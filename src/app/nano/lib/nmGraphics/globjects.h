@@ -50,4 +50,7 @@ extern int spm_render_mark (const nmb_LocationInfo &, void *);
 extern int replaceDefaultObjects (void);
 extern int initialize_globjects (const char * fontName = NULL);
 
+// TCH Dissertation Dec 2001
+extern void enableFeelGrid (int on);
+
 #endif  // GLOBJECTS_H

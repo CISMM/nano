@@ -150,6 +150,10 @@ static int Tip (void *);
 // Needed for ad-hoc latency compensation
 static int TrueTip (void *);
 
+// TCH Dissertation Dec 2001
+static int FeelGrid (void *);
+static int feelGrid_id;
+
 static int measure_hand (void *);
 static int vx_down_icon (void *);
 static int vx_up_icon (void *);
@@ -213,6 +217,9 @@ int clear_world_modechange(int mode, int style, int tool_param)
     }
     if (style == SWEEP) {
       removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    }
+    if (g_config_feelGrid) {
+       removeFunctionFromFunclist(&vir_world, feelGrid_id);
     }
     break;
     //  case USER_SWEEP_MODE:
@@ -323,8 +330,13 @@ int init_world_modechange(int mode, int style, int tool_param)
     if (g_config_trueTip) {
       trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL, "true tip");
     }
+    if (g_config_feelGrid) {
+       feelGrid_id = addFunctionToFunclist(&vir_world, FeelGrid, NULL,
+	     "feel grid");
+    }
     if (style == SWEEP) {
-      sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list, &sweep_struct,
+      sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list,
+	    &sweep_struct,
 					      "draw_list(sweep_struct)");
     }
     break;
@@ -1923,8 +1935,42 @@ int TrueTip (void *)
 	glPopMatrix();
 
 	return 0;
-}	/* Tip */
+}	/* TrueTip */
 
+
+
+// TCH Dissertation Dec 2001
+
+// Draws wireframe triangles to show the grid being returned by
+// feel-ahead haptics.
+
+int FeelGrid (void *) {
+   int i, j;
+   double * vp;  // UGLY HACK!
+
+   glPushMatrix();
+   glPushAttrib(GL_CURRENT_BIT);
+   glColor3f(1.0f, 1.0f, 1.0f);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+   for (i = 0; i < g_fg_xside - 1; i++) {
+      glBegin(GL_TRIANGLE_STRIP);
+
+      for (j = 0; j < g_fg_yside; j++) {
+        vp = g_fg_vertices[i * g_fg_xside + j];
+        glVertex3d(vp[0], vp[1], vp[2]);
+        vp = g_fg_vertices[(i + 1) * g_fg_xside + j];
+        glVertex3d(vp[0], vp[1], vp[2]);
+      }
+      glEnd();
+   }
+
+   glPopAttrib();
+   glPopMatrix();
+
+   return 0;
+   /* FeelGrid */
+}
 
 
 
@@ -2514,4 +2560,23 @@ int initialize_globjects (const char * fontName) {
   return 0;
 }
 
+
+void enableFeelGrid (int on) {
+
+   switch (on) {
+      case 1:
+
+        feelGrid_id = addFunctionToFunclist(&vir_world, FeelGrid, NULL,
+	     "feel grid");
+	break;
+
+      default:
+
+        removeFunctionFromFunclist(&vir_world, feelGrid_id);
+
+	break;
+   }
+
+   g_config_feelGrid = on;
+}
 

@@ -243,6 +243,11 @@ int g_VERTEX_ARRAY = 0;
 // End GL capabilities
 //////////////////////////////////////////////////////////////////
 
+int g_config_feelGrid = 0;
+int g_fg_xside = 0;
+int g_fg_yside = 0;
+q_vec_type * g_fg_vertices = NULL;
+
 // Local Variables:
 // mode:c++
 // End:

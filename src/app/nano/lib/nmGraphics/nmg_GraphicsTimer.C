@@ -635,6 +635,15 @@ void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {
 }
 
 
+void nmg_Graphics_Timer::setFeelGrid (int x, int y, q_vec_type * v) {
+   activateTimer();
+   d_imp->setFeelGrid(x, y, v);
+}
+void nmg_Graphics_Timer::showFeelGrid (vrpn_bool on) {
+   activateTimer();
+   d_imp->showFeelGrid(on);
+}
+
 
 void nmg_Graphics_Timer::getLightDirection (q_vec_type * v) const {
   d_imp->getLightDirection(v);

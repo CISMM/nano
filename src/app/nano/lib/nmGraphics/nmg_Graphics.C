@@ -14,6 +14,8 @@
 #include <netinet/in.h>  // ntoh/hton conversions
 #endif
 
+#include <assert.h>
+
 #define CHECK(a) if (a == -1) return -1
 
 nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
@@ -2940,4 +2942,32 @@ int nmg_Graphics::decode_associate (const char * buf, vrpn_bool *associate, int 
   CHECK(vrpn_unbuffer(&buf, associate));
   CHECK(vrpn_unbuffer(&buf, region));
   return 0;
+}
+
+
+// TCH Dissertation Dec 2001
+//
+char * nmg_Graphics::encode_setFeelGrid (int * len, int xside, int yside,
+      q_vec_type * vertices) {
+
+   assert(0);
+   return NULL;
+}
+
+int nmg_Graphics::decode_setFeelGrid (const char * buf, int * xside,
+      int * yside, q_vec_type ** vertices) {
+
+   assert(0);
+   return 0;
+}
+char * nmg_Graphics::encode_showFeelGrid (int * len, vrpn_bool on) {
+
+   assert(0);
+   return NULL;
+}
+
+int nmg_Graphics::decode_showFeelGrid (const char * buf, vrpn_bool * on) {
+
+   assert(0);
+   return 0;
 }

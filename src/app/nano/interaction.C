@@ -392,8 +392,10 @@ void FDOnOffMonitor::startSurface (void) {
   }
 
   if (surfaceGoing) {
+fprintf(stderr, "  fdoom sending surface\n");
     forceDevice->sendSurface();
   } else {
+fprintf(stderr, "  fdoom starting surface\n");
     forceDevice->startSurface();
     surfaceGoing = vrpn_TRUE;
   }
@@ -401,6 +403,7 @@ void FDOnOffMonitor::startSurface (void) {
 
 void FDOnOffMonitor::stopSurface (void) {
   if (surfaceGoing && forceDevice) {
+fprintf(stderr, "  fdoom stopping surface\n");
     forceDevice->stopSurface();
     surfaceGoing = vrpn_FALSE;
   }
@@ -413,6 +416,7 @@ void FDOnOffMonitor::startForceField (void) {
   }
 
   if (forceDevice) {
+fprintf(stderr, "  fdoom starting field\n");
     forceDevice->sendForceField();
     forceFieldGoing = vrpn_TRUE;
   }
@@ -420,6 +424,7 @@ void FDOnOffMonitor::startForceField (void) {
 
 void FDOnOffMonitor::stopForceField (void) {
   if (forceFieldGoing && forceDevice) {
+fprintf(stderr, "  fdoom stopping field\n");
     forceDevice->stopForceField();
     forceFieldGoing = vrpn_FALSE;
   }
@@ -1153,6 +1158,8 @@ void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
     // If no hand tracker this function shouldn't do anything
     if ( vrpnHandTracker == NULL )
         return;
+
+    graphics->showFeelGrid(VRPN_FALSE);
 
     switch(mode) {
 	case USER_LIGHT_MODE:
@@ -2819,6 +2826,9 @@ int doFeelLive (int whichUser, int userEvent)  {
       return -1;
    }
 
+  if (microscope->state.modify.tool == FEELAHEAD) {
+     graphics->showFeelGrid(VRPN_TRUE);
+  }
 
   // Find the x,y location of hand in grid space
   // xy_lock fixes the hand in one position, until it is released
@@ -3510,7 +3520,7 @@ collabVerbose(5, "initializeInteraction:  updateWorldFromRoom().\n");
   haptic_manager.d_canned = new nmui_HSCanned;
   haptic_manager.d_measurePlane = new nmui_HSMeasurePlane (decoration);
   haptic_manager.d_livePlane = new nmui_HSLivePlane;
-  haptic_manager.d_feelAhead = new nmui_HSFeelAhead;
+  haptic_manager.d_feelAhead = new nmui_HSFeelAhead (graphics);
   haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
   haptic_manager.d_warpedPlane = new nmui_HSWarpedPlane;
 

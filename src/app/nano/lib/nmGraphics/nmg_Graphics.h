@@ -394,7 +394,17 @@ class nmg_Graphics {
     virtual void associateTextureTransformMode(vrpn_bool associate, int region) = 0;
     virtual void associateStride(vrpn_bool associate, int region) = 0;
 
+    // TCH Dissertation Dec 2001
+    
+    virtual void setFeelGrid (int xsize, int ysize,
+                              q_vec_type * vertices) = 0;
+    virtual void showFeelGrid (vrpn_bool) = 0;
+
+
+
     // ACCESSORS
+    
+    
     virtual void getLightDirection (q_vec_type *) const = 0;
       // Returns the direction from which the light emanates.
     virtual int getHandColor (void) const = 0;
@@ -526,6 +536,9 @@ class nmg_Graphics {
     vrpn_int32 d_associateTextureDisplayed_type;
     vrpn_int32 d_associateTextureMode_type;
     vrpn_int32 d_associateTextureTransformMode_type;
+
+    vrpn_int32 d_setFeelGrid_type;
+    vrpn_int32 d_showFeelGrid_type;
 
     // Each encode_ routine will allocate a new char [] to hold
     // the appropriate encoding of its arguments, and write the
@@ -753,8 +766,10 @@ class nmg_Graphics {
     char * encode_setRegionMaskHeight (int * len, float, float, int);
     int decode_setRegionMaskHeight (const char * buf, float *, float *, int *);
     
-    char * encode_setRegionControlPlaneName (int * len, const char *, int region);
-    int decode_setRegionControlPlaneName (const char * buf, char **, int * region);
+    char * encode_setRegionControlPlaneName (int * len, const char *,
+	                                     int region);
+    int decode_setRegionControlPlaneName (const char * buf, char **,
+	                                  int * region);
 
     char * encode_createRegion (int * len);
     int decode_createRegion (const char * buf);
@@ -764,6 +779,16 @@ class nmg_Graphics {
 
     char * encode_associate (int * len, vrpn_bool associate, int region);
     int decode_associate (const char * buf, vrpn_bool *associate, int *region);
+
+
+
+    char * encode_setFeelGrid (int * len, int xsize, int ysize,
+	  q_vec_type * vertices);
+    int decode_setFeelGrid (const char * buf, int * xsize, int * ysize,
+	                    q_vec_type ** vertices);
+
+    char * encode_showFeelGrid (int * len, vrpn_bool on);
+    int decode_showFeelGrid (const char * buf, vrpn_bool * on);
 };
 
 #endif  // NMG_GRAPHICS_H

@@ -5,8 +5,12 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
-#include <string.h>
+
+
 #include "nmg_GraphicsRemote.h"
+
+#include <assert.h>
+#include <string.h>
 
 #include <vrpn_Shared.h>
 #include <vrpn_Connection.h>
@@ -2250,6 +2254,18 @@ void nmg_Graphics_Remote::associateStride(vrpn_bool associate, int region)
   if (msgbuf)
     delete [] msgbuf;
 }
+
+
+void nmg_Graphics_Remote::setFeelGrid (int x, int y, q_vec_type * v) {
+   assert(0);
+}
+
+void nmg_Graphics_Remote::showFeelGrid (vrpn_bool on) {
+   assert(0);
+}
+
+
+
 
 // ACCESSORS
 void nmg_Graphics_Remote::getLightDirection (q_vec_type * v) const {

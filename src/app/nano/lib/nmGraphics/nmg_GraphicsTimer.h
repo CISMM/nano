@@ -168,6 +168,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void associateTextureMode(vrpn_bool associate, int region);
     virtual void associateTextureTransformMode(vrpn_bool associate, int region);
     virtual void associateStride(vrpn_bool associate, int region);
+    virtual void setFeelGrid (int, int, q_vec_type *);
+    virtual void showFeelGrid (vrpn_bool);
 
   protected:
 

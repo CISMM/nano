@@ -294,6 +294,13 @@ extern int g_VERTEX_ARRAY;
 // End GL capabilities
 //////////////////////////////////////////////////////////////////
 
+
+// TCH Dissertation Dec 2001
+extern int g_config_feelGrid;
+extern int g_fg_xside;
+extern int g_fg_yside;
+extern q_vec_type * g_fg_vertices;
+
 #endif  // GRAPHICS_GLOBALS_H
 
 

@@ -181,7 +181,12 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void associateTextureTransformMode(vrpn_bool associate, int region);
     virtual void associateStride(vrpn_bool associate, int region);
 
+    virtual void setFeelGrid (int xsize, int ysize, q_vec_type * vertices);
+    virtual void showFeelGrid (vrpn_bool on);
+
     // ACCESSORS
+
+
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const; 
@@ -191,7 +196,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual const double * getMaxColor (void) const;
 
     // Note:
-    //   This implementation's accessors is *NOT* guaranteed
+    //   This implementation's accessors are *NOT* guaranteed
     // to be consistent with the server!
 
   protected:

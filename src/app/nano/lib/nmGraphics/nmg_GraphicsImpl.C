@@ -2808,6 +2808,29 @@ void nmg_Graphics_Implementation::associateStride(vrpn_bool associate, int regio
 }
 
 
+
+// TCH Dissertation Dec 2001
+
+void nmg_Graphics_Implementation::setFeelGrid (int xside, int yside,
+      q_vec_type * vertices) {
+
+  g_fg_xside = xside;
+  g_fg_yside = yside;
+
+  g_fg_vertices = vertices;
+
+}
+
+void nmg_Graphics_Implementation::showFeelGrid (vrpn_bool on) {
+   //g_config_feelGrid = on;
+   enableFeelGrid(on);
+}
+
+
+
+
+
+
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
   ::getLightDirection(v);
@@ -2842,7 +2865,15 @@ const double * nmg_Graphics_Implementation::getMaxColor (void) const {
 
 
 
+
+
+
+
 // PROTECTED
+
+
+
+
 
 #if 0
 nmg_Graphics_Implementation::TextureMode
@@ -2962,6 +2993,11 @@ void nmg_Graphics_Implementation::getLatestGridChange (int * minX, int * maxX,
   *maxY = g_maxChangedY;
 
 }
+
+
+
+
+
 
 
 
@@ -4253,3 +4289,28 @@ int nmg_Graphics_Implementation::handle_associateTextureTransformMode(void *user
   it->associateTextureTransformMode(associate, region);
   return 0;
 }
+
+// TCH Dissertation Dec 2001
+
+int nmg_Graphics_Implementation::handle_setFeelGrid (void * userdata, vrpn_HANDLERPARAM p) {
+   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+   int xside;
+   int yside;
+   q_vec_type * vertices;
+
+   CHECKF(it->decode_setFeelGrid(p.buffer, &xside, &yside, &vertices),
+	 "handle_setFeelGrid");
+   it->setFeelGrid(xside, yside, vertices);
+   return 0;
+}
+
+int nmg_Graphics_Implementation::handle_showFeelGrid (void * userdata, vrpn_HANDLERPARAM p) {
+   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+   vrpn_bool on;
+
+   CHECKF(it->decode_showFeelGrid(p.buffer, &on),
+	 "handle_showFeelGrid");
+   it->showFeelGrid(on);
+   return 0;
+}
+

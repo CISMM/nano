@@ -194,7 +194,14 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void associateTextureTransformMode(vrpn_bool associate, int region);
     virtual void associateStride(vrpn_bool associate, int region);
 
+
+    virtual void setFeelGrid (int xsize, int ysize, q_vec_type * vertices);
+    virtual void showFeelGrid (vrpn_bool);
+
+
+
     // ACCESSORS
+
 
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                         q_vec_type &ur);
@@ -347,6 +354,11 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_associateTextureDisplayed(void *, vrpn_HANDLERPARAM);
   static int handle_associateTextureMode(void *, vrpn_HANDLERPARAM);
   static int handle_associateTextureTransformMode(void *, vrpn_HANDLERPARAM);
+
+
+  static int handle_setFeelGrid (void *, vrpn_HANDLERPARAM);
+  static int handle_showFeelGrid (void *, vrpn_HANDLERPARAM);
+
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H
