@@ -1,3 +1,8 @@
+2002-07-08  David Borland <borland@cs.unc.edu> 
+
+        * sim.cpp : fixed the rotation code so that rotations 
+        of tubes in nano are correctly represented in the simulator.
+
 2002-07-04  Andrea Hilchey <hilchey@cs.unc.edu>
 	
 	* modify drawing of tip so that scaled if simulator is connected

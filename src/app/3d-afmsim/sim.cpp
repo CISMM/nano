@@ -33,6 +33,8 @@
 #include "lightcol.h"
 #include "uncert.h"
 
+#include "quat.h"
+
 #include "sim.h"
 #include <vrpn_Connection.h>
 #include <nmm_SimulatedMicroscope.h>
@@ -719,146 +721,76 @@ void displayFuncDepth( void ) {
 
 	}
 	if(SimMicroscopeServer.rotRcv){
-		
 		//in radians
 		float x = SimMicroscopeServer.rot_x;
 		float y = SimMicroscopeServer.rot_y;
 		float z = SimMicroscopeServer.rot_z;
-		cout << "rot rcv: \t" << "x: " << x << "\ty: " << y << "\tz: " << z << endl;
-
-		//in radians
-		float rel_x = x - current_rot_x;
-		float rel_y = y - current_rot_y;
-		float rel_z = z - current_rot_z;
-		cout << "rel: \t\t" << "x: " << rel_x << "\ty: " << rel_y << "\tz: " << rel_z << endl;
-
-
-		//in radians
-		current_rot_x = x;
-		current_rot_y = y;
-		current_rot_z = z;
-
+		
 		int obj_group = NANOTUBE_GROUP;
 
 		//start added code
 
-		//Z stuff
-		if(rel_z != 0){	
+        // CHANGED BY DAVID BORLAND 7/8/02
+        // Changed the manner of performing rotations to using quatlib.  This matches the way they are done
+        // in nano, so correct results are gained
+
+        q_type q, new_q;
+        static q_type old_q = { 0, 0, 0, 1 };
+        q_vec_type v;
+
+        // get the new quaternion from the rotations received
+        q_from_euler(new_q, z, y, x);
+
+        // invert the quaternion from the previous rotation
+        q_invert(q, old_q);
+        // multiply to get the quaternion necessary to use to rotate to the new quaternion
+        q_mult(q, new_q, q);
+
+        // save the current rotation
+        q_copy(old_q, new_q);
+
+
+        //find the group center
+		Vec3d group_center;
+		for(int i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+        // translate to group center, rotate, translate back
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+            q_vec_set(v, rel_pos.x, rel_pos.y, rel_pos.z);
+            q_xform(v, q, v);
+   			this_obj->setPos(Vec3d(v[0], v[1], v[2]) + group_center);
+		}
 		
-			//find the group center
-			Vec3d group_center;
-			for(int i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				group_center += this_obj->pos;
-			}
-			group_center /= number_in_group[obj_group];
-			//cout << "group center: " << group_center << endl;
+		//rotate objects about themselves 
+        for(i = 0; i < number_in_group[obj_group];i++){
+			Ntube * n = (Ntube *)group_of_obs[obj_group][i];
+			Vec3d left;
+			Vec3d right;
+			left += n->pos;
+			left -= n->axis*n->leng/2;
+			right += n->pos;
+			right += n->axis*n->leng/2;
 
-			//rotate around z
+            q_vec_set(v, left.x - n->pos.x, left.y - n->pos.y, left.z - n->pos.z);
+            q_xform(v, q, v);
+			left = n->pos + Vec3d(v[0], v[1], v[2]);
 
-			//translate objects to position rel_z rad. rel. to group_center
-			for(i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),rel_z) + group_center;
-				this_obj->setPos(new_pos);
-			}
+            q_vec_set(v, right.x - n->pos.x, right.y - n->pos.y, right.z - n->pos.z);
+            q_xform(v, q, v);
+			right = n->pos + Vec3d(v[0], v[1], v[2]);
 
-			for(i = 0; i < number_in_group[obj_group];i++){
-				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
-				Vec3d left;
-				Vec3d right;
-				left += n->pos;
-				left -= n->axis*n->leng/2;
-				right += n->pos;
-				right += n->axis*n->leng/2;
-
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),rel_z);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),rel_z);
-				n->set(left,right,n->diam);		
-			}
+			n->set(left,right,n->diam);
 		}
-
-		//Y stuff
-		if(rel_y != 0){		
-
-			//find the group center
-			Vec3d group_center;
-			for(int i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				group_center += this_obj->pos;
-			}
-			group_center /= number_in_group[obj_group];
-			//cout << "group center: " << group_center << endl;
-			
-			//rotate around y
-
-			//translate objects to position rel_y rad. rel. to group_center
-			for(i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),rel_y) + group_center;
-				this_obj->setPos(new_pos);
-			}
-
-			for(i = 0; i < number_in_group[obj_group];i++){
-				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
-				Vec3d left;
-				Vec3d right;
-				left += n->pos;
-				left -= n->axis*n->leng/2;
-				right += n->pos;
-				right += n->axis*n->leng/2;
-
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),rel_y);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),rel_y);
-				n->set(left,right,n->diam);
-			}
-		}
-
-		//X stuff
-		if(rel_x != 0){			
-
-			//find the group center
-			Vec3d group_center;
-			for(int i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				group_center += this_obj->pos;
-			}
-			group_center /= number_in_group[obj_group];
-			//cout << "group center: " << group_center << endl;
-
-			//rotate around x
-
-			//translate objects to position rel_x rad. rel. to group_center
-			for(i = 0; i < number_in_group[obj_group];i++){
-				OB * this_obj = group_of_obs[obj_group][i];
-				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),rel_x) + group_center;
-				this_obj->setPos(new_pos);
-			}
-			
-			//rotate objects about themselves in x
-			for(i = 0; i < number_in_group[obj_group];i++){
-				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
-				Vec3d left;
-				Vec3d right;
-				left += n->pos;
-				left -= n->axis*n->leng/2;
-				right += n->pos;
-				right += n->axis*n->leng/2;
-
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),rel_x);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),rel_x);
-				n->set(left,right,n->diam);
-			}
-		}
-
-   
+		        
 		//end added code
 
 		SimMicroscopeServer.rotRcv = false;
-
 	}
 	
 
