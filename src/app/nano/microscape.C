@@ -1205,7 +1205,6 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
 
 int createNewMicroscope( MicroscapeInitializationState &istate,
                          vrpn_Connection * c);
-void Usage (char * s);
 int main (int argc, char * argv []);
 
 static void Usage (char * s);

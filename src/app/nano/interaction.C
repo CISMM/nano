@@ -766,12 +766,6 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 	   // after it's constraint line is specified.
 	   if (microscope->state.modify.tool == LINE) {
 	       ret = doLine(user, event);
-	       /*
-	   } else if (((microscope->state.modify.tool == CONSTR_FREEHAND) ||
-		       (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ))
-		       && (!microscope->state.modify.constr_line_specified)) {
-	       */
-	       ret = doLine(user, event);
 	   } else if ((microscope->state.modify.tool == CONSTR_FREEHAND)
 		       && (!microscope->state.modify.constr_line_specified)) {
 	       ret = doLine(user, event);
