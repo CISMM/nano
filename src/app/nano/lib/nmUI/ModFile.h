@@ -41,9 +41,8 @@ class ModFile {
     Tcl_Interp * d_interp;
     Point_list d_pointlist;
 
-    void RememberPointList (void);
+    void RememberPointList (string * text);
 
-    void ShowModFile (void);
 };
 
 #endif  // MOD_FILE_H

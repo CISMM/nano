@@ -25,14 +25,6 @@ static const int MODMODE = 1;
 // Tom Hudson
 // Code from modfile_ functions and globals in animate.c
 
-
-
-Tclvar_int modfile_hasWindow ("modfile_hasWindow", 0); 
-                                // it won't work the other way unless
-				// we correctly link the Tcl variable with
-				// the C variable - AAS
-//static int modfile_hasWindow = 0;
-
 ModFile::ModFile (void) :
     d_lastmode (IMAGEMODE),
     d_interp (NULL),
@@ -62,15 +54,12 @@ int ModFile::EnterImageMode (void * userdata) {
 
   if (me->d_lastmode == IMAGEMODE) return 0;
 
-  me->d_interp = Tcl_Interpreter::getInterpreter();
-  if (!modfile_hasWindow) {
-    me->ShowModFile();
-    modfile_hasWindow = 1;
-  }
-  me->d_pointlist.writeToTclWindow(me->d_interp);
+  // This allocates the string, and passes it to us. 
+  string * text = me->d_pointlist.outputToText();
   me->d_pointlist.clear();
 
-  me->RememberPointList();
+  me->RememberPointList(text);
+  delete text;
 
   me->d_lastmode = IMAGEMODE;
 
@@ -89,20 +78,20 @@ int ModFile::ReceiveNewPoint (void * userdata, const Point_results * _p) {
   return 0;
 }
 
-void ModFile::ShowModFile (void) {
-    // Turns out we don't want to pop up the modfile window. Ever.
-    /*
-   char command [100];
-   sprintf(command, "show_mod_win");
-   TCLEVALCHECK2(d_interp, command);
-    */
-}
+/** Put the text of the modfile into the tcl interpreter, then tell the
+ interpreter it is there so the use can save it later.
+  */
+void ModFile::RememberPointList (string * text) {
+    d_interp = Tcl_Interpreter::getInterpreter();
+    char * c_text = new char[strlen(text->c_str()) +1];
+    strcpy(c_text, text->c_str());
+    // Can't use tclvar_string, because it has a length limit of 128 char. 
+    Tcl_SetVar(d_interp,"modfile_text",c_text,TCL_GLOBAL_ONLY);
+    delete [] c_text;
 
-void ModFile::RememberPointList (void) {
-   char command [100];
-   d_interp = Tcl_Interpreter::getInterpreter();
-   // This command includes a timestamp so we know which mod it is. 
-   sprintf(command, "remember_mod_data %ld", d_start_mod_time);
-   TCLEVALCHECK2(d_interp, command);
+    char command [100];
+    // This command includes a timestamp so we know which mod it is. 
+    sprintf(command, "remember_mod_data %ld", d_start_mod_time);
+    TCLEVALCHECK2(d_interp, command);
 }
 
