@@ -1,3 +1,8 @@
+2003-06-20  Russell M. Taylor II <taylorr@cs.unc.edu>
+
+        * 3d_afm.dsp : Modified to compile debug and release in the current
+                build environment for nano.
+
 2002-03-18  Aron Helser  <helser@cs.unc.edu>
 
 	* 3d_afm.dsp: Updated so it compiles with STL, quat, vogl
