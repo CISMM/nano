@@ -1,5 +1,7 @@
 USES_LIBS := nmAux nmMScope nmBase vrpn quat
 
+USES_EXTERNAL_LIBS := tcl tk
+
 include ../Makefile.share
 
 .PHONY: vrpn_headerPrint
@@ -41,7 +43,7 @@ vrpn_newStreamPrint:
 streamToVrpn:
 	$(MAKE) APP_NAME=streamToVrpn \
                 GENERATED_SRC= \
-                EXCLUDE_SRC="streamEdit.c streamPrint.c streamToNewVrpn.C vrpn_streamTimeFix.C vrpn_headerPrint.C vrpn_uiHeaderPrint.C vrpnsp.C" \
+                EXCLUDE_SRC="streamEdit.c streamPrint.c streamToNewVrpn.C vrpn_streamTimeFix.C vrpn_headerPrint.C vrpn_uiHeaderPrint.C vrpnsp.C " \
                 MAKECMDGOALS=""
 
 .PHONY: streamToNewVrpn

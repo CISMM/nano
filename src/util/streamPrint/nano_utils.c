@@ -486,7 +486,7 @@ int	stm_close_stream(stm_stream *s)
  * NULL on failure.
  *	Note that this routine can take a long time to complete. */
 
-stm_stream	*stm_open_datastream_for_read(char* filename)
+stm_stream	*stm_open_datastream_for_read(const char* filename)
 {
 	stm_stream	*s;
 	struct	stat	statbuf;

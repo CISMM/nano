@@ -1,0 +1,8 @@
+2000-09-21  Adam Seeger  <seeger@cs.unc.edu>
+
+        * streamToVrpn.C: made some major changes to this because most of
+	the code is now moved into nmm_MicroscopeTranslator.C so it will be
+	easier to maintain. This also fixes the bug with the time except
+        at the very end of the stream file where system messages screw
+        things up again (time goes back to the elapsed time that it took to
+        do the translation at the very end of the stream file)
