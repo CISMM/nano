@@ -279,6 +279,16 @@ int draw_world (int, void * data)
             mysphere(NULL);
         }
     }
+	
+	//if we are drawing the axis on the sphere for direct step...
+	if(decoration-> ds_sphere_axis) {
+
+		UTree *node;
+		node = World.TGetNodeByName(*World.current_object);
+		URender &obj = node->TGetContents();
+		
+		make_ds_sphere_axis(state, obj.GetLocalXform().GetRot() );
+	}
     
     // TCH 8 April 98 don't know where these go best
     if (decoration->red.changed()) {

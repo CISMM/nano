@@ -94,6 +94,10 @@ static int red_line_struct_id;
 static int green_line_struct_id;
 static int blue_line_struct_id;
 
+//variables to set up axis for direct step.
+static GLint ds_sphere_axis_struct;
+static int ds_sphere_axis_struct_id;
+
 static GLint collab_hand_struct;
 
 static marker_type * marker_list; // linked list of markers for selected area 
@@ -398,6 +402,16 @@ void enableCollabHand (nmg_State * state, int enable) {
   }
 }
 
+void enable_ds_sphere_axis() {
+ds_sphere_axis_struct_id = addFunctionToFunclist(&vir_world, draw_list, &ds_sphere_axis_struct,
+					       "draw_list(ds_sphere_axis_struct)"); 
+}
+
+void disable_ds_sphere_axis() {
+	removeFunctionFromFunclist(&vir_world, ds_sphere_axis_struct_id );
+
+}
+
 // collabHand_id:
 //   add in enableCollabHand(VRPN_TRUE)
 //   remove in clear_world_modechange()
@@ -472,6 +486,9 @@ void myobjects(nmg_State * state)
 
   glNewList(sweep_struct,GL_COMPILE);
 		/*empty list?*/
+  glEndList();
+
+  glNewList(ds_sphere_axis_struct, GL_COMPILE);
   glEndList();
   
   /* vx_quarter_up structure */
@@ -1344,6 +1361,66 @@ int make_blue_line (nmg_State * state, const float a[], const float b[])
    glEndList();
    return(blue_line_struct);
 } 
+
+//this will be where an axis centered on the position of the microscope tip
+//will be created
+int make_ds_sphere_axis (nmg_State *state, const q_type rot )
+{
+
+	q_vec_type red_axis = {1,0,0};
+    q_vec_type green_axis = {0,1,0};
+    q_vec_type blue_axis  = {0,0,1};
+
+	float a[] = {sphere_x, sphere_y, sphere_z};
+
+q_xform(red_axis,rot,red_axis);
+q_xform(green_axis,rot,green_axis);
+q_xform(blue_axis,rot,blue_axis);
+
+q_vec_scale(red_axis, 350, red_axis);
+q_vec_scale(green_axis, 350, green_axis);
+q_vec_scale(blue_axis, 350, blue_axis);
+
+
+float r_axis_p [] = {red_axis[0]   + a[0],  red_axis[1]   + a[1],  red_axis[2]   + a[2] };
+float g_axis_p [] = {green_axis[0] + a[0],  green_axis[1] + a[1],  green_axis[2] + a[2] };
+float b_axis_p [] = {blue_axis[0]  + a[0],  blue_axis[1]  + a[1],  blue_axis[2]  + a[2] };
+
+float r_axis_n [] = {a[0] - red_axis[0],    a[1] - red_axis[1],   a[2] -  red_axis[2]   };
+float g_axis_n [] = {a[0] - green_axis[0],  a[1] - green_axis[1], a[2] -  green_axis[2] };
+float b_axis_n [] = {a[0] - blue_axis[0] ,  a[1] - blue_axis[1],  a[2] -  blue_axis[2]  };
+
+ v_gl_set_context_to_vlib_window(); 
+  glDeleteLists(ds_sphere_axis_struct,1);
+  ds_sphere_axis_struct = glGenLists(1);
+  glNewList(ds_sphere_axis_struct,GL_COMPILE);
+  //positive lines, solid
+  glColor3f(1.0,0.0,0.0);
+  make_line(a,r_axis_p);
+  glColor3f(0.0,1.0,0.0);
+  make_line(a,g_axis_p);
+   glColor3f(0.0,0.0,1.0);
+  make_line(a,b_axis_p);
+
+  //negative lines, dotted
+  glLineStipple(1, 0x00FF);
+  glEnable(GL_LINE_STIPPLE);
+    glColor3f(1.0,0.0,0.0);
+  make_line(a,r_axis_n);
+  glColor3f(0.0,1.0,0.0);
+  make_line(a,g_axis_n);
+   glColor3f(0.0,0.0,1.0);
+  make_line(a,b_axis_n);
+
+  glDisable(GL_LINE_STIPPLE);
+
+
+  glEndList();
+  return(ds_sphere_axis_struct);
+
+return 0;
+}
+
 
 
 int make_sweep (nmg_State * /*state*/, const float a [], const float b [],
@@ -2523,7 +2600,9 @@ int replaceDefaultObjects(nmg_State * state)
   red_line_struct = glGenLists(1);
   green_line_struct = glGenLists(1);
   blue_line_struct = glGenLists(1);
-  collab_hand_struct = glGenLists(1); 
+  collab_hand_struct = glGenLists(1);
+  
+  ds_sphere_axis_struct = glGenLists(1);
 
   marker_list = (marker_type *)malloc(sizeof(marker_type));
   marker_list->id = glGenLists(1);

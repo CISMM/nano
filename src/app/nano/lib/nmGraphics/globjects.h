@@ -19,6 +19,8 @@ extern int make_green_line (nmg_State * state,
 extern int make_blue_line (nmg_State * state, 
                            const float a [], const float b []);
 
+extern int make_ds_sphere_axis(nmg_State * state, const q_type rot);
+
 //   Called in nmg_GraphicsImpl.c
 extern int make_aim (const float a [], const float b []);
 extern int clear_world_modechange (nmg_State * state,

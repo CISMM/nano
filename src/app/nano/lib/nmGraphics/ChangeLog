@@ -1,3 +1,10 @@
+2002-07-18 Jameson Miller <millerj@cs.unc.edu>
+	* openGl.c : draw the direct step sphere axes.
+	in the draw world function
+
+	  globjects.c (.h) : handles the drawing of the direst step axis
+	that follows the microscope tip.
+
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_SurfaceRegion.C (setTexture): added GL_ENABLE_BIT to 
