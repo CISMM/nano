@@ -96,7 +96,9 @@ pack $sharedptr(sp).mutex -side bottom
 # from C++, so that if we solve the initial races in the distributed
 # code we'll also be correct here.
 # XXX
-$sharedptr(sp).mutex.request_mutex_button configure -state disabled
+
+#$sharedptr(sp).mutex.request_mutex_button configure -state disabled
+$sharedptr(sp).mutex.release_mutex_button configure -state disabled
 
 
 
@@ -117,7 +119,8 @@ proc mutex_release_command {} {
   global sharedptr
 
   set release_mutex 1
-  $sharedptr(sp).mutex.release_mutex_button configure \
+#  Don't disable it here;  let the callback do that.
+#  $sharedptr(sp).mutex.release_mutex_button configure \
           -state disabled
 
 }
@@ -162,3 +165,86 @@ proc mutex_release_callback {} {
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal
 }
+
+
+
+#----- hierarchical fine-grained coupling controls -----
+
+frame $sharedptr(sp).view_frame
+frame $sharedptr(sp).view_frame.sf
+
+# .5 cm left padding
+frame $sharedptr(sp).view_frame.sf.pad -width .5c
+pack $sharedptr(sp).view_frame.sf.pad -side left
+
+frame $sharedptr(sp).view_frame.sf.plane_frame
+pack $sharedptr(sp).view_frame.sf.plane_frame -fill x -side top
+
+checkbutton \
+  $sharedptr(sp).view_frame.sf.plane_frame.synch_view_plane \
+  -text "Plane"
+pack $sharedptr(sp).view_frame.sf.plane_frame.synch_view_plane \
+  -side left
+
+frame $sharedptr(sp).view_frame.sf.color_frame
+pack $sharedptr(sp).view_frame.sf.color_frame -fill x -side top
+
+checkbutton $sharedptr(sp).view_frame.sf.color_frame.synch_view_color \
+  -text "Color"
+pack $sharedptr(sp).view_frame.sf.color_frame.synch_view_color -side left
+
+frame $sharedptr(sp).view_frame.sf.measure_frame
+pack $sharedptr(sp).view_frame.sf.measure_frame -fill x -side top
+
+checkbutton $sharedptr(sp).view_frame.sf.measure_frame.synch_view_measure \
+  -text "Measure Lines"
+pack $sharedptr(sp).view_frame.sf.measure_frame.synch_view_measure -side left
+
+frame $sharedptr(sp).view_frame.sf.lighting_frame
+pack $sharedptr(sp).view_frame.sf.lighting_frame -fill x -side top
+
+checkbutton $sharedptr(sp).view_frame.sf.lighting_frame.synch_view_lighting \
+  -text "Lighting"
+pack $sharedptr(sp).view_frame.sf.lighting_frame.synch_view_lighting -side left
+
+# pack $sharedptr(sp).view_frame.sf.synchronize_view -side left
+
+frame $sharedptr(sp).view_frame.sf.contour_frame
+pack $sharedptr(sp).view_frame.sf.contour_frame -fill x -side top
+
+checkbutton $sharedptr(sp).view_frame.sf.contour_frame.synch_view_contour \
+  -text "Contour Lines"
+pack $sharedptr(sp).view_frame.sf.contour_frame.synch_view_contour -side left
+
+
+frame $sharedptr(sp).view_frame.sf.grid_frame
+pack $sharedptr(sp).view_frame.sf.grid_frame -fill x -side top
+
+checkbutton $sharedptr(sp).view_frame.sf.grid_frame.synch_view_grid \
+  -text "Rulergrid"
+pack $sharedptr(sp).view_frame.sf.grid_frame.synch_view_grid -side left
+
+pack $sharedptr(sp).view_frame.sf
+
+
+
+
+
+
+#----- hierarchical fine-grained coupling drivers -----
+
+
+proc pack_finegrained_coupling {} {
+  global sharedptr
+
+  pack $sharedptr(sp).view_frame -side bottom
+}
+
+proc unpack_finegrained_coupling {} {
+  global sharedptr
+
+  pack forget $sharedptr(sp).view_frame
+}
+
+
+

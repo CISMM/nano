@@ -925,3 +925,18 @@ iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(pref_surf_shading).diffuse \
 	$nmInfo(pref_surf_tris).surface_alpha  \
 	$nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale
+
+#
+# Coupling
+#
+iwidgets::Labeledframe $nmInfo(preferences).coupling \
+        -labeltext "Coupling" \
+        -labelpos nw
+set nmInfo(pref_coupling) [$nmInfo(preferences).coupling childsite]
+
+checkbutton $nmInfo(pref_coupling).finegrained_coupling \
+        -text "fine-grained coupling" -variable finegrained_coupling
+
+pack $nmInfo(preferences).coupling -fill both
+pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
+

@@ -400,7 +400,11 @@ after idle {
 	set my_ypos [expr [lindex [wm maxsize .] 1] - $req_height]
     }
 
-    wm geometry .sharedptr ${toolbar_req_width}x${req_height}+${main_xpos}+$my_ypos
+#  Can't specify the window size because we want it to change when we pack
+# the finegrained coupling controls.
+#    wm geometry .sharedptr ${toolbar_req_width}x${req_height}+${main_xpos}+$my_ypos
+    wm geometry .sharedptr +${main_xpos}+$my_ypos
+
 
     # Make the modify live window appear at the same position as the toolbar
     wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
