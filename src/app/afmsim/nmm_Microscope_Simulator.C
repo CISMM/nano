@@ -147,7 +147,12 @@ nmm_Microscope_Simulator::
 nmm_Microscope_Simulator (const char * _name,
 			  vrpn_Connection * _c) :
     nmb_SharedDevice_Server (_name, _c),
-    nmm_Microscope (_name, d_connection)
+    nmm_Microscope (_name, d_connection),
+    d_doLatestScanTo (VRPN_TRUE),
+    d_saved_scan_to_point_buffer_len (0),
+    d_redundancy (new vrpn_RedundantTransmission (_c)),
+    d_rController (new vrpn_RedundantController (d_redundancy, _c)),
+    d_rReceiver (new vrpn_RedundantReceiver (_c))
 {
 
 
@@ -165,10 +170,17 @@ nmm_Microscope_Simulator (const char * _name,
   UpdateFeedbackParamsNow = 1;
   RegisterAmpEnabled = 1;
 
+  d_saved_scan_to_point_msg.type = -1;
+  d_saved_scan_to_point_msg.buffer = NULL;
+
   if ( !d_connection ) {
     ServerOutputAdd(2, "Could not connect to \"%S\".\n", _name );
     exit( 0 );
   }
+
+
+  // ANY_TYPE should come first!
+  d_connection->register_handler(vrpn_ANY_TYPE, RcvAnyMessage, this);
 
   d_connection->register_handler(d_SetScanStyle_type,
 				RcvSetScanStyle,
@@ -182,8 +194,9 @@ nmm_Microscope_Simulator (const char * _name,
 				RcvSetRegionNM,
 				this);
 
-  d_connection->register_handler(d_ScanTo_type,
-				 RcvScanPointNM,
+  // TCH Dissertation July 2001
+  d_rReceiver->register_handler(d_ScanTo_type,
+                                RcvScanPointNM,
 				this);
 
   d_connection->register_handler(d_ZagTo_type,
@@ -317,6 +330,17 @@ nmm_Microscope_Simulator (const char * _name,
 nmm_Microscope_Simulator::
 ~nmm_Microscope_Simulator()
 {
+}
+
+// virtual
+void nmm_Microscope_Simulator::mainloop (void) {
+
+  d_rController->mainloop();
+  d_redundancy->mainloop();
+
+  d_connection->mainloop();
+
+  executeBufferedScanMessage();
 }
 
 float nmm_Microscope_Simulator::
@@ -1032,7 +1056,9 @@ RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
   const char * bufptr = _p.buffer;
   mic_start = 0;  			// added by JakeK, supposed to stop the scanning of the
 					// surface while user is doing a live touch
-  if ( tmp->stm_scan_point_nm( bufptr ) ) {
+  if (tmp->d_doLatestScanTo) {
+    return tmp->bufferScanMessage(_p);
+  } else if (tmp->stm_scan_point_nm( bufptr, &_p.msg_time)) {
     ServerError( "stm_scan_point_nm failed" );
     return -1;
   }
@@ -1114,7 +1140,9 @@ RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
   const char * bufptr = _p.buffer;
 
-  if ( tmp->stm_sweep_point_nm( bufptr ) ) {
+  if (tmp->d_doLatestScanTo) {
+    return tmp->bufferScanMessage(_p);
+  } else if ( tmp->stm_sweep_point_nm( bufptr ) ) {
       ServerError ("stm_sweep_point_nm failed");
       return -1;
   }
@@ -1130,6 +1158,10 @@ int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
   vrpn_int32 a, b;
   vrpn_float32 c, d, e;
   int retval;
+
+  if (tmn->d_doLatestScanTo) {
+    return tmn->bufferScanMessage(p);
+  }
 
   retval = tmn->afmFeelToPoint(bufptr);
   if (retval) {
@@ -1857,7 +1889,7 @@ spm_report_angle_clipped( float /*xmin*/, float /*ymin*/, float /*xmax*/, float 
 
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
-stm_scan_point_nm( const char *bufptr )
+stm_scan_point_nm (const char * bufptr, timeval * reqTime)
 {
 /*************************************************************************
  * Request to return the height at a specific point.
@@ -3282,7 +3314,7 @@ punch_in( float /*posx*/, float /*posy*/ )
 ///////////////////////////////////////////////////////////////////////////
 
 int nmm_Microscope_Simulator::
-report_point_set( float x, float y )
+report_point_set( float x, float y, timeval * reqTime )
 {
 /**************************************************************************
  * report_point_set takes in x and y coordinates and reports the data sets.
@@ -3302,7 +3334,8 @@ report_point_set( float x, float y )
   getImageHeightAtXYLoc(x, y, &z);
   point_value[0] = z;
   
-  spm_report_point_datasets(d_PointResultData_type, x, y, point_value, numsets);
+  spm_report_point_datasets(d_PointResultData_type, x, y, point_value, numsets,
+                            reqTime);
 //fprintf(stderr, "Reported h %.5f at %.5f, %.5f\n", z, x, y);
   return 0;
 }
@@ -3333,8 +3366,9 @@ spm_get_z_piezo_nM(int /*NUM_SAMPLES*/)
 
 
 int nmm_Microscope_Simulator::
-spm_report_point_datasets(long report_type, double x, double y,
-				float* data, int count )
+spm_report_point_datasets (long report_type, double x, double y,
+                           float * data, int count,
+                           timeval * reqTime )
 {
 /************************************************************************
  * Buffers the height and other data into the outgoing buffer.
@@ -3361,7 +3395,15 @@ spm_report_point_datasets(long report_type, double x, double y,
       ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_report_point_datasets:  Buffer overflow!!" );
       return -1;
     } else {
-      retval = Send( len, report_type, msgbuf );
+
+      // TCH Dissertation July 2001
+
+      if (d_redundancy && d_redundancy->isEnabled()) {
+        retval = RedundantSend(len, report_type, msgbuf, reqTime);
+      } else {
+        retval = Send( len, report_type, msgbuf );
+      }
+
       if ( retval ) {
         ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_report_point_datasets:  Couldn't pack message to send to client." );
         return -1;
@@ -3445,7 +3487,8 @@ gather_data_and_report(long /*report_type*/, float /*the_desired_x*/,
 }
 
 int nmm_Microscope_Simulator::
-goto_point_and_report_it(float the_desired_x, float the_desired_y)
+goto_point_and_report_it (float the_desired_x, float the_desired_y,
+                          timeval * reqTime)
 {
    //  unsigned int  state;
 
@@ -3454,7 +3497,7 @@ goto_point_and_report_it(float the_desired_x, float the_desired_y)
 	// Go to the point
   spm_goto_xynm (the_desired_x, the_desired_y);
 
-  if ( report_point_set(the_desired_x,the_desired_y) ) return -1;
+  if ( report_point_set(the_desired_x,the_desired_y, reqTime) ) return -1;
 
 
   afm_prev_point_x = the_desired_x;
@@ -3656,6 +3699,26 @@ Send( long len, long msg_type, char * buf )
   return retval;
 }
 
+int nmm_Microscope_Simulator::RedundantSend
+             (long len, long msg_type, char * buf, timeval * ts) {
+  struct timeval now;
+  int retval;
+
+  if (ts) {
+    now.tv_sec = ts->tv_sec;
+    now.tv_usec = ts->tv_usec;
+  } else {
+    gettimeofday(&now, NULL);
+  }
+
+  retval = d_redundancy->pack_message(len, now, msg_type, d_myId,
+					buf, vrpn_CONNECTION_RELIABLE);
+  if ( buf ) {
+    delete [] buf;
+  }
+  return retval;
+}
+
 void nmm_Microscope_Simulator::
 get_current_xy(float *posx, float *posy)
 {
@@ -3842,6 +3905,91 @@ helpTimer2()
 		  ServerOutputAdd( 3, "Custom 2 Timer enabled successfully" );
 }
 
+
+int nmm_Microscope_Simulator::bufferScanMessage (vrpn_HANDLERPARAM p) {
+
+  // From nmm_Microscope_Topometrix -
+  //   which means this ought to be on a nmb/vrpn class that
+  //   generalizes delayed execution, just like vrpn_RedundantTransmission
+  //   generalizes its work.
+
+  char * bufptr = (char *) d_saved_scan_to_point_msg.buffer;
+
+  // Grow the size of the saved message buffer, if necessary
+  if (p.payload_len >  d_saved_scan_to_point_buffer_len) {
+      if (bufptr) delete [] bufptr;
+      bufptr = new char [p.payload_len];
+      if (bufptr == NULL) {
+          d_saved_scan_to_point_buffer_len = 0;
+          ServerOutputAdd(0, "bufferScanMessage:  out of memory!\n");
+          return -1;
+      } else {
+          d_saved_scan_to_point_buffer_len = p.payload_len;
+      }
+  }
+
+  d_saved_scan_to_point_msg = p;
+  d_saved_scan_to_point_msg.buffer = bufptr;
+
+  memcpy((void *) d_saved_scan_to_point_msg.buffer,
+         p.buffer, p.payload_len);
+
+  return 0;
+}
+
+int nmm_Microscope_Simulator::executeBufferedScanMessage (void) {
+  vrpn_HANDLERPARAM & p = d_saved_scan_to_point_msg;
+  int retval = 0;
+
+  // Note to self:  this ought to be on a base class!
+
+  // invalid stored message, return immediately
+  if (p.type == -1) {
+    return 0;
+  }
+
+  // Must clear p.type BEFORE calling stm_scan_foo to make sure it's clear
+  // in case sending the message sends us through RcvAnyMessage again
+  // (not that it should - sounds like something's broken in the control
+  // flow).
+
+  if (p.type == d_ScanTo_type) {
+    p.type = -1;
+    retval = stm_scan_point_nm(p.buffer, &p.msg_time);
+    if (retval) {
+      ServerError("stm_scan_point_nm failed");
+    }
+  // Simulator doesn't support XYZ mode at this time
+  //} else if (p.type == d_ScanToZ_type) {
+    //p.type = -1;
+    //retval = stm_scan_point_xyz_nm(p.buffer);
+    //if (retval) {
+      //ServerError("stm_scan_point_xyz_nm failed");
+    //}
+  } else if (p.type == d_ZagTo_type) {
+    p.type = -1;
+    retval = stm_sweep_point_nm(p.buffer);
+    if (retval) {
+      ServerError("stm_sweep_point_nm failed");
+    }
+  } else if (p.type == d_FeelTo_type) {
+    p.type = -1;
+    retval = afmFeelToPoint(p.buffer);
+    if (retval) {
+      ServerError("afmFeelToPoint failed");
+    }
+  } else {
+    ServerError("Unknown scan message type buffered");
+    retval = -1;
+  }
+  return retval;
+
+}
+
+
+
+
+
 // This function called by real Topo AFM, indirectly
 void nmm_Microscope_Simulator::
 helpShutdown()
@@ -3879,6 +4027,17 @@ void ServerError( char * txt )
 }
 
 
-/*****************************************************************
- * END OF FILE
- *****************************************************************/
+// static
+int nmm_Microscope_Simulator::RcvAnyMessage (void * userdata,
+                                             vrpn_HANDLERPARAM p) {
+  nmm_Microscope_Simulator * m = (nmm_Microscope_Simulator *) userdata;
+
+  if ((p.type == m->d_ScanTo_type) ||
+      (p.type == m->d_ZagTo_type) ||
+      (p.type == m->d_FeelTo_type)) {
+    return 0;
+  }
+
+  return m->executeBufferedScanMessage();
+}
+

@@ -255,6 +255,7 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
   double targetradius, tr2;
   double interval, in2;
   double sx, sy;
+  int step;
 
   switch (planeShape) {
 

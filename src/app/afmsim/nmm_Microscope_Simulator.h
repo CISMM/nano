@@ -1,10 +1,13 @@
 #ifndef NMM_MICROSCOPE_SIMULATOR_H
 #define NMM_MICROSCOPE_SIMULATOR_H
 
-#include <nmm_Microscope.h>
-#include <nmb_Types.h>
+#include <vrpn_RedundantTransmission.h>
+
 #include <BCGrid.h>
+#include <nmb_Types.h>
 #include <nmb_SharedDevice.h>
+
+#include <nmm_Microscope.h>
 
 #define NANOM_VERSION    7     // Version 7
 #define NANOM_REVISION   1     // Release 1
@@ -138,7 +141,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
   // MANIPULATORS
 
 
-//    virtual void mainloop (void);
+    virtual void mainloop (void);
 	// virtual from nmm_Microscope.
 	// A VRPN mainloop. This function should be called regularly
 	// 	by the application using an object of this class to
@@ -180,6 +183,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
     int spm_is_register_amp_enabled(void);
 
     int Send( long len, long msg_type, char * buf );
+    int RedundantSend (long len, long msg_type, char * buf, timeval * ts = NULL);
 
     void spm_store_current_driveamp(float damp);
     float spm_read_current_driveamp(void);
@@ -382,7 +386,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      int stm_set_rate_nmeters( const char *bufptr );
 
-     int stm_scan_point_nm( const char *bufptr );
+     int stm_scan_point_nm (const char * bufptr, timeval * reqTime = NULL);
 
      int spm_set_region_angle_gradual( const char *bufptr );
 
@@ -464,21 +468,23 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      float spm_get_z_value (int NUM_SAMPLES);
 
-     int report_point_set( float x, float y );
+     int report_point_set (float x, float y, timeval * reqTime = NULL);
 
      float spm_get_z_piezo_like_scan (int NUM_SAMPLES);
 
      float spm_get_z_piezo_nM( int NUM_SAMPLES );
 
-     int spm_report_point_datasets( long type, double x, double y,
-					float* data, int count );
+     int spm_report_point_datasets (long type, double x, double y,
+                                    float * data, int count,
+                                    timeval * reqTime = NULL);
 
      void spm_goto_xynm( float x, float y );
 
      int gather_data_and_report(long report_type, float the_desired_x,
 				float the_desired_y, unsigned int wait_time);
 
-     int goto_point_and_report_it(float the_desired_x, float the_desired_y);
+     int goto_point_and_report_it (float the_desired_x, float the_desired_y,
+                                   timeval * reqTime = NULL);
 
      void spm_enable_param_reporting(void);
 
@@ -505,6 +511,21 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 	 void helpTimer2();
 
 
+     int bufferScanMessage (vrpn_HANDLERPARAM p);
+     int executeBufferedScanMessage (void);
+
+     vrpn_bool d_doLatestScanTo;
+       ///< Quick hack - always TRUE, since we don't deal with
+       ///< EnableUpdatableQueue messages.
+     int d_saved_scan_to_point_buffer_len;
+     vrpn_HANDLERPARAM d_saved_scan_to_point_msg;
+
+
+     // TCH Dissertation July 2001
+
+     vrpn_RedundantTransmission * d_redundancy;
+     vrpn_RedundantController * d_rController;
+     vrpn_RedundantReceiver * d_rReceiver;
 
 
   private:
@@ -563,6 +584,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
      static int RcvTappingMode( void *_userdata, vrpn_HANDLERPARAM _p );
 	
 
+     static int RcvAnyMessage (void *, vrpn_HANDLERPARAM);
 
 };
 

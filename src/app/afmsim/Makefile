@@ -29,7 +29,7 @@ default: surface
 surface: $(OBJECT_DIR)/surface
 
 $(OBJECT_DIR)/surface:
-	$(MAKE) APP_NAME=surface.exe \
+	$(MAKE) APP_NAME=surface \
            MAKECMDGOALS="$(filter-out surface,$(MAKECMDGOALS))" \
            EXCLUDE_SRC="warrencntsim.C vec2d.C"
 
