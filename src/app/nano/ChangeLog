@@ -1,3 +1,9 @@
+2002-10-02 David Borland <borland@cs.unc.edu>
+
+        * import.C : removed a reference to URTexture
+
+        * microscape.C : same
+
 2002-10-01 Jameson Miller <millerj@cs.unc.edu>
        *microscape.c - added handler functions that copy the values
           of TCL variables into nmb_decoration whenever they are 

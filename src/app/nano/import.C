@@ -4,7 +4,6 @@
 
 #include <UTree.h>
 #include <URPolygon.h>
-#include <URTexture.h>
 #include <URSpider.h>
 #include <URWaveFront.h>
 #include <FileGenerator.h>

@@ -185,7 +185,6 @@ pid_t getpid();
 #endif
 
 UTree World;
-UTree Textures;
 
 
 /*********** IMPORT OBJECTS **************/
