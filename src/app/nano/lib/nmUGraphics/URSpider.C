@@ -29,7 +29,8 @@ void URSpider::SaveSpider(const char* filename) {
 				  << "\tLength\t" << spider_length[i] << endl
 				  << "\tWidth\t\t" << spider_width[i] << endl
 				  << "\tThickness\t" << spider_thick[i] << endl
-				  << "\tCurvature\t" << Q_RAD_TO_DEG(spider_curve[i]) << endl << endl;
+				  << "\tBegin Curvature\t" << Q_RAD_TO_DEG(spider_beg_curve[i]) << endl
+                  << "\tEnd Curvature\t" << Q_RAD_TO_DEG(spider_end_curve[i]) << endl << endl;
 	}
 
 	writefile.close();

@@ -1,3 +1,13 @@
+2002-01-20  David Borland <borland@cs.unc.edu>
+
+        * SpiderGenerator.C : changed the way the spider curve is computed.  
+        Now, we have the beginning and ending curvature over the leg, as 
+        opposed to a constant curvature over the leg.
+
+        * URSpider.h : changes to reflect the above change.
+
+        * URSpider.C : same
+
 2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URProjectiveTexture.[Ch] (setImage): uncommented check of image pointer
