@@ -20,7 +20,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <vector>
 using namespace std;
 
 // and reset the warnings

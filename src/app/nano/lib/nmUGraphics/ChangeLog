@@ -1,3 +1,7 @@
+2003-08-07  Aron Helser  <helser@cs.unc.edu>
+
+	* URender.h: Fixed compile warnings.
+
 2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URProjectiveTexture.hC - added wrapMode attribute
