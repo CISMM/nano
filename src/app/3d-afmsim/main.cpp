@@ -118,8 +118,9 @@ double cone_sphere_list_radius;
 // third arg is the default
 
 // all units in nm
-SphereTip sp(20.);
-InvConeSphereTip ics(20.,1000.,DEG_TO_RAD*30.);
+// XXX Edit the following lines to adjust the radius and tilt of the tip
+SphereTip sp(5.);
+InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*30.);
 Tip tip(sp,ics,INV_CONE_SPHERE_TIP);
 //Tip tip(sp,ics,SPHERE_TIP);
 

@@ -93,8 +93,12 @@ void make_sphere() {
   glEndList();
 }
 
-GLenum key_down(int key, GLenum state) {
-
+#ifdef _WIN32
+extern "C" void key_down(unsigned char key, int, int)
+#else
+GLenum key_down(int key, GLenum state)
+#endif
+{
         if ((key == 'q') || (key == 'Q'))
 	  exit(0);
 }

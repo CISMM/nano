@@ -22,7 +22,9 @@
 #ifndef _VEC3D_H_
 #define _VEC3D_H_
 
+#ifndef	_WIN32
 typedef int bool;
+#endif
 #define true 1
 #define false 0
 
