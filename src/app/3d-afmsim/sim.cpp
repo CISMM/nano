@@ -185,8 +185,8 @@ int main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-unca_nano")) {
 			unca_minx = 0;
 			unca_miny = 0;
-			unca_maxx = 1000;
-			unca_maxy = 1000;
+			unca_maxx = 5000;
+			unca_maxy = 5000;
 		}
     }
 
