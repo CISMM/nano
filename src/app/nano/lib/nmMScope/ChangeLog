@@ -1,5 +1,7 @@
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
+	* Makefile: Generated files need to be created before .depend
+
 	* .cvsignore: new. Ignore generated files. 
 
 	* nmm_AFM_Control.vrpndef: new msg definition file
