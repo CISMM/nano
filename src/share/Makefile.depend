@@ -5,35 +5,37 @@ endif
 
 DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
 
-ifeq ($(DEPEND_EXISTS),true)
-	ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
-	   DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)
-	else
-	   -include $(MAKEFILE_DEPEND)
+ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
+	DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)
+else
+	ifeq ($(DEPEND_EXISTS),true)
+		include $(MAKEFILE_DEPEND)
+		DEPEND_INCLUDED := true
 	endif
 endif
 ##############################################################################
 #
-# Expand the uses libs stuff
+# Expand the uses libs stuff if the depend file has not been made yet
+# The depend file sets the following variables itself.
 #
 
-ifneq ($(DEPEND_EXISTS),true)
-   ifdef USES_LIBS
-      ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
-      SEARCH_LIBS := $(filter-out $(ALT_LIBS),$(USES_LIBS))
-      ifdef VC
-         USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) pc_win32_MTd$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
-      else
-         USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
-      endif
-      USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
-      USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
-      USES_LIBS_LIB := $(addprefix -l,$(USES_LIBS))
-   endif
-
-   ifdef NAUGHTY
-      USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
-   endif
+ifneq ($(DEPEND_INCLUDED),true)
+	ifdef USES_LIBS
+	 	ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
+		SEARCH_LIBS := $(filter-out $(ALT_LIBS),$(USES_LIBS))
+		ifdef VC
+			USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) pc_win32_MTd$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+		else
+			USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+		endif
+		USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
+		USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
+		USES_LIBS_LIB := $(addprefix -l,$(USES_LIBS))
+	endif
+	
+	ifdef NAUGHTY
+		USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
+	endif
 endif
 
 ##############################################################################
