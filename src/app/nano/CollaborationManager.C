@@ -37,7 +37,8 @@ static
 vrpn_Connection * getPeer (const char * hostname, int port,
                            const char * loggingPath, int timestamp,
                            vrpn_bool loggingInterface,
-                           const char * NIC_IP) {
+                           const char * NIC_IP,
+                           int peerVerbosity) {
   char buf [256];
   char sfbuf [1024];
 
@@ -49,9 +50,10 @@ vrpn_Connection * getPeer (const char * hostname, int port,
                 buf, NIC_IP, sfbuf);
 
   // TCH 17 Feb 01 only logs incoming messages
+  // TCH DISSN Jan 2002 turns on verbose 1
   return vrpn_get_connection_by_name (buf,
              loggingInterface ? sfbuf : NULL, NULL,
-             NULL, NULL, 1.0, 3, NIC_IP);
+             NULL, NULL, 1.0, 3, NIC_IP, peerVerbosity);
 }
 
 static
@@ -71,7 +73,8 @@ static
 vrpn_Connection * getServer (int port,
                              const char * loggingPath, int timestamp,
                              vrpn_bool loggingInterface,
-                             const char * NIC_IP) {
+                             const char * NIC_IP,
+                             int serverVerbosity) {
   char sfbuf [1024];
 
   sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp); 
@@ -81,10 +84,11 @@ vrpn_Connection * getServer (int port,
                 port, NIC_IP);
 
   // TCH 17 Feb 01 only logs incoming messages
+  // TCH DISSN Jan 2002 turns on verbose 1
   return new vrpn_Synchronized_Connection
         (port,
          loggingInterface ? sfbuf : NULL, NULL,
-         NIC_IP);
+         NIC_IP, vrpn_Connection::allocateEndpoint, serverVerbosity);
 }
 
 
@@ -306,7 +310,8 @@ void CollaborationManager::setTimer (nmb_TimerList * timer) {
 void CollaborationManager::initialize
      (vrpn_Tracker_Remote * handTracker,
       void * syncChangeData,
-      void (* syncChangeCB) (void *, vrpn_bool)) {
+      void (* syncChangeCB) (void *, vrpn_bool),
+      int serverVerbosity) {
   char sfbuf [1024];
   timeval now;
   vrpn_int32 timerSN;
@@ -326,7 +331,7 @@ void CollaborationManager::initialize
     sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
 
     d_peerServer = getServer (d_serverPort, d_logPath, d_logTime, d_log,
-                              d_NIC_IP);
+                              d_NIC_IP, serverVerbosity);
 
   }
 
@@ -402,7 +407,8 @@ void CollaborationManager::setPeerName
                       void * handChangeData,
                       void (* handChangeCB) (void *, const vrpn_TRACKERCB),
                       void * modeChangeData,
-                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB)) {
+                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB),
+                      int peerVerbosity) {
   char peerHandName [1024];
   char peerModeName [1024];
   char sfbuf [1024];
@@ -412,6 +418,7 @@ void CollaborationManager::setPeerName
   vrpn_int32 newConnection_type;
   vrpn_int32 timerSNreply;
   vrpn_int32 firstC_type;
+  int i;
 
   collabVerbose(1, "CollaborationManager::setPeerName:  Peer named %s.\n",
                 newName);
@@ -438,7 +445,7 @@ void CollaborationManager::setPeerName
     d_peerRemote = getPeerReplay(d_logPath, d_logTime);
   } else {
     d_peerRemote = getPeer(newName, d_peerPort, d_logPath, d_logTime,
-                           d_log, d_NIC_IP);
+                           d_log, d_NIC_IP, peerVerbosity);
   }
 
   if (d_peerRemote->connected()) {
@@ -493,6 +500,25 @@ void CollaborationManager::setPeerName
     sprintf(buf, "%s", newName);
 
     gethostname(hnbuf, 256);
+
+    // TCH Dissertation Jan 2002
+    // Need to force things to lower case
+
+  for (i = 0; i < strlen(buf); i++) {
+     buf[i] = tolower(buf[i]);
+  }
+  for (i = 0; i < strlen(hnbuf); i++) {
+     hnbuf[i] = tolower(hnbuf[i]);
+  }
+
+
+fprintf(stderr, "CollaborationManager::setPeerName:  I am \"%s\", "
+"you are \"%s\".\n", hnbuf, buf);
+
+// HACK late sunday night reversed sign of both comparisons XXX
+// for latencymeter test with Dorian when other things broke.
+// currently NOT IN EFFECT
+
     if (strcmp(hnbuf, buf) == 0) {
       // a special case: testing two collaborators running on the same machine
       // here we perpetuate this hack by using the port number to 
@@ -508,6 +534,9 @@ void CollaborationManager::setPeerName
     } else {
       shouldSynchronize = VRPN_FALSE;
     }
+
+fprintf(stderr, "CollaborationManager::setPeerName:  shouldSynchronize %s.\n",
+shouldSynchronize ? "true" : "false");
 
     if (shouldSynchronize) {
       d_uiController->addPeer(d_peerServer, shouldSynchronize);

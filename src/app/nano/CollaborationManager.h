@@ -108,7 +108,8 @@ class CollaborationManager {
 
     void initialize (vrpn_Tracker_Remote * handTracker,
                      void * syncChangeData,
-                     void (* syncChangeCH) (void *, vrpn_bool));
+                     void (* syncChangeCH) (void *, vrpn_bool),
+                     int serverVerbosity);
       ///< Open a port to listen on (or the replay file), log the interface,
       ///< and then open handServer and modeServer.
 
@@ -121,7 +122,8 @@ class CollaborationManager {
                       void * handChangeData,
                       void (* handChangeCB) (void *, const vrpn_TRACKERCB),
                       void * modeChangeData,
-                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB));
+                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB),
+                      int peerVerbosity);
       ///< Connect to the named peer, calling the given callbacks in case
       ///< of change of peer's hand position or user mode; naming
       ///< must be by DNS name to guarantee correct collaboration.

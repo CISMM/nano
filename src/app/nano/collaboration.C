@@ -17,6 +17,8 @@
 /// These are used for synchronizing with a remote user's streamfile playback.
 static vrpn_bool isSynchronized = VRPN_FALSE;
 
+extern int g_peerVerbosity;
+
 /**
  * Radio button controlling whether we're publically or privately synched.
  * Currently assumes that only the most recently added peer is
@@ -368,7 +370,8 @@ void handle_collab_machine_name_change( const char * new_value,
     cm->setPeerName( new_value,
 		     (void *) &V_TRACKER_FROM_HAND_SENSOR,
 		     handle_collab_sensor2tracker_change,
-		     NULL, handle_collab_mode_change);
+		     NULL, handle_collab_mode_change,
+                     g_peerVerbosity);
   }
 }
 

@@ -56,12 +56,17 @@ extern "C" {
 pid_t getpid();
 }
 
-
 // there is also a different getpid defined in Process.h in the VC-6.0 include
 // directory.  I think it has a different return type.
 
 #endif
 // ############
+
+
+// TCH DISSN HACK Jan 2002
+int g_peerVerbosity = 0;
+int g_serverVerbosity = 0;
+
 
 // base
 #include <BCPlane.h>
@@ -5904,6 +5909,14 @@ void ParseArgs (int argc, char ** argv,
         istate->laFaN = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         istate->laFaD = atoi(argv[i]);
+      } else if (!strcmp(argv[i], "-cosv")) {
+        // TCH Dissertation HACK Jan 2002
+        if (++i >= argc) Usage(argv[0]);
+        g_serverVerbosity = atoi(argv[i]);
+      } else if (!strcmp(argv[i], "-copv")) {
+        // TCH Dissertation HACK Jan 2002
+        if (++i >= argc) Usage(argv[0]);
+        g_peerVerbosity = atoi(argv[i]);
       } else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
@@ -6061,6 +6074,8 @@ void Usage(char* s)
   fprintf(stderr, "       -qm t d:  queue monitoring (threshold, decay)\n");
   fprintf(stderr, "       -wpa:  warped plane approximation FFB\n");
   fprintf(stderr, "       -fa n d:  feelahead FFB, nxn samples d nm apart\n");
+  fprintf(stderr, "  -copv n: collaboration peer verbosity [0-3]\n");
+  fprintf(stderr, "  -cosv n: collaboration server verbosity [0-3]\n");
   exit(-1);
 }
 
@@ -7331,7 +7346,8 @@ int main (int argc, char* argv[])
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setTimer(&collaborationTimer);
   collaborationManager->initialize(vrpnHandTracker, NULL,
-                                   handle_peer_sync_change);
+                                   handle_peer_sync_change,
+                                   g_serverVerbosity);
 
   setupSynchronization(collaborationManager, dataset, microscope);
 
@@ -7814,6 +7830,30 @@ VERBOSE(1, "Entering main loop");
         dialBox->mainloop();
       }
 
+
+    // Begin tcl-tk move
+    // TCH Dissertation Jan 2002
+    
+#if 0
+    /* Run the Tk control panel checker if we are using them */
+    if (tkenable) {
+	VERBOSE(4, "  Handling Tk control panels");
+	poll_Tk_control_panels();
+    }
+
+
+
+    /* Run the Tk event handler if we are using Tk in any of the code */
+    if( tkenable || (interp != NULL) ) {
+	VERBOSE(4, "  Handling Tk events");
+	while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
+    }
+#endif // 0
+
+
+    // End tcl-tk move
+    // TCH Dissertation Jan 2002
+
       if (collaborationManager) {
 
         // Tell the collaborationManager what the current user mode is;
@@ -7986,18 +8026,21 @@ VERBOSE(1, "Entering main loop");
        robotControl->mainloop();
   #endif
 
+
+// Source of reordering
+// TCH Dissertation Jan 2002
+
+#if 1
     /* Run the Tk control panel checker if we are using them */
     if (tkenable) {
 	VERBOSE(4, "  Handling Tk control panels");
 	poll_Tk_control_panels();
     }
-
+#endif
 
     // If we've rolled over a second, update the RTT measurements
     // and send out on our RTT server.
-
     update_rtt();
-
 
     // Have the active sets update the microscape data sets
     VERBOSE(4, "  Updating scan and point sets");
@@ -8008,11 +8051,17 @@ VERBOSE(1, "Entering main loop");
       // limited to only 2 channels by the Topometrix dsp code and I
       // haven't written the code to add the second channel
     }
+
+#if 1
     /* Run the Tk event handler if we are using Tk in any of the code */
     if( tkenable || (interp != NULL) ) {
 	VERBOSE(4, "  Handling Tk events");
 	while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
     }
+#endif
+
+// End source of reordering
+// TCH Dissertation Jan 2002
 
     if (aligner) {
        aligner->mainloop();
