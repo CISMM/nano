@@ -1,3 +1,8 @@
+2002-02-12  Aron Helser  <helser@cs.unc.edu>
+
+	* filemenu.tcl (save_plane_data): Correct file extension for SPIP
+	files, .bcr
+
 2002-02-11  Aron Helser  <helser@cs.unc.edu>
 
 	* modify.tcl: Fix annoying resize of modify full dialog, remove

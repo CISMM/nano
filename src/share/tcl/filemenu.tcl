@@ -303,7 +303,7 @@ proc save_plane_data {} {
         { "PPM Image" ".ppm" }
         { "Other Image" ".jpg" }
         { "Text(MathCAD)" ".txt" }
-        { "SPIP" ".spip" }
+        { "SPIP" ".bcr" }
         { "UNCA Image" ".ima" } }
 
         # Set the file extension correctly

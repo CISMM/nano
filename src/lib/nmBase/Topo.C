@@ -1282,8 +1282,8 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
                  */
 
                 plane->setScale(1.0);
-                Zscale = fDACtoWorld;
-                Zoffset = fDACtoWorldZero;
+                plane->tm_scale = Zscale = fDACtoWorld;
+                plane->tm_offset = Zoffset = fDACtoWorldZero;
 	/* Printf duplicates info printed from read of header. 
         	printf("  Zscale=%f Zoffset=%f\n",Zscale,Zoffset);
 	*/
@@ -1385,8 +1385,11 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         }
 
         // Get scale and offset from the plane, not from Topo header
+        // Store in Topo header
         Zscale = I->valueScaleDAC();
         Zoffset = I->valueOffsetDAC();
+        fDACtoWorld = I->valueScaleDAC();
+        fDACtoWorldZero = I->valueOffsetDAC();
 //          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
 //                  (long)iXYUnitType);
 //          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
@@ -1411,9 +1414,9 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
                 int y = (iRows - 1) - col;
                 griddata[(col)*iRows+ row] =
                   (vrpn_uint16)((
-                         ((float)I->getValue(row,y)/(float)Zunits2nm)
-                                 -(float)Zoffset
-                                 )/(float)Zscale
+                         (I->getValue(row,y)/Zunits2nm)
+                                 -Zoffset
+                                 )/Zscale
                                 );
             }
         }
@@ -1515,8 +1518,9 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *plane){
 	}
 
         // Get scale and offset from the plane, not from Topo header
-        Zscale = plane->tm_scale;
-        Zoffset = plane->tm_offset;
+        // Store in Topo header
+        fDACtoWorld = Zscale = plane->tm_scale;
+        fDACtoWorldZero =Zoffset = plane->tm_offset;
 
 //          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
 //                  (long)iXYUnitType);

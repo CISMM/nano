@@ -8,6 +8,7 @@
 #include <stdlib.h> // for exit()
 #include <malloc.h> // for calloc() and free()
 #include <errno.h> // for perror()
+#include <limits.h>
 #ifdef	_WIN32
 #include <io.h>
 #ifdef __CYGWIN__
@@ -1327,28 +1328,36 @@ int BCPlane::writeSPIPFile(FILE *file)
    // Makes image appear in same orientation as SPIP/Thermo
     for (x = numX()-1; x >= 0; x--) {
       for(y = 0; y < numY(); y++ ) {
-           value=(short) ( (( (this->value(y, x) - minValue())*scale)-1 ) * 32767);
+          // scale into -1 to 1 range, then to full range of short. 
+           value=(short) ( (( (this->value(y, x) - minValue())*scale)-1 ) * SHRT_MAX);
 	   if( fwrite(&value, 2, 1,file)!=1) {
               fprintf(stderr,"writeSPIPFile failed\n");
            }
       }
     }
+    fclose(file);
     return 0;
 
 }  // writeSPIPFile
 
+#define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
 
-int BCPlane::readSPIPFile(FILE *file, double max_value) 
-{  short value;  // short is two bytes
-   double real_value, scale; 
-   int x, y;
-    
+int BCPlane::readSPIPFile(FILE *file, double scale, int intel_mode) 
+{
+    short value;  // short is two bytes
+    double real_value; 
+    int x, y;
+    char  *b1;
+    char  *b0;
+    // Endian_tst is true if we are on Intel
+    int	Endian_int = 1;
+    char *Endian_tst = ( char * )(&Endian_int);
+
     // skip over 2 kbyte header
    if( fseek(file,2048,0) ) {
      fprintf(stderr," fseek in readSPIPFile failed.\n");
      return -1;
     }
-   scale =   max_value / 2.0;
 //fprintf(stderr," numx= %d, numy= %d\n", numX(),numY()); 
 //fprintf(stderr," max_value= %e,scale = %e\n",max_value,scale ); 
 
@@ -1361,13 +1370,20 @@ int BCPlane::readSPIPFile(FILE *file, double max_value)
                 fprintf(stderr,"   x: %d  y: %d\n",x,y);
                 return -1;
             }
-            real_value= (value/32767.0 + 1 ) * scale; 
+            b1 = (char *) &value;
+            b0 = b1 + 1;
+            if ((intel_mode && ! *Endian_tst) || 
+                (!intel_mode && *Endian_tst) ) {
+                SWAP(*b1, *b0);
+            }
+            real_value= value * scale; 
             // mirror xy
             setValue(y,x, real_value);
         }
    }
-   setMinAttainableValue(0);
-   setMaxAttainableValue(max_value);
+   setMinAttainableValue(minValue());
+   setMaxAttainableValue(maxValue());
+   fclose(file);
    return 0;
 }
 

@@ -174,7 +174,7 @@ class BCPlane
     int readBinaryFile(FILE* file);
     int writeBinaryFile(FILE* file);
 
-    int readSPIPFile(FILE * file, double max_value);
+    int readSPIPFile(FILE * file, double scale, int intel_mode);
     int writeSPIPFile(FILE *file);
 
     int readUNCAFile(FILE* file);

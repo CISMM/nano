@@ -12,6 +12,7 @@
 //#include <malloc.h> // for calloc() and free()
 #include <errno.h> // for perror()
 #include <time.h> // for time() and ctime()
+#include <limits.h>
 #include <math.h> // for exp()
 #ifndef _WIN32
 #include <unistd.h>
@@ -233,12 +234,13 @@ BCGrid::loadFile(const char* file_name, TopoFile &topoFile)
             return NULL;
         }
 	if (!(grid->empty())) {
+            // We allow grids with the same resolution, and with the
+            // same size, even if they aren't in the same place. 
+            // Helps with saving and immediately reloading Thermo file. 
             if ( (grid->_num_x != _num_x) ||
                  (grid->_num_y != _num_y) ||
-                 (grid->_min_x != _min_x) ||
-                 (grid->_max_x != _max_x) ||
-                 (grid->_min_y != _min_y) ||
-                 (grid->_max_y != _max_y) ) {
+                 (grid->_max_x - grid->_min_x != _max_x - _min_x) ||
+                 (grid->_max_y - grid->_min_y != _max_y - _min_y) ) {
                 // Not an error any more - expected, return this grid.  
 //  		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size or region mismatch"
 //  			" in file \"%s\", ignoring any remaining files\n",
@@ -724,123 +726,74 @@ BCGrid::writeUNCAFile(FILE* file, BCPlane* plane)
 } // writeUNCAFile
 
 
-int check_format(char *token)
-{ int n;
-  int i = 0;
-  
-  n=strlen(token);
-
-/*Skip all the blanks */
-
-  while(token[i]==' ' || token[i]=='\t')
-     i++;
-
-/*Check if the length are contained with all the digits */
-
-  while(isdigit(token[i])!=0 && i<n)
-     i++;
-
-  while(token[i]==' ' || token[i]=='\t')
-     i++;
- 
-  if(i!=n)
-    return -1;
-  
-  return 0;
-
-}
-
-
 int BCGrid::readSPIPFile(FILE* file, const char *name)
 {
-  // float current,bias,scanspeed;
-  //int intelmode=0;
-  //  char starttime[60];
-  // current=bias=scanspeed=0.0;
-  char *token;
-  char buffer[80];
-  double  max_value = 1; 
+    // float current,bias,scanspeed;
+    int intelmode=0;
+    //  char starttime[60];
+    // current=bias=scanspeed=0.0;
+    int ngot = 1;
+    char *token;
+    char buffer[80];
+    double  scale = 1; 
+    
+    //rewind(file);  //we read eight bytes for magic number
+    // just go ahead and read the rest of the line. 
+    fgets(buffer, 70, file);  // first line specifies fileformat 
   
-  rewind(file);  //we read eight bytes for magic number
-  
-  fgets(buffer, 70, file);  // first line specifies fileformat 
- 
-  while( fgets(buffer, 70,file)!= NULL) {
-     if ('%' != *buffer) {   // it is comment, ignore this line
+    while( fgets(buffer, 70,file)!= NULL) {
+        // If it is comment, ignore this line
+        if ('%' == *buffer || '#' == *buffer) continue;
         token = strtok(buffer,"=");
-        /*if(token == NULL) {
-	     fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-	     return -1;
-	} */
         if(token == NULL ) 
-           break;
+            break;
 
-	if(strcmp(token,"xpixels ")== 0) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else  _num_x= atoi(token);
-	}
-        else if(strcmp(token,"ypixels ")==0 ) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else _num_y= atoi(token);
-	}	   
-	else if( strcmp(token,"xoffset ") == 0) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else _min_x = atof(token);
-	} 
-	else if (strcmp(token,"yoffset ") == 0) {
-	  token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else _min_y= atof(token);
-	} 
-        else if( strcmp(token,"xlength ") == 0) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else _max_x = atof(token);
-	} 
-	else if( strcmp(token,"ylength ") == 0) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else _max_y = atof(token);
-	}
-	else if( strcmp(token,"bit2nm ") == 0) {
-	   token = strtok(NULL,"");
-           if( !check_format(token)) {
-	        fprintf(stderr,"ReadSPIPFile:Unknown file format\n");
-		return -1;
-	   }
-	   else max_value = atof(token) * 32767.0;
+        if(strcmp(token,"xpixels ")== 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%hd", &_num_x);
         }
+        else if(strcmp(token,"ypixels ")==0 ) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%hd", &_num_y);
+        }	   
+        else if( strcmp(token,"xlength ") == 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%lg", &_max_x);
+        } 
+        else if( strcmp(token,"ylength ") == 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%lg", &_max_y);
+        }
+        else if(strcmp(token,"intelmode ")==0 ) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%d", &intelmode);
+        }	   
+        else if( strcmp(token,"bit2nm ") == 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%lg", &scale);
+        }
+        else if( strcmp(token,"xoffset ") == 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%lg", &_min_x);
+        } 
+        else if (strcmp(token,"yoffset ") == 0) {
+            token = strtok(NULL,"");
+            ngot = sscanf(token, "%lg", &_min_y);
+        } 
+        if (ngot <=0) {
+            fprintf(stderr,"ReadSPIPFile:Error reading numeric parameter.\n");
+            return -1;
+        }       
     }
-  }
+
 
     _max_x= _max_x + _min_x;
     _max_y= _max_y + _min_y;
-
+    
     BCPlane* plane = addNewPlane(name, "nm", TIMED);
 
-    return (plane->readSPIPFile(file,max_value));
-
+    return (plane->readSPIPFile(file,scale, intelmode));
+    
 }
 
 
@@ -881,7 +834,7 @@ int BCGrid::writeSPIPFile(FILE* file, BCPlane* plane)
     return -1;
   }
   if(fprintf(file,"bit2nm = %f\n",
-             (plane->maxValue()-plane->minValue())/32767)==EOF) {
+             (plane->maxValue()-plane->minValue())/USHRT_MAX)==EOF) {
     perror("BCGrid::writeSPIPFile: Could not write bit2nm\n");
     return -1;
   }

@@ -323,6 +323,12 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual BCString *unitsValue();
 	virtual BCString *unitsX();
 	virtual BCString *unitsY();
+        /// Updates correctly if plane receives new thermo header
+        /// during live or streamfile replay. 
+        virtual double valueOffsetDAC() {return plane->tm_offset;}
+        /// Updates correctly if plane receives new thermo header
+        /// during live or streamfile replay. 
+        virtual double valueScaleDAC() {return plane->tm_scale;}
         virtual void setTopoFileInfo(TopoFile &tf);
         virtual void getTopoFileInfo(TopoFile &tf);
         virtual void *pixelData();
