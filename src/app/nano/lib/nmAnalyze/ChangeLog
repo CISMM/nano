@@ -1,3 +1,20 @@
+2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C : filled in stub functions
+	sourcePlaneChangeCallback and _handleSourcePlaneChange
+	in the nma_ShapeIdentifiedPlane class. in the second
+	function, if the nma_ShapeIdentifiedPlane object was
+	created by a nmm_SimulatedMicroscope object and the
+	name of that object is the eroder's name, source plane
+	changes trigger resending of source plane (scan) data
+	to the eroder for re-erosion, which then results in
+	an update to the nma_ShapeIdentifiedPlane object when
+	the eroder sends back the new results.  some changes
+	to constructor related to new data member:
+	nmm_SimulatedMicroscope_Remote* remoteEroderConnObj,
+	constructor now has additional optional argument of this
+	type	
+
 2002-04-05 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nma_ShapeAnalyze.C : changed display code in blur_data_up

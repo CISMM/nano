@@ -12,6 +12,7 @@
 class nmb_PlaneSelection;
 class CNT_IA;
 class nma_ShapeIdentifiedPlane;
+class nmm_SimulatedMicroscope_Remote;
 
 #include "nmb_CalculatedPlane.h"
 #include <vrpn_Connection.h>
@@ -79,9 +80,10 @@ class nma_ShapeIdentifiedPlane
 {
 public:
 	friend class nmb_CalculatedPlane;
+	friend class nmm_SimulatedMicroscope_Remote;
 
     nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, 
-				 const char* outputPlaneName, double * cntMask);
+				 const char* outputPlaneName, double * cntMask, void * creator = NULL);
 	nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, 
 				 const char* outputPlaneName);
     ~nma_ShapeIdentifiedPlane();
@@ -108,17 +110,13 @@ public:
 				  vrpn_int32 /*synchCalcdPlaneMessageType */ )const {}
 
 protected:
-	// create a new plane according to the data from vrpn
-	static nmb_CalculatedPlane*
-	  _handle_PlaneSynch( vrpn_HANDLERPARAM /* p */, 
-			      nmb_Dataset* /* dataset */ )
-	  throw( nmb_CalculatedPlaneCreationException )
-	  {return NULL;}
 
-	// Update the calculated plane for changes in the source plane
-	static void sourcePlaneChangeCallback( BCPlane* /* plane */, 
-					       int /* x */, int /* y */,
-					       void* /* userdata */ ){ }
+	// Check for changes in the source plane
+	static void sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
+				 void* userdata );
+
+	// non-static member function to handle changes in the source plane
+	void _handleSourcePlaneChange( int x, int y );
 
 	//used by UpdateDataArray; blurs current dataline up or down to fit required rowlength 
 	//(filling in points in between if d_rowlength is larger, and blur between current row 
@@ -161,6 +159,8 @@ private:
 									//values for rownumber placeholder_y
 	int h_sim_y;					//upper rownumber in sim y-space to interpolate between
 	int nano_y;						//y value in the source plane array at which the new point is being inserted
+	nmm_SimulatedMicroscope_Remote* remoteEroderConnObj;	//pointer to simulated microscope object that created
+															//this shape identified plane object, if there is one
 
 };
 

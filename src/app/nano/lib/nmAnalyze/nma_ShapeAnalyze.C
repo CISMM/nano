@@ -8,6 +8,7 @@
 #include "nma_ShapeAnalyze.h"
 #include "cnt_ia.h"
 #include <nmb_Dataset.h>
+#include <nmm_SimulatedMicroscope_Remote.h>
 
 int nma_ShapeAnalyze::nma_ShapeAnalyzeCounter = 0;
 
@@ -189,9 +190,10 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
 //constructor for when data is sent across initially
 nma_ShapeIdentifiedPlane::
-nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName, double * dataArray)
-  : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
-  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(dataArray)
+nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName, 
+						 double * dataArray,void * creator) : nmb_CalculatedPlane(outputPlaneName, dataset), 
+						 d_sourcePlane(sourcePlane), d_dataset(dataset), d_outputPlaneName(outputPlaneName), 
+						 d_dataArray(dataArray)
 {
   d_rowlength = d_sourcePlane->GetGrid()->numX();
   d_columnheight = d_sourcePlane->GetGrid()->numY();
@@ -212,11 +214,18 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   nano_y = 0;
 
   d_array_size = create_ShapeIdentifiedPlane();
+
+  if(creator != NULL){
+	  remoteEroderConnObj = (nmm_SimulatedMicroscope_Remote*)creator;
+  }
+  else{
+	  remoteEroderConnObj = NULL;
+  }
 }
 
 //'default' constructor for when no data sent across initially
 nma_ShapeIdentifiedPlane::
-nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName)
+nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName) 
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
   d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(NULL)
 {
@@ -238,11 +247,14 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   //and want to have 0 and 1 for first row processed (y=0 from simulator)
 
   nano_y = 0;
+
+  d_sourcePlane->add_callback(sourcePlaneChangeCallback, this);
+
 }
 
 nma_ShapeIdentifiedPlane::
 ~nma_ShapeIdentifiedPlane(){
-  
+	  
 }
 
 
@@ -266,6 +278,55 @@ dependsOnPlane( const char* planeName )
   else
     return false;
 }
+
+
+// Check changes in the source plane
+/*static*/
+void nma_ShapeIdentifiedPlane::
+sourcePlaneChangeCallback(BCPlane* plane, int x, int y,void* userdata){
+  nma_ShapeIdentifiedPlane* me = (nma_ShapeIdentifiedPlane*) userdata;
+  if(plane != me->d_sourcePlane) 
+    {
+      cerr << "Internal Error:  nma_ShapeIdentifiedPlane::sourcePlaneChangeCallback "
+	       << "called with inconsistent nma_ShapeIdentifiedPlane and source plane." 
+	       << endl;
+      return;
+    }
+  me->_handleSourcePlaneChange(x, y);
+}
+
+// non-static member function to handle changes in the source plane
+void nma_ShapeIdentifiedPlane::
+_handleSourcePlaneChange(int x, int y){	
+	float * rowptr = d_sourcePlane->rowbeginning(y);
+	//scan data sent if there is a remoteEroderConnObj is from d_sourcePlane, which is
+	//the height plane at the time of creation of the ShapeIdentifiedPlane object
+	//for the case of the remoteEroderConnObj creating the ShapeIdentifiedPlane object,
+	//d_sourcePlane is the height plane when the remoteEroderConnObj is created--
+	//when the tcl boxes are filled in for its creation
+
+	/*for(int _y = 0; _y <= d_columnheight - 1; _y++) {
+		for( int _x = 0; _x <= d_rowlength - 1; _x++){			 
+			int index = _y*d_rowlength + _x;
+			double val = d_dataArray[index];
+			calculatedPlane->setValue(_x,_y,val);
+			d_dataset->range_of_change.AddPoint(_x,_y);			
+		}
+	}*/
+	if(remoteEroderConnObj != NULL){		
+		if(remoteEroderConnObj->deviceNameRcv){
+			if(strcmp(remoteEroderConnObj->server_name,"Eroder")==0){
+				remoteEroderConnObj->encode_and_sendScanData(rowptr, y, d_rowlength);
+			}
+			if(y == d_sourcePlane->numY()-1){
+				//cout << remoteEroderConnObj->server_name << endl;
+				//cout << d_sourcePlane;
+			}
+		}
+	}
+	
+}
+
 
 //updates d_dataArray when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
@@ -445,7 +506,7 @@ create_ShapeIdentifiedPlane()
 {
   char uniqueOutputPlaneName[50];
   nma_ShapeAnalyze::nma_ShapeAnalyzeCounter++;
-  sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyze::nma_ShapeAnalyzeCounter, d_outputPlaneName);
+  sprintf(uniqueOutputPlaneName, "%s%d", d_outputPlaneName,nma_ShapeAnalyze::nma_ShapeAnalyzeCounter);
   //allows files to be named different things so you can make more than one shape-identified file
   //per run of nano
   
