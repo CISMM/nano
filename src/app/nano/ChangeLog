@@ -1,3 +1,9 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* interaction.c (doFeelLive): added call to microscope->finishFreehand()
+	which I plan to implement later (currently it doesn't do anything)
+    * nm_Tip.C : fixed how z values for tip are acquired
+   
 2002-10-08 Jameson Miller <millerj@cs.unc.edu>
 	* microscape.c : the -d file:filename command line 
 	option was using wrong variable to get filename. Now

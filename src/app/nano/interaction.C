@@ -3462,7 +3462,10 @@ int doFeelLive (int whichUser, int userEvent)
           }
         }
       }
-
+	  // this needs to be implemented along with an acknowledgement message
+	  // so we know when freehand positioning is done for 
+	  // some other part of the program that might want to know that
+	  microscope->FinishFreehand();
       /* Start image mode (to make the relaxation compensation code work
        * as it should, and to turn the background the right color in case
        * we don't scan more, and to stop points from coming into the list

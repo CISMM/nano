@@ -2,6 +2,7 @@
 #include <GL/glut_UNC.h>
 #include <math.h>
 #include "v.h"
+#include "error_display.h"
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -107,7 +108,14 @@ void nm_TipDisplayControls::handleSendFiducialRequested (vrpn_int32 newval,
 // non-static
 int nm_TipDisplayControls::pointDataHandler(const Point_results *pr)
 {
-  d_tipModel.setPosition(pr->x(), pr->y(), pr->z());
+  Point_value *heightData = pr->getValueByPlaneName(
+	  d_AFM->Data()->heightPlaneName->string());
+  if (!heightData) {
+	display_error_dialog("Missing height data in point channels");
+	return -1;
+  }
+  double z = heightData->value();
+  d_tipModel.setPosition(pr->x(), pr->y(), z);
   return 0;
 }
 
@@ -147,7 +155,7 @@ void nm_TipDisplayControls::sendFiducial()
 {
   double minX, maxX, minY, maxY;
   double scanWidthX_nm = 1.0, scanWidthY_nm = 1.0;
-  if (d_AFM) {
+  if (d_AFM && d_AFM->Data() && d_AFM->Data()->inputGrid) {
 	minX = d_AFM->Data()->inputGrid->minX();
 	maxX = d_AFM->Data()->inputGrid->maxX();
 	minY = d_AFM->Data()->inputGrid->minY();
