@@ -1,9 +1,7 @@
 #include "patternEditor.h"
 #include "GL/gl.h"
 
-PatternEditor::PatternEditor():
-  d_lineWidth_nm("line_width_nm", 0),
-  d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 0)
+PatternEditor::PatternEditor()
 {
    d_viewer = ImageViewer::getImageViewer();
    char *display_name = (char *)getenv("DISPLAY");
@@ -35,8 +33,7 @@ PatternEditor::PatternEditor():
    d_mainWinMaxX_nm = 1;
    d_mainWinMaxY_nm = 1;
    
-   d_settingRegion = VRPN_FALSE;
-   d_settingTranslation = VRPN_FALSE;
+   d_userMode = IDLE;
 
    d_navDragStartX_nm = d_worldMinX_nm;
    d_navDragStartY_nm = d_worldMinY_nm;
@@ -51,7 +48,8 @@ PatternEditor::~PatternEditor()
    d_viewer->destroyWindow(d_mainWinID);
 }
 
-void PatternEditor::addImage(nmb_Image *im)
+void PatternEditor::addImage(nmb_Image *im, double opacity,
+      double r, double g, double b)
 {
    nmb_ImageBounds ib;
    im->getBounds(ib);
@@ -59,7 +57,8 @@ void PatternEditor::addImage(nmb_Image *im)
      {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
       nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
    
-   d_images.insert(d_images.begin(), im);
+   ImageElement ie(im, r,g,b,opacity);
+   d_images.insert(d_images.begin(), ie);
 
    for (int i = 0; i < 4; i++) {
        d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
@@ -75,13 +74,35 @@ void PatternEditor::addImage(nmb_Image *im)
 
 void PatternEditor::removeImage(nmb_Image *im)
 {
-   d_images.remove(im);
+   // this depends on the fact that we defined the equality 
+   // operator to return true if the images are equal
+   ImageElement ie(im);
+   d_images.remove(ie);
+}
+
+void PatternEditor::setImageEnable(nmb_Image *im, vrpn_bool displayEnable)
+{
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+  {
+     if ((*imIter).d_image == im) {
+          (*imIter).d_enabled = displayEnable;
+     }
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 void PatternEditor::show() 
 {
    d_viewer->showWindow(d_mainWinID);
    d_viewer->showWindow(d_navWinID);
+}
+
+void PatternEditor::newPosition(nmb_Image *im)
+{
+  // really this is only necessary if the image is currently displayed
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 int PatternEditor::mainWinEventHandler(
@@ -113,8 +134,8 @@ int PatternEditor::mainWinEventHandler(
              // see if we are near something and if so then select it
              // and grab it, otherwise deselect the currently selected object
 
-             d_nearDistX_nm = d_nearDistX_pix*
-                        (d_mainWinMaxX_nm-d_mainWinMinX_nm)/d_mainWinWidth;
+             me->d_nearDistX_nm = me->d_nearDistX_pix*
+                (me->d_mainWinMaxX_nm-me->d_mainWinMinX_nm)/me->d_mainWinWidth;
 
              break;
            default:
@@ -209,13 +230,10 @@ int PatternEditor::mainWinDisplayHandler(
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-  GLfloat border_color[] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat border_color[] = {0.0, 0.0, 0.0, 0.0};
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-  glTexParameterf(GL_TEXTURE_2D,
-                  GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
   glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_BLEND);
   GLfloat textureColor[] = {0.5, 0.5, 0.5, 0.5};
   glTexEnvfv(GL_TEXTURE_2D, GL_TEXTURE_ENV_COLOR, textureColor);
@@ -257,12 +275,12 @@ int PatternEditor::mainWinDisplayHandler(
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  if (me->d_settingRegion || me->d_settingTranslation) {
+  if (me->d_userMode == SET_REGION || me->d_userMode == SET_TRANSLATE) {
     glOrtho(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxXadjust_nm,
-            me->d_mainWinMinYadjust_nm, me->d_mainWinMaxYadjust_nm, -1, 1);
+            me->d_mainWinMaxYadjust_nm, me->d_mainWinMinYadjust_nm, -1, 1);
   } else {
     glOrtho(me->d_mainWinMinX_nm, me->d_mainWinMaxX_nm, 
-            me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
+            me->d_mainWinMaxY_nm, me->d_mainWinMinY_nm, -1, 1);
   }
 
   glMatrixMode(GL_MODELVIEW);
@@ -272,23 +290,44 @@ int PatternEditor::mainWinDisplayHandler(
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
 
-  double worldToImage[16];
-  void *texture;
-  int width, height;
-
   // for each image, load the texture matrix, setup automatic texture-mapping
   // of that image, draw a simple polygon on which to texture the image
-  list<nmb_Image *>::iterator currImage;
+  list<ImageElement>::iterator currImage;
   int i = 0;
   for (currImage = me->d_images.begin(); 
        currImage != me->d_images.end(); currImage++)
   {
+     if ((*currImage).d_enabled) {
+          me->drawImage(*currImage);
+     }
+     i++;
+  }
+
+  glPopAttrib();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glMatrixMode(GL_TEXTURE);
+  glPopMatrix();
+
+  return 0;
+}
+
+
+void PatternEditor::drawImage(const ImageElement &ie)
+{
+
+     double worldToImage[16];
+     void *texture;
+     int texwidth, texheight;
+
      vrpn_bool textureOkay = VRPN_TRUE;
-     texture = (*currImage)->pixelData();
-     width = (*currImage)->width();
-     height = (*currImage)->height();
+     texture = ie.d_image->pixelData();
+     texwidth = ie.d_image->width() + 2*ie.d_image->border();
+     texheight = ie.d_image->height() + 2*ie.d_image->border();
      int pixType;
-     switch ((*currImage)->pixelType()) {
+     switch (ie.d_image->pixelType()) {
        case NMB_UINT8:
          pixType = GL_UNSIGNED_BYTE;
          break;
@@ -310,56 +349,57 @@ int PatternEditor::mainWinDisplayHandler(
 
      if (textureOkay) {
 /*
-       printf("Loading texture %s with type %d\n", 
-              (*currImage)->name()->Characters(), (*currImage)->pixelType());
+       printf("Loading texture %s with type %d\n",
+              ie.d_image->name()->Characters(), ie.d_image->pixelType());
 */
-       gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_LUMINANCE,
+       gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
+              GL_LUMINANCE,
               pixType, texture);
+
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
               GL_LINEAR_MIPMAP_LINEAR);
-       (*currImage)->getWorldToImageTransform(worldToImage);
+       ie.d_image->getWorldToImageTransform(worldToImage);
        nmb_ImageBounds ib;
-       (*currImage)->getBounds(ib);
+       ie.d_image->getBounds(ib);
 /*
        for (int j = 0; j < 4; j++){
            printf("%g %g %g %g\n", worldToImage[j*4], worldToImage[j*4+1],
                                    worldToImage[j*4+2], worldToImage[j*4+3]);
        }
        printf("bounds : (%g,%g) -> (%g,%g)\n",
-            ib.getX(nmb_ImageBounds::MIN_X_MIN_Y), 
+            ib.getX(nmb_ImageBounds::MIN_X_MIN_Y),
             ib.getY(nmb_ImageBounds::MIN_X_MIN_Y),
-            ib.getX(nmb_ImageBounds::MAX_X_MAX_Y), 
+            ib.getX(nmb_ImageBounds::MAX_X_MAX_Y),
             ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
 */
-       glLoadMatrixd(worldToImage);
+       float scaleFactorX = (float)(ie.d_image->width())/(float)texwidth;
+       float scaleFactorY = (float)(ie.d_image->height())/(float)texheight;
+       // in texture coordinates
+       float bordSizeX = (float)(ie.d_image->border())/(float)texwidth;
+       float bordSizeY = (float)(ie.d_image->border())/(float)texheight;
+       glLoadIdentity();
+       // compensation for the border:
+       glTranslatef(bordSizeX, bordSizeY, 0.0);
+       glScalef(scaleFactorX, scaleFactorY, 1.0);
+       // now we can use the xform defined for the actual image part of the
+       // texture
+       glMultMatrixd(worldToImage);
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
        glColor4f(1.0, 1.0, 1.0, 0.5);
-       if (me->d_settingRegion || me->d_settingTranslation) {
-         glVertex3f(me->d_mainWinMinXadjust_nm, me->d_mainWinMinYadjust_nm, 0);
-         glVertex3f(me->d_mainWinMaxXadjust_nm, me->d_mainWinMinYadjust_nm, 0);
-         glVertex3f(me->d_mainWinMaxXadjust_nm, me->d_mainWinMaxYadjust_nm, 0);
-         glVertex3f(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxYadjust_nm, 0);
+       if (d_userMode == SET_REGION || d_userMode == SET_TRANSLATE) {
+         glVertex3f(d_mainWinMinXadjust_nm, d_mainWinMinYadjust_nm, 0);
+         glVertex3f(d_mainWinMaxXadjust_nm, d_mainWinMinYadjust_nm, 0);
+         glVertex3f(d_mainWinMaxXadjust_nm, d_mainWinMaxYadjust_nm, 0);
+         glVertex3f(d_mainWinMinXadjust_nm, d_mainWinMaxYadjust_nm, 0);
        } else {
-         glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMinY_nm, 0);
-         glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMinY_nm, 0);
-         glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMaxY_nm, 0);
-         glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMaxY_nm, 0);
+         glVertex3f(d_mainWinMinX_nm, d_mainWinMinY_nm, 0);
+         glVertex3f(d_mainWinMaxX_nm, d_mainWinMinY_nm, 0);
+         glVertex3f(d_mainWinMaxX_nm, d_mainWinMaxY_nm, 0);
+         glVertex3f(d_mainWinMinX_nm, d_mainWinMaxY_nm, 0);
        }
        glEnd();
      }
-     i++;
-  }
-
-  glPopAttrib();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-  glPopMatrix();
-  glMatrixMode(GL_TEXTURE);
-  glPopMatrix();
-
-  return 0;
 }
 
 
@@ -411,7 +451,7 @@ int PatternEditor::navWinEventHandler(
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // start dragging a rectangle
-             me->d_settingRegion = VRPN_TRUE;
+             me->d_userMode = SET_REGION;
              me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, x, y);
              me->d_navDragStartX_nm = x;
@@ -426,7 +466,7 @@ int PatternEditor::navWinEventHandler(
              if (x > me->d_mainWinMinX_nm && x < me->d_mainWinMaxX_nm &&
                  y > me->d_mainWinMinY_nm && y < me->d_mainWinMaxY_nm) {
                 // start translating
-                me->d_settingTranslation = VRPN_TRUE;
+                me->d_userMode = SET_TRANSLATE;
                 me->d_navDragStartX_nm = x;
                 me->d_navDragStartY_nm = y;
                 me->d_navDragEndX_nm = me->d_navDragStartX_nm;
@@ -442,26 +482,28 @@ int PatternEditor::navWinEventHandler(
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // copy the dragged rectangle into the main displayed rectangle
-             me->d_settingRegion = VRPN_FALSE;
-             me->d_viewer->toImage(event.winID, &x, &y);
-             me->navWinPositionToWorld(x, y, 
+             if (me->d_userMode == SET_REGION){
+               me->d_userMode = IDLE;
+               me->d_viewer->toImage(event.winID, &x, &y);
+               me->navWinPositionToWorld(x, y, 
                  me->d_navDragEndX_nm, me->d_navDragEndY_nm);
-             me->d_mainWinMaxX_nm = max(me->d_navDragStartX_nm,
+               me->d_mainWinMaxX_nm = max(me->d_navDragStartX_nm,
                                     me->d_navDragEndX_nm);
-             me->d_mainWinMinX_nm = min(me->d_navDragStartX_nm,
+               me->d_mainWinMinX_nm = min(me->d_navDragStartX_nm,
                                     me->d_navDragEndX_nm);
-             me->d_mainWinMaxY_nm = max(me->d_navDragStartY_nm,
+               me->d_mainWinMaxY_nm = max(me->d_navDragStartY_nm,
                                     me->d_navDragEndY_nm);
-             me->d_mainWinMinY_nm = min(me->d_navDragStartY_nm,
+               me->d_mainWinMinY_nm = min(me->d_navDragStartY_nm,
                                     me->d_navDragEndY_nm);
-             me->d_viewer->dirtyWindow(event.winID);
-             me->d_viewer->dirtyWindow(me->d_mainWinID);
+               me->d_viewer->dirtyWindow(event.winID);
+               me->d_viewer->dirtyWindow(me->d_mainWinID);
+             }
              break;
            case IV_RIGHT_BUTTON:
-             if (me->d_settingTranslation) {
+             if (me->d_userMode == SET_TRANSLATE) {
                // copy the translated rectangle into the main 
                // displayed rectangle
-               me->d_settingTranslation = VRPN_FALSE;
+               me->d_userMode = IDLE;
                me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y,
                                        me->d_navDragEndX_nm, me->d_navDragEndY_nm);
@@ -510,7 +552,7 @@ int PatternEditor::navWinDisplayHandler(
   glLoadIdentity();
 
   glOrtho(me->d_worldMinX_nm, me->d_worldMaxX_nm,
-          me->d_worldMinY_nm, me->d_worldMaxY_nm, -1, 1);
+          me->d_worldMaxY_nm, me->d_worldMinY_nm, -1, 1);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -519,7 +561,9 @@ int PatternEditor::navWinDisplayHandler(
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
 
-  if (me->d_settingRegion) {
+  double t_x = 0.0, t_y = 0.0;
+  switch (me->d_userMode) {
+   case (SET_REGION):
     // draw the current tentative setting
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
@@ -529,19 +573,21 @@ int PatternEditor::navWinDisplayHandler(
     glVertex3f(me->d_navDragEndX_nm, me->d_navDragEndY_nm, 0);
     glVertex3f(me->d_navDragStartX_nm, me->d_navDragEndY_nm, 0);
     glEnd();
-  } else if (me->d_settingTranslation) {
+    break;
+   case (SET_TRANSLATE):
     // draw the current tentative setting
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
     glColor3f(1.0, 1.0, 0.0);
-    double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
-    double t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
+    t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
+    t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
     glVertex3f(me->d_mainWinMinX_nm + t_x, me->d_mainWinMinY_nm + t_y, 0);
     glVertex3f(me->d_mainWinMaxX_nm + t_x, me->d_mainWinMinY_nm + t_y, 0);
     glVertex3f(me->d_mainWinMaxX_nm + t_x, me->d_mainWinMaxY_nm + t_y, 0);
     glVertex3f(me->d_mainWinMinX_nm + t_x, me->d_mainWinMaxY_nm + t_y, 0);
     glEnd();
-  } else {
+    break;
+  default:
     // draw the area covered by the main window
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
@@ -551,6 +597,7 @@ int PatternEditor::navWinDisplayHandler(
     glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMaxY_nm, 0);
     glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMaxY_nm, 0);
     glEnd();
+    break;
   }
 
 
@@ -569,12 +616,12 @@ void PatternEditor::navWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_worldMinX_nm + x*(d_worldMaxX_nm - d_worldMinX_nm);
-  y_nm = d_worldMinY_nm + (1.0-y)*(d_worldMaxY_nm - d_worldMinY_nm);
+  y_nm = d_worldMaxY_nm + (1.0-y)*(d_worldMinY_nm - d_worldMaxY_nm);
 }
 
 void PatternEditor::mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
-  y_nm = d_mainWinMinY_nm + (1.0-y)*(d_mainWinMaxY_nm - d_mainWinMinY_nm);
+  y_nm = d_mainWinMaxY_nm + (1.0-y)*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
 }

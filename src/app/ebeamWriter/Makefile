@@ -1,4 +1,4 @@
-USES_LIBS := ImgFormat nmReg nmImageViewer nmBase vrpn quat tclLinkVar
+USES_LIBS := ImgFormat nmReg nmSEM nmImageViewer nmBase vrpn quat tclLinkVar
 
 ifdef VC
   USES_EXTERNAL_LIBS := tcl82 tk82

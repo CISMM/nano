@@ -12,6 +12,10 @@
 #include "transformFile.h"
 #include "nmr_Util.h"
 
+#include "nmr_Registration_Proxy.h"
+#include "nmm_Microscope_SEM_Remote.h"
+#include "controlPanels.h"
+
 /* arguments:
 
  -t <transformation file>
@@ -45,75 +49,31 @@ static int init_Tk();
 extern "C" int Blt_Init (Tcl_Interp *interp);
 
 #define MAX_PLANNING_IMAGES 10
-static nmb_ListOfStrings planningImageNameList;
 static char **planningImageNames;
 static int numPlanningImages = 0;
-nmb_ImageList *planningImages = NULL;
+nmb_ImageList *imageData = NULL;
 
-static nmb_Image *liveImage;
 static char transformFileName[256];
+
+static vrpn_bool semDeviceSet = VRPN_FALSE, alignerDeviceSet = VRPN_FALSE;
+static char *semDeviceName = NULL, *alignerDeviceName = NULL;
+
+
 static TransformFile transformFile;
+
 static Tclvar_int timeToQuit ("time_to_quit", 0);
 
-PatternEditor *pe = NULL;
+PatternEditor *patternEditor = NULL;
+nmr_Registration_Proxy *aligner = NULL;
+nmm_Microscope_SEM_Remote *sem = NULL;
+ControlPanels *controls = NULL;
+
 static Tcl_Interp *tk_control_interp;
 
 int main(int argc, char **argv)
 {
-    int i;
-    planningImageNames = new char *[MAX_PLANNING_IMAGES];
-    for (i = 0; i < MAX_PLANNING_IMAGES; i++){
-        planningImageNames[i] = NULL;
-    }
-    sprintf(transformFileName, "default_transforms.txt");
-    // fill in the list of planning images, setting their worldToImage
-    // transformations from the transformation file if it is available and
-    // contains the files loaded
-    parseArgs(argc, argv);
 
-    // only load the transformations if the transform file exists
-    FILE *test = fopen(transformFileName, "r");
-    if (test) {
-       fclose(test);
-       transformFile.load((char *)transformFileName);
-    }
-
-    TopoFile defaultTopoFileSettings;
-    planningImages = new nmb_ImageList(&planningImageNameList,
-                          (const char **)planningImageNames, numPlanningImages,
-                          defaultTopoFileSettings);
-
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-
-    
-
-    pe = new PatternEditor();
-
-    double matrix[16];
-    double default_matrix[16] = {1.0, 0.0, 0.0, 0.0,
-                                 0.0, 1.0, 0.0, 0.0,
-                                 0.0, 0.0, 1.0, 0.0,
-                                 0.0, 0.0, 0.0, 1.0};
-    nmb_Image *currImage;
-
-    for (i = 0; i < planningImages->numImages(); i++){
-        currImage = planningImages->getImage(i);
-        currImage->normalize();
-        currImage->setWorldToImageTransform(default_matrix);
-        // search for this image in the list of transformations we loaded
-        if (transformFile.lookupImageTransformByName(
-                          currImage->name()->Characters(),
-                          matrix)) {
-            currImage->setWorldToImageTransform(matrix);
-            printf("setting world to image transform for %s\n",
-                   currImage->name()->Characters());
-        }
-        pe->addImage(currImage);
-    }
-
-    pe->show();
-
+    // Initialize TCL/TK so that TclLinkvar variables link up properly
     char *tcl_script_dir;
     char command[128];
 
@@ -134,6 +94,86 @@ int main(int argc, char **argv)
               tk_control_interp->result);
         return 0;
     }
+
+    // Figure out what image files to load and other options
+    int i;
+    planningImageNames = new char *[MAX_PLANNING_IMAGES];
+    for (i = 0; i < MAX_PLANNING_IMAGES; i++){
+        planningImageNames[i] = NULL;
+    }
+    sprintf(transformFileName, "default_transforms.txt");
+    // fill in the list of planning images, setting their worldToImage
+    // transformations from the transformation file if it is available and
+    // contains the files loaded
+    parseArgs(argc, argv);
+
+    // only load the transformations if the transform file exists
+    FILE *test = fopen(transformFileName, "r");
+    if (test) {
+       fclose(test);
+       transformFile.load((char *)transformFileName);
+    }
+
+    // initialize graphics
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+
+    // this must come after we initialize graphics
+    patternEditor = new PatternEditor();
+
+    // create the other two important objects for the program 
+    // Registration and SEM
+
+    if (alignerDeviceSet) {
+      aligner = new nmr_Registration_Proxy(alignerDeviceName);
+    } else { // use local implementation
+      aligner = new nmr_Registration_Proxy();
+    }
+    if (semDeviceSet) {
+      sem = new nmm_Microscope_SEM_Remote(semDeviceName);
+    } else {
+      sem = NULL;
+    }
+
+
+    // Now we can hook up the Tcl/Tk control panels 
+    // to the parts that do the work
+    controls = new ControlPanels(patternEditor, aligner, sem);
+
+
+    // load the images specified on the command line
+    TopoFile defaultTopoFileSettings;
+    imageData = new nmb_ImageList(
+                          controls->imageNameList(),
+                          (const char **)planningImageNames, numPlanningImages,
+                          defaultTopoFileSettings);
+
+    controls->setImageList(imageData);
+
+    double matrix[16];
+    double default_matrix[16] = {1.0, 0.0, 0.0, 0.0,
+                                 0.0, 1.0, 0.0, 0.0,
+                                 0.0, 0.0, 1.0, 0.0,
+                                 0.0, 0.0, 0.0, 1.0};
+    nmb_Image *currImage;
+
+    for (i = 0; i < imageData->numImages(); i++){
+        currImage = imageData->getImage(i);
+        currImage->normalize();
+        currImage->setWorldToImageTransform(default_matrix);
+        // search for this image in the list of transformations we loaded
+        if (transformFile.lookupImageTransformByName(
+                          currImage->name()->Characters(),
+                          matrix)) {
+            currImage->setWorldToImageTransform(matrix);
+            printf("setting world to image transform for %s\n",
+                   currImage->name()->Characters());
+        }
+        patternEditor->addImage(currImage);
+    }
+
+    patternEditor->show();
 
     while(!timeToQuit){
       glutProcessEvents_UNC();
