@@ -1,3 +1,3 @@
-USES_LIBS := nmBase vrpn
+USES_LIBS := nmBase
 
 include ../Makefile.share

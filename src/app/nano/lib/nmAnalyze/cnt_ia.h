@@ -40,7 +40,8 @@ private :
 
 public : // following are Image Analysis functions
 
-	double *cnt_image;		// image array
+	double *cnt_image;	// image array
+	double *cnt_image_Hgt;	// image height (in nm)
 	double *cnt_image_Blr;	// smoothed image
 	double *cnt_image_Rdg;	// ridge operation
 	double *cnt_image_Med;	// medial axes image
@@ -82,9 +83,9 @@ public : // following are Image Analysis functions
 	void cnt_image_medial(void);	// finding medial axes
 	int  cnt_image_pattern(double x, double y, double z);
 									// pattern recognition function
-	void cnt_image_fit(void);		// picking tube from medial axes info
-	void cnt_image_label(void);		// labelling CNT id
-	void cnt_image_order(void);		// order medial axis points
+	void cnt_image_fit(void);	// picking tube from medial axes info
+	void cnt_image_label(void);	// labelling CNT id
+	void cnt_image_order(void);	// order medial axis points
 	void cnt_image_select(void);	// applying thresholds to pick out CNTs
 
 protected:	// filter related variables
