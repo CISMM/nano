@@ -7,6 +7,7 @@
 #include <nmb_Image.h>
 
 #include "nmm_Microscope_SEM.h"
+#include "nmm_EDAX.h"
 
 class nmm_Microscope_SEM_Remote;
 
@@ -109,6 +110,8 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
 		vrpn_int32 &num_fields, vrpn_int32 &num_lines, 
                 nmb_PixelType &pix_type,
                 void **data);
+	// this is just scanline data that has been buffered into an image
+	void getImageData(nmb_ImageArray **image);
     void getPointDwellTime(vrpn_int32 &time_nsec);
     void getBeamBlankEnabled(vrpn_int32 &enabled);
     void getMaxScan(vrpn_int32 &x, vrpn_int32 &y);
@@ -189,6 +192,10 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     vrpn_int32 d_numPointsDone;
     vrpn_float32 d_timeTotal_sec;
     vrpn_float32 d_timeDone_sec;
+
+    // image data buffers (one for each image size collected):
+    nmb_ImageArray *d_image_uint8[EDAX_NUM_SCAN_MATRICES];
+    nmb_ImageArray *d_image_uint16[EDAX_NUM_SCAN_MATRICES];
 
     /* ---------------------------------------------------------------
        message callback management

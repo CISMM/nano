@@ -29,6 +29,13 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     d_timeDone_sec(0.0),
     d_messageHandlerList(NULL)
 {
+
+	int i;
+	for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
+		d_image_uint8[i] = NULL;
+		d_image_uint16[i] = NULL;
+	}
+
   if (d_connection == NULL){
     fprintf(stderr, "nmm_Microscope_SEM_Remote: No connection\n");
     return;
@@ -534,6 +541,26 @@ void nmm_Microscope_SEM_Remote::getScanlineData
   *data = d_dataBuffer;
 }
 
+void nmm_Microscope_SEM_Remote::getImageData(nmb_ImageArray **image)
+{
+  vrpn_int32 res_x, res_y;
+  int res_index;
+  getResolution(res_x, res_y);
+  res_index = nmm_EDAX::resolutionToIndex(res_x, res_y);
+  switch (d_pixelType) {
+  case NMB_UINT8:
+	  *image = d_image_uint8[res_index];
+	  break;
+  case NMB_UINT16:
+	  *image = d_image_uint16[res_index];
+	  break;
+  default:
+	  *image = NULL;
+	  break;
+  }
+  return;
+}
+
 void nmm_Microscope_SEM_Remote::getPointDwellTime(vrpn_int32 &time_nsec)
 {
   time_nsec = d_pointDwellTime_nsec;
@@ -742,6 +769,44 @@ int nmm_Microscope_SEM_Remote::RcvScanlineData(void *_userdata,
   me->d_numFields = num_fields;
   me->d_numLines = num_lines;
   me->d_pixelType = pixelType;
+
+  int i,y;
+  y = start_y;
+  vrpn_int32 res_x, res_y;
+  int res_index;
+  char image_name[128];
+  me->getResolution(res_x, res_y);
+  res_index = nmm_EDAX::resolutionToIndex(res_x, res_y);
+  if (res_index < 0) {
+     fprintf(stderr, "Error, resolution not found (%d,%d)\n", res_x, res_y);
+	 return -1;
+  }
+  if (pixelType == NMB_UINT8) {
+    sprintf(image_name, "SEM_DATA08_%dx%d", res_x, res_y);
+    if (!me->d_image_uint8[res_index]) {
+       me->d_image_uint8[res_index] = new nmb_ImageArray(image_name,
+                                "ADC", res_x, res_y, NMB_UINT8);
+    }
+    for (i = 0; i < num_lines; i++){
+      me->d_image_uint8[res_index]->setLine(y, data);
+      y += dy;
+    }   
+  } else if (pixelType == NMB_UINT16) {
+    sprintf(image_name, "SEM_DATA16_%dx%d", res_x, res_y);
+    if (!me->d_image_uint16[res_index]) {
+       me->d_image_uint16[res_index] = new nmb_ImageArray(image_name,
+                                "ADC", res_x, res_y, NMB_UINT16);
+    }
+    for (i = 0; i < num_lines; i++){   
+      me->d_image_uint16[res_index]->setLine(y, data);
+      y += dy;
+    }
+  } else {
+    fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture:"
+            " Error: can't handle pixel type\n");
+    return -1;
+  }
+
   return me->notifyMessageHandlers(SCANLINE_DATA, _p.msg_time);
 }
 

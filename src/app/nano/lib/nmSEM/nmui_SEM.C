@@ -72,11 +72,6 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
     image_viewer->setValueRange(image_window_id, 0.0, 255.0);
     image_viewer->setWindowDisplayHandler(image_window_id, drawGreyscaleWindow,
            this);
-    int i;
-    for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
-	image_uint8[i] = NULL;
-        image_uint16[i] = NULL;
-    }
 }
 
 // virtual
@@ -376,51 +371,33 @@ int nms_SEM_ui::updateSurfaceTexture(
   // first look to see if we have already created an image for the current
   // resolution
   vrpn_int32 res_x, res_y;
-  int res_index;
   sem->getResolution(res_x, res_y);
-  res_index = nmm_EDAX::resolutionToIndex(res_x, res_y);
-  if (res_index < 0) {
-     fprintf(stderr, "Error, resolution not found (%d,%d)\n", res_x, res_y);
-  }
-  char image_name[128];
 
-  int i,y;
-  y = start_y;
+  int y;
+  y = start_y + dy*num_lines;
 
-  if (pix_type == NMB_UINT8) {
-    sprintf(image_name, "SEM_DATA08_%dx%d", res_x, res_y);
-    if (!image_uint8[res_index]) {
-       image_uint8[res_index] = new nmb_ImageArray(image_name,
-                                "ADC", res_x, res_y, NMB_UINT8);
-       dataset->dataImages->addImage(image_uint8[res_index]);
-    }
-    for (i = 0; i < num_lines; i++){
-      image_uint8[res_index]->setLine(y, data);
-      y += dy;
-    }   
-  } else if (pix_type == NMB_UINT16) {
-    sprintf(image_name, "SEM_DATA16_%dx%d", res_x, res_y);
-    if (!image_uint16[res_index]) {
-       image_uint16[res_index] = new nmb_ImageArray(image_name,
-                                "ADC", res_x, res_y, NMB_UINT16);
-       dataset->dataImages->addImage(image_uint16[res_index]);
-    }
-    for (i = 0; i < num_lines; i++){   
-      image_uint16[res_index]->setLine(y, data);
-      y += dy;
-    }
-  } else {
-    fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture:"
-            " Error: can't handle pixel type\n");
-    return -1;
+  nmb_ImageArray *image = NULL;
+  sem->getImageData(&image);
+  string *imageName = image->name();
+  if (!image) {
+	fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture: Error, image not found\n");
+	return -1;
   }
+  if (!imageName) {
+	fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture: Error, image name is NULL\n");
+	return -1;
+  }
+  if (!(dataset->dataImages->getImageByName(*imageName))) {
+	dataset->dataImages->addImage(image);
+  }
+
 
   // if we've just got the last scanline in the image then tell graphics
   // to update the whole image, we probably want to do this update more
   // frequently if possible to display the first few lines before all the
   // scanlines have come in but once per data frame is reasonable for now
   if (y == res_y) {
-      graphics->updateTexture(nmg_Graphics::SEM_DATA, image_name,
+      graphics->updateTexture(nmg_Graphics::SEM_DATA, imageName->c_str(),
         0, 0, res_x, res_y);
   }
   return 0;

@@ -44,12 +44,10 @@ class nms_SEM_ui {
     // Handle getting any reports
     virtual int mainloop(const struct timeval * timeout = NULL);
 
+	nmm_Microscope_SEM_Remote *semClient() {return sem;}
+
   protected:
     nmm_Microscope_SEM_Remote *sem;
-
-    // image data buffers (one for each image size collected):
-    nmb_ImageArray *image_uint8[EDAX_NUM_SCAN_MATRICES];
-    nmb_ImageArray *image_uint16[EDAX_NUM_SCAN_MATRICES];
 
     Tcl_Interp *tcl_interp;
 

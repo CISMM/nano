@@ -1,3 +1,9 @@
+2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_Remote.[hC]: added buffers to temporarily store
+	latest images
+	* nmui_SEM.[Ch]: removed buffers that temporarily stored latest images
+
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_Remote.h (lastScanMessageCompletesImage): 
