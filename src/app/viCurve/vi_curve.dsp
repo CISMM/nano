@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I "../../../../vrpn" /I "../../../../../vrpn" /I "../nano/lib/nmAux" /I "../../lib/nmBase" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /TP /c
+# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I "../../../../vrpn" /I "../../../../../vrpn" /I "../nano/lib/nmAux" /I "../../lib/nmBase" /I "../../lib/nmMP" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -100,6 +100,18 @@ SOURCE=..\..\lib\nmBase\nmb_Device.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\lib\nmMP\thread.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmMP\thread.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmMP\util.C
+# End Source File
+# Begin Source File
+
 SOURCE=..\nano\lib\nmAux\vrpn_GPIBDevice.C
 # End Source File
 # Begin Source File
@@ -116,7 +128,7 @@ SOURCE=.\vrpn_GPIBDeviceServer.h
 # End Source File
 # Begin Source File
 
-SOURCE=".\Gpib-32.obj"
+SOURCE=".\Gpib-32.lib"
 # End Source File
 # End Target
 # End Project
