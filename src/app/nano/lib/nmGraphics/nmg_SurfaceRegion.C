@@ -57,6 +57,9 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
     d_currentAssociations.textureDisplayed = true;
     d_currentAssociations.textureTransformMode = true;
     d_currentAssociations.textureMode = true;
+
+    d_list_base = 0;
+    d_num_lists = 0;
 }
 
 ////////////////////////////////////////////////////////////
@@ -743,9 +746,9 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
         
-    if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, &d_list_base, 
-                                 &d_num_lists, d_num_lists, g_minColor,
-                                 g_maxColor, d_vertexPtr)) {
+    if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, 
+				 &d_list_base, &d_num_lists, d_num_lists, 
+				 g_minColor, g_maxColor, d_vertexPtr)) {
         return 0;
     }
 

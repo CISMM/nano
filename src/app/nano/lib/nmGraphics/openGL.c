@@ -20,7 +20,6 @@ All Rights Reserved.
 #include	<stdio.h>
 #include	<fcntl.h>
 #include	<string.h>
-//#include	<sys/time.h>
 #include	<sys/types.h>
 #include	<errno.h>
 #include        <v.h>
@@ -157,14 +156,8 @@ void determine_GL_capabilities() {
 #define MAXFONTS 2
 int	font_array[MAXFONTS];
 
-//GLdouble minColor[3];		/* Color areas of lowest colorparams */
-//GLdouble maxColor[3];		/* Color areas of highest colorparams */
-//GLuint	grid_list_base;		/* Base for grid display lists */
-//GLsizei	num_grid_lists;		/* Number of display lists for grid */
 char	message[1000];		/* Message to display on screen */
 
-//int (* stripfn)
-//    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
 
 #ifdef RENDERMAN
 GLfloat cur_projection_matrix[16];
@@ -280,7 +273,6 @@ int build_list_set
     }
     
 #endif // sgi or win32
-    //#endif // sgi 
     
     if (spm_graphics_verbosity >= 15) { 
         fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
@@ -378,20 +370,9 @@ int build_list_set (const nmb_Interval &insubset,
     
     v_gl_set_context_to_vlib_window(); 
     
-    // TCH 27 Jan 00
-    // Quick hacking to fix bug?
-    //int maxStrip;
-    //if (strips_in_x) {
-    //maxStrip = (planes.height->numY() - 1) / g_stride;
-    //} else {
-    //maxStrip = (planes.height->numX() - 1) / g_stride;
-    //}
-    //fprintf(stderr, "Max strip is %d;  input max was %d.\n", maxStrip, insubset.high());
-    //nmb_Interval subset (MAX(0, insubset.low()),
-    //MIN(maxStrip - 1, insubset.high()));
-    
     int (* stripfn)
-        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+      (const nmb_PlaneSelection&, nmg_SurfaceMask *, 
+	 GLdouble [3], GLdouble [3], int, Vertex_Struct *);
     
     if (strips_in_x) {
         stripfn = spm_x_strip_masked;
@@ -409,12 +390,12 @@ int build_list_set (const nmb_Interval &insubset,
         MIN(num - 1, insubset.high()));
     
     if (!subset.empty()) {      
-        if (spm_graphics_verbosity >= 8) {
-            fprintf(stderr, "Deleting display lists from %d for %d.\n",
+      if (spm_graphics_verbosity >= 8) {
+	fprintf(stderr, "Deleting display lists from %d for %d.\n",
                 base + subset.low(), subset.high() - subset.low() + 1);
-        }
-        glDeleteLists(base + subset.low(), subset.high() - subset.low() + 1);
-        VERBOSECHECK(8);
+      }
+      glDeleteLists(base + subset.low(), subset.high() - subset.low() + 1);
+      VERBOSECHECK(8);
     } 
     
     return build_list_set(subset, planes, mask, base, num,
@@ -437,14 +418,15 @@ int build_list_set (const nmb_Interval &insubset,
 *  a particular base. 
 *************************************************************************/
 
-int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
+int build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
                              int strips_in_x, GLuint *base, GLsizei *num, 
                              GLsizei old_num, GLdouble *minColor, GLdouble *maxColor,
                              Vertex_Struct **surface)
 {
     
     int (* stripfn)
-        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], 
+	 GLdouble [3], int, Vertex_Struct *);
     
     VERBOSE(4,"     build_grid_display_lists in openGL.c");
     VERBOSECHECK(4);
@@ -453,10 +435,10 @@ int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask 
     
     /* If this is not the first time around, free the old display lists */
     if (old_num > 0) {
-        glDeleteLists(*base, old_num);
-        if (spm_graphics_verbosity >= 6)
-            fprintf(stderr, "      deleted display lists "
-            "from %d for %d.\n", *base, old_num);
+      glDeleteLists(*base, old_num);
+      if (spm_graphics_verbosity >= 6)
+	fprintf(stderr, "      deleted display lists "
+		"from %d for %d.\n", *base, old_num);
     }
     
     VERBOSE(4,"     build_grid_display_lists in openGL.c");
@@ -483,8 +465,6 @@ int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask 
         stripfn = spm_y_strip_masked;
     }
     
-    //fprintf(stderr, "Generating %d lists.\n", *num);
-    
     // Generate a new set of display list indices
     if ( (*base = glGenLists(*num)) == 0) {
         fprintf(stderr,
@@ -496,16 +476,13 @@ int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask 
         *base, *num);
     
 #if defined(sgi) || defined(_WIN32)
-    //#if defined(sgi)
     // use vertex array extension
     if (g_VERTEX_ARRAY) {
-        //glEnable(GL_VERTEX_ARRAY_EXT);
         glEnableClientState(GL_VERTEX_ARRAY);
         // Color arrays are enabled/disabled dynamically depending
         // on whether or not planes.color or g_PRERENDERED_COLORS are
         // valid.
         if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-            //glEnable(GL_NORMAL_ARRAY_EXT);
             glEnableClientState(GL_NORMAL_ARRAY);
         }
     }
@@ -548,10 +525,7 @@ int draw_world (int) {
     TIMERVERBOSE(5, mytimer, "draw_world:Looking up planes");
     
     nmb_PlaneSelection planes;
-    /*
-    planes.lookup(g_inputGrid, g_heightPlaneName,
-    g_colorPlaneName, g_contourPlaneName, g_alphaPlaneName);
-    */
+
     
     planes.lookup(g_inputGrid, g_heightPlaneName, g_colorPlaneName,
         g_contourPlaneName, g_opacityPlaneName,
@@ -570,19 +544,12 @@ int draw_world (int) {
     }
     
     
-    //fprintf(stderr, "Corners of grid:  (%.2f, %.2f), (%.2f, %.2f).\n",
-    //planes.height->xInWorld(0), planes.height->yInWorld(0),
-    //planes.height->xInWorld(planes.height->numX() - 1),
-    //planes.height->yInWorld(planes.height->numX() - 1));
-    
-    
     /********************************************************************/
     // Set up surface materials parameters for the surface, then draw it
     /********************************************************************/
     
     VERBOSECHECK(4);
     VERBOSE(4,"    Setting surface materials");
-    //TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");    
     
     /************************************************************
     * If the region has changed, we need to rebuild the display
@@ -619,10 +586,9 @@ int draw_world (int) {
         ratio = dataset->range_of_change.RatioOfChange();
         
         /* If the ratio is very skewed, make sure we are
-        * scanning in the correct direction. */
+	 * scanning in the correct direction. */
         if (ratio > 4) {		/* 4x as much in y */
             if (display_lists_in_x) {	/* Going wrong way */
-                
                 display_lists_in_x = 0;
                 VERBOSE(4,"    Rebuilding display lists (in y).");
                 if (!g_surface->rebuildSurface(VRPN_TRUE)) {
@@ -636,7 +602,6 @@ int draw_world (int) {
             }
         } else if (ratio < 0.25) {	/* 4x as much in x */
             if (!display_lists_in_x) {	/* Going wrong way */
-                
                 display_lists_in_x = 1;
                 VERBOSE(4,"    Rebuilding display lists (in x).");
                 if (!g_surface->rebuildSurface(VRPN_TRUE)) {
@@ -698,19 +663,8 @@ int draw_world (int) {
     // rescans the same line of the sample more often than the graphics
     // process runs, that new data will never be drawn.
     
-    //  int (* stripfn)
-    //    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
-    
-    //  static nmb_Interval last_marked;
-    //  nmb_Interval mark;
-    //  nmb_Interval update;
-    
-    //  int direction;
-    
     int low_row;
     int high_row;
-    //  int low_strip;
-    //  int high_strip;
     
     // Get the data (low and high X, Y vales changed) atomically
     // so we have bulletproof synchronization.
@@ -718,63 +672,31 @@ int draw_world (int) {
     dataset->range_of_change.GetBoundsAndClear
         (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
     if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
-        //fprintf(stderr, "Using prerendered grid for bounds of change.\n");
         g_prerenderedChange->GetBoundsAndClear
             (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
     }
     
     if (display_lists_in_x) {
-        
         low_row = g_minChangedY;
         high_row = g_maxChangedY;
-        //stripfn = spm_x_strip;
-        
-        //fprintf(stderr, "X row from %d to %d.\n", low_row, high_row);
-        
     } else {
-        
         low_row = g_minChangedX;
         high_row = g_maxChangedX;
-        //stripfn = spm_y_strip;
-        
-        //fprintf(stderr, "Y row from %d to %d.\n", low_row, high_row);
-        
     }
     
-    // Convert from rows to strips:  divide through by the tesselation stride
-    
-    
+    // Convert from rows to strips:  divide through by the tesselation stride    
     if (!g_surface->rebuildInterval(low_row, high_row, display_lists_in_x)) {
         return -1;
     }
 
-    /*
-    if (update.overlaps(todo) || update.adjacent(todo)) {
-    if (build_list_set(update + todo, planes, stripfn, display_lists_in_x)) return -1;
-    } 
-    else {
-    if (build_list_set(update, planes, stripfn, display_lists_in_x)) return -1;
-    if (build_list_set(todo, planes, stripfn, display_lists_in_x)) return -1;
-    }
-    */
-    
     if (spm_graphics_verbosity >= 15)
         fprintf(stderr, "\n");
     VERBOSECHECK(15)
-        
-        //last_marked = mark;
-        
         
     /* Draw grid using current viewing/modeling matrix */
     VERBOSECHECK(4);
     VERBOSE(4,"    Drawing the grid");
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
-    
-    /*
-    for (i = 0; i < num_grid_lists; i++) {
-    glCallList(grid_list_base + i);
-    }
-    */
     
     /* Draw the light */       
     setup_lighting(0);
@@ -816,17 +738,14 @@ int draw_world (int) {
     
     // TCH 8 April 98 don't know where these go best
     if (decoration->red.changed()) {
-        //fprintf(stderr, "Making red line.\n");
         make_red_line(decoration->red.top(), decoration->red.bottom());
         decoration->red.clearChanged();
     }
     if (decoration->green.changed()) {
-        //fprintf(stderr, "Making green line.\n");
         make_green_line(decoration->green.top(), decoration->green.bottom());
         decoration->green.clearChanged();
     }
     if (decoration->blue.changed()) {
-        //fprintf(stderr, "Making blue line.\n");
         make_blue_line(decoration->blue.top(), decoration->blue.bottom());
         decoration->blue.clearChanged();
     }
@@ -851,9 +770,7 @@ int draw_world (int) {
         make_collab_hand_icon(g_collabHandPos, g_collabHandQuat,
             g_collabMode);
         g_position_collab_hand = 0;
-    }	
-    
-    
+    }    
     
     // Set the lighting model for the measurement things
     VERBOSECHECK(4);

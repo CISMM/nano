@@ -1,3 +1,13 @@
+2001-07-13  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmg_SurfaceRegion.C: initialized d_list_base and d_num_lists.  This
+	correct the disappearance of the chartjunk text on the SGIs (because 
+	they weren't initialized, we were accidentally deleting all the 
+	display liststhe first time the lists were rebuilt).
+
+	* openGL.c: removed a bunch of old commented-out code and print 
+	statements
+
 2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C: removed some compiler warnings
