@@ -1,3 +1,8 @@
+2002-06-05  David Borland <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.C : fixed a little kink in the user interface
+        for switching between surface and model projective texture modes
+
 2002-06-03  David Borland <borland@cs.unc.edu>
 
         * nmr_RegistrationUI.C : code for phantom control of the projective

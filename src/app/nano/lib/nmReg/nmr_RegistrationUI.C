@@ -562,6 +562,15 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
       me->d_imageDisplay->addImageToDisplay(im);
       me->updateTextureTransform();
       me->d_imageDisplay->updateImage(im);
+
+	  if (me->d_textureImageMode == 1) {
+			graphics->setTextureMode(nmg_Graphics::COLORMAP,
+			                       nmg_Graphics::SURFACE_REGISTRATION_COORD);
+	  }
+	  else {
+			graphics->setTextureMode(nmg_Graphics::COLORMAP,
+									 nmg_Graphics::MODEL_REGISTRATION_COORD);
+	  }
     } 
     else {
       me->d_imageDisplay->removeImageFromDisplay(im);
@@ -576,6 +585,8 @@ void nmr_RegistrationUI::handle_textureImageMode_change(
 	if (!(me->d_imageDisplay)) return;
 
 	if (!(me->d_dataset)) return;
+
+	if (!(me->d_textureDisplayEnabled)) return;
 
 	if (value == 1) {
 		graphics->setTextureMode(nmg_Graphics::COLORMAP,
