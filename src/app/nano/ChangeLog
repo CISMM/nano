@@ -1,3 +1,12 @@
+2001-07-06 Jameson Miller <millerj@cs.unc.edu>
+	* microscape.c - registered a new pointdatahandler so dataset will be u
+	updated when in optimize now mode and new points are recieved
+	* interaction.c - cleaned up and debugged interface for optimize_now 
+	mode. 
+	* minit.c - commented out explicit call for handle_commit_change
+	for TCL_COMMIT when commit or cancel button pressed on 
+	magellan
+
 2001-06-27  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
 
 	* Makefile:  removed collaboration.C from the list of ignored files

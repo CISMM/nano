@@ -131,6 +131,7 @@ pid_t getpid();
 #include "nmui_SEM.h" // EDAX SEM
 #include "Timer.h"
 #include "microscopeHandlers.h"
+#include "optimize_now.h"
 #include "CollaborationManager.h"
 #include "collaboration.h"
 #include "minit.h"
@@ -6711,6 +6712,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // Allow another result to be requested when the last is received
     // when using the Slow Line tool. 
     new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, new_microscope);
+    new_microscope->registerPointDataHandler(optimize_now_ReceiveNewPoint, new_microscope);
 
     //draw measure lines
     VERBOSE(1, "Initializing measure lines");

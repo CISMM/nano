@@ -68,6 +68,8 @@
 #include <nmui_HapticSurface.h>
 #include <nmui_SurfaceFeatures.h>
 
+#include <optimize_now.h>
+
 #include "normal.h"
 #include "relax.h"
 #include "butt_mode.h"
@@ -77,7 +79,6 @@
 #include "microscape.h"  // for lots of #defines, graphicsTimer
 #include "interaction.h"
 #include "minit.h"  // for reset_phantom()
-
 
 /***************************
  * Local Defines
@@ -863,16 +864,22 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	      OPTIMIZE_NOW_LINE) {
 	    // optimize based on a line specified by the user
 	    // These are the points we have specified so far in the polyline
-
 	    Position_list & pos_list = microscope->state.modify.stored_points;
+	    if(pos_list.peekPrev() != NULL){
 	    pos_list.goToHead();
-	    plane->computeOptimizeMinMax(
+	    computeOptimizeMinMax(
 		   microscope->state.modify.optimize_now_param,
 		   pos_list.currX(),
 		   pos_list.currY(),
 		   (pos_list.peekNext())->x(),
 		   (pos_list.peekNext())->y(),
 		   &coord_x, &coord_y);
+	    pos_list.goToTail();
+	    }else {
+	      fprintf (stderr, "ERROR: NEED 2 POINTS TO OPTIMIZE\n");
+	      tcl_commit_pressed = 0;
+	      old_commit_pressed = 0;
+	    }
 	  }
 	  Point_value *value =
 	    microscope->state.data.inputPoint->getValueByPlaneName
@@ -882,7 +889,8 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    return;
 	  }
 	  microscope->ScanTo( coord_x, coord_y );
-	  position_sphere( coord_x, coord_y, plane->valueInWorld(coord_x, coord_y) );
+	  position_sphere( coord_x, coord_y,plane->valueInWorld(coord_x, coord_y) );
+
 	}
 	//if we aren't using line tool, don't change commit button's value,
 	// because it's handled below in doFeelLive()
@@ -903,7 +911,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    printf("Optimizing based on selected area\n");
 	    Position_list & pos_list = microscope->state.modify.stored_points;
 	    pos_list.goToHead();
-	    plane->computeOptimizeMinMax(
+	    computeOptimizeMinMax(
 		 microscope->state.modify.optimize_now_param,
 		 microscope->state.select_center_x
                     - microscope->state.select_region_rad,
@@ -913,7 +921,6 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
                     + microscope->state.select_region_rad,
 		 microscope->state.select_center_y
                     + microscope->state.select_region_rad, &coord_x, &coord_y);
-
 	    Point_value *value =
 	      microscope->state.data.inputPoint->getValueByPlaneName
 	      (dataset->heightPlaneName->string());
@@ -958,8 +965,8 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 
 	break;
     default:
-	tcl_commit_pressed = 0;	
-	old_commit_pressed = 0;
+      tcl_commit_pressed = 0;	
+      old_commit_pressed = 0;
 	return;
     }
 }
@@ -2422,7 +2429,35 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		     //			      clipPos[2]);
 		   }
 		   else {
-		     pos_list.insert(clipPos[0], clipPos[1], list_id);
+
+		     //if in optimize now, only let 2 points be on a line
+		     if((microscope->state.modify.tool == OPTIMIZE_NOW) &&
+		         (pos_list.peekPrev() != NULL)){
+			 //if we are here, 2 points are in the polyline already,
+			 //delete head, add point, update rubberline
+			 pos_list.goToHead();
+			 pos_list.del();
+			 pos_list.goToTail();
+
+			 pos_list.insert(clipPos[0], clipPos[1], list_id);
+
+			 //delete rubberline
+			 graphics->emptyPolyline();
+			 //redraw rubberline
+			 for(pos_list.start();pos_list.notDone(); pos_list.next()){
+			   PointType * markpts = new PointType[2];
+			   markpts[0][0] = markpts[1][0] = pos_list.currX();
+			   markpts[0][1] = markpts[1][1] = pos_list.currY();
+			   markpts[0][2] = plane->maxAttainableValue()*plane->scale();
+			   markpts[1][2] = plane->minAttainableValue()*plane->scale();
+			   
+			   list_id = graphics->addPolylinePoint(markpts);
+			 }
+			 //we want to be at tail of list
+			 pos_list.goToTail();
+		       } else{
+		      pos_list.insert(clipPos[0], clipPos[1], list_id);
+		     }
 		   }
 		} else if ((microscope->state.modify.tool == CONSTR_FREEHAND) ||
 			   (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
@@ -2991,8 +3026,7 @@ doSelect(int whichUser, int userEvent)
     {
         fprintf(stderr, "Error in doSelect: could not get plane!\n");
         return -1;
-    }  
-
+    } 
     /* Move the tip to the hand x,y location */
     /* Set its height based on data at this point */
     v_get_world_from_hand(whichUser, &worldFromHand);
@@ -3522,6 +3556,8 @@ int clear_polyline( void * userdata ) {
   g->emptyPolyline();
   return 0;
 }
+
+
 
 
 

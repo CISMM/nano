@@ -269,7 +269,8 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        tcl_commit_pressed = 1;
       // we must call "handle_commit_change" explicitly, 
       // because tclvars are set to ignore changes from C.
-      handle_commit_change(tcl_commit_pressed, NULL);
+          // no longer needed
+          // handle_commit_change(tcl_commit_pressed, NULL);
        break;
    case 5:              /* Center the surface */
        center();
@@ -293,7 +294,8 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        tcl_commit_canceled = 1;
       // we must call "handle_commit_cancel" explicitly, 
       // because tclvars are set to ignore changes from C.
-      handle_commit_cancel(tcl_commit_canceled, NULL);
+       // no longer needed
+       // handle_commit_cancel(tcl_commit_canceled, NULL);
        break;
    }
 
