@@ -1,3 +1,11 @@
+2002-06-25  Adam Seeger  <seeger@cs.unc.edu>
+
+	* chartjunk.c : Some minor changes to the use of variables to 
+	position text to make the code behave the same as before with
+	current default values of the variables (non-stereo).
+	Fixes nasty crashing problem on my pc but I'm still not sure exactly
+	what was wrong except that some text was getting drawn off screen.
+
 2002-06-21 Charles Mason <mason@cs.unc.edu>
 
 	* chartjunk.c : changed text to work based more on variables

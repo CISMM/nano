@@ -358,7 +358,7 @@ int control_display (void *data) {
 //fprintf(stderr, " <cd> got size\n");
 
   // Total screen is 1.0f across, but font width is in pixels. Convert. 
-  float char_width = getFontWidth() / (float)((w != 0)?w:1);
+  float char_width = (V_RIGHT_EDGE-V_LEFT_EDGE)*getFontWidth() / (float)((w != 0)?w:1);
 
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
@@ -373,7 +373,7 @@ int control_display (void *data) {
   // Find out length of message:
   float msg_width = char_width * strlen(message);
   // Need a bit bigger margin on the right edge. 
-  glTranslatef(V_RIGHT_EDGE - (3*MARGIN + 0.1f), V_BOTTOM_EDGE+MARGIN, Z_SLIVER); 
+  glTranslatef(V_RIGHT_EDGE - (3*MARGIN + msg_width), V_BOTTOM_EDGE+MARGIN, Z_SLIVER); 
   //printf ("CD %f %f\n", char_width, msg_width);
   // Leave space for the Point result display to spill over 
   // to right side of screen.
