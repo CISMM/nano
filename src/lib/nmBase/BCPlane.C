@@ -221,6 +221,68 @@ BCPlane::maxNonZeroValue()
     }
 } // maxNonZeroValue
 
+void BCPlane::computeOptimizeMinMax(int type, int x0, int y0, int x1, int y1,
+				    double *x_max_coord, double *y_max_coord) {
+  short top, right, bottom, left;
+  int temp, x, y;
+  _max_value = -1.0e33;
+ 
+  // sort so that x0 = xmin, x1 = xmax, y0 = ymin and y1 = ymax;
+  if (y0 > y1) { temp = y0; y0 = y1; y1 = temp; }
+  if (x0 > x1) { temp = x0; x0 = x1; x1 = temp; }
+  
+  if (findValidDataRange( &top, &right, &bottom, &left ) != -1) {
+    // if the selected area is smaller than the valid area, change the 
+     // boundaries accordingly
+    
+    if (y0 > bottom) { bottom = y0; }
+    if (y1 < top) { top = y1; }
+    if (x0 > left) { left = x0; }
+    if (x1 < right) { right = x1; } 
+    
+    if (type == BCPLANE_OPTIMIZE_AREA) {
+      printf("optimizing area\n");
+      for (y = bottom; y < top; y++) {
+	for (x = right; x < left; x++) {
+	  double value = this->value(x, y);
+	  if (value > _max_value) { 
+	    if (_sec[x][y] && _usec[x][y]) {
+	      _max_value = value; 
+	      _max_value_x_coord = x;
+	      _max_value_y_coord = y;
+	    }
+	  }
+	}
+      }
+     } else if (type == BCPLANE_OPTIMIZE_LINE) {
+       float line_position_param = 0.0;
+       // 45-45-90 triangle, longest side is hypotnuse
+       // so anything shorter falls within this range
+       float step_size = 1 / (1.41421 * numX());
+       
+       while (line_position_param < 1.0) {
+	 x = right * line_position_param + left * (1.0 - line_position_param);
+	 y = bottom * line_position_param + top * (1.0 - line_position_param);
+	 double value = this->value(x, y);
+	 if (value > _max_value) { 
+	   if (_sec[x][y] && _usec[x][y]) {
+	     _max_value = value; 
+	     _max_value_x_coord = x;
+	     _max_value_y_coord = y;
+	   }
+	 }
+	 line_position_param += step_size;
+       }
+     }
+  } else {  // bad tool param spec, shouldn't be here
+    return;
+  }
+  // following returns type double
+  *x_max_coord = xInWorld(_max_value_x_coord);
+  *y_max_coord = yInWorld(_max_value_y_coord);
+}
+
+
 double BCPlane::minAttainableValue (void) const {
   return _min_attainable_value;
 }

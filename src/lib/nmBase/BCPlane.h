@@ -14,6 +14,8 @@ const int NOT_TIMED = 0;
 const double DEFAULT_MIN_ATTAINABLE_VALUE = -10;
 const double DEFAULT_MAX_ATTAINABLE_VALUE = 10;
 
+const int BCPLANE_OPTIMIZE_LINE = 0;
+const int BCPLANE_OPTIMIZE_AREA = 1;
 
 #include "BCGrid.h"
 
@@ -54,6 +56,10 @@ class BCPlane
 
     double minNonZeroValue();
     double maxNonZeroValue();
+
+    void computeOptimizeMinMax(int type, int x0, int y0, int x1, int y1,
+			       double *x_max_coord, double *y_max_coord);
+ 
 
     inline double minValueComputedLast() const { return _min_value; }
     inline double maxValueComputedLast() const { return _max_value; }
@@ -202,7 +208,8 @@ class BCPlane
     BCPlane * _next;	///< the next BCPlane in the list maintained by _grid
 
     float * _value;
-    int _num_x, _num_y;
+    int _num_x, _num_y;    
+    int _max_value_x_coord, _max_value_y_coord;
     int _border;
 
     long** _sec;
