@@ -9,7 +9,7 @@
 #define NMR_REGISTRATIONUI_H
 #include "nmb_ImageDisplay.h"
 #include "nmb_Image.h"
-#include "nmb_Dataset.h"
+#include "nmb_ImageManager.h"
 #include "nmb_String.h"
 #include "nmr_Registration_Proxy.h"
 #include "nmb_TransformMatrix44.h"
@@ -65,7 +65,7 @@ class nmr_RegistrationUI {
 
     void setupCallbacks();
     void teardownCallbacks();
-    void changeDataset(nmb_Dataset *dataset);
+    void changeDataset(nmb_ImageManager *dataset);
     void handleRegistrationChange(const nmr_ProxyChangeHandlerData &info);
     static void handle_registrationChange(void *ud,
                   const nmr_ProxyChangeHandlerData &info);
@@ -105,25 +105,25 @@ class nmr_RegistrationUI {
     void updateTextureTransform();
     void setTransformationSource(nmr_RegistrationType source);
 
-    TclNet_string d_registrationImageName3D;
-    TclNet_string d_registrationImageName2D;
-    TclNet_string d_newResampleImageName;
-    TclNet_string d_newResamplePlaneName;
-    TclNet_int d_registrationEnabled;
-    TclNet_int d_constrainToTopography;
-    TclNet_int d_invertWarp;
-    TclNet_int d_textureDisplayEnabled;
-    TclNet_int d_resampleResolutionX;
-    TclNet_int d_resampleResolutionY;
-    TclNet_float d_resampleRatio;
-    TclNet_string d_registrationColorMap3D;
-    TclNet_string d_registrationColorMap2D;
+    Tclvar_string d_registrationImageName3D;
+    Tclvar_string d_registrationImageName2D;
+    Tclvar_string d_newResampleImageName;
+    Tclvar_string d_newResamplePlaneName;
+    Tclvar_int d_registrationEnabled;
+    Tclvar_int d_constrainToTopography;
+    Tclvar_int d_invertWarp;
+    Tclvar_int d_textureDisplayEnabled;
+    Tclvar_int d_resampleResolutionX;
+    Tclvar_int d_resampleResolutionY;
+    Tclvar_float d_resampleRatio;
+    Tclvar_string d_registrationColorMap3D;
+    Tclvar_string d_registrationColorMap2D;
 
     // for automatic alignment
-    TclNet_int d_autoAlignRequested;
-    TclNet_int d_numIterations;
-    TclNet_float d_stepSize;
-    TclNet_string d_resolutionLevel;
+    Tclvar_int d_autoAlignRequested;
+    Tclvar_int d_numIterations;
+    Tclvar_float d_stepSize;
+    Tclvar_string d_resolutionLevel;
     // this array is set by the C-code and is then copied into
     //  d_resolutionLevelList in a string representation
     vrpn_int32 d_numResolutionLevels;
@@ -132,26 +132,26 @@ class nmr_RegistrationUI {
     static vrpn_float32 s_defaultStdDev[];
     Tclvar_list_of_strings d_resolutionLevelList;
 
-    TclNet_float d_scaleX, d_scaleY;
-    TclNet_float d_translateX, d_translateY;
-    TclNet_float d_rotateX, d_rotateY, d_rotateZ;
-    TclNet_float d_shearZ;
+    Tclvar_float d_scaleX, d_scaleY;
+    Tclvar_float d_translateX, d_translateY;
+    Tclvar_float d_rotateX, d_rotateY, d_rotateZ;
+    Tclvar_float d_shearZ;
 
     static vrpn_int32 s_numAutoAlignModes;
     static nmr_AutoAlignMode s_autoAlignModes[];
     static char * s_autoAlignModeNames[];
-    TclNet_string d_autoAlignMode;
+    Tclvar_string d_autoAlignMode;
     Tclvar_list_of_strings d_autoAlignModeList;
 
     static vrpn_int32 s_numTransformationSources;
     static nmr_RegistrationType s_transformationSources[];
     static char * s_transformationSourceNames[];
-    TclNet_string d_transformationSource;
+    Tclvar_string d_transformationSource;
     Tclvar_list_of_strings d_transformationSourceList;
 
     nmb_ImageDisplay *d_imageDisplay;
 
-    nmb_Dataset *d_dataset;
+    nmb_ImageManager *d_dataset;
 
     nmr_Registration_Proxy *d_aligner;
     nmui_ColorMap * d_3DImageCMap;

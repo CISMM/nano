@@ -1,3 +1,10 @@
+2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
+	
+	* nmr_RegistrationUI.hC : replaced nmb_Dataset with nmb_ImageManager
+        switched a bunch of TclNet_vars into ordinary Tcl_vars in order to
+	fix a problem with callbacks not getting called when changes were
+	made in tcl
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.C (constructor): took out parameter in call to

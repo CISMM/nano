@@ -207,7 +207,7 @@ void nmr_RegistrationUI::teardownCallbacks()
         (handle_textureTransformMode_change, (void *)this);
 }
 
-void nmr_RegistrationUI::changeDataset(nmb_Dataset *dataset)
+void nmr_RegistrationUI::changeDataset(nmb_ImageManager *dataset)
 {
   d_dataset = dataset;
 }
@@ -267,9 +267,11 @@ void nmr_RegistrationUI::updateTextureTransform()
 
   // first we lookup the images that this transformation applies to and
   // get from them the additional transformations we need to compose
-  nmb_Image *topographyImage = (d_dataset->dataImages)->getImageByName
+  if (!d_dataset) return;
+
+  nmb_Image *topographyImage = d_dataset->dataImages()->getImageByName
                       (d_registrationImageName3D.string());
-  nmb_Image *projectionImage = (d_dataset->dataImages)->getImageByName
+  nmb_Image *projectionImage = d_dataset->dataImages()->getImageByName
                       (d_registrationImageName2D.string());
   if (!topographyImage || !projectionImage) {
      fprintf(stderr, "updateTextureTransform: can't find image\n");
@@ -359,7 +361,8 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
 {
     //printf("nmr_RegistrationUI::handle_registrationImage3D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
-    nmb_Image *im = me->d_dataset->dataImages->getImageByName(name);
+    if (!me->d_dataset) return;
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
@@ -390,7 +393,8 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
 {
     //printf("nmr_RegistrationUI::handle_registrationImage2D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
-    nmb_Image *im = me->d_dataset->dataImages->getImageByName(name);
+    if (!me->d_dataset) return;
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
@@ -454,7 +458,8 @@ void nmr_RegistrationUI::handle_registrationColorMap2D_change(const char *name,
     // send changes off to the proxy
     me->d_aligner->setColorMap(NMR_TARGET, cmap);
 
-    nmb_Image *im = me->d_dataset->dataImages->getImageByName(
+    if (!me->d_dataset) return;
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
                                 me->d_registrationImageName2D.string());
 
     if (me->d_imageDisplay) {
@@ -480,7 +485,8 @@ void nmr_RegistrationUI::handle_registrationMinMax2D_change(vrpn_float64, void *
      me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
     // send changes off to the proxy
     me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
-    nmb_Image *im = me->d_dataset->dataImages->getImageByName(
+    if (!me->d_dataset) return;
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
                                 me->d_registrationImageName2D.string());
     if (me->d_imageDisplay) {
       // set up texture in graphics
@@ -509,7 +515,9 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (!(me->d_imageDisplay)) return;
 
-    nmb_Image *im = me->d_dataset->dataImages->getImageByName(
+    if (!(me->d_dataset)) return;
+
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
                                 me->d_registrationImageName2D.string());
     if (value) {
       me->d_imageDisplay->addImageToDisplay(im);
@@ -576,14 +584,15 @@ void nmr_RegistrationUI::handle_autoAlignRequested_change(
         first_time = vrpn_FALSE;
         // some debugging code that inserts the blurred images used for
         // alignment into the image list so you can easily view them:
-        nmb_Image *im_3D = me->d_dataset->dataImages->getImageByName
+        if (!me->d_dataset) return;
+        nmb_Image *im_3D = me->d_dataset->dataImages()->getImageByName
                             (me->d_registrationImageName3D.string());
-        nmb_Image *im_2D = me->d_dataset->dataImages->getImageByName
+        nmb_Image *im_2D = me->d_dataset->dataImages()->getImageByName
                             (me->d_registrationImageName2D.string());
         nmr_AlignerMI aligner;
         aligner.initImages(im_3D, im_2D, 
                            me->d_numResolutionLevels, me->d_stddev, 
-                           NULL, me->d_dataset->dataImages);
+                           NULL, me->d_dataset->dataImages());
       }
     }
 }
@@ -625,18 +634,22 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
         me->d_aligner->setGUIEnable(vrpn_TRUE);
         // We're popping up our window. Set the 3D image to 
         // height plane if we have any clue what that is. 
+/*
         nmb_Image *dataim;
+        if (!me->d_dataset) return;
+
         if (me->d_dataset->heightPlaneName) {
           me->d_registrationImageName3D = 
                         me->d_dataset->heightPlaneName->string();
-        } else if (me->d_dataset->dataImages->numImages() > 0){
-          dataim = me->d_dataset->dataImages->getImage(0);
+        } else 
+        if (me->d_dataset->dataImages()->numImages() > 0){
+          dataim = me->d_dataset->dataImages()->getImage(0);
           me->d_registrationImageName3D = dataim->name()->Characters();
         }
         // Also guess at the 2D image name
         int i;
-        for (i = 0; i < (me->d_dataset->dataImages)->numImages(); i++) {
-            dataim = me->d_dataset->dataImages->getImage(i);
+        for (i = 1; i < me->d_dataset->dataImages()->numImages(); i++) {
+            dataim = me->d_dataset->dataImages()->getImage(i);
             //printf("Considering %s\n", dataim->name()->Characters());
             if (strcmp(dataim->name()->Characters(),
                        me->d_dataset->heightPlaneName->string())) {
@@ -644,6 +657,7 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
                 break;
             }
         }
+*/
     } else {
         me->d_aligner->setGUIEnable(vrpn_FALSE);
     }
@@ -654,9 +668,10 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
 {
     printf("nmr_RegistrationUI::createResampleImage\n");
     nmb_Image *new_image;
-    nmb_Image *im_3D = d_dataset->dataImages->getImageByName
+    if (!d_dataset) return;
+    nmb_Image *im_3D = d_dataset->dataImages()->getImageByName
                           (d_registrationImageName3D.string());
-    nmb_Image *im_2D = d_dataset->dataImages->getImageByName
+    nmb_Image *im_2D = d_dataset->dataImages()->getImageByName
                           (d_registrationImageName2D.string());
 
     int displayedTransformIndex = getDisplayedTransformIndex();
@@ -797,7 +812,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
     }
     printf("finished resampling image\n");
     // now make it available elsewhere:
-    d_dataset->dataImages->addImage(new_image);
+    d_dataset->dataImages()->addImage(new_image);
 }
 
 void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
@@ -805,9 +820,10 @@ void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
     printf("nmr_RegistrationUI::createResamplePlane\n");
     int displayedTransformIndex = getDisplayedTransformIndex();
     nmb_ImageGrid *new_image;
-    nmb_Image *im_3D = d_dataset->dataImages->getImageByName
+    if (!d_dataset) return;
+    nmb_Image *im_3D = d_dataset->dataImages()->getImageByName
                           (d_registrationImageName3D.string());
-    nmb_Image *im_2D = d_dataset->dataImages->getImageByName
+    nmb_Image *im_2D = d_dataset->dataImages()->getImageByName
                           (d_registrationImageName2D.string());
 
     // d_imageTransformWorldSpace is the transformation that takes points from
