@@ -1,3 +1,7 @@
+2001-12-20    <marshbur@cs.unc.edu>
+
+	* nmReg.dsp:  removed references to ImgFormat
+
 2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile:  remove ImgFormat from USES_LIBS

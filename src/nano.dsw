@@ -15,18 +15,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "ImgFormat"=.\lib\ImgFormat\ImgFormat.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "NMmp"=.\lib\nmMP\NMmp.dsp - Package Owner=<4>
 
 Package=<5>
@@ -47,9 +35,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name ImgFormat
-    End Project Dependency
     Begin Project Dependency
     Project_Dep_Name nmAnalyze
     End Project Dependency

@@ -1,3 +1,7 @@
+2001-12-20    <marshbur@cs.unc.edu>
+
+	* nano.dsp:  removed references to ImgFormat
+
 2001-12-14  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile (%.depend): I forgot to add a inplicit build rule for 
