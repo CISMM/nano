@@ -1,3 +1,18 @@
+2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.hC (printJointHistograms): new function that is helpful for
+	visualizing the histograms at each scale used for the mutual information
+    calculations; it outputs TIFF files
+	* nmr_MultiResObjectiveMI_direct.hC (getJointHistogramSize): new function
+	(getJointHistogramImage): new function
+	* nmr_ObjectiveMI_direct.hC (value): fixed some bugs discovered by
+	taking a look at the histograms - some image coordinates were being
+	computed incorrectly but now they seem to be about right
+	(getJointHistogramSize): new function
+	(getJointHistogramImage): new function
+	* nmr_Registration_Impl (registerImagesUsingMutualInformation):
+	added call to printJointHistograms() before running the optimization
+
 2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.h (setTopographyImage): new function

@@ -507,10 +507,18 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
     }
 
     d_mutInfoAligner.setTransform(xform);
+    fprintf(stderr, "registerImagesUsingMutualInformation: Warning,"
+            "automatically saving histogram TIFF files\n");
+	d_mutInfoAligner.printJointHistograms(xform);
+	
+    bool useGradientDescent = false;
+	if (useGradientDescent) {
+		d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
+	                                       d_maxIterations, d_stepSize);
+    } else {
+		d_mutInfoAligner.multiResPatternSearch(d_maxIterations, d_stepSize);
+	}
 
-//    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
-//                                       d_maxIterations, d_stepSize);
-    d_mutInfoAligner.multiResPatternSearch(d_maxIterations, d_stepSize);
     d_mutInfoAligner.getTransform(xform);
 
     return 0;

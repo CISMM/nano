@@ -192,3 +192,13 @@ void nmr_MultiResObjectiveMI_direct::valueAndGradient(int level,
   d_objectiveMI[level].valueAndGradient(testFromReferenceTransform,
                                    valueMI, gradMI);
 }
+
+void nmr_MultiResObjectiveMI_direct::getJointHistogramSize(int level, int &numX, int &numY)
+{
+  d_objectiveMI[level].getJointHistogramSize(numX, numY);
+}
+
+void nmr_MultiResObjectiveMI_direct::getJointHistogramImage(int level, nmb_Image *image)
+{
+  d_objectiveMI[level].getJointHistogramImage(image);
+}

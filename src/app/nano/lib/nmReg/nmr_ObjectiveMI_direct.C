@@ -103,28 +103,65 @@ double nmr_ObjectiveMI_direct::value(double *testFromReferenceTransform)
   d_refHistogram->clear();
   d_jointHistogram->clear();
 
+  double deltaXRef, deltaYRef;
+  double refSizeX, refSizeY;
+  d_refValue->getAcquisitionDimensions(refSizeX, refSizeY);
+  double testSizeX, testSizeY;
+  d_testValue->getAcquisitionDimensions(testSizeX, testSizeY);
+  deltaXRef = refSizeX/(d_refValue->width());
+  deltaYRef = refSizeY/(d_refValue->width());
+  double pixelsPerUnitXTest = (double)(d_testValue->width())/testSizeX;
+  double pixelsPerUnitYTest = (double)(d_testValue->height())/testSizeY;
   int i, j;
-  double x, y, z = 0.0, x2, y2;
+  double minRefVal, maxRefVal;
+  double minTestVal, maxTestVal;
+  minRefVal = d_refValue->minValue();
+  maxRefVal = d_refValue->maxValue();
+  minTestVal = d_testValue->minValue();
+  maxTestVal = d_testValue->maxValue();
+  double rangeInvRef = (maxRefVal - minRefVal);
+  if (rangeInvRef == 0) {
+	rangeInvRef = 1.0;
+  } else {
+	rangeInvRef = 1.0/rangeInvRef;
+  }
+  double rangeInvTest = (maxTestVal - minTestVal);
+  if (rangeInvTest == 0) {
+	rangeInvTest = 1.0;
+  } else {
+	rangeInvTest = 1.0/rangeInvTest;
+  }
+
+  double temp;
+  double x_pix, y_pix, z = 0.0;
+  double x_world, y_world;
+  double x_world2, y_world2;
+  double x_pix2, y_pix2;
   int intValues[2];
-  for (i = 0, x = 0.5; i < d_refValue->width(); i++, x+=1.0) {
-    for (j = 0, y = 0.5; j < d_refValue->height(); j++, y+=1.0) {
+  // XXX - this needs work - there is too much confusion in what the coordinates of a pixel are
+  for (i = 0, x_pix = 0.5, x_world=deltaXRef*0.5; i < d_refValue->width(); i++, x_pix+=1.0, x_world+=deltaXRef) {
+    for (j = 0, y_pix = 0.5, y_world=deltaYRef*0.5; j < d_refValue->height(); j++, y_pix+=1.0, y_world+=deltaYRef) {
       if (d_dimensionMode == REF_HEIGHTFIELD) {
-        z = d_refZ->getValueInterpolated(x,y);
-        x2 = transform_x(x, y, z, testFromReferenceTransform);
-        y2 = transform_y(x, y, z, testFromReferenceTransform);
+        z = d_refZ->getValue(i, j);
+        x_world2 = transform_x(x_world, y_world, z, testFromReferenceTransform);
+        y_world2 = transform_y(x_world, y_world, z, testFromReferenceTransform);
       } else {
-        x2 = transform_x(x, y, testFromReferenceTransform);
-        y2 = transform_y(x, y, testFromReferenceTransform);
+        x_world2 = transform_x(x_world, y_world, testFromReferenceTransform);
+        y_world2 = transform_y(x_world, y_world, testFromReferenceTransform);
       }
-      if (x2 >= 0 && x2 <= d_testValue->width() && 
-          y2 >= 0 && y2 <= d_testValue->height()) {
-        intValues[0] = (int)((d_refValue->getValue(i,j))*d_numRefBins);
+	  x_pix2 = x_world2*pixelsPerUnitXTest;
+	  y_pix2 = y_world2*pixelsPerUnitYTest;
+      if (x_pix2 >= 0 && x_pix2 <= d_testValue->width() && 
+          y_pix2 >= 0 && y_pix2 <= d_testValue->height()) {
+		temp = (d_refValue->getValue(i,j) - minRefVal)*rangeInvRef;
+        intValues[0] = (int)(temp*d_numRefBins);
         if (intValues[0] > d_numRefBins-1) {
           intValues[0] = d_numRefBins-1;
         }
-        
-        float testVal = d_testValue->getValueInterpolated(x2, y2);
-        intValues[1] = (int)(testVal*d_numTestBins);
+    
+        float testVal = d_testValue->getValueInterpolated(x_pix2, y_pix2);
+		temp = (testVal - minTestVal)*rangeInvTest;
+        intValues[1] = (int)(temp*d_numTestBins);
         if (intValues[1] > d_numTestBins-1) {
           intValues[1] = d_numTestBins-1;
         }
@@ -155,3 +192,13 @@ void nmr_ObjectiveMI_direct::valueAndGradient(
   valueMI = value(testFromReferenceTransform);
 }
 
+void nmr_ObjectiveMI_direct::getJointHistogramSize(int &numX, int &numY)
+{
+  numX = d_numRefBins;
+  numY = d_numTestBins;
+}
+
+void nmr_ObjectiveMI_direct::getJointHistogramImage(nmb_Image *image)
+{
+  d_jointHistogram->getImage(image);
+}

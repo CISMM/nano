@@ -25,6 +25,7 @@ class nmr_AlignerMI {
     // transform is assumed to be in pixel units
     void setTransform(nmb_Transform_TScShR &xform);
     void getTransform(nmb_Transform_TScShR &xform);
+    void printJointHistograms(nmb_Transform_TScShR &xform);
     void plotObjective(FILE *outf);
     int getNumLevels();
     void getBlurStdDev(float *stddev);

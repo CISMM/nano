@@ -51,6 +51,9 @@ class nmr_ObjectiveMI_direct : public nmr_Objective {
     virtual void valueAndGradient(double *testFromReferenceTransform, 
                 double &valueMI, double *gradMI);
 
+	void getJointHistogramSize(int &numX, int &numY);
+	void getJointHistogramImage(nmb_Image *image);
+
   protected:
 
     // inline helper functions

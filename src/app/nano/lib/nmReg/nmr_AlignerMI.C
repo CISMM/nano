@@ -294,6 +294,33 @@ void nmr_AlignerMI::setTransform(nmb_Transform_TScShR &xform)
   d_transform = xform;
 }
 
+void nmr_AlignerMI::printJointHistograms(nmb_Transform_TScShR &xform)
+{
+  double xform_matrix[16];
+  xform.getMatrix(xform_matrix);
+  double objValue;
+  nmb_ImageGrid *hist = NULL;
+  int nx, ny;
+  FILE *file;
+  static int printCount = 0;
+  char filename[128];
+  int i;
+  // this is just to force calculation of the joint histogram
+  for (i = 0; i < d_objective->numLevels(); i++) {
+	objValue = d_objective->value(i, xform_matrix);
+	d_objective->getJointHistogramSize(i, nx, ny);
+	hist = new nmb_ImageGrid("temp", "temp", nx, ny);
+	d_objective->getJointHistogramImage(i, hist);
+	sprintf(filename, "jointHistogram%d.%d.tif", printCount, i);
+	file = fopen(filename, "w");
+	hist->exportToFile(file, "TIFF Image", filename);
+	fclose(file);
+	nmb_Image::deleteImage(hist);
+	hist = NULL;
+  }
+  printCount++;
+}
+
 void nmr_AlignerMI::getTransform(nmb_Transform_TScShR &xform)
 {
   xform = d_transform;

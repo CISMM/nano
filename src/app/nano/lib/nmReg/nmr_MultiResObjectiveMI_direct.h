@@ -61,6 +61,8 @@ class nmr_MultiResObjectiveMI_direct {
     /// function
     void valueAndGradient(int level, double *testFromReferenceTransform,
                 double &valueMI, double *gradMI);
+	void getJointHistogramSize(int level, int &numX, int &numY);
+	void getJointHistogramImage(int level, nmb_Image *image);
 
   protected:
     int d_numResolutionLevels;
