@@ -1330,7 +1330,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
         g_tex_image_height[COLORMAP_TEX_ID]);
   }
 
-  float min = im->minValue();
+  float min = im->minNonZeroValue();
   float max = im->maxValue();
   int red_index, grn_index, blu_index, alph_index;
   // we leave a 1 pixel border at the edge so that texture color where there
@@ -1376,7 +1376,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
          else { // Otherwise simple data to color mapping
            realign_data[red_index] = 
                ( im->getValue( k_im, j_im ) - min )/( max - min );
-		   
+           if (realign_data[red_index] < 0.0) realign_data[red_index] = 0.0;
            realign_data[grn_index] = 0.5;
            realign_data[blu_index] = 0.5;
          }
