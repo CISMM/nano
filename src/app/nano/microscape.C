@@ -385,12 +385,13 @@ int handSensor;
 
 // NANOX
 
-/** collaborationManager carries shared data for
- hand tracking, streamfile synchronization, and
- view sharing.
+/**
+ collaborationManager carries shared data for hand tracking,
+ streamfile synchronization, and view sharing.
  This should eventually be generalized to a set of collaborating
  remote peers. 
- Needs to be global so we can clean up after it. */
+ Needs to be global so we can clean up after it.
+*/
 
 CollaborationManager * collaborationManager = NULL;
 
@@ -6083,10 +6084,10 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
    vrpn_Connection * c) 
 {
     VERBOSE(1, "Creating a new microscope");
-  // Callbacks can do strange things, because re-creating
-  // tclvars can cause changes to be propagated through tcl to
-  // the new objects. I was getting a segfault in the microscope 
-  // constructor.
+
+  // First tear down callbacks & collaboration state to avoid
+  // triggering unwanted calls.
+
   if (microscope && dataset) {
     teardownStateCallbacks(microscope);
     teardownCallbacks(dataset, microscope);
@@ -6099,9 +6100,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
   if (alignerUI) {
     alignerUI->teardownCallbacks();
   }
-
   if (collaborationManager && microscope && dataset) {
-    //    printf("entering teardownSynchronization\n");
     teardownSynchronization(collaborationManager, dataset, 
 			    microscope);
   }
@@ -6654,7 +6653,9 @@ int main (int argc, char* argv[])
         display_fatal_error_dialog("Cannot setup tracker callbacks\n");
         return(-1);
     }
+
   // NANOX
+  // Initialize collaboration.
 
   collaborationManager = new CollaborationManager (istate.replayInterface);
 
@@ -7114,6 +7115,12 @@ VERBOSE(1, "Entering main loop");
       }
 
       if (collaborationManager) {
+
+        // Tell the collaborationManager what the current user mode is;
+        // this should be made obsolete by changing user_0_mode to
+        // a TclNet_int.  Then trigger the mainloop of collaborationManager,
+        // which sends and receives all necessary updates from our peer.
+
         collaborationManager->setUserMode(user_0_mode);
         collaborationManager->mainloop();
       }
