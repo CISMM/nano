@@ -3982,6 +3982,17 @@ doWorldGrab(int whichUser, int userEvent)
 			// Translate
 			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
 
+			// Check to see if any axes are locked.
+			if (obj.GetLockTransx()) {
+				v[0] = 0;
+			}
+			if (obj.GetLockTransy()) {
+				v[1] = 0;
+			}
+			if (obj.GetLockTransz()) {
+				v[2] = 0;
+			}
+
 			// Check to see if fine tuning.  If so, scale by 0.1
 			if (obj.GetTuneTrans()) {
 				q_vec_scale(v, 0.1, v);

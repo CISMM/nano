@@ -491,19 +491,19 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 	else {
 	    UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
+			// Note:  Locks are only applied when "grabbing" the object with
+			// the phantom/mouse phantom.  No check is applied here.
 			URender &obj = node->TGetContents();
-			if (!obj.GetLockTransx()) {
-				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-				obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
-				
-				// if a tube file and update_AFM selected, send trans
-				if ((strstr(*World.current_object, ".txt") != 0) && 
-					(SimulatedMicroscope != NULL) &&
-					obj.GetUpdateAFM()) {
-					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-																obj.GetLocalXform().GetTrans()[1],
-																obj.GetLocalXform().GetTrans()[2]);
-				}
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
+			
+			// if a tube file and update_AFM selected, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
 			}
 		}
     }
@@ -519,19 +519,19 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
+			// Note:  Locks are only applied when "grabbing" the object with
+			// the phantom/mouse phantom.  No check is applied here.
 			URender &obj = node->TGetContents();
-			if (!obj.GetLockTransy()) {
-				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-				obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
-				
-				// if a tube file and update_AFM selected, send trans
-				if ((strstr(*World.current_object, ".txt") != 0) && 
-					(SimulatedMicroscope != NULL) &&
-					obj.GetUpdateAFM()) {
-					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-																obj.GetLocalXform().GetTrans()[1],
-																obj.GetLocalXform().GetTrans()[2]);
-				}
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
+			
+			// if a tube file and update_AFM selected, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
 			}
 		}
     }
@@ -547,19 +547,19 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
+			// Note:  Locks are only applied when "grabbing" the object with
+			// the phantom/mouse phantom.  No check is applied here.
 			URender &obj = node->TGetContents();
-			if (!obj.GetLockTransz()) {
-				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-				obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
-							
-				// if a tube file and update_AFM selected, send trans
-				if ((strstr(*World.current_object, ".txt") != 0) && 
-					(SimulatedMicroscope != NULL) &&
-					obj.GetUpdateAFM()) {
-					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-																obj.GetLocalXform().GetTrans()[1],
-																obj.GetLocalXform().GetTrans()[2]);
-				}
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
+						
+			// if a tube file and update_AFM selected, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
 			}
 		}
     }
