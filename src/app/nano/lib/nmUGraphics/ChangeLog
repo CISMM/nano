@@ -1,3 +1,8 @@
+2002-04-15  David Borland <borland@cs.unc.edu>
+
+        * TubeFileGenerator.C:  made changes so that when the current static
+        file is a .tfr, the correct info is sent to the AFM simulator
+
 2002-04-11  David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C:  added code for skipping the first point in

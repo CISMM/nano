@@ -123,8 +123,8 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	maxY = height->maxY();
 
 	// set up z offset
-	z_value = height->scale() * 0.5 * (height->maxNonZeroValue() + height->minNonZeroValue());
-//	z_value = height->minNonZeroValue();
+//	z_value = height->scale() * 0.5 * (height->maxNonZeroValue() + height->minNonZeroValue());
+	z_value = height->minNonZeroValue();
 //	z_value = height->maxNonZeroValue();
 
 /*
@@ -298,34 +298,16 @@ printf("%f\n", height->scaledMaxValue());
 							Pobject->num_triangles += 2;	// two triangles per vertex
 						}
 						// do cylinder stuff
-						// translates back to origin from correct place in height plane
-
-/*
+						// translates back from correct place in height plane
 						c.x1 = p1[0] - minX;
 						c.y1 = p1[1] - minY;
 						c.z1 = p1[2] - z_value;
-*/
 
-
-/*
-						c.x1 = p1[0];
-						c.y1 = p1[1];
-						c.z1 = p1[2];
-*/
-						c.x1 = p1[0];
-						c.y1 = p1[1];
-						c.z1 = p1[2] - z_value;
-
-/*
-	printf("%f\n", c.x1);
-	printf("%f\n", c.y1);
-	printf("%f\n\n", c.z1);
-*/
 						if (!newtube) {	
 							// fill in last guys second point
-							cs.back().x2 = p1[0];
-							cs.back().y2 = p1[1];
-							cs.back().z2 = p1[2];
+							cs.back().x2 = c.x1;
+							cs.back().y2 = c.y1;
+							cs.back().z2 = c.z1;
 							// fill in length
 							cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
 													(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
