@@ -353,6 +353,7 @@ create_ShapeIdentifiedPlane()
   d_sourcePlane->add_callback(sourcePlaneChangeCallback, this);
 
   // let interested parties know a new plane has been created.
+
   //nmb_CalculatedPlane::addNewCalculatedPlane(this);
 
   return size;
