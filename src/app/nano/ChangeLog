@@ -1,3 +1,10 @@
+2001-06-18  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* microscape.c: changed handle_analyze_shape function so that
+		call to imageAnalyze() now takes the new parameter of 
+		type nmb_Dataset * that it now needs (due to changes in
+		nma_ShapeAnalysis)
+	
 2001-06-18  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c:  dead code removal.  Got rid of copy_inactive_state

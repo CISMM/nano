@@ -1057,7 +1057,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 	int x, y, i, j;
 	long id0, id1, index;
 	FILE *fSum, *fDet;
-	int tubeCount = 0;
+  	int tubeCount = 0;
 
 	int count;
 	double dx, dy, theta;

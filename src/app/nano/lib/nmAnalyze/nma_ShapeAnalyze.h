@@ -16,7 +16,7 @@ class CNT_IA;
 class nma_ShapeAnalyze
 {
 public:
-	nma_ShapeAnalyze(nmb_Dataset* dataset);
+	nma_ShapeAnalyze();
 
 	void setScale(float, float, float);
 	void setBlur(float);
@@ -32,13 +32,11 @@ public:
 	void setMaskFile(const char *);
 	void setOrderFile(const char *);
 
-	void setDataset(nmb_Dataset* dataset);
-
-	void imageAnalyze(nmb_PlaneSelection planeSelection);
+	void imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset);
+	//pass in dataset so that it is current when image analysis is done
 
 
 private:
-	nmb_Dataset* d_dataset;
 	char d_imgMaskFile[255];  //255 characters should be plenty for any file name
 	char d_desiredFilename[255];
 	

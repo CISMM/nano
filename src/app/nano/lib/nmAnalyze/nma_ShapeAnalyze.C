@@ -10,8 +10,8 @@
 #include <nmb_Dataset.h>
 
 nma_ShapeAnalyze::
-nma_ShapeAnalyze(nmb_Dataset* dataset)
-  :	d_maskWrite(1), d_ordWrite(0), d_dataset(dataset)
+nma_ShapeAnalyze()
+  :	d_maskWrite(1), d_ordWrite(0)
 {
 	strcpy(d_imgMaskFile, "mask.ppm");
 	strcpy(d_imgOrdFile, "order.ppm");
@@ -114,15 +114,9 @@ setOrderFile(const char *file)
 	}
 }
 
-void nma_ShapeAnalyze::
-setDataset(nmb_Dataset* dataset)
-{
-  d_dataset = dataset;
-}
-
 
 void nma_ShapeAnalyze::
-imageAnalyze(nmb_PlaneSelection planeSelection) //*
+imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 {
 	BCPlane *imagePlane;
 	imagePlane = planeSelection.height;
@@ -140,9 +134,9 @@ imageAnalyze(nmb_PlaneSelection planeSelection) //*
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
 	if (d_maskWrite) {
-	  //d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
+	  d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
 
-          nma_ShapeIdentifiedPlane shapePlane(imagePlane, d_dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
+          nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
 	}
 	if (d_ordWrite) {
 		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
@@ -221,7 +215,7 @@ create_ShapeIdentifiedPlane()
     {
       for( int x = 0; x <= rowlength - 1; x++) 
   	{
-	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]/255));  
+	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]));  
 	  //the array d_cntMask fills from the top down when you "chunk" the array
 	  //into pieces of length rowlength.  However, traditional y values used
 	  //in setValue treat lower valued y's as at the bottom of the image, and

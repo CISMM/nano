@@ -1,5 +1,13 @@
 2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
 
+	* nma_ShapeAnalyze.C:  took out setDataset() which was just a temp. fix function
+		anyways.  added parameter 'dataset' to imageAnalyze().
+
+	* nma_ShapeAnalyze.h:  took out above functions as well as data member d_dataset, 
+		since the only time that value is needed is in imageAnalyze
+
+2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
+
 	* nma_ShapeAnalyze.C:  initial creation of class nma_ShapeIdentified.  
 		This class displays the nanotubes that have been identified 
 		in the original plane in a separate height plane that can be 

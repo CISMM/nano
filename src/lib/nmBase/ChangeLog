@@ -3,6 +3,13 @@
 	* nmb_Types.h : remove dead code, move all #include statements to
 	top of file.
 
+2001-06-15  Andrea Hilchey  <hilchey@cs.unc.edu>
+
+	* BCPlane.h: added function GetGrid() to BCPlane to access private data
+ 		member _grid so that didn't have to make nma_ShapeAnalyze a friend
+		class to BCPlane.  changed line of code in nma_ShapeAnalyze
+ 		from ...->_grid to ...->GetGrid()
+
 2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* BCPlane.h:  added "friend class nma_ShapeIdentified" so this class

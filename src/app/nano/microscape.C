@@ -821,7 +821,7 @@ Tclvar_float	intensity_thresh("intensity_thresh",0.6);
 Tclvar_string	shape_mask_file("shape_mask_file", "mask");
 Tclvar_string	shape_order_file("shape_order_file", "order");
 
-nma_ShapeAnalyze shape_analysis(dataset);
+nma_ShapeAnalyze shape_analysis;
 //-----------------------------------------------------------------
 
 
@@ -2412,6 +2412,50 @@ static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
 
 }
 
+
+/**
+ * Currently assumes that only the most recently added peer is
+ *  "valid";  others are a (small?) memory/network leak.
+ */
+static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
+
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
+
+  int copyFrom = !sync->synchronizedTo();
+
+  //// only run once
+  //if (!value) {
+    //return;
+  //}
+
+  if (copyFrom) {
+
+    // a copyReplica needs to be deferred until the new data arrives
+    // The right way to do this is probably to have a Component's
+    // sync handler pack a "syncComplete" message AFTER all the
+    // callbacks have been triggered (=> the sync messages are marshalled
+    // for VRPN), so when that arrives we know the sync is complete and
+    // we can issue a copyReplica()
+
+    //collaborationTimer.block(collaborationTimer.getListHead());
+
+    sync->requestSync();
+    sync->d_maintain = VRPN_FALSE;
+//fprintf(stderr, "++ In handle_timed_sync() to %d;  "
+//"sent synch request to peer.\n", copyFrom);
+  } else {
+
+    sync->copyReplica(copyFrom);
+//fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
+//copyFrom);
+    plane_sync->acceptUpdates();
+    plane_sync->queueUpdates();
+
+  }
+
+}
 
 static int handle_timed_sync_request (void *) {
   // Write the current elapsed time of the stream
@@ -4236,6 +4280,7 @@ static void handle_analyze_shape(vrpn_int32, void *)
     if (analyze_shape == 0) {
         return;
     }
+
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
@@ -4251,8 +4296,10 @@ static void handle_analyze_shape(vrpn_int32, void *)
     
     shape_analysis.setMaskFile(shape_mask_file.string());
     shape_analysis.setOrderFile(shape_order_file.string());
+
+
     
-    shape_analysis.imageAnalyze(planes);
+    shape_analysis.imageAnalyze(planes, dataset);
     analyze_shape = 0;
 }
 
@@ -6956,8 +7003,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // Start using the new structures!
     microscope = new_microscope;
     dataset = new_dataset;
-
-    shape_analysis.setDataset( dataset );
 
     // Connection switch cleanup!
     // All methods for switching stream/live/default call this
