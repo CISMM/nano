@@ -50,7 +50,7 @@
 #include <sys/unistd.h>  // for getpid()
 
 // cannot include sys/unistd.h because it would cause a conflict with the
-// windows-defined gethostbyname.  Instead, I'll declare getpid myslef.  This
+// windows-defined gethostbyname.  Instead, I'll declare getpid myself.  This
 // is really ugly and dangerous.
 extern "C" {
 pid_t getpid();
@@ -5535,10 +5535,6 @@ void ParseArgs (int argc, char ** argv,
   int time_frame;
   int i;
 
-  // Be nice to Tcl - it expects this:
-  Tcl_FindExecutable(argv[0]);
-
-
     i = 1;
     while (i < argc) {
         //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
@@ -7009,11 +7005,40 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
 
     // Check for NANO_ROOT env var. If other things aren't set, 
     // they can be set relative to NANO_ROOT by default. 
-    char * nano_root = getenv("NANO_ROOT");
+    char * nano_root = NULL;
+    if (getenv("NANO_ROOT")) {
+        // Do it this way so we know we can delete [] below, 
+        // and avoid memory leaks. 
+        nano_root = new char [strlen(getenv("NANO_ROOT")) + 1];
+        strcpy(nano_root, getenv("NANO_ROOT"));
+    }
     tcl_script_dir=getenv("NM_TCL_DIR");
     colorMapDir=getenv("NM_COLORMAP_DIR");
+    char *env_string = NULL; 
+    if (!nano_root) {
+        // attempt to get root directory from directory application 
+        // was run from. 
+        // Use Tcl because it's portable between unix/win
+        char * name = (char *)Tcl_GetNameOfExecutable();
+        int argc;
+        char **argv;
+        Tcl_SplitPath(name, &argc, &argv);
+        // Check to make sure executable is in "bin" directory
+        if (argc > 2 && (strcmp("bin", argv[argc-2]) == 0)) {
+            Tcl_DString dstr;
+            Tcl_DStringInit(&dstr);
+            // grab everything except "bin/nano"
+            name = Tcl_JoinPath( argc-2, argv, &dstr);
+            if (name) {
+                nano_root = new char [strlen(name) +1];
+                strcpy(nano_root, name);
+            }
+            Tcl_DStringFree(&dstr);
+        }
+        Tcl_Free((char *) argv);
+    }
     if (nano_root) {
-        char *env_string = new char [strlen(nano_root) + 50];
+        if (!env_string) env_string = new char [strlen(nano_root) + 50];
 // Not needed if tcl is installed next to the nano app, as
 // the use of NANO_ROOT implies
 //  #if defined (_WIN32) && !defined (__CYGWIN__)
@@ -7037,6 +7062,7 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             strcpy(colorMapDir, env_string);
 	}
         delete [] env_string;
+        delete [] nano_root;
     }
 
     // If these didn't get set up, use defaults. 
@@ -7080,7 +7106,10 @@ int main (int argc, char* argv[])
     // DEBUG pause program to attach debugger. 
     //cin.get();
 
-    nmb_ImgMagick::initMagick(*argv);
+    // image magick library expects this:
+    nmb_ImgMagick::initMagick(argv[0]);
+    // For Tcl, also used in initialize_environment - it expects this:
+    Tcl_FindExecutable(argv[0]);
 
     decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
