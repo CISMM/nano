@@ -94,7 +94,7 @@ vrpn_int32 BaseModParameters_type;
 vrpn_int32 ForceSettings_type;
 vrpn_int32 InModModeT_type;
 vrpn_int32 InImgModeT_type;
-vrpn_int32 InModeMode_type;
+vrpn_int32 InModMode_type;
 vrpn_int32 InImgMode_type;
 vrpn_int32 ModForceSet_type;
 vrpn_int32 ImgForceSet_type;
@@ -463,11 +463,13 @@ int	translate_packet(stm_stream *instream)
       break;
 
     case AFM_IN_MOD_MODE: 
-      printf ("AFM_IN_MOD_MODE ()\n");
+      connection->pack_message(10000 - vbuflen, now, InModMode_type,
+                               myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
     case AFM_IN_IMG_MODE:
-      printf ("AFM_IN_IMG_MODE ()\n");
+      connection->pack_message(10000 - vbuflen, now, InImgMode_type,
+                               myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
     case SPM_RELAX_SET: 
@@ -480,26 +482,26 @@ int	translate_packet(stm_stream *instream)
       break;
 
     case AFM_IN_MOD_MODE_T: 
-      //stm_unbuffer_long (&bufptr, &sec);
+      // We send out the InModMode message, since the timed one is
+      // obsolete (the time is stored in "now" already, so doesn't need
+      // to be also in the body of the message.
       stm_unbuffer_int (&bufptr, &sec);
-      vrpn_buffer (&vbp, &vbuflen, sec);
-      //stm_unbuffer_long (&bufptr, &usec);
       stm_unbuffer_int (&bufptr, &usec);
-      vrpn_buffer (&vbp, &vbuflen, usec);
       if (first_time_sec == 0) {
 	 first_time_sec = sec;
       }
       now.tv_sec = sec - first_time_sec;
       now.tv_usec = usec;
-      connection->pack_message(10000 - vbuflen, now, InModModeT_type,
+      connection->pack_message(10000 - vbuflen, now, InModMode_type,
                                myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
     case AFM_IN_IMG_MODE_T: 
-      //stm_unbuffer_long (&bufptr, &sec);
+      // We send out the InImgMode message, since the timed one is
+      // obsolete (the time is stored in "now" already, so doesn't need
+      // to be also in the body of the message.
       stm_unbuffer_int (&bufptr, &sec);
       vrpn_buffer (&vbp, &vbuflen, sec);
-      //stm_unbuffer_long (&bufptr, &usec);
       stm_unbuffer_int (&bufptr, &usec);
       vrpn_buffer (&vbp, &vbuflen, usec);
       if (first_time_sec == 0) {
@@ -507,7 +509,7 @@ int	translate_packet(stm_stream *instream)
       }
       now.tv_sec = sec - first_time_sec;
       now.tv_usec = usec;
-      connection->pack_message(10000 - vbuflen, now, InImgModeT_type,
+      connection->pack_message(10000 - vbuflen, now, InImgMode_type,
                                myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
@@ -680,7 +682,6 @@ int	translate_packet(stm_stream *instream)
 	stm_unbuffer_float (&bufptr, &fscrap);
         vrpn_buffer (&vbp, &vbuflen, fscrap);
       }
-      printf ("SPM_SCAN_DATASETS %d\n", iscrap);
       connection->pack_message(10000 - vbuflen, now, ScanDataset_type,
                                myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
@@ -1320,8 +1321,8 @@ void	main(unsigned argc, char *argv[])
         ("nmm Microscope AFM InModModeT");
     InImgModeT_type = connection->register_message_type
         ("nmm Microscope AFM InImgModeT");
-    // InModMode_type = connection->register_message_type
-    //    ("nmm Microscope AFM InModMode");
+    InModMode_type = connection->register_message_type
+       ("nmm Microscope AFM InModMode");
     InImgMode_type = connection->register_message_type
         ("nmm Microscope AFM InImgMode");
     ModForceSet_type = connection->register_message_type

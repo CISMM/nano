@@ -13,7 +13,10 @@
 //
 // Tom Hudson, May 1999
 // Program takes a stm_cmd stream and translates it to the NEW
-// VRPN message spec by Aron Helser.
+// VRPN message spec by Aron Helser.  (As of June 2000, we had
+// not yet implemented this new type; this program is not the
+// one to use to convert to the Nano version 9.0; use the program
+// streamToVrpn instead.
 
 // This is not very efficient;  we copy buffers over and over
 // even when the format is unchanged because while copying we
