@@ -155,6 +155,10 @@ int URProjectiveTexture::enable(double *textureTransform,
 								double *objectToWorldTransform,
 								bool textureInWorldCoordinates)
 {
+	if (d_enabled) {
+		fprintf(stderr, "URProjectiveTexture::enable: Error, already enabled\n");
+		return -1;
+	}
 	if (!d_textureCreated && !d_greyscaleImage && !d_colorImage) return 0;
 
 	double imageToTexture[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};

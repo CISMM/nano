@@ -1,3 +1,8 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URProjectiveTexture.C (enable): added error message to catch a potential
+    programmer error
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 	* URender.[hC]: name change: SetProjTextAll-->SetProjTextEnableAll
 	(SetProjTextureAll): new function
