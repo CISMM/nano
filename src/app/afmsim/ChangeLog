@@ -1,3 +1,12 @@
+2000-10-05  Kwan Torrich Skinner <skinner@cs.unc.edu>
+	* nmm_Microscope_Simulator.h (afmFeelToPoint) : updated
+	declaration.
+	* nmm_Microscope_Simulator.h (sendEndFeelTo) : same.
+	* nmm_Microscope_Simulator.C (RcvFeelTo) : updated call to
+	afmFeelToPoint.
+	* nmm_Microscope_Simulator.C (afmFeelToPoint) : updated call
+	to sendEndFeelTo.
+
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* simulator_server.C (jakeMain) : remove hacked latency
