@@ -256,7 +256,7 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 #ifdef PROJECTIVE_TEXTURE
     
     if (d_currentState.textureMode == GL_TEXTURE_2D) {
-        glPushAttrib(GL_TRANSFORM_BIT | GL_TEXTURE_BIT);
+        glPushAttrib(GL_TRANSFORM_BIT | GL_TEXTURE_BIT | GL_ENABLE_BIT);
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_TEXTURE_GEN_S);
         glEnable(GL_TEXTURE_GEN_T);

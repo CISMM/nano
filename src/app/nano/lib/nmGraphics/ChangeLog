@@ -1,3 +1,8 @@
+2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_SurfaceRegion.C (setTexture): added GL_ENABLE_BIT to 
+	the glPushAttrib call so we can pop the call to glEnable(GL_TEXTURE_2D)
+
 2002-07-01  Aron Helser  <helser@cs.unc.edu>
 
 	* chartjunk.c (rate_display): Display total length of stream in
