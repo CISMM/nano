@@ -220,59 +220,24 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
  *                                                                         
  *	This routine returns 1 on success and 0 on failure. */
 
-int init_vertexArray(int x, int y)
-{
-    static int old_grid_dim = 0;
-  int dim, i;
-
-  if(x<=y) {
-     dim=y;
-  }
-  else {
-     dim=x;
-  }       
-
-  // Called every time grid is resized - reclaim memory.
-  if (vertexptr) {
-      for(i=0;i< old_grid_dim;i++) {
-          if ( vertexptr[i] ) free (vertexptr[i]);
-      }
-      free(vertexptr);
-  }
-  old_grid_dim = dim;
-
-   vertexptr= (Vertex_Struct **)malloc(
-                               sizeof(Vertex_Struct *) * dim);
-
-   if (vertexptr == NULL)
-      return 0;
-   for(i=0;i< dim;i++) {
-     vertexptr[i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
-
-     if(vertexptr[i] == NULL )
-       return 0;
-   }
-   return 1;
-}
-
-void specify_vertexArray(int strip, int *vert_counts, int num)
+void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_strips)
 {
     if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
         glNormalPointer(GL_SHORT, sizeof(Vertex_Struct),
-                        vertexptr[strip][0].Normal );
+                        vertexArray[0].Normal );
     }
     glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(Vertex_Struct),
-                   vertexptr[strip][0].Color);
+                   vertexArray[0].Color);
     glVertexPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
-                    vertexptr[strip][0].Vertex);
+                    vertexArray[0].Vertex);
     
     if (g_texture_mode == GL_TEXTURE_1D) // (planes.contour)
         glTexCoordPointer(1,GL_FLOAT,sizeof(Vertex_Struct),
-                          &(vertexptr[strip][0].Texcoord[2]));
+                          &(vertexArray[0].Texcoord[2]));
 #if defined(sgi)
     else if (g_texture_mode == GL_TEXTURE_3D) // (planes.alpha)
         glTexCoordPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
-                          vertexptr[strip][0].Texcoord);
+                          vertexArray[0].Texcoord);
 #endif
     
     // if using projective texture then we still do 1D and 3D textures as above
@@ -280,15 +245,15 @@ void specify_vertexArray(int strip, int *vert_counts, int num)
 #ifndef PROJECTIVE_TEXTURE
     else if (g_texture_mode == GL_TEXTURE_2D)
         glTexCoordPointer(2,GL_FLOAT,sizeof(Vertex_Struct),
-                          &(vertexptr[strip][0].Texcoord[1]));
+                          &(vertexArray[0].Texcoord[1]));
     
     else if ( g_realign_textures_enabled )
         glTexCoordPointer( 2, GL_FLOAT, sizeof(Vertex_Struct), 
-                           &(vertexptr[strip][0].Texcoord[1]));
+                           &(vertexArray[0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
     
     int start = 0;
-    for(int i = 0; i < num; i++) {
+    for(int i = 0; i < num_strips; i++) {
         glDrawArrays( GL_TRIANGLE_STRIP,start,vert_counts[i]);
         start += vert_counts[i];
     }
@@ -766,7 +731,7 @@ int spm_y_strip( nmb_PlaneSelection planes,
 
 
 int spm_x_strip( nmb_PlaneSelection planes,
-                 GLdouble minColor[4], GLdouble maxColor[4], int strip,
+                 GLdouble minColor[4], GLdouble maxColor[4], int which,
                  Vertex_Struct * vertexArray)
 {      
     int     x,y;
@@ -779,18 +744,16 @@ int spm_x_strip( nmb_PlaneSelection planes,
     }
     
     // Make sure they asked for a legal strip (in range and on stride)
-    int which = strip * g_stride;
     if ((which < 0) || (which >= planes.height->numY() - 1)) {
         fprintf(stderr, "Strip %d is outside plane.\n", which);
         return(-1);
     }
-    /*
-      if (which % g_stride) {
+    
+    if (which % g_stride) {
       fprintf(stderr, "Strip %d is off stride.\n", which);
       return(-1);
-      }
-    */
-    
+    }
+        
     /* Fill in the vertices for the triangle strip */
     glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
     
@@ -893,7 +856,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
     
     if (g_VERTEX_ARRAY) {
         vert_counts[number_of_strips] = count;
-        specify_vertexArray(strip, vert_counts, number_of_strips+1);
+        specify_vertexArray(vertexArray, vert_counts, number_of_strips+1);
     }
     else {
         glEnd();

@@ -253,8 +253,8 @@ extern char g_maskPlaneName [128];
 extern char g_transparentPlaneName [128];
 
 extern BCGrid * g_inputGrid;
-struct Vertex_Struct;
-extern Vertex_Struct **vertexptr;
+//struct Vertex_Struct;
+//extern Vertex_Struct **vertexptr;
 
 //////////////////////////////////////////////////////////////////
 // Visualization Section

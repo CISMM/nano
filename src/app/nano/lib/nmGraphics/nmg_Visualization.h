@@ -33,6 +33,8 @@ public:
 	void setAlpha(float alpha);
 	void setSmooth(bool smooth);
 
+	Vertex_Struct ** getBaseSurface();
+
 protected:
 	float d_maxHeight, d_minHeight;  //Height's specified in percentage of
 	                                 //max height

@@ -1,3 +1,22 @@
+2001-01-19  Jason Clark  <jclark@cs.unc.edu>
+
+	* spm_gl.c (specify_vertexArray): Bug fix. See below
+
+	* openGL.c (build_list_set): Bug fix.  See below
+
+	* nmg_Visualization.C (getBaseSurface): New function
+	Bug fix of second pass rendering "collapsing" occasionally when
+	stride changed.  Also moved all accessing of the surface, the
+	global variable vertexptr, to be through visualization classes.
+
+	* nmg_GraphicsImpl.C: Fix for visualizations so that it does the
+	right thing when the height plane is changed.
+	(computeRealignPlane): Calls visualizations getBaseSurface to get
+	a surface to use for texture calculations.
+	(setTextureCenter): See above
+
+	* graphics_globals.h: Removed no longer needed externed vertexptr variable.
+
 2001-01-15  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c (specify_vertexArray): Vertex arrays are now standard

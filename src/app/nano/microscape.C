@@ -322,6 +322,9 @@ static void handle_mutex_release (vrpn_int32, void *);
 static void handle_recordAdaptations_change (int, void *);
 static void handle_msTimestampsName_change (const char *, void *);
 
+//Shape Analysis callback functions
+static void handle_analyze_shape(vrpn_int32 new_value, void *userdata);
+
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
 // Error recovery
@@ -743,7 +746,7 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
-Tclvar_int	analyze_shape("analyze_shape",0);
+Tclvar_int	analyze_shape("analyze_shape",0, handle_analyze_shape);
 Tclvar_int	shape_mask("shape_mask",1);
 Tclvar_int	shape_order("shape_order",0);
 Tclvar_int	auto_adapt("auto_adapt",1);
@@ -1734,12 +1737,6 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
             tk_control_interp->result);
   }
 }
-
-
-
-
-
-
 
 /// Handle the color change of the rulergrid
 static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
@@ -4004,6 +4001,31 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
    }
 
    newScreenImageFileName = (const char *) "";
+}
+
+static void handle_analyze_shape(vrpn_int32, void *)
+{
+    if (analyze_shape == 0) {
+        return;
+    }
+    nmb_PlaneSelection planes;
+    planes.lookup(dataset);
+    
+    shape_analysis.setScale(shape_xscale, shape_yscale, shape_zscale);
+    shape_analysis.setBlur(blurring);
+    shape_analysis.setCorrelation(correlation);
+    shape_analysis.setAspectRatio(aspect_ratio);
+    shape_analysis.setThresholdInten(intensity_thresh);
+    shape_analysis.setAutoAdapt(auto_adapt);
+    
+    shape_analysis.setMaskWrite(shape_mask);
+    shape_analysis.setOrderWrite(shape_order);
+    
+    shape_analysis.setMaskFile(shape_mask_file.string());
+    shape_analysis.setOrderFile(shape_order_file.string());
+    
+    shape_analysis.imageAnalyze(planes);
+    analyze_shape = 0;
 }
 
 
@@ -6290,12 +6312,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     microscope = new_microscope;
     dataset = new_dataset;
 
-
-    // Some other stuff
-
-    // clear the modify markers
-    handleCharacterCommand("C", &dataset->done, 1);
-
     // Connection switch cleanup!
     // All methods for switching stream/live/default call this
     // function, so cleaning up goobers in the interface should
@@ -7234,28 +7250,8 @@ VERBOSE(1, "Entering main loop");
         ttest0(t_avg_d, "display");
       } /* end if updt */
 
-    // REMOTERENDER
-      if (analyze_shape == 1) {
-          nmb_PlaneSelection planes;
-          planes.lookup(dataset);
-          
-          shape_analysis.setScale(shape_xscale, shape_yscale, shape_zscale);
-          shape_analysis.setBlur(blurring);
-          shape_analysis.setCorrelation(correlation);
-          shape_analysis.setAspectRatio(aspect_ratio);
-          shape_analysis.setThresholdInten(intensity_thresh);
-          shape_analysis.setAutoAdapt(auto_adapt);
-          
-          shape_analysis.setMaskWrite(shape_mask);
-          shape_analysis.setOrderWrite(shape_order);
-          
-          shape_analysis.setMaskFile(shape_mask_file.string());
-          shape_analysis.setOrderFile(shape_order_file.string());
-          
-          shape_analysis.imageAnalyze(planes);
-          analyze_shape = 0;
-      }
-      
+      // REMOTERENDER
+
       graphicsTimer.newTimestep();
       
       // NANOX

@@ -1240,6 +1240,9 @@ void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   strcpy(g_heightPlaneName, n);
+  //Temporary hack until TCL interface for Visualizations is created
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+  visualization->setControlPlane(planes.height);
 }
 
 // virtual
@@ -1647,14 +1650,15 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
   // Uses bi-linear interpolation for points that don't fall
   // exactly on the grid.
 
+  Vertex_Struct ** surface = visualization->getBaseSurface();
   int numx = plane->numX();
   int numy = plane->numY();
   for ( int i = 0; i < numy; i++ )
     for ( int j = 0; j < numx; j++ ) {
 
       // Transformed Texture Coordinate
-      float u = vertexptr[i][j * 2].Texcoord[1];
-      float v = vertexptr[i][j * 2].Texcoord[2];
+      float u = surface[i][j * 2].Texcoord[1];
+      float v = surface[i][j * 2].Texcoord[2];
 
       // X, Y coordinate in original dataset
       float x = u * 512; // Maximum texture size
@@ -1916,19 +1920,20 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
   float min = 3;
   float x_dis, y_dis;
 
+  Vertex_Struct ** surface = visualization->getBaseSurface();
   for ( int i = 0; i < numy; i++ )
     for ( int j = 0; j < numx; j++ ) {
-      x_dis = (vertexptr[i][j * 2].Texcoord[1] - u)*
-	(vertexptr[i][j * 2].Texcoord[1] - u);
-      y_dis = (vertexptr[i][j * 2].Texcoord[2] - v)*
-	(vertexptr[i][j * 2].Texcoord[2] - v);
+      x_dis = (surface[i][j * 2].Texcoord[1] - u)*
+	(surface[i][j * 2].Texcoord[1] - u);
+      y_dis = (surface[i][j * 2].Texcoord[2] - v)*
+	(surface[i][j * 2].Texcoord[2] - v);
       if ( sqrt( x_dis + y_dis ) < min ) {
 	min = sqrt( x_dis + y_dis );
-	x = vertexptr[i][j * 2].Vertex[0];
-	y = vertexptr[i][j * 2].Vertex[1];
-	z = vertexptr[i][j * 2].Vertex[2];
-	g_tex_coord_center_x = vertexptr[i][j * 2].Texcoord[1];
-	g_tex_coord_center_y = vertexptr[i][j * 2].Texcoord[2];
+	x = surface[i][j * 2].Vertex[0];
+	y = surface[i][j * 2].Vertex[1];
+	z = surface[i][j * 2].Vertex[2];
+	g_tex_coord_center_x = surface[i][j * 2].Texcoord[1];
+	g_tex_coord_center_y = surface[i][j * 2].Texcoord[2];
 	position_sphere(x, y, z);
       }
     }

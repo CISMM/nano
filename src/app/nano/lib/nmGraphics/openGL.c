@@ -264,7 +264,7 @@ int build_list_set
 #endif // PROJECTIVE_TEXTURE
   }
 
-#endif // sgi or __CYGWIN__
+#endif // sgi or win32
 //#endif // sgi 
 
   if (spm_graphics_verbosity >= 15) { 
@@ -290,7 +290,7 @@ int build_list_set
     
     VERBOSECHECK(10);
     
-    if ((*stripfn)(planes, minColor, maxColor, i, surface[i])) {
+    if ((*stripfn)(planes, minColor, maxColor, i*g_stride, surface[i])) {
         if (g_VERTEX_ARRAY) {
             fprintf(stderr, "build_list_set():  "
                     "Internal error - bad strip(vertex array)\n");

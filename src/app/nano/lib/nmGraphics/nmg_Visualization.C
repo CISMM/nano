@@ -27,7 +27,7 @@
 //to the "base" surface.  Typically this will be whatever surface is
 //the "opaque" surface.   This should be set in the initVertexArrays
 //call.
-Vertex_Struct ** vertexptr = NULL;
+//Vertex_Struct ** vertexptr = NULL;
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::Constructor
@@ -85,6 +85,17 @@ nmg_Visualization::
     if (d_vertexPtr) {
         free(d_vertexPtr);
     }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::getBaseSurface
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+Vertex_Struct ** nmg_Visualization::
+getBaseSurface()
+{
+    return d_vertexPtr[0];
 }
 
 ////////////////////////////////////////////////////////////
@@ -669,18 +680,19 @@ initVertexArrays(int x, int y)
         dim=x;
     }       
     
-    d_vertexPtr = (Vertex_Struct ***)malloc(sizeof(Vertex_Struct **));
-    
-    // with RenderClient may be called more than once;  why waste memory?
-    if (d_vertexPtr[0]) {
-        free(vertexptr);
+    if (d_vertexPtr) {
+        free(d_vertexPtr);
     }
+    
+    d_vertexPtr = (Vertex_Struct ***)malloc(sizeof(Vertex_Struct **));
     
     d_vertexPtr[0] = (Vertex_Struct **)malloc(
         sizeof(Vertex_Struct *) * dim);
     
-    if (d_vertexPtr[0] == NULL)
+    if (d_vertexPtr[0] == NULL) {
         return 0;
+    }
+    
     for(int i=0;i < dim; i++) {
         d_vertexPtr[0][i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
         
@@ -688,7 +700,6 @@ initVertexArrays(int x, int y)
             return 0;
     }
     
-    vertexptr = d_vertexPtr[0];
     return 1;
 }
 
@@ -842,14 +853,13 @@ initVertexArrays(int x, int y)
         dim=x;
     }       
     
+    if (d_vertexPtr) {
+        free(d_vertexPtr);
+    }
+    
     d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
     
     for(int i = 0; i < 2; i++) {
-        // with RenderClient may be called more than once;  why waste memory?
-        if (d_vertexPtr[i]) {
-            free(vertexptr);
-        }
-        
         d_vertexPtr[i] = (Vertex_Struct **)malloc(
             sizeof(Vertex_Struct *) * dim);
         
@@ -863,7 +873,6 @@ initVertexArrays(int x, int y)
         }
     }
     
-    vertexptr = d_vertexPtr[0];
     return 1;
 }
 
@@ -920,6 +929,7 @@ rebuildGrid()
     {
         return 0;
     }
+
     g_mask = INVERT_MASK;
     
     int stride = g_stride;
@@ -1031,14 +1041,13 @@ initVertexArrays(int x, int y)
         dim=x;
     }       
     
+    if (d_vertexPtr) {
+        free(d_vertexPtr);
+    }
+    
     d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
     
     for(int i = 0; i < 2; i++) {
-        // with RenderClient may be called more than once;  why waste memory?
-        if (d_vertexPtr[i]) {
-            free(vertexptr);
-        }
-        
         d_vertexPtr[i] = (Vertex_Struct **)malloc(
             sizeof(Vertex_Struct *) * dim);
         
@@ -1052,7 +1061,6 @@ initVertexArrays(int x, int y)
         }
     }
     
-    vertexptr = d_vertexPtr[0];
     return 1;
 }
 
@@ -1252,14 +1260,13 @@ initVertexArrays(int x, int y)
         dim=x;
     }       
     
+    if (d_vertexPtr) {
+        free(d_vertexPtr);
+    }
+    
     d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
     
     for(int i = 0; i < 2; i++) {
-        // with RenderClient may be called more than once;  why waste memory?
-        if (d_vertexPtr[i]) {
-            free(vertexptr);
-        }
-        
         d_vertexPtr[i] = (Vertex_Struct **)malloc(
             sizeof(Vertex_Struct *) * dim);
         
@@ -1273,6 +1280,5 @@ initVertexArrays(int x, int y)
         }
     }
     
-    vertexptr = d_vertexPtr[0];
     return 1;
 }
