@@ -79,7 +79,6 @@ class nmr_RegistrationUI {
     static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
     static void handle_registrationMinMax2D_change(vrpn_float64, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
-	static void handle_textureImageMode_change(vrpn_int32 value, void *ud);		// Surface or Model
     static void handle_textureTransformMode_change(const char *name, void *ud);
     static void handle_autoAlignRequested_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
@@ -95,8 +94,6 @@ class nmr_RegistrationUI {
        handle_registrationImage2D_change(imageName, (void *)this);
     }
     void displayTexture(int enable) {d_textureDisplayEnabled = enable;};
-	void setImageMode(int mode) {d_textureImageMode = mode;};
-
     void autoAlignImages();
     // set a function to be called whenever the worldToImage transformation
     // changes for an image in the image list
@@ -119,7 +116,6 @@ class nmr_RegistrationUI {
     Tclvar_int d_constrainToTopography;
     Tclvar_int d_invertWarp;
     Tclvar_int d_textureDisplayEnabled;
-	Tclvar_int d_textureImageMode;
     Tclvar_int d_resampleResolutionX;
     Tclvar_int d_resampleResolutionY;
     Tclvar_float d_resampleRatio;

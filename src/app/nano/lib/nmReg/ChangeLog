@@ -1,3 +1,9 @@
+2002-07-08  David Borland <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.[Ch] : removed code for selecting the 
+        projective texture coordinate generation mode.  Now resides in
+        import.C.
+
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondence.[Ch] : added distinction between 2D points (specified
