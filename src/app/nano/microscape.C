@@ -2767,12 +2767,13 @@ static void handle_openStaticFilename_change (const char *, void *)
 {
     //fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
     //fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
-    //if collaborative session don't allow
+    //if in a collaborative session, don't allow
     // changing staticfiles/streamfiles/SPM devices
-    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	//display_error_dialog("Error: Cannot change static file in collaborative session");
-	//return;
-    //}
+    if( (collaborationManager) && (collaborationManager->isCollaborationOn()) ) 
+	{
+		display_error_dialog("Error: Cannot change static file in collaborative session");
+		return;
+    }
 
 	// assume same scale in x and y
 	change_static_file csf;
@@ -2839,12 +2840,13 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 {
     //fprintf(stderr,"HANDLE_OPENSTREAMFILE CHANGE\n");
     //fprintf(stderr,"Filename length: %d\n",strlen(openStreamFilename));
-    //if collaborative session don't allow
+    //if in collaborative session,  don't allow
     // changing staticfiles/streamfiles/SPM devices
-    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	//display_error_dialog("Error: Cannot change stream file in collaborative session");
-	//return;
-    //}
+    if( (collaborationManager) && (collaborationManager->isCollaborationOn()) ) 
+	{
+		display_error_dialog("Error: Cannot change stream file in collaborative session");
+		return;
+    }
 
     // Give the use a little feedback that we're doing something that
     // might take a while. 
@@ -5398,9 +5400,9 @@ void setupSynchronization( CollaborationManager * cm,
   streamfileControls->add(&rewind_stream);
   streamfileControls->add(&set_stream_time);
   // open{Static,Stream}Filename are now TclNet_string
-  streamfileControls->add(&openStaticFilename);
-  streamfileControls->add(&openStreamFilename);
-  streamfileControls->add(&openSPMDeviceName);
+  // streamfileControls->add(&openStaticFilename);
+  // streamfileControls->add(&openStreamFilename);
+  // streamfileControls->add(&openSPMDeviceName);
   // Don't want to synchronize this;  TCL sets it when set_stream_time
   // sync occurs.
   // streamfileControls->add(&set_stream_time_now);
