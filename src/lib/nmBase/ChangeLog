@@ -12,7 +12,7 @@
 		loading both Hamburg and DI and bogus files.
 	* BCPlane.C : Same.
 	* BCPlane.h : Same.
-	nmBase.dsp : Adding in the above files.
+	* nmBase.dsp : Adding in the above files.
 
 2004-03-17  David Borland  <borland@cs.unc.edu>
 
