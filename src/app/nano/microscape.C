@@ -3448,13 +3448,7 @@ static void handle_flatPlaneName_change(const char *, void *)
       return;
     }
   
-  // Add the plane into the list of available ones.
-  // Here we DONT just use newFlatPlaneName, because 
-  // computeFlattenedPlane will change the name,
-  // to add "from hostname"
-  dataset->inputPlaneNames->addEntry(flatPlane->getName()->Characters());
-  newFlatPlaneName = (const char *) "";
-  
+  newFlatPlaneName = (const char *) "";  
 } // end handle_flatPlaneName_change
 
 
@@ -3483,10 +3477,7 @@ static void handle_lblflatPlaneName_change(const char *, void *)
       return;
     }
   
-  // Add the plane into the list of available ones.
-  dataset->inputPlaneNames->addEntry( flatPlane->getName( )->Characters( ) );
   newLBLFlatPlaneName = (const char *) "";
-  
 } // end handle_lblflatPlaneName_change
 
 
@@ -3515,10 +3506,7 @@ static	void	handle_sumPlaneName_change(const char *, void *)
       return;
     }
     
-  // Add the plane into the list of available ones.
-  dataset->inputPlaneNames->addEntry(newSumPlane->getName()->Characters());
-  
-  newSumPlaneName = "";
+  newSumPlaneName = (const char*) "";
 }
 
 /** See if the user has given a name to the adhesion plane other
