@@ -82,6 +82,8 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
                       vrpn_int32 &y_gain, vrpn_int32 &y_offset,
                       vrpn_int32 &z_gain, vrpn_int32 &z_offset);
     void getExternalScanControlEnable(vrpn_int32 &enabled);
+    void getMagnification(vrpn_float32 &mag);
+    void getScanRegion_nm(double &width_nm, double &height_nm);
 
     // other
     int connected() {return d_connection->connected();}
@@ -103,6 +105,7 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     static int RcvReportDACParams(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvReportExternalScanControlEnable(void *_userdata,
                                                   vrpn_HANDLERPARAM _p);
+    static int RcvReportMagnification(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type,
         const struct timeval &msg_time);
@@ -129,6 +132,9 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     vrpn_int32 d_hRetraceDelay_nsec, d_vRetraceDelay_nsec;
     vrpn_int32 d_xGain, d_xOffset, d_yGain, d_yOffset, d_zGain, d_zOffset;
     vrpn_int32 d_externalScanControlEnabled;
+    vrpn_float32 d_magnification; // [(width of "display" in nm)/
+                                  //  (width of scan in nm)]
+    vrpn_float32 d_magCalibration; // [width of "display" in nm];default = 10cm
 
     /* ---------------------------------------------------------------
        message callback management

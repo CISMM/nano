@@ -1,3 +1,14 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_EDAX.h: reduced max DAC resolution to 4096x3200 temporarily
+	until we get version 3.3 of the EDAX library which should let us do
+	65536x51200
+        * nmm_Microscope_SEM.[Ch] : added magnification message
+        * nmm_Microscope_SEM_Remote.C : changed default values of resolution
+	and max scan to be non-zero so getScanRegion_nm (a new function)
+	doesn't generate division by 0 errors; added stuff for magnification
+	message
+
 2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_EDAX.h : added a new class called nmm_EDAX as a utility class

@@ -4,22 +4,24 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     (const char * name, vrpn_Connection *cn):
     nmb_Device_Client(name, cn?cn:vrpn_get_connection_by_name(name)),
     nmm_Microscope_SEM (name, d_connection),
-    d_resolutionX(0), d_resolutionY(0),
+    d_resolutionX(512), d_resolutionY(400),
     d_pixelIntegrationTime_nsec(0), 
     d_interpixelDelayTime_nsec(0),
     d_startX(0), d_startY(0), d_dX(0), d_dY(0),
-    d_lineLength(0), d_numFields(0), d_numLines(0), d_pixelType(NMB_UINT8),
+    d_lineLength(512), d_numFields(0), d_numLines(0), d_pixelType(NMB_UINT8),
     d_dataBuffer(NULL),
     d_dataBufferSize(0),
     d_pointDwellTime_nsec(0),
     d_beamBlankEnabled(0),
-    d_maxScanX(0), d_maxScanY(0),
+    d_maxScanX(4096), d_maxScanY(3200),
     d_pointScanX(0), d_pointScanY(0),
     d_hRetraceDelay_nsec(0), d_vRetraceDelay_nsec(0),
     d_xGain(0), d_xOffset(0), 
     d_yGain(0), d_yOffset(0), 
     d_zGain(0), d_zOffset(0),
     d_externalScanControlEnabled(0),
+    d_magnification(1000),
+    d_magCalibration(1e8), // (10 cm)*(nm/cm)
     d_messageHandlerList(NULL)
 {
   if (d_connection == NULL){
@@ -90,6 +92,12 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
                 RcvReportExternalScanControlEnable, this)) {
     fprintf(stderr,
        "nmm_Microscope_SEM_Remote: can't register external control handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportMagnification_type,
+                RcvReportMagnification, this)) {
+    fprintf(stderr,
+       "nmm_Microscope_SEM_Remote: can't register mag handler\n");
     return;
   }
 
@@ -386,6 +394,18 @@ void nmm_Microscope_SEM_Remote::getExternalScanControlEnable(
   enabled = d_externalScanControlEnabled;
 }
 
+void nmm_Microscope_SEM_Remote::getMagnification(vrpn_float32 &mag)
+{
+  mag = d_magnification;
+}
+
+void nmm_Microscope_SEM_Remote::getScanRegion_nm(
+                          double &width_nm, double &height_nm)
+{
+  width_nm = d_magCalibration/d_magnification;
+  height_nm = width_nm*(double)d_resolutionY/(double)d_resolutionX;
+}
+
 //static
 int nmm_Microscope_SEM_Remote::RcvReportResolution (void *_userdata, 
     vrpn_HANDLERPARAM _p)
@@ -633,12 +653,30 @@ int nmm_Microscope_SEM_Remote::RcvReportExternalScanControlEnable
 
   if (decode_ReportExternalScanControlEnable(&bufptr, &enable) == -1) {
     fprintf(stderr,
-        "nmm_Microscope_SEM_Remote::RcvBeamBlankEnable: "
+        "nmm_Microscope_SEM_Remote::RcvReportExternalScanControlEnable: "
         "decode failed\n");
     return -1;
   }
   me->d_externalScanControlEnabled = enable;
   return me->notifyMessageHandlers(EXTERNAL_SCAN_CONTROL_ENABLE, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportMagnification
+     (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 mag;
+
+  if (decode_ReportMagnification(&bufptr, &mag) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportMagnification: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_magnification = mag;
+  return me->notifyMessageHandlers(REPORT_MAGNIFICATION, _p.msg_time);
 }
 
 int nmm_Microscope_SEM_Remote::notifyMessageHandlers(

@@ -38,7 +38,8 @@ class nmm_Microscope_SEM {
                 BEAM_LOCATION,
                 RETRACE_DELAYS,
                 DAC_PARAMS,
-                EXTERNAL_SCAN_CONTROL_ENABLE} msg_t;
+                EXTERNAL_SCAN_CONTROL_ENABLE,
+                REPORT_MAGNIFICATION} msg_t;
   protected:
 //    vrpn_Connection * d_connection;
 //    vrpn_File_Controller * d_fileController;
@@ -71,6 +72,7 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_ReportRetraceDelays_type;
     vrpn_int32 d_ReportDACParams_type;
     vrpn_int32 d_ReportExternalScanControlEnable_type;
+    vrpn_int32 d_ReportMagnification_type;
 
     // message encode, decode functions
     // (client-->server)
@@ -210,6 +212,11 @@ class nmm_Microscope_SEM {
                                             vrpn_int32 enable);
     static vrpn_int32 decode_ReportExternalScanControlEnable (const char **buf,
                                             vrpn_int32 *enable);
+
+    static char * encode_ReportMagnification (vrpn_int32 *len, 
+                                              vrpn_float32 mag);
+    static vrpn_int32 decode_ReportMagnification (const char **buf,
+                                              vrpn_float32 *mag);
 
 //    packs the message reliably and then deletes [] buf
 //    int dispatchMessage (vrpn_int32 len, const char *buf, 

@@ -60,6 +60,8 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (
                 ("nmmMicroscopeSEM ReportDACParams");
     d_ReportExternalScanControlEnable_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportExternalScanControlEnable");
+    d_ReportMagnification_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportMagnification");
   }
 }
 
@@ -965,6 +967,43 @@ vrpn_int32 nmm_Microscope_SEM::decode_ReportExternalScanControlEnable (
                                             vrpn_int32 *enable)
 {
   if ((vrpn_unbuffer(buf, enable)) == -1) {
+    return -1;
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_ReportMagnification (
+                                            vrpn_int32 *len,
+                                            vrpn_float32 mag)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr,
+              "nmm_Microscope_SEM::encode_ReportMagnification:  "
+              "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, mag);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportMagnification (
+                                            const char **buf,
+                                            vrpn_float32 *mag)
+{
+  if ((vrpn_unbuffer(buf, mag)) == -1) {
     return -1;
   }
 
