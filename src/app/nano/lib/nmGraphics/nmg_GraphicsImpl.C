@@ -159,23 +159,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   setupMaterials(); // this needs to come after initializeTextures because
 		// shader initialization depends on texture ids
 
-  /* Build display lists for surface scanning in X fastest, since
-   * that is the way the SPM will start scanning.
-   * There is one list for each row of data points except for
-   * the last.  Since these are for rows scanning in X fastest,
-   * we have one per Y index. */
-  nmb_PlaneSelection planes; planes.lookup(data);
-  if (build_grid_display_lists(planes, 1, &grid_list_base,
-                                &num_grid_lists, g_minColor, g_maxColor)) {
-     fprintf(stderr,"ERROR: Could not build grid display lists\n");
-     d_dataset->done = 1;
-   }
-
 
   const GLubyte * exten;
   exten = glGetString(GL_EXTENSIONS);
 
-#if ( defined(linux) || defined(hpux) || defined(__CYGWIN__) )
+#if ( defined(linux) || defined(hpux) || defined(_WIN32) )
   // RMT The accelerated X server seems to be telling us that we have
   // vertex arrays, but then they are not drawn; ditto for MesaGL on
   // HPUX
@@ -189,13 +177,26 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 //    } else {
 //       fprintf(stderr,"Vertex Array extension not supported.\n");
 //    }
-  if (g_VERTEX_ARRAY) {
+  //  if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(grid_size_x,
 			  grid_size_y) ) {
       fprintf(stderr," init_vertexArray: out of memory.\n");
       exit(0);
     }
-  }
+    //  }
+
+  /* Build display lists for surface scanning in X fastest, since
+   * that is the way the SPM will start scanning.
+   * There is one list for each row of data points except for
+   * the last.  Since these are for rows scanning in X fastest,
+   * we have one per Y index. */
+  nmb_PlaneSelection planes; planes.lookup(data);
+  if (build_grid_display_lists(planes, 1, &grid_list_base,
+                                &num_grid_lists, g_minColor, g_maxColor)) {
+     fprintf(stderr,"ERROR: Could not build grid display lists\n");
+     d_dataset->done = 1;
+   }
+
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
@@ -749,6 +750,11 @@ _______________________________********************/
   g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
 }
 
+void nmg_Graphics_Implementation::causeGridReColor (void) {
+  g_just_color = 1;
+  causeGridRedraw();
+}
+
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
   //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
@@ -766,16 +772,17 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 
+  g_just_color = 0;
   // Rebuilds the texture coordinate array:
   nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
-  if (g_VERTEX_ARRAY) {
+  //  if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(d_dataset->inputGrid->numX(),
                           d_dataset->inputGrid->numY()) ) {
           fprintf(stderr," init_vertexArray: out of memory.\n");
           exit(0);
      }
-  }
+    //  }
 
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numX();
@@ -945,7 +952,7 @@ void nmg_Graphics_Implementation::setColorMapName (const char * name) {
     g_colorMap.load_from_file(name, g_colorMapDir);
     g_curColorMap = &g_colorMap;
   }
-  causeGridRedraw();
+  causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
@@ -953,7 +960,7 @@ void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
   if ( (g_color_min != low) || (g_color_max != high) ) {
     g_color_min = low;
     g_color_max = high;
-    causeGridRedraw();
+    causeGridReColor();
   }
 }
 
@@ -962,7 +969,7 @@ void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
   if ( (g_data_min != low) || (g_data_max != high) ) {
     g_data_min = low;
     g_data_max = high;
-    causeGridRedraw();
+    causeGridReColor();
   }
 }
 

@@ -92,10 +92,12 @@ unsigned long inet_addr();
 
 #define NANO_FONT	(34)
 
+#ifndef NO_MAGELLAN
 const char MAGELLAN_NAME[] = "Magellan0";
 // * in front means "use the connection I give you" to the AnalogFly
 char AF_MAGELLAN_NAME[] = "*Magellan0";
 static vrpn_Tracker_AnalogFlyParam *magellan_param;
+#endif
 
 /*****************************************************************************
 

@@ -34,6 +34,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void loadRulergridImage (const char *);
 
+    virtual void causeGridReColor (void);
     virtual void causeGridRedraw (void);
     virtual void causeGridRebuild (void);
 

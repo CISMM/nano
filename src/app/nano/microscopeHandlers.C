@@ -979,7 +979,7 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
     }
 
     graphics->setColorPlaneName(dataset->colorPlaneName->string());
-    graphics->causeGridRedraw();
+    graphics->causeGridReColor();
 }
 
 void     handle_sound_dataset_change(const char *, void * )

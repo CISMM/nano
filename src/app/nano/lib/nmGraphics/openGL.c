@@ -109,23 +109,26 @@ int report_gl_errors(void)
 
 
 int check_extension (const GLubyte * exten_str) {
-  char work_str[1000];
+  char *work_str;
   char *token;
 
   if (!exten_str)
     return 0;
-
+  work_str = new char [strlen((const char *)exten_str) + 1];
   strcpy(work_str,(const char *) exten_str);
   token = strtok(work_str, " ");
   
   if (strcmp(token, "GL_EXT_vertex_array") == 0) {
+    delete [] work_str;
      return 1;
   } 
   while( (token=strtok(NULL, " ")) != NULL) {
        if (strcmp(token, "GL_EXT_vertex_array") == 0) {
+	 delete [] work_str;
            return 1;
        }
   }
+  delete [] work_str;
   return 0;
 }
 
@@ -264,7 +267,8 @@ int build_list_set
 
       specify_vertexArray(planes, i, count);
     } else {
-      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, NULL)) {
+      //      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, NULL)) {
+      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, vertexptr[i])) {
         fprintf(stderr, "build_list_set():  "
                         "Internal error - bad strip\n");
         return -1;
@@ -278,7 +282,7 @@ int build_list_set
 
     glEndList();
   }
-
+  g_just_color = 0;
   return 0;
 }
 

@@ -1434,7 +1434,6 @@ static void handle_color_change (vrpn_float64, void * userdata) {
   g->setColorMinMax(color_min, color_max);
   g->setDataColorMinMax(data_min, data_max);
   tcl_colormapRedraw();
-  cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
@@ -2604,7 +2603,7 @@ static void handle_surface_color_change (vrpn_int32, void * userdata) {
     color[2] = int(surface_b);
     g->setMinColor( color );
     g->setMaxColor( color );
-    g->causeGridRedraw();
+    g->causeGridReColor();
     tcl_colormapRedraw();
   }
 }

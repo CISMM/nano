@@ -132,6 +132,7 @@ class nmg_Graphics {
     virtual void loadRulergridImage (const char * name) = 0;
       // Specifies the name of a PPM file to display as the rulergrid.
 
+    virtual void causeGridReColor (void) = 0;
     virtual void causeGridRedraw (void) = 0;
       // Forces the entire set of display lists to be regenerated.
     virtual void causeGridRebuild (void) = 0;

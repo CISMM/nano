@@ -789,11 +789,13 @@ long nmm_Microscope_Remote::rotateScanCoords (const double _x, const double _y,
   // Rotate about the center of the scan region -- same as
   // the Thermo software rotates it's scan when we send it a 
   // particular scan angle. 
-    double sin_angle = sinf( _scanAngle );
-    double cos_angle = cosf( _scanAngle );
+    double sin_angle = sinf( -_scanAngle );
+    double cos_angle = cosf( -_scanAngle );
 
-    double centerx = state.xMin + (state.xMax - state.xMin)/2.0 ;
-    double centery = state.yMin + (state.yMax - state.yMin)/2.0 ;
+    double centerx = d_dataset->inputGrid->minX() +
+    (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
+    double centery = d_dataset->inputGrid->minY() + 
+      (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())/2.0 ;
 
     double x = _x - centerx; // translate points to center
     double y = _y - centery;
@@ -803,8 +805,8 @@ long nmm_Microscope_Remote::rotateScanCoords (const double _x, const double _y,
 
     *out_x += centerx;  // translate points back
     *out_y += centery;  // translate points back
-
-  return 0;
+    
+    return 0;
 }
 
 long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty,
@@ -819,6 +821,16 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
   rotateScanCoords(_startx, _starty, state.scanAngle, &startx, &starty);
   double endx, endy;
   rotateScanCoords(_endx, _endy, state.scanAngle, &endx, &endy);
+  double yaw = state.modify.yaw - state.scanAngle;
+
+  printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
+	  state.scanAngle, 
+	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
+	  d_dataset->inputGrid->minY(), d_dataset->inputGrid->maxY() );
+  printf( "             startx = %f starty = %f rotated x = %f rotated y = %f\n",
+	  _startx, _starty, startx, starty);
+  printf( "             endx = %f endy = %f rotated x = %f rotated y = %f\n",
+	  _endx, _endy, endx, endy);
 
   switch (state.modify.style) {
     case SHARP:
@@ -831,11 +843,11 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
       break;
     case SWEEP:
       msgbuf = encode_DrawSweepLine
-                 (&len, startx, starty,
-                  state.modify.yaw, state.modify.sweep_width,
-                  endx, endy,
-                  state.modify.yaw, state.modify.sweep_width,
-                  state.modify.step_size);
+	(&len, startx, starty,
+	 yaw, state.modify.sweep_width,
+	 endx, endy,
+	 yaw, state.modify.sweep_width,
+	 state.modify.step_size);
       type = d_DrawSweepLineCenter_type;
       break;
     default:
@@ -887,6 +899,8 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
   double x,y;
   rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
   // XXX Need to rotate start and end angle as well???
+  double startAngle = _startAngle - state.scanAngle;
+  double endAngle = _endAngle - state.scanAngle;
 
   switch (state.modify.style) {
     case SHARP:
@@ -895,9 +909,9 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
       return 0;
     case SWEEP:
       msgbuf = encode_DrawSweepArc
-                 (&len, x, y, _startAngle,
+                 (&len, x, y, startAngle,
                   state.modify.sweep_width,
-                  _endAngle,
+                  endAngle,
                   state.modify.sweep_width,
                   state.modify.step_size);
       if (!msgbuf)

@@ -69,6 +69,11 @@ void nmg_Graphics_Timer::loadRulergridImage (const char * name) {
 }
 
 
+void nmg_Graphics_Timer::causeGridReColor (void) {
+  activateTimer();
+  d_imp->causeGridReColor();
+}
+
 void nmg_Graphics_Timer::causeGridRedraw (void) {
   activateTimer();
   d_imp->causeGridRedraw();
