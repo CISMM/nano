@@ -1,3 +1,8 @@
+2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.Ch : changed so nmb_ImageArray uses ImgMagick now and
+	  has more formats available
+
 2002-05-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_Image.C (nmb_ImageArray::nmb_ImageArray(...)): initialize

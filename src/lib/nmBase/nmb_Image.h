@@ -465,11 +465,12 @@ class nmb_ImageArray : public nmb_Image {
     virtual void setLine(int line, void *line_data);
     virtual void setImage(void *newdata);
 
-    typedef int (*FileExportingFunction) (FILE *file, nmb_ImageArray *im, const char * filename);
+    typedef int (*FileExportingFunction) (FILE *file, nmb_ImageArray *im, 
+		const char *export_type, const char * filename);
   protected:
     virtual ~nmb_ImageArray();
-    static int exportToTIFF(FILE *file, nmb_ImageArray *im, const char *);
-
+    static int exportUsingImgMagick(FILE *file, nmb_ImageArray *im, 
+		const char *export_type, const char *filename);
 
     int arrIndex(int i, int j) const
       { return (i+d_borderXMin+(j+d_borderYMin)*

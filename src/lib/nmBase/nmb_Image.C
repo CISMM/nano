@@ -1248,13 +1248,16 @@ int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * )
     return 0;
 }
 
-const int nmb_ImageArray::num_export_formats = 1;
+const int nmb_ImageArray::num_export_formats = 5;
 
-const char *nmb_ImageArray::export_formats_list[] = {"TIFF"};
+const char *nmb_ImageArray::export_formats_list[] = 
+{"TIFF","JPG","BMP","PPM","PGM"};
 
-const nmb_ImageArray::FileExportingFunction
-        nmb_ImageArray::file_exporting_function[] = {
-               nmb_ImageArray::exportToTIFF};
+const nmb_ImageArray::FileExportingFunction 
+nmb_ImageArray::file_exporting_function[] = {
+	nmb_ImageArray::exportUsingImgMagick, nmb_ImageArray::exportUsingImgMagick,
+		nmb_ImageArray::exportUsingImgMagick,nmb_ImageArray::exportUsingImgMagick,
+		nmb_ImageArray::exportUsingImgMagick};
 
 nmb_ImageArray::nmb_ImageArray(const char *name,
                                           const char * /*units*/,
@@ -1797,7 +1800,8 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
         return -1;
     }
     else {  // we have a function for exporting this type
-        if (file_exporting_function[my_export_type](f, this, filename)) {
+        if (file_exporting_function[my_export_type](f, this, export_type, 
+		    filename)) {
             fprintf(stderr, "nmb_ImageArray::Error writing file of type %s\n",
                 export_type);
             return -1;
@@ -1807,10 +1811,10 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
 }
 
 // static
-int nmb_ImageArray::exportToTIFF(FILE* /*file*/, nmb_ImageArray *im, 
-                                 const char * filename)
+int nmb_ImageArray::exportUsingImgMagick(FILE* /*file*/, nmb_ImageArray *im, 
+                                 const char *filetype, const char * filename)
 {
-  if(nmb_ImgMagick::writeFileMagick(filename,"TIF",(nmb_Image *)im)) {
+  if(nmb_ImgMagick::writeFileMagick(filename,filetype,(nmb_Image *)im)) {
       fprintf(stderr, "Failed to write data to '%s'!\n", filename);
       return -1;
   }
