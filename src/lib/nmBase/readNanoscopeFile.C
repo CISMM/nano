@@ -23,19 +23,19 @@
 
 #define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
 
-const int NANOSCOPE_GRID_X = 256;
-const int NANOSCOPE_GRID_Y = 256;
+static const int NANOSCOPE_GRID_X = 256;
+static const int NANOSCOPE_GRID_Y = 256;
 
-double scan_size = 1000.0;
-int image_mode = NS_HEIGHT;
+static double scan_size = -1;
+static int image_mode = NS_HEIGHT;
 
-int header_size = 8192;
-int auxiliary_grids = 0;
+static int header_size = 8192;
+static int auxiliary_grids = 0;
 
 // globals used for multi-layer files (added by qliu on 6/27/95)
-int auxiliary_grid_offset[100];
-int auxiliary_grid_image_mode[100];
-double auxiliary_grid_scale[100];
+static int auxiliary_grid_offset[100];
+static int auxiliary_grid_image_mode[100];
+static double auxiliary_grid_scale[100];
 
 
 #ifdef	_WIN32
@@ -314,8 +314,8 @@ parseNanoscopeFileHeader
    description: This method parses the headers of binary or ascii Nanoscope
                 files. In the process, it ignores information that is not
 		needed (or understood).
-        author: Mark Finch
- last modified: 9-9-96 by Russ Taylor
+        author: Mark Finch 9-9-96 by Russ Taylor
+ last modified: 1-21-02 Aron Helser
 */
 int
 BCGrid::parseNanoscopeFileHeader(FILE* file)
@@ -328,11 +328,23 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
     int scale_count = 0;	// How many "Z scale height" entries found?
     int scale_count_2 = 0;	// How many "Z scale" entries found?
     int image_count = 0;	// How many image sets in this file?
-    
+
     auxiliary_grids = -1;
 	
     char token[BUFSIZ];
 
+    // Set some reasonable defaults, in case file doesn't have them. 
+    // XXX This is a hack - if header doesn't have them, we should
+    // probably be reading/doing something else to interpret the data. 
+    _attenuation_in_z = 65536;
+    _z_scale = 100;
+    _detection_sensitivity = 0.04;
+    _z_sensitivity = 8.1;
+    _input_sensitivity = 0.125;
+    _z_max = 220;
+    _input_1_max = 10;
+    _input_2_max = 10;
+    
     // Scan the file until we get to the end or find a backslash
     while ( (CTL_Z != (*token = fgetc(file))) &&
 	    (BSLASH != *token) ) {};
@@ -342,40 +354,49 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header!");
 	return -1;
     }
-		
+    printf("*DI Interpreting file header.\n");
     do {
 	// For ASCII file parsing, this is used to watch for a completely
 	// blank line.  This indicates we didn't just pass one.
 	pastline = 0;
 
 	// Read in all characters up to but not including a colon or a
-	// backslash.  The colon indicates a value follows on the same
-	// line; the backslash indicates we've gotten to the next line
-	// in the file (which starts a new token).
+	// newline.  The colon indicates a value follows on the same
+	// line; the newline indicates we've gotten to the next line
+	// in the file (which starts a new token). 
+        // We strip the backslash which starts all tokens at the end 
+        // of this loop
 
-	fscanf(file, "%[^:\\]", token);
+	fscanf(file, "%[^:\\\n]", token);
 
 	// Check to see if we recognize the token.  If so, gather the
 	// parameter (after the colon).
 
 	if (!strncasecmp(token, "Scan size", strlen("Scan size"))) {
-	    ngot = fscanf(file, ": %lg", &scan_size);
+            if (scan_size < 0) {
+                ngot = fscanf(file, ": %lg", &scan_size);
+            } else {
+                // Ignore it if we've seen one before. 
+                 fscanf(file, ": %*lg");
+                 ngot =1;
+            }                
+	    printf("DI Scan size is %g\n",scan_size);
 	} else if (!strncasecmp(token, "Z atten.", strlen("Z atten."))) {
 	    ngot = fscanf(file, ": %lg", &_attenuation_in_z);
-//	    printf("XXX Z atten is %g\n",_attenuation_in_z);
+	    printf("DI Z atten is %g\n",_attenuation_in_z);
 	} else if (!strncasecmp(token, "Z scale auxc", strlen("Z scale auxc"))){
 	    ngot = fscanf(file, ": %lg", &_z_scale_auxc );
-//	    printf("XXX Z scale auxc is %g\n",_z_scale_auxc);
-	}
-	else if (!strncasecmp(token,"Z scale height",strlen("Z scale height")))
-	{
+	    printf("DI Z scale auxc is %g\n",_z_scale_auxc);
+	} else if (!strncasecmp(token,"Z scale height",
+                                strlen("Z scale height"))) {
 	    // read multi-layer data (added by qliu on 6/27/95)
-	    if (scale_count > 0)
+	    if (scale_count > 0) {
 		ngot = fscanf(file, ": %lg",
 			&(auxiliary_grid_scale[scale_count-1]));
-	    else
+	    } else {
 		ngot = fscanf(file, ": %lg", &_z_scale );
-//	    printf("XXX Z scale height is %g\n",_z_scale);
+            }
+	    printf("DI Z scale height is %g\n",_z_scale);
 	    scale_count++;
 	} else if (!strncasecmp( token, "Z scale", strlen(token))) {
 	    // XXX This used to have code to read multi-mode data, written
@@ -386,7 +407,7 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 	    // I've changed it to work with this type of file.  I hope it will
 	    // also work with multi-mode types still.
 	    // I'm working by the seat of my pants and noticing that the scale
-	    // looks versy close when we take the number in parentheses:
+	    // looks very close when we take the number in parentheses:
 	    //    \Z scale: 47.0512 nm (862)
 	    // rather than the 47, we take the 862.  Is this generally true???
 	    double scrapd;
@@ -401,7 +422,7 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 			"ERROR: Can't read Z scale params in Nanoscope file\n");
 		  return -1;
 		}
-//		printf("XXX Z scale is %g\n",_z_scale);
+		printf("DI Z scale is %g\n",_z_scale);
 	    }
 	    scale_count_2++;
 	}     
@@ -421,31 +442,32 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 
 	else if (!strncasecmp(token, "Detect sens.", strlen("Detect sens."))) {
 		ngot = fscanf(file, ": %lg", &_detection_sensitivity );
-//		printf("XXX Detector sens. is %g\n",_detection_sensitivity);
+		printf("DI Detector sens. is %g\n",_detection_sensitivity);
 	} else if (!strncasecmp(token, "Z sensitivity", strlen(token))) {
 		ngot = fscanf(file, ": %lg", &_z_sensitivity);
-//		printf("XXX Z sensitivity is %g\n",_z_sensitivity);
+		printf("DI Z sensitivity is %g\n",_z_sensitivity);
 	} else if (!strncasecmp(token, "In sensitivity",strlen(token))) {
 		ngot = fscanf(file, ": %lg", &_input_sensitivity);
-//		printf("XXX In sensitivity is %g\n",_input_sensitivity);
+		printf("DI In sensitivity is %g\n",_input_sensitivity);
 	} else if (!strncasecmp(token, "Z max", strlen("Z max"))) {
 		ngot = fscanf(file, ": %lg", &_z_max);
-//		printf("XXX Z max is %g\n",_z_max);
+		printf("DI Z max is %g\n",_z_max);
 	} else if (!strncasecmp(token, "In1 max", strlen("In1 max"))) {
 		ngot = fscanf(file, ": %lg", &_input_1_max);
-//		printf("XXX In1 max is %g\n",_input_1_max);
+		printf("DI In1 max is %g\n",_input_1_max);
 	} else if (!strncasecmp(token, "In2 max", strlen("In2 max"))) {
 		ngot = fscanf(file, ": %lg", &_input_2_max);
-//		printf("XXX In2 max is %g\n",_input_2_max);
+		printf("DI In2 max is %g\n",_input_2_max);
 	} else if (!strncasecmp(token, "Samps/line", strlen("Samps/line"))) {
 	    ngot = fscanf(file, ": %hd %hd", &_num_x, &_num_y);
 	    
 	    if (ngot < 2) {
 		_num_y =_num_x;
 	    }
-	    // We know the file size, set our own grid size.
-	    setGridSize(_num_x, _num_y);
-
+            printf("DI Samps/line is %d\n",_num_x);
+	} else if (!strncasecmp(token, "Lines", strlen("Lines"))) {
+	    ngot = fscanf(file, ": %hd", &_num_y);
+            printf("DI Lines is %d\n",_num_y);
 	} else if (!strncasecmp(token, "Data offset", strlen("Data offset"))) {
 	    // read multi-layer data (added by qliu on 6/27/95)
 	    if (auxiliary_grids >= 0)
@@ -454,8 +476,10 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 		ngot = fscanf(file, ": %d", &header_size);
 
 	    auxiliary_grids++;
-	}
-
+            printf("DI Data Offset is %d\n",header_size);
+	} else if (!strncasecmp(token, "*File list end", strlen("*File list end"))) {
+            printf("*DI End of header\n");
+        }
 	// Since ngot is set to 1 to start with and only reset when we are
 	// reading parameters, if it is zero that means we couldn't get some
 	// parameter we were looking for.
@@ -506,6 +530,10 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 	image_mode = NS_DEFLECTION;
     else if (!strncasecmp(image_type, "AUX", strlen("AUX")))
 	image_mode = NS_AUXC;	// XXX Assuming Aux C... could be others
+
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
+
     
     return 0;
     
