@@ -1,5 +1,10 @@
+#include <string>
+#include <vector>
+#include <iostream.h>
+#include <fstream.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include "cnt_ia.h"
 #include "cnt_ps.h"
@@ -1034,7 +1039,8 @@ void CNT_IA::cnt_image_order(char *txtFile)
 			if ( cnt_image_Ord[id0] > 0.0 ) {
                                 height = cnt_image[id0] * cnt_image_height / 255.0;
 				id1 = int (cnt_image_Ord[id0]) - 1; // NEW
-                                fprintf(fp, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
+                                fprintf(fp, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", 
+					cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
 			}
 		}
 	}
@@ -1050,13 +1056,77 @@ void CNT_IA::cnt_image_order(char *txtFile)
 }
 
 
-// select which "tubes" are actually tubes, and which are irrelevant blobs
-// for each tube, write position, orientation, and size to file mask.summary.txt
-void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
+//select which "tubes" are actually tubes, and which are irrelevant blobs
+//for each tube, write position, orientation, and size to file mask.summary.txt
+//note that the details file prints out information for the source plane AND all calculated planes, etc.
+//also in the inputGrid
+void CNT_IA::cnt_image_select(char *txtFile, const char *fileName, BCGrid * grid, 
+			      BCPlane * thisObjectPlane)
 {
+	const int size = 10;//I would like to have it so that the number of planes in the grid is the max 
+	                    //number of planes we can have, but that value is not const at compile time, so
+	                    //instead I am using the arbitrary value of ten (doesn't seem as though you'd create
+	                    //more than ten calc. planes...).  this may need to be changed
+
+        //get information for all planes so we can output it all to the details file
+  
+	
+	//if we ever go to g++ as a compiler instead of CC, use the following and delete
+	//the variables following it
+
+	/*vector<string> ListofNames;//list of all plane names
+	  vector<string> ListofUnits;//list of all plane units
+	  vector< BCPlane * > ListofPlanes;//list of planes, in same order as list of plane names
+	  vector< CNT_IA * > CNT_List;//CNT_IA object associated with each plane*/
+
+
+	char * ListofNames[size];//list of all plane names
+	for (int b = 0; b < size; b++)  ListofNames[b] = NULL;
+	char * ListofUnits[size];//list of all plane units
+	for (b = 0; b < size; b++)  ListofUnits[b] = NULL;
+	//zero out all elements in arrays first for ease of debugging
+
+	//BCPlane * ListofPlanes[size];//list of planes, in same order as list of plane names
+	CNT_IA * CNT_List[size];//CNT_IA object associated with each plane	
+	//end of stuff that goes if switch to g++
+	
+
+	int t = 0;
+	for(BCPlane * currentPlane = grid->head(); (t < size && currentPlane != NULL); currentPlane = currentPlane->next()){
+	  //if(currentPlane == NULL) break;//reached the end of the list
+	  if(currentPlane != thisObjectPlane){
+	    //if == thisObjectPlane, then already taken care of by code below, second check because first could == NULL
+
+	    //likewise, if switch to g++ put following lines in and take out what follows those lines
+
+	    /*ListofNames.push_back( (string)(char*)( currentPlane->name() ) );//deal with list of names
+	      cout << ListofNames[t] << endl;
+	      ListofUnits.push_back( (string)(char*)( currentPlane->units() ) );
+	      //ListofPlanes[t] = currentPlane;//deal with list of planes
+	      CNT_List.push_back( new CNT_IA() );
+            */
+
+	    
+	    ListofNames[t] = currentPlane->name()->nonconst_characters();//deal with list of names
+
+	    ListofUnits[t] = currentPlane->units()->nonconst_characters();
+	    //ListofPlanes[t] = currentPlane;//deal with list of planes
+	    CNT_List[t] = new CNT_IA();
+	    //end of stuff that goes if switch to g++
+
+	    CNT_List[t]->cnt_image_read(currentPlane);//deal with CNT_IA object list
+	    
+	    t++;
+	  }
+	  
+	}
+	const int numberAdditionalPlanes = t;//how many other planes exist that we are dealing with for the details file
+
+	//getting basic topographic information
 	int x, y, i, j;
 	long id0, id1, index;
-	FILE *fSum, *fDet;
+	FILE *fSum;
+	ofstream fDet;
   	int tubeCount = 0;
 
 	int count;
@@ -1078,7 +1148,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 	char detailsTxtFile[255];
 	strcpy(detailsTxtFile, txtFile);
 	strcat(detailsTxtFile, ".details.txt");
-	fDet = fopen(detailsTxtFile, "w");
+	fDet.open(detailsTxtFile);
 
 	fprintf(fSum, "INPUT IMAGE FILE:  %s\n\n", fileName);
 
@@ -1089,9 +1159,6 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 	fprintf(fSum, "Correlation Factor:  %4.2f\n", cnt_correlate);
 	fprintf(fSum, "Pre-Flattening:  %1d\n", cnt_preflatten);
 	fprintf(fSum, "Auto-Adaptation:  %1d\n\n", cnt_autoparam);
-
-        fprintf(fDet, "INDEX      X2D      Y2D      X3D      Y3D      Z3D  AZIMUTH ALTITUDE   RADIUS\n\n");
-        fprintf(fDet, "-----      ---      ---      ---      ---      ---  ------- --------   ------\n\n");
 
 	// reset cnt_image_Ord
 	for ( y=0; y<cnt_image_y; y++ ) {
@@ -1169,167 +1236,193 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 					fprintf(fSum, "Orientation : %8.3lf degree\n", yaw);
 					fprintf(fSum, "Length = %8.3lf Width = %8.3lf\n\n", La, Lb);
 
-	count = 0;
-        for ( j=0; j<cnt_image_y; j++ ) {
-                for ( i=0; i<cnt_image_x; i++ ) {
-                        id1 = j * cnt_image_x + i;
-			if ( (cnt_image_Tid[id1] == id0) && (cnt_image_Med[id1] > 0.0) ) {
-				Xs[count] = j;
-				Ys[count] = i;
-				IDs[count++] = id1;
-			}
-		}
-	}
-	maxDist = -1.0;
-	maxID = 0;
-	for ( i=0; i<count; i++ ) {
-		tempDist = sqrt(double((Xs[i]-Xs[0])*(Xs[i]-Xs[0]) + (Ys[i]-Ys[0])*(Ys[i]-Ys[0])));
-		if ( tempDist > maxDist ) {
-			maxDist = tempDist;
-			maxID = i;
-		}
-	}
-	for ( i=0; i<count; i++ ) {
-		tempDist = sqrt(double((Xs[i]-Xs[maxID])*(Xs[i]-Xs[maxID]) + (Ys[i]-Ys[maxID])*(Ys[i]-Ys[maxID])));
-		dist[i] = tempDist;
-	}
-	for ( j=0; j<count; j++ ) {
-		maxDist = -1.0;
-		maxID = 0;
-		for ( i=0; i<count; i++ ) {
-			if ( dist[i] > maxDist ) {
-				maxDist = dist[i];
-				maxID = i;
-			}
-		}
-		ord[j] = maxID;
-		dist[maxID] = -1.0;
-	}
+					count = 0;
+					for ( j=0; j<cnt_image_y; j++ ) {
+					  for ( i=0; i<cnt_image_x; i++ ) {
+					    id1 = j * cnt_image_x + i;
+					    if ( (cnt_image_Tid[id1] == id0) && (cnt_image_Med[id1] > 0.0) ) {
+					      Xs[count] = j;
+					      Ys[count] = i;
+					      IDs[count++] = id1;
+					    }
+					  }
+					}
+					maxDist = -1.0;
+					maxID = 0;
+					for ( i=0; i<count; i++ ) {
+					  tempDist = sqrt(double((Xs[i]-Xs[0])*(Xs[i]-Xs[0]) + (Ys[i]-Ys[0])*(Ys[i]-Ys[0])));
+					  if ( tempDist > maxDist ) {
+					    maxDist = tempDist;
+					    maxID = i;
+					  }
+					}
+					for ( i=0; i<count; i++ ) {
+					  tempDist = sqrt(double((Xs[i]-Xs[maxID])*(Xs[i]-Xs[maxID]) + (Ys[i]-Ys[maxID])*(Ys[i]-Ys[maxID])));
+					  dist[i] = tempDist;
+					}
+					for ( j=0; j<count; j++ ) {
+					  maxDist = -1.0;
+					  maxID = 0;
+					  for ( i=0; i<count; i++ ) {
+					    if ( dist[i] > maxDist ) {
+					      maxDist = dist[i];
+					      maxID = i;
+					    }
+					  }
+					  ord[j] = maxID;
+					  dist[maxID] = -1.0;
+					}
 
-/*
-        // Compute height of nanotube.  // NEW (whole block)
-        double heightSum = 0.0;
-        double heightMax, heightAve;
-        count = 0;
-        for ( y=0; y<cnt_image_y; y++ ) {
-                for ( x=0; x<cnt_image_x; x++ ) {
-                        id0 = y * cnt_image_x + x;
-                        if (cnt_image_Ord[id0] > 0.0) {
-                                theta = cnt_image_Vpp[id0] * 3.14159265359;
-                                theta = fabs(theta);
-                                dx = sin(theta);
-                                dy = cos(theta);
-                                heightMax = 0;
-                                for ( i=-TUBEWID/2; i<=TUBEWID/2; i++) {
-                                        id1 = int(y+i*dx+0.5) * cnt_image_x + int(x-i*dy+0.5);
-					if ( cnt_image[id1] > heightMax )  // NEWEST -- used to be cnt_image_Hgt
-						heightMax = cnt_image[id1];  // NEWEST -- used to be cnt_image_Hgt
-                                }
-//                              idLeft = int(y+dx+0.5) * cnt_image_x + int(x-dy+0.5);
-//                              idRight = int(y-dx+0.5) * cnt_image_x + int(x+dy+0.5);
-//                              heightMax = 0;//{replace w/ height[id0], from nano info}
-//                              if ( 1 )//{height[idLeft] > heightMax}
-//                                      heightMax = 1;//{height[idLeft]}
-//                              if ( 2 )//{height[idRight] > heightMax}
-//                                      heightMax = 2;//{height[idRight]}
-                                heightSum += heightMax;
-                                count++;
-                        }
-                }
-        }
-        heightAve = heightSum / count;
-*/
 
-        // Compute 3D info.  // NEW (whole block) 
-        int prevId, nextId;
-        int prevX, prevY, nextX, nextY;
-        double prevZ, nextZ, dz, norm_alt, mag;
-        double *az = new double [count];
-        double *alt = new double [count];
-        double *rad_of_curv = new double [count];
-        double *X3D = new double [count];
-        double *Y3D = new double [count];
-        double *Z3D = new double [count];
+/*                                      // Compute height of nanotube.  // NEW (whole block)
+					double heightSum = 0.0;
+					double heightMax, heightAve;
+					count = 0;
+					for ( y=0; y<cnt_image_y; y++ ) {
+					  for ( x=0; x<cnt_image_x; x++ ) {
+					    id0 = y * cnt_image_x + x;
+					    if (cnt_image_Ord[id0] > 0.0) {
+					      theta = cnt_image_Vpp[id0] * 3.14159265359;
+					      theta = fabs(theta);
+					      dx = sin(theta);
+					      dy = cos(theta);
+					      heightMax = 0;
+					      for ( i=-TUBEWID/2; i<=TUBEWID/2; i++) {
+						id1 = int(y+i*dx+0.5) * cnt_image_x + int(x-i*dy+0.5);
+						if ( cnt_image[id1] > heightMax )  // NEWEST -- used to be cnt_image_Hgt
+						  heightMax = cnt_image[id1];  // NEWEST -- used to be cnt_image_Hgt
+					      }
+					      //                              idLeft = int(y+dx+0.5) * cnt_image_x + int(x-dy+0.5);
+					      //                              idRight = int(y-dx+0.5) * cnt_image_x + int(x+dy+0.5);
+					      //                              heightMax = 0;//{replace w/ height[id0], from nano info}
+					      //                              if ( 1 )//{height[idLeft] > heightMax}
+					      //                                      heightMax = 1;//{height[idLeft]}
+					      //                              if ( 2 )//{height[idRight] > heightMax}
+					      //                                      heightMax = 2;//{height[idRight]}
+					      heightSum += heightMax;
+					      count++;
+					    }
+					  }
+					}
+					heightAve = heightSum / count;
+				        */
 
-        for ( i=0; i<count; i++ ) { 
-                id0 = Ys[i] * cnt_image_x + Xs[i];
+					// Compute 3D info.  // NEW (whole block) 
+					int prevId, nextId;
+					int prevX, prevY, nextX, nextY;
+					double prevZ, nextZ, dz, norm_alt, mag;
+					double *az = new double [count];
+					double *alt = new double [count];
+					double *rad_of_curv = new double [count];
+					double *X3D = new double [count];
+					double *Y3D = new double [count];
+					double *Z3D = new double [count];
 
-                // Find the azimuth and altitude of the axis direction at the current location.
-                if ( i==0 ) {
-                        prevX = Xs[i];
-                        prevY = Ys[i];
-                }
-                else {
-                        prevX = Xs[i-1];
-                        prevY = Ys[i-1];
-                }
-                if ( i==count-1 ) {
-                        nextX = Xs[i];
-                        nextY = Ys[i];
-                }
-                else {
-                        nextX = Xs[i+1];
-                        nextY = Ys[i+1];
-                }
-                prevId = prevY * cnt_image_x + prevX;
-                nextId = nextY * cnt_image_x + nextX;
-                prevZ = cnt_image[prevId];
-                nextZ = cnt_image[nextId];
-                dx = double (nextX - prevX);
-                dy = double (nextY - prevY);
-                dz = nextZ - prevZ;
-                theta = cnt_image_Vpp[id0] * 3.14159265359;
-                theta = fabs(theta);
-                az[i] = theta;
-                alt[i] = atan2(dz, sqrt(dx*dx+dy*dy));
+					for ( i=0; i<count; i++ ) { 
+					  id0 = Ys[i] * cnt_image_x + Xs[i];
 
-                // Find the radius of curvature of the tube at the current location.
-                if ( fabs(cnt_image_Hpp[id0]) > fabs(cnt_image_Hqq[id0]) )
-                        rad_of_curv[i] = fabs(cnt_image_Hpp[id0]);
-                else
-                        rad_of_curv[i] = fabs(cnt_image_Hqq[id0]);
-                rad_of_curv[i] *= cos(alt[i]);           
+					  // Find the azimuth and altitude of the axis direction at the current location.
+					  if ( i==0 ) {
+					    prevX = Xs[i];
+					    prevY = Ys[i];
+					  }
+					  else {
+					    prevX = Xs[i-1];
+					    prevY = Ys[i-1];
+					  }
+					  if ( i==count-1 ) {
+					    nextX = Xs[i];
+					    nextY = Ys[i];
+					  }
+					  else {
+					    nextX = Xs[i+1];
+					    nextY = Ys[i+1];
+					  }
+					  prevId = prevY * cnt_image_x + prevX;
+					  nextId = nextY * cnt_image_x + nextX;
+					  prevZ = cnt_image[prevId];
+					  nextZ = cnt_image[nextId];
+					  dx = double (nextX - prevX);
+					  dy = double (nextY - prevY);
+					  dz = nextZ - prevZ;
+					  theta = cnt_image_Vpp[id0] * 3.14159265359;
+					  theta = fabs(theta);
+					  az[i] = theta;
+					  alt[i] = atan2(dz, sqrt(dx*dx+dy*dy));
 
-                // Find the 3D medial axis location corresponding to the current image (tube top) point.
-                if ( alt > 0 ) {    
-                        norm_alt = alt[i] - 3.14159265359/2;
-                        dx = sin(theta);
-                        dy = cos(theta);  
-                        dz = tan(norm_alt);
-                }
-                else if ( alt < 0 ) {
-                        norm_alt = alt[i] + 3.14159265359/2;
-                        dx = -sin(theta);
-                        dy = -cos(theta);
-                        dz = -tan(theta);
-                }
-                mag = rad_of_curv[i] / sqrt(1 + dz*dz);
-                dx *= mag;
-                dy *= mag;
-                dz *= mag;
-                X3D[i] = double (Xs[i]) + dx;
-                Y3D[i] = double (Ys[i]) + dy;
-                Z3D[i] = cnt_image[id0] + dz;
-        }
+					  // Find the radius of curvature of the tube at the current location.
+					  if ( fabs(cnt_image_Hpp[id0]) > fabs(cnt_image_Hqq[id0]) )
+					    rad_of_curv[i] = fabs(cnt_image_Hpp[id0]);
+					  else
+					    rad_of_curv[i] = fabs(cnt_image_Hqq[id0]);
+					  rad_of_curv[i] *= cos(alt[i]);           
 
-	fprintf(fDet, "TUBE #%1d\n", tubeCount++);
-	for ( j=0; j<count; j++ ) {
-		i = ord[j];
-		fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
-	}
-	fprintf(fDet, "\n");
+					  // Find the 3D medial axis location corresponding to the current image (tube top) point.
+					  if ( alt > 0 ) {    
+					    norm_alt = alt[i] - 3.14159265359/2;
+					    dx = sin(theta);
+					    dy = cos(theta);  
+					    dz = tan(norm_alt);
+					  }
+					  else if ( alt < 0 ) {
+					    norm_alt = alt[i] + 3.14159265359/2;
+					    dx = -sin(theta);
+					    dy = -cos(theta);
+					    dz = -tan(theta);
+					  }
+					  mag = rad_of_curv[i] / sqrt(1 + dz*dz);
+					  dx *= mag;
+					  dy *= mag;
+					  dz *= mag;
+					  X3D[i] = double (Xs[i]) + dx;
+					  Y3D[i] = double (Ys[i]) + dy;
+					  Z3D[i] = cnt_image[id0] + dz;
+					}
 
-//	double orient, height;
-//	for ( y=cnt_image_y-1; y>=0; y-- ) {
-//		for ( x=0; x<cnt_image_x; x++ ) {
-//			id0 = y * cnt_image_x + x;
-//			if ( cnt_image_Ord[id0] > 0.0 ) {
-//                              height = cnt_image[id0] * cnt_image_height / 255.0;
-//				id1 = int (cnt_image_Ord[id0]) - 1; // NEW
-//                                fprintf(fDet, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
-//			}
-//		}
-//	}
+					fDet << "TUBE #" << tubeCount++ << endl;
+				   
+
+					//prints values and headings for all planes in dataset for each tube
+					for ( j=0; j<count; j++ ) {
+					  i = ord[j];
+
+					  if(j == 0){//only output headings the first time
+					    fDet << "INDEX\tX2D\tY2D\tX3D\t\tY3D\t\tZ3D\t\tAZIMUTH\t\tALTITUDE\tRADIUS";
+
+					    for(int k = 0; k < numberAdditionalPlanes; k++){
+					      //for all additional planes output col. heading for what the plane shows
+					      fDet << "\t" << ListofNames[k] << " (" << ListofUnits[k] << ")";
+					    }
+					    fDet << endl;
+					  }
+		
+					  fDet << i << "\t" << Xs[i] << "\t" << Ys[i] << "\t" << X3D[i] << "\t\t" << Y3D[i] 
+					       << "\t\t" << Z3D[i] << "\t\t" << az[i] << "\t\t" << alt[i] << "\t" << rad_of_curv[i];
+		
+					  for(int k = 0; k < numberAdditionalPlanes; k++){
+					    //for all additional planes output values in units of what the plane represents
+					    if(CNT_List[k] != NULL){
+					      fDet << "\t" << CNT_List[k]->cnt_image[i];
+					    }
+					  } 
+					  fDet << endl;
+	       
+					}
+					fDet << endl;
+
+					//	double orient, height;
+					//	for ( y=cnt_image_y-1; y>=0; y-- ) {
+					//		for ( x=0; x<cnt_image_x; x++ ) {
+					//			id0 = y * cnt_image_x + x;
+					//			if ( cnt_image_Ord[id0] > 0.0 ) {
+					//                              height = cnt_image[id0] * cnt_image_height / 255.0;
+					//				id1 = int (cnt_image_Ord[id0]) - 1; // NEW
+					//                                fprintf(fDet, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf 
+					//                                  %8.2lf\n", cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], 
+					//                                  x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
+					//			}
+					//		}
+					//	}
 
 				}
 			}
@@ -1337,6 +1430,14 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 	}
 
 	fclose(fSum);
-	fclose(fDet);
-	
+	fDet.close();
+
+
+	for(t = 0;t < numberAdditionalPlanes; t++){
+	  //delete ListofPlanes[t];
+	  if(CNT_List[t] != NULL){
+	    delete CNT_List[t];
+	  }
+	}
+
 }
