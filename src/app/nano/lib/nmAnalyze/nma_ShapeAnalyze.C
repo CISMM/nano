@@ -360,33 +360,66 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 	new_index = 0;
 	float val;
 
-	//ANDREA:  this is new
 	int datain_numrows = datain_rowlen;
 	if(d_rowlength != d_columnheight){
 		planepts_per_datapt = d_columnheight/datain_numrows;
 	}//if number of rows does not equal number of columns in the source plane,
 	 //change planepts_per_datapt so that the appropriate number of rows
 	 //correspond to each row of data coming in
-	
+
+
+	int y_to_use, y_flipped;
+	//use these to "flip" y:  array is filled in such that the top of the grid corresponds to 
+	//lower numbered rows and the bottom of the grid is higher numbered rows--however, the plane fills 
+	//in with lowered numbered rows corresponding to the bottom of the grid.  so, we store top down
+	//but must "flip" y to display the plane
+	int index;//current index we are on now
+	int last_y;//the last real y value we were using
+	int last_index;//the last index (separated by planepts_per_datapt) we were using
+	int inter_index;//tracks intermediate indices (between last_index and index)
+
 	for(i = 0; i < datain_rowlen; ++i){
+		y_to_use = y;//use real y when dealing with d_dataArray
+		index = datain_rowlen*y_to_use+i;
+
 		if(firstblur) firstblur = false;
-		if(new_index < d_rowlength){
-			d_dataArray[datain_rowlen*y+i] = (*dataline)[i];
-			val = d_dataArray[datain_rowlen*y+i];
-			calculatedPlane->setValue(i,y,val);
-			d_dataset->range_of_change.AddPoint(i,y);
+
+		if(new_index < d_rowlength){				
+			d_dataArray[index] = (*dataline)[i];
+			val = d_dataArray[index];
+
+			y_flipped = d_columnheight-y-1;
+			//flip y because small indices in d_dataArray correspond to
+			//large indices in calculatedPlane
+			y_to_use = y_flipped;
+			//use flipped y when setting value in calculatedPlane and updating display
+
+			calculatedPlane->setValue(i,y_to_use,val);
+			d_dataset->range_of_change.AddPoint(i,y_to_use);
 		}
-		if(y-planepts_per_datapt >=0){
-			intermediate = (d_dataArray[datain_rowlen*y+i] - d_dataArray[datain_rowlen*(y-planepts_per_datapt)+i])
+
+		y_to_use = y;//set back for dealing with d_dataArray, and for if check (following this line)
+		last_y = y_to_use-planepts_per_datapt;
+		last_index = datain_rowlen*last_y+i;
+
+		if(last_y >=0){
+			intermediate = (d_dataArray[index] - d_dataArray[last_index])
 				*(1.0/(double)planepts_per_datapt);
+
 			for(int k = 1; k <= planepts_per_datapt-1; k++){
-				inter_y = (y-planepts_per_datapt) + k;
+				y_to_use = y;//set back for dealing with d_dataArray in for loop...
+				inter_y = last_y + k;//dealing with d_dataArray
+				inter_index = datain_rowlen*inter_y+i;
+
 				if(new_index++ < d_rowlength){
-					d_dataArray[datain_rowlen*inter_y+i] = intermediate*k 
-						+ d_dataArray[datain_rowlen*(y-planepts_per_datapt)+i];
-					val = d_dataArray[datain_rowlen*inter_y+i];
-					calculatedPlane->setValue(i,inter_y,val);
-					d_dataset->range_of_change.AddPoint(i,inter_y);
+					d_dataArray[inter_index] = intermediate*k + d_dataArray[last_index];
+					val = d_dataArray[inter_index];
+
+					y_flipped = d_columnheight-inter_y-1;//flip
+					y_to_use = y_flipped;//use flipped for plane and display...
+
+					calculatedPlane->setValue(i,y_to_use,val);
+					d_dataset->range_of_change.AddPoint(i,y_to_use);
 				}
 			}	
 		}

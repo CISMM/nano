@@ -1,3 +1,8 @@
+2002-01-18  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze : changed format of data array so that low row numbers 
+	correspond to the top of the plane and data is updated from the top down as well
+
 2002-01-17  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nma_ShapeAnalyze : added some checks for which rownumber the UpdateDataArray

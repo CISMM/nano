@@ -73,10 +73,13 @@ void get_z_buffer_values() {
   glReadBuffer(GL_BACK);
 
 
+  //create new rows for zDistance and zDistanceScaled only if they have not yet been created
   if(zDistance == NULL){
 	  zDistance = new double*[MAX_GRID];
 	  for(int j=0; j<scanResolution; j++ ) {
 		  zDistance[j] = NULL;
+		  //initialize to NULL so can check and see if we have to create the row array later
+		  //(only want to do this once too...)
 	  }
   }
   if(zDistanceScaled == NULL){
@@ -91,17 +94,22 @@ void get_z_buffer_values() {
 
   for(int j=0; j<scanResolution; j++ ) {
 
+	//create row array only if hasn't been done before
     if(zDistance[j] == NULL)		zDistance[j] = new double[MAX_GRID];
 	if(zDistanceScaled[j] == NULL)	zDistanceScaled[j] = new double[MAX_GRID];
 
     for(int i=0; i<scanResolution; i++ ) {
-      float zNormalized = zBuffer[ j*pixelGridSize + i ];
+      float zNormalized = zBuffer[ (scanResolution-j-1)*pixelGridSize + i ];
+	  //changed back for now
+	  //changed to (scanResolution-j-1) from j so that top of zBuffer ends up in top of zDistance array
+	  //zBuffer has lower values at the bottom of the grid, while zDistance should have lower values at the 
+	  //top of the grid to match the way data read with microscope
       
       // -scanNear and -scanFar are the real depth values in the viewing 
       // volume (see definition of glOrtho)
       double zDepth = -scanFar + (1-(double)zNormalized)*(-scanNear + scanFar);
       // Open GL convention
-      zHeight[j][i] = zDepth;
+      zHeight[(scanResolution-j-1)/*j*/][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
 	  zDistanceScaled[j][i] = 10*zDistance[j][i];
       //I *think* it should be '+ scanFar'
@@ -280,7 +288,7 @@ void showGrid( void ) {
       double x4 = x;     double y4 = y+dy;  double z4 = zHeight[j+1][i];
 
       // gray color values
-      double gcol1 = colorBuffer[j*scanResolution + i];
+      double gcol1 = colorBuffer[(scanResolution-j-1)/*j*/*scanResolution + i];
       //      double gcol2 = colorBuffer[j*scanResolution + i+1];
       //      double gcol3 = colorBuffer[(j+1)*scanResolution + i+1];
       //      double gcol4 = colorBuffer[(j+1)*scanResolution + i];

@@ -39,9 +39,10 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "." /I "..\nano" /I "..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\vrpn" /I "..\..\nano\lib\nmMScope" /I "..\..\..\lib\nmBase" /I "..\..\..\lib\nmMP" /I "..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\quat" /I "..\..\..\..\..\vogl" /I "..\..\nano\lib\nmUI" /I "..\..\nano\lib\nmGraphics" /I "..\..\..\lib\ImgFormat" /I "..\..\nano\lib\nmUGraphics" /I "..\..\..\..\..\vrpn\server_src" /I "..\..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\..\nano\lib\nmReg" /I "..\..\..\lib\nmImageViewer" /I "..\..\nano\lib\nmAux" /I "..\..\nano\lib\nmSEM" /I "..\..\nano\lib\nmAnalyze" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "..\nano\lib\nmUI" /I "..\nano\lib\nmGraphics" /I "..\..\lib\ImgFormat" /I "..\nano\lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\nano\lib\nmMScope" /I "..\..\lib\nmMP" /I "..\nano\lib/nmReg" /I "..\..\lib\nmImageViewer" /I "..\nano\lib\nmAux" /I "..\nano\lib\nmSEM" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -49,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /machine:I386
 
 !ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
 
