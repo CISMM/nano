@@ -707,6 +707,10 @@ int CollaborationManager::fullyConnected (void) {
   char command [1000];
   int retval;
 
+  if (d_isCollaborationOn) {
+    return;
+  }
+
   display_warning_dialog("Now collaborating with %s.\n", d_peerName);
 
   d_isCollaborationOn = VRPN_TRUE;

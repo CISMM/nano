@@ -1,5 +1,13 @@
 2001-04-30  Tom Hudson  <hudsoncs.unc.edu>
 
+	* CollaborationManager.C (fullyConnected) : Test to see if we're
+	already connected so we don't display the "got connected" message
+	and call subsequent handlers twice.  Hack, but should work as long
+	as we're not supporting disconnection and reconnection or as long
+	as that facility is PROPERLY implemented.
+
+2001-04-30  Tom Hudson  <hudsoncs.unc.edu>
+
 	* microscape.c (main) : Add call to requestMutex() to try to
 	get Tcl displays correctly set.
 	* minit.c (connect_Magellan) : Add new parameter to constructor
