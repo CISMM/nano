@@ -586,8 +586,9 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       // encode_ScanDataset is implemented in nmm_Microscope_Topometrix.C
 
       stm_unbuffer_int (&bufptr, &iscrap);
-      vbuflen = sizeof(vrpn_int32) + 
-                ( 2*64*sizeof(char) + 2*sizeof(float) ) * iscrap;
+      vbuflen = (long) sizeof(vrpn_int32) + 
+                ( 2 * 64 * (long) sizeof(char) 
+		  + 2 * (long) sizeof(float) ) * iscrap;
       vrpnbuffer = new char[vbuflen];
       mlen = vbuflen;
       mptr = vrpnbuffer;
@@ -636,8 +637,9 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       // encode_ScanDataset is implemented in nmm_Microscope_Topometrix.C
 
       stm_unbuffer_int (&bufptr, &reports);
-      vbuflen = sizeof(vrpn_int32) + 
-         ( 2*64*sizeof(char) + sizeof(vrpn_int32) + 2*sizeof(float) ) * reports;
+      vbuflen = (long) sizeof(vrpn_int32) + 
+	( 2 * 64 * (long) sizeof(char) + (long) sizeof(vrpn_int32) 
+	  + 2 * (long) sizeof(float) ) * reports;
       vrpnbuffer = new char[vbuflen];
       mlen = vbuflen;
       mptr = vrpnbuffer;
