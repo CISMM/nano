@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifdef sgi
-using std::vector
+using std::vector;
 #endif
 
 
@@ -70,7 +70,6 @@ void BuildList(URender *Pobject, GLuint dl, verts vs);
 int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 {
 	char buffer[MAXLENGTH];
-	//char token[MAXLENGTH];
 	char* token;
 	ifstream readfile;
 
@@ -88,6 +87,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	int numtubes = 0;
 
 	GLuint dl;
+
 
 	readfile.open(filename);
     assert(readfile);
@@ -159,12 +159,24 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 					vs.push_back(v);
 					theta += 2 * PI / TESS;
+
+					Pobject->num_triangles += 2;	// two triangles per vertex
 				}
 			}
 		}
 	}
 	// add last tube
 	t[numtubes++] = vs;
+
+
+	// create space for triangles in Pobject
+	Pobject->num_triangles -= numtubes * TESS * 2;
+	Pobject->triangles = new float* [Pobject->num_triangles * 3];
+	for (int i = 0; i < Pobject->num_triangles * 3; i++) {
+		Pobject->triangles[i] = new float[4];
+	}
+
+
 
 
 
@@ -179,11 +191,21 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
         return 0;
 	}
 
-	for (int i = 0; i < numtubes; i++){
+	for (i = 0; i < numtubes; i++){
 		//BuildList actually builds the geometry from
 		//the data structures previously built
         BuildList(Pobject, dl + i, t[i]);
 		Dlist_array[i] = dl + i;
+	}
+
+
+
+
+	for (i = 0; i < Pobject->num_triangles * 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			printf("%f\t", Pobject->triangles[i][j]);
+		}
+		printf("\n");
 	}
 
 	readfile.close();
@@ -201,46 +223,42 @@ void BuildList(URender *Pobject, GLuint dl, verts vs) {
 
 	q_vec_type n1;
 	q_vec_type n2;
-	q_vec_type n3;
 
-	int count = 0;
+	static int count = 0;
 
 	glNewList(dl, GL_COMPILE);	// init display list
 
-	for (int i = 0; i < vs.size() - TESS - 2; i++) {
+	for (int i = 0; i < vs.size() - TESS; i++) {
 		glBegin(GL_TRIANGLES);
 		for (int k = 0; k < 3; k++) {
-			v1[k] = vs[i][k];
-			v2[k] = vs[i + TESS + 1][k];
-			v3[k] = vs[i + TESS + 2][k];
-			v4[k] = vs[i + 1][k];
+			// special case for last two triangles per segment
+			if ((i + 1) >= TESS && (i + 1) % TESS == 0) {
+				v1[k] = vs[i][k];
+				v2[k] = vs[i + TESS][k];
+				v3[k] = vs[i + 1][k];
+				v4[k] = vs[i - TESS + 1][k];
+			}
+			else {
+				v1[k] = vs[i][k];
+				v2[k] = vs[i + TESS][k];
+				v3[k] = vs[i + TESS + 1][k];
+				v4[k] = vs[i + 1][k];
+			}
 		}
 		v1[k] = v2[k] = v3[k] = v4[k] = 1.0;
-/*
-printf("Triangle %d :\n", i);
-for (k = 0; k < 4; k++) {
-	printf("%f ", v1[k]);
-}
-printf("\t");
-for (k = 0; k < 4; k++) {
-	printf("%f ", v2[k]);
-}
-printf("\t");
-for (k = 0; k < 4; k++) {
-	printf("%f ", v3[k]);
-}
-*/
+
 
 		// Compute the normal...only flat shading for now...should be good enough???
-		q_vec_set(n1, v1[0], v1[1], v1[2]);
-		q_vec_set(n2, v2[0], v2[1], v2[2]);
-		q_vec_subtract(n1, n2, n1);
+		q_vec_set(n1, v4[0] - v2[0],
+						v4[1] - v2[1],
+						v4[2] - v2[2]);
 
-		q_vec_set(n2, v2[0], v2[1], v2[2]);
-		q_vec_set(n3, v3[0], v3[1], v3[2]);
-		q_vec_subtract(n2, n3, n2);
+		q_vec_set(n2, v1[0] - v4[0],
+						v1[1] - v4[1],
+						v1[2] - v4[2]);
+		
 
-		q_vec_cross_product(n1, n1, n2);
+		q_vec_cross_product(n1, n2, n1);
 
 		q_vec_normalize(n1, n1);
 	
@@ -261,20 +279,21 @@ for (k = 0; k < 4; k++) {
 		Pobject->triangles[count++][3] = 1.0;
 
 		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][0] = v4[0];
+		Pobject->triangles[count][1] = v4[1];
+		Pobject->triangles[count][2] = v4[2];
 		Pobject->triangles[count++][3] = 1.0;
 
 		// Compute the normal...only flat shading for now...should be good enough???
-		q_vec_set(n1, v2[0], v2[1], v2[2]);
-		q_vec_set(n2, v3[0], v3[1], v3[2]);
-		q_vec_subtract(n1, n2, n1);
+		q_vec_set(n1, v4[0] - v3[0],
+						v4[1] - v3[1],
+						v4[2] - v3[2]);
 
-		q_vec_set(n2, v2[0], v2[1], v2[2]);
-		q_vec_set(n3, v4[0], v4[1], v4[2]);
-		q_vec_subtract(n2, n3, n2);
+		q_vec_set(n2, v2[0] - v4[0],
+						v2[1] - v4[1],
+						v2[2] - v4[2]);
+		
 
-		q_vec_cross_product(n1, n1, n2);
+		q_vec_cross_product(n1, n2, n1);
 
 		q_vec_normalize(n1, n1);
 	
@@ -295,20 +314,13 @@ for (k = 0; k < 4; k++) {
 		Pobject->triangles[count++][3] = 1.0;
 
 		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][0] = v4[0];
+		Pobject->triangles[count][1] = v4[1];
+		Pobject->triangles[count][2] = v4[2];
 		Pobject->triangles[count++][3] = 1.0;
 
 
-/*
-glNormal3f(1.0, 1.0, 1.0);
-		glVertex4fv(v1);
-glNormal3f(1.0, 1.0, 1.0);
-		glVertex4fv(v4);
-*/
 
-
-		Pobject->UpdateBoundsWithPoint(v1[0], v1[1], v1[2]);
+		Pobject->UpdateBoundsWithPoint(v1[0], v1[1], v1[2]);  // should do for all points
 		glEnd();
 	}
 	glEndList();

@@ -43,6 +43,7 @@ URender::URender(){
 	obj_type=URENDER;
 	texture=NULL;
 	name=NULL;
+	num_triangles = 0;
 }
 
 void URender::UpdateBoundsWithPoint(double vx, double vy, double vz)

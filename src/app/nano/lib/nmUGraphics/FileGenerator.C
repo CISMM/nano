@@ -44,7 +44,8 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
         return new WaveFrontFileGenerator(fname);
     }
 	// added by David Borland for loading Shape Analysis tubes
-	else if (strstr(fname, "mask.detail.txt") != 0) {
+	else if (strstr(fname, "mask.detail.txt") != 0 ||
+				strstr(fname, "mask.details.txt") != 0) {
 		return new TubeFileGenerator(fname);
 	}
     //added by Leila Plummer for loading objects from tube_foundry

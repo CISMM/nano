@@ -150,8 +150,8 @@ public:
 
 	
 	// holds geometry for sending to afm simulator
-	// make dynamic later, just allocate a bunch of memory for now...
-	float triangles[10000][4];
+	float** triangles;
+	long num_triangles;
 
 
 };
