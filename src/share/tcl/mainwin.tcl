@@ -58,6 +58,12 @@ catch { option add *Font {helvetica -15 } startupFile}
 #
 set thirdtech_ui 0
 
+# Decide if we are running Windows
+set MSwin 0
+if {$tcl_platform(os) == "Windows 95" || $tcl_platform(os) == "Windows NT"} {
+    set MSwin 1
+}
+
 # We will also watch for "viewer_only" to be set, indicating this
 # version can't connect to live SPMs.
 if {![info exists viewer_only] } { set viewer_only 0 }
@@ -225,25 +231,32 @@ menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0
 
 if { !$viewer_only } {
-$setupmenu add command -label "Data Sets..." -underline 0 \
+    $setupmenu add command -label "Data Sets..." -underline 0 \
 	-command "show.data_sets"
 }
 $setupmenu add command -label "Height Plane..." -underline 0 -command \
-	"show.z_mapping"
+    "show.z_mapping"
 $setupmenu add command -label "Color Map..." -underline 0 -command \
-	"show.colorscale"
+    "show.colorscale"
 $setupmenu add command -label "Contour Lines..." -underline 8 -command \
-	"show.contour_lines"
+    "show.contour_lines"
 if { !$thirdtech_ui } {
-$setupmenu add command -label "Visualization Settings..." -underline 0 \
+    $setupmenu add command -label "Visualization Settings..." -underline 0 \
         -command "show.visualizations"
-$setupmenu add command -label "Texture Blend..." -underline 0 -command \
+    $setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
-$setupmenu add command -label "Haptic..." -underline 2 -command \
+    if ($MSwin) {
+	$setupmenu entryconfigure "Texture Blend..." -state disabled
+    }
+    $setupmenu add command -label "Haptic..." -underline 2 -command \
 	"show.haptic"
-$setupmenu add command -label "External Filters..." -underline 0 -command \
+    $setupmenu add command -label "External Filters..." -underline 0 -command \
 	"show.external_filters"
+    if {$MSwin} {
+        $setupmenu entryconfigure "External Filters..." -state disabled
+    }
 }
+
 $setupmenu add command -label "Display Settings..." -underline 8 -command \
 		"show.display_settings"
 if { !$thirdtech_ui } {
