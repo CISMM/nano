@@ -1,3 +1,7 @@
+2001-08-28    <dwyer@BISMUTH-CS>
+
+	* microscape.c (handle_guardedscan_planeacquire): Fixed string problem.
+
 2001-08-23    <dwyer@BISMUTH-CS>
 
 	* microscape.c (handle_guardedscan_planeacquire): Added channel/direction selector for guardedscan (uses current heightplane)
