@@ -20,9 +20,6 @@ using namespace std;
 
 #include "nmm_Microscope_Simulator.h"  // for connection
 
-// Necessary to link with nmm_Microscope
-static TopoFile GTF;
-
 // Added Tom Hudson 10 June 99 to simplify
 static BCPlane * g_myZPlane;
 
@@ -129,7 +126,7 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   static int last_point_y = 0;
 
   const int numsets = 1;
-  int i, j, k;
+  int j, k;
   //j = (int)x;
   //k = (int)y;
   j = g_myZPlane->xInGrid(x);
@@ -328,8 +325,13 @@ int main (int argc, char ** argv) {
 
     // create new grid
     readmode = READ_FILE;
+    TopoFile TF;    // Needs to be passed into the load routine.
     mygrid = new BCGrid (g_numX, g_numY, 0.0, 300.0, 0.0, 300.0,
-                         readmode, g_imageName, GTF);
+                         readmode);
+    if (mygrid->loadFile(g_imageName, TF) == NULL) {
+      fprintf(stderr,"Cannot load file %s\n", g_imageName);
+      exit(-1);
+    }
 
     // add plane for Z data
     // Double huh?
@@ -340,7 +342,7 @@ int main (int argc, char ** argv) {
 
   } else {			// CODE USED IF MATH SURFACE TO BE USED
 
-    mygrid = new BCGrid (g_numX,g_numY,0,300,0,300);  
+    mygrid = new BCGrid (g_numX,g_numY,0,300,0,300, READ_FILE);  
     mygrid->addNewPlane("Topography-Forward","nm", 0);
     g_myZPlane = mygrid->getPlaneByName("Topography-Forward");
 
@@ -351,6 +353,8 @@ int main (int argc, char ** argv) {
   while (!retval) {
     jakeMain(.1, g_isWaiting, g_waitTime);
   }
+
+  return 0;
 }
 
 

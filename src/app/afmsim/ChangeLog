@@ -1,3 +1,10 @@
+2002-06-13  Russell M. Taylor II <taylorr@cs.unc.edu>
+
+	* surface.C : Changed to compile under new version of nmBase on
+		PCs (no PC-specific changes, though).
+	* afmsim.dsp : Build on PC.
+	* afmsim.dsw : Build on PC.
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_Simulator.C (RcvMarkFinishFreehand, 

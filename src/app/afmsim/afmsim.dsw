@@ -1,0 +1,92 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "NMmp"=..\..\lib\nmMP\NMmp.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "afmsim"=.\afmsim.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name nmBase
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmMScope
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name NMmp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmMScopeGenerate
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nmBase"=..\..\lib\nmBase\nmBase.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmMScope"=..\nano\lib\nmMScope\nmMScope.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name nmMScopeGenerate
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nmMScopeGenerate"=..\nano\lib\nmMScope\nmMScopeGenerate.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
