@@ -1,3 +1,12 @@
+2000-09-21  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_MicroscopeTranslator.hC: new files
+	I moved a bunch of code from streamToVrpn.C into here so that it will
+	be easier to maintain. This also fixes the bug with the time except
+	at the very end of the stream file where system messages screw
+	things up again (time goes back to the elapsed time that it took to
+	do the translation at the very end of the stream file)
+
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
         * splat.c (mkSplat) : changed return value
