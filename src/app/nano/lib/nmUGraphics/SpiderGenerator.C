@@ -108,8 +108,9 @@ void BuildList(URender *Pobject, GLuint dl) {
 	double x = Pobject->GetSpiderLength();
 	double y = Pobject->GetSpiderWidth() / 2;
 	double z = Pobject->GetSpiderThick() / 2;
+	int legs = Pobject->GetSpiderLegs();
 
-	double rot_step = Q_PI / 4;
+	double rot_step = 2 * Q_PI / legs;
 	double rot;
 
 /**********************************************************************************/
@@ -119,16 +120,16 @@ void BuildList(URender *Pobject, GLuint dl) {
 	if (Pobject->GetSpiderCurve() == 0.0) {
 		glNewList(dl, GL_COMPILE);
 		rot = 0.0;
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < legs; i++) {
 			glBegin(GL_QUADS);
 
 			// set up middle points
 			q_from_euler(q, rot, 0, 0);
 
-			q_vec_set(p[0], -x, y, -z);
-			q_vec_set(p[1], -x, -y, -z);
-			q_vec_set(p[2], -x, -y, z);
-			q_vec_set(p[3], -x, y, z);
+			q_vec_set(p[0], 0, y, -z);
+			q_vec_set(p[1], 0, -y, -z);
+			q_vec_set(p[2], 0, -y, z);
+			q_vec_set(p[3], 0, y, z);
 			q_vec_set(p[4], x, y, -z);
 			q_vec_set(p[5], x, -y, -z);
 			q_vec_set(p[6], x, -y, z);
@@ -228,7 +229,7 @@ void BuildList(URender *Pobject, GLuint dl) {
 
 	glNewList(dl, GL_COMPILE);	// init display list
 	rot = 0.0;
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < legs; i++) {
 		glBegin(GL_QUADS);
 
 		// set up middle points

@@ -98,6 +98,7 @@ protected:
 	double spider_thick;
 	int spider_tess;
 	double spider_curve;
+	int spider_legs;
 
 	//bounding box
 	BBOX bounds;	
@@ -161,6 +162,7 @@ public:
 	void SetSpiderThick(double t) { spider_thick = t; }
 	void SetSpiderTess(int t) { spider_tess = t; }
 	void SetSpiderCurve(double c) { spider_curve = c; }
+	void SetSpiderLegs(int l) { spider_legs = l; }
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
@@ -184,6 +186,7 @@ public:
 	double GetSpiderThick() { return spider_thick; }
 	int GetSpiderTess() { return spider_tess; }
 	double GetSpiderCurve() { return spider_curve; }
+	int GetSpiderLegs() { return spider_legs; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}

@@ -1,5 +1,14 @@
 2002-05-20  David Borland <borland@cs.unc.edu>
 
+        * URender.h : added variable and access functions for number of
+        spider legs
+
+        * SpiderGenerator.C : changed code to account for variable number
+        of legs.  This allows the spider generator code to also be used for
+        aligning simple paddles and determining curvature.
+
+2002-05-20  David Borland <borland@cs.unc.edu>
+
         * URender.h : added variables and access functions for locking
         translations and rotations
 
