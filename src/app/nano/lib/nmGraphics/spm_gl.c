@@ -720,26 +720,216 @@ int spm_y_strip( nmb_PlaneSelection planes,
     }
     
     if (g_VERTEX_ARRAY) {
-        return i;
-    }
-    else {
+		specify_vertexArray(vertexArray, &i, 1);
+	}
+	else {
         glEnd();
         VERBOSE(20, "          glEnd()");
     }
     return 0;
 }
 
+int spm_y_strip_masked( nmb_PlaneSelection planes,
+						GLdouble minColor[4], GLdouble maxColor[4], int which,
+						Vertex_Struct * vertexArray)
+{
+int     x,y;
+    int    i;	
+    
+    // Make sure we found a height plane
+    if (planes.height == NULL) {
+        fprintf(stderr, "spm_y_strip_masked: could not get grid!\n");
+        return -1;
+    }
+    
+    // Make sure they asked for a legal strip (in range and on stride)
+    if ((which < 0) || (which >= planes.height->numY() - 1)) {
+        fprintf(stderr, "Strip %d is outside plane.\n", which);
+        return(-1);
+    }
+    
+    if (which % g_stride) {
+      fprintf(stderr, "Strip %d is off stride.\n", which);
+      return(-1);
+    }
+        
+    /* Fill in the vertices for the triangle strip */
+    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
+    
+    if (!g_VERTEX_ARRAY) {
+        glBegin(GL_TRIANGLE_STRIP);
+        VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
+    }
+    
+    int number_of_strips = 0;
+    bool skipping = false;
+    int *x_array = new int[planes.height->numX() * 2];
+    int *y_array = new int[planes.height->numX() * 2];
+    i = 0;
+    
+    x = which + g_stride;
+    y = 0;
+	//Is the current quad partially masked?
+    bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
+                              planes.mask->value(x - g_stride,y) <= 0 ||
+                              planes.mask->value(x,y+g_stride) <= 0 ||
+                              planes.mask->value(x-g_stride,y+g_stride) <= 0);
+    if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
+        (g_mask == INVERT_MASK && !quad_partial_mask))
+    {
+        skipping = true;
+    }
+    else {
+        x_array[i] = x; x_array[i+1] = x - g_stride;
+        y_array[i] = y; y_array[i+1] = y;
+        i+=2;
+    }
+    for (y = g_stride; y < planes.height->numX() - g_stride; y += g_stride) {   // Left->right
+        quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
+                             planes.mask->value(x - g_stride,y) <= 0 ||
+                             planes.mask->value(x,y+g_stride) <= 0 ||
+                             planes.mask->value(x-g_stride,y+g_stride) <= 0);
+        if (!skipping) {
+            x_array[i] = x; x_array[i+1] = x;
+            y_array[i] = y; y_array[i+1] = y - g_stride;
+            i+=2;
+            if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
+                (g_mask == INVERT_MASK && !quad_partial_mask))
+            {
+                skipping = true;
+                x_array[i] = -1;
+                y_array[i] = -1;
+                i++;
+                number_of_strips++;
+            }
+        }
+        else if (skipping) {
+            if ((g_mask == INVERT_MASK && quad_partial_mask) ||
+                (g_mask == ENABLE_MASK && !quad_partial_mask))
+            {
+                skipping = false;
+                x_array[i] = x; x_array[i+1] = x;
+                y_array[i] = y; y_array[i+1] = y - g_stride;
+                i+=2;
+            }
+        }
+    }
+    
+    if (!skipping) {
+        x_array[i] = x; x_array[i+1] = x;
+        y_array[i] = y; y_array[i+1] = y - g_stride;
+        i+=2;
+        number_of_strips++;
+    }
+    else {
+        i--;
+    }
+    
+    int max = i;
+    int count = 0;
+    int *vert_counts = new int[number_of_strips];
+    number_of_strips = 0;
+    int vert = 0;
+    for (i = 0; i < max; i++) {
+        x = x_array[i];
+        y = y_array[i];
+        if (x == -1 && y == -1) {
+            if (g_VERTEX_ARRAY) {
+                vert_counts[number_of_strips] = count;
+                count = 0;
+                number_of_strips++;
+            }
+            else {
+                glEnd();
+                glBegin(GL_TRIANGLE_STRIP);
+            }
+        }
+        else {
+            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
+                return(-1);
+            }
+            vert++;
+            count++;
+        }
+    }
+    
+    if (g_VERTEX_ARRAY) {
+        vert_counts[number_of_strips] = count;
+        specify_vertexArray(vertexArray, vert_counts, number_of_strips+1);
+    }
+    else {
+        glEnd();
+        VERBOSE(20, "          glEnd()");
+    }
+    
+    delete [] x_array;
+    delete [] y_array;
+    
+    return 0;
+}
 
 int spm_x_strip( nmb_PlaneSelection planes,
                  GLdouble minColor[4], GLdouble maxColor[4], int which,
                  Vertex_Struct * vertexArray)
+{
+    int     x,y;
+    int    i=0;
+    
+    // Make sure we found a height plane
+    if (planes.height == NULL) {
+        fprintf(stderr, "spm_x_strip: could not get grid!\n");
+        return -1;
+    }
+    
+    // Make sure they asked for a legal strip (in range and on stride)
+    if ((which < 0) || (which >= planes.height->numX())) {
+        fprintf(stderr, "Strip %d is outside the plane.\n", which);
+        return(-1);
+    }
+    if (which % g_stride) {
+        fprintf(stderr, "Strip %d is off stride.\n", which);
+        return -1;
+    }
+    
+    /* Fill in the vertices for the triangle strip */
+    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
+    
+    if (!g_VERTEX_ARRAY) {
+        glBegin(GL_TRIANGLE_STRIP);
+        VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
+    }
+    
+    for (x = 0; x < planes.height->numX(); x += g_stride) {   
+        for (y = which+g_stride; y >= which; y -= g_stride) { 
+            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[i]))) {
+                fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
+                return(-1);
+            }
+            i++;
+        }
+    }
+    
+    if (g_VERTEX_ARRAY) {
+		specify_vertexArray(vertexArray, &i, 1);
+	}
+	else {
+        glEnd();
+        VERBOSE(20, "          glEnd()");
+    }
+    return 0;
+}
+
+int spm_x_strip_masked( nmb_PlaneSelection planes,
+					    GLdouble minColor[4], GLdouble maxColor[4], int which,
+					    Vertex_Struct * vertexArray)
 {      
     int     x,y;
     int    i;	
     
     // Make sure we found a height plane
     if (planes.height == NULL) {
-        fprintf(stderr, "spm_x_strip: could not get grid!\n");
+        fprintf(stderr, "spm_x_strip_masked: could not get grid!\n");
         return -1;
     }
     
@@ -770,7 +960,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
     
     x = 0;
     y = which + g_stride;
-	//Is the current quad is partially masked?
+	//Is the current quad partially masked?
     bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
                               planes.mask->value(x,y - g_stride) <= 0 ||
                               planes.mask->value(x+g_stride,y) <= 0 ||
@@ -847,7 +1037,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
         }
         else {
             if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
-                fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
+                fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
             vert++;

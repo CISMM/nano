@@ -51,11 +51,17 @@ extern GLuint nM_shader;
 #endif
 
 extern	int	spm_x_strip (nmb_PlaneSelection planes,
-		GLdouble minColor [3], GLdouble maxColor [3], int which,
-                Vertex_Struct * vertexArray);
+						 GLdouble minColor [3], GLdouble maxColor [3], int which,
+						 Vertex_Struct * vertexArray);
+extern	int	spm_x_strip_masked (nmb_PlaneSelection planes,
+								GLdouble minColor [3], GLdouble maxColor [3], int which,
+								Vertex_Struct * vertexArray);
 extern	int	spm_y_strip (nmb_PlaneSelection planes,
-		GLdouble minColor [3], GLdouble maxColor [3], int which,
-                Vertex_Struct * vertexArray);
+						 GLdouble minColor [3], GLdouble maxColor [3], int which,
+						 Vertex_Struct * vertexArray);
+extern	int	spm_y_strip_masked (nmb_PlaneSelection planes,
+								GLdouble minColor [3], GLdouble maxColor [3], int which,
+								Vertex_Struct * vertexArray);
 extern	int	spm_grid_to_tris (BCGrid *, GLdouble *, GLdouble *, int);
 extern	void	spm_set_surface_materials (void);
 extern	void	spm_set_icon_materials (void);

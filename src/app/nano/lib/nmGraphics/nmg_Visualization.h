@@ -6,6 +6,7 @@
 
 class BCPlane;
 class nmb_Dataset;
+class nmb_PlaneSelection;
 
 struct Vertex_Struct;
 
@@ -64,8 +65,11 @@ protected:
 	void setUpdateAndTodo(int low_row, int high_row, int stride, 
 						  int num, nmb_Interval &last_marked,
 						  nmb_Interval &update, nmb_Interval &todo);
-	void buildMaskPlane();
-	void buildTransparentPlane();
+
+	void ensureMaskPlane(nmb_PlaneSelection &planes);
+	void ensureTransparentPlane(nmb_PlaneSelection &planes);
+	void buildMaskPlane(nmb_PlaneSelection &planes);
+	void buildTransparentPlane(nmb_PlaneSelection &planes);
 
 	int determineVertexDim(int x, int y);
 	void setTexture();

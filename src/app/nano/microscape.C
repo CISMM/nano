@@ -1179,7 +1179,6 @@ struct MicroscapeInitializationState {
 //    int num_x;  replaced by AFMImageState::grid_resolution.
 //    int num_y;
   int graphics_mode;
-  int viz_mode;
   char graphicsHost [256];
 
   int num_stm_files;
@@ -1240,7 +1239,6 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
 //    num_x (DATA_SIZE),
 //    num_y (DATA_SIZE),
   graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
-  viz_mode (0),
   num_stm_files (0),
   num_image_files(0),
   SPMhostptr (NULL),
@@ -5166,9 +5164,6 @@ void ParseArgs (int argc, char ** argv,
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
-      } else if (!strcmp(argv[i], "-visualization")) {
-          if (++i >= argc) Usage(argv[0]);
-          istate->viz_mode = atoi(argv[i]);
       } else if (!strcmp(argv[i], "-renderserver")) {
           istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
@@ -5574,10 +5569,6 @@ void Usage(char* s)
                          "receive times\n");
   fprintf(stderr, "       -alphacolor: Set color for alpha texture "
                          "(default 0.0 1.0 0.0)\n");
-  fprintf(stderr, "       -visualization: Use alternate visualization method\n");
-  fprintf(stderr, "       \t0 for normal\n");
-  fprintf(stderr, "       \t1 for transparent\n");
-  fprintf(stderr, "       \t2 for wire frame\n");
   fprintf(stderr, "       -vizimage: PPM file to use for the visualization image\n");
   fprintf(stderr, "       -marshalltest: Test remote/server graphics pair "
                          "in single process\n");

@@ -380,9 +380,19 @@ int build_list_set (
     (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
 
   if (strips_in_x) {
-    stripfn = spm_x_strip;
+	  if (g_mask == DISABLE_MASK) {
+		stripfn = spm_x_strip;
+	  }
+	  else {
+		stripfn = spm_x_strip_masked;
+	  }
   } else {
-    stripfn = spm_y_strip;
+	  if (g_mask == DISABLE_MASK) {
+		stripfn = spm_y_strip;
+	  }
+	  else {
+		stripfn = spm_y_strip_masked;
+	  }
   }
 
   nmb_Interval subset (MAX(0, insubset.low()),
@@ -456,11 +466,21 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
   // Figure out how many strips we will need.  Recall that we are
   // skipping along by stride gridpoints each time.
   if (strips_in_x) {
-    *num = (planes.height->numY() - 1) / g_stride;
-    stripfn = spm_x_strip;
+	  *num = (planes.height->numY() - 1) / g_stride;
+	  if (g_mask == DISABLE_MASK) {
+		stripfn = spm_x_strip;
+	  }
+	  else {
+		stripfn = spm_x_strip_masked;
+	  }
   } else {
-    *num = (planes.height->numX() - 1) / g_stride;
-    stripfn = spm_y_strip;
+	  *num = (planes.height->numX() - 1) / g_stride;
+	  if (g_mask == DISABLE_MASK) {
+		stripfn = spm_y_strip;
+	  }
+	  else {
+		stripfn = spm_y_strip_masked;
+	  }
   }
   
   //fprintf(stderr, "Generating %d lists.\n", *num);

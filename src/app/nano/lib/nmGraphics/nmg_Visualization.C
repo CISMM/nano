@@ -152,20 +152,34 @@ setControlPlane(BCPlane *control) {
 void nmg_Visualization::
 changeDataset(nmb_Dataset *dataset) {
 	d_dataset = dataset;
-    nmb_PlaneSelection planes;
-    
-    planes.lookup(d_dataset);
+}
 
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::ensureMaskPlane
+//      Access: Protected
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_Visualization::
+ensureMaskPlane(nmb_PlaneSelection &planes) {
     if (planes.mask == (BCPlane*)NULL) {
         BCPlane *plane = d_dataset->inputGrid->addNewPlane("Mask-Plane", "", NOT_TIMED);		
         d_dataset->maskPlaneName->Set(plane->name()->Characters());
         strcpy(g_maskPlaneName, plane->name()->Characters());
+		planes.mask = plane;
     }
-    
+}    
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::ensureTransparentPlane
+//      Access: Protected
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_Visualization::
+ensureTransparentPlane(nmb_PlaneSelection &planes) {
     if (planes.transparent == (BCPlane*)NULL) {
         BCPlane *plane = d_dataset->inputGrid->addNewPlane("Transparent-Plane", "", NOT_TIMED);		
         d_dataset->transparentPlaneName->Set(plane->name()->Characters());
         strcpy(g_transparentPlaneName, plane->name()->Characters());
+		planes.transparent = plane;
     }
 }
 
@@ -516,10 +530,9 @@ drawLists(int base, int num)
 //              visualization method
 ////////////////////////////////////////////////////////////
 void nmg_Visualization::
-buildMaskPlane() {
-    nmb_PlaneSelection planes;
-    
-    planes.lookup(d_dataset);
+buildMaskPlane(nmb_PlaneSelection &planes) {
+
+	ensureMaskPlane(planes);
 
 	if (d_control == (BCPlane*)NULL) {
 		//If there is no control plane, then just fill the
@@ -550,10 +563,10 @@ buildMaskPlane() {
 //              control the alpha values at each point
 ////////////////////////////////////////////////////////////
 void nmg_Visualization::
-buildTransparentPlane() {
-    nmb_PlaneSelection planes;
-    
-	planes.lookup(d_dataset);
+buildTransparentPlane(nmb_PlaneSelection &planes) {
+
+	ensureTransparentPlane(planes);
+
 	if (d_control == (BCPlane*)NULL) {
 		//If there is no control plane, then just fill the
 		//transparency plane with 1's.
@@ -664,8 +677,10 @@ int nmg_Viz_Opaque::
 rebuildGrid()
 {  
     nmb_PlaneSelection planes;  // Rebuilds the texture coordinate array:
-    
     planes.lookup(d_dataset);
+
+	//ensureMaskPlane(planes);
+	//ensureTransparentPlane(planes);
     
     if (build_grid_display_lists(planes,display_lists_in_x, &d_list_base[0], 
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
@@ -804,12 +819,12 @@ int nmg_Viz_Transparent::
 rebuildGrid()
 {
     nmb_PlaneSelection planes;
-    
-    buildMaskPlane();  
-    buildTransparentPlane();
-    g_mask = ENABLE_MASK;
     planes.lookup(d_dataset);
-    
+
+    buildMaskPlane(planes);  
+    buildTransparentPlane(planes);
+    g_mask = ENABLE_MASK;
+        
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
                                  g_maxColor, d_vertexPtr[0])) {
@@ -858,8 +873,8 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
                      last_marked[0], update[0], todo[0]);
     
-	buildMaskPlane();  
-    buildTransparentPlane();
+	buildMaskPlane(planes);  
+    buildTransparentPlane(planes);
     g_mask = ENABLE_MASK;
 
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
@@ -979,8 +994,11 @@ rebuildGrid()
 {
     nmb_PlaneSelection planes;  
     planes.lookup(d_dataset);
+
+	//ensureMaskPlane(planes);
+	//ensureTransparentPlane(planes);
     
-    buildMaskPlane();   
+    buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
     
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
@@ -1043,7 +1061,7 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
                      last_marked[0], update[0], todo[0]);
     
-	buildMaskPlane();   
+	buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
 
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
@@ -1202,7 +1220,10 @@ rebuildGrid()
     nmb_PlaneSelection planes;  
     planes.lookup(d_dataset);
     
-    buildMaskPlane();   
+	//ensureMaskPlane(planes);
+	//ensureTransparentPlane(planes);
+
+    buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
     
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
@@ -1266,7 +1287,7 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
                      last_marked[0], update[0], todo[0]);
 
-	buildMaskPlane();   
+	buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
     
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
