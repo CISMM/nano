@@ -166,15 +166,19 @@ SOURCE=..\..\lib\nmBase\nmb_Image.C
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\nmBase\nmb_ImageTransform.C
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\nmBase\nmb_String.C
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_TimerList.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_Transform_TScShR.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_TransformMatrix44.C
 # End Source File
 # Begin Source File
 
@@ -200,6 +204,18 @@ SOURCE=..\sem\nmm_Microscope_SEM_EDAX.C
 # Begin Source File
 
 SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM_Remote.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_AlignerMI.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_CoarseToFineSearch.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_Gaussian.C
 # End Source File
 # Begin Source File
 
@@ -327,15 +343,19 @@ SOURCE=..\..\lib\nmBase\nmb_Image.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\nmBase\nmb_ImageTransform.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\nmBase\nmb_String.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_TimerList.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_Transform_TScShR.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_TransformMatrix44.h
 # End Source File
 # Begin Source File
 
@@ -352,6 +372,18 @@ SOURCE=..\sem\nmm_Microscope_SEM_EDAX.h
 # Begin Source File
 
 SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM_Remote.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_AlignerMI.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_CoarseToFineSearch.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_Gaussian.h
 # End Source File
 # Begin Source File
 
