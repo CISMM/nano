@@ -422,6 +422,44 @@ void nmb_Image::getWorldToImageTransform(nmb_TransformMatrix44 &xform)
   xform.setMatrix(matrix);
 }
 
+void nmb_Image::getImageToTextureTransform(double *matrix44)
+{
+  int texwidth = width() + borderXMin() + borderXMax();
+  int texheight = height() + borderYMin() + borderYMax();
+  double scaleFactorX = (double)(width())/(double)texwidth;
+  double scaleFactorY = (double)(height())/(double)texheight;
+  double borderOffsetX = (double)borderXMin()/(double)texwidth;
+  double borderOffsetY = (double)borderYMin()/(double)texheight;
+
+  // image_to_texture
+  matrix44[0] = scaleFactorX;
+  matrix44[4] = 0.0;
+  matrix44[8] = 0.0;
+  matrix44[12] = borderOffsetX;
+
+  matrix44[1] = 0.0;
+  matrix44[5] = scaleFactorY;
+  matrix44[9] = 0.0;
+  matrix44[13] = borderOffsetY;
+  
+  matrix44[2] = 0.0;
+  matrix44[6] = 0.0;
+  matrix44[10] = 1.0;
+  matrix44[14] = 0.0;
+  
+  matrix44[3] = 0.0;
+  matrix44[7] = 0.0;
+  matrix44[11] = 0.0;
+  matrix44[15] = 1.0;
+}
+
+void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform)
+{
+  double matrix[16];
+  getImageToTextureTransform(matrix);
+  xform.setMatrix(matrix);
+}
+
 void nmb_Image::setWorldToImageTransform(double *matrix44)
 {
     d_worldToImageMatrixSet = VRPN_TRUE;
@@ -516,7 +554,7 @@ TopoFile nmb_ImageGrid::s_openFileTopoHeader;
 int nmb_ImageGrid::openFile(const char *filename)
 {
   s_openFileGrid = new BCGrid();
-  if (s_openFileGrid->loadFile(filename, s_openFileTopoHeader) != 0) {
+  if (s_openFileGrid->loadFile(filename, s_openFileTopoHeader) == NULL) {
     delete s_openFileGrid;
     s_openFileGrid = NULL;
     return -1;

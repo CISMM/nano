@@ -47,6 +47,11 @@ int nmb_ImgMagick::readFileMagick(const char * filename, const char * name, BCGr
       (void) strcpy(image_info->filename,filename);
       image=ReadImage(image_info,&exception);
       if (image == (Image *) NULL) {
+          // print out something to let us know we are missing the 
+          // delegates.mgk or whatever if that is the problem instead of just
+          // saying the file can't be loaded later
+          fprintf(stderr, "nmb_ImgMagic: %s: %s\n",
+                 exception.reason,exception.description);
           //MagickError(exception.severity,exception.reason,exception.description);
           // Get here if we can't decipher the file, let caller handle it. 
           return -1;

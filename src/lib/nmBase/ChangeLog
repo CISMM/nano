@@ -1,3 +1,15 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Device.hC : moved buffering code from nmb_Device_Client into
+	the base class nmb_Device so that it is available to nmb_Device_Server
+	as well
+	Synchronized access to the buffer with a semaphore mutex
+	* nmb_Image.hC (getImageToTextureTransform): new function that
+	encapsulates code which is used outside this class to compensate
+	for the borders of the image array when setting texture coordinates
+	- this basically tells you where the image lies inside the array
+	* nmb_ImgMagick.C (readFileMagick): added a error print statement
+
 2001-08-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_Dataset.C: removed d_hostname member, removed hostname

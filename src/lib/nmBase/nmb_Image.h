@@ -164,6 +164,8 @@ class nmb_Image {
 
         void getWorldToImageTransform(double *matrix44);
         void getWorldToImageTransform(nmb_TransformMatrix44 &xform);
+        void getImageToTextureTransform(double *matrix44);
+        void getImageToTextureTransform(nmb_TransformMatrix44 &xform);
         void setWorldToImageTransform(double *matrix44);
         void setWorldToImageTransform(nmb_TransformMatrix44 &xform);
 
