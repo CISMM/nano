@@ -2013,7 +2013,7 @@ void nmg_Graphics_Implementation::setViewTransform (v_xform_type xform) {
 
 void nmg_Graphics_Implementation::
 createScreenImage( const char* filename,
-		   const char* /*type*/ )
+		   const char* type )
 {
   int w, h;
   unsigned char * pixels = NULL;
@@ -2023,7 +2023,7 @@ createScreenImage( const char* filename,
     return;
   }
 
-  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
+  if(nmb_ImgMagick::writeFileMagick(filename, type, w, h, 3, pixels)) {
       fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
   }
   delete [] pixels;

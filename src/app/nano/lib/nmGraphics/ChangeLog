@@ -1,3 +1,8 @@
+2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
+
+    * nmg_GraphicsImpl.C (createScreenImage): passes type argument to 
+	nmg_ImgMagick::writeFileMagick()
+
 2003-02-17  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (setRubberLineStart): Fixed indexing error
