@@ -208,8 +208,8 @@ proc popup_check_streamfile_dialog { {nm ""} {el ""} {op ""} } {
 
 	if { $check_streamfile_save == 0 } {return 1;}
 	
-	if { [tk_dialog ".file_warning_dialog" "Warning" "WARNING: No file has been selected!\n" \
-				"warning" "" "Continue without saving" "Select a file"] } {
+	if { [tk_dialog ".file_warning_dialog" "Warning" "WARNING: No log file has been selected!\n" \
+				"warning" "" "Continue:  don't save data" "Select a file"] } {
 		puts "popup_check_streamfile_dialog3"
 		choose_logfile 
 	}
