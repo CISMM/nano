@@ -11,8 +11,7 @@
 #include "OpticalServerInterface.h"
 
 
-#define VIRTUAL_ACQ_RES_X (1024)
-#define VIRTUAL_ACQ_RES_Y (800)
+#define VIRTUAL_ACQ_RES_INDEX (3)
 
 
 int EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES] ={64, 128, 256, 512, 1024, 2048, 4096};
@@ -84,8 +83,8 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	short maxExtents[2]; // width then height
 	if( d_virtualAcquisition )
 	{
-		maxExtents[0] = VIRTUAL_ACQ_RES_X;
-		maxExtents[1] = VIRTUAL_ACQ_RES_Y;
+		maxExtents[0] = EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES-1];
+		maxExtents[1] = EDAX_SCAN_MATRIX_Y[EDAX_NUM_SCAN_MATRICES-1];
 		currentResolutionIndex = 1;
 	}
 	else
@@ -107,7 +106,6 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	myImageBuffer = new vrpn_uint8[ maxBufferSize ];
 	cameraImageBuffer = new vrpn_uint8[ maxBufferSize ];
 
-	
 }
 
 nmm_Microscope_SEM_diaginc::
@@ -199,7 +197,7 @@ setupCamera( )
 	}
 	
 	// set bin size
-	short binning = 2;
+	short binning = 1;
 	success = SpotSetValue( SPOT_BINSIZE, &binning );
 	if( success != SPOT_SUCCESS )
 	{
@@ -279,8 +277,9 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 {
 	if( d_virtualAcquisition )
 	{
-		res_x = VIRTUAL_ACQ_RES_X;
-		res_y = VIRTUAL_ACQ_RES_Y;
+		int x = 0, y = 0;
+		this->indexToResolution( currentResolutionIndex, x, y );
+		res_x = x;  res_y = y;
 	}
 	else
 	{
@@ -293,8 +292,8 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 			res_x = -1;  res_y = -1;
 			return ret;
 		}
-		res_x = rect.right - rect.left;
-		res_y = rect.bottom - rect.top;
+		res_x = (rect.right - rect.left) / currentBinning;
+		res_y = (rect.bottom - rect.top) / currentBinning;
 	}
 
 	int resInd = this->resolutionToIndex( res_x, res_y );
@@ -315,7 +314,7 @@ getBinning( vrpn_int32 &bin )
 {
 	if( d_virtualAcquisition )
 	{
-		bin = 1;
+		bin = currentBinning;
 	}
 	else
 	{
@@ -347,8 +346,8 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 {
 	if( d_virtualAcquisition )
 	{
-		x = VIRTUAL_ACQ_RES_X;
-		y = VIRTUAL_ACQ_RES_Y;
+		x = EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES-1];
+		y = EDAX_SCAN_MATRIX_Y[EDAX_NUM_SCAN_MATRICES-1];
 	}
 	else
 	{
@@ -370,14 +369,7 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 {
-	if( d_virtualAcquisition )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
-			"virtual acquisition on.  We're making up data and not changing the resolution.\n" );
-		return reportResolution( );
-	}
-
-	// get the index for this resolution
+	// get the index for this image resolution
 	int resInd = this->resolutionToIndex( res_x, res_y );
 	if( resInd < 0 )
 	{
@@ -397,28 +389,37 @@ setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 	}
 
 	// check that the requested resolution isn't too big
-	if( res_x > maxX || res_y > maxY )
+	int camX = res_x * currentBinning, camY = res_y * currentBinning;
+	if( camX > maxX || camY > maxY )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
-			"resolution (%d x %d) greater than max (%d x %d).\n",
-			res_x, res_y, maxX, maxY );
+			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
+			res_x, res_y, maxX, maxY, currentBinning );
 		return reportResolution( );
 	}
 
-	// request the new resolution.  the requested area is centered in 
-	// the camera's capture area.
-	RECT rect;
-	rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( res_x / 2.0f ) );
-	rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( res_x / 2.0f ) );
-	rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( res_y / 2.0f ) );
-	rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( res_y / 2.0f ) );
-	retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
-	if( retVal != SPOT_SUCCESS )
+	if( d_virtualAcquisition )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
-			"failed on the SPOT camera.  Code:  %d\n", retVal);
+		currentResolutionIndex = resInd;
+	}
+	else
+	{
+		// request the new resolution.  the requested area is centered in 
+		// the camera's capture area.
+		RECT rect;
+		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
+		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
+		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
+		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
+		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+				"failed on the SPOT camera.  Code:  %d\n", retVal);
+		}
 	}
 	
+	OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
 	return reportResolution();
 } // end setResolution(...)
 
@@ -426,12 +427,7 @@ setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 setBinning( vrpn_int32 bin )
 {
-	if( d_virtualAcquisition )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
-			"virtual acquisition on.  We're making up data and not changing the binning.\n" );
-		return currentBinning;
-	}
+	int retVal = SPOT_SUCCESS;
 
 	// check that the requested bin size is in range
 	if( bin <= 0 || bin > 4 )
@@ -441,18 +437,68 @@ setBinning( vrpn_int32 bin )
 		return currentBinning;
 	}
 
-	// request the new resolution.  the requested area is centered in 
-	// the camera's capture area.
-	short binsize = bin;
-	int retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
+	// figure out what new resolution we need, and if it's possible
+	double resFactor = (double) bin / (double) currentBinning;
+	int resX = 0, resY = 0, maxX = 0, maxY = 0, camX = 0, camY  = 0;
+	retVal = this->getResolution( resX, resY );
 	if( retVal != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
-			"failed on the SPOT camera.  Code:  %d\n", retVal);
+			"error fixing the resolution (1).\n" );
+		return currentBinning;
 	}
+	camX = resX * resFactor;  
+	camY = resY * resFactor;
+	retVal = this->getMaxResolution( maxX, maxY );
+	if( retVal != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+			"error fixing the resolution (2).\n" );
+		return currentBinning;
+	}
+	if( camX > maxX || camY > maxY )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+			"required area too large for camera: (%d x %d) needed.  "
+			"(%d x %d) available.\n", camX, camY, maxX, maxY );
+		return currentBinning;
+	}
+
+	// request the new binning and resolution.  the requested area is centered in 
+	// the camera's capture area.
+	if( d_virtualAcquisition )
+	{
+		currentBinning = bin;
+	}
+	else
+	{
+		short binsize = bin;
+		retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+				"failed on the SPOT camera.  Code:  %d\n", retVal);
+			return currentBinning;
+		}
+		RECT rect;
+		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
+		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
+		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
+		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
+		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+				"resolution failed on the SPOT camera.  Code:  %d\n", retVal);
+			// try to set the binning back
+			binsize = currentBinning;
+			SpotSetValue( SPOT_BINSIZE, &binsize );
+		}
+	}
+
 	vrpn_int32 binning = 0;
 	getBinning( binning );
-	
+	OpticalServerInterface::getInterface()->setBinning( binning );
 	return currentBinning;
 } // end setResolution(...)
 
@@ -485,7 +531,7 @@ reportResolution()
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 requestScan(vrpn_int32 nscans)
 {
-	//printf("enable scan = %d\n", enable);
+	printf("enable scan = %d\n", nscans);
     if (nscans == 0) {
         d_scan_enabled = vrpn_FALSE;
         d_scans_to_do = 0;
@@ -534,14 +580,6 @@ acquireImage()
 {
 	int i, j;
 	
-	/*
-	if (d_shared_settings_changed) {
-		//  do something
-	}
-	if (d_image_mode_settings_changed) {
-		//  do something else
-	}
-	*/
 	int result = SPOT_SUCCESS;
 	int resX = 0, resY = 0;
 	result = this->getResolution( resX, resY );

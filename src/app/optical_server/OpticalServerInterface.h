@@ -21,8 +21,8 @@ public:
 
 	int getBinning( ) { return binning; };
 	int getResolutionIndex( ) { return resolutionIndex; };
-	void setBinning( int bin ) { binning = bin; };
-	void setResolutionIndex( int idx ) { resolutionIndex = idx; };
+	void setBinning( int bin );
+	void setResolutionIndex( int idx );
 
 protected:
 

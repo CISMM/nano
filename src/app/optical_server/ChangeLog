@@ -1,3 +1,16 @@
+2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
+
+	* OpticalServerInterface.h: removed implementation of setBinning
+	and setResolutionIndex
+	* OpticalServerInterface.cpp:  implementation of setBinning and
+	setResolutionIndex.  Also, only sleep 10 ms in the glut idle func.
+	* opticalServer.cpp:  added some initialization
+	* nmm_Microscope_SEM_diaginc.h:  comment change
+	* nmm_Microscope_SEM_diaginc.cpp:  virtual acquisition will now change
+	resolution and binning.  Also, fixed the interplay between binning
+	and resolution when either are changed (e.g., camera resolution must
+	double when doubling binning to maintain the same image size).
+	
 2003-11-22  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* OpticalServerInterface.cpp : Added version number.  Modified to

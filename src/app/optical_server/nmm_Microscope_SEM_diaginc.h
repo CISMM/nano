@@ -98,7 +98,7 @@ private:
 
     vrpn_bool d_virtualAcquisition;
 
-	int currentResolutionIndex;
+	int currentResolutionIndex;  // image resolution = camera resolution / binning
 	int maxBufferSize;
 	int currentBinning;
 	vrpn_uint8* myImageBuffer;

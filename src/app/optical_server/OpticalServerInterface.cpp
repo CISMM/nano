@@ -95,7 +95,7 @@ void OpticalServerInterface_myGlutIdle( )
     fprintf(stderr,"Tclvar Mainloop failed\n");
   }
 
-  vrpn_SleepMsecs( 100 );
+  vrpn_SleepMsecs( 10 );
 }
 
 
@@ -113,7 +113,7 @@ void OpticalServerInterface::handle_resolution_changed(char *new_value, void *us
   if( me->microscope != NULL && me->threadReady ) {
     int i, x, y;
     sscanf(new_value, "%d %dx%d", &i, &x, &y);
-    me->setResolutionIndex(i);
+ 	me->microscope->setResolution( x, y );
   }
 }
 
@@ -300,4 +300,31 @@ setMicroscope( nmm_Microscope_SEM_diaginc* m )
 		this->setBinning( ret );
 		this->setResolutionIndex( m->getResolutionIndex( ) );
 	}
+}
+
+
+void OpticalServerInterface::
+setBinning( int bin ) 
+{ 
+	binning = bin;
+	char binStr[512];
+	sprintf( binStr, "%d", bin );
+	d_binningSelector->Set( binStr );
+}
+
+
+void OpticalServerInterface::
+setResolutionIndex( int idx ) 
+{ 
+	resolutionIndex = idx;
+	char idxStr[512];
+	if( idx > 0 && idx <= EDAX_NUM_SCAN_MATRICES - 1 )
+	{
+		sprintf( idxStr, "%i %dx%d", idx, EDAX_SCAN_MATRIX_X[idx], EDAX_SCAN_MATRIX_Y[idx] );
+	}
+	else
+	{
+		sprintf( idxStr, "%i ?x?", idx );
+	}
+	d_resolutionSelector->Set( idxStr );
 }
