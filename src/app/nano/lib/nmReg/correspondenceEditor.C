@@ -189,7 +189,7 @@ int CorrespondenceEditor::displayHandler(
     // set up projection so we can draw on top of image such that
     // vertices are in image coordinates scaled by the window size relative
     // to the image size
-    glOrtho(0, data.winWidth, data.winHeight, 0, -1, 1);
+    glOrtho(data.winWidth, 0, data.winHeight, 0, -1, 1);
     glPixelZoom(1.0, 1.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -206,12 +206,12 @@ int CorrespondenceEditor::displayHandler(
         // convert point to the right location in the window by scaling it
         me->viewer->toPixels(data.winID, &(image_pnt.x), &(image_pnt.y));
         // now draw the point
-        me->drawCrosshair(image_pnt.x, image_pnt.y);
+        me->drawCrosshair(data.winWidth-image_pnt.x, image_pnt.y);
         sprintf(num_str, "%d", i);
         glColor3f(1.0, 1.0, 1.0);
-        me->viewer->drawString(image_pnt.x+1, image_pnt.y - 3, num_str);
+        me->viewer->drawString(data.winWidth-image_pnt.x-1, image_pnt.y - 3, num_str);
         if (i == me->selectedPointIndex)
-            me->drawSelectionBox(image_pnt.x, image_pnt.y);
+            me->drawSelectionBox(data.winWidth-image_pnt.x, image_pnt.y);
     }
     return 0;
 }
@@ -334,7 +334,7 @@ int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
     // printf(" min,max = %f, %f\n", im->minNonZeroValue(), im->maxValue());
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
-            val = im->getValue(i,im_h -j -1);   // we need to flip y
+            val = im->getValue(i,j);
             viewer->setValue(win_ids[spaceIndex], i, j, val);
         }
     }

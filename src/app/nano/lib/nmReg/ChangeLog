@@ -1,3 +1,10 @@
+2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondenceEditor.C (displayHandler): flipped X
+	I think there might be a pixel-sized error between the 
+	drawn position and the point actually stored but its approximately
+	right at least
+
 2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondence.hC (scalePoints): added this function to let you
