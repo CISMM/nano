@@ -160,19 +160,6 @@ checkbutton $nmInfo(registration).texture.display_texture \
 
 pack $nmInfo(registration).texture.display_texture -anchor nw
 
-radiobutton $nmInfo(registration).texture.image_mode_surface \
-    -text "Surface Mode" -variable reg_image_mode -value 1
-
-pack $nmInfo(registration).texture.image_mode_surface -anchor nw
-
-radiobutton $nmInfo(registration).texture.image_mode_model \
-    -text "Model Mode" -variable reg_image_mode -value 0 -command "show.import_objects"
-
-pack $nmInfo(registration).texture.image_mode_model -anchor nw
-
-checkbutton $nmInfo(registration).texture.grab_texture \
-    -text "Grab Texture" -variable reg_grab_texture -command grab_texture_proc
-
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
 	-labelpos nw

@@ -1,3 +1,10 @@
+2002-07-08  David Borland <borland@cs.unc.edu>
+
+        * import.tcl : added radiobutton for projective texture mode
+
+        * registration.tcl : removed radiobutton for projective texture
+        mode
+
 2002-07-03 Jameson Miller <millerj@cs.unc.edu>
 	*directstep.tcl - button to let user set axis to step along. new colored arrow icons.
 
