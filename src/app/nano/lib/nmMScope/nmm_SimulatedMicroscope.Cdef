@@ -7,45 +7,28 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.C
 //#include <unistd.h>
 #include <sys/types.h>
 #include <vrpn_Connection.h>
-
-//ANDREA:  make sure the following is all correct
+//
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #include <sys/time.h>
 #else
 #include <vrpn_Shared.h>  // get timeval some other way
 #endif
 //
-
+//
 USE_MSG_GROUP nmm_AFMSIM_Report
-
+//
 CLASSNAME nmm_SimulatedMicroscope
-
-
-//the following are notes to myself (ANDREA)
-
-
-// Utility routines to parse host specifiers FROM service locations
-//   <hostname>
-//   <hostname>:<port number>
-//   x-vrpn://<hostname>
-//   x-vrpn://<hostname>:<port number>
-//   x-vrsh://<hostname>/<server program>,<comma-separated server arguments>
-
-
-//////////////////////
+//
 //
 //name is the name of this device
 nmm_SimulatedMicroscope::
-nmm_SimulatedMicroscope(char *name, vrpn_Connection *c, int port) : nmb_SharedDevice_Server(name,c), 
-						nmm_AFMSIM_Report(c)/*, d_name(name)*/, d_connection(c) {
+nmm_SimulatedMicroscope(char *name, vrpn_Connection *c) : nmb_SharedDevice_Server(name,c), 
+						nmm_AFMSIM_Report(c), d_connection(c) {
 	d_name = new char[100];
-	strcpy(d_name,name);
-  
+	strcpy(d_name,name);  
 	simulator_id = d_connection->register_sender("AFMSimulator");
 
 }
-
-
 //
 nmm_SimulatedMicroscope::
 ~nmm_SimulatedMicroscope(){
@@ -59,117 +42,70 @@ change_machineName(char * newName){
 	strcpy(d_name,newName);
 }
 //
-/*
-char * nmm_AFMSIM_Report::encode_WindowLineData (
-      int * len,
-      vrpn_int32 x,
-      vrpn_int32 y,
-      vrpn_int32 dx,
-      vrpn_int32 dy,
-      vrpn_int32 reports,
-      vrpn_int32 fields,
-      vrpn_int32 sec,
-      vrpn_int32 usec,
-      vrpn_float32 **data)
-
-  //message is a line of data
-VRPN_MESSAGE WindowLineData {
-  int32 x // should be 0
-  int32 y //should be some value
-  int32 dx //should be 1, increment by 1 (pixel, step) across row
-  int32 dy //should be 0, do not increment in y
-  int32 reports
-  int32 fields
-  int32 sec //for current time
-  int32 usec //for current time
-  float32 data [reports][fields]
-}
-*/
-
-
 void nmm_SimulatedMicroscope::
-encode_and_sendData(double ** Data, const int rowlen){
-	cout << "nmm_SimulatedMicroscope::encode_and_sendData entered" << endl;
-	int num_rows = rowlen;
-	for(int linenumber = 0; linenumber < num_rows; linenumber++){
-	//process each line separately
-
-		/*double dbl_array[rowlen][2];
-		for(int i = 0; i < rowlen; ++i){
-			dbl_array[i][0] = Data[i][linenumber];
-		}
-		double ** line = dbl_array;
-		*/
-		
-		double ** line = new double*[rowlen];
-		for(int i = 0; i < rowlen; ++i){
-			line[i] = new double[1];
-			line[i][0] = Data[i][linenumber];
-			//ANDREA:  note that this was Data[linenumber][i] before
-			//not sure why this works but that didn't
-			//check that things fill in correctly in nano
-		}
-
-		timeval time;
-		gettimeofday(&time,NULL);
-		int * len = NULL;
-		char * msgbuf = encode_WindowLineData(len, 0, linenumber, 1, 0, rowlen,
-						1, time.tv_sec, time.tv_usec, (float**)line);
-
-		//clean up before next iteration
-		for(i = 0; i < rowlen; ++i){
-			delete line[i];
-		}
-		delete line;
-
-		int retval = -1;
-		cout << "nmm_SimulatedMicroscope::encode_and_sendData:" << endl
-			 << "\tmessage (line of data) should be go to Send on next line" << endl;
-		retval = Send( (long)len, d_WindowLineData_type, msgbuf );
-		if(retval==-1){
-			cout << "Data not sent.  Check setup." << endl;
-		}
-   		//
-		//ANDREA:  check to see if mainloop should be called here
-		d_connection->mainloop();
-	}
-
+encode_and_sendData(double ** Data, const int num_cols){
+ int num_rows = num_cols;
+ for(vrpn_int32 y = 0; y < num_rows; y++){
+ //process each line separately
+//
+  vrpn_float32 ** line = new vrpn_float32*[num_cols];
+//
+  for(int i = 0; i < num_cols; ++i){
+   line[i] = new vrpn_float32[1];
+   line[i][0] = (vrpn_float32)(Data[y][i]);
+  }
+//
+  //variables for encoding in msgbuf
+  timeval time;
+  gettimeofday(&time,NULL);
+  int len;
+  vrpn_int32 x,dx,dy,reports,fields;
+  x = 0;
+  dx = 1;//step across a row
+  dy = 0;//but don't move in y
+  reports = num_cols;
+  fields = 1;//only height
+//
+  //encode msgbuf
+  char * msgbuf = encode_WindowLineData(&len, x, y, dx, dy, reports, 
+	  fields, time.tv_sec, time.tv_usec, line);
+//  
+  //send stuff
+  int retval = -1;
+  char * temp = new char[len];
+  strcpy(temp,msgbuf);
+  retval = Send((long)len, d_WindowLineData_type, msgbuf);
+//
+  //clean up before next iteration
+  for(i = 0; i < num_cols; ++i){
+   delete line[i];
+  }
+  delete line;
+ }
 }
-
 //
 int nmm_SimulatedMicroscope::
-Send( long len, vrpn_int32 msg_type, char * buf )
-{
-	cout << "nmm_SimulatedMicroscope::Send entered" << endl;
-	struct timeval now;
-	int retval = -1;
-	//
+Send(long len, vrpn_int32 msg_type, char * buf){
+	int retval = -1;//initial value denotes failure, do not continue if remains -1
+	timeval now;	
 	gettimeofday(&now, NULL);
-	//
-	cout << "nmm_SimulatedMicroscope::Send entered:" << endl
-		 << "\tmessage should be sent via vrpn_Connection::pack_message on next line" 
-		 << endl;
+	//pack message
 	retval = d_connection->pack_message(len, now, msg_type, simulator_id,
 				      buf, vrpn_CONNECTION_RELIABLE);
-	if(retval == -1){
-		cout << "nmm_SimulatedMicroscope::Send:" << endl
-			 << "message NOT successfully sent" << endl;
+	if(retval != -1){
+		d_connection->mainloop();//send message here
 	}
 	else{
-		cout << "nmm_SimulatedMicroscope::Send:" << endl
-			 << "message successfully sent" << endl;
+		cout << "Message not sent" << endl;
 	}
-
 	//
 	if ( buf ) {
-		delete [] buf;
+		delete buf;
 	}
 	return retval;
 }
-//
 
 
-//HANDLERS nmm_AFMSIM_Report;
 
 
-//
+

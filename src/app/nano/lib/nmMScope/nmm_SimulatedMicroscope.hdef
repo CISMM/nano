@@ -3,45 +3,33 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.h
 //
 #ifndef NMM_SIMULATEDMICROSCOPE_H
 #define NMM_SIMULATEDMICROSCOPE_H
-
 //
 #include "nmm_AFMSIM_Report.h"
 #include <nmb_SharedDevice.h>
-
 //
 class nmb_SharedDevice_Server;
-
-
 //
 USE_MSG_GROUP nmm_AFMSIM_Report
 
 CLASSNAME nmm_SimulatedMicroscope
-
-
 //
 class nmm_SimulatedMicroscope : public nmb_SharedDevice_Server, 
 	public nmm_AFMSIM_Report {
 
 public:
-	nmm_SimulatedMicroscope(char *name, vrpn_Connection *c, int port = 4500);
+	nmm_SimulatedMicroscope(char *name, vrpn_Connection *c);
 	virtual ~nmm_SimulatedMicroscope();
-	void encode_and_sendData(double ** Data, const int rowlen);
+	void encode_and_sendData(double ** Data, const int num_cols);
 	void change_machineName(char * newName);
 //
 private:
-	
-	//HANDLERS_DECL ;
-
 	int Send( long len, vrpn_int32 msg_type, char * buf );
 	char * d_name;
 	vrpn_Connection * d_connection;
 	long simulator_id;
 
 };
-
 //
-
-
 #endif //NMM_SIMULATEDMICROSCOPE_H
 
 

@@ -35,51 +35,31 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   (const char * name, vrpn_Connection * connection, const char * planename, 
   nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection), nmb_SharedDevice_Remote(name,
   connection), d_dataset(dataset), RealAFMPlaneName(d_dataset->heightPlaneName->string()),
-  RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName))
+  RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName)), 
+  d_connection(connection)
 {
-	
-	cout << "got here nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote" 
-		 << endl;
-
-
 	REGISTER nmm_AFMSIM_Report;
-//
-	long simulator_id = connection->register_sender("AFMSimulator");
 //
 	Xdim = d_dataset->inputGrid->numX();
 	Ydim = d_dataset->inputGrid->numY();
-	DATA_ARRAY_SIZE = (d_dataset->inputGrid->numX())*(d_dataset->inputGrid->numY());
-	DataArray = new double[DATA_ARRAY_SIZE]; 
-	//
-	//cout << "Got to line before nma_ShapeIdentifiedPlane created" << endl;
-	//
-	SimScanPlane = new nma_ShapeIdentifiedPlane(RealAFMPlane, d_dataset, planename);
-	//
-	//if(SimScanPlane != NULL)	//cout << "nma_ShapeIdentifiedPlane not NULL" << endl;
-	//else	//cout << "nma_ShapeIdentifiedPlane NULL" << endl;
-	//
+	DATA_ARRAY_SIZE = Xdim*Ydim;
+	DataArray = NULL;
+	SimScanPlane = new nma_ShapeIdentifiedPlane(RealAFMPlane, d_dataset, planename,NULL);
+	DataArray = new double*[Xdim]; //ANDREA:  check on whether this should be something sent over
+								   //or stay as is
 	UnitsOK = true;
 }
-
 //
-
-
 nmm_SimulatedMicroscope_Remote::~nmm_SimulatedMicroscope_Remote() {
 	//delete SimScanPlane;
 }
-
 //
-
-
 int nmm_SimulatedMicroscope_Remote::mainloop() {
-//
-  return 0;
+  return d_connection->mainloop();
 }
-
-
+//
 HANDLERS nmm_AFMSIM_Report ; 
-
-
+//
 RECEIVE_MSG WindowLineData {
 //    int32 x
 //    int32 y
@@ -90,7 +70,7 @@ RECEIVE_MSG WindowLineData {
 //    int32 sec
 //    int32 usec
 //    float32 data [reports][fields]
-	cout << "Receiving window line data" << endl;
+//
 	if(UnitsOK){//check that units match before allowing in data
 //
 		//check to see that the data the "microscope" wants to send is not greater than the
@@ -98,47 +78,40 @@ RECEIVE_MSG WindowLineData {
 		//check is whether initial (x), which is counted as zero, + (reports - 1), the number
 		//of data points following the Oth data point sent, is greater than the number of 
 		//points per row; analogous situation for y
-  		if ((x < 0 || y < 0 || 
-     			(x+(reports-1)*dx) > (d_dataset->inputGrid->numX()-1) ||
-     			(y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1))) {
-     			cerr << "Internal: grid size doesn't match reported data size."
-		     	<< "Exiting to avoid loss of data." << endl; 
-    			return;
-  		}
+		//
+		int datain_xmax = x+(reports-1)*dx;
+		int datain_ymax = y+(reports-1)*dy;
+
+		if (x < 0 || y < 0 || datain_xmax > Xdim || datain_ymax > Ydim) {
+			cerr << "Internal: grid size doesn't match reported data size."
+				 << "Exiting to avoid loss of data." << endl; 
+			return;
+		}
 //	
   		if (RealAFMPlane == NULL) return;
+//
+		DataArray[y] = new double[reports];//DataArray[y] is a double*
+		//for each new y that is sent, create a new array to be filled in
 //
 		for (int i = 0; i < reports; i++) {
 			int new_x = x + i*dx;
 			int new_y = y + i*dy;
-			int new_pos = new_x + new_y*reports;
-			//
-
-			if(new_pos <= DATA_ARRAY_SIZE){//good index, fill in
-				DataArray[new_pos] = (double)(data[new_x][0]);//fill in first
-
-				//then check and see if we have filled in the last element in the array 
-				//and should update
-				if(new_pos == DATA_ARRAY_SIZE){
-					SimScanPlane->UpdateDataArray(DataArray, DATA_ARRAY_SIZE);
-					cout << "Update should have occurred" << endl;
-				}
-			}
-			else{
-				cerr << "Data received exceeds dimensions of acceptable array" << endl;
-			}
-			//
-			
+//
+			DataArray[y][i] = (double)(data[new_x][0]);//fill in
 		}
 		//
-
+		if(SimScanPlane){
+			SimScanPlane->UpdateDataArray(DataArray[y], y, reports);//send line of data
+		}
+		else{
+			return;
+		}
+		//delete [] DataArray[y];//figure out if should delete here or not...
+		//cleanup for next go-round
   		return;
 	}
 }
 //
-
-
-
 //message tells what order the fields are in
 //in case of simulator, there is only one field, so datasets will only have one element (height)
 RECEIVE_MSG_BODY ScanDataset {
@@ -160,8 +133,6 @@ RECEIVE_MSG_BODY ScanDataset {
 	}
 //		
 }
-
-
 //message tells what order the fields are in
 //in case of simulator, there is only one field, so datasets will only have one element (height)
 RECEIVE_MSG_HEADER ScanDataset {

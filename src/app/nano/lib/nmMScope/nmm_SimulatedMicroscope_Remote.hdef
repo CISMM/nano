@@ -8,6 +8,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.h
 #include <nmb_SharedDevice.h>
 #include <nmb_Dataset.h>
 #include "nma_ShapeAnalyze.h"
+#include "vrpn_Connection.h"
 
 //
 class nmb_SharedDevice_Remote;
@@ -39,15 +40,16 @@ private:
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
 	BCString RealAFMPlaneName;	//name of plane with real di data
 	BCPlane * RealAFMPlane;		//plane with real di data
-	int Xdim;			//number of elements in the x dimention in the current
-					//grid, and therefore of RealAFMPlane
-	int Ydim;			//same for y
-	double * DataArray;		//data array passed to nma_ShapeIdentified class	
+	int Xdim;			        //number of elements in the x dimention in the current
+					            //grid, and therefore of RealAFMPlane
+	int Ydim;			        //same for y
+	double ** DataArray;		    //data array passed to nma_ShapeIdentified class	
 	int DATA_ARRAY_SIZE;		//size of DataArray when it finally gets filled
 	nma_ShapeIdentifiedPlane * SimScanPlane;//new plane formed/filled in when
-						//full array of data has been sent
-	bool UnitsOK;			//so only load information if units check out,
-					//match real afm scan plane
+						        //full array of data has been sent
+	bool UnitsOK;			    //so only load information if units check out,
+					            //match real afm scan plane
+	vrpn_Connection * d_connection;
 	
 
 };
