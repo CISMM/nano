@@ -38,19 +38,21 @@ vrpn_Connection * getPeer (const char * hostname, int port,
                            const char * loggingPath, int timestamp,
                            vrpn_bool loggingInterface,
                            const char * NIC_IP) {
-  char buf [256];
-  char sfbuf [1024];
+  char buf[256];
+  char inbuf[1024];
+  char outbuf[1024];
 
   sprintf(buf, "%s:%d", hostname, port);
-  sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath, timestamp);
+  sprintf(inbuf, "%s/SharedIFRemInLog-%ld.stream", loggingPath, timestamp);
+  sprintf(outbuf, "%s/SharedIFRemOutLog-%ld.stream", loggingPath, timestamp);
 
   collabVerbose(1, "Collaboration Manager:  "
-                "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
-                buf, NIC_IP, sfbuf);
+                "Connecting to peer %s on NIC %s;  any logging is to %s and %s.\n",
+                buf, NIC_IP, inbuf, outbuf);
 
-  // TCH 17 Feb 01 only logs incoming messages
   return vrpn_get_connection_by_name (buf,
-             loggingInterface ? sfbuf : NULL, NULL,
+             loggingInterface ? inbuf : NULL, 
+             loggingInterface ? outbuf : NULL,
              NULL, NULL, 1.0, 3, NIC_IP);
 }
 
@@ -72,18 +74,20 @@ vrpn_Connection * getServer (int port,
                              const char * loggingPath, int timestamp,
                              vrpn_bool loggingInterface,
                              const char * NIC_IP) {
-  char sfbuf [1024];
+  char inbuf [1024];
+  char outbuf [1024];
 
-  sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp); 
+  sprintf(inbuf, "%s/SharedIFSvrInLog-%ld.stream", loggingPath, timestamp); 
+  sprintf(outbuf, "%s/SharedIFSvrOutLog-%ld.stream", loggingPath, timestamp); 
 
   collabVerbose(1, "Collaboration Manager:  "
-                "Opening peer server on port %d, NIC %s.\n",
-                port, NIC_IP);
+                "Opening peer server on port %d, NIC %s; any logging is to %s and %s\n",
+                port, NIC_IP, inbuf, outbuf);
 
-  // TCH 17 Feb 01 only logs incoming messages
   return new vrpn_Synchronized_Connection
         (port,
-         loggingInterface ? sfbuf : NULL, NULL,
+         loggingInterface ? inbuf : NULL, 
+         loggingInterface ? outbuf : NULL, 
          NIC_IP);
 }
 

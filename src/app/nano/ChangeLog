@@ -1,3 +1,10 @@
+2002-02-27  David Marshburn  <marshbur@cs.unc.edu>
+
+	* CollaborationManager.C (getPeer, getServer):  for completeness,
+	save both incoming and outgoing logs on both connections.
+	* nano.dsp:  remove an extra vrpn_phantom.lib from the external-
+	libraries list.
+	
 2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* microscape.C : deleted call to encode_and_sendScanandGridInfo

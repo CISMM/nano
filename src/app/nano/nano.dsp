@@ -641,10 +641,6 @@ SOURCE=..\..\..\..\external\pc_win32\lib\GHOST31.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\vrpn\server_src\pc_win32_MTd\vrpn_phantom.lib
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\quat\pc_win32_MDd\quat.lib
 # End Source File
 # Begin Source File
