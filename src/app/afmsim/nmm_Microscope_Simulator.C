@@ -188,6 +188,10 @@ nmm_Microscope_Simulator (const char * _name,
 				RcvZagPointNM,
 				this);
 
+  d_connection->register_handler(d_FeelTo_type,
+				RcvFeelTo,
+				this);
+
   d_connection->register_handler(d_SetStdDelay_type,
 				RcvSetStdDelay,
 				this);
@@ -3280,12 +3284,14 @@ report_point_set( float x, float y )
   if(set_point > 1)		// Checks to see if surface is to be modified
   {
      //float point_value[numsets];
-     moveTipToXYLoc( (x-(num_x/2)), (y-(num_y/2))); 
+     //moveTipToXYLoc( (x-(num_x/2)), (y-(num_y/2))); 
+     moveTipToXYLoc(x, y); 
   }
 
   float point_value[numsets];
   float z;
-  getImageHeightAtXYLoc( (x-(num_x/2)), (y-(num_y/2)), &z );
+  //getImageHeightAtXYLoc( (x-(num_x/2)), (y-(num_y/2)), &z );
+  getImageHeightAtXYLoc(x, y, &z);
   point_value[0] = z;
   
   spm_report_point_datasets(d_PointResultData_type, x, y, point_value, numsets);
@@ -3784,7 +3790,7 @@ spm_report_window_line_data(int currentline){
       return -1;
     }
 
-fprintf(stderr, "Sent scan data for line %d.\n", y);
+//fprintf(stderr, "Sent scan data for line %d.\n", y);
   }
   return 0;
 }

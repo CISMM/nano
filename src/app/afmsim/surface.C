@@ -105,16 +105,18 @@ int parse (int argc, char ** argv) {
 
 
 
-int getImageHeightAtXYLoc( float x , float y , float* z ) {
-  *z = myZPlane->value( (int)x, (int)y );
+int getImageHeightAtXYLoc (float x, float y, float * z) {
+  *z = myZPlane->valueAt(x, y);
   return 1;
 }
 
 int moveTipToXYLoc( float x , float y, float set_point ) {
   const int numsets = 1;
-  int j,k;
-  j = (int)x;
-  k = (int)y;
+  int i, j, k;
+  //j = (int)x;
+  //k = (int)y;
+  j = myZPlane->xInGrid(x);
+  k = myZPlane->yInGrid(y);
   if(j>(num_x-1))
 	j = num_x-1;
   if(j<0)
@@ -228,6 +230,7 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   // TCH June 1999 - instead, interpolate linearly within the current
   // grid square.
 
+/*
   // NOTE k is y, j is x!
 
   float xF, yF;
@@ -247,11 +250,13 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   if (jprime > num_x - 2) jprime = num_x - 2;
   if (kprime > num_y - 2) kprime = num_y - 2;
 
+  // HACK - assumes j = floor(x), k = floor(y)
+
   // Fractional part of x.
   //  REVERSE IT to get the appropriate weights for the interpolation.
 
-  xF = 1.0f - (x - jprime);
-  yF = 1.0f - (y - kprime);
+  //xF = 1.0f - (x - jprime);
+  //yF = 1.0f - (y - kprime);
 
   if (xF > 1.0f) xF = 1.0f;
   if (xF < 0.0f) xF = 0.0f;
@@ -264,6 +269,11 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
                    + yF * (1.0f - xF) * (myZPlane->value(jprime,kprime+1))
                    + (1.0f - yF) * (1.0f - xF)
                                  * (myZPlane->value(jprime+1,kprime+1));
+
+  for (i = 0; i < numsets; i++) {
+    myZPlane->valueAt(&point_value[i], x, y);
+  }
+*/
 
 //fprintf(stderr, "Interpolating at %.5f, %.5f with weights %.5f, %.5f:\n",
 //x, y, xF, yF);

@@ -1,5 +1,13 @@
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
+	* nmm_Microscope_Simulator.C (constructor) : register RcvFeelTo
+        (spm_report_window_line_data) : fix call to getImageHeightAtXYLoc()
+        (report_point_set) : same;  also call to moveTipToXYLoc
+	* surface.C (getImageHeightAtXYLoc) : fix implementation
+        (moveTipToXYLoc) : this function got eviscerated sometime
+
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
         * nmm_Microscope_Simulator (spm_report_window_line_data) :
         change parameters to upcall of getImageHeightAtXYLoc() so that
         both afmsim and (this version of) afmcntsim work.
