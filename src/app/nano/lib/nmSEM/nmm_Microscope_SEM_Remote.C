@@ -21,7 +21,12 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     d_zGain(0), d_zOffset(0),
     d_externalScanControlEnabled(0),
     d_magnification(1000),
-    d_magCalibration(1e8), // (10 cm)*(nm/cm)
+    d_magCalibration(1e8), // (10 cm)*(nm/cm) - since 10cm is the standard
+                           // SEM display width
+    d_numPointsTotal(0),
+    d_numPointsDone(0),
+    d_timeTotal_sec(0.0),
+    d_timeDone_sec(0.0),
     d_messageHandlerList(NULL)
 {
   if (d_connection == NULL){
@@ -98,6 +103,12 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
                 RcvReportMagnification, this)) {
     fprintf(stderr,
        "nmm_Microscope_SEM_Remote: can't register mag handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportExposureStatus_type,
+                RcvReportExposureStatus, this)) {
+    fprintf(stderr,
+       "nmm_Microscope_SEM_Remote: can't register exposure status handler\n");
     return;
   }
 
@@ -496,6 +507,16 @@ void nmm_Microscope_SEM_Remote::getScanRegion_nm(
   height_nm = width_nm*(double)d_resolutionY/(double)d_resolutionX;
 }
 
+void nmm_Microscope_SEM_Remote::getExposureStatus(vrpn_int32 &numPointsTotal,
+       vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec,
+       vrpn_float32 &timeDone_sec)
+{
+  numPointsTotal = d_numPointsTotal;
+  numPointsDone = d_numPointsDone;
+  timeTotal_sec = d_timeTotal_sec;
+  timeDone_sec = d_timeDone_sec;
+}
+
 //static
 int nmm_Microscope_SEM_Remote::RcvReportResolution (void *_userdata, 
     vrpn_HANDLERPARAM _p)
@@ -767,6 +788,29 @@ int nmm_Microscope_SEM_Remote::RcvReportMagnification
   }
   me->d_magnification = mag;
   return me->notifyMessageHandlers(REPORT_MAGNIFICATION, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportExposureStatus
+     (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 numPointsTotal, numPointsDone;
+  vrpn_float32 timeTotal_sec, timeDone_sec;
+
+  if (decode_ReportExposureStatus(&bufptr, &numPointsTotal, &numPointsDone,
+                                  &timeTotal_sec, &timeDone_sec) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportExposureStatus: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_numPointsTotal = numPointsTotal;
+  me->d_numPointsDone = numPointsDone;
+  me->d_timeTotal_sec = timeTotal_sec;
+  me->d_timeDone_sec = timeDone_sec;
+  return me->notifyMessageHandlers(REPORT_EXPOSURE_STATUS, _p.msg_time);
 }
 
 int nmm_Microscope_SEM_Remote::notifyMessageHandlers(

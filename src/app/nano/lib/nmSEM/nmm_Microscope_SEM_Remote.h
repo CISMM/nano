@@ -105,6 +105,10 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     void getExternalScanControlEnable(vrpn_int32 &enabled);
     void getMagnification(vrpn_float32 &mag);
     void getScanRegion_nm(double &width_nm, double &height_nm);
+    void getExposureStatus(vrpn_int32 &numPointsTotal, 
+       vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec, 
+       vrpn_float32 &timeDone_sec);
+
 
     // other
     int connected() {return d_connection->connected();}
@@ -127,6 +131,7 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     static int RcvReportExternalScanControlEnable(void *_userdata,
                                                   vrpn_HANDLERPARAM _p);
     static int RcvReportMagnification(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportExposureStatus(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type,
         const struct timeval &msg_time);
@@ -156,6 +161,10 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     vrpn_float32 d_magnification; // [(width of "display" in nm)/
                                   //  (width of scan in nm)]
     vrpn_float32 d_magCalibration; // [width of "display" in nm];default = 10cm
+    vrpn_int32 d_numPointsTotal;
+    vrpn_int32 d_numPointsDone;
+    vrpn_float32 d_timeTotal_sec;
+    vrpn_float32 d_timeDone_sec;
 
     /* ---------------------------------------------------------------
        message callback management

@@ -1,4 +1,4 @@
-USES_LIBS := nmImageViewer nmGraphics nmUI nmBase tclLinkVar ImgFormat vogl vrpn quat
+USES_LIBS := nmMP nmImageViewer nmGraphics nmUI nmBase tclLinkVar ImgFormat vogl vrpn quat
 
 USES_EXTERNAL_LIBS := glut
 

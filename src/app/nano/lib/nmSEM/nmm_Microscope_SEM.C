@@ -78,6 +78,12 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (
                 ("nmmMicroscopeSEM ReportExternalScanControlEnable");
     d_ReportMagnification_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportMagnification");
+    d_ReportBeamCurrent_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportBeamCurrent");
+    d_ReportBeamWidth_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportBeamWidth");
+    d_ReportExposureStatus_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportExposureStatus");
   }
 }
 
@@ -1257,6 +1263,56 @@ vrpn_int32 nmm_Microscope_SEM::decode_ReportMagnification (
 
   return 0;
 }
+
+char * nmm_Microscope_SEM::encode_ReportExposureStatus (
+                                            vrpn_int32 *len,
+                                            vrpn_int32 numPointsTotal,
+                                            vrpn_int32 numPointsDone,
+                                            vrpn_float32 timeTotal_sec,
+                                            vrpn_float32 timeDone_sec)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr,
+              "nmm_Microscope_SEM::encode_ReportExposureStatus:  "
+              "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, numPointsTotal);
+    vrpn_buffer(&mptr, &mlen, numPointsDone);
+    vrpn_buffer(&mptr, &mlen, timeTotal_sec);
+    vrpn_buffer(&mptr, &mlen, timeDone_sec);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportExposureStatus (
+                                            const char **buf,
+                                            vrpn_int32 *numPointsTotal,
+                                            vrpn_int32 *numPointsDone,
+                                            vrpn_float32 *timeTotal_sec,
+                                            vrpn_float32 *timeDone_sec)
+{
+  if (((vrpn_unbuffer(buf, numPointsTotal)) == -1) ||
+      ((vrpn_unbuffer(buf, numPointsDone)) == -1) ||
+      ((vrpn_unbuffer(buf, timeTotal_sec)) == -1) || 
+      ((vrpn_unbuffer(buf, timeDone_sec)) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
 
 /*
 int nmm_Microscope_SEM::dispatchMessage (vrpn_int32 len, const char * buf, 

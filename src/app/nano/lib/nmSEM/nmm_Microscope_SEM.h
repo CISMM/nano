@@ -46,7 +46,8 @@ class nmm_Microscope_SEM {
                 ADD_DUMP_POINT,
                 EXPOSE_PATTERN,
                 BEAM_CURRENT,
-                BEAM_WIDTH} msg_t;
+                BEAM_WIDTH,
+                REPORT_EXPOSURE_STATUS} msg_t;
   protected:
 //    vrpn_Connection * d_connection;
 //    vrpn_File_Controller * d_fileController;
@@ -89,6 +90,8 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_ReportMagnification_type;
     vrpn_int32 d_ReportBeamCurrent_type;
     vrpn_int32 d_ReportBeamWidth_type;
+    vrpn_int32 d_ReportExposureStatus_type;
+
 
     // message encode, decode functions
     // (client-->server)
@@ -278,6 +281,17 @@ class nmm_Microscope_SEM {
                                               vrpn_float32 mag);
     static vrpn_int32 decode_ReportMagnification (const char **buf,
                                               vrpn_float32 *mag);
+
+    static char * encode_ReportExposureStatus (vrpn_int32 *len,
+                                               vrpn_int32 numPointsTotal,
+                                               vrpn_int32 numPointsDone,
+                                               vrpn_float32 timeTotal_sec,
+                                               vrpn_float32 timeDone_sec);
+    static vrpn_int32 decode_ReportExposureStatus (const char **buf,
+                                               vrpn_int32 *numPointsTotal,
+                                               vrpn_int32 *numPointsDone,
+                                               vrpn_float32 *timeTotal_sec,
+                                               vrpn_float32 *timeDone_sec);
 
 //    packs the message reliably and then deletes [] buf
 //    int dispatchMessage (vrpn_int32 len, const char *buf, 
