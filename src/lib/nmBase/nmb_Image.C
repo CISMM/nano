@@ -1,6 +1,6 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
-
+#include <limits.h>
 nmb_ImageBounds::nmb_ImageBounds() 
 {
     for (int i = 0; i < 4; i++){
@@ -214,8 +214,8 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
     BCString name_str(name), units_str(units);
     grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0);
     plane = grid->addNewPlane(name_str, units_str, 0);
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+    max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
     for (int i = 0; i < numExportFormats(); i++){
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
@@ -235,8 +235,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
 
     plane = p;
     grid = NULL;
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
 
     int i,j;
     for (i = 0; i < plane->numX(); i++){
@@ -496,8 +496,8 @@ nmb_Image8bit::nmb_Image8bit(const char *name, const char * /*units*/,
         units_x("none"), units_y("none"), units("ADC"),
         my_name(name)
 {
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+    max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
     data = new vrpn_uint8[x*y];
     if (!data) {
 	fprintf(stderr, "nmb_Image8bit::nmb_Image8bit: Error, out of memory\n");

@@ -283,11 +283,11 @@ void glDebugOff();
 // these were grabbed from vrpn_Shared.h
 // for sockets and gettimeofday
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/timeb.h>
 #include <winsock.h>   // timeval is defined here
   /* from HP-UX */
-#if !defined(__CYGWIN__)
+//#if !defined(__CYGWIN__)
 #ifndef _STRUCT_TIMEVAL
 #define _STRUCT_TIMEVAL
 struct timezone {
@@ -301,7 +301,7 @@ struct timezone {
 // CYGWIN defines gettimeofday, but it uses C style linkage.
 // If we define it here, the compiler thinks it has C++ style 
 // linkage and can't find it later.
-#endif // CYGWIN
+//#endif // CYGWIN
 // #define close closesocket
 #else
 // unix time headers
@@ -362,6 +362,34 @@ int nonblockingGetch(char *, int fEcho=1);
 
 /*****************************************************************************\
   $Log$
+  Revision 1.2.2.1  2000/07/04 00:38:41  helser
+  Removed many more printfs. Most on startup are now from vrpn.
+
+  Removed Genetic Textures.
+
+  WARNING: Tclvar_string can't be cast to a char * on VC++ - instead you
+  must use the ->string() method. Fixed bug caused by this in
+  interaction.c, possible bug in nmm_MicroscopeRemote.c
+
+  Fixed active_set.C and the channel selector classes. The tcl has now
+  been re-written so the channel selectors can be destroyed and
+  re-created without repercussions for the tcl interface.
+
+  Fixed bug when hitting accept in modify window.
+
+  Added Magellan button box. Buttons are the same as on the main window,
+  but leave out scale-up and scale-down. Uses Russ' vrpn_Magellan
+  class.
+
+  Grid_size widget added to image controls. Segfault caused by using
+  tesselation_stride with a small gridsize fixed. Error when topo failed
+  to report new grid size fixed.
+
+  Added messages, message types and methods to handle a PauseScan
+  message, a WithdrawTip message from nano to Thermo, and a Scanning
+  message from Thermo to nano. These implement the functions of two
+  buttons on the main nano window which were already added.
+
   Revision 1.2  2000/04/07 19:00:13  helser
   Changes to allow nano to compile with MS Visual C++. It doesn't link yet,
   but it compiles. Issues still to be resolved:

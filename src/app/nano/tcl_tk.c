@@ -62,12 +62,6 @@ static	int	controls_on = 0;
 static  int  old_knobs[8];
 static  int  knobs_set_from_c;
 
-// Global variables for the colormap widget:
-static Tk_PhotoImageBlock colormap;
-static unsigned char *colormap_pixels = NULL;
-static int colormap_width = 32, colormap_height = 256;
-static Tk_PhotoHandle image;
-
 
 static void (* command_handler) (char *, vrpn_bool *, int);
 
@@ -393,7 +387,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_SetVar(my_tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
 	controls_on = 1;
 
-
 	/* Initialize the Tclvar variables */
 	VERBOSE(4, "  Calling Tclvar_init()");
         Tclnet_init(my_tk_control_interp, useOptimism);
@@ -402,25 +395,15 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
-	// This code sets up the colormap bar displayed in the colormap
-	// tcl window.
-	colormap_pixels = new unsigned char[ colormap_height * colormap_width * 3];
-	for (i= 0; i < colormap_height*colormap_width*3; i++)
-	  colormap_pixels[i] = 128;
-	colormap.pixelPtr = colormap_pixels;
-	colormap.width = colormap_width;
-	colormap.height = colormap_height;
-	colormap.pixelSize = 3;
-	colormap.pitch = colormap_width * 3;
-	colormap.offset[0] = 0;	colormap.offset[1] = 1;	colormap.offset[2] = 2;
-	image = Tk_FindPhoto( my_tk_control_interp, "colormap_image" );
-	Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
-	// end of colormap setup
 
         // Initialize the global tcl interpreter
         // Waiting til here makes sure the error_display functions get to use a
         // fully-initialized interpreter, and don't cause a seg-fault.
         tk_control_interp = my_tk_control_interp;
+
+        // Initialize the color bar display. Needs inited interpreter. 
+        tcl_colormapRedraw();
+
 	return(0);
 }
 
@@ -468,56 +451,74 @@ int	poll_Tk_control_panels(void)
 	return 0;
 }
 
+/** Take a colormap and makes an color-bar image in Tcl with specified name,
+    width, height.  c_min and c_max are values between 0 and 1 which can
+    squash the colormap range, making the whole colormap appear in a small
+    window in the larger image. Defaults perform no squashing. 
+ */
+int makeColorMapImage(ColorMap * cmap, char * name, int width, int height, 
+                      float c_min , float c_max ) 
+{
+    Tk_PhotoImageBlock colormap;
+    unsigned char *colormap_pixels = new unsigned char[ height * width * 3];
+    Tk_PhotoHandle image;
 
+    char command[200];
+    // This code sets up the colormap bars displayed in the colormap
+    // choice menu in tcl.
+    colormap.pixelPtr = colormap_pixels;
+    colormap.width = width;
+    colormap.height = height;
+    colormap.pixelSize = 3;
+    colormap.pitch = width * 3;
+    colormap.offset[0] = 0; colormap.offset[1] = 1; colormap.offset[2] = 2;
 
+    // Make an image in Tcl based on the colormap.
+    float ci;
+    int r, g, b, a;
+    for ( int i= 0; i < height; i++) {
+        for ( int j = 0; j < width; j++ ) {
+            ci = 1.0 - float(i)/height;
+            if ( ci <  c_min ) ci = 0;
+            else if ( ci > c_max ) ci = 1.0;
+            else ci = (ci - c_min)/(c_max - c_min);
+            
+            cmap->lookup( ci, &r, &g, &b, &a);
+            
+            colormap_pixels[ i*width*3 + j*3 + 0] = (unsigned char)( r );
+            colormap_pixels[ i*width*3 + j*3 + 1] = (unsigned char)( g );
+            colormap_pixels[ i*width*3 + j*3 + 2] = (unsigned char)( b );
+        }
+    }
+    // "image create" will replace any existing instance of the image. 
+    sprintf (command, "image create photo %s", name);
+    TCLEVALCHECK( get_the_interpreter(), command);
+    image = Tk_FindPhoto( get_the_interpreter(), name );
+    Tk_PhotoPutBlock( image, &colormap, 0, 0, width, height );
+
+    return 0;
+}
 
 void tcl_colormapRedraw() {
     
-  delete [] colormap_pixels;
-  colormap_pixels = new unsigned char[colormap_height * colormap_width * 3];
-  if (curColorMap) {
-    float ci, r, g, b, a;
-    for ( int i= 0; i < colormap_height; i++) {
-      for ( int j = 0; j < colormap_width; j++ ) {
-	ci = 1.0 - float(i)/colormap_height;
-	if ( ci <  color_min ) ci = 0;
-	else if ( ci > color_max ) ci = 1.0;
-	else ci = (ci - color_min)/(color_max - color_min);
-	
-	curColorMap->lookup( ci, &r, &g, &b, &a);
-	
-	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( r * 255 );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( g * 255 );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( b * 255 );
-      }
+    // Must match the colormap widget:
+    const int colormap_width = 32, colormap_height = 256;
+
+    // Draw a colormap bar if either colorPlaneName or colorMapName 
+    // aren't "none"
+    if (curColorMap &&
+        ( ( strcmp( dataset->colorPlaneName->string(), "none") != 0 ) ||
+          ( strcmp( dataset->colorMapName->string(), "none") != 0) ) ) {
+        // color_max and color_min "squash" the color map image based
+        // on tcl controls. 
+        makeColorMapImage(curColorMap, "colormap_image", 
+                          colormap_width, colormap_height, 
+                          color_min, color_max);
     }
-  }
-  else if ( strcmp( dataset->colorPlaneName->string(), "none") != 0 ) {
-    for ( int i= 0; i < colormap_height; i++) {
-      float data_value = float(colormap_height - i)/colormap_height;
-      //      data_value = data_value * (data_max - data_min) + data_min;
-      
-      // clamp data based on the stretched/shrunk colormap:
-      if ( data_value <  color_min ) data_value = 0;
-      else if ( data_value > color_max ) data_value = 1.0;
-      else data_value = (data_value - color_min)/(color_max - color_min);
-      for ( int j = 0; j < colormap_width; j++ ) {
-	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r * data_value);
-	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g * data_value );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b * data_value );
-      }
-    }
-  }
-  else {
-    for ( int i= 0; i < colormap_height; i++) {
-      for ( int j = 0; j < colormap_width; j++ ) {
-	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b );
-      }
-    }
-  }
-  colormap.pixelPtr = colormap_pixels;
-  Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
-  
+    else {
+        ColorMap constmap;
+        constmap.setConst(surface_r , surface_g, surface_b, 255);
+        makeColorMapImage(&constmap, "colormap_image", 
+                          colormap_width, colormap_height);
+    }  
 }

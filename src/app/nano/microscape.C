@@ -42,9 +42,9 @@
 #endif
 
 // ############ getpid hack
-#if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
+#if defined (__CYGWIN__) 
 
-/* #include <sys/unistd.h>  // for getpid() */
+#include <sys/unistd.h>  // for getpid()
 
 // cannot include sys/unistd.h because it would cause a conflict with the
 // windows-defined gethostbyname.  Instead, I'll declare getpid myslef.  This
@@ -463,9 +463,11 @@ static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
 static	char	*colorMapDir = NULL;
 
-static ColorMap	colorMap;		///< Color map currently loaded
+static ColorMap	* colorMaps[100] = { NULL };		///< Color maps currently loaded
+// limit to 100 because that's the limit of nmb_ListOfStrings
 ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
-  // used in vrml.C
+// width and height of colormap image used in the colormap choice popup menu
+static const int colormap_width = 24, colormap_height = 128;
 
 
 
@@ -1253,8 +1255,8 @@ void shutdown_connections (void) {
   set_stream_time.bindConnection(NULL);
   set_stream_time_now.bindConnection(NULL);
 
-  microscope->state.stm_z_scale.bindConnection(NULL);
-  ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
+  if (microscope) microscope->state.stm_z_scale.bindConnection(NULL);
+  if (dataset) ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
   tcl_wfr_xlate_X.bindConnection(NULL);
   tcl_wfr_xlate_Y.bindConnection(NULL);
   tcl_wfr_xlate_Z.bindConnection(NULL);
@@ -1266,8 +1268,8 @@ void shutdown_connections (void) {
   //tcl_wfr_changed.bindConnection(NULL);
   tclstride.bindConnection(NULL);
 
-  ((TclNet_string *) dataset->colorPlaneName)->bindConnection(NULL);
-  ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
+  if (dataset) ((TclNet_string *) dataset->colorPlaneName)->bindConnection(NULL);
+  if (dataset) ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
   color_min.bindConnection(NULL);
   color_max.bindConnection(NULL);
 
@@ -1292,7 +1294,7 @@ void shutdown_connections (void) {
   contour_g.bindConnection(NULL);
   contour_b.bindConnection(NULL);
   contour_changed.bindConnection(NULL);
-  ((TclNet_string *) dataset->contourPlaneName)->bindConnection(NULL);
+  if (dataset) ((TclNet_string *) dataset->contourPlaneName)->bindConnection(NULL);
 
   rulergrid_position_line.bindConnection(NULL);
   rulergrid_orient_line.bindConnection(NULL);
@@ -1376,10 +1378,40 @@ void shutdown_connections (void) {
   }
 }
 
+#if defined (_WIN32) && !defined (__CYGWIN__)
+/**
+ * Handle exiting cleanly when we get ^C or other signals. 
+ */
+BOOL WINAPI handleConsoleSignalsWin( DWORD signaltype)
+{
+    switch (signaltype) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+	if (do_keybd == 1)
+	  {
+	    /* Reset the raw terminal input to standard */
+#ifndef NO_RAW_TERM
+	    reset_raw_term(ttyFD);
+#endif
+	  }
+
+	shutdown_connections();
+        //printf("Signal done\n"); DOESN'T PRINT pipes are already closed.
+        //exit (0); SEGFAULTS !!
+        // Don't exit, but return FALSE so default handler
+        // gets called. The default handler, ExitProcess, will exit. 
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
+#else
 /*********
  * Handle exiting cleanly when we get ^C
  *********/
-
 void	handle_cntl_c(int which_signal)
 {
 	which_signal = which_signal;	// Keep the compiler happy
@@ -1401,6 +1433,18 @@ void	handle_cntl_c(int which_signal)
 
 	exit(0);
 }
+#endif
+// Callback for the ANSI standard atexit() call
+// Glut won't tell us when the GLUT window gets destroyed
+// GLUT just calls exit(0). 
+// So we register this function to called at exit to make
+// sure the streamfile gets saved. 
+ void at_exit_shutdown_connections() 
+ {
+     //     printf("atexit fcn\n");
+     shutdown_connections();
+ }
+
 //---------------------------------------------------------------------------
 /// Deal with changes in the stride between rows on the grid for tesselation.
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
@@ -2635,6 +2679,14 @@ static void handle_surface_color_change (vrpn_int32, void * userdata) {
     color[2] = int(surface_b);
     g->setMinColor( color );
     g->setMaxColor( color );
+
+    // Re-do the "none" colormap based on new surface color.
+    colorMaps[0]->setGradient(0,0,0,255,int(surface_r), 
+                              int(surface_g), int(surface_b), 255);
+    
+    makeColorMapImage(colorMaps[0], "cm_image_none", 
+                      colormap_width, colormap_height);
+
     g->causeGridReColor();
     tcl_colormapRedraw();
   }
@@ -2645,13 +2697,9 @@ static	void	handle_colormap_change (const char *, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorMapName(dataset->colorMapName->string());
 
-  if (strcmp(dataset->colorMapName->string(), "none") == 0) {
-    curColorMap = NULL;
-  }
-  else {
-    colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
-    curColorMap = &colorMap;
-  }
+  // This works for the "none" colormap, too, since it's specially
+  // added as colorMaps[0] 
+  curColorMap = colorMaps[colorMapNames.getIndex(dataset->colorMapName->string())];
   tcl_colormapRedraw();
 }
 
@@ -3817,33 +3865,52 @@ int register_vrpn_callbacks(void){
 
 /**
 loadColorMaps
-	This routine looks up the names of the color maps that we might want
- to load.  It also sets up the directory path to the color map files so that
- the routines that load them can know where to look.
+	This routine looks the color maps out of the specified directory, 
+        loads them, and creates images in Tcl so they can be displayed. 
+        The tcl images have the same name as the colormap with "cm_image_" 
+        on the front. 
 */
 int	loadColorMapNames(char * colorMapDir)
 {
-	DIR	*directory;
-	struct	dirent *entry;
+    char cm_name[100];
 
-	// Set the default entry to use the custom color controls
-	colorMapNames.addEntry("none");
+    DIR	*directory;
+    struct	dirent *entry;
+    nmb_ListOfStrings temp_dir_list;
+    
+    colorMaps[0] = new ColorMap(0,0,0,255,int(surface_r), int(surface_g), int(surface_b),255);
+    makeColorMapImage(colorMaps[0], "cm_image_none", colormap_width, colormap_height);
+    curColorMap = colorMaps[0];
+    // Set the default entry to use the custom color controls
+    temp_dir_list.addEntry("none");
 
-	// Get the list of files that are in that directory
-	// Put the name of each file in that directory into the list
-	if ( (directory = opendir(colorMapDir)) == NULL) {
-		display_error_dialog("Couldn't load colormaps from\n"
-                                     "directory named: %s",colorMapDir);
-		return -1;
-	}
-	while ( (entry = readdir(directory)) != NULL) {
-	    if (entry->d_name[0] != '.') {
-		colorMapNames.addEntry(entry->d_name);
-	    }
-	}
-	closedir(directory);
+    // Get the list of files that are in that directory
+    // Put the name of each file in that directory into the list
+    if ( (directory = opendir(colorMapDir)) == NULL) {
+        display_error_dialog("Couldn't load colormaps from\n"
+                             "directory named: %s\nDirectory not available.",colorMapDir);
+        return -1;
+    }
+    int k;
+    while ( (entry = readdir(directory)) != NULL) {
+        if (entry->d_name[0] != '.') {
+            k = temp_dir_list.numEntries();
+            // Load the colormap
+            colorMaps[k] = new ColorMap(entry->d_name, colorMapDir);
 
-	return 0;
+            sprintf (cm_name, "cm_image_%s", entry->d_name); 
+            makeColorMapImage(colorMaps[k], cm_name, colormap_width, colormap_height);
+
+            // Remember the name
+            temp_dir_list.addEntry(entry->d_name);
+        }
+    }
+    // Don't set the real list of names until after the images have
+    // been created. 
+    colorMapNames.copyList(&temp_dir_list);
+    closedir(directory);
+    
+    return 0;
 }
 
 /**
@@ -6014,10 +6081,6 @@ int main(int argc, char* argv[])
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
 
-    // Load the names of usable color maps
-    VERBOSE(1, "Loading color maps");
-    loadColorMapNames(colorMapDir);
-
 #ifndef NO_FILTERS
     // Load the names of the image processing programs available.
     VERBOSE(1, "Loading external program names");
@@ -6261,6 +6324,10 @@ int main(int argc, char* argv[])
     VERBOSE(1, "done initialising the control panels\n");
   }
 
+    // Load the names of usable color maps
+    VERBOSE(1, "Loading color maps");
+    loadColorMapNames(colorMapDir);
+
     VERBOSE(1, "Before french ohmmeter initialization");
     if ( tkenable ) {
       // create the ohmmeter control panel
@@ -6441,7 +6508,17 @@ int main(int argc, char* argv[])
 
   //Prepare signal handler for ^C,so we save the stream file and exit cleanly
   VERBOSE(1,"Setting ^C Handle");
+
+#if defined (_WIN32) && !defined (__CYGWIN__)
+  // This handles all kinds of signals.
+  SetConsoleCtrlHandler(handleConsoleSignalsWin, TRUE);
+#else 
   signal(SIGINT, handle_cntl_c);
+#endif
+   if(atexit(at_exit_shutdown_connections)) {
+       display_fatal_error_dialog("Unable to register exit handler.\n"
+            "Stream files may not be saved! Contact product support.\n");
+    }
 
   // only print the keyboard options if it is turned on
   if (do_keybd == 1) {
@@ -7063,6 +7140,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 	} else { */
 	    *donePtr = VRPN_TRUE;
 	    fprintf(stderr, "\nShutting down...\n");
+            exit(0);
 	//}
 	break;
 

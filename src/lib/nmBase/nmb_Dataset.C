@@ -181,7 +181,7 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
 {
   // Load the files
     int ret;
-    if (ret = inputGrid->loadFiles(file_names, num_files, topoFile)) {
+    if ((ret = inputGrid->loadFiles(file_names, num_files, topoFile)) != 0) {
         return ret;
     }
   

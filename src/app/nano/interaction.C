@@ -35,6 +35,9 @@
  *
  */
 #include <stdio.h>
+#ifdef __CYGWIN__
+#include <unistd.h> // for sleep()
+#endif
 
 #include <quat.h>
 

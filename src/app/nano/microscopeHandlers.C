@@ -5,6 +5,9 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+#ifdef __CYGWIN__
+#include <unistd.h> // for sleep()
+#endif
 #include <BCPlane.h>
 #include <nmb_Types.h>
 #include <nmb_Decoration.h>

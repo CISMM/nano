@@ -35,9 +35,25 @@ generic_optionmenu $nmInfo(colorscale).pickframe.colormap_plane \
 	"Colormap plane" inputPlaneNames
 
 set colorMapNames {none }
+proc show_colormap_images {nm el op} {
+    global nmInfo colorMapNames colorbarmenu
+
+    set m [$nmInfo(colorscale).pickframe.colormap component popupMenu] 
+    set i 0
+    foreach cm_name $colorMapNames {
+        $m entryconfigure $i -image cm_image_$cm_name -columnbreak 1
+        incr i
+    }
+}
+
+trace variable colorMapNames w show_colormap_images
+
 generic_optionmenu $nmInfo(colorscale).pickframe.colormap \
 	color_map \
 	"Colormap" colorMapNames
+# This doesn't actually set the width, but it prevents the width
+# from being too large
+$nmInfo(colorscale).pickframe.colormap configure -width 30
 
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(colorscale).pickframe.colormap_plane \
@@ -293,7 +309,8 @@ trace variable cmColor(max_value) w "adjust_color_max $nmInfo(colorscale)"
 $nmInfo(colorscale).canvas create window [expr $color_x + $triangle_width] $color_y_high\
 	-anchor w -window $nmInfo(colorscale).color_max_entry -tags color_max_entry
 
-set imh [image create photo "colormap_image" -height $image_height -width $image_width]
+set imh [image create photo "colormap_image" ]
+#-height $image_height -width $image_width]
 $nmInfo(colorscale).canvas create image $image_x $image_y -anchor se -image $imh
 
 ## This function gets called when the user moves the data_min triangle

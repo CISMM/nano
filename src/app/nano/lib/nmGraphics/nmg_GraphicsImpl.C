@@ -802,12 +802,6 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
   if ( g_config_chartjunk == on )
     return;
   g_config_chartjunk = on;
-  if ( on == 1 ) {
-    init_world_modechange( g_user_mode, 0);
-  }
-  else if ( on == 0 ) {
-    clear_world_modechange( g_user_mode, 0);
-  }
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
