@@ -1,0 +1,248 @@
+// CoreViewImage.C
+// Mark Foskey
+// Defines CoreViewImage class for the program coreview.
+
+// usr/Image definitions and header
+#define D_RealImage
+#define D_ImageStream
+#define D_minmax
+#define D_DebugBuffer
+#define D_IntensRange
+#define D_block_ops
+#define D_Blur
+
+#include <maxima_prelud.h>
+#include <imprelud.h>
+
+#include <stdio.h>
+#include <iostream.h>
+#include <string>
+#include "CoreViewImage.h"
+
+// CoreViewImage()
+// Default constructor
+CoreViewImage::
+CoreViewImage() 
+    : _im(), _min_intensity(0.0), _max_intensity(0.0),
+    _x_nm_perpixel(1.0), _y_nm_perpixel(1.0)
+{}
+
+// CoreViewImage(RealImage)
+CoreViewImage::
+CoreViewImage(RealImage im) 
+    : _im(), _min_intensity(0.0), _max_intensity(0.0),
+    _x_nm_perpixel(1.0), _y_nm_perpixel(1.0)
+{
+    minmax();
+}
+
+// read_from_file()
+// Reads in an image file with ancillary information.
+int CoreViewImage::
+read_from_file(String file) 
+{
+
+    ImageStream in_stream(file);
+
+    //  Read a single image, forcing the pixels to be REAL
+    in_stream(0) >> image >> _im;
+    if (in_stream.status() == INVALID) {
+	ApplReport(eError, "Error reading image.\n");
+	return FALSE;
+    }
+
+    minmax();
+
+    // Must include code to set nm_per_pixel values.
+
+    return TRUE;
+}
+
+// to_cimage(cimage cim)
+// Converts the CoreViewImage cvim to a CIMAGE image, leaving
+// the result in cim.
+void CoreViewImage::
+to_cimage(cimage cim) const
+{
+    printf ("Converting to CIMAGE ...\n\tInitializing the array `pixels'.\n");
+    CREALTYPE* pixels = new CREALTYPE[_im.size()];
+    for (int n = 0; n < _im.size(); n++) {
+	pixels[n] = _im(n);
+    }
+
+    printf("\tFilling in CIMAGE structure\n");
+    cimage_setformat (cim, CREAL);
+    cim->pixels = (char *) pixels;
+    cim->fname = "Not recorded.";
+    cim->xdim = xdim();
+    cim->ydim = ydim();
+    cim->zdim = 1;
+    cim->imin = min_intensity();
+    cim->imax = max_intensity();
+    cim->appdata = NULL;
+
+}
+
+// minmax()
+// Computes the intensity range for the image.
+void CoreViewImage::
+minmax()
+{
+    int npix = _im.size();
+    _min_intensity = _im(0);
+    _max_intensity = _im(0);
+    for (int i = 0; i < npix; i++) {
+	if (_im(i) > _max_intensity)
+	    _max_intensity = _im(i);
+	else if (_im(i) < _min_intensity)
+	    _min_intensity = _im(i);
+    }
+    printf("_min_intensity = %f; _max_intensity = %f.\n",
+	   _min_intensity, _max_intensity);
+}
+
+//===================================================================
+// NOTE:
+// None of following functions is currently being used.
+// They were part of a project to convert all of the core tracker to
+// usr/Image, which has now been put on hold.  Deleting them should
+// have no effect on the functionality of the program, and the only
+// reason I haven't done it yet is that I'm not ready to admit we're
+// giving up on converting the program.  
+// Mark Foskey  1/6/99
+//====================================================================
+
+// display_yourself()
+// Debugging tool.
+void CoreViewImage::
+display_yourself() const
+{
+     cout << "Size = " << _im.size() << ".\n";
+     for (int n = 0; n < _im.size(); n +=1000)
+	 cout << '(' << n << ", " << _im(n) << ")  ";
+     cout << '\n';
+}
+
+// invert()
+// Subtracts each pixel from the sum of the max and min intensities.
+// This produces an image with the same max and min intensities as
+// before, but with the intensities inverted about their mean.
+void CoreViewImage::
+invert()
+{
+    int npix = _im.size();
+    double top = min_intensity() + max_intensity();
+    for (int i = 0; i < npix; i++) {
+	_im(i) = top - _im(i);
+    }
+}
+
+// blur()
+// Simulates convolution of the image with a gaussian kernal of
+// characteristic radius gaussian_sigma.  See the MAXIMA tutorial
+// (postscript doc) in usr/Image.
+void CoreViewImage::
+blur(float gaussian_sigma)
+{
+    if (!(gaussian_sigma > 1)) {
+	cout << "No blurring performed because preblur parameter is "
+	    "not greater than 1.\n";
+	return;
+    }
+
+    // A BlurFloat object treats sigma as an initial scale times a
+    // multiplier which given as the second argument below.  We take
+    // 1.0 for the initial scale, and gaussian_sigma for the
+    // multiplier.
+    BlurFloat util(_im.rank(), gaussian_sigma);
+    util.blur(_im, 1.0);  
+
+    minmax();
+
+}
+
+// zoomed_copy_of()
+// Performs linear interpolation to alter both dimensions of an image
+// by a factor of zoom_factor.  Can trivially be rewritten to take
+// different parameters for each dimension.  Recomputes max and min
+// intensities since they can be changed slightly in the interpolation.
+void CoreViewImage::
+zoomed_copy_of(const CoreViewImage& cvim, float zoom_factor)
+{
+    int   xdm = cvim.xdim(), ydm = cvim.ydim();
+
+    RealImageRef img = cvim.im();
+
+    float xmag, ymag;
+    xmag = ymag = zoom_factor;  
+
+    /* No mag then just copy image */
+    if ((xmag == 1.0) && (ymag == 1.0)) {
+	_im = img;
+	_min_intensity = cvim.min_intensity();
+	_max_intensity = cvim.max_intensity();
+	return;
+    }
+
+    // Rest of code treats x and y dimensions independently.
+
+    _min_intensity = img(0,0);
+    _max_intensity = img(0,0);
+
+    // Must add code to copy image physical dimensions too.
+
+    register int  i, j;
+    register int newi, newj;
+    float intensity;
+    float newx, newy, dx, dy;
+    float inv_magx, inv_magy;
+    int new_xdim = (int)(xdm * xmag + 0.5);
+    int new_ydim = (int)(ydm * ymag + 0.5);
+
+    _im.shape(Lattice(new_xdim, new_ydim, 0));
+
+    inv_magx = 1.0 / xmag;
+    inv_magy = 1.0 / ymag;
+
+    for (j = 0, newy = 0; j < new_ydim; j++) {
+
+	newj = (int) newy;
+	dy = newy - newj;
+
+	for (i = 0, newx=0; i < new_xdim; i++) {
+	    newi = (int) newx;
+	    dx = newx - newi;
+
+	    if ((newi+1 < xdm) && (newj+1 < ydm)) {
+		intensity = (1.0-dx)*(1.0-dy)*img(newi, newj)
+			    + dx*(1.0-dy)*img(newi+1, newj)
+			    + (1.0-dx)*dy*img(newi, newj+1)
+			    + dx*dy*img(newi+1, newj+1);
+	    }
+	    else if ((newi+1 >= xdm) && (newj+1 >= ydm)) {
+		intensity = img(newi, newj);
+	    }
+	    else if(newi+1 >= xdm) {
+		intensity = (1.0-dy)*img(newi, newj)+
+			    dy*img(newi, newj+1);
+	    }
+	    else if (newj+1 >= ydm) {
+		intensity = (1.0-dx)*img(newi, newj)+
+			    dx*img(newi+1, newj);
+	    }
+	    _im(i, j) = intensity;
+	    if (intensity > _max_intensity)
+		_max_intensity = intensity;
+	    else if (intensity < _min_intensity)
+		_min_intensity = intensity;
+	    newx += inv_magx;
+	}
+	newy += inv_magy;
+    }
+
+    printf("Made it through loop.\n");
+
+    printf("min = %f, max = %f.\n", min_intensity(), max_intensity());
+
+    return;
+}

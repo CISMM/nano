@@ -1,0 +1,38 @@
+#!/bin/csh -f
+#########################################################################
+# Takes in one of the ASCII files written with modification results and
+# puts out a file suitable for importing into xgraph.  Basically, it
+# strips each data set out and puts it in separately.
+#########################################################################
+
+set infile = $1
+set outfile = $2
+
+# Find out how many columns of data there are.  For some reason, wc returns
+# 1 too many.
+set cols = `head -1 $infile | wc -w`
+@ cols --
+
+# Tell what we're doing and create the output file
+echo "Converting $cols columns from $infile to $outfile"
+echo "" >! $outfile
+
+# Start at the second column, since all is indexed to s (the first column)
+@ i = 2
+while ($i <= $cols)
+	# Put the column name, after " character, in the file.
+	set name = `head -1 $infile | cut -f $i`
+	echo "Adding column $name"
+	echo "" >> $outfile
+	echo '"'"$name" >> $outfile
+
+	# Cut the s column and the one we're on right now
+	# Skip the first line, which has the header
+	tail +2 $infile | cut -f 1,$i >> $outfile
+
+	# Next column
+	@ i ++
+end
+
+# Add a blank line, then the name of the data set we're doing
+

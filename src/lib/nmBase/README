@@ -1,0 +1,42 @@
+Package NMB:  nanoManipulator base
+
+  Everything in this directory has data or function that must be replicated
+on both the main controller and the graphics server.
+
+filter:
+  The routines that execute a filter script on a data plane and add it
+to the BCGrid.  Called from inside nmb_Dataset.
+
+nmb_Dataset:
+  Contains a (pointer to a) BCGrid with all known data from microscopes,
+and a nmb_Subgrid used to record the portions of that grid that have
+changed.
+  Contains the names of all the BCPlanes in the BCGrid that are mapped
+to specific visualization techniques or parameters.
+
+nmb_Decoration:
+  Contains most of the trivial pieces of data other than the dataset that
+need to be known to the graphics code:  scrape and pulse marks, positions
+of measure lines, current tip mode (image/feel/modify).
+  Encapsulates the scrape and pulse marks.
+
+nmb_Globals:
+  Declares globally-visible pointers to an nmb_Dataset and an
+nmb_Decoration.
+
+nmb_PlaneSelection:
+  Given the current named visualization planes & input grid extracts
+pointers to those planes conveniently and aggomerates them to be passed
+around the graphics routines.
+
+nmb_Subgrid:
+  Tracks the portion of a grid that has changed (since the last
+rendering iteration, so that those display lists can be regenerated).
+
+nmb_Types:
+  Type definitions/declarations.
+
+Depends on:  Tcl_Linkvar, BCGrid, BCPlane, BCDebug, and BCString.
+
+
+

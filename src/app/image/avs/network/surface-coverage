@@ -1,0 +1,543 @@
+#!/usr/bin/avs -network
+version 5.4 (50.76 SunOS5 xgl)
+module "print field.user.0" -xy 520,449 -ex $Path/avs_library/mongo
+module "fit histo1+1es.user.1" -xy 367,314 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/fit_1+1es_avs
+module "histogram simple.user.2" -xy 250,197 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/generate_histo
+module "field to int.user.3" -xy 250,125 -ex $Path/avs_library/mongo
+module "Read Sunraster JH.user.4" -xy 511,17 -ex /afs/unc/proj/mip/neuro/avs/Biwi97/avs_library/SunOS/ReadSunraster
+module "field to float.user.5" -xy 250,242 -ex $Path/avs_library/mongo
+module AVSGraph.user.6 -xy 7,395 -ex $Path/avs_library/AVSGraph
+module threshold2G.user.7 -xy 349,440 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/threshold2G
+module "print field.user.8" -xy 349,494 -ex $Path/avs_library/mongo
+module "ip threshold.user.10" -xy 727,170 -ex $Path/avs_library/sv_multm
+module erode_2D.user.11 -xy 574,215 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module "structuring element.user.12" -xy 403,179 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module dilate_2D.user.13 -xy 565,287 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module downsize.user.14 -xy 916,152 -ex $Path/avs_library/mongo
+module downsize.user.15 -xy 763,242 -ex $Path/avs_library/mongo
+module downsize.user.16 -xy 727,494 -ex $Path/avs_library/mongo
+module "ip statistics.user.17" -xy 709,332 -ex $Path/avs_library/sv_multm
+module "image viewer.user.18" -xy 943,395
+port_connect "fit histo1+1es.user.1":0 threshold2G.user.7:0
+port_connect "fit histo1+1es.user.1":0 "print field.user.0":0
+port_connect "fit histo1+1es.user.1":1 AVSGraph.user.6:14
+port_connect "histogram simple.user.2":0 "field to float.user.5":0
+port_connect "field to int.user.3":0 "histogram simple.user.2":0
+port_connect "Read Sunraster JH.user.4":3 downsize.user.14:0
+port_connect "Read Sunraster JH.user.4":3 "ip threshold.user.10":0
+port_connect "Read Sunraster JH.user.4":3 "field to int.user.3":0
+port_connect "field to float.user.5":0 AVSGraph.user.6:15
+port_connect "field to float.user.5":0 "fit histo1+1es.user.1":0
+port_connect threshold2G.user.7:0 "print field.user.8":0
+port_connect "ip threshold.user.10":0 erode_2D.user.11:0
+port_connect "ip threshold.user.10":0 downsize.user.15:0
+port_connect erode_2D.user.11:0 dilate_2D.user.13:0
+port_connect "structuring element.user.12":0 dilate_2D.user.13:1
+port_connect "structuring element.user.12":0 erode_2D.user.11:1
+port_connect dilate_2D.user.13:0 downsize.user.16:0
+port_connect dilate_2D.user.13:0 "ip statistics.user.17":0
+port_connect downsize.user.14:0 "image viewer.user.18":0
+port_connect downsize.user.15:0 "image viewer.user.18":0
+port_connect downsize.user.16:0 "image viewer.user.18":0
+parm_set "print field.user.0":"Min X" 0
+parm_set "print field.user.0":"Max X" -1
+parm_set "print field.user.0":"Min Y" 0
+parm_set "print field.user.0":"Max Y" -1
+parm_set "print field.user.0":"Min Z" 0
+parm_set "print field.user.0":"Max Z" -1
+parm_set "print field.user.0":"Min W" 0
+parm_set "print field.user.0":"Max W" -1
+parm_set "print field.user.0":"Max Elements" 272
+parm_set "print field.user.0":"Display Header" false
+parm_set "print field.user.0":"Display Data" true
+parm_set "print field.user.0":"Output File" /tmp/pfield_29574
+parm_set "print field.user.0":"Output Browser" /tmp/pfield_29574
+parm_set "fit histo1+1es.user.1":nbG 2
+parm_set "fit histo1+1es.user.1":nb_iterations 15658
+parm_set "fit histo1+1es.user.1":grow 1.049999952
+parm_set "fit histo1+1es.user.1":init_step 19.28563881
+parm_set "fit histo1+1es.user.1":Normalize false
+parm_set "fit histo1+1es.user.1":mu_min 1
+parm_set "fit histo1+1es.user.1":mu_max 256
+parm_set "fit histo1+1es.user.1":sigma_min 1
+parm_set "fit histo1+1es.user.1":sigma_max 256
+parm_set "fit histo1+1es.user.1":a1 8762
+parm_set "fit histo1+1es.user.1":mu1 149
+parm_set "fit histo1+1es.user.1":sig1 26
+parm_set "fit histo1+1es.user.1":a2 4200
+parm_set "fit histo1+1es.user.1":mu2 175
+parm_set "fit histo1+1es.user.1":sig2 58
+parm_set "fit histo1+1es.user.1":a3 0
+parm_set "fit histo1+1es.user.1":mu3 0
+parm_set "fit histo1+1es.user.1":sig3 0
+parm_set "fit histo1+1es.user.1":a4 0
+parm_set "fit histo1+1es.user.1":mu4 0
+parm_set "fit histo1+1es.user.1":sig4 0
+parm_set "fit histo1+1es.user.1":a5 0
+parm_set "fit histo1+1es.user.1":mu5 0
+parm_set "fit histo1+1es.user.1":sig5 0
+parm_set "field to int.user.3":"int normalize" false
+parm_set "field to float.user.5":"float normalize" false
+parm_set AVSGraph.user.6:"Plot Type" Curve
+parm_set AVSGraph.user.6:"Line Thickness" 2
+parm_set AVSGraph.user.6:"Line Style" ______________
+parm_set AVSGraph.user.6:"Marker Size" 2
+parm_set AVSGraph.user.6:"Marker Type" Cycle
+parm_set AVSGraph.user.6:"Bar Frames" true
+parm_set AVSGraph.user.6:PlotTitle AVSGraph
+parm_set AVSGraph.user.6:"Title Height" 6
+parm_set AVSGraph.user.6:"Title Color" White
+parm_set AVSGraph.user.6:"Top Title" true
+parm_set AVSGraph.user.6:"Plot Legend" true
+parm_set AVSGraph.user.6:"Legend Placement" "Upper Right"
+parm_set AVSGraph.user.6:"Legend Title" Legend
+parm_set AVSGraph.user.6:"Axes Visibility" "On Behind"
+parm_set AVSGraph.user.6:"Top X Axis" false
+parm_set AVSGraph.user.6:"Right Y Axis" false
+parm_set AVSGraph.user.6:XAxisLabel "X Axis"
+parm_set AVSGraph.user.6:YAxisLabel "Y Axis"
+parm_set AVSGraph.user.6:"Axis Scale" 5
+parm_set AVSGraph.user.6:"Fine Grid" false
+parm_set AVSGraph.user.6:"Tick Line Layout" "From Start"
+parm_set AVSGraph.user.6:"Major Tick Lines" true
+parm_set AVSGraph.user.6:"Major Tick Line Color" White
+parm_set AVSGraph.user.6:"Major Tick Stippled" false
+parm_set AVSGraph.user.6:"Minor Tick Lines" false
+parm_set AVSGraph.user.6:"Minor Tick Line Count" 1
+parm_set AVSGraph.user.6:"Minor Tick Line Color" Cyan
+parm_set AVSGraph.user.6:"Minor Tick Stippled" true
+parm_set AVSGraph.user.6:"Log X Axis" false
+parm_set AVSGraph.user.6:"Log Y Axis" false
+parm_set AVSGraph.user.6:"Use X Limits" true
+parm_set AVSGraph.user.6:"Use Y Limits" true
+parm_set AVSGraph.user.6:"User X Min" 0
+parm_set AVSGraph.user.6:"User X Max" 256
+parm_set AVSGraph.user.6:"User Y Min" 0
+parm_set AVSGraph.user.6:"User Y Max" 15000
+parm_set AVSGraph.user.6:"Hard Copy Device" "PostScript A (Letter)%HPOSTA"
+parm_set AVSGraph.user.6:"Hardcopy File" /tmp/AVSGraph.plt
+parm_set AVSGraph.user.6:"Double Buffer" true
+parm_set AVSGraph.user.6:"Clip To Viewport" true
+parm_set AVSGraph.user.6:"Text Font" Simplex%SIMP
+parm_set AVSGraph.user.6:"Use Limits" false
+parm_set AVSGraph.user.6:"User Min" 0
+parm_set AVSGraph.user.6:"User Max" 1
+parm_set AVSGraph.user.6:"Num of Classes" 20
+parm_set threshold2G.user.7:"Statistical method" "Max Likelyhood"
+parm_set threshold2G.user.7:"First Gaussian" 1
+parm_set threshold2G.user.7:"Second Gaussian" 2
+parm_set "print field.user.8":"Min X" 0
+parm_set "print field.user.8":"Max X" -1
+parm_set "print field.user.8":"Min Y" 0
+parm_set "print field.user.8":"Max Y" -1
+parm_set "print field.user.8":"Min Z" 0
+parm_set "print field.user.8":"Max Z" -1
+parm_set "print field.user.8":"Min W" 0
+parm_set "print field.user.8":"Max W" -1
+parm_set "print field.user.8":"Max Elements" 1
+parm_set "print field.user.8":"Display Header" false
+parm_set "print field.user.8":"Display Data" true
+parm_set "print field.user.8":"Output File" /tmp/pfield_14619
+parm_set "print field.user.8":"Output Browser" /tmp/pfield_14619
+parm_set "ip threshold.user.10":"Channel 0" true
+parm_set "ip threshold.user.10":"Channel 1" false
+parm_set "ip threshold.user.10":"Channel 2" false
+parm_set "ip threshold.user.10":"Channel 3" false
+parm_set "ip threshold.user.10":"Channel 4" false
+parm_set "ip threshold.user.10":"Channel 5" false
+parm_set "ip threshold.user.10":"Channel 6" false
+parm_set "ip threshold.user.10":"Channel 7" false
+parm_set "ip threshold.user.10":"Channel 8" false
+parm_set "ip threshold.user.10":"Channel 9" false
+parm_set "ip threshold.user.10":"Channel 10" false
+parm_set "ip threshold.user.10":"Channel 11" false
+parm_set "ip threshold.user.10":"Low Value" 172 -range 0 255
+parm_set "ip threshold.user.10":"High Value" 172 -range 0 255
+parm_set "ip threshold.user.10":Invert false
+parm_set "ip threshold.user.10":"clear output" true
+parm_set "structuring element.user.12":dimtitle dimension
+parm_set "structuring element.user.12":dimension 2
+parm_set "structuring element.user.12":metrictitle metric
+parm_set "structuring element.user.12":metric euclid
+parm_set "structuring element.user.12":"radius x" 1.5
+parm_set "structuring element.user.12":"radius y" 1.5
+parm_set "structuring element.user.12":"radius z" 0
+parm_set downsize.user.14:downsize 2
+parm_set downsize.user.15:downsize 2
+parm_set downsize.user.16:downsize 2
+parm_set "ip statistics.user.17":Channel "channel 0" -range "channel 0" ;
+parm_set "image viewer.user.18":"Update Always" true
+mod_image "image viewer.user.18"
+image_set_scene -scene "image viewer.user.18"
+image_set_view_size 63 529 1235 489
+image_set_view_transformation -tx -0.000000 -ty -0.000000 -sx 1.000000 -sy 1.000000
+image_set_color 0.000000 0.000000 0.000000
+image_create_image -image "downsize.user.16"
+image_set_image_transformation -image "downsize.user.16" -tx 276.000000 -ty 1.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.16" 1
+image_set_display_technique -image "downsize.user.16" dither
+image_create_image -image "downsize.user.15"
+image_set_image_transformation -image "downsize.user.15" -tx -30.000000 -ty -2.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.15" 1
+image_set_display_technique -image "downsize.user.15" dither
+image_create_image -image "downsize.user.14"
+image_set_image_transformation -image "downsize.user.14" -tx -298.000000 -ty -9.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.14" 1
+image_set_display_technique -image "downsize.user.14" dither
+}
+shell "ui" shell
+ panel Application -w app_panel -p ui -xy 0,0 -wh 260,1024
+  panel "Top Level Stack" -w master_stack -p Application -xy 2,100 -wh 274,1016\
+   -P columns integer 1
+   panel "print field.user.0" -w panel -p "Top Level Stack" -xy 0,194 -wh 254,821
+    manipulator "print field.user.0:Min X" -w typein_integer -p "print field.user.0" \
+        -xy 10,10 -wh 117,21
+    manipulator "print field.user.0:Max X" -w typein_integer -p "print field.user.0" \
+        -xy 10,28 -wh 117,21
+    manipulator "print field.user.0:Min Y" -w typein_integer -p "print field.user.0" \
+        -xy 10,53 -wh 117,21
+    manipulator "print field.user.0:Max Y" -w typein_integer -p "print field.user.0" \
+        -xy 10,75 -wh 117,21
+    manipulator "print field.user.0:Min Z" -w typein_integer -p "print field.user.0" \
+        -xy 10,94 -wh 117,21
+    manipulator "print field.user.0:Max Z" -w typein_integer -p "print field.user.0" \
+        -xy 10,118 -wh 117,21
+    manipulator "print field.user.0:Min W" -w typein_integer -p "print field.user.0" \
+        -xy 10,136 -wh 117,21
+    manipulator "print field.user.0:Max W" -w typein_integer -p "print field.user.0" \
+        -xy 10,161 -wh 117,21
+    manipulator "print field.user.0:Max Elements" -w idial -p "print field.user.0" \
+        -xy 124,161 -wh 90,129
+    manipulator "print field.user.0:Display Header" -w toggle -p "print field.user.0" \
+        -xy 10,291 -wh 117,21
+    manipulator "print field.user.0:Display Data" -w toggle -p "print field.user.0" \
+        -xy 10,309 -wh 117,21
+    manipulator "print field.user.0:Output File" -w typein -p "print field.user.0" \
+        -xy 10,334 -wh 235,21
+   panel "fit histo1+1es.user.1" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 200,712
+    manipulator "fit histo1+1es.user.1:nbG" -w idial -p "fit histo1+1es.user.1" \
+        -xy 10,10 -wh 90,129
+    manipulator "fit histo1+1es.user.1:nb_iterations" -w idial -p "fit histo1+1es.user.1" \
+        -xy 100,10 -wh 90,129
+    manipulator "fit histo1+1es.user.1:grow" -w dial -p "fit histo1+1es.user.1" \
+        -xy 10,136 -wh 90,129
+    manipulator "fit histo1+1es.user.1:init_step" -w dial -p "fit histo1+1es.user.1" \
+        -xy 100,136 -wh 90,129
+    manipulator "fit histo1+1es.user.1:Normalize" -w toggle -p "fit histo1+1es.user.1" \
+        -xy 10,268 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu_min" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,291 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu_max" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,309 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sigma_min" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,334 -wh 235,21
+    manipulator "fit histo1+1es.user.1:sigma_max" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,356 -wh 235,21
+    manipulator "fit histo1+1es.user.1:a1" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,375 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu1" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,399 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sig1" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,417 -wh 117,21
+    manipulator "fit histo1+1es.user.1:a2" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,441 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu2" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,464 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sig2" -w typein_real -p "fit histo1+1es.user.1" \
+        -xy 10,483 -wh 117,21
+    manipulator "fit histo1+1es.user.1:a3" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,507 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu3" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,529 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sig3" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,549 -wh 117,21
+    manipulator "fit histo1+1es.user.1:a4" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,572 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu4" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,590 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sig4" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,615 -wh 117,21
+    manipulator "fit histo1+1es.user.1:a5" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,637 -wh 117,21
+    manipulator "fit histo1+1es.user.1:mu5" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,656 -wh 117,21
+    manipulator "fit histo1+1es.user.1:sig5" -w typein_real -p "fit histo1+1es.user.1" -hide \
+        -xy 10,680 -wh 117,21
+   panel "field to int.user.3" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,42
+    manipulator "field to int.user.3:int normalize" -w toggle -p "field to int.user.3" \
+        -xy 10,10 -wh 117,21
+   panel "Read Sunraster JH.user.4" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,42
+    manipulator "Read Sunraster JH.user.4:Read Sunraster" -w oneshot -p "Read Sunraster JH.user.4" \
+        -xy 10,10 -wh 117,21
+   panel "field to float.user.5" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,42
+    manipulator "field to float.user.5:float normalize" -w toggle -p "field to float.user.5" \
+        -xy 10,10 -wh 117,21
+   panel AVSGraph.user.6 -w panel -p "Top Level Stack" -xy 0,194 -wh 274,785
+    panel AVSGraph.user.6!Menu -w stack -p AVSGraph.user.6 -xy 0,0 -wh 264,774\
+   -P columns integer 2\
+   -P width integer 2\
+   -P title string "AVSGraph Menu"
+     panel AVSGraph.user.6!page.1 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,218\
+   -P title string "Plot Type"
+      manipulator "AVSGraph.user.6:Plot Type" -w radio_buttons -p AVSGraph.user.6!page.1 \
+          -xy 60,10 -wh 117,194
+     panel AVSGraph.user.6!page.2 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,417\
+   -P title string "Style"
+      manipulator "AVSGraph.user.6:Line Thickness" -w islider -p AVSGraph.user.6!page.2 \
+          -xy 10,10 -wh 235,31
+      manipulator "AVSGraph.user.6:Line Style" -w choice_browser -p AVSGraph.user.6!page.2 \
+          -xy 10,37 -wh 234,152
+      manipulator "AVSGraph.user.6:Marker Size" -w islider -p AVSGraph.user.6!page.2 \
+          -xy 10,200 -wh 235,31
+      manipulator "AVSGraph.user.6:Marker Type" -w choice_browser -p AVSGraph.user.6!page.2 \
+          -xy 10,227 -wh 234,152
+      manipulator "AVSGraph.user.6:Bar Frames" -w toggle -p AVSGraph.user.6!page.2 \
+          -xy 70,390 -wh 117,21
+     panel AVSGraph.user.6!page.3 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,260\
+   -P title string "Title"
+      manipulator AVSGraph.user.6:PlotTitle -w typein -p AVSGraph.user.6!page.3 \
+          -xy 10,10 -wh 235,21
+      manipulator "AVSGraph.user.6:Title Height" -w islider -p AVSGraph.user.6!page.3 \
+          -xy 10,37 -wh 235,31
+      manipulator "AVSGraph.user.6:Title Color" -w choice_browser -p AVSGraph.user.6!page.3 \
+          -xy 10,70 -wh 234,152
+      manipulator "AVSGraph.user.6:Top Title" -w toggle -p AVSGraph.user.6!page.3 \
+          -xy 60,227 -wh 117,21
+     panel AVSGraph.user.6!page.4 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,208\
+   -P title string "Legend"
+      manipulator "AVSGraph.user.6:Plot Legend" -w toggle -p AVSGraph.user.6!page.4 \
+          -xy 70,10 -wh 117,21
+      manipulator "AVSGraph.user.6:Legend Title" -w typein -p AVSGraph.user.6!page.4 \
+          -xy 10,37 -wh 235,21
+      panel AVSGraph.user.6!page.5 -w panel -p AVSGraph.user.6!page.4 \
+          -xy 60,70 -wh 134,127\
+   -P title string "Placement"
+       manipulator "AVSGraph.user.6:Legend Placement" -w radio_buttons -p AVSGraph.user.6!page.5 \
+           -xy 10,28 -wh 117,86
+     panel AVSGraph.user.6!page.6 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 264,268\
+   -P title string "Axes"
+      manipulator "AVSGraph.user.6:Top X Axis" -w toggle -p AVSGraph.user.6!page.6 \
+          -xy 70,110 -wh 117,21
+      manipulator "AVSGraph.user.6:Right Y Axis" -w toggle -p AVSGraph.user.6!page.6 \
+          -xy 70,136 -wh 117,21
+      manipulator AVSGraph.user.6:XAxisLabel -w typein -p AVSGraph.user.6!page.6 \
+          -xy 10,169 -wh 235,21
+      manipulator AVSGraph.user.6:YAxisLabel -w typein -p AVSGraph.user.6!page.6 \
+          -xy 10,200 -wh 235,21
+      manipulator "AVSGraph.user.6:Axis Scale" -w islider -p AVSGraph.user.6!page.6 \
+          -xy 10,227 -wh 235,31
+      panel AVSGraph.user.6!page.7 -w panel -p AVSGraph.user.6!page.6 \
+          -xy 0,10 -wh 254,86\
+   -P title string "Axes Visibility"
+       manipulator "AVSGraph.user.6:Axes Visibility" -w radio_buttons -p AVSGraph.user.6!page.7 \
+           -xy 130,10 -wh 117,64
+     panel AVSGraph.user.6!page.8 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 264,580\
+   -P title string "Tick Lines"
+      manipulator "AVSGraph.user.6:Fine Grid" -w toggle -p AVSGraph.user.6!page.8 \
+          -xy 63,78 -wh 117,21
+      panel AVSGraph.user.6!stack.9 -w stack -p AVSGraph.user.6!page.8 \
+          -xy 0,110 -wh 255,459\
+   -P columns integer 2\
+   -P width integer 2\
+   -P title string "Tick Line Type"
+       panel AVSGraph.user.6!page.10 -w panel -p AVSGraph.user.6!stack.9 \
+           -xy 0,194 -wh 254,232\
+   -P title string "Major"
+        manipulator "AVSGraph.user.6:Major Tick Lines" -w toggle -p AVSGraph.user.6!page.10 \
+            -xy 60,10 -wh 117,21
+        manipulator "AVSGraph.user.6:Major Tick Line Color" -w choice_browser -p AVSGraph.user.6!page.10 \
+            -xy 10,37 -wh 234,152
+        manipulator "AVSGraph.user.6:Major Tick Stippled" -w toggle -p AVSGraph.user.6!page.10 \
+            -xy 60,200 -wh 117,21
+       panel AVSGraph.user.6!page.11 -w panel -p AVSGraph.user.6!stack.9 \
+           -xy 0,194 -wh 254,265\
+   -P title string "Minor"
+        manipulator "AVSGraph.user.6:Minor Tick Lines" -w toggle -p AVSGraph.user.6!page.11 \
+            -xy 60,10 -wh 117,21
+        manipulator "AVSGraph.user.6:Minor Tick Line Count" -w islider -p AVSGraph.user.6!page.11 \
+            -xy 10,37 -wh 235,31
+        manipulator "AVSGraph.user.6:Minor Tick Line Color" -w choice_browser -p AVSGraph.user.6!page.11 \
+            -xy 10,70 -wh 234,152
+        manipulator "AVSGraph.user.6:Minor Tick Stippled" -w toggle -p AVSGraph.user.6!page.11 \
+            -xy 60,227 -wh 117,21
+      panel AVSGraph.user.6!page.12 -w panel -p AVSGraph.user.6!page.8 \
+          -xy 0,10 -wh 254,61\
+   -P title string "Tick Line Layout"
+       manipulator "AVSGraph.user.6:Tick Line Layout" -w radio_buttons -p AVSGraph.user.6!page.12 \
+           -xy 130,10 -wh 117,43
+     panel AVSGraph.user.6!page.13 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,251\
+   -P title string "Limits"
+      manipulator "AVSGraph.user.6:Log X Axis" -w toggle -p AVSGraph.user.6!page.13 \
+          -xy 60,10 -wh 117,21
+      manipulator "AVSGraph.user.6:Log Y Axis" -w toggle -p AVSGraph.user.6!page.13 \
+          -xy 60,37 -wh 117,21
+      manipulator "AVSGraph.user.6:Use X Limits" -w toggle -p AVSGraph.user.6!page.13 \
+          -xy 60,70 -wh 117,21
+      manipulator "AVSGraph.user.6:Use Y Limits" -w toggle -p AVSGraph.user.6!page.13 \
+          -xy 60,100 -wh 117,21
+      manipulator "AVSGraph.user.6:User X Min" -w typein_real -p AVSGraph.user.6!page.13 \
+          -xy 10,127 -wh 235,21
+      manipulator "AVSGraph.user.6:User X Max" -w typein_real -p AVSGraph.user.6!page.13 \
+          -xy 10,160 -wh 235,21
+      manipulator "AVSGraph.user.6:User Y Min" -w typein_real -p AVSGraph.user.6!page.13 \
+          -xy 10,190 -wh 235,21
+      manipulator "AVSGraph.user.6:User Y Max" -w typein_real -p AVSGraph.user.6!page.13 \
+          -xy 10,218 -wh 235,21
+     panel AVSGraph.user.6!page.14 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,392\
+   -P title string "Hardcopy"
+      manipulator "AVSGraph.user.6:Hard Copy Device" -w choice_browser -p AVSGraph.user.6!page.14 \
+          -xy 10,10 -wh 234,152
+      manipulator "AVSGraph.user.6:Hardcopy File" -w browser -p AVSGraph.user.6!page.14 \
+          -xy 11,161 -wh 234,195
+      manipulator "AVSGraph.user.6:Make Hardcopy" -w oneshot -p AVSGraph.user.6!page.14 \
+          -xy 74,364 -wh 117,21
+     panel AVSGraph.user.6!page.15 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,227\
+   -P title string "Options"
+      manipulator "AVSGraph.user.6:Double Buffer" -w toggle -p AVSGraph.user.6!page.15 \
+          -xy 70,10 -wh 117,21
+      manipulator "AVSGraph.user.6:Clip To Viewport" -w toggle -p AVSGraph.user.6!page.15 \
+          -xy 70,37 -wh 117,21
+      manipulator "AVSGraph.user.6:Text Font" -w choice_browser -p AVSGraph.user.6!page.15 \
+          -xy 10,70 -wh 234,152
+     panel AVSGraph.user.6!page.16 -w panel -p AVSGraph.user.6!Menu \
+         -xy 0,194 -wh 254,227\
+   -P title string "Image"
+      manipulator "AVSGraph.user.6:Use Limits" -w toggle -p AVSGraph.user.6!page.16 \
+          -xy 70,10 -wh 117,21
+      manipulator "AVSGraph.user.6:User Min" -w typein_real -p AVSGraph.user.6!page.16 \
+          -xy 10,37 -wh 235,21\
+   -P width integer 4
+      manipulator "AVSGraph.user.6:User Max" -w typein_real -p AVSGraph.user.6!page.16 \
+          -xy 10,60 -wh 235,21
+      manipulator "AVSGraph.user.6:Num of Classes" -w idial -p AVSGraph.user.6!page.16 \
+          -xy 80,86 -wh 90,129
+   panel threshold2G.user.7 -w panel -p "Top Level Stack" -xy 0,194 -wh 254,103
+    manipulator "threshold2G.user.7:Statistical method" -w radio_buttons -p threshold2G.user.7 \
+        -xy 10,10 -wh 117,43
+    manipulator "threshold2G.user.7:First Gaussian" -w typein_integer -p threshold2G.user.7 \
+        -xy 10,53 -wh 235,21
+    manipulator "threshold2G.user.7:Second Gaussian" -w typein_integer -p threshold2G.user.7 \
+        -xy 10,75 -wh 235,21
+   panel "print field.user.8" -w panel -p "Top Level Stack" -xy 0,194 -wh 254,821
+    manipulator "print field.user.8:Min X" -w typein_integer -p "print field.user.8" \
+        -xy 10,10 -wh 117,21
+    manipulator "print field.user.8:Max X" -w typein_integer -p "print field.user.8" \
+        -xy 10,28 -wh 117,21
+    manipulator "print field.user.8:Min Y" -w typein_integer -p "print field.user.8" \
+        -xy 10,53 -wh 117,21
+    manipulator "print field.user.8:Max Y" -w typein_integer -p "print field.user.8" \
+        -xy 10,75 -wh 117,21
+    manipulator "print field.user.8:Min Z" -w typein_integer -p "print field.user.8" \
+        -xy 10,94 -wh 117,21
+    manipulator "print field.user.8:Max Z" -w typein_integer -p "print field.user.8" \
+        -xy 10,118 -wh 117,21
+    manipulator "print field.user.8:Min W" -w typein_integer -p "print field.user.8" \
+        -xy 10,136 -wh 117,21
+    manipulator "print field.user.8:Max W" -w typein_integer -p "print field.user.8" \
+        -xy 10,161 -wh 117,21
+    manipulator "print field.user.8:Max Elements" -w idial -p "print field.user.8" \
+        -xy 124,161 -wh 90,129
+    manipulator "print field.user.8:Display Header" -w toggle -p "print field.user.8" \
+        -xy 10,291 -wh 117,21
+    manipulator "print field.user.8:Display Data" -w toggle -p "print field.user.8" \
+        -xy 10,309 -wh 117,21
+    manipulator "print field.user.8:Output File" -w typein -p "print field.user.8" \
+        -xy 10,334 -wh 235,21
+    manipulator "print field.user.8:Output Browser" -w text_browser -p "print field.user.8" \
+        -xy 10,356 -wh 234,456
+   panel "ip threshold.user.10" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 224,546
+    manipulator "ip threshold.user.10:Channel 0" -w toggle -p "ip threshold.user.10" \
+        -xy 4,9 -wh 117,21\
+   -P title string "Channel 0"
+    manipulator "ip threshold.user.10:Channel 1" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,28 -wh 117,21\
+   -P title string "Channel 1"
+    manipulator "ip threshold.user.10:Channel 2" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,53 -wh 117,21\
+   -P title string "Channel 2"
+    manipulator "ip threshold.user.10:Channel 3" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,76 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 4" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,94 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 5" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,119 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 6" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,143 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 7" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,161 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 8" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,185 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 9" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,210 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 10" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,233 -wh 117,21
+    manipulator "ip threshold.user.10:Channel 11" -w toggle -p "ip threshold.user.10" -hide \
+        -xy 4,251 -wh 117,21
+    manipulator "ip threshold.user.10:Low Value" -w dial -p "ip threshold.user.10" \
+        -xy 124,251 -wh 90,129
+    manipulator "ip threshold.user.10:High Value" -w dial -p "ip threshold.user.10" \
+        -xy 4,383 -wh 90,129
+    manipulator "ip threshold.user.10:Invert" -w toggle -p "ip threshold.user.10" \
+        -xy 94,383 -wh 117,21
+    manipulator "ip threshold.user.10:clear output" -w toggle -p "ip threshold.user.10" \
+        -xy 4,514 -wh 117,21
+   panel "structuring element.user.12" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 224,367
+    manipulator "structuring element.user.12:dimtitle" -w text -p "structuring element.user.12" \
+        -xy 4,9 -wh 117,21
+    manipulator "structuring element.user.12:dimension" -w radio_buttons -p "structuring element.user.12" \
+        -xy 4,28 -wh 117,43
+    manipulator "structuring element.user.12:metrictitle" -w text -p "structuring element.user.12" \
+        -xy 4,76 -wh 117,21
+    manipulator "structuring element.user.12:metric" -w radio_buttons -p "structuring element.user.12" \
+        -xy 4,94 -wh 117,64
+    manipulator "structuring element.user.12:radius x" -w dial -p "structuring element.user.12" \
+        -xy 124,94 -wh 90,129
+    manipulator "structuring element.user.12:radius y" -w dial -p "structuring element.user.12" \
+        -xy 4,227 -wh 90,129
+    manipulator "structuring element.user.12:radius z" -w dial -p "structuring element.user.12" \
+        -xy 94,227 -wh 90,129
+   panel downsize.user.14 -w panel -p "Top Level Stack" -xy 0,194 -wh 110,150
+    manipulator downsize.user.14:downsize -w idial -p downsize.user.14 \
+        -xy 10,10 -wh 90,129
+   panel downsize.user.15 -w panel -p "Top Level Stack" -xy 0,194 -wh 110,150
+    manipulator downsize.user.15:downsize -w idial -p downsize.user.15 \
+        -xy 10,10 -wh 90,129
+   panel downsize.user.16 -w panel -p "Top Level Stack" -xy 0,194 -wh 110,150
+    manipulator downsize.user.16:downsize -w idial -p downsize.user.16 \
+        -xy 10,10 -wh 90,129
+   panel "ip statistics.user.17" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 254,384
+    manipulator "ip statistics.user.17:Channel" -w radio_buttons -p "ip statistics.user.17" \
+        -xy 10,10 -wh 117,21
+    manipulator "ip statistics.user.17:Statistics" -w textblock -p "ip statistics.user.17" \
+        -xy 10,268 -wh 235,108
+ manipulator "print field.user.0:Output Browser" -w text_browser -p ui \
+     -xy 132,780 -wh 444,128
+ panel AVSGraph.user.6!DrawingWindow -w panel -p ui -xy 407,163 -wh 700,499\
+   -P title string "AVSGraph Drawing Window"
+ panel "image viewer.user.18!image" -w container -p ui -xy 27,515 -wh 1277,564\
+   -P zoom_coords string "0 0 0 0 0 <$NULL> 0 0 0 0"
+manipulator AVSGraph.user.6!page.5!title -w text -p AVSGraph.user.6!page.5 \
+    -xy 10,10 -wh 117,21
+manipulator AVSGraph.user.6!page.7!title -w text -p AVSGraph.user.6!page.7 \
+    -xy 10,28 -wh 117,21
+manipulator AVSGraph.user.6!page.12!title -w text -p AVSGraph.user.6!page.12 \
+    -xy 10,20 -wh 117,21
+manipulator "image viewer.user.18":"Update Always" -w none
+manipulator "image viewer.user.18":"Update Image" -w none
+# End of file

@@ -1,0 +1,678 @@
+#!/usr/bin/avs -network
+version 5.4 (50.76 SunOS5 xgl)
+module "field to float.user.0" -xy 277,138 -ex $Path/avs_library/mongo
+module luminance.user.1 -xy 277,102 -ex $Path/avs_library/mongo
+module "display image.user.2" -xy 160,467
+module read_RTM.user.3 -xy 52,215 -ex /afs/cs.unc.edu/home/gerig/avs/modules/hough-xian/hough_trafo
+module hough_view.user.4 -xy 205,395 -ex /afs/cs.unc.edu/home/gerig/avs/modules/hough-xian/hough_trafo
+module "generate colormap.user.5" -xy 439,269
+module "image viewer.user.6" -xy 547,314
+module "READ ANY IMAGE.user.7" -xy 151,12 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/read_any_image
+module downsize.user.8 -xy 610,84 -ex $Path/avs_library/mongo
+module downsize.user.9 -xy 484,224 -ex $Path/avs_library/mongo
+module downsize.user.10 -xy 529,138 -ex $Path/avs_library/mongo
+module "canny edge 2D.user.11" -xy 277,174 -ex /afs/unc/proj/mip/neuro/avs/BIWI/macros/canny_edge_2D -macro -type 1
+port_add -in "canny edge 2D.user.11":"Input Field" field -flags 0x2
+port_add -out "canny edge 2D.user.11":output "field float" -flags 0x2
+port_add -out "canny edge 2D.user.11":angle "field 2D scalar uniform float" -flags 0x2
+module "filter gauss 2D.user.12" -xy 333,145 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/gauss -parent "canny edge 2D.user.11"
+module "field to float.user.13" -xy 333,89 -ex $Path/avs_library/mongo -parent "canny edge 2D.user.11"
+module "canny 2D edge.user.14" -xy 157,201 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/canny2DEdge -parent "canny edge 2D.user.11"
+module "connect region 2D.user.15" -xy 437,289 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/cannyBasic -parent "canny edge 2D.user.11"
+module "field to byte.user.16" -xy 285,329 -ex $Path/avs_library/mongo -parent "canny edge 2D.user.11"
+module "thinning 2D.user.17" -xy 285,377 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/thinning2D -parent "canny edge 2D.user.11"
+module mask.user.18 -xy 437,417 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/mask -parent "canny edge 2D.user.11"
+module "double threshold.user.19" -xy 437,249 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/cannyBasic -parent "canny edge 2D.user.11"
+module hough_trafo.user.20 -xy 250,272 -ex /afs/cs.unc.edu/home/gerig/avs/modules/hough-xian/hough_trafo
+module crop.user.21 -xy 152,48 -ex $Path/avs_library/mongo
+module "print field.user.22" -xy 583,413 -ex $Path/avs_library/mongo
+module "write math.user.23" -xy 718,413 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/write_math
+module "print field.user.24" -xy 322,467 -ex $Path/avs_library/mongo
+module "write math.user.25" -xy 466,467 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/write_math
+module "write math.user.26" -xy 16,377 -ex /afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/write_math
+module "print values.user.27" -xy 25,440 -ex /afs/unc/proj/mip/neuro/avs/Biwi97/avs_library/SunOS/printval
+port_connect "field to float.user.0":0 "canny edge 2D.user.11":0
+port_connect luminance.user.1:0 "field to float.user.0":0
+port_connect read_RTM.user.3:0 hough_trafo.user.20:2
+port_connect read_RTM.user.3:0 hough_view.user.4:7
+port_connect hough_view.user.4:0 "display image.user.2":0
+port_connect "generate colormap.user.5":0 "image viewer.user.6":1
+port_connect "READ ANY IMAGE.user.7":0 crop.user.21:0
+port_connect downsize.user.8:0 "image viewer.user.6":0
+port_connect downsize.user.9:0 "image viewer.user.6":0
+port_connect downsize.user.10:0 "image viewer.user.6":0
+port_connect "canny edge 2D.user.11":0 hough_trafo.user.20:0
+port_connect "canny edge 2D.user.11":0 downsize.user.9:0
+port_connect "canny edge 2D.user.11":1 hough_trafo.user.20:1
+port_connect "canny edge 2D.user.11":1 downsize.user.10:0
+port_connect "IN-> canny edge 2D.user.11":0 "field to float.user.13":0
+port_connect "filter gauss 2D.user.12":0 "canny 2D edge.user.14":0
+port_connect "field to float.user.13":0 "filter gauss 2D.user.12":0
+port_connect "canny 2D edge.user.14":0 "double threshold.user.19":0
+port_connect "canny 2D edge.user.14":1 "OUT-> canny edge 2D.user.11":1
+port_connect "connect region 2D.user.15":0 mask.user.18:0
+port_connect "connect region 2D.user.15":0 "field to byte.user.16":0
+port_connect "field to byte.user.16":0 "thinning 2D.user.17":0
+port_connect "thinning 2D.user.17":0 mask.user.18:1
+port_connect mask.user.18:0 "OUT-> canny edge 2D.user.11":0
+port_connect "double threshold.user.19":0 "connect region 2D.user.15":0
+port_connect "double threshold.user.19":1 "connect region 2D.user.15":1
+port_connect hough_trafo.user.20:0 "write math.user.23":0
+port_connect hough_trafo.user.20:0 "print field.user.22":0
+port_connect hough_trafo.user.20:0 hough_view.user.4:0
+port_connect hough_trafo.user.20:1 "write math.user.25":0
+port_connect hough_trafo.user.20:1 "print field.user.24":0
+port_connect hough_trafo.user.20:1 hough_view.user.4:1
+port_connect hough_trafo.user.20:2 hough_view.user.4:2
+port_connect hough_trafo.user.20:3 hough_view.user.4:3
+port_connect hough_trafo.user.20:3 "print values.user.27":0
+port_connect hough_trafo.user.20:4 hough_view.user.4:4
+port_connect hough_trafo.user.20:4 "write math.user.26":0
+port_connect hough_trafo.user.20:5 hough_view.user.4:5
+port_connect hough_trafo.user.20:6 hough_view.user.4:6
+port_connect crop.user.21:0 hough_view.user.4:8
+port_connect crop.user.21:0 luminance.user.1:0
+port_connect crop.user.21:0 downsize.user.8:0
+parm_set "field to float.user.0":"float normalize" false
+parm_set "display image.user.2":Magnification x1
+parm_set "display image.user.2":Automag_Size 256
+parm_set "display image.user.2":"Maximum Image Dimension" 1280
+parm_set read_RTM.user.3:rtm_file /afs/cs.unc.edu/home/gerig/avs/modules/hough-xian/kreis32.rtm
+parm_set hough_view.user.4:model true
+parm_set hough_view.user.4:center true
+parm_set hough_view.user.4:fan false
+parm_set hough_view.user.4:edgel false
+parm_set hough_view.user.4:completeness 0.1855670065
+parm_set hough_view.user.4:"relative completeness" true
+parm_set hough_view.user.4:zoom 1
+parm_set "generate colormap.user.5":colormap "{ \
+{0.666666687,0,1,0}\
+{0.664052308,0,0.996078432,1.53787023e-05}\
+{0.661437929,0,0.992156863,6.15148092e-05}\
+{0.65882355,0,0.988235295,0.000138408315}\
+{0.656209171,0,0.984313726,0.000246059237}\
+{0.653594792,0,0.980392158,0.000384467538}\
+{0.650980413,0,0.97647059,0.000553633261}\
+{0.648366034,0,0.972549021,0.00075355632}\
+{0.645751655,0,0.968627453,0.000984236947}\
+{0.643137276,0,0.964705884,0.00124567491}\
+{0.640522897,0,0.960784316,0.00153787015}\
+{0.637908518,0,0.956862748,0.0018608229}\
+{0.635294139,0,0.952941179,0.00221453304}\
+{0.63267976,0,0.949019611,0.00259900047}\
+{0.630065382,0,0.945098042,0.00301422528}\
+{0.627451003,0,0.941176474,0.00346020772}\
+{0.624836624,0,0.937254906,0.00393694779}\
+{0.622222245,0,0.933333337,0.00444444502}\
+{0.619607866,0,0.929411769,0.00498269964}\
+{0.616993487,0,0.925490201,0.00555171119}\
+{0.614379108,0,0.921568632,0.0061514806}\
+{0.611764729,0,0.917647064,0.0067820074}\
+{0.60915035,0,0.913725495,0.0074432916}\
+{0.606535971,0,0.909803927,0.00813533273}\
+{0.603921592,0,0.905882359,0.00885813218}\
+{0.601307213,0,0.90196079,0.00961168855}\
+{0.598692834,0,0.898039222,0.0103960019}\
+{0.596078455,0,0.894117653,0.011211073}\
+{0.593464077,0,0.890196085,0.0120569011}\
+{0.590849698,0,0.886274517,0.0129334871}\
+{0.588235319,0,0.882352948,0.0138408309}\
+{0.58562094,0,0.87843138,0.0147789316}\
+{0.583006561,0,0.874509811,0.0157477912}\
+{0.580392182,0,0.870588243,0.0167474076}\
+{0.577777803,0,0.866666675,0.0177777801}\
+{0.575163424,0,0.862745106,0.0188389104}\
+{0.572549045,0,0.858823538,0.0199307986}\
+{0.569934666,0,0.854901969,0.0210534427}\
+{0.567320287,0,0.850980401,0.0222068448}\
+{0.564705908,0,0.847058833,0.0233910047}\
+{0.562091529,0,0.843137264,0.0246059224}\
+{0.55947715,0,0.839215696,0.025851598}\
+{0.556862772,0,0.835294127,0.0271280296}\
+{0.554248393,0,0.831372559,0.0284352191}\
+{0.551634014,0,0.827450991,0.0297731664}\
+{0.549019635,0,0.823529422,0.0311418697}\
+{0.546405256,0,0.819607854,0.0325413309}\
+{0.543790877,0,0.815686285,0.0339715518}\
+{0.541176498,0,0.811764717,0.0354325287}\
+{0.538562119,0,0.807843149,0.0369242616}\
+{0.53594774,0,0.80392158,0.0384467542}\
+{0.533333361,0,0.800000012,0.0400000028}\
+{0.530718982,0,0.796078444,0.0415840074}\
+{0.528104603,0,0.792156875,0.0431987718}\
+{0.525490224,0,0.788235307,0.0448442921}\
+{0.522875845,0,0.784313738,0.0465205684}\
+{0.520261467,0,0.78039217,0.0482276045}\
+{0.517647088,0,0.776470602,0.0499654002}\
+{0.515032709,0,0.772549033,0.0517339483}\
+{0.51241833,0,0.768627465,0.0535332561}\
+{0.509803951,0,0.764705896,0.0553633235}\
+{0.507189572,0,0.760784328,0.0572241433}\
+{0.504575193,0,0.75686276,0.0591157265}\
+{0.501960814,0,0.752941191,0.061038062}\
+{0.499346435,0,0.749019623,0.0629911646}\
+{0.496731997,0,0.745098054,0.0649750158}\
+{0.494117677,0,0.741176486,0.0669896305}\
+{0.491503239,0,0.737254918,0.0690349936}\
+{0.488888919,0,0.733333349,0.0711111203}\
+{0.486274481,0,0.729411781,0.0732180029}\
+{0.483660161,0,0.725490212,0.0753556415}\
+{0.481045723,0,0.721568644,0.0775240362}\
+{0.478431404,0,0.717647076,0.0797231942}\
+{0.475816965,0,0.713725507,0.0819531009}\
+{0.473202646,0,0.709803939,0.0842137709}\
+{0.470588207,0,0.70588237,0.086505197}\
+{0.467973888,0,0.701960802,0.088827379}\
+{0.465359449,0,0.698039234,0.0911803246}\
+{0.46274513,0,0.694117665,0.0935640186}\
+{0.460130692,0,0.690196097,0.0959784761}\
+{0.457516372,0,0.686274529,0.0984236896}\
+{0.454901934,0,0.68235296,0.100899659}\
+{0.452287614,0,0.678431392,0.103406392}\
+{0.449673176,0,0.674509823,0.105943874}\
+{0.447058856,0,0.670588255,0.108512118}\
+{0.444444418,0,0.666666687,0.111111119}\
+{0.441830099,0,0.662745118,0.113740876}\
+{0.43921566,0,0.65882355,0.116401389}\
+{0.436601341,0,0.654901981,0.119092666}\
+{0.433986902,0,0.650980413,0.121814691}\
+{0.431372583,0,0.647058845,0.124567479}\
+{0.428758144,0,0.643137276,0.127351031}\
+{0.426143825,0,0.639215708,0.130165324}\
+{0.423529387,0,0.635294139,0.133010387}\
+{0.420915067,0,0.631372571,0.135886207}\
+{0.418300629,0,0.627451003,0.138792783}\
+{0.415686309,0,0.623529434,0.141730115}\
+{0.413071871,0,0.619607866,0.144698203}\
+{0.410457551,0,0.615686297,0.147697046}\
+{0.407843113,0,0.611764729,0.150726646}\
+{0.405228794,0,0.607843161,0.153787017}\
+{0.402614355,0,0.603921592,0.156878129}\
+{0.400000036,0,0.600000024,0.160000011}\
+{0.397385597,0,0.596078455,0.163152635}\
+{0.394771278,0,0.592156887,0.16633603}\
+{0.392156839,0,0.588235319,0.16955018}\
+{0.38954252,0,0.58431375,0.172795087}\
+{0.386928082,0,0.580392182,0.17607075}\
+{0.384313762,0,0.576470613,0.179377168}\
+{0.381699324,0,0.572549045,0.182714343}\
+{0.379085004,0,0.568627477,0.186082274}\
+{0.376470566,0,0.564705908,0.189480975}\
+{0.373856246,0,0.56078434,0.192910418}\
+{0.371241808,0,0.556862772,0.196370631}\
+{0.368627489,0,0.552941203,0.199861601}\
+{0.36601305,0,0.549019635,0.203383312}\
+{0.363398731,0,0.545098066,0.206935793}\
+{0.360784292,0,0.541176498,0.210519031}\
+{0.358169973,0,0.53725493,0.214133024}\
+{0.355555534,0,0.533333361,0.217777774}\
+{0.352941215,0,0.529411793,0.221453294}\
+{0.350326777,0,0.525490224,0.225159556}\
+{0.347712457,0,0.521568656,0.228896573}\
+{0.345098019,0,0.517647088,0.232664362}\
+{0.342483699,0,0.513725519,0.236462906}\
+{0.339869261,0,0.509803951,0.240292192}\
+{0.337254941,0,0.505882382,0.244152248}\
+{0.334640503,0,0.501960814,0.24804306}\
+{0.332026124,0,0.498039246,0.251964658}\
+{0.329411745,0,0.494117677,0.255916983}\
+{0.326797366,0,0.490196109,0.259900063}\
+{0.324182987,0,0.48627454,0.2639139}\
+{0.321568608,0,0.482352972,0.267958522}\
+{0.318954229,0,0.478431404,0.27203387}\
+{0.31633985,0,0.474509835,0.276139975}\
+{0.313725471,0,0.470588267,0.280276835}\
+{0.311111093,0,0.466666698,0.284444481}\
+{0.308496714,0,0.46274513,0.288642853}\
+{0.305882335,0,0.458823562,0.292872012}\
+{0.303267956,0,0.454901993,0.297131896}\
+{0.300653577,0,0.450980425,0.301422566}\
+{0.298039198,0,0.447058856,0.305743963}\
+{0.295424819,0,0.443137288,0.310096145}\
+{0.29281044,0,0.43921572,0.314479083}\
+{0.290196061,0,0.435294151,0.318892777}\
+{0.287581682,0,0.431372583,0.323337197}\
+{0.284967303,0,0.427451015,0.327812403}\
+{0.282352924,0,0.423529446,0.332318366}\
+{0.279738545,0,0.419607878,0.336855084}\
+{0.277124166,0,0.415686309,0.341422558}\
+{0.274509788,0,0.411764741,0.346020788}\
+{0.271895409,0,0.407843173,0.350649774}\
+{0.26928103,0,0.403921604,0.355309516}\
+{0.266666651,0,0.400000036,0.360000014}\
+{0.264052272,0,0.396078467,0.364721298}\
+{0.261437893,0,0.392156899,0.369473308}\
+{0.258823514,0,0.388235331,0.374256074}\
+{0.256209135,0,0.384313762,0.379069626}\
+{0.253594756,0,0.380392194,0.383913904}\
+{0.250980377,0,0.376470625,0.388788968}\
+{0.248365998,0,0.372549057,0.393694758}\
+{0.245751619,0,0.368627489,0.398631334}\
+{0.24313724,0,0.36470592,0.403598636}\
+{0.240522861,0,0.360784352,0.408596724}\
+{0.237908483,0,0.356862783,0.413625568}\
+{0.235294104,0,0.352941215,0.418685138}\
+{0.232679725,0,0.349019647,0.423775494}\
+{0.230065346,0,0.345098078,0.428896606}\
+{0.227450967,0,0.34117651,0.434048474}\
+{0.224836588,0,0.337254941,0.439231098}\
+{0.222222209,0,0.333333373,0.444444478}\
+{0.21960783,0,0.329411805,0.449688613}\
+{0.216993451,0,0.325490236,0.454963505}\
+{0.214379072,0,0.321568668,0.460269153}\
+{0.211764693,0,0.317647099,0.465605557}\
+{0.209150314,0,0.313725531,0.470972717}\
+{0.206535935,0,0.309803963,0.476370662}\
+{0.203921556,0,0.305882394,0.481799334}\
+{0.201307178,0,0.301960826,0.487258762}\
+{0.198692799,0,0.298039258,0.492748976}\
+{0.19607842,0,0.294117689,0.498269916}\
+{0.193464041,0,0.290196121,0.503821611}\
+{0.190849662,0,0.286274552,0.509404123}\
+{0.188235283,0,0.282352984,0.515017331}\
+{0.185620904,0,0.278431416,0.520661294}\
+{0.183006525,0,0.274509847,0.526336074}\
+{0.180392146,0,0.270588279,0.53204155}\
+{0.177777767,0,0.26666671,0.537777781}\
+{0.175163388,0,0.262745142,0.543544829}\
+{0.172549009,0,0.258823574,0.549342573}\
+{0.16993463,0,0.254902005,0.555171132}\
+{0.167320251,0,0.250980437,0.561030388}\
+{0.164705873,0,0.247058868,0.566920459}\
+{0.162091494,0,0.2431373,0.572841227}\
+{0.159477115,0,0.239215732,0.57879281}\
+{0.156862736,0,0.235294163,0.58477509}\
+{0.154248357,0,0.231372595,0.590788186}\
+{0.151633978,0,0.227451026,0.596832037}\
+{0.149019599,0,0.223529458,0.602906585}\
+{0.14640522,0,0.21960789,0.609011948}\
+{0.143790841,0,0.215686321,0.615148067}\
+{0.141176462,0,0.211764753,0.621314883}\
+{0.138562083,0,0.207843184,0.627512515}\
+{0.135947704,0,0.203921616,0.633740902}\
+{0.133333325,0,0.200000048,0.640000045}\
+{0.130718946,0,0.196078479,0.646289885}\
+{0.128104568,0,0.192156911,0.65261054}\
+{0.125490189,0,0.188235343,0.658961952}\
+{0.12287581,0,0.184313774,0.665344119}\
+{0.120261431,0,0.180392206,0.671757042}\
+{0.117647052,0,0.176470637,0.678200722}\
+{0.115032673,0,0.172549069,0.684675157}\
+{0.112418294,0,0.168627501,0.691180348}\
+{0.109803915,0,0.164705932,0.697716296}\
+{0.107189536,0,0.160784364,0.704282999}\
+{0.104575157,0,0.156862795,0.710880458}\
+{0.101960778,0,0.152941227,0.717508674}\
+{0.0993463993,0,0.149019659,0.724167645}\
+{0.0967320204,0,0.14509809,0.730857372}\
+{0.0941176414,0,0.141176522,0.737577856}\
+{0.0915032625,0,0.137254953,0.744329095}\
+{0.0888888836,0,0.133333385,0.75111115}\
+{0.0862745047,0,0.129411817,0.757923901}\
+{0.0836601257,0,0.125490248,0.764767408}\
+{0.0810457468,0,0.12156868,0.771641672}\
+{0.0784313679,0,0.117647111,0.778546751}\
+{0.0758169889,0,0.113725543,0.785482526}\
+{0.07320261,0,0.109803975,0.792449057}\
+{0.0705882311,0,0.105882406,0.799446404}\
+{0.0679738522,0,0.101960838,0.806474447}\
+{0.0653594732,0,0.0980392694,0.813533247}\
+{0.0627450943,0,0.0941177011,0.820622861}\
+{0.0601307154,0,0.0901961327,0.827743173}\
+{0.0575163364,0,0.0862745643,0.8348943}\
+{0.0549019575,0,0.0823529959,0.842076123}\
+{0.0522875786,0,0.0784314275,0.849288762}\
+{0.0496731997,0,0.0745098591,0.856532097}\
+{0.0470588207,0,0.0705882907,0.863806248}\
+{0.0444444418,0,0.0666667223,0.871111095}\
+{0.0418300629,0,0.0627451539,0.878446758}\
+{0.0392156839,0,0.0588235855,0.885813177}\
+{0.036601305,0,0.0549020171,0.893210292}\
+{0.0339869261,0,0.0509804487,0.900638223}\
+{0.0313725471,0,0.0470588803,0.90809691}\
+{0.0287581682,0,0.0431373119,0.915586293}\
+{0.0261437893,0,0.0392157435,0.923106492}\
+{0.0235294104,0,0.0352941751,0.930657446}\
+{0.0209150314,0,0.0313726068,0.938239157}\
+{0.0183006525,0,0.0274510384,0.945851624}\
+{0.0156862736,0,0.02352947,0.953494787}\
+{0.0130718946,0,0.0196079016,0.961168766}\
+{0.0104575157,0,0.0156863332,0.968873501}\
+{0.00784313679,0,0.0117647648,0.976608992}\
+{0.00522875786,0,0.00784319639,0.984375238}\
+{0.00261437893,0,0.00392162753,0.992172241}\
+{0,0,5.86733222e-08,1}\
+}"
+parm_set "generate colormap.user.5":"lo value" 0
+parm_set "generate colormap.user.5":"hi value" 179.0153656
+parm_set "image viewer.user.6":"Update Always" true
+parm_set "READ ANY IMAGE.user.7":"READ ANY IMAGE browser" /net/nano/nano3/data/foskey/bucky-tem/smallims/csec/detail-csec.pgm
+parm_set "READ ANY IMAGE.user.7":"image type" pbm
+parm_set downsize.user.8:downsize 2
+parm_set downsize.user.9:downsize 2
+parm_set downsize.user.10:downsize 2
+parm_set "filter gauss 2D.user.12":"sigma (x)" 2
+parm_set "filter gauss 2D.user.12":"sigma (y)" 2
+parm_set "filter gauss 2D.user.12":"half size (x)" 8
+parm_set "filter gauss 2D.user.12":"half size (y)" 8
+parm_set "filter gauss 2D.user.12":border "cut border"
+parm_set "field to float.user.13":"float normalize" false
+parm_set "canny 2D edge.user.14":"calculate angle" true
+parm_set "canny 2D edge.user.14":"non-maximum suppression" true
+parm_set "field to byte.user.16":"byte normalize" true
+parm_set "thinning 2D.user.17":"proc type" parallel
+parm_set "thinning 2D.user.17":"keep corners" true
+parm_set "double threshold.user.19":"low threshold (relative)" 0.009999999776
+parm_set "double threshold.user.19":"high threshold (relative)" 0.01999999955
+parm_set "double threshold.user.19":"low threshold (absolute)" 0.2145179659 -range 0 21.45179749
+parm_set "double threshold.user.19":"high threshold (absolute)" 0.4290359318 -range 0 21.45179749
+parm_set "double threshold.user.19":"select parameter" relative
+parm_set hough_trafo.user.20:min_angle 0
+parm_set hough_trafo.user.20:max_angle 6.283185482
+parm_set hough_trafo.user.20:step_angle 7
+parm_set hough_trafo.user.20:min_scale 0.3958247304
+parm_set hough_trafo.user.20:max_scale 0.7816494703
+parm_set hough_trafo.user.20:step_scale 0.01129896939
+parm_set hough_trafo.user.20:tolerance 1
+parm_set hough_trafo.user.20:threshold 5
+parm_set hough_trafo.user.20:roi_left 0
+parm_set hough_trafo.user.20:roi_right 0
+parm_set hough_trafo.user.20:roi_top 0
+parm_set hough_trafo.user.20:roi_bottom 0
+parm_set crop.user.21:"min x" 0 -range 0 670
+parm_set crop.user.21:"max x" 670 -range 0 670
+parm_set crop.user.21:"min y" 0 -range 0 902
+parm_set crop.user.21:"max y" 902 -range 0 902
+parm_set crop.user.21:"min z" 0
+parm_set crop.user.21:"max z" 1
+parm_set crop.user.21:"size to fit" true
+parm_set "print field.user.22":"Min X" 0
+parm_set "print field.user.22":"Max X" -1
+parm_set "print field.user.22":"Min Y" 0
+parm_set "print field.user.22":"Max Y" -1
+parm_set "print field.user.22":"Min Z" 0
+parm_set "print field.user.22":"Max Z" -1
+parm_set "print field.user.22":"Min W" 0
+parm_set "print field.user.22":"Max W" -1
+parm_set "print field.user.22":"Max Elements" 5000
+parm_set "print field.user.22":"Display Header" true
+parm_set "print field.user.22":"Display Data" true
+parm_set "print field.user.22":"Output File" /tmp/pfield_1772
+parm_set "print field.user.22":"Output Browser" /tmp/pfield_1772
+parm_set "write math.user.23":"output file" /home/foskey/avs/data/coordinates
+parm_set "write math.user.23":"auto output" false
+parm_set "print field.user.24":"Min X" 0
+parm_set "print field.user.24":"Max X" -1
+parm_set "print field.user.24":"Min Y" 0
+parm_set "print field.user.24":"Max Y" -1
+parm_set "print field.user.24":"Min Z" 0
+parm_set "print field.user.24":"Max Z" -1
+parm_set "print field.user.24":"Min W" 0
+parm_set "print field.user.24":"Max W" -1
+parm_set "print field.user.24":"Max Elements" 5000
+parm_set "print field.user.24":"Display Header" true
+parm_set "print field.user.24":"Display Data" true
+parm_set "print field.user.24":"Output File" /tmp/pfield_1772
+parm_set "print field.user.24":"Output Browser" /tmp/pfield_1772
+parm_set "write math.user.25":"output file" /home/foskey/avs/data/scale
+parm_set "write math.user.25":"auto output" false
+parm_set "write math.user.26":"output file" /home/foskey/avs/data/evidence
+parm_set "write math.user.26":"auto output" false
+mod_image "image viewer.user.6"
+image_set_scene -scene "image viewer.user.6"
+image_set_view_size 211 370 1302 482
+image_set_view_transformation -tx -0.000000 -ty -0.000000 -sx 1.000000 -sy 1.000000
+image_set_color 0.000000 0.000000 0.000000
+image_create_image -image "downsize.user.8"
+image_set_image_transformation -image "downsize.user.8" -tx -388.000000 -ty -2.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.8" 1
+image_set_display_technique -image "downsize.user.8" dither
+image_create_image -image "downsize.user.9"
+image_set_image_transformation -image "downsize.user.9" -tx 36.000000 -ty 1.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.9" 1
+image_set_display_technique -image "downsize.user.9" dither
+image_create_image -image "downsize.user.10"
+image_set_image_transformation -image "downsize.user.10" -tx 379.000000 -ty 1.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.10" 1
+image_set_display_technique -image "downsize.user.10" dither
+image_create_image -image "downsize.user.10"
+image_set_image_transformation -image "downsize.user.10" -tx 0.000000 -ty 0.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.10" 1
+image_set_display_technique -image "downsize.user.10" dither
+image_create_image -image "downsize.user.9"
+image_set_image_transformation -image "downsize.user.9" -tx 0.000000 -ty 0.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.9" 1
+image_set_display_technique -image "downsize.user.9" dither
+}
+shell "ui" shell
+ panel Application -w app_panel -p ui -xy 0,0 -wh 260,1024
+  panel "Top Level Stack" -w master_stack -p Application -xy 2,100 -wh 432,1016\
+   -P columns integer 1
+   panel "field to float.user.0" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,37
+    manipulator "field to float.user.0:float normalize" -w toggle -p "field to float.user.0" \
+        -xy 4,9 -wh 117,21
+   panel "display image.user.2" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,127
+   panel read_RTM.user.3 -w panel -p "Top Level Stack" -xy 0,194 -wh 254,216
+    manipulator read_RTM.user.3:rtm_file -w browser -p read_RTM.user.3 \
+        -xy 4,9 -wh 234,195
+   panel hough_view.user.4 -w panel -p "Top Level Stack" -xy 0,194 -wh 252,193
+    manipulator hough_view.user.4:model -w toggle -p hough_view.user.4 \
+        -xy 4,9 -wh 117,21
+    manipulator hough_view.user.4:center -w toggle -p hough_view.user.4 \
+        -xy 4,28 -wh 117,21
+    manipulator hough_view.user.4:fan -w toggle -p hough_view.user.4 \
+        -xy 4,53 -wh 117,21
+    manipulator hough_view.user.4:edgel -w toggle -p hough_view.user.4 \
+        -xy 4,75 -wh 117,21
+    manipulator hough_view.user.4:completeness -w slider -p hough_view.user.4 \
+        -xy 4,94 -wh 235,31
+    manipulator "hough_view.user.4:relative completeness" -w toggle -p hough_view.user.4 \
+        -xy 4,127 -wh 117,21
+    manipulator hough_view.user.4:zoom -w islider -p hough_view.user.4 \
+        -xy 4,152 -wh 235,31
+   panel "generate colormap.user.5" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 253,565
+    manipulator "generate colormap.user.5:colormap" -w color_editor -p "generate colormap.user.5" \
+        -xy 4,9 -wh 235,416
+    manipulator "generate colormap.user.5:lo value" -w dial -p "generate colormap.user.5" \
+        -xy 4,425 -wh 90,129
+    manipulator "generate colormap.user.5:hi value" -w dial -p "generate colormap.user.5" \
+        -xy 94,425 -wh 90,129
+   panel "READ ANY IMAGE.user.7" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 253,549
+    manipulator "READ ANY IMAGE.user.7:READ ANY IMAGE browser" -w browser -p "READ ANY IMAGE.user.7" \
+        -xy 4,9 -wh 234,195
+    manipulator "READ ANY IMAGE.user.7:image type" -w radio_buttons -p "READ ANY IMAGE.user.7" \
+        -xy 4,208 -wh 235,324
+   panel downsize.user.8 -w panel -p "Top Level Stack" -xy 0,194 -wh 104,144
+    manipulator downsize.user.8:downsize -w idial -p downsize.user.8 \
+        -xy 4,9 -wh 90,129
+   panel downsize.user.9 -w panel -p "Top Level Stack" -xy 0,194 -wh 104,144
+    manipulator downsize.user.9:downsize -w idial -p downsize.user.9 \
+        -xy 4,9 -wh 90,129
+   panel downsize.user.10 -w panel -p "Top Level Stack" -xy 0,194 -wh 104,144
+    manipulator downsize.user.10:downsize -w idial -p downsize.user.10 \
+        -xy 4,9 -wh 90,129
+   panel "canny edge 2D.user.11" -w stack -p "Top Level Stack" \
+       -xy 0,194 -wh 255,595\
+   -P columns integer 1
+    panel "filter gauss 2D.user.12" -w panel -p "canny edge 2D.user.11" \
+        -xy 0,194 -wh 254,152
+     manipulator "filter gauss 2D.user.12:sigma (x)" -w typein_real -p "filter gauss 2D.user.12" \
+         -xy 4,9 -wh 117,21
+     manipulator "filter gauss 2D.user.12:sigma (y)" -w typein_real -p "filter gauss 2D.user.12" \
+         -xy 4,28 -wh 117,21
+     manipulator "filter gauss 2D.user.12:half size (x)" -w typein_integer -p "filter gauss 2D.user.12" -hide \
+         -xy 4,53 -wh 235,21
+     manipulator "filter gauss 2D.user.12:half size (y)" -w typein_integer -p "filter gauss 2D.user.12" -hide \
+         -xy 4,75 -wh 235,21
+     manipulator "filter gauss 2D.user.12:border" -w radio_buttons -p "filter gauss 2D.user.12" \
+         -xy 4,94 -wh 117,64
+    panel "field to float.user.13" -w panel -p "canny edge 2D.user.11" \
+        -xy 0,194 -wh 134,37
+     manipulator "field to float.user.13:float normalize" -w toggle -p "field to float.user.13" \
+         -xy 4,9 -wh 117,21
+    panel "canny 2D edge.user.14" -w panel -p "canny edge 2D.user.11" \
+        -xy 0,194 -wh 134,61
+     manipulator "canny 2D edge.user.14:calculate angle" -w toggle -p "canny 2D edge.user.14" \
+         -xy 4,9 -wh 117,21
+     manipulator "canny 2D edge.user.14:non-maximum suppression" -w toggle -p "canny 2D edge.user.14" \
+         -xy 4,28 -wh 117,21
+    panel "field to byte.user.16" -w panel -p "canny edge 2D.user.11" \
+        -xy 0,194 -wh 134,37
+     manipulator "field to byte.user.16:byte normalize" -w toggle -p "field to byte.user.16" \
+         -xy 4,9 -wh 117,21
+    panel mask.user.18 -w panel -p "canny edge 2D.user.11" -xy 0,194 -wh 254,400
+     manipulator "mask.user.18:mask stats" -w text_block_browser -p mask.user.18 \
+         -xy 4,9 -wh 234,292
+    panel "double threshold.user.19" -w panel -p "canny edge 2D.user.11" \
+        -xy 0,194 -wh 254,152
+     manipulator "double threshold.user.19:low threshold (relative)" -w typein_real -p "double threshold.user.19" \
+         -xy 4,9 -wh 235,21
+     manipulator "double threshold.user.19:high threshold (relative)" -w typein_real -p "double threshold.user.19" \
+         -xy 4,28 -wh 235,21
+     manipulator "double threshold.user.19:low threshold (absolute)" -w typein_real -p "double threshold.user.19" \
+         -xy 4,53 -wh 235,21
+     manipulator "double threshold.user.19:high threshold (absolute)" -w typein_real -p "double threshold.user.19" \
+         -xy 4,75 -wh 235,21
+     manipulator "double threshold.user.19:select parameter" -w radio_buttons -p "double threshold.user.19" \
+         -xy 4,94 -wh 117,43
+   panel "thinning 2D.user.17" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 134,84
+    manipulator "thinning 2D.user.17:proc type" -w radio_buttons -p "thinning 2D.user.17" \
+        -xy 4,9 -wh 117,43
+    manipulator "thinning 2D.user.17:keep corners" -w toggle -p "thinning 2D.user.17" \
+        -xy 4,53 -wh 117,21
+   panel hough_trafo.user.20 -w panel -p "Top Level Stack" -xy 0,194 -wh 253,694
+    manipulator hough_trafo.user.20:min_angle -w slider -p hough_trafo.user.20 \
+        -xy 4,202 -wh 235,31
+    manipulator hough_trafo.user.20:max_angle -w slider -p hough_trafo.user.20 \
+        -xy 4,235 -wh 235,31
+    manipulator hough_trafo.user.20:step_angle -w slider -p hough_trafo.user.20 \
+        -xy 4,268 -wh 235,31
+    manipulator hough_trafo.user.20:min_scale -w slider -p hough_trafo.user.20 \
+        -xy 4,301 -wh 235,31
+    manipulator hough_trafo.user.20:max_scale -w slider -p hough_trafo.user.20 \
+        -xy 4,334 -wh 235,31
+    manipulator hough_trafo.user.20:step_scale -w slider -p hough_trafo.user.20 \
+        -xy 4,367 -wh 235,31
+    manipulator hough_trafo.user.20:tolerance -w islider -p hough_trafo.user.20 \
+        -xy 4,392 -wh 235,31
+    manipulator hough_trafo.user.20:threshold -w typein_real -p hough_trafo.user.20 \
+        -xy 4,9 -wh 117,21
+    manipulator hough_trafo.user.20:roi_left -w idial -p hough_trafo.user.20 \
+        -xy 124,9 -wh 90,129
+    manipulator hough_trafo.user.20:roi_right -w idial -p hough_trafo.user.20 \
+        -xy 4,425 -wh 90,129
+    manipulator hough_trafo.user.20:roi_top -w idial -p hough_trafo.user.20 \
+        -xy 94,425 -wh 90,129
+    manipulator hough_trafo.user.20:roi_bottom -w idial -p hough_trafo.user.20 \
+        -xy 4,555 -wh 90,129
+   panel crop.user.21 -w panel -p "Top Level Stack" -xy 0,194 -wh 200,431
+    manipulator "crop.user.21:min x" -w idial -p crop.user.21 \
+        -xy 10,10 -wh 90,129
+    manipulator "crop.user.21:max x" -w idial -p crop.user.21 \
+        -xy 100,10 -wh 90,129
+    manipulator "crop.user.21:min y" -w idial -p crop.user.21 \
+        -xy 10,136 -wh 90,129
+    manipulator "crop.user.21:max y" -w idial -p crop.user.21 \
+        -xy 100,136 -wh 90,129
+    manipulator "crop.user.21:min z" -w idial -p crop.user.21 -hide \
+        -xy 10,268 -wh 90,129
+    manipulator "crop.user.21:max z" -w idial -p crop.user.21 -hide \
+        -xy 100,268 -wh 90,129
+    manipulator "crop.user.21:size to fit" -w toggle -p crop.user.21 \
+        -xy 10,399 -wh 117,21
+   panel "print field.user.22" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 254,821
+    manipulator "print field.user.22:Min X" -w typein_integer -p "print field.user.22" \
+        -xy 10,10 -wh 117,21
+    manipulator "print field.user.22:Max X" -w typein_integer -p "print field.user.22" \
+        -xy 10,28 -wh 117,21
+    manipulator "print field.user.22:Min Y" -w typein_integer -p "print field.user.22" \
+        -xy 10,53 -wh 117,21
+    manipulator "print field.user.22:Max Y" -w typein_integer -p "print field.user.22" \
+        -xy 10,75 -wh 117,21
+    manipulator "print field.user.22:Min Z" -w typein_integer -p "print field.user.22" \
+        -xy 10,94 -wh 117,21
+    manipulator "print field.user.22:Max Z" -w typein_integer -p "print field.user.22" \
+        -xy 10,118 -wh 117,21
+    manipulator "print field.user.22:Min W" -w typein_integer -p "print field.user.22" \
+        -xy 10,136 -wh 117,21
+    manipulator "print field.user.22:Max W" -w typein_integer -p "print field.user.22" \
+        -xy 10,161 -wh 117,21
+    manipulator "print field.user.22:Max Elements" -w idial -p "print field.user.22" \
+        -xy 124,161 -wh 90,129
+    manipulator "print field.user.22:Display Header" -w toggle -p "print field.user.22" \
+        -xy 10,291 -wh 117,21
+    manipulator "print field.user.22:Display Data" -w toggle -p "print field.user.22" \
+        -xy 10,309 -wh 117,21
+    manipulator "print field.user.22:Output File" -w typein -p "print field.user.22" \
+        -xy 10,334 -wh 235,21
+    manipulator "print field.user.22:Output Browser" -w text_browser -p "print field.user.22" \
+        -xy 10,356 -wh 234,456
+   panel "write math.user.23" -w panel -p "Top Level Stack" -xy 0,194 -wh 254,259
+    manipulator "write math.user.23:output file" -w browser -p "write math.user.23" \
+        -xy 10,10 -wh 234,195
+    manipulator "write math.user.23:generate output" -w oneshot -p "write math.user.23" \
+        -xy 10,202 -wh 117,21
+    manipulator "write math.user.23:auto output" -w toggle -p "write math.user.23" \
+        -xy 10,227 -wh 117,21
+   panel "print field.user.24" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 254,821
+    manipulator "print field.user.24:Min X" -w typein_integer -p "print field.user.24" \
+        -xy 10,10 -wh 117,21
+    manipulator "print field.user.24:Max X" -w typein_integer -p "print field.user.24" \
+        -xy 10,28 -wh 117,21
+    manipulator "print field.user.24:Min Y" -w typein_integer -p "print field.user.24" \
+        -xy 10,53 -wh 117,21
+    manipulator "print field.user.24:Max Y" -w typein_integer -p "print field.user.24" \
+        -xy 10,75 -wh 117,21
+    manipulator "print field.user.24:Min Z" -w typein_integer -p "print field.user.24" \
+        -xy 10,94 -wh 117,21
+    manipulator "print field.user.24:Max Z" -w typein_integer -p "print field.user.24" \
+        -xy 10,118 -wh 117,21
+    manipulator "print field.user.24:Min W" -w typein_integer -p "print field.user.24" \
+        -xy 10,136 -wh 117,21
+    manipulator "print field.user.24:Max W" -w typein_integer -p "print field.user.24" \
+        -xy 10,161 -wh 117,21
+    manipulator "print field.user.24:Max Elements" -w idial -p "print field.user.24" \
+        -xy 124,161 -wh 90,129
+    manipulator "print field.user.24:Display Header" -w toggle -p "print field.user.24" \
+        -xy 10,291 -wh 117,21
+    manipulator "print field.user.24:Display Data" -w toggle -p "print field.user.24" \
+        -xy 10,309 -wh 117,21
+    manipulator "print field.user.24:Output File" -w typein -p "print field.user.24" \
+        -xy 10,334 -wh 235,21
+    manipulator "print field.user.24:Output Browser" -w text_browser -p "print field.user.24" \
+        -xy 10,356 -wh 234,456
+   panel "write math.user.25" -w panel -p "Top Level Stack" -xy 0,194 -wh 254,259
+    manipulator "write math.user.25:output file" -w browser -p "write math.user.25" \
+        -xy 10,10 -wh 234,195
+    manipulator "write math.user.25:generate output" -w oneshot -p "write math.user.25" \
+        -xy 10,202 -wh 117,21
+    manipulator "write math.user.25:auto output" -w toggle -p "write math.user.25" \
+        -xy 10,227 -wh 117,21
+   panel "write math.user.26" -w panel -p "Top Level Stack" -xy 0,194 -wh 254,259
+    manipulator "write math.user.26:output file" -w browser -p "write math.user.26" \
+        -xy 10,10 -wh 234,195
+    manipulator "write math.user.26:generate output" -w oneshot -p "write math.user.26" \
+        -xy 10,202 -wh 117,21
+    manipulator "write math.user.26:auto output" -w toggle -p "write math.user.26" \
+        -xy 10,227 -wh 117,21
+   panel "print values.user.27" -w panel -p "Top Level Stack" \
+       -xy 0,194 -wh 432,149
+    manipulator "print values.user.27:info" -w text_block_browser -p "print values.user.27" \
+        -xy 10,10 -wh 412,128
+ panel "display image.user.2!image" -w container -p ui -xy 485,26 -wh 770,1024\
+   -P zoom_coords string "0 0 0 0 0 <$NULL> 0 0 0 0"
+ panel "image viewer.user.6!image" -w container -p ui -xy 184,367 -wh 1344,557\
+   -P zoom_coords string "0 0 0 0 0 <$NULL> 0 0 0 0"
+manipulator "display image.user.2":Magnification -w none
+manipulator "display image.user.2":Automag_Size -w none
+manipulator "display image.user.2":"Maximum Image Dimension" -w none
+manipulator "image viewer.user.6":"Update Always" -w none
+manipulator "image viewer.user.6":"Update Image" -w none
+# End of file

@@ -1,0 +1,2741 @@
+#include "nmg_GraphicsImpl.h"
+
+#include <GL/gl.h>
+#if defined(sgi) || defined(__CYGWIN__)
+#include <GL/glu.h>
+#endif
+#include <v.h>
+
+#include <Position.h>
+#include <PPM.h>
+#include <BCPlane.h>
+#include <BCGrid.h>
+#include <nmb_Image.h>
+#include <colormap.h>  // for ColorMap::lookup()
+
+#include <nmb_Dataset.h>
+#include <nmb_Globals.h>
+
+#include "graphics.h"
+#include "openGL.h"  // for check_extension(), display_lists_in_x
+#include "globjects.h"  // for replaceDefaultObjects()
+#include "graphics_globals.h"
+#include "spm_gl.h"  // for init_vertexArray()
+
+#include "Timer.h"
+
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)<(b)?(b):(a))
+
+#define CHECK(a) if (a == -1) return -1
+
+nmg_Graphics_Implementation::nmg_Graphics_Implementation
+                                (nmb_Dataset * data,
+                                 const int minColor [3],
+                                 const int maxColor [3],
+                                 const char * rulergridName,
+                                 vrpn_Connection * connection) :
+    nmg_Graphics (connection, "nmg Graphics Implementation GL"),
+    d_displayIndexList (new v_index [NUM_USERS]) {
+
+fprintf(stderr,
+        "In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
+
+  nmb_PlaneSelection planes; planes.lookup(data);
+  int i;
+
+  // do pgl_init() stuff
+
+#ifdef FLOW
+  g_data_tex_size = max(data->inputGrid->numX(),
+                        data->inputGrid->numY());
+  g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+#endif
+
+  /* initialize graphics  */
+  printf("Initializing graphics...\n");
+
+  if ( v_open() != V_OK )
+      exit(V_ERROR);
+
+  fprintf(stderr, "Done.\n");
+
+  /*
+   * initialize display for each user
+   */
+  for ( i = 0; i < NUM_USERS; i++ ) {
+    /* open display */
+    if ( (d_displayIndexList[i] = v_open_display(V_ENV_DISPLAY, i)) ==
+	 V_NULL_DISPLAY ) {
+      exit(V_ERROR);
+    }
+    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
+  }
+
+  /* Set up the viewing info */
+  
+  /* Set initial user mode */
+  for (i = 0; i < NUM_USERS; i++)
+    g_user_mode[i] = USER_GRAB_MODE;
+
+  /* set up user and object trees     */
+  printf("Creating the world...\n");
+  v_create_world(NUM_USERS, d_displayIndexList);
+
+  /* Set the background color to light blue */
+  glClearColor(0.3, 0.3, 0.7,  0.0);
+
+  setMinColor(minColor);
+  setMaxColor(maxColor);
+
+  initialize_globjects(NULL);  // load default font
+
+  /* user routine to define user objects and override default objects */
+  replaceDefaultObjects();
+
+  v_replace_drawfunc(i, V_WORLD, draw_world);
+  v_replace_lightingfunc(i, setup_lighting);
+
+  setupMaterials();
+
+  /********************************************************************/
+  /* Build the display lists we'll need to draw the data, etc */
+  /********************************************************************/
+
+  fprintf(stderr,"Building display lists...\n");
+
+  /* added by qliu for texture mapping*/
+  /*initialize the texture mapping*/
+  // Texture mapping is not enabled here, but when a data set is mapped*/
+
+  if (rulergridName) {
+    g_rulerPPM = new PPM (rulergridName);
+    if (!g_rulerPPM) {
+      fprintf(stderr, "nmg_GraphicsImplementation:  Out of memory.\n");
+      return;
+    }
+    if (!g_rulerPPM->valid) {
+      fprintf(stderr, "Cannot read rulergrid PPM %s.\n", rulergridName);
+
+      delete g_rulerPPM;  // plug memory leak?
+      g_rulerPPM = NULL;  // show default ruler image instead
+    }
+  }
+
+  buildAllTextures();
+
+  /* Build display lists for surface scanning in X fastest, since
+   * that is the way the SPM will start scanning.
+   * There is one list for each row of data points except for
+   * the last.  Since these are for rows scanning in X fastest,
+   * we have one per Y index. */
+  if (build_grid_display_lists(planes, 1, &grid_list_base,
+                               &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,"ERROR: Could not build grid display lists\n");
+    dataset->done = 1;
+  }
+
+  // other (non-pgl_init()) setup
+
+  const GLubyte * exten;
+  exten = glGetString(GL_EXTENSIONS);
+
+#if ( defined(linux) || defined(hpux) || defined(__CYGWIN__) )
+  // RMT The accelerated X server seems to be telling us that we have
+  // vertex arrays, but then they are not drawn; ditto for MesaGL on
+  // HPUX
+  g_VERTEX_ARRAY = 0;
+#else
+  g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
+#endif
+
+  if (g_VERTEX_ARRAY) 
+    fprintf(stderr,"Vertex Array extension used.\n");
+  else
+     fprintf(stderr,"Vertex Array extension not supported.\n");
+
+  if (g_VERTEX_ARRAY)
+    if (!init_vertexArray(data->inputGrid->numX(),
+                          data->inputGrid->numY()) ) {
+          fprintf(stderr," init_vertexArray: out of memory.\n");
+          exit(0);
+     }
+
+  g_positionList = new Position_list;
+
+  // genetic textures:
+  fprintf( stderr, "Genetic Texture: initializing remote\n" );
+
+  vrpn_Connection * gac;
+
+  gac = new vrpn_Synchronized_Connection( 4503 );
+  gaRemote = new gaEngine_Remote (gac);
+  gaRemote->registerEvaluationCompleteHandler( genetic_textures_ready, this );
+  gaRemote->registerConnectionCompleteHandler(send_genetic_texture_data,this );
+
+  if (!connection) return;
+
+  connection->register_handler(d_resizeViewport_type,
+                               handle_resizeViewport,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_loadRulergridImage_type,
+                               handle_loadRulergridImage,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableChartjunk_type,
+                               handle_enableChartjunk,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableFilledPolygons_type,
+                               handle_enableFilledPolygons,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableSmoothShading_type,
+                               handle_enableSmoothShading,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableTrueTip_type,
+                               handle_enableTrueTip,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setAdhesionSliderRange_type,
+                               handle_setAdhesionSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setAlphaColor_type,
+                               handle_setAlphaColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setAlphaSliderRange_type,
+                               handle_setAlphaSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setBumpMapName_type,
+                               handle_setBumpMapName,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setColorMapDirectory_type,
+                               handle_setColorMapDirectory,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setColorMapName_type,
+                               handle_setColorMapName,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setColorSliderRange_type,
+                               handle_setColorSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setComplianceSliderRange_type,
+                               handle_setComplianceSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setContourColor_type,
+                               handle_setContourColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setContourWidth_type,
+                               handle_setContourWidth,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setFrictionSliderRange_type,
+                               handle_setFrictionSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setBumpSliderRange_type,
+							   handle_setBumpSliderRange,
+							   this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setBuzzSliderRange_type,
+                               handle_setBuzzSliderRange,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setHandColor_type,
+                               handle_setHandColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setHatchMapName_type,
+                               handle_setHatchMapName,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setMinColor_type,
+                               handle_setMinColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setMaxColor_type,
+                               handle_setMaxColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setPatternMapName_type,
+                               handle_setPatternMapName,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableRulergrid_type,
+                               handle_enableRulergrid,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridAngle_type,
+                               handle_setRulergridAngle,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridColor_type,
+                               handle_setRulergridColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridOffset_type,
+                               handle_setRulergridOffset,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridOpacity_type,
+                               handle_setRulergridOpacity,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridScale_type,
+                               handle_setRulergridScale,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRulergridWidths_type,
+                               handle_setRulergridWidths,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setSpecularity_type,
+                               handle_setSpecularity,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setSpecularColor_type,
+                               handle_setSpecularColor,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setDiffusePercent_type,
+			       handle_setDiffusePercent,
+			       this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setSurfaceAlpha_type,
+                               handle_setSurfaceAlpha,
+                               this, vrpn_ANY_SENDER); 
+  connection->register_handler(d_setSphereScale_type,
+                               handle_setSphereScale,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setTesselationStride_type,
+                               handle_setTesselationStride,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setTextureMode_type,
+                               handle_setTextureMode,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setTextureScale_type,
+                               handle_setTextureScale,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setTrueTipScale_type,
+                               handle_setTrueTipScale,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setUserMode_type,
+                               handle_setUserMode,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setLightDirection_type,
+                               handle_setLightDirection,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_resetLightDirection_type,
+                               handle_resetLightDirection,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_addPolylinePoint_type,
+                               handle_addPolylinePoint,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_emptyPolyline_type,
+                               handle_emptyPolyline,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setScanlineEndpoints_type,
+				handle_setScanlineEndpoints,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler(d_displayScanlinePosition_type,
+				handle_displayScanlinePosition,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler(d_positionAimLine_type,
+                               handle_positionAimLine,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_positionRubberCorner_type,
+                               handle_positionRubberCorner,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_positionSweepLine_type,
+                               handle_positionSweepLine,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_positionSphere_type,
+                               handle_positionSphere,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setCollabHandPos_type,
+			       handle_setCollabHandPos,
+			       this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setCollabMode_type,
+			       handle_setCollabMode,
+			       this, vrpn_ANY_SENDER);
+
+  // Genetic Textures Handlers:
+  connection->register_handler(d_enableGeneticTextures_type,
+                               handle_enableGeneticTextures,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_sendGeneticTexturesData_type,
+                               handle_sendGeneticTexturesData,
+                               this, vrpn_ANY_SENDER);
+  // Realign Textures Handlers:
+  connection->register_handler( d_createRealignTextures_type,
+				handle_createRealignTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setRealignTextureSliderRange_type,
+				handle_setRealignTextureSliderRange,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setRealignTexturesConversionMap_type,
+				handle_setRealignTexturesConversionMap,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_computeRealignPlane_type,
+				handle_computeRealignPlane,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_enableRealignTextures_type,
+				handle_enableRealignTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_translateTextures_type,
+				handle_translateTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_scaleTextures_type,
+				handle_scaleTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_shearTextures_type,
+				handle_shearTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_rotateTextures_type,
+				handle_rotateTextures,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setTextureCenter_type,
+				handle_setTextureCenter,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_enableRegistration_type,
+				handle_enableRegistration,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setTextureTransform_type,
+				handle_setTextureTransform,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_createScreenImage_type,
+				handle_createScreenImage,
+				this, vrpn_ANY_SENDER);
+
+}
+
+nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
+
+  int i;
+
+  /*XXX should be fixed for non-PxFl also, maybe... (C.Chang 9/96)*/
+  for (i = 0; i < NUM_USERS; i++)
+    v_close_display(d_displayIndexList[i]);
+
+#ifdef FLOW
+  // free the dynamic memory allocated for date textures
+  if (bump_data) {
+    delete [] bump_data;
+  }
+  if (pattern_data) {
+    delete [] pattern_data;
+  }
+  if (hatch_data) {
+    delete [] hatch_data;
+  }
+#endif
+
+  v_close();
+}
+
+
+
+void nmg_Graphics_Implementation::mainloop (void) {
+
+  // BUG:  do we have one frame of latency here?
+  switch (decoration->mode) {
+    case nmb_Decoration::IMAGE:
+      glClearColor(0.3, 0.3, 0.7, 0.0);  // blue
+      break;
+    case nmb_Decoration::FEEL:
+      glClearColor(0.4, 0.4, 0.2, 0.0);  // yellow
+      break;
+    case nmb_Decoration::MODIFY:
+      glClearColor(0.7, 0.3, 0.3, 0.0);  // red
+      break;
+    case nmb_Decoration::SCANLINE:
+      glClearColor(0.3, 0.7, 0.3, 0.0);  // green (kind of looks like some
+      break;				// green tea ice-cream I once had)
+    default:
+      fprintf(stderr, "Illegal or unknown value for mode of microscope "
+                      "to display in v_draw_objects().\n");
+      break;
+  }
+
+
+  TIMERVERBOSE(5, mytimer, "GImainloop: nmg_Graphics::mainloop");
+
+  nmg_Graphics::mainloop();
+
+  TIMERVERBOSE(5, mytimer, "GImainloop: end nmg_Graphics::mainloop");
+  TIMERVERBOSE(5, mytimer, "GImainloop: v_update_displays");
+
+  v_update_displays(d_displayIndexList);
+
+  TIMERVERBOSE(5, mytimer, "GImainloop: end v_update_displays");
+
+  // genetic textures:
+  if ( gaRemote )
+    gaRemote->mainloop();
+
+}
+
+// functions to replace code in microscape.c - AAS
+void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
+  v_display_type *displayPtr;
+  v_viewport_type *windowPtr;
+
+  // DEBUG
+  //fprintf(stderr, "DEBUG nmg_Graphics_Impl::resizeViewport, width %d, height %d\n",
+  //  width, height);
+  displayPtr=&v_display_table[d_displayIndexList[0]];
+  windowPtr=&(displayPtr->viewports[0]);
+  windowPtr->fbExtents[0] = width;
+  windowPtr->fbExtents[1] = height;
+
+}
+
+void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
+        q_vec_type &ul, q_vec_type &ur)
+{
+    q_vec_copy(ll,
+        v_display_table[d_displayIndexList[0]].viewports[0].screenLowerLeft);
+    q_vec_copy(ul,
+        v_display_table[d_displayIndexList[0]].viewports[0].screenUpperLeft);
+    q_vec_copy(ur,
+        v_display_table[d_displayIndexList[0]].viewports[0].screenUpperRight);
+// DEBUG
+//   fprintf(stderr, "g>DEBUG nmg_Graphics_Impl::getDisplayPosition, \
+//   ll %f %f %f ul %f %f %f ur %f %f %f\n",
+// 	  ll[0], ll[1], ll[2], 
+// 	  ul[0], ul[1], ul[2], 
+// 	  ur[0], ur[1], ur[2]);
+}
+// end functions to replace stuff in microscape.c
+
+
+void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
+  if (!name)
+    return;
+
+  g_rulerPPM = new PPM (name);
+  if (!g_rulerPPM->valid)
+    fprintf(stderr, "Cannot read rulergrid PPM %s.\n", name);
+
+  // experimental
+  fprintf(stderr, "loading rulergrid image\n");
+  makeAndInstallRulerImage(g_rulerPPM);
+}
+
+void nmg_Graphics_Implementation::enableChartjunk (int on) {
+  g_config_chartjunk = on;
+}
+
+void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
+  g_config_filled_polygons = on;
+}
+
+void nmg_Graphics_Implementation::enableSmoothShading (int on) {
+  g_config_smooth_shading = on;
+}
+
+void nmg_Graphics_Implementation::enableTrueTip (int on) {
+  g_config_trueTip = on;
+  fprintf(stderr, "Set g_config_trueTip to %d.\n", on);
+}
+
+
+
+
+void nmg_Graphics_Implementation::setAdhesionSliderRange (float low,
+                                                          float high) {
+  g_adhesion_slider_min = low;
+  g_adhesion_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setAlphaColor (float r, float g, float b) {
+  g_alpha_r = r;
+  g_alpha_g = g;
+  g_alpha_b = b;
+  makeCheckImage();
+  buildAlphaTexture();
+}
+
+void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
+  g_alpha_slider_min = low;
+  g_alpha_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setBumpMapName (const char * name) {
+
+  BCPlane * plane = dataset->inputGrid->getPlaneByName(name);
+
+#ifdef FLOW
+  double value;
+  GLubyte c;
+  int x, y;
+
+  if (plane) {
+    setTextureMode(RULERGRID);
+
+    for (x = 0; x < plane->numX(); x++)
+      for (y = 0; y < plane->numY(); y++) {
+        value = (plane->value(x, y) - g_friction_slider_min) /
+                 (g_friction_slider_max - g_friction_slider_min);
+        value = min(1.0, value);
+        value = max(0.0, value);
+        c = (GLubyte)((int) (value * 255.0 + 0.5));
+
+        bump_data[(y * g_data_tex_size + x) * 3] = (GLubyte) c;
+        bump_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) c;
+        bump_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) c;
+      }
+
+    shader_mask = shader_mask | BUMP_BIT;
+
+    // bind active mask
+    glBoundMaterialiEXT(nM_shader,
+                        glGetMaterialParameterNameEXT("active_mask"),
+                        shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[BUMP_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
+                 0, GL_RGB, GL_BYTE, (const GLvoid *) bump_data);
+  } else {
+    for(x = 0; x < g_data_tex_size; x++)
+      for(y = 0; y < g_data_tex_size; y++) {
+        bump_data[(y * g_data_tex_size + x) * 3] = (GLubyte) 0;
+        bump_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) 0;
+        bump_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) 0;
+      }
+    shader_mask = shader_mask & (~BUMP_BIT);
+
+    // bind active mask
+    glBoundMaterialiEXT(nM_shader,
+                        glGetMaterialParameterNameEXT("active_mask"),
+                        shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[BUMP_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
+                 GL_RGB, GL_BYTE, (const GLvoid *) bump_data);
+  }
+
+#endif
+
+}
+
+void nmg_Graphics_Implementation::setColorMapDirectory (const char * dir) {
+  if (g_colorMapDir) {
+    delete [] g_colorMapDir;
+  }
+  if (!dir) {
+    g_colorMapDir = NULL;
+    return;
+  }
+  g_colorMapDir = new char [1 + strlen(dir)];
+
+  strcpy(g_colorMapDir, dir);
+}
+
+void nmg_Graphics_Implementation::setTextureDirectory (const char * dir) {
+  if (g_textureDir) {
+    delete [] g_textureDir;
+  }
+  if (!dir) {
+    g_textureDir = NULL;
+    return;
+  }
+  g_textureDir = new char [1 + strlen(dir)];
+  strcpy(g_textureDir, dir);
+}
+
+void nmg_Graphics_Implementation::setColorMapName (const char * name) {
+
+  // If CUSTOM is selected, set the color map pointer to
+  // NULL so that the gl code will go back to using the old
+  // method of computing color.  XXX Integrate this better,
+  // so that we always use a color map but that it is set to
+  // the min/max colors when we are using CUSTOM.
+  if (strcmp(name, "CUSTOM") == 0) {
+          g_curColorMap = NULL;
+  } else {
+          g_colorMap.load_from_file(name, g_colorMapDir);
+          g_curColorMap = &g_colorMap;
+  }
+}
+
+void nmg_Graphics_Implementation::setColorSliderRange (float low, float high) {
+  g_color_slider_min = low;
+  g_color_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
+  g_compliance_slider_min = low;
+  g_compliance_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setContourColor (int r, int g, int b) {
+  g_contour_r = r;
+  g_contour_g = g;
+  g_contour_b = b;
+  buildContourTexture();
+}
+
+void nmg_Graphics_Implementation::setFrictionSliderRange (float low,
+                                                          float high) {
+  g_friction_slider_min = low;
+  g_friction_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setBumpSliderRange (float low,
+                                                          float high) {
+  g_bump_slider_min = low;
+  g_bump_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setBuzzSliderRange (float low,
+                                                          float high) {
+  g_buzz_slider_min = low;
+  g_buzz_slider_max = high;
+}
+
+void nmg_Graphics_Implementation::setHandColor (int c) {
+  g_hand_color = c;
+}
+
+void nmg_Graphics_Implementation::setIconScale (float scale) {
+  g_icon_scale = scale;
+}
+
+void nmg_Graphics_Implementation::setCollabHandPos(double pos[], double quat[])
+{
+  int i;
+  for (i = 0; i < 3; i++) {
+    g_collabHandPos[i] = pos[i];
+    g_collabHandQuat[i] = quat[i];
+  }
+  g_collabHandQuat[3] = quat[3];
+  g_draw_collab_hand = 1;
+}
+
+void nmg_Graphics_Implementation::setCollabMode(vrpn_int32 mode)
+{
+  g_collabMode = mode;
+}
+
+void nmg_Graphics_Implementation::setHatchMapName (const char * name) {
+
+  BCPlane * plane = dataset->inputGrid->getPlaneByName(name);
+
+#ifdef FLOW
+
+  double value;
+  GLubyte c;
+  int x, y;
+
+  if (plane) {
+    setTextureMode(RULERGRID);
+
+    for (x = 0; x < plane->numX(); x++)
+      for (y = 0; y < plane->numY(); y++) {
+        value = (plane->value(x, y) - g_adhesion_slider_min) /
+                 (g_adhesion_slider_max - g_adhesion_slider_min);
+        value = min(1.0, value);
+        value = max(0.0, value);
+        c = (GLubyte)((int) (value * 255.0 + 0.5));
+
+        hatch_data[(y * g_data_tex_size + x) * 3] = (GLubyte) c;
+        hatch_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) c;
+        hatch_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) c;
+      }
+
+    shader_mask = shader_mask | HATCH_BIT;
+
+    // bind active mask
+    glBoundMaterialiEXT(nM_shader,
+                        glGetMaterialParameterNameEXT("active_mask"),
+                        shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[HATCH_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
+                 0, GL_RGB, GL_BYTE, (const GLvoid *) hatch_data);
+  } else {
+    for(x = 0; x < g_data_tex_size; x++)
+      for(y = 0; y < g_data_tex_size; y++) {
+        hatch_data[(y * g_data_tex_size + x) * 3] = (GLubyte) 0;
+        hatch_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) 0;
+        hatch_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) 0;
+      }
+    shader_mask = shader_mask & (~HATCH_BIT);
+
+    // bind active mask
+    glBoundMaterialiEXT(nM_shader,
+                        glGetMaterialParameterNameEXT("active_mask"),
+                        shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[HATCH_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
+                 GL_RGB, GL_BYTE, (const GLvoid *) hatch_data);
+  }
+
+#endif  // FLOW
+
+}
+
+void nmg_Graphics_Implementation::setContourWidth (float x) {
+  g_contour_width = x;
+  buildContourTexture();
+}
+
+void nmg_Graphics_Implementation::setMinColor (const double c [4]) {
+  memcpy(g_minColor, c, 3 * sizeof(double));
+}
+
+void nmg_Graphics_Implementation::setMaxColor (const double c [4]) {
+  memcpy(g_maxColor, c, 3 * sizeof(double));
+}
+
+void nmg_Graphics_Implementation::setMinColor (const int c [4]) {
+  g_minColor[0] = c[0] / 255.0;
+  g_minColor[1] = c[1] / 255.0;
+  g_minColor[2] = c[2] / 255.0;
+  //use alpha value from Opacity scrollbar
+  g_minColor[3] = g_surface_alpha;
+}
+
+void nmg_Graphics_Implementation::setMaxColor (const int c [4]) {
+  g_maxColor[0] = c[0] / 255.0;
+  g_maxColor[1] = c[1] / 255.0;
+  g_maxColor[2] = c[2] / 255.0;
+  //use alpha value from Opacity scrollbar
+  g_maxColor[3] = g_surface_alpha;
+}
+
+void nmg_Graphics_Implementation::setPatternMapName (const char * name) {
+
+  BCPlane * plane = dataset->inputGrid->getPlaneByName(name);
+
+#ifdef FLOW
+
+  GLubyte c;
+  double value;
+  int x, y;
+
+  if (plane) {
+    for (x = 0; x < plane->numX(); x++)
+      for (y = 0; y < plane->numY(); y++) {
+        value = (plane->value(x, y) - g_alpha_slider_min) /
+                (g_alpha_slider_max - g_alpha_slider_min);
+        value = min(1.0, value);
+        value = max(0.0, value);
+        c = (GLubyte) ((int) (value * 255.0 + 0.5));
+
+        pattern_data[(y * g_data_tex_size + x) * 3] = c;
+        pattern_data[(y * g_data_tex_size + x) * 3 + 1] = c;
+        pattern_data[(y * g_data_tex_size + x) * 3 + 2] = c;
+      }
+
+    shader_mask |= PATTERN_BIT;
+
+    // bind active mask
+
+    glBoundMaterialiEXT(nM_shader,
+                 glGetMaterialParameterNameEXT("active_mask"),
+                 shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[PATTERN_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
+                 0, GL_RGB, GL_BYTE, (const GLvoid *) pattern_data);
+  } else {
+    for (x = 0; x < g_data_tex_size; x++)
+      for (y = 0; y < g_data_tex_size; y++) {
+        pattern_data[(y * g_data_tex_size + x) * 3] = 0;
+        pattern_data[(y * g_data_tex_size + x) * 3 + 1] = 255;
+        pattern_data[(y * g_data_tex_size + x) * 3 + 2] = 0;
+      }
+
+    shader_mask &= (~PATTERN_BIT);
+
+    glBoundMaterialiEXT(nM_shader,
+                 glGetMaterialParameterNameEXT("active_mask"),
+                 shader_mask);
+
+    glBindTexture(GL_TEXTURE_2D, tex_ids[PATTERN_DATA_TEX_ID]);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
+                 0, GL_RGB, GL_BYTE, (const GLvoid *) pattern_data);
+  }
+
+#endif  // FLOW
+
+}
+
+// Genetic Textures
+void nmg_Graphics_Implementation::enableGeneticTextures (int on) {
+  g_genetic_textures_enabled = on;
+
+  if (on)  { // Just turned on
+    setTextureMode(nmg_Graphics::GENETIC);
+  }
+  else { // Just turned off
+    setTextureMode(nmg_Graphics::NO_TEXTURES);
+  }
+}
+
+//
+// Realign Texture Functions
+//
+
+//
+// This function takes the name of a dataset and creates a texture map
+// out of the data in the dataset. 
+// The texture map is created by mapping data values to color values
+// based on the conversion map selected (i.e. blackbody, inverse rainbow,...)
+// Or in none is selected, it just does some simple mapping.
+//
+// Texture maps must be in units of powers of 2,
+// So a texture map of 512x512 is allocated (hopefully this is big enough)
+// 
+//
+// The new texture map overwrites any existing 2D texture map...
+// This is a known bug and will be fixed in the future.
+//
+void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
+  // inputGrid is replaced with dataImages in this function so that
+  // we don't have separate functions for building textures from ppm images
+  // and AFM data (these changes allow this function to do what 
+  // makeAndInstallRulerImage() was used for previously)
+  nmb_Image *im = dataset->dataImages->getImageByName(name);
+  if (!im)
+    return;
+
+  float *realign_texture = new float[ 512 * 512 * 3 ];
+  
+  int image_width = im->width();
+  int image_height = im->height();
+
+  /* values used by registration code - since non-graphics code assumes
+	that the texture coordinates go from 0..1 in the texture image and not
+	0..<some value smaller than one> as a result of our need to use a
+	power of 2 - the different sizes need to be stored so that we can
+	compute the right scaling factor to compensate when loading the texture
+	transformation
+  */
+  g_tex_installed_width = 512;
+  g_tex_installed_height = 512;
+  int stride_x = 1, stride_y = 1;
+  if (image_width > g_tex_installed_width){
+	stride_x = (int)ceil((double)image_width/
+			     (double)g_tex_installed_width);
+  }
+  if (image_height > g_tex_installed_height) {
+	stride_y = (int)ceil((double)image_height/
+			     (double)g_tex_installed_height);
+  }
+
+  g_tex_image_width = image_width/stride_x;
+  g_tex_image_height = image_height/stride_y;
+
+  if (image_width > g_tex_installed_width ||
+		image_height > g_tex_installed_height) {
+	fprintf(stderr, "nmg::createRealignTextures, Warning: large texture"
+	 ", stride reduction: (%d,%d)/(%d,%d)->(%d,%d)\n",
+	image_width, image_height, stride_x, stride_y, g_tex_image_width,
+	g_tex_image_height);
+  }
+
+  float min = im->minValue();
+  float max = im->maxValue();
+  
+  for ( int j = 0,j_im= 0; j < g_tex_installed_height; j++,j_im+=stride_y ) {
+    for ( int k = 0,k_im= 0; k < g_tex_installed_width; k++,k_im+=stride_x ) {
+      // this condition actually chops off a pixel on each side of the 
+      // texture so that the clamped texture coordinates map to 
+      // completely transparent pixels
+      // really, we'd like to just shift the image by 1 pixel so we don't
+      // lose anything but that would introduce a translation which
+      // we'd need to compensate for when using the registration result
+      // and I don't feel like figuring that out at the moment
+      if ((j < g_tex_image_height-1) && (k < g_tex_image_width-1) && 
+		(j > 0) && (k > 0)) {
+        // Map data to color based on conversion map:
+       if (g_realign_textures_curColorMap) {
+
+           double scale = (im->getValue(k_im,j_im) -
+                        g_realign_textures_slider_min) /
+              (g_realign_textures_slider_max - g_realign_textures_slider_min);
+           scale = min(1.0, scale);
+           scale = max(0.0, scale);
+
+           float r, g, b, a;
+           g_realign_textures_curColorMap->lookup(scale, &r, &g, &b, &a);
+	   realign_texture[ j * 512 * 3 + k * 3 + 0] = r;
+           realign_texture[ j * 512 * 3 + k * 3 + 1] = g;
+           realign_texture[ j * 512 * 3 + k * 3 + 2] = b;
+       } 
+       // Otherwise simple data to color mapping
+       else {
+           realign_texture[ j * 512 * 3 + k * 3 + 0] =
+               ( im->getValue( k_im, j_im ) - min )/( max - min );
+		   
+           realign_texture[ j * 512 * 3 + k * 3 + 1] = 0.5;
+           realign_texture[ j * 512 * 3 + k * 3 + 2] = 0.5;
+       }
+       realign_texture[ j * 512 * 3 + k * 3 + 0] += 
+		(1.0- realign_texture[ j * 512 * 3 + k * 3 + 0])*
+		(255.0 - (float)g_ruler_opacity)/255.0;
+       realign_texture[ j * 512 * 3 + k * 3 + 1] += 
+		(1.0- realign_texture[ j * 512 * 3 + k * 3 + 1])*
+		(255.0 - (float)g_ruler_opacity)/255.0;
+       realign_texture[ j * 512 * 3 + k * 3 + 2] += 
+		(1.0- realign_texture[ j * 512 * 3 + k * 3 + 2])*
+		(255.0 - (float)g_ruler_opacity)/255.0;
+#if 0
+	#ifdef __CYGWIN__
+        float r = realign_texture[ j * 512 * 3 + k * 3 + 0];
+        float g = realign_texture[ j * 512 * 3 + k * 3 + 1];
+        float b = realign_texture[ j * 512 * 3 + k * 3 + 2];
+        realign_texture[ j * 512 * 3 + k * 3 + 0] = r/255.0;
+        realign_texture[ j * 512 * 3 + k * 3 + 1] = g/255.0;
+        realign_texture[ j * 512 * 3 + k * 3 + 2] = b/255.0;
+	#endif
+#endif
+      } // endif ( (j < height) && (k < width) )
+      else {	// handles parts of texture that extend beyond image
+#if 0
+#ifdef __CYGWIN__
+	// for GL_BLEND
+        realign_texture[ j * 512 * 3 + k * 3 + 0] = 0.0;
+        realign_texture[ j * 512 * 3 + k * 3 + 1] = 0.0;
+        realign_texture[ j * 512 * 3 + k * 3 + 2] = 0.0; 
+#else
+#endif
+#endif
+	// for GL_MODULATE
+	realign_texture[ j * 512 * 3 + k * 3 + 0] = 1.0;
+	realign_texture[ j * 512 * 3 + k * 3 + 1] = 1.0;
+	realign_texture[ j * 512 * 3 + k * 3 + 2] = 1.0;
+	
+//#endif
+      }
+    }
+  }
+
+  //
+  // Create/Setup the Texture in GL:
+  //
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+  
+//#ifdef __CYGWIN__
+//  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+//#else
+  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+//#endif
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  
+#if defined(sgi) || defined(__CYGWIN__)
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 512, 512,
+                        GL_RGB, GL_FLOAT, realign_texture) != 0) { 
+    printf(" Error making mipmaps, using texture instead.\n");
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+		 512, 512, 0, GL_RGB, GL_FLOAT, realign_texture);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making realign texture.\n");
+    }
+  }
+#else
+  // Should use glBindTexture so it doesn't conflict w/Rulergrid...
+  //   glBindTexture( GL_TEXTURE_2D, &texName );
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+	       512, 512, 0, GL_RGB, GL_FLOAT, realign_texture);
+ #ifndef FLOW
+  if (glGetError()!=GL_NO_ERROR) {
+    printf(" Error making realign texture.\n");
+  }
+ #endif
+#endif
+
+  delete [] realign_texture;
+
+}
+
+//
+// Sets the conversion map used to convert data values to 
+// color values when realigning textures.
+//
+void nmg_Graphics_Implementation::
+setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
+  if ( !strcmp( map, "CUSTOM" ) ) {
+    if (g_realign_textures_curColorMap) {
+      delete g_realign_textures_curColorMap;
+    }
+    g_realign_textures_curColorMap = NULL;
+  }
+  else {
+    if ( !g_realign_textures_curColorMap )
+      g_realign_textures_curColorMap = new ColorMap;
+    g_realign_textures_curColorMap->load_from_file( map, mapdir );
+  }
+}
+
+//
+// Sets the realign texture colormap slider range:
+//
+void nmg_Graphics_Implementation::setRealignTextureSliderRange (float low,
+								float high) {
+  g_realign_textures_slider_min = low;
+  g_realign_textures_slider_max = high;
+}
+
+//
+// Enables realigning textures
+//
+void nmg_Graphics_Implementation::enableRealignTextures (int on) {
+  g_realign_textures_enabled = on;
+  g_translate_textures  = 0;
+  g_scale_textures      = 0;
+  g_shear_textures      = 0;
+  g_rotate_textures     = 0;
+
+  if (on)  { // Just turned on
+    setTextureMode(nmg_Graphics::REALIGN);
+  }
+  else {     // Just turned off
+    setTextureMode(nmg_Graphics::NO_TEXTURES);
+  }
+}
+
+//
+// Resamples the original data set based on the transformed
+// texture coordinates, creating a new data array.
+// Uses bi-linear interpolation for points that don't fall
+// exactly on the grid.
+//
+void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
+						       const char *newname ) {
+  
+  // New data Array 
+  BCPlane *plane = dataset->inputGrid->getPlaneByName(name);
+  if ( !plane )
+    return;
+  
+  char newunits [1000];
+  sprintf(newunits, "%s_realign", plane->units()->Characters());
+
+  BCPlane *newplane = dataset->inputGrid->getPlaneByName(newname);
+  if (!newplane) {
+     dataset->inputGrid->addNewPlane( newname, newunits, NOT_TIMED );
+     if ( newplane == NULL ) {
+        fprintf( stderr, "compute realign plane: Can't make plane %s\n", 
+		newname );
+    	return;
+     }
+     dataset->dataImages->addImage(new nmb_ImageGrid(newplane));
+  }
+
+  // Resample the old dataset based on the realigned texture coordinates
+  // Uses bi-linear interpolation for points that don't fall
+  // exactly on the grid.
+
+  int numx = plane->numX();
+  int numy = plane->numY();
+  for ( int i = 0; i < numy; i++ )
+    for ( int j = 0; j < numx; j++ ) {
+
+      // Transformed Texture Coordinate
+      float u = vertexptr[i][j * 2].Texcoord[1];
+      float v = vertexptr[i][j * 2].Texcoord[2];
+
+      // X, Y coordinate in original dataset
+      float x = u * 512; // Maximum texture size
+      float y = v * 512; // Maximum texture size
+
+      // interpolation values
+      float s = x - floor( x );
+      float t = y - floor( y );
+
+      // indices of the four data values to interpolate:
+      int x1 = (int)floor( x );
+      int y1 = (int)floor( y );
+      int x2 = (int)ceil( x );
+      int y2 = (int)ceil( y );
+
+      // lookup data values to interpolate:
+      float a, b, c, d;
+      if ( (x1 >= 0) && (x1 < numx) && (y1 >= 0) && (y1 < numy) )
+	a = plane->value( x1, y1 );
+      else
+	a = 0;
+      if ( (x2 >= 0) && (x2 < numx) && (y1 >= 0) && (y1 < numy) )
+	b = plane->value( x2, y1 );
+      else
+	b = 0;
+      if ( (x1 >= 0) && (x1 < numx) && (y2 >= 0) && (y2 < numy) )
+	c = plane->value( x1, y2 );
+      else
+	c = 0;
+      if ( (x2 >= 0) && (x2 < numx) && (y2 >= 0) && (y2 < numy) )
+	d = plane->value( x2, y2 );
+      else d = 0;
+
+      // interpolate first along x:
+      float e = (1.0 - s) * a + s * b;
+      float f = (1.0 - s) * c + s * d;
+
+      // interpolate interpolated values along y:
+      float value = (1.0 - t) * e + t * f;
+      
+      // assign the value to the new dataset
+      newplane->setValue( j, i, value );
+    }
+}
+
+//
+// Translates the texture based on the mouse movements:
+//
+void nmg_Graphics_Implementation::translateTextures ( int on,
+						      float dx, float dy ) {
+  g_translate_textures = on;
+  g_scale_textures = 0;
+  g_shear_textures = 0;
+  g_rotate_textures = 0;
+
+  //
+  // First the direction (dx, dy) is rotated to match the
+  // rotated texture coordinates. (So after rotating the texture,
+  // translating up and down still matches the mouse)...
+  //
+  float u = ( dx / g_tex_range_x ) * cos( g_tex_theta_cumulative ) + 
+    ( dy / g_tex_range_y ) * sin( g_tex_theta_cumulative );
+  float v = ( dx / g_tex_range_x ) * -sin( g_tex_theta_cumulative ) +
+    ( dy / g_tex_range_y ) * cos( g_tex_theta_cumulative );
+
+  g_translate_tex_dx = u;
+  g_translate_tex_dy = v;
+
+#ifdef PROJECTIVE_TEXTURE
+  g_translate_tex_x -= dx;
+  g_translate_tex_y -= dy;
+#endif
+
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  if (build_grid_display_lists(planes,
+			       display_lists_in_x, &grid_list_base,
+			       &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,
+	    "handle_texture_coords_change(): Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
+  }
+}
+
+//
+// Scales the texture based on the mouse movements:
+//
+void nmg_Graphics_Implementation::scaleTextures ( int on,
+						  float dx, float dy ) {
+  g_translate_textures = 0;
+  g_scale_textures = on;
+  g_shear_textures = 0;
+  g_rotate_textures = 0;
+
+  //
+  // First the direction (dx, dy) is rotated to match the
+  // rotated texture coordinates. (So after rotating the texture,
+  // scaling left and right still matches the mouse)...
+  //
+  float u = ( dx / 100.0 ) * cos( g_tex_theta_cumulative ) + 
+    ( dy / 100.0 ) * sin( g_tex_theta_cumulative );
+  float v = ( dx / 100.0 ) * -sin( g_tex_theta_cumulative ) +
+    ( dy / 100.0 ) * cos( g_tex_theta_cumulative );
+
+  g_scale_tex_dx = 1.0 + u;
+  g_scale_tex_dy = 1.0 + v;
+
+  g_tex_range_x /= g_scale_tex_dx;
+  g_tex_range_y /= g_scale_tex_dy;
+
+#ifdef PROJECTIVE_TEXTURE
+  if (g_scale_tex_dx > 0.5 && g_scale_tex_dx < 2.0)
+      g_scale_tex_x *= g_scale_tex_dx;
+  if (g_scale_tex_dy > 0.5 && g_scale_tex_dy < 2.0)
+      g_scale_tex_y *= g_scale_tex_dy;
+#endif
+
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  if (build_grid_display_lists(planes,
+			       display_lists_in_x, &grid_list_base,
+			       &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,
+	    "handle_texture_coords_change(): Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
+  }
+}
+
+//
+// Shear the texture based on the mouse movements:
+//
+void nmg_Graphics_Implementation::shearTextures ( int on,
+						  float dx, float dy ) {
+  g_translate_textures = 0;
+  g_scale_textures = 0;
+  g_shear_textures = on;
+  g_rotate_textures = 0;
+
+  //
+  // First the direction (dx, dy) is rotated to match the
+  // rotated texture coordinates. (So after rotating the texture,
+  // shearing left and right still matches the mouse)...
+  //
+  float u = ( dx/(g_tex_range_x ) ) * cos( g_tex_theta_cumulative ) + 
+    ( dy/( g_tex_range_y ) ) * sin( g_tex_theta_cumulative );
+  float v = ( dx/(g_tex_range_x ) ) * -sin( g_tex_theta_cumulative ) +
+    ( dy/( g_tex_range_y ) ) * cos( g_tex_theta_cumulative );
+
+  g_shear_tex_dx = u;
+  g_shear_tex_dy = v;
+
+#ifdef PROJECTIVE_TEXTURE
+  // not sure why this is more sensitive but it is so we scale down the
+  // change a bit
+  g_shear_tex_x += g_shear_tex_dx/100.0;
+  g_shear_tex_y += g_shear_tex_dy/100.0;
+#endif
+
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  if (build_grid_display_lists(planes,
+			       display_lists_in_x, &grid_list_base,
+			       &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,
+	    "handle_texture_coords_change(): Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
+  }
+}
+
+//
+// Shear the texture based on the mouse movements:
+//
+void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
+  g_translate_textures = 0;
+  g_scale_textures = 0;
+  g_shear_textures = 0;
+  g_rotate_textures = on;
+
+  g_rotate_tex_theta = theta / 10.0;
+  g_tex_theta_cumulative += g_rotate_tex_theta;
+
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  if (build_grid_display_lists(planes,
+			       display_lists_in_x, &grid_list_base,
+			       &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,
+	    "handle_texture_coords_change(): Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
+  }
+}
+
+//
+// Set the center of texture realign transformations:
+// A red "center sphere" follows the mouse:
+//
+void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
+
+  int numx = dataset->inputGrid->numX();
+  int numy = dataset->inputGrid->numY();
+
+#ifdef PROJECTIVE_TEXTURE
+
+  // (g_translate_tex = g_translate_tex_x,g_translate_tex_y)
+  // g_translate_tex represents the translation of the grid to the
+  // point about which the texture is rotated, scaled, and sheared
+  // so to move this point we must adjust g_translate_tex but then
+  // we need to compute the corresponding new location in texture coordinates
+  // so that this can be subtracted out properly by compute_texture_matrix() 
+  // so that the texture itself doesn't move
+
+  BCPlane *plane = dataset->inputGrid->getPlaneByName(
+	(char*)dataset->heightPlaneName);
+  if (plane == NULL){
+      fprintf(stderr, "Error in setTextureCenter: could not get plane!\n");
+      return; 
+  }
+
+  // we use current texture matrix to compute how the change in position of
+  // the center on the grid (g_tex_grid_center) gets mapped to a change in 
+  // the position of the center in the texture (g_tex_coord_center)
+  double tex_mat[16];
+
+  // note: it is important that we call this here before we
+  // change g_translate_tex because otherwise g_translate_tex and
+  // g_tex_coord_center would be inconsistent and the texture would move
+  compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
+                g_tex_theta_cumulative, g_scale_tex_x,
+                g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,
+                g_tex_coord_center_x, g_tex_coord_center_y,
+                tex_mat); 
+
+  double pl_len_x = plane->maxX()-plane->minX();
+  double pl_len_y = plane->maxY()-plane->minY();
+
+  // this just scales the mouse movements by a reasonable value to map them
+  // to nm:
+  g_translate_tex_x += dx*pl_len_x/(double)numx;
+  g_translate_tex_y += dy*pl_len_y/(double)numy;
+
+  if (g_translate_tex_x > pl_len_x)
+     g_translate_tex_x = pl_len_x;
+  else if (g_translate_tex_x < 0)
+     g_translate_tex_x = 0;
+  if (g_translate_tex_y > pl_len_y)
+     g_translate_tex_y = pl_len_y;
+  else if (g_translate_tex_y < 0)
+     g_translate_tex_y = 0;
+
+  float x = 0, y = 0, z = 0;
+  // x,y are in nm
+  x = g_translate_tex_x;
+  y = g_translate_tex_y;
+ 
+  // rx,ry are in grid lattice units 
+  double rx = x*(double)numx/pl_len_x;
+  double ry = y*(double)numy/pl_len_y;
+  z = plane->interpolatedValue(rx, ry)*(plane->scale());
+
+  position_sphere(x,y,z);
+
+  // now that we have the new position of the center in grid coordinates, we
+  // compute the new position of the center in texture coordinates using the
+  // _old_ texture matrix 
+  double grid_pnt[4] = {x, y, z, 1.0};
+  double texture_pnt[2];
+  int i,j;
+  for (i = 0; i < 2; i++){
+      texture_pnt[i] = 0.0;
+      for (j = 0; j < 4; j++)
+          texture_pnt[i] += tex_mat[i + j*4]*grid_pnt[j];
+  }
+  g_tex_coord_center_x = texture_pnt[0];
+  g_tex_coord_center_y = texture_pnt[1];
+
+#else	// NOT PROJECTIVE_TEXTURE
+
+  // rotate:
+  float u = ( dx/(2.0 * g_tex_range_x ) ) * cos( g_tex_theta_cumulative ) + 
+    ( dy/( 2.0 * g_tex_range_y ) ) * sin( g_tex_theta_cumulative );
+  float v = ( dx/(2.0 * g_tex_range_x ) ) * -sin( g_tex_theta_cumulative ) +
+    ( dy/( 2.0 * g_tex_range_y ) ) * cos( g_tex_theta_cumulative );
+
+  u = g_tex_coord_center_x + u;
+  v = g_tex_coord_center_y + v;
+  
+  float x = 0, y = 0, z = 0;
+  float min = 3;
+  float x_dis, y_dis;
+
+  for ( int i = 0; i < numy; i++ )
+    for ( int j = 0; j < numx; j++ ) {
+      x_dis = (vertexptr[i][j * 2].Texcoord[1] - u)*
+	(vertexptr[i][j * 2].Texcoord[1] - u);
+      y_dis = (vertexptr[i][j * 2].Texcoord[2] - v)*
+	(vertexptr[i][j * 2].Texcoord[2] - v);
+      if ( sqrt( x_dis + y_dis ) < min ) {
+	min = sqrt( x_dis + y_dis );
+	x = vertexptr[i][j * 2].Vertex[0];
+	y = vertexptr[i][j * 2].Vertex[1];
+	z = vertexptr[i][j * 2].Vertex[2];
+	g_tex_coord_center_x = vertexptr[i][j * 2].Texcoord[1];
+	g_tex_coord_center_y = vertexptr[i][j * 2].Texcoord[2];
+	position_sphere(x, y, z);
+      }
+    }
+#endif
+}
+
+//
+// End of Realign Texture Functions.
+//
+void nmg_Graphics_Implementation::enableRegistration(int on) {
+  //printf("registration enabled = %d\n", on);
+  g_registration_enabled = on;
+  if (on) { // Just turned on
+    setTextureMode(nmg_Graphics::REGISTRATION);
+    if (g_rulerPPM)
+      makeAndInstallRulerImage(g_rulerPPM);
+    else {
+      makeRulerImage();
+      buildRulergridTexture();
+    }
+#ifdef __CYGWIN__
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+#else
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+#endif 
+  }
+  else // just turned off
+    setTextureMode(nmg_Graphics::NO_TEXTURES);
+}
+
+void nmg_Graphics_Implementation::setTextureTransform(double *xform){
+    int i;
+    for (i = 0; i < 16; i++)
+	g_texture_transform[i] = xform[i];
+}
+
+void nmg_Graphics_Implementation::enableRulergrid (int on) {
+  g_rulergrid_enabled = on;
+  if (on) { // Just turned on
+
+    setTextureMode(nmg_Graphics::RULERGRID);
+    if (g_rulerPPM)
+      makeAndInstallRulerImage(g_rulerPPM);
+    else {
+      makeRulerImage();
+      buildRulergridTexture();
+    }
+#ifdef __CYGWIN__
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+#else
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+#endif 
+  }
+  else // Just turned off
+    setTextureMode(nmg_Graphics::NO_TEXTURES);
+}
+
+void nmg_Graphics_Implementation::setRulergridAngle (float v) {
+  g_rulergrid_sin = sin(-v / 180.0 * M_PI);
+  g_rulergrid_cos = cos(-v / 180.0 * M_PI);
+}
+
+void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
+  g_ruler_r = r;
+  g_ruler_g = g;
+  g_ruler_b = b;
+
+  // if they've specified a ruler image, keep that instead of replacing
+  // it with the default set of orthogonal lines
+  if (g_rulerPPM)
+    makeAndInstallRulerImage(g_rulerPPM);
+  else {
+    makeRulerImage();
+    buildRulergridTexture();
+  }
+}
+
+void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
+  g_rulergrid_xoffset = x;
+  g_rulergrid_yoffset = y;
+}
+
+void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
+  g_ruler_opacity = alpha;
+
+  // if they've specified a ruler image, keep that instead of replacing
+  // it with the default set of orthogonal lines
+  if (g_rulerPPM)
+    makeAndInstallRulerImage(g_rulerPPM);
+  else {
+    makeRulerImage();
+    buildRulergridTexture();
+  }
+}
+
+void nmg_Graphics_Implementation::setRulergridScale (float s) {
+  g_rulergrid_scale = s;
+}
+
+void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
+  g_ruler_width_x = x;
+  g_ruler_width_y = y;
+
+  // if they've specified a ruler image, keep that instead of replacing
+  // it with the default set of orthogonal lines
+  if (g_rulerPPM)
+    makeAndInstallRulerImage(g_rulerPPM);
+  else {
+    makeRulerImage();
+    buildRulergridTexture();
+  }
+}
+
+void nmg_Graphics_Implementation::setSpecularity (int s) {
+  g_shiny = s;
+}
+
+
+void nmg_Graphics_Implementation::setDiffusePercent (float d) {
+  g_diffuse = d;
+}
+
+void nmg_Graphics_Implementation::setSurfaceAlpha (float a) {
+  g_surface_alpha = a;
+}
+
+void nmg_Graphics_Implementation::setSpecularColor (float s) {
+  g_specular_color = s;
+}
+
+void nmg_Graphics_Implementation::setSphereScale (float s) {
+  g_sphere_scale = s;
+}
+
+void nmg_Graphics_Implementation::setTesselationStride (int s) {
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+
+  g_stride = s;
+
+  // Destroy the old triangle strips, then rebuilt the correct number
+  // of new ones.
+  if (build_grid_display_lists(planes,
+                         display_lists_in_x, &grid_list_base,
+                         &num_grid_lists, g_minColor, g_maxColor)) {
+        fprintf(stderr,
+         "handle_stride_change(): Couldn't build grid display lists\n");
+        dataset->done = V_TRUE;
+  }
+}
+
+void nmg_Graphics_Implementation::setTextureMode (TextureMode m) {
+
+// on FLOW, do we need to not change out of TEXTURE_2D?
+#ifdef FLOW
+  m = RULERGRID;
+#endif
+
+  switch (m) {
+
+    case NO_TEXTURES:
+      g_texture_mode = GL_FALSE;
+      break;
+
+    case CONTOUR:
+// This mode is possible if we can reimplement contour texture stuff
+// not using glXXXPointerEXT() and glDrawArraysEXT()
+#ifndef _WIN32
+      fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
+      g_texture_mode = GL_TEXTURE_1D;
+#else
+      fprintf(stderr, "nmg_Graphics_Implementation: " 
+		"CONTOUR mode not available under WIN32\n");
+#endif
+      break;
+
+    case RULERGRID:
+      g_texture_mode = GL_TEXTURE_2D;
+      //glEnable(GL_TEXTURE_2D);
+      break;
+
+    case REGISTRATION:
+      g_texture_mode = GL_TEXTURE_2D;
+      break;
+
+    case ALPHA:
+#ifndef _WIN32
+      fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
+      g_texture_mode = GL_TEXTURE_3D_EXT;
+#else
+      fprintf(stderr, "nmg_Graphics_Implementation:"
+		" ALPHA mode not available under WIN32\n");
+#endif
+      break;
+
+    case GENETIC:
+      g_texture_mode = GL_TEXTURE_2D;
+      break;
+
+    case REALIGN:
+      g_texture_mode = GL_TEXTURE_2D;
+      break;
+
+    default:
+      fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
+                      "Unknown texture mode %d.\n", m);
+      break;
+  }
+
+}
+
+void nmg_Graphics_Implementation::setTextureScale (float f) {
+  g_texture_scale = f;
+}
+
+void nmg_Graphics_Implementation::setTrueTipScale (float f) {
+  g_trueTipScale = f;
+}
+
+
+void nmg_Graphics_Implementation::setUserMode (int oldMode, int newMode,
+                                               int style) {
+  clear_world_modechange(oldMode);
+  init_world_modechange(newMode, style);
+}
+
+
+void nmg_Graphics_Implementation::setLightDirection (q_vec_type & v) {
+  ::setLightDirection(v);
+}
+
+void nmg_Graphics_Implementation::resetLightDirection (void) {
+  ::resetLightDirection();
+}
+
+
+int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
+
+  return make_rubber_line_point(point, g_positionList);
+}
+
+void nmg_Graphics_Implementation::emptyPolyline (void) {
+
+  empty_rubber_line(g_positionList);
+
+}
+
+void nmg_Graphics_Implementation::setRubberLineStart (float p0, float p1) {
+  g_rubberPt[0] = p0;
+  g_rubberPt[1] = p1;
+}
+
+void nmg_Graphics_Implementation::setRubberLineEnd (float p2, float p3 ) {
+  g_rubberPt[2] = p2;
+  g_rubberPt[3] = p3;
+}
+
+void nmg_Graphics_Implementation::setRubberLineStart (const float p [2]) {
+  g_rubberPt[0] = p[0];
+  g_rubberPt[1] = p[1];
+}
+
+void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
+  g_rubberPt[2] = p[0];
+  g_rubberPt[3] = p[1];
+}
+
+
+void nmg_Graphics_Implementation::setScanlineEndpoints(const float p0[3],
+		const float p1[3]){
+  g_scanlinePt[0] = p0[0]; g_scanlinePt[1] = p0[1]; g_scanlinePt[2] = p0[2];
+  g_scanlinePt[3] = p1[0]; g_scanlinePt[4] = p1[1]; g_scanlinePt[5] = p1[2];
+}
+
+void nmg_Graphics_Implementation::displayScanlinePosition(const int enable)
+{
+    enableScanlinePositionDisplay(enable);
+}
+
+void nmg_Graphics_Implementation::positionAimLine (const PointType top,
+                                                   const PointType bottom) {
+  make_aim(top, bottom);
+}
+
+void nmg_Graphics_Implementation::positionRubberCorner
+    (float minx, float miny, float maxx, float maxy) {
+  make_rubber_corner(minx, miny, maxx, maxy);
+}
+
+void nmg_Graphics_Implementation::positionSweepLine (const PointType top,
+                                                     const PointType bottom) {
+  make_sweep(top, bottom);
+}
+
+void nmg_Graphics_Implementation::positionSphere (float x, float y, float z) {
+  position_sphere(x, y, z);
+}
+
+
+
+void nmg_Graphics_Implementation::createScreenImage
+(
+   const char      *filename,
+   const ImageType  type
+)
+{
+   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
+   v_display_type *displayPtr;
+   v_viewport_type *windowPtr;
+
+   displayPtr=&v_display_table[d_displayIndexList[0]];
+   windowPtr=&(displayPtr->viewports[0]);
+
+
+   int w = windowPtr->fbExtents[0],
+       h = windowPtr->fbExtents[1];
+
+   unsigned char *pixels = new unsigned char[w*h*3];
+
+   if (!pixels)
+      fprintf(stderr, "Insufficient memory to grab screen!\n");
+   else
+   {
+      glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
+      glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
+      glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+      // Do we ever do anything really nonstandard?  do we always clean
+      // up and return to defaults between frames?  will the following
+      // screw-up some other fancy thing somewhere?  If graphics go wonky
+      // these should be queried prior to reading, then restored to what
+      // they were after reading the buffer instead of some "defaults".
+      glPixelStorei(GL_PACK_ALIGNMENT, 4); // word alignment, GL's default
+      glReadBuffer(GL_FRONT); // go back to the front buffer
+
+
+      AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
+
+
+      delete [] pixels;
+
+      if (ai)
+      {
+         if (!ai->Write(filename))
+            fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+
+         delete ai;
+      }
+   }
+}
+
+void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
+  ::getLightDirection(v);
+}
+
+int nmg_Graphics_Implementation::getHandColor (void) const {
+  return g_hand_color;
+}
+
+int nmg_Graphics_Implementation::getSpecularity (void) const {
+  return g_shiny;
+}
+
+/*
+float nmg_Graphics_Implementation::getDiffusePercent (void) const {
+  return g_diffuse;
+}
+*/
+
+const double * nmg_Graphics_Implementation::getMinColor (void) const {
+  return g_minColor;
+}
+
+const double * nmg_Graphics_Implementation::getMaxColor (void) const {
+  return g_maxColor;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_resizeViewport
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int height, width;
+
+  CHECK(it->decode_resizeViewport(p.buffer, &height, &width));
+  it->resizeViewport(height, width);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_loadRulergridImage
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->loadRulergridImage(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableChartjunk
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECK(it->decode_enableChartjunk(p.buffer, &value));
+  it->enableChartjunk(value);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableFilledPolygons
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECK(it->decode_enableFilledPolygons(p.buffer, &value));
+  it->enableFilledPolygons(value);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableSmoothShading
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECK(it->decode_enableSmoothShading(p.buffer, &value));
+  it->enableSmoothShading(value);
+
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableTrueTip
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECK(it->decode_enableTrueTip(p.buffer, &value));
+  it->enableTrueTip(value);
+
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setAdhesionSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setAdhesionSliderRange(p.buffer, &low, &hi));
+  it->setAdhesionSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setAlphaColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float r, g, b;
+
+  CHECK(it->decode_setAlphaColor(p.buffer, &r, &g, &b));
+  it->setAlphaColor(r, g, b);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setAlphaSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setAlphaSliderRange(p.buffer, &low, &hi));
+  it->setAlphaSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setBumpMapName
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setBumpMapName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setColorMapDirectory
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setColorMapDirectory(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTextureDirectory
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setTextureDirectory(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setColorMapName
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setColorMapName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setColorSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setColorSliderRange(p.buffer, &low, &hi));
+  it->setColorSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setComplianceSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setComplianceSliderRange(p.buffer, &low, &hi));
+  it->setComplianceSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setContourColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int r, g, b;
+
+  CHECK(it->decode_setContourColor(p.buffer, &r, &g, &b));
+  it->setContourColor(r, g, b);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setContourWidth
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float width;
+
+  CHECK(it->decode_setContourWidth(p.buffer, &width));
+  it->setContourWidth(width);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setFrictionSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setFrictionSliderRange(p.buffer, &low, &hi));
+  it->setFrictionSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setBumpSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setBumpSliderRange(p.buffer, &low, &hi));
+  it->setBumpSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setBuzzSliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setBuzzSliderRange(p.buffer, &low, &hi));
+  it->setBuzzSliderRange(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setHandColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int color;
+
+  CHECK(it->decode_setHandColor(p.buffer, &color));
+  it->setHandColor(color);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setCollabHandPos
+                                 (void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+  double pos[3], quat[4];
+
+  CHECK(it->decode_setCollabHandPos(p.buffer, pos, quat));
+  it->setCollabHandPos(pos, quat);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setCollabMode
+                                 (void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+  vrpn_int32 mode;
+
+  CHECK(it->decode_setCollabMode(p.buffer, &mode));
+  it->setCollabMode(mode);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setHatchMapName
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setHatchMapName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setMinColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  double c [3];
+
+  CHECK(it->decode_setMinColor(p.buffer, c));
+  it->setMinColor(c);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setMaxColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  double c [3];
+
+  CHECK(it->decode_setMaxColor(p.buffer, c));
+  it->setMaxColor(c);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setPatternMapName
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->setPatternMapName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableRulergrid
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECK(it->decode_enableRulergrid(p.buffer, &value));
+  it->enableRulergrid(value);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridAngle
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float angle;
+
+  CHECK(it->decode_setRulergridAngle(p.buffer, &angle));
+  it->setRulergridAngle(angle);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int r, g, b;
+
+  CHECK(it->decode_setRulergridColor(p.buffer, &r, &g, &b));
+  it->setRulergridColor(r, g, b);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridOffset
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float x, y;
+
+  CHECK(it->decode_setRulergridOffset(p.buffer, &x, &y));
+  it->setRulergridOffset(x, y);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridOpacity
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float alpha;
+
+  CHECK(it->decode_setRulergridOpacity(p.buffer, &alpha));
+  it->setRulergridOpacity(alpha);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridScale
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float scale;
+
+  CHECK(it->decode_setRulergridScale(p.buffer, &scale));
+  it->setRulergridScale(scale);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRulergridWidths
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float x, y;
+
+  CHECK(it->decode_setRulergridWidths(p.buffer, &x, &y));
+  it->setRulergridWidths(x, y);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setSpecularity
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int shiny;
+
+  CHECK(it->decode_setSpecularity(p.buffer, &shiny));
+  it->setSpecularity(shiny);
+  return 0;
+}
+
+
+int nmg_Graphics_Implementation::handle_setDiffusePercent
+				 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float diffuse;
+
+  CHECK(it->decode_setDiffusePercent(p.buffer, &diffuse));
+  it->setDiffusePercent(diffuse);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setSurfaceAlpha
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+   float surface_alpha;
+
+   CHECK(it->decode_setSurfaceAlpha(p.buffer, &surface_alpha));
+   it->setSurfaceAlpha(surface_alpha);
+   return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setSpecularColor
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float specular_color;
+
+  CHECK(it->decode_setSpecularColor(p.buffer, &specular_color));
+  it->setSpecularColor(specular_color);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setSphereScale
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float scale;
+
+  CHECK(it->decode_setSphereScale(p.buffer, &scale));
+  it->setSphereScale(scale);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTesselationStride
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int stride;
+
+  CHECK(it->decode_setTesselationStride(p.buffer, &stride));
+  it->setTesselationStride(stride);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTextureMode
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  TextureMode m;
+
+  CHECK(it->decode_setTextureMode(p.buffer, &m));
+  it->setTextureMode(m);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTextureScale
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float scale;
+
+  CHECK(it->decode_setTextureScale(p.buffer, &scale));
+  it->setTextureScale(scale);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTrueTipScale
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float scale;
+
+  CHECK(it->decode_setTrueTipScale(p.buffer, &scale));
+  it->setTrueTipScale(scale);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setUserMode
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int oldMode, newMode, style;
+
+  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &newMode, &style));
+  it->setUserMode(oldMode, newMode, style);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setLightDirection
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  q_vec_type v;
+
+  CHECK(it->decode_setLightDirection(p.buffer, v));
+  it->setLightDirection(v);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_resetLightDirection
+                                 (void * userdata, vrpn_HANDLERPARAM) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->resetLightDirection();
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_addPolylinePoint
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType * pp;
+
+  pp = new PointType [2];
+
+  CHECK(it->decode_addPolylinePoint(p.buffer, pp));
+  it->addPolylinePoint(pp);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_emptyPolyline
+                                 (void * userdata, vrpn_HANDLERPARAM) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->emptyPolyline();
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRubberLineStart
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float pt [2];
+
+  CHECK(it->decode_setRubberLineStart(p.buffer, pt));
+  it->setRubberLineStart(pt);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRubberLineEnd
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float pt [2];
+
+  CHECK(it->decode_setRubberLineEnd(p.buffer, pt));
+  it->setRubberLineEnd(pt);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setScanlineEndpoints
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float pt [6];
+
+  CHECK(it->decode_setScanlineEndpoints(p.buffer, pt));
+  it->setScanlineEndpoints(&(pt[0]), &(pt[3]));
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_displayScanlinePosition
+				(void *userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int enable;
+  CHECK(it->decode_displayScanlinePosition(p.buffer, &enable));
+  it->displayScanlinePosition(enable);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_positionAimLine
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType top, bottom;
+
+  CHECK(it->decode_positionAimLine(p.buffer, top, bottom));
+  it->positionAimLine(top, bottom);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_positionRubberCorner
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float x0, y0, x1, y1;
+
+  CHECK(it->decode_positionRubberCorner(p.buffer, &x0, &y0, &x1, &y1));
+  it->positionRubberCorner(x0, y0, x1, y1);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_positionSweepLine
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType top, bottom;
+
+  CHECK(it->decode_positionSweepLine(p.buffer, top, bottom));
+  it->positionSweepLine(top, bottom);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_positionSphere
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float x, y, z;
+
+  CHECK(it->decode_positionSphere(p.buffer, &x, &y, &z));
+  it->positionSphere(x, y, z);
+  return 0;
+}
+
+
+// genetic textures:
+// Call back function called when the gaEngine_Remote gets an
+// evaluation_complete message. This occurs when the selected texture
+// sent by the gaEngine_Implementation had been completely transferred
+// accross the network and is ready to be mapped onto the surface.
+//static
+int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
+  nmg_Graphics_Implementation * it = (  nmg_Graphics_Implementation * )p;
+  
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+#if defined(sgi) || defined(__CYGWIN__)
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 512, 512,
+                        GL_RGB, GL_FLOAT, it->gaRemote->data[0]) != 0) { 
+    printf(" Error making mipmaps, using texture instead.\n");
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+		 512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making genetic texture.\n");
+    }
+  }
+#else
+  // Should use glBindTexture so it doesn't conflict w/Rulergrid...
+  //   glBindTexture( GL_TEXTURE_2D, &texName );
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+	       512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
+ #ifndef FLOW
+  if (glGetError()!=GL_NO_ERROR) {
+    printf(" Error making genetic texture.\n");
+  }
+ #endif
+#endif
+
+  return 0;
+}
+
+// Sends the data to the genetic algorithm.
+// The variable list is either the entire list of plane names,
+// or the selected list from the "Set Genetic Textures Parameter"
+// pop-up window. 
+// Only the selected datasets are sent to the genetic alg.
+void nmg_Graphics_Implementation::sendGeneticTexturesData (
+			   int number_of_variables, 
+			   char **variable_list ) {
+  BCGrid *grid = dataset->inputGrid;
+
+  gaRemote->number_of_variables( number_of_variables );
+  gaRemote->mainloop();
+  gaRemote->variableList( number_of_variables, variable_list );
+  gaRemote->mainloop();
+
+  int width  = grid->numX();
+  int height = grid->numY();
+  gaRemote->dimensions( number_of_variables, width, height );
+  gaRemote->mainloop();
+
+  float **input = new float*[height];
+  if (!input) {
+    fprintf(stderr, "nmg_Graphics_Implementation::sendGeneticTexturesData:  "
+                    "Out of memory.\n");
+    return;
+  }
+  for ( int i = 0; i < number_of_variables; i++ ) {
+    for ( BCPlane *head = grid->head(); head; head = head ->next() ) {
+      if ( !strcmp( variable_list[ i ], head->name()->Characters() ) ) {
+	float min = head->minValue();
+	float max = head->maxValue();
+	for ( int j = 0; j < height; j++ ) {
+	  input[ j ] = new float[ width ];
+          if (!input[j]) {
+            fprintf(stderr, "nmg_Graphics_Implementation::"
+                            "sendGeneticTexturesData:  "
+                            "Out of memory.\n");
+            return;
+          }
+	  for ( int k = 0; k < width; k++ )
+	    input[ j ][ k ] = ( head->value( k, j ) - min )/( max - min );
+	  gaRemote->dataSet( i, j, input );
+	  gaRemote->mainloop();
+	  delete [] input[ j ];
+	}
+      }
+    }
+  }
+
+  delete [] input;
+}
+
+
+// This is a callback function called when the gaEngine_Remote 
+// gets a connection. It calls sendGeneticTextureData which sends 
+// the number of variables, names of the planes to be used in the genetic alg.
+// and all the data sets. 
+//
+int nmg_Graphics_Implementation::send_genetic_texture_data( void *userdata ) {
+  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
+
+  BCGrid *grid = dataset->inputGrid;
+
+  int number_of_variables  = grid->numPlanes();
+  char **variable_list     = new char*[ number_of_variables ];
+
+  BCPlane *head = grid->head();
+
+  if (!variable_list) {
+    fprintf(stderr, "nmg_Graphics_Implementation::send_genetic_texture_data:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  int i;
+  for ( i = 0; ( i < number_of_variables ) && head; i++ ) {
+    variable_list[ i ] = new char[ head->name()->Length() ];
+    if (!variable_list[i]) {
+      fprintf(stderr, "nmg_Graphics_Implementation::"
+                      "send_genetic_texture_data:  "
+                      "Out of memory.\n");
+      return -1;
+    }
+    strcpy( variable_list[ i ], head->name()->Characters() );
+    head = head->next();
+  }
+
+  it->sendGeneticTexturesData ( number_of_variables, variable_list );
+
+  for ( i = 0; i < number_of_variables; i++ )
+    delete [] variable_list[ i ];
+  delete [] variable_list;
+
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
+						       vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
+  int value;
+  it->decode_enableGeneticTextures( p.buffer, &value );
+  it->enableGeneticTextures( value );
+  return 0;
+}
+
+
+// static
+int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
+						      vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  int number_of_variables;
+  char **variable_list;
+  it->decode_sendGeneticTexturesData( p.buffer, 
+				      &number_of_variables, &variable_list );
+  it->sendGeneticTexturesData( number_of_variables, variable_list );
+  for ( int i = 0; i < number_of_variables; i++ ) {
+    if (variable_list && variable_list[i]) {
+      delete [] variable_list[i];
+    }
+  }
+  if (variable_list) {
+    delete [] variable_list;
+  }
+  return 0;
+}
+
+
+//
+// Realign Textures Handlers
+//
+
+// static
+int nmg_Graphics_Implementation::handle_createRealignTextures (void *userdata,
+						       vrpn_HANDLERPARAM p) {
+
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->createRealignTextures( p.buffer );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRealignTextureSliderRange
+( void *userdata, vrpn_HANDLERPARAM p) {
+  float low, hi;
+  
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_setRealignTextureSliderRange( p.buffer, &low, &hi );
+  it->setRealignTextureSliderRange( low, hi );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRealignTexturesConversionMap
+( void *userdata, vrpn_HANDLERPARAM p) {
+  
+  char *map = new char[100], *mapdir = new char[100];
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_two_char_arrays( p.buffer, &map, &mapdir );
+  it->setRealignTexturesConversionMap( map, mapdir );
+
+  if (map) {
+    delete [] map;
+  }
+  if (mapdir) {
+    delete [] mapdir;
+  }
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_computeRealignPlane (void *userdata,
+						     vrpn_HANDLERPARAM p) {
+
+  char *name = new char[100], *newname = new char[100];
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_two_char_arrays( p.buffer, &name, &newname );
+  it->computeRealignPlane( name, newname );
+
+  if (name) {
+    delete [] name;
+  }
+  if (newname) {
+    delete [] newname;
+  }
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableRealignTextures (void *userdata,
+						       vrpn_HANDLERPARAM p) {
+  int on;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_enableRealignTextures( p.buffer, &on );
+  it->enableRealignTextures( on );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_translateTextures (void *userdata,
+						   vrpn_HANDLERPARAM p) {
+  
+  float dx, dy;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_dx_dy( p.buffer, &dx, &dy );
+  it->translateTextures( 1, dx, dy );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_scaleTextures (void *userdata,
+					       vrpn_HANDLERPARAM p) {
+  float dx, dy;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_dx_dy( p.buffer, &dx, &dy );
+  it->scaleTextures( 1, dx, dy );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_shearTextures (void *userdata,
+					       vrpn_HANDLERPARAM p) {
+  float dx, dy;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_dx_dy( p.buffer, &dx, &dy );
+  it->shearTextures( 1, dx, dy );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_rotateTextures (void *userdata,
+						vrpn_HANDLERPARAM p) {
+  float theta;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_rotateTextures( p.buffer, &theta );
+  it->rotateTextures( 1, theta );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTextureCenter (void *userdata,
+						  vrpn_HANDLERPARAM p) {
+  float dx, dy;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_dx_dy( p.buffer, &dx, &dy );
+  it->setTextureCenter( dx, dy );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableRegistration (void *userdata,
+                                                       vrpn_HANDLERPARAM p) {
+  int on;
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_enableRegistration( p.buffer, &on );
+  it->enableRegistration( on );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTextureTransform (void *userdata,
+						vrpn_HANDLERPARAM p) {
+  double xform[16];
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  it->decode_textureTransform( p.buffer, xform);
+  it->setTextureTransform( xform );
+  return 0;
+}
+
+
+
+//
+// Save the screen as an image
+//
+
+
+
+int nmg_Graphics_Implementation::handle_createScreenImage
+(
+   void              *userdata,
+   vrpn_HANDLERPARAM  p
+)
+{
+   char *filename = new char[512];
+
+   ImageType type;
+
+   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+   it->decode_createScreenImage(p.buffer, &filename, &type);
+   it->createScreenImage(filename, type);
+
+   if (filename) {
+     delete [] filename;
+   }
+
+   return 0;
+}
+

@@ -1,0 +1,29 @@
+This version of coreview reads files using usr/Image.  It cannot read
+topo files natively.  To retrieve the earlier version of coreview
+(core) that does read topo files, use
+
+cvs checkout -r native-topo-reader.
+
+The code to actually track the core is found in
+
+core_stimulate_at_point.C.  
+
+This is a modified version of
+
+./CIMAGE/src/core/ops/core_stimulate_at_point.c
+
+The local ./core_stimulate_at_point.C has useful but relatively small
+modifications, affecting the way the cores are stored and output.  The
+code to actually track the code doesn't differ from that in the
+original CIMAGE version.
+
+The older version in the CIMAGE subdirectory is the "official" 
+CIMAGE version and also contains a fairly large number of comments
+that were added as I tried to figure out how the code worked.  So it
+is the file to look at if you want to understand the core tracking algorithm.
+
+Mark Foskey
+1999-03-19
+
+
+

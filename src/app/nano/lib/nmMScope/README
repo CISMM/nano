@@ -1,0 +1,41 @@
+Package NMM:  nanoManipulator microscope
+
+  This directory contains components that control a SPM.
+
+nmm_Microscope:
+  Abstract base class for SPM controllers.  Has code to marshall and
+unmarshall VRPN messages (RPC), register message types, etc.
+
+nmm_Globals:
+  Extern variables and class declarations visible to any program that
+links with this library.
+
+nmm_Types:
+  Enums and utilty structs visible to any program that links with this
+library.
+
+Microscope:
+  A heavy-weight remote interface to SPM.
+
+MicroscopeIO:
+  Mid-level communications interface for Microscope class.  Buffers and
+unbuffers messages.  Largely made obsolete by nmm_Microscope.
+
+NetworkedMicroscopeChannel:
+  Low-level communications interface for Microscope class.  Has buffer
+and network connection handling logic.  Design is flawed.
+Replaced by VRPN in nmm_Microscope.
+
+AFMState:
+  A structure containing state information and some utility classes
+for the Microscope, specialized to AFMs.
+
+drift:
+  Code used to compensate for piezo drift.
+
+relax:
+  Code used to compensate for piezo relaxation.
+
+splat:
+  Code used for splatting sample points into a data plane.
+

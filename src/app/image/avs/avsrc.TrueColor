@@ -1,0 +1,65 @@
+#
+# .avsrc for sun4
+#	
+
+#
+# Window and Screen stuff
+#
+ScreenSize			1152x900
+NetworkWindow			898x780+244+0
+DisplayPixmapWindow		512x512+270+10
+
+#
+# Libraries
+#
+ModuleLibraries	$Path/avs_library/Imaging \
+		$Path/avs_library/Volume \
+		$Path/avs_library/Animation \
+		/afs/unc/proj/mip/neuro/avs/BIWI/avs_library/AVS_CENTER \
+		$Path/avs_library/Supported \
+		/afs/unc/proj/mip/neuro/avs/MIGGG/avs_library/MIGGG \
+		/afs/unc/proj/mip/neuro/avs/BIWI/avs_library/BIWI \
+		/afs/unc/proj/mip/neuro/avs/Biwi97/avs_library/SunOS/Biwi97 
+
+
+#
+# Hosts
+#
+#Hosts 		/usr/local/avs_local/runtime/hosts.sun4
+
+#
+# Directories
+#
+DataDirectory 	/home/foskey/avs/data
+HelpPath
+$Path/runtime/help:/afs/unc/proj/mip/neuro/avs/Biwi97/Help:/afs/unc/proj/mip/neuro/avs/BIWI/help:/afs/unc/proj/mip/neuro/avs/MIGGG/Help:/home/foskey/avs/help
+
+NetworkDirectory /home/foskey/avs/network
+
+StackSelector	choice_browser
+XWarpPtr 	on
+
+
+#
+# Miscellaneous
+#
+#Gamma		1.0
+BoundingBox	1
+#WindowMgr	olvm
+
+#
+# write all parameters when saving the network
+#
+NetWriteAllParms 1
+
+#
+# Colormap
+#
+# Colors		5 5 5 108
+
+# more grey values :
+#Colors			4 4 4 128
+# more colors :
+#Colors			6 6 6 16
+Colors			1 1 1 1
+VisualType                      TrueColor

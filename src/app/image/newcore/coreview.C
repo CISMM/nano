@@ -1,0 +1,1984 @@
+/*----------------------------------------------------------------------------
+ File:    core.C
+ Date:    June 10, 1994
+ Author:  Dan Fritsch
+ Purpose: Main driver for Fritsch stimulated core generation
+
+ Mark Foskey's version control:
+ F1.0 10/13/98
+ F1.1 10/23/98
+ F2.0 10/24/98
+ F2.1 11/01/98--11/15/98
+ F3.0 11/15/98--11/17/98
+ F3.1 11/23/98--12/12/98
+ F4.0 12/12/98--
+
+ Changes made by MSF:
+ 10/13/98 Renamed to core.C, added numerous comments, removed
+          draw_func_bak(), moved get_boundary_sites() to end for
+	  eventual deletion.
+ 10/23/98 Removed get_boundary_sites(), added comments from 
+          xcore.C, included optimize_boundary.h
+ 10/23/98 Factored some code into a new function blur_image() and into
+          ReadImageFile(), added more comments.
+ 10/24/98 Tried trick copied from smooch lib to include usr/Image headers.
+ 11/01/98 Declared CoreViewImage variables.
+ 11/09/98 Rewrote load_image to follow the same steps as when an image
+          is loaded initially.
+ 11/15/98 Place image inversion in usr/Image part.
+ 11/15/98 Replaced preblur code with usr/Image blurring.
+ 11/17/98 Replaced cimage_interp with internal code.  (Doesn't work.)
+ 11/23/98 Fixed interpolation code.
+ 12/12/98 Basically eliminated changes made after 11/09/98.
+ 01/04/99 Made it confirm before overwriting a file.
+ 01/15/99 Renamed from core.C to coreview.C
+----------------------------------------------------------------------------*/
+
+
+//=========================================================================
+// Header #includes.
+
+/* MOTIF HEADERS */
+
+// This is a hack to avoid a name clash.
+#define String X_String
+#include <Xm/Xm.h>
+#include <Xm/DrawingA.h>
+#include <Xm/Form.h>
+#include <Xm/Frame.h>
+#include <Xm/MainW.h>
+#include <Xm/Scale.h>
+#include <Xm/RowColumn.h>
+#include <Xm/ToggleB.h>
+#include <Xm/Label.h>
+#include <Xm/FileSB.h>
+#include <X11/cursorfont.h>
+#undef String
+#undef Complex
+// End of name clash prevention hack.
+
+// usr/Image definitions and header
+#define D_RealImage
+#define D_ImageStream
+#define D_DebugBuffer
+
+#include <imprelud.h>
+
+// C headers
+#include <stdio.h>
+#include <math.h>
+
+/* CIMAGE HEADERS */
+#include "cimage_io.h"
+#include "cimage_X.h"
+#include "misc_X.h"
+#include "cimage_filter.h"
+#include "cimage_curve.h"
+#include "cimage_core.h"
+#include "core_ops.h"  // direction_flag, LEFT, RIGHT, BOTH defined.
+#include "core_io.h"
+#include "cimage_ioP.h"
+#include "cimage_ops.h"
+#include "cimage_util.h"
+#include "core_X.h"
+
+// CoreView headers
+#include "optimize_boundary.h"
+#include "CoreViewImage.h"
+
+//=========================================================================
+// #defines
+
+#define RND(x)  (int)((x)+0.5) 
+
+#define FILENAME_LEN 128 
+
+//=========================================================================
+// Global variables.
+
+// Conversion factors in nm per pixel, set when a file is read.
+// Logically should be fields in im; global because they're only used
+// inside a deeply nested procedure call.
+double  xConvFactor = 1.0;
+double  yConvFactor = 1.0;
+
+/* Global commandline variables and defaults */
+float   radius = 4.0;  // Initial radius of the medial primitive,
+                       // measured in real multiples of one pixel
+
+float   preblur = 0.0; // sigma for gaussian blurring kernel
+float   rstep = 0.5;
+int     weak_or_strong = 0;
+int     save_core = False;
+int     draw_discs = False;
+int     draw_boundaries = False;
+int     polarity = -1;
+int     med_type = LAP_MEDIALNESS;
+float   rho = 1.0;
+char    core_file[FILENAME_LEN];
+char    tmpDir[512];
+static float    zoom = 1.0;
+
+// Mss, alpha, and gradP are measures of ridge strength.  The
+// following three variables are threshholds below which ridge
+// tracking stops.
+float   Mssthresh = 0.25,
+	alphathresh = 0.25,
+	gradPthresh = 0.25;
+int     TABLE_INIT = 0;
+float   ratio = 4.0;
+
+/* Image on which to compute cores */
+static  cimage im;      // Main image, possibly blurred.
+static  cimage iminv;   // Image with intensities flipped about mean.
+static	cimage disp_im; // Actually displayed on screen.
+static  cimage imcomp;  // Passed to core_stimulate_at_point for
+			// computation.
+
+char    imagefile[FILENAME_LEN];
+
+/* Global X-related stuff */
+GC gc;
+Widget imageWidget, traceviewWidget, sliceviewWidget, cutviewWidget;
+Widget traceviewShell, sliceviewShell, cutviewShell, coreviewShell;
+Widget equalizeWidget;
+Colormap cmap;
+Cmap_info cmap_info;
+Cursor cursor;
+XColor xred, xgreen, xblue;
+
+Cores C; // A list of all cores found on the current image.
+
+int     prev_x;
+int	prev_y;
+int     SCALE_TRACE = FALSE;
+int     DISPLAY_SLICE = FALSE;
+int     EQUALIZE = FALSE;
+
+static int      reset = 0;
+
+//=========================================================================
+// Forward declarations of selected functions.
+
+void blur_image(cimage clear, cimage blurry, float blurval);
+
+void make_disp_im(cimage old_im, cimage disp_im, double zoom);
+
+void scale_trace(cimage im, CorePoint P, int med_type,
+		 Widget trace_widget, GC gc);
+
+void draw_equalizer(CorePoint P, Widget w);
+
+void ParseCommLine (int, char **);
+
+//=========================================================================
+// Function definitions.
+
+// draw_func()
+// For a single point P on the core in scale space, plots the x and y
+// coordinates of that point as a dot, and also displays other
+// information depending on what options have been chosen.
+int
+draw_func (CorePoint P, void * AppData) 
+{
+    CorePoint P1 = P;
+    float   x = P.x,
+	y = P.y,
+	s = P.s;
+    static int      count = 0;
+    XEvent event;
+    Widget * w = (Widget *) AppData;
+    static int      xp =- 1,
+	yp =- 1;
+    static int      reset = 1;
+    Display * display = XtDisplay (*w);
+    Window window = XtWindow (*w);
+    int     i = (int) ((x + 0.5) * zoom);
+    int     j = (int) ((y + 0.5) * zoom);
+    float   fwidth = 1 * zoom;
+    if (fwidth > 2.0)
+	fwidth = 2.0;
+    int     iwidth = RND (fwidth * 2.0);
+
+    if (x == -1) {
+	count = 0;
+	reset = 1;
+	return 1;
+    }
+
+    if (reset == 1 && x != -1) {
+	reset = 0;
+	xp = i;
+	yp = j;
+    }
+    x = x * zoom;
+    y = y * zoom;
+
+    if (reset == 0 && zoom >= 1.0) {
+	XFillArc (display, window, gc, RND (x - fwidth),
+		  RND (y - fwidth),
+		  iwidth, iwidth, 360 * 64, 360 * 64);
+	CorePoint B0, B1;
+	if (EQUALIZE == TRUE)
+	    draw_equalizer (P, equalizeWidget);
+	if (SCALE_TRACE == TRUE)
+	    scale_trace (im, P, med_type, traceviewWidget, gc);
+	if (draw_discs == TRUE) {
+	    optimize_boundary_sites (P1, polarity, im, 
+				     &B0, &B1, ratio);
+	    x = B0.x * zoom;
+	    y = B0.y * zoom;
+	    XFillArc (display, window, gc, RND ((x - fwidth)),
+		      RND ((y - fwidth)),
+		      iwidth, iwidth, 360 * 64, 360 * 64);
+	    x = B1.x * zoom;
+	    y = B1.y * zoom;
+	    XFillArc (display, window, gc, RND ((x - fwidth)),
+		      RND ((y - fwidth)),
+		      iwidth, iwidth, 360 * 64, 360 * 64);
+	}
+
+	xp = i;
+	yp = j;
+    }
+
+    else
+	if (reset == 0 && zoom < 1.0) {
+	    XDrawPoint (display, window, gc, i, j);
+	    XFillArc (display, window, gc,
+		      (int) (i - 1), (int) (j - 1), 2, 2,
+		      360 * 64, 360 * 64);
+	    xp = i;
+	    yp = j;
+	}
+
+    XFlush (display);
+
+    s = s;			/* To get rid of compiler warning */
+
+    if (XCheckWindowEvent (display, window,
+			   ButtonPressMask, &event))
+	return - 1;
+    else
+	return 1;
+}
+
+// draw_equalizer()
+// - Displays three measures of core strength as horizontal bars whose
+// heights vary.  Derives its name from the display's resemblance to a
+// graphic equalizer.
+void 
+draw_equalizer (CorePoint P, Widget w) 
+{
+    static float    imin = 0,
+	imax = 2;
+    float   height = 100;
+    int     bar_width = 40;
+    int     win_width = 256;
+    int     x1,
+	x2;
+
+    float   y = height - height * P.gradP / (imax - imin);
+    XClearWindow (XtDisplay (w), XtWindow (w));
+    x1 = win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+    y = height + height * P.alpha / (imax - imin);
+    x1 = win_width / 2 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+    y = height - height * P.Mss / (imax - imin);
+    x1 = 5 * win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+}
+
+// scale_trace()
+// Plots the medialness as a function of scale while the core is being
+// plotted.  This only occurs if the Core View display option has been
+// selected.  Called by draw_func().
+void 
+scale_trace (cimage im, CorePoint P, int med_type,
+             Widget trace_widget, GC gc) 
+{
+    Window trace_win = XtWindow (trace_widget);
+    Display * display = XtDisplay (trace_widget);
+    MedialnessFunctionDirect myMedialness;
+    int i;
+    int j;
+    float   scale_max = P.s;
+    float   ymin = MAXCREAL;
+    float   ymax = MINCREAL;
+    float   xmin = MAXCREAL;
+    float   xmax = MINCREAL;
+    static float    medmax = 0;
+    float   width = 256;
+    float   height = 128;
+    float   medialness[500];
+    float   s[500];
+    XPoint points[500];
+    int     npoints;
+    static int      isfirst = 1;
+    float   scale_min;
+    float   ds;
+    XClearWindow (display, trace_win);
+    switch (med_type) {
+    case LAP_MEDIALNESS: 
+	myMedialness = Lap_Medialness;
+	break;
+    case LPP_MEDIALNESS: 
+	myMedialness = Lpp_Medialness;
+    case EDGE_MEDIALNESS: 
+	myMedialness = Edge_Medialness;
+	break;
+    }
+
+    P.s = 1.0;
+    ymin = ymax = -myMedialness (im, P);
+    xmin = 0;
+    xmax = 2;
+    npoints = 20;
+    scale_min = scale_max / 4;
+    scale_max = scale_max * 2;
+    ds = (scale_max - scale_min) / (float) npoints;
+    for (i = 0; i < npoints; i++) {
+	float   val;
+	s[i] = P.s = scale_max - i * ds;
+	val = -myMedialness (im, P);
+	medialness[i] = val;
+	if (val > ymax)
+	    ymax = val;
+	if (val < ymin)
+	    ymin = val;
+	if (val > medmax)
+	    medmax = val;
+    }
+	 
+    if (isfirst) {
+	medmax *= 2;
+	isfirst = 0;
+    }
+
+    for (i = 0; i < npoints; i++) {
+	points[i].x = (int) (width * (s[i] - scale_min) / 
+			     (scale_max - scale_min));
+	points[i].y = (int) (height - height * (medialness[i] - ymin) 
+			     / (medmax - ymin));
+    }
+    if (npoints > 1)
+	XDrawLines (display, trace_win, gc, 
+		    points, npoints, CoordModeOrigin);
+}
+
+
+// Usage()
+// - Prints usage message.
+int 
+Usage()
+{
+    printf ("\n*** coreview V4.0 ***\n");
+    printf ("\nUsage:  coreview [options] imagefile\n");
+    printf ("Options:\n");
+    printf ("   -f (string) \t\t: output ASCII file of labeled cores\n");
+    printf ("   -p (real)   \t\t: preblur sigma (default=0.0)\n");
+    printf ("   -z (real)   \t\t: zoom factor (default=1.0)\n");
+    printf ("   -t (string) \t\t: temporary directory which houses" 
+	    " ims data\n");
+    printf ("   imagefile (string)\t: image on which to find cores"
+	    " - topo format\n\n");
+    printf ("\n\n   Send comments to: Daniel Fritsch (fritsch@cs.unc.edu)\n");
+    exit (-1);
+}
+
+// draw_circ() 
+// Draws a red circle, the scale circle, that follows the mouse and
+// marks the characteristic radius of the medialness kernel.
+void 
+draw_circ(Widget w, int x, int y, float r)
+{
+    Display * display = XtDisplay (w);
+    GC gc;
+    XGCValues values;
+    unsigned long   valuemask = GCForeground | GCFunction | GCPlaneMask;
+    int     radius = (int) (r + 0.5);
+    values.foreground = 255;
+    values.function = GXxor;
+    values.plane_mask = 0x80;
+    gc = XCreateGC (display, XtWindow (w), valuemask, &values);
+    XDrawArc (display, XtWindow (w), gc, x - radius, y - radius,
+	      2 * radius, 2 * radius, 360 * 64, 360 * 64);
+    if (direction_flag == RIGHT)
+	XDrawLine (display, XtWindow (w), gc, x + radius, y,
+		   x + radius + 5, y);
+    else
+	if (direction_flag == LEFT)
+	    XDrawLine (display, XtWindow (w), gc, x - radius, y,
+		       x - radius - 5, y);
+    XFreeGC (display, gc);
+    XFlush (display);
+}
+
+// draw_cores()
+// Redraws all cores listed in C.
+void
+draw_cores (Cores C, Widget w, int which) 
+{
+    int i;
+    int j;
+    XColor xcolor;
+    Display * display = XtDisplay (w);
+    Window window = XtWindow (w);
+    CorePoint P, P0, P1;
+    XPoint points[10000];
+    xcolor.flags = DoRed | DoGreen | DoBlue;
+    xgreen.flags = DoRed | DoGreen | DoBlue;
+
+    XClearWindow (display, window);
+    XSetLineAttributes (XtDisplay (w), gc, (unsigned int) (1.0),
+			LineSolid, CapButt, JoinRound);
+    if (draw_discs == True || draw_boundaries == TRUE) {
+	XSetLineAttributes (XtDisplay (w), gc,
+			    (unsigned int) (1.0),
+			    LineSolid, CapButt, JoinRound);
+	for (j = 0; j < C -> cores_used; j++) {
+	    for (i = 0; i < C -> cores[j] -> clength; i++) {
+		if (draw_boundaries == True) {
+		    XSetForeground (display, gc, xblue.pixel);
+		    CorePoint P1 = core_point_get (C -> cores[j], i - 1);
+		    CorePoint P2 = core_point_get (C -> cores[j], i);
+		    CorePoint P3 = core_point_get (C -> cores[j], i + 1);
+		    float   k = (P1.s + P2.s + P3.s) * zoom / 3.0;
+		    XFillArc (display, window, gc,
+			      (int) (zoom * P2.x - k + 0.5),
+			      (int) (zoom * P2.y - k + 0.5),
+			      (int) (2 * k + 0.5), (int) (2 * k + 0.5),
+			      360 * 64, 360 * 64);
+		}
+		XSetForeground (display, gc, xred.pixel);
+		int     pol = C -> cores[j] -> polarity;
+		CorePoint B0, B1;
+		CorePoint P = core_point_get (C -> cores[j], i);
+		optimize_boundary_sites (P, pol, im,
+					 &B0, &B1, ratio);
+		points[i].x = RND (B0.x * zoom);
+		points[i].y = RND (B0.y * zoom);
+	    }
+
+	    XDrawLines (display, XtWindow (w), gc, points,
+			C -> cores[j] -> clength, CoordModeOrigin);
+	    for (i = 0; i < C -> cores[j] -> clength; i++) {
+		int     pol = C -> cores[j] -> polarity;
+		CorePoint B0, B1;
+		CorePoint P = core_point_get (C -> cores[j], i);
+		optimize_boundary_sites (P, pol, im,
+					 &B0, &B1, ratio);
+		points[i].x = RND (B1.x * zoom);
+		points[i].y = RND (B1.y * zoom);
+	    }
+
+	    XDrawLines (display, XtWindow (w), gc, points,
+			C -> cores[j] -> clength, CoordModeOrigin);
+	}
+    }
+
+    XSetLineAttributes (XtDisplay (w), gc, (unsigned int) (1.0 + zoom + 0.5),
+			LineSolid, CapButt, JoinRound);
+    for (j = 0; j < C -> cores_used; j++) {
+	for (i = 0; i < C -> cores[j] -> clength; i++) {
+	    P = core_point_get (C -> cores[j], i);
+	    // 10/23/98 MSF -- Added explicit casts.  Should we round?
+	    points[i].x = (short) (P.x * zoom);
+	    points[i].y = (short) (P.y * zoom);
+	}
+	if (C -> cores[j] -> clength > 1)
+	    XDrawLines (display, XtWindow (w), gc, points,
+			C -> cores[j] -> clength, CoordModeOrigin);
+	P0 = core_point_get (C -> cores[j], i - 1);
+	XFillArc (XtDisplay (w), XtWindow (w), gc,
+		  (int) (P0.x * zoom - 4.0),
+		  (int) (P0.y * zoom - 4.0),
+		  (int) (8.0), (int) (8.0),
+		  360 * 64, 360 * 64);
+	P0 = core_point_get (C -> cores[j], 0);
+	XFillArc (XtDisplay (w), XtWindow (w), gc,
+		  (int) (P0.x * zoom - 4.0),
+		  (int) (P0.y * zoom - 4.0),
+		  (int) (8.0), (int) (8.0),
+		  360 * 64, 360 * 64);
+    }
+
+}
+
+// ReadImageFile()
+// Reads in a file using the usr/Image library DIAL and puts it in the
+// global variables im, iminv, imcomp, and disp_im, which must already
+// be initialized.
+void 
+ReadImageFile(char *file) 
+{
+    CoreViewImage main_image;
+
+    if(!main_image.read_from_file(file)) {
+	printf("Exiting.\n");
+	exit(-1);
+    }
+
+    main_image.to_cimage(im);
+
+    cimage_invert (im, iminv);
+    blur_image(im, imcomp, preblur);  // Does a copy if preblur == 0.
+    make_disp_im(imcomp, disp_im, zoom);
+
+}
+
+// blur_image()
+// Blurs the overall image by a gaussian kernel with standard
+// deviation blurval (in pixels).  If blurval == 0.0, just makes copy.
+void
+blur_image(cimage clear, cimage blurry, float blurval)
+{
+    if (preblur != 0.0) {
+	printf ("Blurring image with sigma = %f\n", blurval);
+	cimage blur_kernel = cimage_init();
+	cimage_gauss_im(blur_kernel, 
+			(int) (blurval * 3 + 1), 
+			(int) (blurval * 3 + 1),
+			blurval, 0, 0, 0);
+	cimage_convol_im(clear, blurry, blur_kernel);
+	cimage_destroy (blur_kernel);
+    }
+    else {
+	cimage_copy (im, imcomp);
+    }
+    cimage_max_min(imcomp);
+}
+
+// make_disp_im()
+// Produces an image for display by possibly zooming an image.
+void
+make_disp_im(cimage old_im, cimage disp_im, double zoom)
+{
+    // Does a copy if zoom == 1.
+    cimage_interp (old_im, disp_im, zoom, zoom);
+    cimage_max_min (disp_im);
+}
+
+// load_image()
+// Loads in a new image in response to a seletion by the user.
+void 
+load_image (Widget w, XtPointer client_data,
+	    XmFileSelectionBoxCallbackStruct * cbs) 
+{
+    char   *file = NULL;
+    char    port_file[100];
+
+    XtUnmanageChild (w);
+
+    printf ("In load_image...");
+    if (cbs) {
+	if (!XmStringGetLtoR (cbs -> value, XmSTRING_DEFAULT_CHARSET, &file))
+	    return;
+    }
+
+    ReadImageFile (file);
+
+    pixmap_to_widget (cimage_pixmap (disp_im, &cmap_info, XtDisplay (w)),
+		      imageWidget);
+    XtVaSetValues (imageWidget, XmNheight, cimage_ydim (disp_im),
+		   XmNwidth, cimage_xdim (disp_im),
+		   NULL);
+    XtFree (file);
+    C -> cores_used = 0;
+    draw_cores (C, imageWidget, draw_discs);
+    TABLE_INIT = 0;
+}
+
+// loadCB()
+// Called when Load button is pressed.  Pops up dialog for file
+// selection and calls load_image when selection is made.
+void 
+loadCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    static  Widget dialog;
+    cimage im1 = (cimage) client_data;
+    XmString name, filter;
+    if (!dialog) {
+	name = XmStringCreateSimple ("Directories");
+	filter = XmStringCreateSimple ("*.im");
+
+	dialog =
+	    XmCreateFileSelectionDialog (w, "Port Selection", NULL, 0);
+	XtVaSetValues (dialog,
+		       XmNdirListLabelString, name,
+		       XmNdirMask, filter, NULL);
+	XtAddCallback (dialog, XmNokCallback,
+		       (XtCallbackProc) load_image, NULL);
+	XtAddCallback (dialog, XmNcancelCallback,
+		       (XtCallbackProc) XtUnmanageChild, (XtPointer) NULL);
+	XmStringFree (name);
+	XmStringFree (filter);
+    }
+    XtManageChild (dialog);
+    XtPopup (XtParent (dialog), XtGrabNone);
+}
+
+void 
+display_slice (Core thisCore, cimage thisImage, Widget thisWidget) 
+{
+/*	FILE *output = fopen("strength.txt", "a");*/
+    int     length = core_length (thisCore);
+    int     num_scales = 32;
+    float   scale_max1 = -1,
+	scale_min1 = 1000;
+    float   ds,
+	mag;
+    cimage slice_im = cimage_new (CREAL, length, num_scales, 1);
+    cimage temp = cimage_init ();
+    int     xnum = 32;
+    cimage plane_im, work;
+    float   sliceZoom = 2;
+    MedialnessFunctionDirect myMedialness;
+    int i, j, k;
+    int     med_type = thisCore -> med_type;
+    GC gc;
+    XGCValues values;
+    unsigned long   valuemask = GCForeground | GCFunction | GCPlaneMask;
+    values.foreground = 255;
+    values.function = GXxor;
+    values.plane_mask = 0x80;
+    gc = XCreateGC (XtDisplay (thisWidget), XtWindow (thisWidget), 
+		    valuemask, &values);
+
+    switch (med_type) {
+    case LAP_MEDIALNESS: 
+#ifdef SGI_PARALLEL
+	myMedialness = Lap_Medialness2proc;
+#else
+	myMedialness = Lap_Medialness;
+#endif
+	break;
+    case LPP_MEDIALNESS: 
+	myMedialness = Lpp_Medialness;
+	break;
+    case EDGE_MEDIALNESS: 
+	myMedialness = Edge_Medialness;
+	break;
+    default: 
+	myMedialness = Lap_Medialness;
+    }
+    printf ("Computing slice image for %d points\n", length);
+
+    for (i = 0; i < length; i++) {
+	CorePoint P = core_point_get (thisCore, i);
+	if (P.s > scale_max1)
+	    scale_max1 = P.s;
+	if (P.s < scale_min1)
+	    scale_min1 = P.s;
+    }
+
+    scale_max1 *= 1.5;
+    scale_min1 /= 1.5;
+
+    ds = (scale_max1 - scale_min1) / (float) num_scales;
+    for (i = 0; i < length; i++) {
+	for (j = 0; j < num_scales; j++) {
+	    float   s = scale_max1 - j * ds,
+		medialness;
+	    CorePoint P = core_point_get (thisCore, i);
+	    P.s = s;
+	    medialness = -myMedialness (thisImage, P);
+	    cimage_set (slice_im, i, j, medialness);
+	}
+    }
+    printf ("Creating pixmap\n");
+    cimage_max_min (slice_im);
+    cimage_interp (slice_im, temp, sliceZoom, sliceZoom);
+    cimage_copy (temp, slice_im);
+    cimage_destroy (temp);
+    cimage_max_min (slice_im);
+    pixmap_to_widget (cimage_pixmap (slice_im, &cmap_info, XtDisplay (thisWidget)), thisWidget);
+
+    XtVaSetValues (thisWidget, XmNheight, cimage_ydim (slice_im),
+		   XmNwidth, cimage_xdim (slice_im),
+		   NULL);
+    for (i = 1; i < length; i++) {
+	CorePoint P0 = core_point_get (thisCore, i - 1);
+	CorePoint P1 = core_point_get (thisCore, i);
+	float   s0 = num_scales - num_scales * P0.s / (scale_max1 - scale_min1);
+	float   s1 = num_scales - num_scales * P1.s / (scale_max1 - scale_min1);
+	XDrawLine (XtDisplay (thisWidget), XtWindow (thisWidget), gc,
+		   (int) ((i - 1) * sliceZoom + 0.5), (int) (sliceZoom * s0 + 0.5), (int) (i * sliceZoom + 0.5), (int) (sliceZoom * s1 + 0.5));
+    }
+    xnum = 32;
+    plane_im = cimage_new (CREAL, xnum + 1, num_scales + 1, 1);
+    work = cimage_init ();
+    temp = cimage_init ();
+    for (i = 0; i < length; i += 2) {
+	CorePoint P = core_point_get (thisCore, i);
+	float   scale = P.s;
+	float   scale_max = scale * 1.2,
+	    scale_min = scale / 4;
+	float   x = P.x,
+	    y = P.y,
+	    s = P.s;
+	float   dx = P.dx,
+	    dy = P.dy;
+	float   angle = atan (dx / dy);
+	float   si = num_scales - num_scales * P.s / (scale_max1 - scale_min1);
+	ds = (scale_max - scale_min) / (float) num_scales;
+
+	XDrawLine (XtDisplay (thisWidget), XtWindow (imageWidget),
+		   gc, (int) (zoom * (x - 10 * cos (angle))),
+		   (int) (zoom * (y + 10 * sin (angle))),
+		   (int) (zoom * (x + 10 * cos (angle))),
+		   (int) (zoom * (y - 10 * sin (angle))));
+	XFillArc (XtDisplay (thisWidget), XtWindow (thisWidget), gc,
+		  (int) (i * sliceZoom + 0.5) - 2, (int) (sliceZoom * si + 0.5) - 2,
+		  4, 4, 360 * 64, 360 * 64);
+	for (j = 0; j < num_scales + 1; j++) {
+	    float   s = scale_max - j * ds;
+	    for (k = 0; k < xnum + 1; k++) {
+		float   ii = scale / 4.0 * (k - xnum / 2), med;
+		CorePoint P;
+		P.x = x + ii * cos (angle);
+		P.y = y - ii * sin (angle);
+		P.s = s;
+		med = -myMedialness (thisImage, P);
+		cimage_set (plane_im, k, j, med);
+	    }
+	}
+
+	mag = 4;
+	cimage_interp (plane_im, work, mag, mag);
+	cimage_max_min (work);
+	pixmap_to_widget (cimage_pixmap (work, &cmap_info,
+					 XtDisplay (thisWidget)), cutviewWidget);
+	XDrawArc (XtDisplay (thisWidget), XtWindow (cutviewWidget), gc,
+		  (int) (mag * xnum / 2 - 4),
+		  (int) (mag * ((float) num_scales - (float) num_scales * (scale - scale_min) / (scale_max - scale_min)) - 0.5) - 4, 8, 8, 360 * 64, 360 * 64);
+	if (i == 0)
+	    XtVaSetValues (cutviewWidget, XmNheight, (int) (mag * cimage_ydim (plane_im)),
+			   XmNwidth, (int) (mag * cimage_xdim (plane_im)),
+			   NULL);
+	XDrawLine (XtDisplay (thisWidget), XtWindow (imageWidget),
+		   gc, (int) (zoom * (x - 10 * cos (angle))),
+		   (int) (zoom * (y + 10 * sin (angle))),
+		   (int) (zoom * (x + 10 * cos (angle))),
+		   (int) (zoom * (y - 10 * sin (angle))));
+    }
+    cimage_destroy (slice_im);
+    cimage_destroy (plane_im);
+    cimage_destroy (work);
+}
+
+// Buttonpress()
+// Called when a mouse button is pressed while the pointer is in the
+// image.  If it is button 1, start tracking a core.  If it is 2 or 3,
+// shrink or enlarge the scale circle respectively.
+void 
+Buttonpress (Widget w, XtPointer client_data, XEvent * event,
+	     Boolean * continue_to_dispatch) 
+{
+    int     i;
+    Display * display = XtDisplay (w);
+    CorePoint p, P;
+    p.x = event -> xbutton.x;
+    p.y = event -> xbutton.y;
+    p.s = radius;
+    P.x = p.x / zoom;
+    P.y = p.y / zoom;
+    P.s = p.s;
+
+    P.alpha = alphathresh;
+    P.Mss = Mssthresh;
+    P.gradP = gradPthresh;
+    switch (event -> xbutton.button) {
+    case 1: 
+	reset = 0;
+	cursor = XCreateFontCursor (XtDisplay (w), XC_watch);
+	XDefineCursor (XtDisplay (w), XtWindow (w), cursor);
+	XFreeCursor (XtDisplay (w), cursor);
+	XFlush (XtDisplay (w));
+
+	if (core_stimulate_at_point (imcomp, C, P,
+				     rstep, weak_or_strong, polarity, med_type,
+				     draw_func, &imageWidget)) {
+	    draw_cores (C, imageWidget, draw_discs);
+	    if (DISPLAY_SLICE == TRUE)
+		display_slice (cores_core_get (C, C -> cores_used - 1), 
+			       im, sliceviewWidget);
+	}
+
+
+	XDefineCursor (XtDisplay (w), XtWindow (w), None);
+	break;
+    case 2: 
+	draw_circ (w, (int) p.x, (int) p.y, (int) radius * zoom);
+	radius -= 1;
+	draw_circ (w, (int) p.x, (int) p.y, (int) radius * zoom);
+	break;
+    case 3: 
+	draw_circ (w, (int) p.x, (int) p.y, radius * zoom);
+	radius += 1;
+	draw_circ (w, (int) p.x, (int) p.y, radius * zoom);
+	break;
+    }
+}
+
+// Pointermotion()
+// Moves the scale circle when the mouse moves.
+void 
+Pointermotion (Widget w, XtPointer client_data, XEvent * event,
+	       Boolean * continue_to_dispatch) 
+{
+    Point p;
+    p.x = event -> xbutton.x;
+    p.y = event -> xbutton.y;
+    draw_circ (w, prev_x, prev_y, radius * zoom);
+    draw_circ (w, (int) p.x, (int) p.y, radius * zoom);
+    prev_x = (int) p.x;
+    prev_y = (int) p.y;
+}
+
+void Enternotify (Widget w, XtPointer client_data, XEvent * event,
+		  Boolean * continue_to_dispatch) {
+    Point p;
+    unsigned long   valuemask;
+
+    p.x = event -> xbutton.x;
+    p.y = event -> xbutton.y;
+    draw_circ (w, (int) p.x, (int) p.y, radius * zoom);
+    prev_x = (int) p.x;
+    prev_y = (int) p.y;
+}
+
+void Leavenotify (Widget w, XtPointer client_data, XEvent * event,
+		  Boolean * continue_to_dispatch) {
+    Point p;
+    p.x = event -> xbutton.x;
+    p.y = event -> xbutton.y;
+    draw_circ (w, prev_x, prev_y, radius * zoom);
+}
+
+void Exposenotify (Widget w, XtPointer client_data, XEvent * event,
+		   Boolean * continue_to_dispatch) {
+    draw_cores (C, imageWidget, draw_discs);
+}
+
+
+void samplingCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    rstep = (float) (ptr -> value) / 100.0;
+    printf ("rstep is %f\n", rstep);
+}
+
+void zoomCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    float   linewidth = (2.0 + zoom / 2 + 0.5);
+    cimage work = cimage_init ();
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    zoom = (float) (ptr -> value) / 100.0;
+    printf ("zoom is %f\n", zoom);
+    cimage_interp (im, work, zoom, zoom);
+    cimage_max_min (work);
+    cimage_info ("original", im);
+    cimage_info ("in zoomCB", work);
+    pixmap_to_widget (cimage_pixmap (work, &cmap_info, XtDisplay (w)),
+		      imageWidget);
+    XtVaSetValues (imageWidget, XmNheight, cimage_ydim (work),
+		   XmNwidth, cimage_xdim (work),
+		   NULL);
+    XSetLineAttributes (XtDisplay (w), gc, (unsigned int) linewidth, LineSolid,
+			CapButt, JoinRound);
+    cimage_destroy (work);
+
+}
+
+
+void scale_to_radiusCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    rho = (float) (ptr -> value) / 100.0;
+    printf ("rho is %f\n", rho);
+    draw_cores (C, imageWidget, draw_discs);
+}
+
+void ratioCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    ratio = (float) (ptr -> value) / 10.0;
+    printf ("ratio is %f\n", ratio);
+    draw_cores (C, imageWidget, draw_discs);
+}
+
+
+void resetEqualizer (Widget w) {
+    int     i;
+    cimage backim = cimage_new (CBYTE, 256, 100, 1);
+    static float    imin = 0,
+	imax = 2;
+    float   height = 100;
+    int     bar_width = 40;
+    int     win_width = 256;
+    int     x1,
+	x2;
+    float   y;
+
+    // In the following, cimage_set() requires that y be an int.  I
+    // added the casts to avoid compiler warnings.  Should we be
+    // rounding instead?  Foskey 10/20/98.
+    y = height - height * gradPthresh / (imax - imin);
+    x1 = win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    for (i = x1; i < x2; i++)
+	cimage_set (backim, i, (int) y, 255);
+    y = height - height * alphathresh / (imax - imin);
+    x1 = win_width / 2 - bar_width / 2;
+    x2 = x1 + bar_width;
+    for (i = x1; i < x2; i++)
+	cimage_set (backim, i, (int) y, 255);
+    y = height - height * Mssthresh / (imax - imin);
+    x1 = 5 * win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    for (i = x1; i < x2; i++)
+	cimage_set (backim, i, (int) y, 255);
+
+
+    cimage_max_min (backim);
+
+    pixmap_to_widget (cimage_pixmap (backim, &cmap_info, XtDisplay (w)), w);
+
+    y = height - height / (imax - imin);
+    ;
+    XClearWindow (XtDisplay (w), XtWindow (w));
+    x1 = win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+    x1 = win_width / 2 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+    x1 = 5 * win_width / 6 - bar_width / 2;
+    x2 = x1 + bar_width;
+    XDrawLine (XtDisplay (w), XtWindow (w), gc, x1, (int) y, x2, (int) y);
+    cimage_destroy (backim);
+}
+
+void alphathreshCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    alphathresh = (float) (ptr -> value) / 100.0;
+    resetEqualizer (equalizeWidget);
+}
+
+void MssthreshCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    Mssthresh = (float) (ptr -> value) / 100.0;
+    resetEqualizer (equalizeWidget);
+}
+
+void gradPthreshCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmScaleCallbackStruct * ptr;
+    ptr = (XmScaleCallbackStruct *) call_data;
+    gradPthresh = (float) (ptr -> value) / 100.0;
+    resetEqualizer (equalizeWidget);
+}
+
+
+
+void weak_or_strongCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True)
+	weak_or_strong = 1;
+    else
+	weak_or_strong = 0;
+    printf ("weak_or_strong = %d\n", weak_or_strong);
+}
+
+void discCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True)
+	draw_discs = 1;
+    else
+	draw_discs = 0;
+    printf ("draw_discs = %d\n", draw_discs);
+    draw_cores (C, imageWidget, draw_discs);
+}
+
+void boundariesCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True)
+	draw_boundaries = True;
+    else
+	draw_boundaries = False;
+    printf ("Drawing boundaries is %d\n", draw_boundaries);
+    draw_cores (C, imageWidget, draw_discs);
+}
+
+
+void polarityCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True) {
+	cimage_copy (iminv, imcomp);
+	polarity = 1;
+    }
+    else {
+	cimage_copy (im, imcomp);
+	polarity = -1;
+    }
+    printf ("polarity = %d\n", polarity);
+    TABLE_INIT = 0;
+}
+
+
+void cancelCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    if (C -> cores_used >= 1) {
+	C -> cores_used -= 1;
+	draw_cores (C, imageWidget, draw_discs);
+    }
+    else
+	XBell (XtDisplay (w), 0);
+}
+
+void quitCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    if (save_core == 1) {
+	FILE* fp;
+	if ((fp = fopen(core_file, "r")) != NULL) {
+	    printf("Overwrite existing file %s with "
+		   "list of core points?  ", 
+		   core_file);
+	    char response[4];
+	    scanf("%3s", response);
+	    if (!(response[0] == 'y' || response[0] == 'Y')) {
+		exit(0);
+	    }
+	}
+	fclose(fp);
+	cores_write_to_ascii (C, core_file);
+    }
+    exit (0);
+}
+void LapCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    med_type = LAP_MEDIALNESS;
+    printf ("Computing Laplacian Medialness\n");
+}
+
+void LppCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    med_type = LPP_MEDIALNESS;
+    printf ("Computing Lpp Medialness\n");
+}
+
+void EdgeCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    med_type = EDGE_MEDIALNESS;
+    printf ("Computing Edge Medialness\n");
+}
+
+void leftCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    direction_flag = LEFT;
+}
+
+
+void rightCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    direction_flag = RIGHT;
+}
+
+void bothCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    direction_flag = BOTH;
+}
+
+void coreviewCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True) {
+	XtPopup (coreviewShell, XtGrabNone);
+	XtPopup (traceviewShell, XtGrabNone);
+	XtPopup (sliceviewShell, XtGrabNone);
+	XtPopup (cutviewShell, XtGrabNone);
+	DISPLAY_SLICE = TRUE;
+	SCALE_TRACE = TRUE;
+    }
+    else {
+	XtPopdown (coreviewShell);
+	XtPopdown (traceviewShell);
+	XtPopdown (sliceviewShell);
+	XtPopdown (cutviewShell);
+	DISPLAY_SLICE = FALSE;
+	SCALE_TRACE = FALSE;
+    }
+
+}
+
+void equalizetoggleCB (Widget w, XtPointer client_data, XtPointer call_data) {
+    XmToggleButtonCallbackStruct * ptr;
+    ptr = (XmToggleButtonCallbackStruct *) call_data;
+    if (ptr -> set == True)
+	EQUALIZE = TRUE;
+    else
+	EQUALIZE = FALSE;
+}
+
+int
+main(int argc, char *argv[]) 
+{
+    int     nreg[3];
+    float   clipfrac = 6.0;
+
+    XtAppContext app_context;
+    Widget topLevel, mainWidget, controlWidget, imageFrame, mainFrame;
+    Widget optionFrame, optionForm, buttonForm, buttonFrame, frameTitle,
+	drawFrame, drawForm;
+    Widget medialnessFrame, medialnessForm;
+    Widget samplingWidget, weak_or_strongWidget, LapWidget, 
+	LppWidget, EdgeWidget, polarityWidget, zoomWidget;
+    Widget coreWidget, discWidget, boundaryWidget, scale_to_radiusWidget;
+    Widget sliceviewFrame, sliceviewForm, sliceSlider;
+    Widget cutviewFrame, cutviewForm;
+    Widget traceviewFrame, traceviewForm, traceviewScale;
+    Widget coreviewButton;
+    Widget coreviewFrame, coreviewForm;
+    Widget equalizeFrame, equalizeForm, equalizeToggle;
+    Widget gradPSlider, MssSlider, alphaSlider;
+    Widget leftWidget, rightWidget, bothWidget, ratioWidget;
+    XmString xmstring;
+    XColor xcolor;
+    Display * display;
+
+    if (argc == 1)
+	Usage();
+
+    setbuf (stdout, NULL);
+    printf ("Starting\n");
+
+    // Initializing global core and image variables.
+    C = cores_init (20);
+    im = cimage_init ();
+    iminv = cimage_init ();
+    disp_im = cimage_init();
+    imcomp = cimage_init ();
+
+    tmpDir[0] = '\0';
+
+    ParseCommLine(argc, argv);
+
+    printf ("Initializing ...");
+
+    topLevel = XtInitialize("CoreView V4.0 - Daniel S. Fritsch",
+				   "Coreview",
+				   NULL, 0,
+				   &argc, argv);
+    printf("Top Level created...");
+    display = XtDisplay (topLevel);
+
+    printf("Done\n");
+
+    ReadImageFile(imagefile);
+
+    gc = DefaultGC(XtDisplay (topLevel),
+		   DefaultScreen (XtDisplay (topLevel)));
+    XSetLineAttributes(display, gc, (unsigned int) (1 * zoom + 0.5),
+		       LineSolid, CapRound, JoinRound);
+
+    cmap_info.num_greys = 100;
+    cmap = init_color_table (&cmap_info, display);
+
+    xred.flags = DoRed | DoGreen | DoBlue;
+    xred.red = 65535;
+    xred.green = 0;
+    xred.blue = 0;
+    XAllocColor (display, cmap, &xred);
+
+    xblue.flags = DoRed | DoGreen | DoBlue;
+    xblue.red = 0;
+    xblue.green = 0;
+    xblue.blue = 65535;
+    XAllocColor (display, cmap, &xblue);
+
+    xgreen.flags = DoRed | DoGreen | DoBlue;
+    xgreen.red = 0;
+    xgreen.green = 65535;
+    xgreen.blue = 0;
+    XAllocColor (display, cmap, &xgreen);
+
+    XSetForeground (XtDisplay (topLevel), gc, xred.pixel);
+
+    printf ("Setting up X stuff\n");
+    XtVaSetValues (topLevel,
+		   XmNcolormap, cmap,
+		   XmNallowShellResize, True,
+		   NULL);
+
+    //=====================================================================
+    // If the user pushes the Core View button on the main window,
+    // four windows pop up: Core View, Scale Trace, Slice, and Cut.
+    // The following code instantiates those windows.  The code
+    // controlling the behavior of those windows is elsewhere.
+
+    //---------------------------------------------------------------------
+    // The Core View window just contains a button labelled "Cycle".
+    // Pushing this button results in a segmentation fault.  (It is
+    // supposed to cycle through a movie of the core slices and cut.)
+
+    coreviewShell = XtVaCreatePopupShell ("Core View",
+					  topLevelShellWidgetClass,
+					  topLevel,
+					  NULL);
+
+    coreviewFrame = XtVaCreateManagedWidget (
+	"coreviewFrame",
+	xmFrameWidgetClass,
+	coreviewShell,
+	XmNshadowThickness, 4,
+	NULL);
+
+    coreviewForm = XtVaCreateManagedWidget (
+	"buttonWidget",
+	xmRowColumnWidgetClass,
+	coreviewFrame,
+	NULL);
+
+    CreatePushbutton (coreviewForm, "Cycle", NULL, NULL);
+
+    //---------------------------------------------------------------------
+    // The Scale Trace window plots medialness as a function of scale
+    // as the core tracking progresses.  The Scale Trace display may
+    // be zoomed by a slider.
+
+    traceviewShell = XtVaCreatePopupShell ("Scale trace",
+					   topLevelShellWidgetClass,
+					   topLevel,
+					   NULL);
+
+    traceviewFrame = XtVaCreateManagedWidget (
+	"coreviewFrame",
+	xmFrameWidgetClass,
+	traceviewShell,
+	XmNshadowThickness, 4,
+	NULL);
+
+    traceviewForm = XtVaCreateManagedWidget (
+	"buttonWidget",
+	xmRowColumnWidgetClass,
+	traceviewFrame,
+	NULL);
+
+    traceviewWidget = XtVaCreateManagedWidget ("traceviewWidget",
+					       xmDrawingAreaWidgetClass,
+					       traceviewForm,
+					       XmNheight, 128,
+					       XmNwidth, 256,
+					       XmNbackground,
+					       BlackPixel (XtDisplay 
+							   (topLevel), 0),
+					       NULL);
+
+    // Implement the Zoom slider.
+
+    xmstring = XmStringCreateSimple ("Zoom");
+
+    traceviewScale = XtVaCreateManagedWidget (
+	"traceSlider",
+	xmScaleWidgetClass,
+	traceviewForm,
+	XmNminimum, 50,
+	XmNmaximum, 200,
+	XmNvalue, (int) (100),
+	XmNdecimalPoints, 2,
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, traceviewWidget,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+
+    XmStringFree (xmstring);
+
+    //---------------------------------------------------------------------
+    // Slice is a grayscale window showing medialness as a function of
+    // scale in y and distance along the core in x, with a red line
+    // following the progress of the core.
+
+    sliceviewShell = XtVaCreatePopupShell ("Slice",
+					   topLevelShellWidgetClass,
+					   topLevel,
+					   XmNheight, 128,
+					   XmNwidth, 256,
+					   XmNallowShellResize, True,
+					   NULL);
+
+    sliceviewFrame = XtVaCreateManagedWidget (
+	"coreviewFrame",
+	xmFrameWidgetClass,
+	sliceviewShell,
+	XmNshadowThickness, 4,
+	NULL);
+
+    sliceviewForm = XtVaCreateManagedWidget (
+	"buttonWidget",
+	xmRowColumnWidgetClass,
+	sliceviewFrame,
+	NULL);
+
+    sliceviewWidget = XtVaCreateManagedWidget ("sliceviewWidget",
+					       xmDrawingAreaWidgetClass,
+					       sliceviewForm,
+					       XmNheight, 128,
+					       XmNwidth, 256,
+					       XmNbackground,
+					       BlackPixel (XtDisplay 
+							   (topLevel), 0),
+					       NULL);
+
+    //---------------------------------------------------------------------
+    // Cut is a grayscale window showing medialness as a function of
+    // scale in y and distance orthogonal to the core in x, with
+    // different images as the core is traced out.
+
+    cutviewShell = XtVaCreatePopupShell ("Cut",
+					 topLevelShellWidgetClass,
+					 topLevel,
+					 XmNheight, 128,
+					 XmNwidth, 256,
+					 XmNallowShellResize, True,
+					 NULL);
+
+    cutviewFrame = XtVaCreateManagedWidget (
+	"coreviewFrame",
+	xmFrameWidgetClass,
+	cutviewShell,
+	XmNshadowThickness, 4,
+	NULL);
+
+    cutviewForm = XtVaCreateManagedWidget (
+	"buttonWidget",
+	xmRowColumnWidgetClass,
+	cutviewFrame,
+	NULL);
+
+    cutviewWidget = XtVaCreateManagedWidget ("cutviewWidget",
+					     xmDrawingAreaWidgetClass,
+					     cutviewForm,
+					     XmNheight, 128,
+					     XmNwidth, 256,
+					     XmNbackground,
+					     BlackPixel (XtDisplay 
+							 (topLevel), 0),
+					     NULL);
+
+    //=====================================================================
+    // The main window of the program.
+
+    mainFrame = XtVaCreateManagedWidget (
+	"mainFrame",
+	xmFrameWidgetClass,
+	topLevel,
+	XmNshadowThickness, 4,
+	NULL);
+
+    mainWidget = XtVaCreateManagedWidget (
+	"main",
+	xmFormWidgetClass,
+	mainFrame,
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The image itself.
+
+    imageFrame = XtVaCreateManagedWidget (
+	"imageFrame",
+	xmFrameWidgetClass,
+	mainWidget,
+	XmNshadowThickness, 4,
+	NULL);
+
+    imageWidget = XtVaCreateManagedWidget (
+	"image",
+	xmDrawingAreaWidgetClass,
+	imageFrame,
+	XmNwidth, cimage_xdim (disp_im),
+	XmNheight, cimage_ydim (disp_im),
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The controls, attached to the bottom of the image.  The
+    // controls are divided into four frames, arranged horizontally.
+
+    controlWidget = XtVaCreateWidget (
+	"controlWidget",
+	xmRowColumnWidgetClass,
+	mainWidget,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, imageFrame,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The "Ridge Options" frame.
+
+    optionFrame = XtVaCreateManagedWidget (
+	"optionFrame",
+	xmFrameWidgetClass,
+	controlWidget,
+	XmNshowSeparator, True,
+	NULL);
+
+    optionForm = XtVaCreateWidget (
+	"controlWidget",
+	xmFormWidgetClass,
+	optionFrame,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, imageWidget,
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The "Display Options" frame.
+
+    drawFrame = XtVaCreateManagedWidget (
+	"drawFrame",
+	xmFrameWidgetClass,
+	controlWidget,
+	XmNshowSeparator, True,
+	NULL);
+
+    drawForm = XtVaCreateManagedWidget (
+	"drawForm",
+	xmRowColumnWidgetClass,
+	drawFrame,
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The "Core Options" frame.  Called buttonFrame since it just has
+    // buttons.
+
+    buttonFrame = XtVaCreateManagedWidget (
+	"buttonFrame",
+	xmFrameWidgetClass,
+	controlWidget,
+	XmNshowSeparator, True,
+	NULL);
+
+    buttonForm = XtVaCreateManagedWidget (
+	"buttonWidget",
+	xmRowColumnWidgetClass,
+	buttonFrame,
+	XmNradioBehavior, True,
+	XmNradioAlwaysOne, True,
+	NULL);
+
+    //---------------------------------------------------------------------
+    // The "Ridge Strength" frame.  (Equalizer display.)  Contains a
+    // drawing area, three sliders, and a button.
+
+    equalizeFrame = XtVaCreateManagedWidget (
+	"equalizeFrame",
+	xmFrameWidgetClass,
+	controlWidget,
+	XmNshowSeparator, True,
+	NULL);
+
+    equalizeForm = XtVaCreateWidget (
+	"equalizeForm",
+	xmFormWidgetClass,
+	equalizeFrame,
+	NULL);
+
+    equalizeWidget = XtVaCreateManagedWidget (
+	"equalizeWidget",
+	xmDrawingAreaWidgetClass,
+	equalizeForm,
+	XmNwidth, 256,
+	XmNheight, 100,
+	XmNbackground,
+	BlackPixel (XtDisplay (topLevel), 0),
+	NULL);
+
+    xmstring = XmStringCreateSimple ("gradP");
+
+    gradPSlider = XtVaCreateManagedWidget (
+	"gradPSlider",
+	xmScaleWidgetClass,
+	equalizeForm,
+	XmNminimum, 0,
+	XmNmaximum, 100,
+	XmNvalue, (int) (rstep * 100),
+	XmNdecimalPoints, 2,
+	XmNshowValue, True,
+	XmNvalue, (int) (gradPthresh * 100),
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, equalizeWidget,
+	XmNorientation, XmHORIZONTAL,
+	XmNscaleWidth, 84,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (gradPSlider,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) gradPthreshCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("alpha");
+
+    alphaSlider = XtVaCreateManagedWidget (
+	"alphaSlider",
+	xmScaleWidgetClass,
+	equalizeForm,
+	XmNminimum, 0,
+	XmNmaximum, 100,
+	XmNvalue, (int) (rstep * 100),
+	XmNdecimalPoints, 2,
+	XmNvalue, (int) (alphathresh * 100),
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, equalizeWidget,
+	XmNleftAttachment, XmATTACH_WIDGET,
+	XmNleftWidget, gradPSlider,
+	XmNorientation, XmHORIZONTAL,
+	XmNscaleWidth, 84,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (alphaSlider,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) alphathreshCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Mss");
+
+    MssSlider = XtVaCreateManagedWidget (
+	"MssSlider",
+	xmScaleWidgetClass,
+	equalizeForm,
+	XmNminimum, 0,
+	XmNmaximum, 100,
+	XmNvalue, (int) (rstep * 100),
+	XmNdecimalPoints, 2,
+	XmNvalue, (int) (Mssthresh * 100),
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, equalizeWidget,
+	XmNleftAttachment, XmATTACH_WIDGET,
+	XmNleftWidget, alphaSlider,
+	XmNorientation, XmHORIZONTAL,
+	XmNscaleWidth, 84,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (MssSlider,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) MssthreshCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Show ridge strength");
+    equalizeToggle = XtVaCreateManagedWidget (
+	"equalizeToggle",
+	xmToggleButtonWidgetClass,
+	equalizeForm,
+	XmNlabelString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, gradPSlider,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (equalizeToggle,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) equalizetoggleCB,
+		   (XtPointer) NULL);
+
+
+
+    printf ("Creating push buttons...\n");
+    CreatePushbutton (buttonForm, "QUIT", quitCB, NULL);
+    CreatePushbutton (buttonForm, "Delete last core", cancelCB, NULL);
+    CreatePushbutton (buttonForm, "Load image", loadCB, NULL);
+
+    xmstring = XmStringCreateSimple ("Both");
+    bothWidget = XtVaCreateManagedWidget (
+	"bothWidget",
+	xmToggleButtonWidgetClass,
+	buttonForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (bothWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) bothCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Right");
+    rightWidget = XtVaCreateManagedWidget (
+	"rightWidget",
+	xmToggleButtonWidgetClass,
+	buttonForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (rightWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) rightCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Left");
+    leftWidget = XtVaCreateManagedWidget (
+	"leftWidget",
+	xmToggleButtonWidgetClass,
+	buttonForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (leftWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) leftCB,
+		   (XtPointer) NULL);
+
+    XtVaSetValues (bothWidget, XmNset, True, NULL);
+
+    xmstring = XmStringCreateSimple ("Core View");
+    coreviewButton = XtVaCreateManagedWidget (
+	"coreviewWidget",
+	xmToggleButtonWidgetClass,
+	drawForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (coreviewButton,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) coreviewCB,
+		   (XtPointer) NULL);
+    printf ("Creating toggle widgets...");
+    xmstring = XmStringCreateSimple ("Strong ridge");
+    weak_or_strongWidget = XtVaCreateManagedWidget (
+	"weak_or_strongWidget",
+	xmToggleButtonWidgetClass,
+	optionForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    printf ("Done\n");
+    XtAddCallback (weak_or_strongWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) weak_or_strongCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Draw discs");
+    discWidget = XtVaCreateManagedWidget (
+	"discWidget",
+	xmToggleButtonWidgetClass,
+	drawForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+
+    XtAddCallback (discWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) discCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Draw boundaries");
+    boundaryWidget = XtVaCreateManagedWidget (
+	"boundaryWidget",
+	xmToggleButtonWidgetClass,
+	drawForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+
+    XtAddCallback (boundaryWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) boundariesCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Light/Dark");
+
+    polarityWidget = XtVaCreateManagedWidget (
+	"polarityWidget",
+	xmToggleButtonWidgetClass,
+	optionForm,
+	XmNlabelString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, weak_or_strongWidget,
+	NULL);
+
+    XmStringFree (xmstring);
+
+    XtAddCallback (polarityWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) polarityCB,
+		   (XtPointer) NULL);
+
+
+    xmstring = XmStringCreateSimple ("Sampling");
+
+    samplingWidget = XtVaCreateManagedWidget (
+	"samplingWidget",
+	xmScaleWidgetClass,
+	optionForm,
+	XmNminimum, 0,
+	XmNmaximum, 100,
+	XmNvalue, (int) (rstep * 100),
+	XmNdecimalPoints, 2,
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, polarityWidget,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+    XmStringFree (xmstring);
+    medialnessFrame = XtVaCreateManagedWidget (
+	"medialnessFrame",
+	xmFrameWidgetClass,
+	optionForm,
+	XmNshowSeparator, True,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, samplingWidget,
+	NULL);
+
+    medialnessForm = XtVaCreateManagedWidget (
+	"medialnessForm",
+	xmRowColumnWidgetClass,
+	medialnessFrame,
+	XmNradioBehavior, True,
+	XmNradioAlwaysOne, True,
+	NULL);
+
+    xmstring = XmStringCreateSimple ("Laplacian");
+    LapWidget = XtVaCreateManagedWidget (
+	"LapWidget",
+	xmToggleButtonWidgetClass,
+	medialnessForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (LapWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) LapCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Lpp");
+    LppWidget = XtVaCreateManagedWidget (
+	"LppWidget",
+	xmToggleButtonWidgetClass,
+	medialnessForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (LppWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) LppCB,
+		   (XtPointer) NULL);
+
+    xmstring = XmStringCreateSimple ("Edge");
+    EdgeWidget = XtVaCreateManagedWidget (
+	"EdgeWidget",
+	xmToggleButtonWidgetClass,
+	medialnessForm,
+	XmNlabelString, xmstring,
+	NULL);
+    XmStringFree (xmstring);
+    XtAddCallback (EdgeWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) EdgeCB,
+		   (XtPointer) NULL);
+
+
+    XtVaSetValues (LapWidget, XmNset, True, NULL);
+
+
+
+
+    xmstring = XmStringCreateSimple ("Radius/Scale");
+    scale_to_radiusWidget = XtVaCreateManagedWidget (
+	"scale_to_radiusWidget",
+	xmScaleWidgetClass,
+	drawForm,
+	XmNminimum, 0,
+	XmNmaximum, 200,
+	XmNvalue, (int) (rho * 100),
+	XmNdecimalPoints, 2,
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, discWidget,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+    XmStringFree (xmstring);
+
+    xmstring = XmStringCreateSimple ("Boundary Ratio");
+    ratioWidget = XtVaCreateManagedWidget (
+	"ratioWidget",
+	xmScaleWidgetClass,
+	drawForm,
+	XmNminimum, 0,
+	XmNmaximum, 100,
+	XmNvalue, (int) (ratio / 10),
+	XmNdecimalPoints, 1,
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, discWidget,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+    XmStringFree (xmstring);
+
+    xmstring = XmStringCreateSimple ("Image Zoom");
+
+    zoomWidget = XtVaCreateManagedWidget (
+	"zoomWidget",
+	xmScaleWidgetClass,
+	drawForm,
+	XmNminimum, 50,
+	XmNmaximum, 400,
+	XmNvalue, (int) (100 * zoom),
+	XmNdecimalPoints, 2,
+	XmNshowValue, True,
+	XmNtitleString, xmstring,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, scale_to_radiusWidget,
+	XmNorientation, XmHORIZONTAL,
+	NULL);
+    XmStringFree (xmstring);
+
+
+#if (XmVersion > 1001) 
+    frameTitle = XtVaCreateManagedWidget ("Ridge Options",
+					  xmLabelWidgetClass, optionFrame,
+					  XmNchildType, XmFRAME_TITLE_CHILD,
+					  XmNchildHorizontalAlignment,
+					  XmALIGNMENT_CENTER,
+					  XmNchildVerticalAlignment,
+					  XmALIGNMENT_BASELINE_BOTTOM,
+					  NULL);
+
+    frameTitle = XtVaCreateManagedWidget ("Core Options",
+					  xmLabelWidgetClass, buttonFrame,
+					  XmNchildType, XmFRAME_TITLE_CHILD,
+					  XmNchildHorizontalAlignment,
+					  XmALIGNMENT_CENTER,
+					  XmNchildVerticalAlignment,
+					  XmALIGNMENT_BASELINE_BOTTOM,
+					  NULL);
+
+    frameTitle = XtVaCreateManagedWidget ("Display Options",
+					  xmLabelWidgetClass, drawFrame,
+					  XmNchildType, XmFRAME_TITLE_CHILD,
+					  XmNchildHorizontalAlignment,
+					  XmALIGNMENT_CENTER,
+					  XmNchildVerticalAlignment,
+					  XmALIGNMENT_BASELINE_BOTTOM,
+					  NULL);
+
+    frameTitle = XtVaCreateManagedWidget ("Medialness:",
+					  xmLabelWidgetClass, medialnessFrame,
+					  XmNchildType, XmFRAME_TITLE_CHILD,
+					  XmNchildHorizontalAlignment,
+					  XmALIGNMENT_CENTER,
+					  XmNchildVerticalAlignment,
+					  XmALIGNMENT_BASELINE_BOTTOM,
+					  NULL);
+
+    frameTitle = XtVaCreateManagedWidget ("Ridge strength",
+					  xmLabelWidgetClass, equalizeFrame,
+					  XmNchildType, XmFRAME_TITLE_CHILD,
+					  XmNchildHorizontalAlignment,
+					  XmALIGNMENT_CENTER,
+					  XmNchildVerticalAlignment,
+					  XmALIGNMENT_BASELINE_BOTTOM,
+					  NULL);
+#endif
+
+    XtAddCallback (samplingWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) samplingCB,
+		   (XtPointer) NULL);
+
+    XtAddCallback (zoomWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) zoomCB,
+		   (XtPointer) NULL);
+
+    XtAddCallback (scale_to_radiusWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) scale_to_radiusCB,
+		   (XtPointer) NULL);
+
+    XtAddCallback (ratioWidget,
+		   XmNvalueChangedCallback,
+		   (XtCallbackProc) ratioCB,
+		   (XtPointer) NULL);
+
+    pixmap_to_widget (cimage_pixmap (disp_im, &cmap_info, display),
+		      imageWidget);
+
+    XtAddEventHandler (imageWidget, ButtonPressMask, False,
+		       (XtEventHandler) Buttonpress,
+		       (XtPointer) NULL);
+
+    XtAddEventHandler (imageWidget, PointerMotionMask, False,
+		       (XtEventHandler) Pointermotion,
+		       (XtPointer) NULL);
+
+    XtAddEventHandler (imageWidget, EnterWindowMask, False,
+		       (XtEventHandler) Enternotify,
+		       (XtPointer) NULL);
+
+    XtAddEventHandler (imageWidget, LeaveWindowMask, False,
+		       (XtEventHandler) Leavenotify,
+		       (XtPointer) NULL);
+
+    XtAddEventHandler (imageWidget, ExposureMask, False,
+		       (XtEventHandler) Exposenotify,
+		       (XtPointer) NULL);
+
+    XtManageChild (controlWidget);
+    XtManageChild (optionForm);
+    XtManageChild (equalizeForm);
+
+    printf ("Realizing widgets\n");
+    XtRealizeWidget (topLevel);
+    XtMainLoop ();
+}
+
+void ParseCommLine (int argc, char *argv[]) {
+    char   *s;
+    while (--argc > 0 && (*++argv)[0] == '-') {
+	for (s = argv[0] + 1; *s; s++)
+	    switch (*s) {
+	    case 'p': 
+		if (sscanf(*++argv, "%f", &preblur) == 0) {
+		    cimage_warning("Missing preblur parameter.");
+		    Usage();
+		}
+		argc--;
+		break;
+	    case 'f': 
+		save_core = 1;
+		if (sscanf (*++argv, "%s", core_file) == 0) {
+		    Usage();
+		    cimage_warning("Missing core filename.");
+		}
+		argc--;
+		break;
+	    case 'z': 
+		if (sscanf (*++argv, "%f", &zoom) == 0) {
+		    cimage_warning("Missing zoom factor.");
+		    Usage();
+		}
+		argc--;
+		break;
+	    case 't': 
+		if (sscanf (*++argv, "%s", tmpDir) == 0) {
+		    cimage_warning("Missing temporary directory" 
+				   "specification.");
+		    Usage();
+		}
+		argc--;
+		break;
+	    }
+    }
+    if (sscanf (*argv++, "%s", imagefile) == 0) {
+	cimage_warning("Cannot get input filename");
+	Usage();
+    }
+}
+

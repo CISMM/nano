@@ -1,0 +1,53 @@
+#!/bin/sh
+# the next line restarts using wishx (see man wish) \
+	exec /net/nano/nano3/tcltk.sgi_irix/bin/wish "$0" "$@"
+
+# Read the output of "streamPrint" and create two files:
+# one with the time and the scan line x and y
+# second with the time and the ohm meter resistance measurments.
+
+proc get_line {fid resist_fid scan_fid} {
+    if {[gets $fid line] >= 0} {
+	if {[lindex $line 0] == "OHM_RESISTANCE"} {
+	    scan $line "%*s (%*d, %d:%d, %f, %*f, %*f, %*f)" time_sec time_usec resist
+	    puts $resist_fid "[expr $time_sec + $time_usec*0.000001]\t$resist"
+	} elseif {[lindex $line 0] == "SPM_WINDOW_LINE_DATA"} {
+	    scan $line "%*s (%d, %d, %*d, %*d, %*d, %*d, %d:%d)" x y time_sec time_usec
+	    puts $scan_fid "[expr $time_sec + $time_usec*0.000001]\t$x\t$y"
+	}
+    } else {
+	puts "Close files..."
+	close $fid
+	close $resist_fid
+	close $scan_fid
+	exit
+    }
+}
+
+
+
+
+
+
+
+
+#wm withdraw .
+
+#puts "$argv0 $argv"
+
+if { [llength $argv] != 3 } {
+    puts "Usage: $argv0 instream outresist outscan"
+    exit
+}
+
+puts "Open files..."
+set resist_fid [open "[lindex $argv 1]" "w"]
+set scan_fid [open "[lindex $argv 2]" "w"]
+
+puts $resist_fid "Time\tResistance"
+puts $scan_fid "Time\tScanX\tScany"
+
+set fid [open "|streamPrint [lindex $argv 0]" "r"]
+
+fileevent $fid readable "get_line $fid $resist_fid $scan_fid"
+

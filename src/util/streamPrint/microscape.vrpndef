@@ -1,0 +1,187 @@
+VRPN_MESSAGE InContactMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+}
+
+VRPN_MESSAGE InOscillatingMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+  float32 amplitude
+}
+
+VRPN_MESSAGE ReportScanrateNM {
+  float32 rate
+}
+
+VRPN_MESSAGE HelloMessage {
+  char nm [4]
+  char scopeName [64]
+  int32 majorVersion
+  int32 minorVersion
+}
+
+VRPN_MESSAGE ReportPID {
+  float32 P
+  float32 I
+  float32 D
+}
+
+VRPN_MESSAGE ReportGridSize {
+  int32 x
+  int32 y
+}
+
+VRPN_MESSAGE ReportScanRegionNM {
+  float32 xmin
+  float32 ymin
+  float32 xmax
+  float32 ymax
+  float32 angle
+}
+
+VRPN_MESSAGE ReportMaxScanRangeNM {
+  float32 xmin
+  float32 ymin
+  float32 zmin
+  float32 xmax
+  float32 ymax
+  float32 zmax
+}
+
+VRPN_MESSAGE SlowScanPause {
+}
+
+VRPN_MESSAGE SlowScanResume {
+}
+
+VRPN_MESSAGE ReportScanWindow {
+  int32 grid_xmin
+  int32 grid_ymin
+  int32 grid_xmax
+  int32 grid_ymax
+}
+
+
+VRPN_MESSAGE ReportScanDatasets {
+  int32 count
+  struct ScanDataset {
+    char name [64]
+    char units [64]
+    float32 offset
+    float32 scale
+  } datasets [count]
+}
+
+VRPN_MESSAGE WindowLineData {
+  int32 x
+  int32 y
+  int32 dx
+  int32 dy
+  int32 reports
+  int32 fields
+  int32 sec
+  int32 usec
+  float32 data [reports][fields]
+}
+
+VRPN_MESSAGE ReportPointDatasets {
+  int32 count
+  struct PointDataset {
+    char name [64]
+    char units [64]
+    int32 numSamples
+    float32 offset
+    float32 scale
+  } datasets [count]
+}
+
+VRPN_MESSAGE InModifyMode {
+}
+
+VRPN_MESSAGE InImageMode {
+}
+
+VRPN_MESSAGE InSharpStyle {
+}
+
+VRPN_MESSAGE InSewingStyle {
+  float32 setpoint
+  float32 bottomDelay
+  float32 topDelay
+  float32 pullBackDistance
+  float32 moveDistance
+  float32 moveRate
+  float32 maxDistanceToApproach
+}
+
+VRPN_MESSAGE InForceCurveStyle {
+  float32 setpoint
+  float32 startDelay
+  float32 zStart
+  float32 zEnd
+  float32 zPullback
+  float32 forceLimit
+  float32 moveDist
+  int32 numSamples
+  int32 numHalfcycles
+  float32 sampleSpeed
+  float32 pullbackSpeed
+  float32 startSpeed
+  float32 feedbackSpeed
+  int32 averageNum
+  float32 sampleDelay
+  float32 pullbackDelay
+  float32 feedbackDelay
+}
+
+VRPN_MESSAGE InDirectZControl {
+  float32 max_z_step
+  float32 max_xy_step
+  float32 min_setpoint
+  float32 max_setpoint
+  float32 max_lateral_force
+  float32 freespace_norm_force
+  float32 freespace_lat_force
+}
+
+VRPN_MESSAGE PointData {
+  float32 x
+  float32 y
+  int32 sec
+  int32 usec
+  int32 reports
+  float32 data [reports]
+}
+
+VRPN_MESSAGE ForceCurveData {
+  float32 x
+  float32 y
+  int32 numSamples
+  int32 numHalfcycles
+  int32 sec
+  int32 usec
+  struct FCData {
+    float32 z
+    float32 d [numHalfcycles]
+  } samples [numSamples]
+}
+
+VRPN_MESSAGE ReportRelaxTimes {
+  int32 minTime
+  int32 sepTime
+}
+
+VRPN_MESSAGE StartingToRelax {
+  int32 sec
+  int32 usec
+}
+
+VRPN_MESSAGE TopoFileHeader {
+  int32 length
+  char header [length]
+}
+

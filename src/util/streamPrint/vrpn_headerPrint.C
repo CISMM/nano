@@ -1,0 +1,380 @@
+// must come before tcl/tk includes.
+#include <vrpn_Connection.h>
+#include <vrpn_FileConnection.h>
+
+#ifdef sgi
+#include <unistd.h>
+#endif
+#include	<stdlib.h>
+#include <signal.h>
+#include	<stdio.h>
+#include	<string.h>
+
+
+static void parseArguments(int argc, char **argv);
+static void handle_cntl_c(int );
+
+
+static 	vrpn_Connection * connection = NULL;
+static   vrpn_File_Connection *fcon = NULL;
+
+//--------------------------------------------------------------------------
+// Handles VRPN messages
+
+int handle_any_print (void * userdata, vrpn_HANDLERPARAM p) {
+  vrpn_Connection * c = (vrpn_Connection *) userdata;
+ struct timeval el;
+ connection->time_since_connection_open(&el);
+  printf("Msg \"%s\" from \"%s\" time %ld.%ld timestamp %ld.%ld\n",
+          c->message_type_name(p.type), c->sender_name(p.sender),
+	  el.tv_sec, el.tv_usec, p.msg_time.tv_sec, p.msg_time.tv_usec);
+
+  return 0;  // non-error completion
+}
+
+// Argument handling
+void usage(char *program_name){
+	fprintf(stderr, "Error: bad arguments.\n");
+	fprintf(stderr, "usage: %s [-i streamfile]",program_name);
+	fprintf(stderr, " [-d device]\n");
+	exit(-1);
+}
+
+static int isReadingStreamFile = 0;
+static char * device_name = NULL;
+void parseArguments(int argc, char **argv){
+	int i;
+	for (i = 1; i < argc; i++){
+	    if (!strcmp(argv[i], "-d")){
+			if (++i >= argc) usage(argv[0]);
+			device_name = strdup(argv[i]);
+		}
+		else if (!strcmp(argv[i], "-i")){
+			if (++i >= argc) usage(argv[0]);
+			isReadingStreamFile = 1;
+			device_name = new char[14 + strlen(argv[i])+1];
+			sprintf(device_name,"file:%s", argv[i]);
+		}
+		else
+			usage(argv[0]);
+	}
+	printf( "Device_name is %s\n", device_name);
+}
+
+int	main(unsigned argc, char *argv[])
+{
+    
+    parseArguments(argc, argv);
+    
+    // Initialize our connections to the things we are going to control.
+    if (device_name == NULL) {
+	return -1;
+    } 
+    if( (connection = vrpn_get_connection_by_name(device_name)) == NULL) {
+       // connection failed. VRPN prints error message.
+      return -1;
+    }
+
+   if (isReadingStreamFile){
+       fcon = connection->get_File_Connection();
+       if (fcon==NULL) {
+	   fprintf(stderr, "Error: expected but didn't get file connection\n");
+	   exit(-1);
+       }
+       fcon->set_replay_rate(1000.0);
+   }
+
+   signal(SIGINT, handle_cntl_c);
+
+
+	// DEBUG print all messages, incoming and outgoing, 
+	// sent over our VRPN connection
+ 	connection->register_handler(vrpn_ANY_TYPE, handle_any_print,
+ 				    connection);
+         // defaults to vrpn_SENDER_ANY
+// 	struct timeval newStreamTime;
+// 	newStreamTime.tv_sec = 500;
+// 	newStreamTime.tv_usec = 0L;
+	//fcon->play_to_time(newStreamTime);
+
+     connection->register_message_type
+         ("clock query");
+     connection->register_message_type
+         ("clock reply");
+
+     connection->register_message_type
+         ("nmm Microscope SetRegionNM");
+     connection->register_message_type
+         ("nmm Microscope ScanTo");
+     connection->register_message_type
+         ("nmm Microscope ScanToZ");
+     connection->register_message_type
+         ("nmm Microscope ZagTo");
+     connection->register_message_type
+         ("nmm Microscope SetScanStyle");
+     connection->register_message_type
+         ("nmm Microscope SetSlowScan");
+     connection->register_message_type
+         ("nmm Microscope SetStdDelay");
+     connection->register_message_type
+         ("nmm Microscope SetStPtDelay");
+     connection->register_message_type
+         ("nmm Microscope SetRelax");
+     connection->register_message_type
+         ("nmm Microscope RecordResistance");
+     connection->register_message_type
+         ("nmm Microscope SetStdDevParams");
+     connection->register_message_type
+         ("nmm Microscope SetScanWindow");
+     connection->register_message_type
+         ("nmm Microscope ResumeWindowScan");
+     connection->register_message_type
+         ("nmm Microscope SetGridSize");
+     connection->register_message_type
+         ("nmm Microscope SetOhmmeterSampleRate");
+     connection->register_message_type
+         ("nmm Microscope EnableAmp");
+     connection->register_message_type
+         ("nmm Microscope DisableAmp");
+     connection->register_message_type
+         ("nmm Microscope EnableVoltsource");
+     connection->register_message_type
+         ("nmm Microscope DisableVoltsource");
+     connection->register_message_type
+         ("nmm Microscope SetRateNM");
+     connection->register_message_type
+         ("nmm Microscope SetMaxMove");
+     connection->register_message_type
+         ("nmm Microscope SetModForce");
+     connection->register_message_type
+         ("nmm Microscope DrawSharpLine");
+     connection->register_message_type
+         ("nmm Microscope DrawSweepLine");
+     connection->register_message_type
+         ("nmm Microscope DrawSweepArc");
+     connection->register_message_type
+         ("nmm Microscope GetNewPointDatasets");
+     connection->register_message_type
+         ("nmm Microscope GetNewScanDatasets");
+     connection->register_message_type
+         ("nmm Microscope Echo");
+	// Tiger	HACK HACK HACK 	added two new message: d_MarkModify_type and d_MarkImage_type
+     connection->register_message_type
+	("nmm Microscope MarkModify");
+     connection->register_message_type
+        ("nmm Microscope MarkImage");
+     connection->register_message_type
+         ("nmm Microscope Shutdown");
+     connection->register_message_type
+         ("nmm Microscope QueryScanRange");
+     connection->register_message_type
+         ("nmm Microscope QueryStdDevParams");
+     connection->register_message_type
+         ("nmm Microscope QueryPulseParams");
+     connection->register_message_type
+         ("nmm Microscope VoltsourceEnabled");
+     connection->register_message_type
+         ("nmm Microscope VoltsourceDisabled");
+     connection->register_message_type
+         ("nmm Microscope AmpEnabled");
+     connection->register_message_type
+         ("nmm Microscope AmpDisabled");
+     connection->register_message_type
+         ("nmm Microscope StartingToRelax");
+     connection->register_message_type
+         ("nmm Microscope RelaxSet");
+     connection->register_message_type
+         ("nmm Microscope StdDevParameters");
+     connection->register_message_type
+         ("nmm Microscope WindowLineData");
+     connection->register_message_type
+         ("nmm Microscope WindowScanNM");
+     connection->register_message_type
+         ("nmm Microscope WindowBackscanNM");
+     connection->register_message_type
+         ("nmm Microscope PointResultNM");
+     connection->register_message_type
+         ("nmm Microscope PointResultData");
+     connection->register_message_type
+         ("nmm Microscope BottomPunchResultData");
+     connection->register_message_type
+         ("nmm Microscope TopPunchResultData");
+     connection->register_message_type
+         ("nmm Microscope ZigResultNM");
+     connection->register_message_type
+         ("nmm Microscope BluntResultNM");
+     connection->register_message_type
+         ("nmm Microscope ScanRange");
+     connection->register_message_type
+         ("nmm Microscope SetRegionCompleted");
+     connection->register_message_type
+         ("nmm Microscope SetRegionClipped");
+     connection->register_message_type
+         ("nmm Microscope ResistanceFailure");
+     connection->register_message_type
+         ("nmm Microscope Resistance");
+     connection->register_message_type
+         ("nmm Microscope Resistance2");
+     connection->register_message_type
+         ("nmm Microscope ReportSlowScan");
+     connection->register_message_type
+         ("nmm Microscope ScanParameters");
+     connection->register_message_type
+         ("nmm Microscope HelloMessage");
+     connection->register_message_type
+         ("nmm Microscope ClientHello");
+     connection->register_message_type
+         ("nmm Microscope ScanDataset");
+     connection->register_message_type
+         ("nmm Microscope PointDataset");
+     connection->register_message_type
+         ("nmm Microscope PidParameters");
+     connection->register_message_type
+         ("nmm Microscope ScanrateParameter");
+     connection->register_message_type
+         ("nmm Microscope ReportGridSize");
+     connection->register_message_type
+         ("nmm Microscope ServerPacketTimestamp");
+     connection->register_message_type
+         ("nmm Microscope TopoFileHeader");
+     connection->register_message_type
+	 ("nmm Microscope ForceCurveData");
+
+     connection->register_message_type
+	 ("nmm Microscope MaxSetpointExceeded");
+
+     connection->register_message_type
+         ("nmm Microscope Clark RecvTimestamp");
+     connection->register_message_type
+         ("nmm Microscope Clark FakeSendTimestamp");
+     connection->register_message_type
+         ("nmm Microscope Clark UdpSeqNum");
+
+     connection->register_message_type
+        ("nmm Microscope AFM EnterTappingMode");
+     connection->register_message_type
+        ("nmm Microscope AFM EnterContactMode");
+     connection->register_message_type
+        ("nmm Microscope AFM EnterDirectZControl");
+     connection->register_message_type
+        ("nmm Microscope AFM EnterSewingStyle");
+     connection->register_message_type
+	("nmm Microscope AFM EnterSpectroscopyMode");
+     connection->register_message_type
+        ("nmm Microscope AFM SetContactForce");
+     connection->register_message_type
+        ("nmm Microscope AFM QueryContactForce");
+
+     connection->register_message_type
+        ("nmm Microscope AFM InTappingMode");
+     connection->register_message_type
+        ("nmm Microscope AFM InContactMode");
+     connection->register_message_type
+        ("nmm Microscope AFM InDirectZControl");
+     connection->register_message_type
+        ("nmm Microscope AFM InSewingStyle");
+     connection->register_message_type
+	("nmm Microscope AFM InSpectroscopyMode");
+     connection->register_message_type
+        ("nmm Microscope AFM ForceParameters");
+     connection->register_message_type
+        ("nmm Microscope AFM BaseModParameters");
+     connection->register_message_type
+        ("nmm Microscope AFM ForceSettings");
+     connection->register_message_type
+        ("nmm Microscope AFM InModModeT");
+     connection->register_message_type
+        ("nmm Microscope AFM InImgModeT");
+     connection->register_message_type
+        ("nmm Microscope AFM InModMode");
+     connection->register_message_type
+        ("nmm Microscope AFM InImgMode");
+     connection->register_message_type
+        ("nmm Microscope AFM ModForceSet");
+     connection->register_message_type
+        ("nmm Microscope AFM ImgForceSet");
+     connection->register_message_type
+        ("nmm Microscope AFM ModForceSetFailure");
+     connection->register_message_type
+        ("nmm Microscope AFM ImgForceSetFailure");
+     connection->register_message_type
+        ("nmm Microscope AFM ModSet");
+     connection->register_message_type
+        ("nmm Microscope AFM ImgSet");
+     connection->register_message_type
+        ("nmm Microscope AFM ForceSet");
+     connection->register_message_type
+        ("nmm Microscope AFM ForceSetFailure");
+
+     connection->register_message_type
+        ("nmm Microscope STM SampleApproach");
+     connection->register_message_type
+        ("nmm Microscope STM SetBias");
+     connection->register_message_type
+        ("nmm Microscope STM SampleApproachNM");
+     connection->register_message_type
+        ("nmm Microscope STM SetPulsePeak");
+     connection->register_message_type
+        ("nmm Microscope STM SetPulseDuration");
+     connection->register_message_type
+        ("nmm Microscope STM PulsePoint");
+     connection->register_message_type
+        ("nmm Microscope STM PulsePointNM");
+
+     connection->register_message_type
+        ("nmm Microscope STM PulseParameters");
+     connection->register_message_type
+        ("nmm Microscope STM PulseCompletedNM");
+     connection->register_message_type
+        ("nmm Microscope STM PulseFailureNM");
+     connection->register_message_type
+        ("nmm Microscope STM PulseCompleted");
+     connection->register_message_type
+        ("nmm Microscope STM PulseFailure");
+     connection->register_message_type
+        ("nmm Microscope STM TunnellingAttained");
+     connection->register_message_type
+        ("nmm Microscope STM TunnellingAttainedNM");
+     connection->register_message_type
+        ("nmm Microscope STM TunnellingFailure");
+     connection->register_message_type
+        ("nmm Microscope STM ApproachComplete");
+
+    // Scanline mode (client-->server)
+     connection->register_message_type
+	("nmm Microscope EnterScanlineMode");
+     connection->register_message_type
+        ("nmm Microscope RequestScanLine");
+
+    // Scanline mode (server-->client)
+     connection->register_message_type
+        ("nmm Microscope InScanlineMode");
+     connection->register_message_type
+        ("nmm Microscope ScanlineData");
+     int done = 0;
+     while (!done) {
+	    sleep(0.01);
+      
+	    //------------------------------------------------------------
+	    // Send/receive message from our vrpn connections.
+	    connection->mainloop();
+	    //fprintf(stderr, "After mainloop, fcon is doing %d.\n", fcon->doing_okay());
+	    if (fcon) {
+		if (fcon->eof())
+		    done = 1;
+	    }
+     }
+    if (connection) 
+        delete connection; // needed to make stream file write out
+     
+     return 0;
+}
+
+
+void handle_cntl_c(int ){
+    fprintf(stderr, "Received ^C signal, shutting down and saving log file\n");
+    if (connection) 
+        delete connection; // needed to make stream file write out
+
+    exit(-1);
+}

@@ -1,0 +1,15 @@
+# Chris Weigle 12/14/99
+
+Variables you may want set in your shell:
+
+   MY_NANO_SRC_DIR -- the directory containing your checked-out copy of
+                      the nano source tree (if not the default:
+                      /afs/cs.unc.edu/project/stm/src/<login>).
+                      A must for pc_cygwin!
+                      On pc_*, a good way to do this is to cd to the
+                      parent (where nano is checked-out) and set this
+                      to `pwd -P`.
+
+   MY_NANO_OBJ_DIR -- where to put object files (if not the detault:
+                      /afs/cs.unc.edu/project/stm/src/not_backed_up).
+                      A must for pc_cygwin!

@@ -1,0 +1,869 @@
+/****************************************************************************\
+
+  Copyright 1999 The University of North Carolina at Chapel Hill.
+  All Rights Reserved.
+
+  Permission to use, copy, modify and distribute this software and its
+  documentation for educational, research and non-profit purposes,
+  without fee, and without a written agreement is hereby granted,
+  provided that the above copyright notice and the following three
+  paragraphs appear in all copies.
+
+  IN NO EVENT SHALL THE UNIVERSITY OF NORTH CAROLINA AT CHAPEL HILL BE
+  LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+  CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE
+  USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY
+  OF NORTH CAROLINA HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH
+  DAMAGES.
+
+  THE UNIVERSITY OF NORTH CAROLINA SPECIFICALLY DISCLAIM ANY
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+  PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+  NORTH CAROLINA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
+  UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+  The author may be contacted via:
+
+  US Mail:             Hans Weber
+                       Department of Computer Science
+                       Sitterson Hall, CB #3175
+                       University of N. Carolina
+                       Chapel Hill, NC 27599-3175
+
+  Phone:               (919) 962 - 1928
+
+  EMail:               weberh@cs.unc.edu
+
+\****************************************************************************/
+
+/*****************************************************************************\
+  util.c
+  --
+  Description : the header file has some nice macros and typedefs, this file
+                just defines an object to effect a change before the "main"
+		routine runs (it sets up a new new_handler)
+
+		NOTE: if you never call any routine in this file, then
+		      the BeforeMain obj is not created, and the new 
+		      handler is not redirected.  ASSERT calls 
+                      do_exit, so this should not be a problem from
+		      now on.
+
+
+		KEY: When using this lib and vrpn in windows,
+		     gettimeofday will be mulitply defined.
+		     To avoid this problem,#define USE_VRPN_CLOCK.
+		     This will force all calls to use the 
+		     vrpn version, which will ensure that 
+		     all timestamps are in the same time frame.
+
+  ----------------------------------------------------------------------------
+  Author: weberh
+  Created: Wed Sep 17 03:30:10 1997
+  Revised: Thu May 14 10:10:51 1998 by weberh
+  $Source$
+  $Locker$
+  $Revision$
+\*****************************************************************************/
+
+#include "myUtil.h"
+#include <math.h>
+#include <sys/time.h>
+
+// set up a handler for when new fails
+#if defined(_WIN32) && !defined(__CYGWIN__)
+int my_new_handler( size_t cBytes ) {
+  cerr << "\nnew:: free store is exhausted (tried to new " << cBytes <<
+    " bytes).  Exiting ..." NL; 
+  do_exit(-1); 
+  return -1;
+}
+#else
+void my_new_handler( void ) { 
+  cerr << "\nnew:: free store is exhausted.  Exiting ..." NL; 
+  do_exit(-1); 
+}
+#endif
+
+#ifdef sgi
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+void do_exit( int iExitCode ) {
+#if defined(sgi) && defined(_DEBUG)
+  cerr << "Util:do_exit: process/thread " << getpid() << " exited." NL;
+#endif
+  exit(iExitCode);
+}
+
+// includes for numProcessors call
+#ifdef sgi
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#endif
+
+int numProcessors() {
+  int cProcessors=-1;
+#ifdef sgi
+  if ((cProcessors = (int) sysconf(_SC_NPROC_ONLN)) < 0) {
+    perror("Util:numProcessors:");
+  }
+#elif defined(_WIN32)
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  cProcessors = (int) si.dwNumberOfProcessors;
+#else
+  cerr << "Util:numProcessors: not implemented on this architecture." NL;
+#endif
+#ifdef _DEBUG
+  cerr << "Util:numProcessors: " << cProcessors << " detected." NL;
+#endif
+  return cProcessors;
+}
+
+////////////////////////////////////////////
+// These calls switch from input
+// endianness eIn to current endianness
+////////////////////////////////////////////
+
+unsigned short usEndian( unsigned short us, Endianness eIn ) {
+  if (eIn==ENDIANNESS) {
+    return us;
+  }
+  unsigned short usTemp;
+  ((char *)&usTemp)[0] = ((char *)&us)[1];
+  ((char *)&usTemp)[1] = ((char *)&us)[0];
+  return usTemp;
+}
+
+unsigned long ulEndian( unsigned long ul, Endianness eIn ) {
+  if (eIn==ENDIANNESS) {
+    return ul;
+  }
+  unsigned long ulTemp;
+  ((char *)&ulTemp)[0] = ((char *)&ul)[3];
+  ((char *)&ulTemp)[1] = ((char *)&ul)[2];
+  ((char *)&ulTemp)[2] = ((char *)&ul)[1];
+  ((char *)&ulTemp)[3] = ((char *)&ul)[0];
+  return ulTemp;
+}
+
+float fEndian( float f, Endianness eIn ) {
+  if (eIn==ENDIANNESS) {
+    return f;
+  }
+  float fTemp;
+  ((char *)&fTemp)[0] = ((char *)&f)[3];
+  ((char *)&fTemp)[1] = ((char *)&f)[2];
+  ((char *)&fTemp)[2] = ((char *)&f)[1];
+  ((char *)&fTemp)[3] = ((char *)&f)[0];
+  return fTemp;
+}
+
+double dEndian( double d, Endianness eIn ) {
+  if (eIn==ENDIANNESS) {
+    return d;
+  }
+  double dTemp;
+  ((char *)&dTemp)[0] = ((char *)&d)[7];
+  ((char *)&dTemp)[1] = ((char *)&d)[6];
+  ((char *)&dTemp)[2] = ((char *)&d)[5];
+  ((char *)&dTemp)[3] = ((char *)&d)[4];
+  ((char *)&dTemp)[4] = ((char *)&d)[3];
+  ((char *)&dTemp)[5] = ((char *)&d)[2];
+  ((char *)&dTemp)[6] = ((char *)&d)[1];
+  ((char *)&dTemp)[7] = ((char *)&d)[0];
+  return dTemp;
+}
+
+/// These are binary writing functions and reading functions
+
+ostream& write( ostream& os, void * const & pv ) {
+  return os.write( (char *)&pv, sizeof(pv) );
+}
+
+ostream& write( ostream& os, const char& ch ) {
+  return os.write( &ch, sizeof(ch) );
+}
+
+ostream& write( ostream& os, const unsigned char& uch ) {
+  return os.write( (char *)&uch, sizeof(uch) );
+}
+
+ostream& write( ostream& os, const int& i ) {
+  return os.write( (char *)&i, sizeof(i) );
+}
+
+ostream& write( ostream& os, const unsigned int& ui ) {
+  return os.write( (char *)&ui, sizeof(ui) );
+}
+
+ostream& write( ostream& os, const float& f ) {
+  return os.write( (char *)&f, sizeof(f) );
+}
+
+ostream& write( ostream& os, const double& d ) {
+  return os.write( (char *)&d, sizeof(d) );
+}
+
+istream& read( istream& is, char& ch ) {
+  return is.read( (char *)&ch, sizeof(ch) );
+}
+
+istream& read( istream& is, unsigned char& uch ) {
+  return is.read( (char *)&uch, sizeof(uch) );
+}
+
+istream& read( istream& is, int& i ) {
+  return is.read( (char *)&i, sizeof(i) );
+}
+
+istream& read( istream& is, unsigned int& ui ) {
+  return is.read( (char *)&ui, sizeof(ui) );
+}
+
+istream& read( istream& is, float& f ) {
+  return is.read( (char *)&f, sizeof(f) );
+}
+
+istream& read( istream& is, double& d ) {
+  return is.read( (char *)&d, sizeof(d) );
+}
+
+Boolean gGlDebug=FALSE;
+
+void glDebugOn() {
+  gGlDebug=TRUE;
+}
+
+void glDebugOff() {
+  gGlDebug=FALSE;
+}
+
+// timeval math ops
+
+struct timeval operator+( const struct timeval& tv1, 
+			  const struct timeval& tv2 ) {
+  return timevalSum( tv1, tv2 );
+}
+
+struct timeval operator-( const struct timeval& tv1, 
+			  const struct timeval& tv2 ) {
+  return timevalDiff( tv1, tv2 );
+}
+
+// Calcs the sum of tv1 and tv2.  Returns the sum in a timeval struct.
+// Calcs negative times properly, with the appropriate sign on both tv_sec
+// and tv_usec (these signs will match unless one of them is 0).
+// NOTE: both abs(tv_usec)'s must be < 1000000 (ie, normal timeval format)
+struct timeval timevalSum( const struct timeval& tv1, 
+			   const struct timeval& tv2 ) {
+  struct timeval tvSum=tv1;
+
+  tvSum.tv_sec += tv2.tv_sec;
+  tvSum.tv_usec += tv2.tv_usec;
+
+  // do borrows, etc to get the time the way i want it: both signs the same,
+  // and abs(usec) less than 1e6
+  if (tvSum.tv_sec>0) {
+    if (tvSum.tv_usec<0) {
+      tvSum.tv_sec--;
+      tvSum.tv_usec += 1000000;
+    } else if (tvSum.tv_usec >= 1000000) {
+      tvSum.tv_sec++;
+      tvSum.tv_usec -= 1000000;
+    }
+  } else if (tvSum.tv_sec<0) {
+    if (tvSum.tv_usec>0) {
+      tvSum.tv_sec++;
+      tvSum.tv_usec -= 1000000;
+    } else if (tvSum.tv_usec <= -1000000) {
+      tvSum.tv_sec--;
+      tvSum.tv_usec += 1000000;
+    }
+  } else {
+    // == 0, so just adjust usec
+    if (tvSum.tv_usec >= 1000000) {
+      tvSum.tv_sec++;
+      tvSum.tv_usec -= 1000000;
+    } else if (tvSum.tv_usec <= -1000000) {
+      tvSum.tv_sec--;
+      tvSum.tv_usec += 1000000;
+    }
+  }
+
+  return tvSum;
+}
+
+
+// Calcs the diff between tv1 and tv2.  Returns the diff in a timeval struct.
+// Calcs negative times properly, with the appropriate sign on both tv_sec
+// and tv_usec (these signs will match unless one of them is 0)
+struct timeval timevalDiff( const struct timeval& tv1, 
+			    const struct timeval& tv2 ) {
+  struct timeval tv;
+
+  tv.tv_sec = -tv2.tv_sec;
+  tv.tv_usec = -tv2.tv_usec;
+
+  return timevalSum( tv1, tv );
+}
+
+double timevalToMsecs( const struct timeval& tv ) {
+  // problem with ms optimizations, so temp var
+  // double d;
+  // d =  tv.tv_sec*1000.0 + tv.tv_usec/1000.0;
+  //  return d;
+  return tv.tv_sec*1000.0 + tv.tv_usec/1000.0;
+}
+
+struct timeval timevalFromMsecs( const double dMsecs ) {
+  struct timeval tv;
+  tv.tv_sec = (long) floor(dMsecs/1000.0);
+  tv.tv_usec = (long) ((dMsecs/1000.0 - tv.tv_sec)*1e6);
+  return tv;
+}
+
+#ifndef USE_VRPN_CLOCK
+// this is so that all calls use the same gettimeofday --
+// hopefully the one from vrpn
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <iostream.h>
+#include <math.h>
+
+// utility routines to read the pentium time stamp counter
+// QueryPerfCounter drifts too much -- others have documented this
+// problem on the net
+
+// This is all based on code extracted from the hiball tracker cib lib
+
+// 200 mhz pentium -- we change this based on our calibration
+static __int64 FREQUENCY = 200000000;
+
+// Helium to histidine
+// __int64 FREQUENCY = 199434500;
+
+// tori -- but queryperfcounter returns this for us
+// __int64 FREQUENCY = 198670000;
+
+// ReaD Time Stamp Counter
+#define rdtsc(li) { _asm _emit 0x0f \
+  _asm _emit 0x31 \
+  _asm mov li.LowPart, eax \
+  _asm mov li.HighPart, edx \
+}
+
+ /*
+  * calculate the time stamp counter register frequency (clock freq)
+  */
+#pragma optimize("",off)
+static int adjustFrequency(void)
+{
+  const int loops = 2;
+  const int tPerLoop = 400; // the longer the better -- 4000 seems good
+  cerr.precision(4);
+  cerr.setf(ios::fixed);
+  cerr << "gettimeofday: determining clock frequency ...";
+
+  LARGE_INTEGER startperf, endperf;
+  LARGE_INTEGER perffreq;
+
+  QueryPerformanceFrequency( &perffreq );
+  
+  // don't optimize away these variables
+  double sum = 0;
+  volatile LARGE_INTEGER liStart, liEnd;
+
+  DWORD dwPriorityClass=GetPriorityClass(GetCurrentProcess());
+  int iThreadPriority=GetThreadPriority(GetCurrentThread());
+  SetPriorityClass( GetCurrentProcess() , REALTIME_PRIORITY_CLASS );
+  SetThreadPriority( GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL );
+
+  // pull all into cache and do rough test to see if tsc and perf counter
+  // are one in the same
+  rdtsc( liStart );
+  QueryPerformanceCounter( &startperf );
+  Sleep(100);
+  rdtsc( liEnd );
+  QueryPerformanceCounter( &endperf );
+
+  double freq = perffreq.QuadPart * (liEnd.QuadPart - liStart.QuadPart) / 
+      ((double)(endperf.QuadPart - startperf.QuadPart));
+
+  if (fabs(perffreq.QuadPart - freq) < 0.05*freq) {
+    FREQUENCY = perffreq.QuadPart;
+    cerr << "\ngettimeofday: perf clock is tsc -- using perf clock freq (" 
+	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
+    SetPriorityClass( GetCurrentProcess() , dwPriorityClass );
+    SetThreadPriority( GetCurrentThread(), iThreadPriority );
+    return 0;
+  } 
+
+  // either tcs and perf clock are not the same, or we could not
+  // tell accurately enough with the short test. either way we now
+  // need an accurate frequency measure, so ...
+
+  cerr << " (this will take " << setprecision(0) << loops*tPerLoop/1000.0 
+       << " seconds) ... " << endl;
+  cerr.precision(4);
+
+  for (int j = 0; j < loops; j++) {
+    rdtsc( liStart );
+    QueryPerformanceCounter( &startperf );
+    Sleep(tPerLoop);
+    rdtsc( liEnd );
+    QueryPerformanceCounter( &endperf );
+
+    // perf counter timer ran for one call to Query and one call to
+    // tcs read in addition to the time between the tsc readings
+    // tcs read did the same
+
+    // endperf - startperf / perf freq = time between perf queries
+    // endtsc - starttsc = clock ticks between perf queries
+    //    sum += (endtsc - starttsc) / ((double)(endperf - startperf)/perffreq);
+    sum += perffreq.QuadPart * (liEnd.QuadPart - liStart.QuadPart) / 
+      ((double)(endperf.QuadPart - startperf.QuadPart));
+  }
+  
+  SetPriorityClass( GetCurrentProcess() , dwPriorityClass );
+  SetThreadPriority( GetCurrentThread(), iThreadPriority );
+
+  // might want last, not sum -- just get into cache and run
+  freq = (sum/loops);
+  
+  cerr.precision(5);
+
+  // we used to check against a 200 mhz clock, but now we just trust the result.
+
+  // now, if we are in a uni-processor system, and the freq is within 5% of the expected
+  // then use it
+  //  if (fabs(freq - FREQUENCY) > 0.05 * FREQUENCY) {
+  //    cerr << "gettimeofday: measured freq is " << freq/1e6 
+  //	 << " MHz - DOES NOT MATCH" << endl;
+  //    return -1;
+  //  }
+  // if we are in a system where the perf clock is the tsc, then use the rate the
+  // perf clock returns (or rather, if the freq we measure is approx the 
+  // perf clock freq)
+  if (fabs(perffreq.QuadPart - freq) < 0.05*freq) {
+    FREQUENCY = perffreq.QuadPart;
+    cerr << "gettimeofday: perf clock is tsc -- using perf clock freq (" 
+	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
+  } else {
+    cerr << "gettimeofday: adjusted clock freq to measured freq (" 
+	 << freq/1e6 << " MHz)" << endl;
+  }
+  FREQUENCY = (__int64) freq;
+  return 0;
+}
+#pragma optimize("", on)
+
+// The pc has no gettimeofday call, and the closest thing to it is _ftime.
+// _ftime, however, has only about 6 ms resolution, so we use the peformance 
+// as an offset from a base time which is established by a call to by _ftime.
+
+// The first call to gettimeofday will establish a new time frame
+// on which all later calls will be based.  This means that the time returned
+// by gettimeofday will not always match _ftime (even at _ftime's resolution),
+// but it will be consistent across all gettimeofday calls.
+
+int gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+  static int fFirst=1;
+  static int fHasPerfCounter=1;
+  static struct _timeb tbInit;
+  static LARGE_INTEGER liInit;
+  static LARGE_INTEGER liNow;
+  static LARGE_INTEGER liDiff;
+  struct timeval tvDiff;
+
+  
+  if (!fHasPerfCounter) {
+    _ftime(&tbInit);
+    tp->tv_sec  = tbInit.time;
+    tp->tv_usec = tbInit.millitm*1000;
+    return 0;
+  } 
+
+  if (fFirst) {
+    LARGE_INTEGER liTemp;
+    // establish a time base
+    fFirst=0;
+
+    // check that hi-perf clock is available
+    if ( !(fHasPerfCounter = QueryPerformanceFrequency( &liTemp )) ) {
+      cerr << "\ngettimeofday: no hi performance clock available. " 
+	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
+      gettimeofday( tp, tzp );
+      return 0;
+    }
+    
+    if (adjustFrequency()<0) {
+      cerr << "\ngettimeofday: can't verify clock frequency. " 
+	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
+      fHasPerfCounter=0;
+      gettimeofday( tp, tzp );
+      return 0;
+    }
+
+    // get current time
+    
+    rdtsc( liInit );
+    _ftime(&tbInit);
+
+    // we now consider it to be exactly the time _ftime returned
+    // (beyond the resolution of _ftime, down to the perfCounter res)
+  } 
+
+  // now do the regular get time call to get the current time
+  rdtsc( liNow );
+
+  // find offset from initial value
+  liDiff.QuadPart = liNow.QuadPart - liInit.QuadPart;
+
+  tvDiff.tv_sec = (long) ( liDiff.QuadPart / FREQUENCY );
+  tvDiff.tv_usec = (long) ( 1e6 * ((liDiff.QuadPart - FREQUENCY*tvDiff.tv_sec)
+			   / (double) FREQUENCY) );
+
+  // pack the value and clean it up
+  tp->tv_sec  = tbInit.time + tvDiff.tv_sec;
+  tp->tv_usec = tbInit.millitm*1000 + tvDiff.tv_usec;  
+  if (tp->tv_usec >= 1000000) {
+    tp->tv_sec++;
+    tp->tv_usec -= 1000000;
+  }
+  
+  return 0;
+}
+
+// init timer at start of program before any time critical ops
+static struct timeval __tv;
+static int __itv = gettimeofday(&__tv, NULL);
+
+#endif // if defined(_WIN32) && !defined(__CYGWIN__)
+#endif // ifndef USE_VRPN_CLOCK
+
+
+#ifdef _WIN32
+// sleeps for iSeconds
+unsigned int sleep( unsigned int cSeconds ) {
+  Sleep( cSeconds*1000 );
+  // clock_t ctGoal = CLOCKS_PER_SEC*cSeconds + clock();
+  //   while( ctGoal > clock() )
+  //      ;
+  //   // no signals, no "unslept" time
+   return 0;
+} 
+#endif
+
+class __BeforeMain {
+public:
+  // this constructor will get called for the static var below
+  // and will set the new_handler appropriately
+  __BeforeMain() { 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    _set_new_handler(my_new_handler);
+#else
+    set_new_handler(my_new_handler); 
+#endif
+  }
+};
+
+static __BeforeMain __bm;
+
+
+void sleepMsecs( double dMsecs ) {
+  struct timeval tvStart, tvNow;
+  gettimeofday(&tvStart, NULL);
+  do {
+    gettimeofday(&tvNow, NULL);
+  } while (timevalToMsecs(tvNow-tvStart)<dMsecs);
+}
+
+
+// need to init and shutdown socket dll -- 0 is success
+// (windows socket dll keeps track of number of open/close for us,
+// we just need to call the same number of closes as opens)
+
+// (note, however, because of vrpn we can't close and open --
+// it still thinks the connections are alive, so we only
+// close when the program ends and only if gfSocketsInited 
+// is true)
+
+// SO, TO USE SOCKETS for win and non-win apps, be sure to include
+// an object of type UseSockets in one of your .cpp files.
+
+#ifdef _WIN32
+#include <winsock.h>
+
+static int gfSocketsInited = 0;
+
+static int initSockets() {
+  WSADATA wsaData; 
+  int status;
+  if (gfSocketsInited==0) {
+    if ((status = WSAStartup(MAKEWORD(1,1), &wsaData)) != 0) {
+      cerr << "initSockets: WSAStartup failed (error code " << status 
+	   << " returned)." NL;
+      return status;
+    }
+    cerr << "initSockets: WSAStartup succeeded." NL;
+    gfSocketsInited=1;
+  } else {
+    // cerr << "initSockets: WSA already started up." NL;
+  }
+  return 0;
+}
+
+static int shutDownSockets() {
+  if (gfSocketsInited==1) {
+    int status;
+    if ((status = WSACleanup()) !=0) {
+      cerr << "shutDownSockets: WSACleanup failed  (error code " << status 
+	   << " returned)." NL;
+      return status;
+    } 
+    cerr << "shutDownSockets: WSACleanup succeeded." NL;
+    gfSocketsInited = 0;
+    return 0;
+  } else {
+    // cerr << "shutDownSockets: socket package not inited." NL;
+    return -1;
+  }
+}
+#endif
+
+UseSockets::UseSockets() {
+#ifdef _WIN32
+    initSockets();
+#endif
+}
+
+UseSockets::~UseSockets() {
+#ifdef _WIN32
+    shutDownSockets();
+#endif
+}
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <conio.h>
+#else
+#if !defined(__CYGWIN__)
+ #include <termio.h>
+ #ifndef linux
+ #include <sys/termio.h>
+ #endif
+ #ifdef sgi
+  static int gfNonblockingInputInited=0;
+  static struct termio gsttyResetArgs;
+ #endif  // sgi
+#endif  // not __CYGWIN__
+#endif  // not _WIN32
+
+// returns 0 if no char, 1 if char (and fills it in pch), -1 on error
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+
+int nonblockingGetch( char *pch, int fEcho ) {
+  // no init necessary
+  if (_kbhit()) {
+    *pch = (char) _getch();
+    // echo the character (since this line setting does not)
+    if (fEcho) {
+      cerr << *pch;
+    }
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+#else
+#ifdef sgi
+
+int nonblockingGetch( char *pch, int fEcho ) {
+  if (!gfNonblockingInputInited) {
+    struct termio sttyArgs;
+    
+    /* get current settings */
+    if ( ioctl(STDIN_FILENO, TCGETA, &gsttyResetArgs) == -1 ) {
+      perror("nonblockingGetch: ioctl get on stdin failed");
+      return(-1);
+    }
+    sttyArgs = gsttyResetArgs;
+    
+    // so it will recognize ctrl-z and ctrl-backslash
+    // LDISC1 is bsd, LDISC0 is system V (ignores crtl-z)
+    sttyArgs.c_line = LDISC1;
+    
+    // put into non-canonical mode (not line buffered) ...
+    sttyArgs.c_lflag &= ~ICANON;
+    
+    // but pay attention to signals
+    sttyArgs.c_lflag &= ISIG;
+    
+    // don't block on a read (return imm if no chars available)
+    sttyArgs.c_cc[VMIN] = 0;
+    sttyArgs.c_cc[VTIME] = 0;
+    
+    if ( ioctl(STDIN_FILENO, TCSETA, &sttyArgs) == -1 ) {
+      perror("nonblockingGetch: ioctl set on stdin failed");
+      return(-1);
+    }
+
+    gfNonblockingInputInited = 1;
+  }
+
+  int cRead;
+  if (cRead = read(STDIN_FILENO, pch, 1)) {
+    if (cRead<0) {
+      perror("nonblockingGetch: error reading from stdin");
+      return -1;
+    } else {
+      // echo the character (since this line setting does not)
+      if (fEcho) {
+	cerr << *pch;
+      }
+      return 1;
+    }
+  } else {
+    return 0;
+  }
+
+  // could use this and make a class that inits and resets 
+  // terminal characteristics, but it seems unnecessary.
+  // reset terminal
+  //  if ( ioctl(STDIN_FILENO, TCSETA, &sttyResetArgs) == -1 ) {
+  //    perror("tRecord: ioctl reset on stdin failed");
+  //   return(-1);
+  //  }
+}
+
+#else
+
+int nonblockingGetch( char *, int ) {
+
+  return 0;
+
+}
+
+#endif  // not sgi
+#endif  // not _WIN32
+
+/*****************************************************************************\
+  $Log$
+  Revision 1.7  1999/05/26 20:28:39  lovelace
+  These changes allow microscape to be compiled on the WIN32 platform
+  using the Cygnus Solutions Cygwin Environment (a WIN32 port of the
+  gcc compiler).
+
+  Revision 1.6  1999/03/23 15:22:57  hudson
+  Added a new control panel (for latency compensation techniques).
+  Added (an early version of) the first compensation technique -
+    showing both the Phantom tip and true tip positions.
+  Migrated a few small pieces of data onto nmb_Decoration.
+
+  Revision 1.5  1998/11/15 20:33:10  helser
+  Add minor changes to allow microscape to compile on linux.
+  Add a new interface widget called Checklist_with_entry, which is used for:
+  A new control to change the number of samples taken during feeling and
+  modification. If the averaging is set higher, it will allow noise to be
+  reduced.
+
+  Revision 1.4  1998/07/08 16:13:54  hudson
+  Removed some compile-time warnings.
+
+  Revision 1.3  1998/06/01 20:56:27  kumsu
+  put in code to compile with aCC for pxfl
+
+  Revision 1.2  1998/05/28 13:14:16  hudson
+  Put #ifdef sgi around some less-than-portable constructs in util.C
+  (nonblockingGetch) because FLOW doesn't support them.
+
+  Revision 1.1  1998/05/27 19:30:42  hudson
+  * Added multip/Makefile
+                 README
+                 myUtil.h
+                 util.C
+                 threads.[Ch]
+  * Wrote sharedGraphicsServer() and spawnSharedGraphics() in microscape.c
+
+  This is Hans Weber's multithreading library, used for a shared-memory
+  multiprocessing version of microscape.
+
+  Revision 4.5  1998/05/01 05:10:39  weberh
+  *** empty log message ***
+
+  Revision 4.4  1998/04/23 19:01:03  weberh
+  *** empty log message ***
+
+  Revision 4.3  1998/04/23 04:14:33  weberh
+  *** empty log message ***
+
+  Revision 4.2  1998/03/31 21:32:38  weberh
+  sgi shutdown good now.
+
+  Revision 4.1  1998/03/31 03:03:17  weberh
+   pc threading compiles
+  >
+
+  Revision 4.0  1998/03/29 22:40:41  weberh
+   sgi threading works. now on to pc threading.
+
+  Revision 3.4  1998/03/25 23:06:26  weberh
+  *** empty log message ***
+
+  Revision 3.3  1998/03/16 16:04:15  weberh
+  *** empty log message ***
+
+  Revision 3.2  1998/03/15 22:18:38  weberh
+  *** empty log message ***
+
+  Revision 3.1  1998/03/05 15:18:48  weberh
+  added scale func
+
+  Revision 3.0  1998/02/25 20:13:18  weberh
+  all in good shape for viewer
+
+  Revision 1.12  1998/02/19 22:22:50  weberh
+  *** empty log message ***
+
+  Revision 1.11  1997/12/21 10:34:57  weberh
+  better gettimeofday, etc. for pc
+
+  Revision 1.10  1997/12/14 08:15:30  weberh
+  timing calls added -- tvDiff, tvSum tvElapsedMsecs
+  also windwos gettimeofday implemented.
+
+  Revision 1.9  1997/12/11 06:38:08  weberh
+  added pc sleep and gettimeofday
+
+  Revision 1.8  1997/12/09 19:42:14  weberh
+  *** empty log message ***
+
+  Revision 1.7  1997/12/01 22:35:53  weberh
+  *** empty log message ***
+
+  Revision 1.6  1997/11/17 23:04:08  weberh
+  added binary read/write
+
+  Revision 1.5  1997/11/15 00:27:33  weberh
+  lots of read and write.
+
+  Revision 1.4  1997/11/12 18:10:06  weberh
+  added binary write and read for basic types.
+
+  Revision 1.3  1997/11/04 06:51:46  weberh
+  utility routines for adjusting endianess
+
+  Revision 1.2  1997/10/30 16:26:22  weberh
+  added proper new handler call for windows
+
+  Revision 1.1  1997/09/17 07:40:10  weberh
+  Initial revision
+
+\*****************************************************************************/
+

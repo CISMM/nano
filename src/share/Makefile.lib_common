@@ -1,0 +1,97 @@
+##############################################################################
+#
+# Typical stuff
+#
+
+CWD := $(shell $(PWD_COMMAND))
+
+THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
+
+OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(THIS_DIR)
+
+###############################################################################
+#
+# Specifics for a library
+#
+
+ifndef SRC_SUFFIXES
+   SRC_SUFFIXES := .C .c .cc
+endif
+
+ifndef LIBRARY_SRC
+   LIBRARY_SRC := $(foreach suffix,$(SRC_SUFFIXES),$(wildcard *$(suffix)))
+   LIBRARY_SRC := $(filter-out $(EXCLUDE_SRC),$(LIBRARY_SRC)))
+endif
+
+ifndef LIBRARY_OBJ
+   LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
+                              $(addsuffix .o,$(basename $(LIBRARY_SRC))))
+endif
+
+ifndef LIBRARY_NAME
+   LIBRARY_NAME := lib$(notdir $(CWD)).a
+endif
+
+ifndef LIBRARY_ARCHIVE
+   LIBRARY_ARCHIVE := $(OBJECT_DIR)/$(LIBRARY_NAME)
+endif
+
+###############################################################################
+#
+# Special targets
+#
+
+.PHONY: default
+default: $(OBJECT_DIR) $(LIBRARY_ARCHIVE)
+
+.PHONY: all
+all: $(OBJECT_DIR) $(LIBRARY_OBJ) $(LIBRARY_ARCHIVE)
+
+.PHONY: clean
+clean: 
+	-rm -rf $(OBJECT_DIR) 
+
+.PHONY: thisclean
+thisclean:
+	-rm -f $(addprefix $(OBJECT_DIR)/*,.o .a)
+
+##############################################################################
+#
+# Expand the uses libs stuff
+#
+
+ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+   ifdef USES_LIBS
+      USES_LIBS_INC := $(foreach lib,$(USES_LIBS),\
+      $(filter-out -L%,$(shell $(SEARCH_PROG) $(HW_OS) $(lib) $(SEARCH_PATH))))
+   endif
+
+   ifdef NAUGHTY
+      USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
+   endif
+endif
+
+#############################################################################
+#
+# implicit rule for all .c files
+#
+
+.SUFFIXES: .c .C .cc .o .a
+
+$(OBJECT_DIR):
+	-mkdir -p $(FULL_OBJECT_DIR)
+	-ln -s $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)
+	-mkdir -p $(OBJECT_DIR)
+
+$(OBJECT_DIR)/%.o: %.c
+	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+
+$(OBJECT_DIR)/%.o: %.C
+	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+
+$(OBJECT_DIR)/%.o: %.cc
+	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+
+$(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
+	$(AR) ruv $(LIBRARY_ARCHIVE) $(OBJECT_DIR)/*.o
+	-ranlib $(LIBRARY_ARCHIVE)

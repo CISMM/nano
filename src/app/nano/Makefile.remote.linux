@@ -1,0 +1,534 @@
+
+#############################################################################
+# 
+#  makefile for vlib virtual worlds library
+#
+#  handles "make" on both pxpl4 and pxpl5.  the executable ends up in
+#	a subdirectory of the current directory, named according to
+#	the output of "hw_os".  to run the correct version independently
+#	of architecture, do "make script", which will create a script
+#	named <application_name>.sh for running the correct version
+#	regardless of machine name.  "make script" prompts for the 
+#	application name.  (the .sh suffix is necessary because if make
+#	sees a script with the same name as the application, it will
+#	think that the application is up to date.)
+#
+#  targets:
+#	
+#	subdir- makes a subdir for objects/libs/executables for this arch/os
+#
+#
+# revision history:
+#
+#  rich holloway	04/18/91	first version
+#
+#############################################################################
+
+#
+# common definitions
+#
+
+MAKEFILE = $(NM_MAKEFILE)
+MAKE = gmake -f $(MAKEFILE)
+
+#DEFAULT_CC = gcc
+#SGI_CC = cc
+DEFAULT_CC = /usr/local/lib/CenterLine/bin/CC
+#DEFAULT_CC = g++ 
+
+HP_CC = g++
+SGI_CC = CC
+LINUX_CC = g++
+
+#
+# main directories
+#
+HMD_DIR 	 = ../../..
+INCLUDE_DIR 	 = $(HMD_DIR)/include
+LIB_DIR 	 = $(HMD_DIR)/lib/$(HW_OS)
+
+# hook to quick go to working ARM set.  normally included thru HMD_DIR.
+ARM_INCLUDE 	 =  
+ARM_LIB 	 =  
+
+BETA_DIR	 = $(HMD_DIR)/beta
+BETA_INCLUDE_DIR = $(BETA_DIR)/include
+BETA_LIB_DIR 	 = $(BETA_DIR)/lib/$(HW_OS)
+
+# subdirectories for make
+OBJECT_DIR 	= $(HW_OS)
+
+PXPL5_DIR 	= /unc/pxpl5
+#PXPL5_DIR 	= /unc/pxpl5/beta
+#PXPL5_DIR	= /antares/mnt10/rhoades/pxpl5s/beta
+
+VSGI_DIR    =
+VFLOW_DIR    = /afs/unc/proj/stm/src/vlib-openGL
+#VFLOW_DIR    = /afs/unc/proj/stm/src/chang/vlib-openGL
+
+VSGI_INCLUDE_DIR  =
+VSGI_LIB_DIR = $(VSGI_DIR)/$(HW_OS)
+
+#the flags need to connect tcl and tk
+LIBS_SGI   = -lv -ltracker -lad -lquat -lsound -larm -lvrpn -lsdi -lGLU -lGL \
+	$(LIB_DIR)/../libtcl.a $(LIB_DIR)/../libtk.a -lX11 -lm
+
+LDFLAGS_SGI     = -L. $(ARM_LIB) -L$(VSGI_LIB_DIR) \
+                  -L$(BETA_LIB_DIR) -L$(LIB_DIR) -L$(PXPL5_DIR)/lib \
+                  -L/usr/local/lib -old_ld
+INCLUDE_FLAGS_SGI = -I. -I.. -I../colormaps $(ARM_INCLUDE) \
+                  -I$(BETA_INCLUDE_DIR) -I$(INCLUDE_DIR)
+
+LIBS_HP   = -lv -ltracker -lad -lquat -lsound -larm -lvrpn -lsdi \
+            -lMesaGL -ltcl -ltk -lXext -lX11 -lm 
+LDFLAGS_HP     = -L. $(ARM_LIB) -L$(VFLOW_DIR)/$(HW_OS) \
+                  -L$(BETA_LIB_DIR) -L$(LIB_DIR) -L$(PXPL5_DIR)/lib \
+                  -L/usr/local/lib -L/usr/lib/X11R5 \
+                  -L/usr/local/contrib/unmod/lib \
+		  -L/usr/local/contrib/mod/lib
+INCLUDE_FLAGS_HP = -I. -I.. -I../colormaps -I$(VSGI_INCLUDE_DIR)\
+                  -I/usr/local/include \
+                  $(ARM_INCLUDE) \
+                  -I$(BETA_INCLUDE_DIR) -I$(INCLUDE_DIR) \
+                  -I$(PXPL5_DIR)/include -I/unc/pxpl5/src/joysticks \
+                  -I/usr/local/contrib/include \
+		  -I/usr/local/contrib/mod/include \
+		  -I/usr/local/contrib/unmod/include/Mesa
+
+LIBS_LINUX   = -lv -ltracker -lad -lquat -lsound -larm -lvrpn -lsdi \
+               -lMesaGL -ltcl -ltk -lXext -lX11 -lbsd -ldl -lm 
+LDFLAGS_LINUX     = -L. $(ARM_LIB) -L$(VSGI_LIB_DIR) \
+                  -L$(BETA_LIB_DIR) -L$(LIB_DIR) -L/usr/local/lib \
+		  -L/usr/X11R6/lib
+INCLUDE_FLAGS_LINUX = -I. -I.. -Iscope/ -I../include -I/usr/include \
+		-I../colormaps $(ARM_INCLUDE) -I$(BETA_INCLUDE_DIR) \
+		-I$(INCLUDE_DIR) -I/usr/include/bsd -I$(INCLUDE_DIR)/pc_linux
+
+
+RMAN = /afs/unc/proj/stm/src/chang/BMRT/HP
+LIBS_RMAN = ${RMAN}/lib/libribout.a $(LIBS_HP)
+LDFLAGS_RMAN = $(LDFLAGS_HP)
+INCLUDE_FLAGS_RMAN = $(INCLUDE_FLAGS_HP) \
+		     -I$(RMAN)/include \
+		     -DRENDERMAN
+
+#
+# PBASE include files for gmake (in $(PBASE_ROOT)/include/gmake) define the
+# following.  The assigned values are as of May 12, 1997.
+#	OPENGL_LINKLIBS = -lpbaux -lap_opengl -lap -lm -lfloss-host
+#	COMPILER_gnu_CFLAGS = -z -Wall -fno-keep-inline-functions \
+#			      -pipe -ansi -fasm -mgas -mpa-risc-1-1
+#	APLFALGS = -static -L$(PBASE_ROOT)/lib/$(PBASE_AP_ARCH) \
+#		   -L$(PVM_ROOT)/lib/$(PVM_ARCH) \
+#		   -L$(FLOSS_HOME)/lib
+#
+ifdef PBASE_ROOT
+include $(PBASE_ROOT)/include/gmake/defs.mk
+endif
+
+LIBS_PBASE   = -lv -ltracker -lad -lquat -lsound -larm -lvrpn -lsdi \
+            $(OPENGL_LINKLIBS) \
+            -ltcl -ltk -lXext -lX11 -lm
+LDFLAGS_PBASE     = -L. $(ARM_LIB) -L$(VFLOW_DIR)/hp_flow \
+		  $(COMPILER_gnu_CFLAGS) \
+                  -L$(BETA_LIB_DIR) -L$(LIB_DIR) -L$(PXPL5_DIR)/lib \
+                  -L/usr/local/lib -L/usr/lib/X11R5 \
+                  -L/usr/local/contrib/unmod/lib \
+		  -L/usr/local/contrib/mod/lib \
+		  $(APLFLAGS) 
+#
+# Modulefiles set up the following variables as follows (as of May 12, 1997):
+#	PBASE_AP_DEBUG = -g
+# 	PBASE_DB_DEBUG = -DPBASE_DEBUG
+#	FLOSS_DEFINES = -DPXFL -DNO_HPPA_HARDWARE -DNO_PXFL_HARDWARE \
+#			-DALLOW_TXSIM_MODE -DNO_GENIE_HARDWARE \
+#			-DUSE_GENIE_SERVER -DRHINO_GENIE_END_PTR_BUG \
+#			-DNO_RAST_HARDWARE -DIGC_TXSIM_MODE -DFLOSS_DEBUG
+#	FLOSS_HOST_DEFINES = -DFLOSS_HOSTED
+#
+# APIFLAGS is defined in $(PBASE_ROOT)/include/gmake/defs.mk.  It uses
+# the definitions of $(FLOSS_DEFINES) and $(FLOSS_HOST_DEFINES)
+#
+# See the above comment (of LDFLAGS_PBASE) for the definition of 
+# $(COMPILER_gnu_CFLAGS)
+#
+INCLUDE_FLAGS_PBASE = -I. -I.. -I../colormaps -I$(VSGI_INCLUDE_DIR)\
+		  $(PBASE_AP_DEBUG) $(PBASE_DB_DEBUG) \
+	          $(COMPILER_gnu_CFLAGS) \
+		  $(APIFLAGS) \
+		  -Dhpux \
+                  -I/usr/local/include \
+                  $(ARM_INCLUDE) \
+                  -I$(BETA_INCLUDE_DIR) -I$(INCLUDE_DIR) \
+                  -I$(PXPL5_DIR)/include -I/unc/pxpl5/src/joysticks \
+                  -I/usr/local/contrib/include \
+		  -I/usr/local/contrib/mod/include \
+		  -DFLOW
+
+# flags
+#
+# {INCLUDE,LD}_FLAGS and LIBS are only defined for recursive pass
+#
+DEFINES		= 
+#DEFINES		= -DINCLUDE_CALLBACK_CODE -DSMALL_GRID
+#DEFINES		= -DINCLUDE_CALLBACK_CODE -DTIMING_TEST -DSMALL_GRID
+#DEFINES		= -DINCLUDE_CALLBACK_CODE -D__STDC__
+LINT_FLAGS 	= $(INCLUDE_FLAGS)
+CFLAGS 		= $(INCLUDE_FLAGS) $(DEFINES) -g
+
+REAL_LIBS_5	= $(PXPL5_DIR)/lib/rc_mgp.o \
+		  -lv -ltracker -lad -lquat -ljoy -lvtk_menus -lvtk -lvtext \
+		  -lpphigs++ -lphive -ljoy \
+		  -lrc -lhostros -lring -lsound -larm -lvrpn -lsdi -ltcl -ltk \
+		  -lX11 -lm
+FAKE_LIBS_5	= $(PXPL5_DIR)/lib/rc_mgp.o \
+		  -lv -ltracker -lad -lquat -ljoy -lvtk_menus -lvtk -lvtext \
+		  -lphake -ljoy -lrc -lhostros -lring -lsound -larm -lsdi \
+		  -ltcl -ltk -lX11 -lm -lvrpn
+LIBS_5 =	$(REAL_LIBS_5)
+LDFLAGS_5 	= -L. $(ARM_LIB) \
+		  -L$(BETA_LIB_DIR) -L$(LIB_DIR) -L$(PXPL5_DIR)/lib \
+		  -L/usr/local/lib -L/usr/local/contrib/mod/lib -g
+
+INCLUDE_FLAGS_5 = -I. -I.. -I../colormaps \
+		  $(ARM_INCLUDE) \
+		  -I$(BETA_INCLUDE_DIR) -I$(INCLUDE_DIR) \
+		  -I$(PXPL5_DIR)/include -I/unc/pxpl5/src/joysticks \
+		  -I/usr/local/contrib/include \
+		  -I/usr/local/contrib/mod/include
+
+# files
+VLIB = libv.a
+
+#############################################################################
+#
+# implicit rule for all .c files
+#
+.SUFFIXES:	.c .C .o .a
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+.C.o:
+	$(CC) -c $(CFLAGS) $<
+#
+#
+#############################################################################
+
+all:
+	$(MAKE) microscape.$(HW_OS)
+
+hack.o: hack.c
+	cc -c $(CFLAGS) hack.c
+
+microscape_gp.o: microscape.gp.c microscape.gp.h 
+	-hmdgo make -f gp_make microscape_gp.o 
+
+BCGrid.C: ../BCGrid.C
+	ln -sf ../BCGrid.C .
+
+BCPlane.C: ../BCPlane.C
+	ln -sf ../BCPlane.C .
+
+BCString.C: ../BCString.C
+	ln -sf ../BCString.C .
+
+BCDebug.C: ../BCDebug.C
+	ln -sf ../BCDebug.C .
+
+Point.C: ../Point.C
+	ln -sf ../Point.C .
+
+Position.C: ../Position.C
+	ln -sf ../Position.C .
+
+readTopometrixFile.C: ../readTopometrixFile.C
+	ln -sf ../readTopometrixFile.C .
+
+PPM.C: ../PPM.C
+	ln -sf ../PPM.C .
+
+colormap.C: ../colormaps/colormap.C
+	ln -sf ../colormaps/colormap.C .
+
+stm_file.c: ../stm_file.c
+	ln -sf ../stm_file.c .
+
+stm_pphigs.c: ../stm_pphigs.c
+	ln -sf ../stm_pphigs.c .
+
+
+#############################################################################
+#
+# microscape code
+#
+#############################################################################
+
+#
+# microscape
+#
+
+MICROSCAPE_FILES = microscape.c minit.c animate.c interaction.c \
+		   stm_file.c normal.c splat.c \
+		   relax.c drift.c updt_display.c butt_mode.c \
+		   x_util.c termio.c x_graph.c x_aux.c tcl_tk.c
+MICROSCAPE_CC_FILES = BCGrid.C BCPlane.C Point.C Position.C BCDebug.C BCString.C \
+			readTopometrixFile.C Tcl_Linkvar.C \
+			colormap.C active_set.C ohmeter.C PPM.C filter.C vrml.C\
+			AFMState.C \
+			ModFile.C SPMSubgrid.C NetworkedMicroscopeChannel.C \
+			microscopeHandlers.C
+MICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(SUNMICROSCAPE_FILES:.c=.o) \
+			microscape_gp.o
+MICROSCAPE_INCLUDES = ../stm.h microscape.h x_util.h x_aux.h openGL.h \
+			tcl_tk.h Tcl_Linkvar.h ../colormaps/colormap.h \
+			active_set.h \
+			../BCGrid.h ../BCPlane.h Makefile ../stm_cmd.h ../Point.h \
+			../PPM.h ../Position.h
+
+microscape:
+	make microscape.sparc_sunos$(SUFFIX)
+
+microscape.sparc_sunos$(SUFFIX) :
+	@$(MAKE) "EXE_NAME = microscape" \
+		"TARGET_INCLUDES = $(SUNMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(MICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"CC = $(DEFAULT_CC)" \
+		doTheRest
+
+#############################################################################
+#
+# microscape code for the SGI
+#
+#############################################################################
+
+#
+# microscape.sgi
+#
+SGMICROSCAPE_FILES = $(MICROSCAPE_FILES) openGL.c font.c spm_gl.c globjects.c
+SGMICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(SGMICROSCAPE_FILES:.c=.o) 
+SGMICROSCAPE_INCLUDES = $(MICROSCAPE_INCLUDES)
+
+microscape.sgi:
+	make microscape.sgi_irix$(SUFFIX)
+
+microscape.sgi_irix$(SUFFIX) :
+	@$(MAKE) "EXE_NAME = microscape" \
+		"TARGET_INCLUDES = $(SGMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(SGMICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"LIBS_5 = $(LIBS_SGI)" \
+		"LDFLAGS_5 = $(LDFLAGS_SGI)"\
+		"INCLUDE_FLAGS_5=$(INCLUDE_FLAGS_SGI)"\
+		"CC = $(SGI_CC)" \
+		doTheRest
+
+#############################################################################
+#
+# microscape code for the HP
+#
+#############################################################################
+
+#
+# microscape.hp
+#
+HPMICROSCAPE_FILES = $(SGMICROSCAPE_FILES)
+HPMICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(HPMICROSCAPE_FILES:.c=.o)
+HPMICROSCAPE_INCLUDES = $(MICROSCAPE_INCLUDES)
+
+microscape.hp:
+	make microscape.hp700_hpux$(SUFFIX)
+
+microscape.hp700_hpux$(SUFFIX) :
+	@$(MAKE) "EXE_NAME = microscape" \
+		"TARGET_INCLUDES = $(HPMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(HPMICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"LIBS_5 = $(LIBS_HP)" \
+		"LDFLAGS_5 = $(LDFLAGS_HP)"\
+		"INCLUDE_FLAGS_5=$(INCLUDE_FLAGS_HP)"\
+		"CC = $(HP_CC)" \
+		doTheRest
+
+#############################################################################
+#
+# microscape code for Linux
+#
+#############################################################################
+
+#
+# microscape.linux
+#
+LINMICROSCAPE_FILES = $(HPMICROSCAPE_FILES)
+LINMICROSCAPE_OBJECTS= $(MICROSCAPE_CC_FILES:.C=.o) $(LINMICROSCAPE_FILES:.c=.o)
+LINMICROSCAPE_INCLUDES = $(MICROSCAPE_INCLUDES)
+
+microscape.linux:
+	make microscape.pc_linux$(SUFFIX)
+
+microscape.pc_linux$(SUFFIX) :
+	@$(MAKE) "EXE_NAME = microscape" \
+		"TARGET_INCLUDES = $(LINMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(LINMICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"LIBS_5 = $(LIBS_LINUX)" \
+		"LDFLAGS_5 = $(LDFLAGS_LINUX)"\
+		"INCLUDE_FLAGS_5=$(INCLUDE_FLAGS_LINUX)"\
+		"CC = $(LINUX_CC)" \
+		doTheRest
+
+#############################################################################
+#
+# microscape code for the pbase (PxFl simulator) on HP
+#
+#############################################################################
+
+#
+# microscape.flow
+#
+PBASEMICROSCAPE_FILES = $(HPMICROSCAPE_FILES)
+PBASEMICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(PBASEMICROSCAPE_FILES:.c=.o)
+PBASEMICROSCAPE_INCLUDES = $(MICROSCAPE_INCLUDES)
+
+microscape.flow$(SUFFIX) :
+ifdef PBASE_ROOT
+	@$(MAKE) "EXE_NAME = microscape" \
+		"OBJECT_DIR = hp_flow" \
+		"TARGET_INCLUDES = $(PBASEMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(PBASEMICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"LIBS_5 = $(LIBS_PBASE)" \
+		"LDFLAGS_5 = $(LDFLAGS_PBASE)"\
+		"INCLUDE_FLAGS_5=$(INCLUDE_FLAGS_PBASE)"\
+		"CC = $(HP_CC)" \
+		doTheRest
+else
+	@echo "Can't build PXFL version without definition of PBASE_ROOT"
+endif
+
+#############################################################################
+#
+# microscape code for RenderMan on HP
+#
+#############################################################################
+
+#
+# microscape.rman
+#
+RMANMICROSCAPE_FILES = $(HPMICROSCAPE_FILES) RenderMan.c
+RMANMICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(RMANMICROSCAPE_FILES:.c=.o)
+RMANMICROSCAPE_INCLUDES = $(MICROSCAPE_INCLUDES)
+
+microscape.rman$(SUFFIX) :
+	@$(MAKE) "EXE_NAME = microscape" \
+		"OBJECT_DIR = hp_rman" \
+		"TARGET_INCLUDES = $(RMANMICROSCAPE_INCLUDES)" \
+		"TARGET_OBJECTS = $(RMANMICROSCAPE_OBJECTS)" \
+		"PREFIX = " \
+		"SUFFIX=space_holder3" \
+		"LIBS_5 = $(LIBS_RMAN)" \
+		"LDFLAGS_5 = $(LDFLAGS_RMAN)"\
+		"INCLUDE_FLAGS_5=$(INCLUDE_FLAGS_RMAN)"\
+		"CC = $(HP_CC)" \
+		doTheRest
+
+#############################################################################
+#
+# gory details:
+#
+#   the following rules handle most of the work of making an 
+#   application for any architecture.
+#
+#  Explanation:
+#
+#   initially, PREFIX is defined to be some non-empty string so that the
+#	rule $(PREFIX)$(EXE_NAME) is not defined at the same time that
+#	the rule at the top with the same name is.  For example, for
+#	"user":  user is defined at the top, with a rule that spawns off
+#	make "blah blah" user ("user" is the eventual target, via the 
+#	EXE_NAME macro and the calls to "doTheRest" and "mainTarget").
+#	If there were no PREFIX and SUFFIX, one of the invocations of "make"
+#	would see two rules for "user".  By setting PREFIX initially to
+#	be nonblank, the second rule for user is covered up initially, 
+#	and by setting SUFFIX in the first rule, the first rule is covered
+#	up thereafter.
+#
+#   finally, the library rule is different, since the target name "lib" is
+#	different from the actual executable to be made, so we leave
+#	PREFIX and SUFFIX unchanged for that one.
+#	
+#
+#############################################################################
+
+doTheRest :
+	@( $(MAKE) \
+		"OBJECT_DIR = $(OBJECT_DIR)" \
+		"TARGET_INCLUDES = $(TARGET_INCLUDES)" \
+		"TARGET_OBJECTS = $(TARGET_OBJECTS)" \
+		"INCLUDE_FLAGS = $(INCLUDE_FLAGS_5)" \
+		"LDFLAGS = $(LDFLAGS_5)" \
+		"LIBS = $(LIBS_5)" \
+		"PREFIX = $(PREFIX)" \
+		"SUFFIX = $(SUFFIX)" \
+		"EXE_NAME = $(EXE_NAME)" \
+		mainTarget ; \
+	   )
+
+
+PREFIX = space_holder1
+TARGET_OBJECTS = space_holder2
+
+mainTarget :
+	@echo "Making $(OBJECT_DIR) if it doesn't exist..."
+	@if [ ! -d $(OBJECT_DIR) ]; then /bin/mkdir $(OBJECT_DIR); fi
+	@echo "Moving objects from $(OBJECT_DIR) to current directory..."
+	@-/bin/rm -f $(EXE_NAME) *.o *.a 
+	@-/bin/mv -f $(OBJECT_DIR)/$(EXE_NAME) $(OBJECT_DIR)/*.o \
+		$(OBJECT_DIR)/*.a . 
+	@echo "Making $(EXE_NAME)..."
+	@-$(MAKE) \
+		"TARGET_INCLUDES = $(TARGET_INCLUDES)" \
+		"TARGET_OBJECTS = $(TARGET_OBJECTS)" \
+		"INCLUDE_FLAGS = $(INCLUDE_FLAGS)" \
+		"LDFLAGS = $(LDFLAGS)" \
+		"LIBS = $(LIBS)" \
+		"PREFIX = $(PREFIX)" \
+		"SUFFIX = $(SUFFIX)" \
+		$(EXE_NAME)
+	@echo "Moving objects back to $(OBJECT_DIR) subdir..."
+	@-/bin/mv -f $(EXE_NAME) *.[oa] $(OBJECT_DIR) 
+	@echo "Done.  Executable (if any) is in $(OBJECT_DIR)/$(EXE_NAME)."
+
+$(PREFIX)$(EXE_NAME) : $(TARGET_OBJECTS)
+	-/bin/rm -f $(EXE_NAME)
+	$(CC) -o $(EXE_NAME) $(TARGET_OBJECTS) $(LDFLAGS) $(LIBS)
+
+$(TARGET_OBJECTS) : $(TARGET_INCLUDES)
+
+#############################################################################
+#
+# misc rules
+#
+
+clean :
+	/bin/rm -f *.o *.a *~ *.j foo stack.gp gpdump* a.out user \
+	$(OBJECT_DIR)/simple $(OBJECT_DIR)/user
+	make -f gp_make clean
+
+allclean :
+	$(MAKE) clean
+	/bin/rm -f $(OBJECT_DIR)/*
+
+
+#############################################################################
+#
+# Dependencies that are non-obvious
+#
+
+Grid.o: ../BCGrid.C ../readNanoscopeFile.C
+

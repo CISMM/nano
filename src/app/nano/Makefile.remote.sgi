@@ -1,0 +1,625 @@
+#############################################################################
+#	Makefile for the nanoManipulator client application.  Needs to be
+# built using 'gmake'.  Should run on any architecture that is currently
+# supported.  It should be possible to build simultaneously on multiple
+# architectures.
+#
+# Author: Russ Taylor, 08/22/1997
+#	  
+# modified:
+#	9/5/97 Renee Maheshwari
+#		-integrated RenderMan compilation with compilation
+#		 on HP's, so compiling on HP will automatically include
+#		 RenderMan capabilities
+#      10/3/97 Tom Hudson (drawing on examples by Dan Aliaga)
+#               -Added support for recursively compiling a subdirectory (scope).
+#                This isn't perfect, since we still need a list of the
+#                object files.
+#               -Added support for ../include as a repository for common
+#                header files.
+#      10/20/97 Sang-Uok Kum
+#               -Changed the flags for pxflow compiling. Now you don't have
+#                to change the flags everytime. It uses the env. var. that is
+#                defined by pbase. 
+#	5/13/98 Tom Hudson
+#		-Used $(patsubst) and INCLUDE_FILES and export
+#		 to get rid of replication of include paths in sub-Makefiles
+#		 Also export HW_OS, CC, OBJECT_DIR and COMMON_INCLUDE_DIR
+#############################################################################
+
+##########################
+# common definitions
+#
+
+MAKEFILE := Makefile.remote.sgi
+MAKEFILE_REMOTE := Makefile.remote.sgi
+MAKE := gmake -f $(MAKEFILE)
+MAKE_REMOTE := gmake -f $(MAKEFILE_REMOTE)
+HW_OS = sgi_irix
+LINK = ln -sf
+
+# Which C++ compiler to use
+# "-32":  force 32-bit compilation (to be compatible with our libraries).
+ifeq ($(HW_OS),sgi_irix)
+  CC := CC -32
+#  CC := CC -32 -fullwarn
+else
+#default case
+  CC := g++
+#  CC := g++ -Wall
+endif
+
+
+##########################
+# directories
+#
+
+
+VRPN_DIR	 := ../../hmd/vrpn
+HMD_DIR 	 := ../../..
+INCLUDE_DIR 	 := $(HMD_DIR)/include
+LIB_DIR 	 := $(HMD_DIR)/lib/$(HW_OS)
+
+BETA_DIR	 := $(HMD_DIR)/beta
+BETA_INCLUDE_DIR := $(BETA_DIR)/include
+BETA_LIB_DIR 	 := $(BETA_DIR)/lib/$(HW_OS)
+
+# Pixel-Planes 5 directory
+# PXPL5_DIR 	 := /unc/pxpl5
+
+VRPN_INCLUDE_DIR := $(VRPN_DIR)
+VRPN_LIB_DIR     := $(VRPN_INCLUDE_DIR)/$(HW_OS)
+
+ifeq ($(HW_OS),sgi_irix)
+  SHMEM_LIBS := -lmpc
+endif
+
+# subdirectory for make
+OBJECT_DIR	 := $(HW_OS)
+
+# Vlib-openGL directory
+V_OPENGL_DIR	 := ../../..
+
+COMMON_INCLUDE_DIR	:= ../include
+
+SYS_INCLUDE = -I../../../tcltk.sgi_irix/include -I/usr/local/include
+
+##########################
+# Include flags
+#
+
+INCLUDE_FLAGS := -I. -I./scope -I.. -I../colormaps -I../include  \
+                 -I$(VRPN_INCLUDE_DIR) \
+	 	 -I$(V_OPENGL_DIR) -I$(BETA_INCLUDE_DIR) -I$(INCLUDE_DIR) \
+		 -I/unc/pxpl5/src/joysticks -I/unc/pxpl5/include \
+		 $(SYS_INCLUDE) 
+
+# export variables to the submakefiles (makefiles in subdirectories).
+# submakefiles will attempt to replace "-I." with "-I../." and
+# "-L." with "-L../."  That leading dot is important!
+
+export INCLUDE_FLAGS
+export OBJECT_DIR
+export COMMON_INCLUDE_DIR
+export CC
+export HW_OS
+export LOAD_FLAGS
+
+
+##########################
+# Load flags
+#
+
+LOAD_FLAGS := -L./$(HW_OS)  -L../../../tcltk.$(HW_OS)/lib\
+              -L$(V_OPENGL_DIR)/$(HW_OS) \
+	      -L$(VRPN_LIB_DIR) \
+	      -L$(BETA_LIB_DIR) -L$(LIB_DIR) \
+	      -L/usr/local/lib \
+	      -g
+
+ifeq ($(HW_OS),sgi_irix)
+  LOAD_FLAGS := $(LOAD_FLAGS) -old_ld
+endif
+
+
+##########################
+# Libraries
+#
+
+ifeq ($(HW_OS),sgi_irix)
+  GRAPHICS_LIBS := -lGLU -lGL
+endif
+
+
+TCL_LIBS := -B static -litk -litcl -lBLT -ltk -ltcl -B dynamic
+
+LIBS := -lvrpn -lsdi -lv -lquat \
+	$(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+
+export LOAD_FLAGS
+export LIBS 
+
+
+#
+# Defines for the compilation, CFLAGS
+#
+
+#
+# Defines for the compilation, CFLAGS
+#
+
+# if want to compile vrpn version, use "gmake nM" - the target below
+# will define USE_VRPN_MICROSCOPE = 1, and all source files will
+# have USE_VRPN_MICROSCOPE defined.
+
+ifeq ($(USE_VRPN_MICROSCOPE), 1)
+        DEFINES          := -DINCLUDE_CALLBACK_CODE -DUSE_VRPN_MICROSCOPE
+else
+        DEFINES          := -DINCLUDE_CALLBACK_CODE
+endif
+
+ifeq ($(HW_OS),pc_cygwin)
+  DEFINES := $(DEFINES) -DV_GLUT
+endif
+
+DEFINES := $(DEFINES) -DPROJECTIVE_TEXTURE
+
+CFLAGS           := $(INCLUDE_FLAGS) $(DEFINES) -g
+
+
+export DEFINES
+
+#############################################################################
+#
+# implicit rule for all .c files
+#
+.SUFFIXES:	.c .C .o .a
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+.C.o:
+	$(CC) -c $(CFLAGS) $<
+
+# Build objects from .c files
+$(OBJECT_DIR)/%.o: %.c $(MICROSCAPE_INCLUDES) 
+#$(MAKEFILE)
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+# Build objects from .C files
+$(OBJECT_DIR)/%.o: %.C $(MICROSCAPE_INCLUDES) 
+#$(MAKEFILE)
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+#
+#
+#############################################################################
+
+microscape:     $(OBJECT_DIR)
+	$(MAKE_REMOTE) $(OBJECT_DIR)/microscape
+
+# Do a "gmake clean" before calling "gmake nM" - make doesn't know
+# about the newly defined symbol.
+nM:     $(OBJECT_DIR)
+	$(MAKE_REMOTE) $(OBJECT_DIR)/nM USE_VRPN_MICROSCOPE=1
+
+purify: $(OBJECT_DIR)
+	$(MAKE_REMOTE) $(OBJECT_DIR)/puremicroscape
+
+renderer:       $(OBJECT_DIR)
+	$(MAKE_REMOTE) $(OBJECT_DIR)/renderer
+
+$(FULL_OBJECT_DIR):
+	-mkdir -p $(FULL_OBJECT_DIR)
+
+$(OBJECT_DIR):
+	-mkdir $(OBJECT_DIR)
+
+BCGrid.C: ../BCGrid.C
+	ln -sf ../BCGrid.C .
+
+BCPlane.C: ../BCPlane.C
+	ln -sf ../BCPlane.C .
+
+BCString.C: ../BCString.C
+	ln -sf ../BCString.C .
+
+BCDebug.C: ../BCDebug.C
+	ln -sf ../BCDebug.C .
+
+Point.C: ../Point.C
+	ln -sf ../Point.C .
+
+Scanline.C: ../Scanline.C
+	ln -sf ../Scanline.C .
+
+Topo.C: ../Topo.C
+	ln -sf ../Topo.C .
+
+Topo.h: ../Topo.h
+	ln -sf ../Topo.h .
+
+Position.C: ../Position.C
+	ln -sf ../Position.C .
+
+readTopometrixFile.C: ../readTopometrixFile.C
+	ln -sf ../readTopometrixFile.C .
+
+PPM.C: ../PPM.C
+	ln -sf ../PPM.C .
+
+colormap.C: ../colormaps/colormap.C
+	ln -sf ../colormaps/colormap.C .
+
+stm_file.c: ../stm_file.c
+	ln -sf ../stm_file.c .
+
+stm_pphigs.c: ../stm_pphigs.c
+	ln -sf ../stm_pphigs.c .
+
+
+#############################################################################
+#
+# microscape code
+#
+#############################################################################
+
+#
+# separately compiled
+#
+# Currently we export lots of lists of file names to the sub-makefiles.
+# This keeps it all in one place, but is messy;  it'd be nice to have
+# the lists down there:
+#   1) easier maintenance
+#   2) better hiding
+#   3) conceptual integrity
+# We need them up here, though, so that we can link to them:  unless,
+# of course, we compile the subdirectories into libraries.  I'd like
+# to do that once we have them better-isolated.
+#                                Tom Hudson, November 1998
+#
+
+#
+# Base (Data Repository / Utility / Foundation) Classes
+#
+
+# As an experiment, base and ui are now compiled into libnmb and libnmui.
+#    Tom Hudson, April 1999
+
+#
+# Microscope
+#
+
+MICROSCOPE_FILES := drift.c relax.c splat.c
+
+MICROSCOPE_CC_FILES := NetworkedMicroscopeChannel.C \
+			AFMState.C \
+			MicroscopeRcv.C Microscope.C \
+			MicroscopeIO.C \
+			nmm_Microscope.C nmm_MicroscopeRemote.C
+
+MICROSCOPE_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(MICROSCOPE_FILES:.c=.o)) \
+	$(patsubst %,$(OBJECT_DIR)/%,$(MICROSCOPE_CC_FILES:.C=.o))
+
+MICROSCOPE_COMMON_HEADERS := Microscope.h AFMState.h nmm_Types.h nmm_Globals.h \
+        nmm_Microscope.h nmm_MicroscopeRemote.h
+
+export MICROSCOPE_FILES
+export MICROSCOPE_CC_FILES
+export MICROSCOPE_COMMON_HEADERS
+
+#
+# Graphics
+#
+
+GRAPHICS_FILES := font.c openGL.c spm_gl.c globjects.c graphics.c chartjunk.c \
+		graphics_globals.c
+
+GRAPHICS_CC_FILES := nmg_Funclist.C nmg_GraphicsImpl.C nmg_Graphics.C \
+		nmg_GraphicsRemote.C
+# nmg_GraphicsNull.C
+
+GRAPHICS_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(GRAPHICS_FILES:.c=.o)) \
+	$(patsubst %,$(OBJECT_DIR)/%,$(GRAPHICS_CC_FILES:.C=.o))
+
+GRAPHICS_COMMON_HEADERS := \
+        nmg_GraphicsImpl.h nmg_Graphics.h nmg_GraphicsRemote.h \
+        nmg_Globals.h
+# nmg_GraphicsNull.h
+
+export GRAPHICS_FILES
+export GRAPHICS_CC_FILES
+export GRAPHICS_COMMON_HEADERS
+
+#
+# UGraphics
+#
+
+UGRAPHICS_FILES :=
+
+UGRAPHICS_CC_FILES := MSIFile.C UTree.C URender.C URAxis.C URPolygon.C \
+                       URTexture.C Xform.C Xform4x4.C WaveFrontFile.C
+
+UGRAPHICS_COMMON_HEADERS :=     URender.h Xform.h Xform4x4.h UTree.h \
+                                URenderAux.h URPolygon.h MSIFile.h \
+                                WaveFrontFile.h
+
+export UGRAPHICS_FILES
+export UGRAPHICS_CC_FILES
+export UGRAPHICS_COMMON_HEADERS
+
+UGRAPHICS_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(UGRAPHICS_FILES:.c=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(UGRAPHICS_CC_FILES:.C=.o))
+
+#
+# Genetic Textures (Alexandra Bokinsky)
+#
+
+GENETIC_TEXTURES_FILES := gaEngine.cc gaEngine_Remote.cc \
+        gaEngine_Implementation.cc genome.cc genetic.cc input.cc \
+        noise.cc gaFunctions.cc
+
+
+GENETIC_TEXTURES_OBJECTS := \
+         $(patsubst %,$(OBJECT_DIR)/%,$(GENETIC_TEXTURES_FILES:.cc=.o))
+
+export GENETIC_TEXTURES_FILES
+
+#
+# Multithreading/Multiprocessing Support (Hans Weber)
+#
+
+MULTIP_FILES :=
+
+MULTIP_CC_FILES := util.C thread.C
+
+ifeq ($(HW_OS), pc_linux)
+        MULTIP_CC_FILES := $(MULTIP_CC_FILES) tw_Semaphore.C
+endif
+
+MULTIP_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(MULTIP_FILES:.c=.o)) \
+	$(patsubst %,$(OBJECT_DIR)/%,$(MULTIP_CC_FILES:.C=.o))
+
+MULTIP_COMMON_HEADERS := myUtil.h thread.h
+
+export MULTIP_FILES
+export MULTIP_CC_FILES
+export MULTIP_COMMON_HEADERS
+
+
+
+#
+# Image Formats for screen captures (Chris Weigle)
+#
+
+IMGFORMAT_FILES :=
+
+IMGFORMAT_CC_FILES := PNMImage.C TIFFImage.C ImageMaker.C
+
+IMGFORMAT_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(IMGFORMAT_FILES:.c=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(IMGFORMAT_CC_FILES:.C=.o))
+
+IMGFORMAT_COMMON_HEADERS := PixelBuffer.h AbstractImage.h PNMImage.h\
+   TIFFImage.h ImageMaker.h
+
+export IMGFORMAT_FILES
+export IMGFORMAT_CC_FILES
+export IMGFORMAT_COMMON_HEADERS
+
+#
+# Registration
+#
+
+REGISTRATION_FILES := blas_extract.c f2c_extract.c dgels.c dgglse.c
+
+REGISTRATION_CC_FILES := imageViewer.C correspondence.C correspondenceEditor.C \
+                        linLeastSqr.C transformSolve.C
+
+REGISTRATION_OBJECTS := \
+        $(patsubst %,$(OBJECT_DIR)/%,$(REGISTRATION_FILES:.c=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(REGISTRATION_CC_FILES:.C=.o))
+
+REGISTRATION_COMMON_HEADERS := correspondenceEditor.h imageViewer.h \
+                        correspondence.h transformSolve.h
+
+export REGISTRATION_FILES
+export REGISTRATION_CC_FILES
+export REGISTRATION_COMMON_HEADERS
+
+#
+# microscape
+#
+
+MICROSCAPE_FILES = globals.c minit.c microscape.c interaction.c \
+                   stm_file.c normal.c \
+                   butt_mode.c updt_display.c \
+                   x_util.c termio.c x_graph.c x_aux.c tcl_tk.c
+
+
+MICROSCAPE_CC_FILES := Tcl_Linkvar.C \
+			microscopeHandlers.C \
+                        colormap.C active_set.C \
+                        vrml.C ohmmeter.C \
+			nma_Keithley2400.C nma_Keithley2400_ui.C \
+			vrpn_GPIBDevice.C imported_obj.C
+
+MICROSCAPE_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(MICROSCAPE_FILES:.c=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(MICROSCAPE_CC_FILES:.C=.o))
+
+MICROSCAPE_INCLUDES := stm.h microscape.h x_util.h x_aux.h openGL.h \
+                        tcl_tk.h Tcl_Linkvar.h colormaps/colormap.h \
+                        active_set.h \
+                        Makefile stm_cmd.h \
+                        AFMState.h \
+                        nmm_MicroscopeRemote.h \
+                        NetworkedMicroscopeChannel.h Topo.h \
+                        nma_Keithley2400.h nma_Keithley2400_ui.h \
+                        vrpn_GPIBDevice.h
+
+ifeq ($(HW_OS), hp_flow)
+  MICROSCAPE_INCLUDES := $(MICROSCAPE_INCLUDES) pxflShader.h
+endif
+
+ifeq ($(HW_OS), hp_flow_aCC)
+  MICROSCAPE_INCLUDES := $(MICROSCAPE_INCLUDES) pxflShader.h
+endif
+
+# libraries:
+#   libnmb.a - base/*
+#   libnmm.a - scope/*
+#   libnmg.a - graphics/*
+#   libnmui.a - ui/*
+
+$(OBJECT_DIR)/microscape: $(OBJECT_DIR) multip base scope imgformat graphics \
+           registration ugraphics genetic_textures ui $(MICROSCAPE_OBJECTS)
+	$(CC) $(LOAD_FLAGS) \
+              $(BASE_OBJECTS) $(MICROSCOPE_OBJECTS) $(IMGFORMAT_OBJECTS) \
+              $(GRAPHICS_OBJECTS) $(GENETIC_TEXTURES_OBJECTS) \
+              $(MULTIP_OBJECTS) $(UI_OBJECTS) $(MICROSCAPE_OBJECTS) \
+              $(UGRAPHICS_OBJECTS) $(REGISTRATION_OBJECTS) \
+              -lnmb -lnmui $(LIBS) \
+                -o $(OBJECT_DIR)/microscape
+
+$(OBJECT_DIR)/nM: $(OBJECT_DIR) multip base scope imgformat graphics \
+           registration ugraphics genetic_textures ui $(MICROSCAPE_OBJECTS)
+	$(CC) $(LOAD_FLAGS) \
+              $(BASE_OBJECTS) $(MICROSCOPE_OBJECTS) $(IMGFORMAT_OBJECTS) \
+              $(GRAPHICS_OBJECTS) $(GENETIC_TEXTURES_OBJECTS) \
+              $(MULTIP_OBJECTS) $(UI_OBJECTS) $(MICROSCAPE_OBJECTS) \
+              $(UGRAPHICS_OBJECTS) $(REGISTRATION_OBJECTS) \
+              -lnmb -lnmui $(LIBS) \
+                -o $(OBJECT_DIR)/nM
+
+$(OBJECT_DIR)/puremicroscape: $(OBJECT_DIR) multip base scope imgformat \
+      registration graphics ugraphics genetic_textures $(MICROSCAPE_OBJECTS)
+	purify $(CC) $(LOAD_FLAGS) \
+              $(BASE_OBJECTS) $(MICROSCOPE_OBJECTS) $(IMGFORMAT_OBJECTS) \
+              $(GRAPHICS_OBJECTS) $(GENETIC_TEXTURES_OBJECTS) \
+              $(MULTIP_OBJECTS) $(UI_OBJECTS) $(MICROSCAPE_OBJECTS) \
+              $(UGRAPHICS_OBJECTS) $(REGISTRATION_OBJECTS) \
+              -lnmb -lnmui $(LIBS) \
+                -o $(OBJECT_DIR)/microscape.pure
+
+#
+# renderer
+# Distributed renderer process
+#
+
+
+# scope/ModFile requires tcl_tk.c
+# tcl_tk.c requires
+#    x_min_value,
+#    x_max_value,
+#    xPlaneName in microscape.c ?!
+#    x_set_scale(double,double) in x_util.c ?!
+
+
+RENDERER_FILES := globals.c stm_file.c tcl_tk.c
+# x_util.c
+
+RENDERER_CC_FILES :=    BCGrid.C BCPlane.C Point.C Scanline.C Position.C \
+			BCDebug.C BCString.C \
+                        readTopometrixFile.C Tcl_Linkvar.C \
+                        colormap.C active_set.C PPM.C Topo.C \
+                        renderer.C
+
+# ohmeter.C ohmmeter.C vrml.C
+
+RENDERER_OBJECTS := $(patsubst %,$(OBJECT_DIR)/%,$(RENDERER_CC_FILES:.C=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(RENDERER_FILES:.c=.o))
+
+$(OBJECT_DIR)/renderer: $(OBJECT_DIR) multip base scope \
+                        genetic_textures imgformat registration graphics \
+                        $(RENDERER_OBJECTS)
+	$(CC) $(LOAD_FLAGS) \
+              $(MULTIP_OBJECTS) $(BASE_OBJECTS) $(MICROSCOPE_OBJECTS) \
+              $(GENETIC_TEXTURES_OBJECTS) $(GRAPHICS_OBJECTS) \
+              $(RENDERER_OBJECTS) $(UGRAPHICS_OBJECTS) $(IMGFORMAT_OBJECTS) \
+              $(REGISTRATION_OBJECTS) $(LIBS) \
+                -o $(OBJECT_DIR)/renderer
+
+
+.PHONY: multip
+multip:
+	$(MAKE) -C multip
+
+.PHONY: base
+base:	multip
+	$(MAKE) -C base
+
+.PHONY: scope
+scope:	base
+	$(MAKE) -C scope
+
+.PHONY: ugraphics
+ugraphics:      base
+	$(MAKE) -C ugraphics
+
+.PHONY: imgformat
+imgformat:
+	$(MAKE) -C imgformat
+
+.PHONY: registration
+registration:
+	$(MAKE) -C registration
+
+.PHONY: graphics
+graphics:	base
+	$(MAKE) -C graphics
+
+.PHONY: genetic_textures
+genetic_textures:
+	$(MAKE_REMOTE) -C genetic_textures
+
+.PHONY: genetic
+genetic:
+	$(MAKE_REMOTE) gaImplementation -C genetic_textures
+
+.PHONY: ui
+ui:     base
+	$(MAKE) -C ui
+
+
+#############################################################################
+#
+# Dependencies that are non-obvious
+#
+
+Grid.o: ../BCGrid.C ../readNanoscopeFile.C
+
+.PHONY: thisclean
+thisclean:
+	-rm $(OBJECT_DIR)/microscape
+	-rm $(MICROSCAPE_OBJECTS)
+	-rm $(RENDERER_OBJECTS)
+
+.PHONY: clean
+clean:  thisclean
+	$(MAKE) -C base clean 
+	$(MAKE) -C scope clean 
+	$(MAKE) -C imgformat clobber
+	$(MAKE) -C registration clean
+	$(MAKE) -C graphics clean 
+	$(MAKE) -C genetic_textures clean 
+	$(MAKE) -C ui clean
+	$(MAKE) -C ugraphics clean
+	$(MAKE) -C multip clean 
+
+.PHONY: clobber
+clobber:	clean
+	$(MAKE) -C base clobber
+	$(MAKE) -C scope clobber 
+	$(MAKE) -C imgformat clobber
+	$(MAKE) -C registration clobber
+	$(MAKE) -C graphics clobber 
+	$(MAKE) -C ugraphics clobber
+	$(MAKE) -C ui clobber
+	$(MAKE) -C multip clobber 
+
+.PHONY: clean_genetics
+clean_genetics:
+	$(MAKE) -C genetic_textures clean
+
+.PHONY: clean_scope
+clean_scope:
+	$(MAKE) -C scope clean
+

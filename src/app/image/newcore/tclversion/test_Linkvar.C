@@ -1,0 +1,256 @@
+/*
+// usr/Image definitions and header
+#define D_RealImage
+#define D_ImageStream
+#define D_DebugBuffer
+
+#include <imprelud.h>
+*/
+
+// C and tcl headers
+#include	<stdlib.h>
+#include	<stdio.h>
+#include	<string.h>
+#include	<math.h>
+#include	<tcl.h>
+#include	<tk.h>
+#include        <itcl.h>
+#include        <itk.h>
+
+// CIMAGE HEADERS
+/*
+#include "cimage_filter.h"
+#include "cimage_core.h"
+#include "core_ops.h"  // direction_flag, LEFT, RIGHT, BOTH defined.
+#include "core_io.h"
+#include "cimage_ops.h"
+#include "cimage_util.h"
+*/
+
+// Nano headers
+#include	"Tcl_Linkvar.h"
+
+/*
+// CoreView headers
+#include "optimize_boundary.h"
+#include "CoreViewImage.h"
+*/
+
+extern	int	sleep(int);
+
+//--------------------------------------------------------------------------
+// Declaring some integer and floating-point variables that will be
+// automatically linked to Tcl variables.  The linking occurs when the
+// Tclvar_init() routine is called.  The Tcl variables are made to track
+// the C variables when Tclvar_mainloop() is called.  Callbacks are set
+// up so that the C variables will track the Tcl variables, so long as
+// the application calls Tk_DoOneEvent(TK_DONT_WAIT) each time through
+// its main loop.
+// The Tcl displays for these (and sliders, if any) must be declared
+// by the application.  
+
+// Core image parameters
+Tclvar_float cursor_x("gstate(cursor,x)");
+Tclvar_float cursor_y("gstate(cursor,y)");
+Tclvar_float cursor_size("gstate(cursor,size)");
+Tclvar_int do_core("gstate(do_core)");
+
+// Ridge option parameters
+Tclvar_int strong_ridge("gstate(strong_ridge)");
+Tclvar_int light_dark("gstate(light_dark)");
+Tclvar_float sampling("gstate(sampling)");
+Tclvar_selector medialness("gstate(medialness)", NULL);
+
+//Display option parameters
+Tclvar_int core_view("gstate(core_view)");
+Tclvar_int draw_discs("gstate(draw_discs)");
+Tclvar_int draw_boundaries("gstate(draw_boundaries)");
+Tclvar_float radius("gstate(radius)");
+Tclvar_float boundary_ratio("gstate(boundary_ratio)");
+Tclvar_float zoom("gstate(zoom)");
+
+// Core options
+Tclvar_selector core_dir("gstate(core_dir)", NULL);
+
+//Ridge Strength params
+Tclvar_float grad("gstate(gradP)");
+Tclvar_float alpha("gstate(alpha)");
+Tclvar_float Mss("gstate(Mss)");
+Tclvar_int ridge_strength("gstate(ridge_strength)");
+
+
+//--------------------------------------------------------------------------
+// Handles changes to the Tcl variables
+
+void	handle_int_change(int newvalue, void *userdata)
+{
+    char	*varname = (char*)userdata;
+    printf("%s is now %d\n",varname,newvalue);
+}
+
+void	handle_float_change(float newvalue, void *userdata)
+{
+    char	*varname = (char*)userdata;
+    printf("%s is now %g\n",varname,newvalue);
+}
+
+void	handle_select_change(char * newvalue, void *userdata)
+{
+    char	*varname = (char*)userdata;
+    printf("%s is now %s\n",varname,newvalue);
+
+}
+
+void	handle_check_change(char *changed, int newvalue, void *)
+{
+    printf("%s is now %d\n",changed, newvalue);
+}
+
+void    handle_do_core(int /*newvalue*/, void * /*userdata*/)
+{
+    if (do_core) {
+	printf("Do a core! %f %f %f\n", 
+	       (float)cursor_x,(float)cursor_y,(float)cursor_size);
+
+	do_core = 0;
+    }
+    // otherwise do nothing
+
+}
+
+int main (int argc, char * argv[])
+{
+    char		command[256];
+    Tcl_Interp	*tk_control_interp;
+    Tk_Window       tk_control_window;
+    //int		count = 0;
+
+    //------------------------------------------------------------------
+    // Generic Tcl startup.  Getting and interpreter and mainwindow.
+
+    tk_control_interp = Tcl_CreateInterp();
+
+    /* Start a Tcl interpreter */
+    if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
+	fprintf(stderr,
+		"Tcl_Init failed: %s\n",tk_control_interp->result);
+	return(-1);
+    }
+
+    /* Initialize Tk */
+    if (Tk_Init(tk_control_interp) == TCL_ERROR) {
+	fprintf(stderr,
+		"Tk_Init failed: %s\n",tk_control_interp->result);
+	return(-1);
+    }
+
+    /* Initialize Tcl packages */
+    if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
+	fprintf(stderr,
+		"Package_Init failed: %s\n",tk_control_interp->result);
+	return(-1);
+    }
+    if (Itk_Init(tk_control_interp) == TCL_ERROR) {
+	fprintf(stderr,
+		"Package_Init failed: %s\n",tk_control_interp->result);
+	return(-1);
+    }
+
+    /* Start a Tk mainwindow to hold the widgets */
+    tk_control_window = Tk_MainWindow(tk_control_interp);
+    if (tk_control_window == NULL) {
+	fprintf(stderr,"%s\n", tk_control_interp->result);
+	return(-1);
+    }
+
+    //------------------------------------------------------------------
+    // Loading the particular definition files we need.  russ_widgets is
+    // required by the Tclvar_float_with_scale class.  test_Linkvar
+    // is application-specific and sets up the controls for the integer
+    // and float variables.
+
+    /* Load the Tcl scripts that handle widget definition and
+     * variable controls */
+	
+    sprintf(command, "source russ_widgets.tcl");
+    TCLEVALCHECK(tk_control_interp, command);
+
+
+    //------------------------------------------------------------------
+    // This routine must be called in order to initialize all of the
+    // variables that came into scope before the interpreter was set
+    // up, and to tell the variables which interpreter to use.  It is
+    // called once, after the interpreter exists.
+
+    // Initialize the variables using the interpreter
+    if (Tclvar_init(tk_control_interp)) {
+	fprintf(stderr,"Can't do init!\n");
+	return -1;
+    }
+
+    //------------------------------------------------------------------
+    // Set up callbacks to track changes on the Tcl side
+
+    do_core.set_tcl_change_callback(handle_do_core, NULL);
+
+    // Ridge options
+    strong_ridge.set_tcl_change_callback(handle_int_change,"gstate(strong_ridge)");
+    light_dark.set_tcl_change_callback(handle_int_change,"gstate(light_dark)");
+    sampling.set_tcl_change_callback(handle_float_change,"gstate(sampling)");
+    medialness.set_tcl_change_callback(handle_select_change,"gstate(medialness)");
+
+    //Display option parameters
+    core_view.set_tcl_change_callback(handle_int_change,"gstate(core_view)");
+    draw_discs.set_tcl_change_callback(handle_int_change,"gstate(draw_discs)");
+    draw_boundaries.set_tcl_change_callback(handle_int_change,"gstate(draw_boundaries)");
+    radius.set_tcl_change_callback(handle_float_change,"gstate(radius)");
+    boundary_ratio.set_tcl_change_callback(handle_float_change,"gstate(boundary_ratio)");
+    zoom.set_tcl_change_callback(handle_float_change,"gstate(zoom)");
+
+    // Core options
+    core_dir.set_tcl_change_callback(handle_select_change,"gstate(core_dir)");
+	
+    //Ridge Strength params
+    grad.set_tcl_change_callback(handle_float_change,"gstate(gradP)");
+    alpha.set_tcl_change_callback(handle_float_change,"gstate(alpha)");
+    Mss.set_tcl_change_callback(handle_float_change,"gstate(Mss)");
+    ridge_strength.set_tcl_change_callback(handle_int_change,"gstate(ridge_strength)");
+
+    sprintf(command, "source coremain.tcl");
+    TCLEVALCHECK(tk_control_interp, command);
+
+    // Load the input file from the command line, if there is one.
+    if (argc == 2) {
+	sprintf(command, "load_image %s", argv[1]);
+	TCLEVALCHECK(tk_control_interp, command);
+    }
+
+    // TK event will eventually kill application.
+    while (1) {
+	//------------------------------------------------------------
+	// This must be done in any Tcl app, to allow Tcl/Tk to handle
+	// events
+
+	while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
+
+	//------------------------------------------------------------
+	// This is called once every time through the main loop.  It
+	// pushes changes in the C variables over to Tcl.
+
+	if (Tclvar_mainloop()) {
+	    fprintf(stderr,"Mainloop failed\n");
+	    return -1;
+	}
+
+	//------------------------------------------------------------
+	// Just to show that changes in the C++ variables make it to
+	// the Tcl variables.
+
+// 		if ( (count++ % 500) == 0) i++;
+// 		if ( (count % 5000) == 0) {
+// 			m = 1-m;
+// 		}
+    }
+    //	return 0;
+}
+

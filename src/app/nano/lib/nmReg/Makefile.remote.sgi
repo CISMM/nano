@@ -1,0 +1,145 @@
+#############################################################################
+#	Makefile for the nanoManipulator client application.  Needs to be
+# built using 'gmake'.  Should run on any architecture that is currently
+# supported.  It should be possible to build simultaneously on multiple
+# architectures.
+#
+# Author: Russ Taylor, 08/22/1997
+#	  
+# modified:
+#	9/5/97 Renee Maheshwari
+#		-integrated RenderMan compilation with compilation
+#		 on HP's, so compiling on HP will automatically include
+#		 RenderMan capabilities
+#      10/3/97 Tom Hudson
+#               -Set up to compile scope subdirectory into ../$(HW_OS).
+#		 Marked changes with "# delta TCH"
+#		-Added support for ../../include as header repository.
+#      10/20/97 Sang-Uok Kum
+#               -Changed the flags for pxflow compiling. Now you don't have
+#                to change the flags everytime. It uses the env. var. that is
+#                defined by pbase. 
+#       5/14/98 Tom Hudson
+#               -Inherits CC, HW_OS, OBJECT_DIR, COMMON_INCLUDE_DIR,
+#                INCLUDE_FLAGS from the Makefile above
+#############################################################################
+
+##########################
+# common definitions
+#
+
+MAKEFILE := Makefile
+MAKE := gmake -f $(MAKEFILE)
+
+# imports CC and HW_OS
+
+##########################
+# directories
+# Inherit and correct for extra level lower in directory hierarchy
+#
+
+# subdirectory for make
+# TCH 13 May 98
+OBJECT_DIR	 := $(patsubst %,../%,$(OBJECT_DIR))
+
+# common include directory
+COMMON_INCLUDE_DIR  := $(patsubst %,../%,$(COMMON_INCLUDE_DIR))
+
+
+##########################
+# PixelFlow Porting Base settings
+#
+
+ifeq ($(HW_OS), hp_flow)
+  include $(PBASE_ROOT)/include/gmake/defs.mk
+  APLINKLIBS     = $(PRELINKLIBS) $(OPENGL_LINKLIBS)
+endif
+
+ifeq ($(HW_OS), hp_flow_aCC)
+  include $(PBASE_ROOT)/include/gmake/defs.mk
+  APLINKLIBS     = $(PRELINKLIBS) $(OPENGL_LINKLIBS)
+endif
+
+##########################
+# Include flags
+#
+
+# Inherit INCLUDE_FLAGS from the Makefile above, which exports them.
+# Redefine all local references to point one directory higher.
+# This means we can no longer invoke this Makefile by itself, but only
+# from the Makefile above!
+
+INCLUDE_FLAGS := $(patsubst -I.%,-I../.%,$(INCLUDE_FLAGS))
+
+#
+# Defines for the compilation, CFLAGS
+#
+
+# import DEFINES
+CFLAGS		 := $(INCLUDE_FLAGS) $(DEFINES) -g
+
+#############################################################################
+#
+# implicit rule for all .c files
+#
+.SUFFIXES:	.c .C .o .a
+
+# Build objects from .c files
+$(OBJECT_DIR)/%.o: %.c $(MICROSCAPE_INCLUDES) 
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+# Build objects from .C files
+$(OBJECT_DIR)/%.o: %.C $(MICROSCAPE_INCLUDES) 
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+# Share headers
+# delta TCH 3 Oct
+$(COMMON_INCLUDE_DIR)/%.h: %.h
+	-@chmod u+w $@
+	/bin/cp $< $@
+
+#
+#
+#############################################################################
+
+
+#############################################################################
+#
+# registration code
+#
+#############################################################################
+
+# imports REGISTRATION_FILES
+# imports REGISTRATION_CC_FILES
+# imports REGISTRATION_COMMON_HEADERS
+
+REGISTRATION_OBJECTS := \
+        $(patsubst %,$(OBJECT_DIR)/%,$(REGISTRATION_FILES:.c=.o)) \
+        $(patsubst %,$(OBJECT_DIR)/%,$(REGISTRATION_CC_FILES:.C=.o))
+
+INSTALLED_COMMON_HEADERS := \
+        $(patsubst %,$(COMMON_INCLUDE_DIR)/%,$(REGISTRATION_COMMON_HEADERS))
+
+all: $(OBJECT_DIR) $(REGISTRATION_OBJECTS) \
+     $(COMMON_INCLUDE_DIR) $(INSTALLED_COMMON_HEADERS)
+
+headers:	$(COMMON_INCLUDE_DIR) $(INSTALLED_COMMON_HEADERS)
+
+$(OBJECT_DIR):
+	-mkdir $(OBJECT_DIR)
+
+$(COMMON_INCLUDE_DIR):
+	-mkdir $(COMMON_INCLUDE_DIR)
+
+.PHONY: thisclean
+thisclean:  $(OBJECT_DIR) $(COMMON_INCLUDE_DIR)
+	-rm $(REGISTRATION_OBJECTS) 
+	-rm $(INSTALLED_COMMON_HEADERS)
+
+.PHONY: clean
+clean:  $(OBJECT_DIR)
+	-rm $(REGISTRATION_OBJECTS) 
+
+.PHONY: clobber
+clobber:	$(COMMON_INCLUDE_DIR) clean
+	-rm $(INSTALLED_COMMON_HEADERS)

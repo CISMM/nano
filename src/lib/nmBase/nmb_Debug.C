@@ -1,0 +1,3 @@
+
+int spm_verbosity;
+

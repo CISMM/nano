@@ -1,0 +1,198 @@
+#include "nmb_Decoration.h"
+
+#include <string.h>  // memcpy()
+#include <stdio.h>
+
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)<(b)?(b):(a))
+
+
+nmb_Decoration::nmb_Decoration (void) :
+  selectedRegion_changed (1),
+  //red_changed (1),
+  //green_changed (1),
+  //blue_changed (1),
+  mode (IMAGE),
+  elapsedTime (0),
+  rateOfTime (1),
+  user_mode (0),
+  //std_dev_color_scale (1.0f),
+  num_markers_shown (2000),
+  trueTipLocation_changed (0),
+  num_pulses (0),
+  max_num_pulses (10),
+  pulses (new nmb_LocationInfo [max_num_pulses]),
+  num_scrapes (0),
+  max_num_scrapes (10),
+  scrapes (new nmb_LocationInfo [max_num_scrapes]),
+  scrapeCallbacks (NULL),
+  pulseCallbacks (NULL)
+{
+  if (!pulses)
+    max_num_pulses = 0;
+  if (!scrapes)
+    max_num_scrapes = 0;
+}
+
+nmb_Decoration::~nmb_Decoration (void) {
+  callbackEntry * t0, * t1;
+
+  if (pulses)
+    delete [] pulses;
+  if (scrapes)
+    delete [] scrapes;
+
+  t0 = scrapeCallbacks;
+  while (t0) {
+    t1 = t0->next;
+    delete t0;
+    t0 = t1;
+  }
+
+  t0 = pulseCallbacks;
+  while (t0) {
+    t1 = t0->next;
+    delete t0;
+    t0 = t1;
+  }
+}
+
+
+void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom) {
+  nmb_LocationInfo * temp;
+  callbackEntry * nce;
+
+  // Grow virtual memory if needed
+  if (num_scrapes >= max_num_scrapes) {
+    temp = new nmb_LocationInfo [2 * max_num_scrapes];
+    if (!temp) {
+      fprintf(stderr, "nmb_Decoration::addScrapeMark:  Out of memory.\n");
+      return;
+    }
+    memcpy(temp, scrapes, num_scrapes * sizeof(nmb_LocationInfo));
+    delete [] scrapes;
+    scrapes = temp;
+    max_num_scrapes *= 2;
+  }
+
+  // Add a scrapes indicator to the list
+  scrapes[num_scrapes].x = Top[0];
+  scrapes[num_scrapes].y = Top[1];
+  scrapes[num_scrapes].top = Top[2];
+  scrapes[num_scrapes].bottom = Bottom[2];
+  num_scrapes++; 
+
+//fprintf(stderr, "Scraping at %.2f %.2f %.2f-%.2f\n", Top[0], Top[1], Top[2],
+//Bottom[2]);
+
+  // do callbacks
+  for (nce = scrapeCallbacks;  nce;  nce = nce->next)
+    if (nce->f(Top, Bottom, nce->userdata)) return;
+}
+
+
+void nmb_Decoration::addPulseMark (PointType Top, PointType Bottom) {
+  nmb_LocationInfo * temp;
+  callbackEntry * nce;
+
+  // Grow virtual memory if needed
+  if (num_pulses >= max_num_pulses) {
+    temp = new nmb_LocationInfo [2 * max_num_pulses];
+    if (!temp) {
+      fprintf(stderr, "nmb_Decoration::addScrapeMark:  Out of memory.\n");
+      return;
+    }
+    memcpy(temp, pulses, num_pulses * sizeof(nmb_LocationInfo));
+    delete [] pulses;
+    pulses = temp;
+    max_num_pulses *= 2;
+  }
+
+  // Add a pulse indicator to the list
+  pulses[num_pulses].x = Top[0];
+  pulses[num_pulses].y = Top[1];
+  pulses[num_pulses].top = Top[2];
+  pulses[num_pulses].bottom = Bottom[2];
+  num_pulses++;
+
+  // do callbacks
+  for (nce = pulseCallbacks;  nce;  nce = nce->next)
+    if (nce->f(Top, Bottom, nce->userdata)) return;
+}
+
+void nmb_Decoration::clearScrapes (void) {
+  num_scrapes = 0;
+}
+
+void nmb_Decoration::clearPulses (void) {
+  num_pulses = 0;
+}
+
+void nmb_Decoration::registerNewScrapeCallback
+      (nmb_SURFACE_MARKER_CALLBACK f, void * userdata) {
+  callbackEntry * nce;
+
+  nce = new callbackEntry;
+  if (!nce) {
+    fprintf(stderr, "nmb_Decoration::registerNewScrapeCallback:  "
+                    "Out of memory!\n");
+    return;
+  }
+
+  nce->f = f;
+  nce->userdata = userdata;
+  nce->next = scrapeCallbacks;
+  scrapeCallbacks = nce;
+  return;
+}
+
+void nmb_Decoration::registerNewPulseCallback
+      (nmb_SURFACE_MARKER_CALLBACK f, void * userdata) {
+  callbackEntry * nce;
+
+  nce = new callbackEntry;
+  if (!nce) {
+    fprintf(stderr, "nmb_Decoration::registerNewPulseCallback:  "
+                    "Out of memory!\n");
+    return;
+  }
+
+  nce->f = f;
+  nce->userdata = userdata;
+  nce->next = pulseCallbacks;
+  pulseCallbacks = nce;
+  return;
+}
+
+void nmb_Decoration::traverseVisibleScrapes
+          (int (* f) (const nmb_LocationInfo &, void *), void * userdata) {
+  int i;
+  int numToShow;
+
+  numToShow = num_markers_shown;
+  numToShow = min(numToShow, num_scrapes);
+  numToShow = max(numToShow, 0);
+
+//fprintf(stderr, "Traversing %d scrapes\n", numToShow);
+
+  for (i = num_scrapes - numToShow; i < num_scrapes; i++)
+    if (f(scrapes[i], userdata)) return;
+
+}
+
+
+void nmb_Decoration::traverseVisiblePulses
+          (int (* f) (const nmb_LocationInfo &, void *), void * userdata) {
+  int i;
+  int numToShow;
+
+  numToShow = num_markers_shown;
+  numToShow = min(numToShow, num_pulses);
+  numToShow = max(numToShow, 0);
+
+  for (i = num_pulses - numToShow; i < num_pulses; i++)
+    if (f(pulses[i], userdata)) return;
+
+}
+
+

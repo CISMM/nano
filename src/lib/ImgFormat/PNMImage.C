@@ -1,0 +1,268 @@
+// for isspace() & isdigit()
+#include <ctype.h>
+
+#include "PNMImage.h"
+
+
+bool PNMImage::readInt
+(
+   ifstream &pnm,
+   int      &value
+)
+{
+   unsigned char c = ' ';
+
+
+   while (isspace(c) || c == '#')
+   {
+      if (c == '#')
+         while (c != '\n')
+         {
+            pnm.get(c);
+
+            if (pnm.fail())
+               return false;
+         }
+
+      pnm.get(c);
+
+      if (pnm.fail())
+         return false;
+   }
+
+   if (!isdigit(c))
+      return false;
+
+   value = 0;
+
+   while (isdigit(c))
+   {
+      value *= 10;
+      value += (c - '0');
+
+      pnm.get(c);
+
+      if (pnm.fail())
+         return false;
+   }
+
+   return true;
+}
+
+bool PNMImage::readUChar
+(
+   ifstream      &pnm,
+   unsigned char &value
+)
+{
+   bool ret;
+
+   int temp;
+
+
+   ret = readInt(pnm, temp);
+
+   //value = static_cast<unsigned char>(temp);
+   value = (unsigned char)(temp);
+
+   return ret;
+}
+
+int PNMImage::readHeader(ifstream &pnm)
+{
+   int ret = 0;
+
+   char magic[3];
+
+
+   pnm.get(magic[0]);
+   pnm.get(magic[1]);
+   magic[2] = '\0';
+
+   if (pnm.fail())
+   {
+      cerr << "Could not read magic number." << endl;
+      return 0;
+   }
+
+
+   int nColumns, nRows;
+
+
+   if (!readInt(pnm, nColumns) || !readInt(pnm, nRows))
+   {
+      cerr << "Could not read image size." << endl;
+      return 0;
+   }
+
+
+   int max;
+
+
+   if (!readInt(pnm, max))
+   {
+      cerr << "Could not read maximum value." << endl;
+      return 0;
+   }
+
+   if (max != 255)
+   {
+      cerr << "Do not understand maximum value '" << max << "'" << endl;
+      return 0;
+   }
+
+   if (!strncmp(magic, "P2", 2 * sizeof(char)))
+      ret = 2;
+   else if (!strncmp(magic, "P3", 2 * sizeof(char)))
+      ret = 3;
+   else if (!strncmp(magic, "P5", 2 * sizeof(char)))
+      ret = 5;
+   else if (!strncmp(magic, "P6", 2 * sizeof(char)))
+      ret = 6;
+
+   switch (ret)
+   {
+      case 2:
+      case 5:
+         if (!(image = new PixelBuffer(nRows, nColumns, 1)))
+         {
+            cerr << "Insufficient memory to for " << nRows << "x" << nColumns
+                 << "x1 PNM image." << endl;
+            ret = 0;
+         }
+         break;
+
+      case 3:
+      case 6:
+         if (!(image = new PixelBuffer(nRows, nColumns, 3)))
+         {
+            cerr << "Insufficient memory to for " << nRows << "x" << nColumns
+                 << "x3 PNM image." << endl;
+            ret = 0;
+         }
+         break;
+
+      default:
+         cerr << "Do not understand image format '" << magic << "'" << endl;
+         cerr << "Expected ASCII/RAW PGM/PPM." << endl;
+   }
+
+   return ret;
+}
+
+bool PNMImage::readASCII(ifstream &pnm)
+{
+   for (int y = 0; y < image->Rows(); y++)
+      for (int x = 0; x < image->Columns(); x++)
+         for (int c = 0; c < image->Colors(); c++)
+         {
+            readUChar(pnm, (image->Pixel(y, x, c)));
+         }
+
+   return true;
+}
+
+bool PNMImage::readRAW(ifstream &pnm)
+{
+   for (int y = 0; y < image->Rows(); y++)
+      pnm.read(&(image->Pixel(y)),
+               image->Columns()*image->Colors()*sizeof(char));
+
+   return true;
+}
+
+bool PNMImage::readPNM(ifstream &pnm)
+{
+   switch (readHeader(pnm))
+   {
+      case 2:
+      case 3:
+         return readASCII(pnm);
+
+      case 5:
+      case 6:
+         return readRAW(pnm);
+
+      default:
+         return false;
+   }
+}
+
+bool PNMImage::writeRAW(ofstream &pnm)
+{
+   pnm << (1 == image->Colors() ? "P5" : "P6") << endl << image->Columns()
+       << " " << image->Rows() << endl << 255 << endl;
+
+   for (int y = 0; y < image->Rows(); y++)
+      pnm.write(&(image->Pixel(y)),
+                image->Columns()*image->Colors()*sizeof(char));
+
+   return true;
+}
+
+bool PNMImage::Read(const char *filename)
+{
+   if (image && image->Valid())
+      Die();
+
+
+   ifstream pnm(filename);
+
+
+   if (!pnm)
+   {
+      cerr << "Could not open file '" << filename << "' for reading." << endl;
+      Die();
+      return false;
+   }
+
+   if (readPNM(pnm))
+   {
+      cerr << "Could not open file '" << filename << "' for reading." << endl;
+      Die();
+   }
+
+   pnm.close();
+
+   return image->Valid();
+}
+
+bool PNMImage::Write(const char *filename)
+{
+   if (!image || !image->Valid())
+   {
+      cerr << "This is not a valid PNM." << endl;
+      return false;
+   }
+
+
+   ofstream pnm(filename);
+
+
+   if (!pnm)
+   {
+      cerr << "Could not open file '" << filename << "' for writing." << endl;
+      return false;
+   }
+
+
+   bool ret;
+
+
+   switch (image->Colors())
+   {
+      case 1:
+      case 3:
+         ret = writeRAW(pnm);
+         break;
+
+      default:
+         cerr << "Do not know how to write a " << image->Colors()
+              << "-color PNM image." << endl;
+         ret = false;
+   }
+
+   pnm.close();
+
+   return ret;
+}

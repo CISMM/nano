@@ -1,0 +1,158 @@
+#!/usr/bin/avs -network
+version 5.4 (50.76 SunOS5 xgl)
+module "image viewer.user.0" -xy 187,512
+module "ip threshold.user.1" -xy 178,98 -ex $Path/avs_library/sv_multm
+module erode_2D.user.2 -xy 142,206 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module "structuring element.user.3" -xy 25,134 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module dilate_2D.user.4 -xy 34,269 -ex /afs/unc/proj/mip/neuro/avs/BIWI/module/morphology
+module "Read Sunraster JH.user.5" -xy 313,8 -ex /afs/unc/proj/mip/neuro/avs/Biwi97/avs_library/SunOS/ReadSunraster
+module downsize.user.6 -xy 466,197 -ex $Path/avs_library/mongo
+module downsize.user.7 -xy 313,179 -ex $Path/avs_library/mongo
+module downsize.user.8 -xy 43,341 -ex $Path/avs_library/mongo
+module "ip statistics.user.9" -xy 178,314 -ex $Path/avs_library/sv_multm
+port_connect "ip threshold.user.1":0 erode_2D.user.2:0
+port_connect "ip threshold.user.1":0 downsize.user.7:0
+port_connect erode_2D.user.2:0 dilate_2D.user.4:0
+port_connect "structuring element.user.3":0 erode_2D.user.2:1
+port_connect "structuring element.user.3":0 dilate_2D.user.4:1
+port_connect dilate_2D.user.4:0 "ip statistics.user.9":0
+port_connect dilate_2D.user.4:0 downsize.user.8:0
+port_connect "Read Sunraster JH.user.5":3 downsize.user.6:0
+port_connect "Read Sunraster JH.user.5":3 "ip threshold.user.1":0
+port_connect downsize.user.6:0 "image viewer.user.0":0
+port_connect downsize.user.7:0 "image viewer.user.0":0
+port_connect downsize.user.8:0 "image viewer.user.0":0
+parm_set "image viewer.user.0":"Update Always" true
+parm_set "ip threshold.user.1":"Channel 0" true
+parm_set "ip threshold.user.1":"Channel 1" false
+parm_set "ip threshold.user.1":"Channel 2" false
+parm_set "ip threshold.user.1":"Channel 3" false
+parm_set "ip threshold.user.1":"Channel 4" false
+parm_set "ip threshold.user.1":"Channel 5" false
+parm_set "ip threshold.user.1":"Channel 6" false
+parm_set "ip threshold.user.1":"Channel 7" false
+parm_set "ip threshold.user.1":"Channel 8" false
+parm_set "ip threshold.user.1":"Channel 9" false
+parm_set "ip threshold.user.1":"Channel 10" false
+parm_set "ip threshold.user.1":"Channel 11" false
+parm_set "ip threshold.user.1":"Low Value" 170 -range 0 255
+parm_set "ip threshold.user.1":"High Value" 255 -range 0 255
+parm_set "ip threshold.user.1":Invert false
+parm_set "ip threshold.user.1":"clear output" true
+parm_set "structuring element.user.3":dimtitle dimension
+parm_set "structuring element.user.3":dimension 2
+parm_set "structuring element.user.3":metrictitle metric
+parm_set "structuring element.user.3":metric euclid
+parm_set "structuring element.user.3":"radius x" 1.5
+parm_set "structuring element.user.3":"radius y" 1.5
+parm_set "structuring element.user.3":"radius z" 0
+parm_set downsize.user.6:downsize 2
+parm_set downsize.user.7:downsize 2
+parm_set downsize.user.8:downsize 2
+parm_set "ip statistics.user.9":Channel "channel 0" -range "channel 0" ;
+mod_image "image viewer.user.0"
+image_set_scene -scene "image viewer.user.0"
+image_set_view_size 84 711 1878 532
+image_set_view_transformation -tx -0.000000 -ty -0.000000 -sx 1.000000 -sy 1.000000
+image_set_color 0.000000 0.000000 0.000000
+image_create_image -image "dilate_2D.user.8.0"
+image_set_image_transformation -image "dilate_2D.user.8.0" -tx 110.000000 -ty 508.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "dilate_2D.user.8.0" 1
+image_set_display_technique -image "dilate_2D.user.8.0" dither
+image_create_image -image "erode_2D.user.6.0"
+image_set_image_transformation -image "erode_2D.user.6.0" -tx -121.000000 -ty 669.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "erode_2D.user.6.0" 1
+image_set_display_technique -image "erode_2D.user.6.0" dither
+image_create_image -image "downsize.user.8"
+image_set_image_transformation -image "downsize.user.8" -tx 520.000000 -ty -22.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.8" 1
+image_set_display_technique -image "downsize.user.8" dither
+image_create_image -image "downsize.user.7"
+image_set_image_transformation -image "downsize.user.7" -tx -51.000000 -ty -22.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.7" 1
+image_set_display_technique -image "downsize.user.7" dither
+image_create_image -image "downsize.user.6"
+image_set_image_transformation -image "downsize.user.6" -tx -578.000000 -ty -24.000000 -sx 1.000000 -sy 1.000000
+image_set_visibility -image "downsize.user.6" 1
+image_set_display_technique -image "downsize.user.6" dither
+}
+shell "ui" shell
+ panel Application -w app_panel -p ui -xy 0,0 -wh 260,1024
+  panel "Top Level Stack" -w master_stack -p Application -xy 2,100 -wh 255,731
+   panel "ip threshold.user.1" -w panel -p "Top Level Stack" \
+       -xy 0,185 -wh 224,546
+    manipulator "ip threshold.user.1:Channel 0" -w toggle -p "ip threshold.user.1" \
+        -xy 5,9 -wh 117,21\
+   -P title string "Channel 0"
+    manipulator "ip threshold.user.1:Channel 1" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,28 -wh 117,21\
+   -P title string "Channel 1"
+    manipulator "ip threshold.user.1:Channel 2" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,53 -wh 117,21\
+   -P title string "Channel 2"
+    manipulator "ip threshold.user.1:Channel 3" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,76 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 4" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,95 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 5" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,119 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 6" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,143 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 7" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,162 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 8" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,185 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 9" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,210 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 10" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,233 -wh 117,21
+    manipulator "ip threshold.user.1:Channel 11" -w toggle -p "ip threshold.user.1" -hide \
+        -xy 5,252 -wh 117,21
+    manipulator "ip threshold.user.1:Low Value" -w dial -p "ip threshold.user.1" \
+        -xy 124,252 -wh 90,129
+    manipulator "ip threshold.user.1:High Value" -w dial -p "ip threshold.user.1" \
+        -xy 5,383 -wh 90,129
+    manipulator "ip threshold.user.1:Invert" -w toggle -p "ip threshold.user.1" \
+        -xy 95,383 -wh 117,21
+    manipulator "ip threshold.user.1:clear output" -w toggle -p "ip threshold.user.1" \
+        -xy 5,514 -wh 117,21
+   panel "structuring element.user.3" -w panel -p "Top Level Stack" \
+       -xy 0,185 -wh 224,367
+    manipulator "structuring element.user.3:dimtitle" -w text -p "structuring element.user.3" \
+        -xy 5,9 -wh 117,21
+    manipulator "structuring element.user.3:dimension" -w radio_buttons -p "structuring element.user.3" \
+        -xy 5,28 -wh 117,43
+    manipulator "structuring element.user.3:metrictitle" -w text -p "structuring element.user.3" \
+        -xy 5,76 -wh 117,21
+    manipulator "structuring element.user.3:metric" -w radio_buttons -p "structuring element.user.3" \
+        -xy 5,95 -wh 117,64
+    manipulator "structuring element.user.3:radius x" -w dial -p "structuring element.user.3" \
+        -xy 124,95 -wh 90,129
+    manipulator "structuring element.user.3:radius y" -w dial -p "structuring element.user.3" \
+        -xy 5,227 -wh 90,129
+    manipulator "structuring element.user.3:radius z" -w dial -p "structuring element.user.3" \
+        -xy 95,227 -wh 90,129
+   panel "Read Sunraster JH.user.5" -w panel -p "Top Level Stack" \
+       -xy 0,185 -wh 135,42
+    manipulator "Read Sunraster JH.user.5:Read Sunraster" -w oneshot -p "Read Sunraster JH.user.5" \
+        -xy 10,10 -wh 117,21
+   panel downsize.user.6 -w panel -p "Top Level Stack" -xy 0,185 -wh 110,150
+    manipulator downsize.user.6:downsize -w idial -p downsize.user.6 \
+        -xy 10,10 -wh 90,129
+   panel downsize.user.7 -w panel -p "Top Level Stack" -xy 0,185 -wh 110,150
+    manipulator downsize.user.7:downsize -w idial -p downsize.user.7 \
+        -xy 10,10 -wh 90,129
+   panel downsize.user.8 -w panel -p "Top Level Stack" -xy 0,185 -wh 110,150
+    manipulator downsize.user.8:downsize -w idial -p downsize.user.8 \
+        -xy 10,10 -wh 90,129
+   panel "ip statistics.user.9" -w panel -p "Top Level Stack" \
+       -xy 0,185 -wh 255,387
+    manipulator "ip statistics.user.9:Channel" -w radio_buttons -p "ip statistics.user.9" \
+        -xy 10,10 -wh 117,21
+    manipulator "ip statistics.user.9:Statistics" -w textblock -p "ip statistics.user.9" \
+        -xy 10,269 -wh 235,108
+ panel "image viewer.user.0!image" -w container -p ui -xy 48,697 -wh 1921,607\
+   -P zoom_coords string "0 0 0 0 0 <$NULL> 0 0 0 0"
+manipulator "image viewer.user.0":"Update Always" -w none
+manipulator "image viewer.user.0":"Update Image" -w none
+# End of file

@@ -1,0 +1,11 @@
+Sample driver files for tracking features in greyscale
+images.
+
+lctrace.c - main interface code
+russell.c - wrapper function for tracker code
+Makefile -  SGI application makefile
+
+trace_mode constants are in ../newcore/CIMAGE/include/constants.h
+
+Running make creates soft links to needed files from the microscape
+root directory.

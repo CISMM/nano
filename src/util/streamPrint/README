@@ -1,0 +1,45 @@
+Stream Tools
+
+
+vrpn_headerPrint:
+	Takes a nM8.0 stream file, usually with extension .nms, and
+	prints out message type, sender, and timestamp. It does not
+	print message contents.
+
+vrpn_streamTimeFix: 
+	Takes a nM8.0 stream file, and writes out another stream file
+	which has the message time stamps adjusted so they are
+	increasing (or at least non-decreasing)
+
+streamPrint:
+	Takes a microscape stream, from version 7.x or 8, maybe even
+	previous versions, and prints all information about the
+	message, including it's contents.
+
+vrpn_newStreamPrint: 
+	This app is generated using awk scripts from the file
+	vrpnsp.c. It is designed to print messages from a new stream
+	file format for nM9.0, which hasn't been implemented yet. The
+	new communication format is documented on the nano manual web
+	page. We propose the extension .nmlog for these streams. 
+	(NOTE: currently does not compile, awk seems to be
+	mis-behaving - 10/27/99)
+
+streamToNewVrpn
+	Conversion program from the old microscape stream files to the
+	new proposed format. Hack:
+	To run streamToNewVrpn, first start up vrpn/server_src/`hw_os`/vrpn_server
+	streamToNewVrpn <old stream file>.stream <new stream file>.nmlog
+	(NOTE: currently does not compile, awk seems to be
+	mis-behaving - 10/27/99)
+
+print_resist:
+	This is a tcl/tk script which takes the output of streamPrint
+	and creates two new output files in easy-to-graph format. They
+	contain the OHM_RESISTANCE message and the
+	SPM_WINDOW_LINE_DATA message contents, along with the message
+	timestamps. Scott Paulson needed this as a temporary fix at
+	one point. Could be useful as a model for extracting useful
+	information from the newer stream print programs. 
+
+

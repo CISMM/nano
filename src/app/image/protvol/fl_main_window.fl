@@ -1,0 +1,57 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.00 
+header_name {.h} 
+code_name {.cxx} 
+gridx 5 
+gridy 5 
+snap 3
+Function {create_main_window()} {open
+} {
+  Fl_Window {} {
+    label ProtVol
+    callback pv_exit open
+    xywh {522 62 388 376} resizable
+    code0 {\#include "pvmain.h"} visible
+  } {
+    Fl_Menu_Bar {} {open
+      xywh {0 0 425 25}
+    } {
+      submenu {} {
+        label File open
+        xywh {0 0 100 20}
+      } {
+        menuitem {} {
+          label Open
+          callback open_cb
+          xywh {0 0 100 20} shortcut 0x4006f
+        }
+        menuitem {} {
+          label Close
+          callback close_cb
+          xywh {0 0 100 20} shortcut 0x40077
+        }
+        menuitem {} {
+          label Exit
+          callback pv_exit selected
+          xywh {10 10 100 20} shortcut 0x40071
+        }
+      }
+    }
+    Fl_Output volume_list_displayer {
+      label {X                 Y                      Volume}
+      xywh {20 60 355 245} type Multiline align 5 textfont 4
+    }
+    Fl_Value_Output x_out {
+      label {X:}
+      xywh {35 320 65 30} color 55 maximum 0
+    }
+    Fl_Value_Output y_out {
+      label {Y:}
+      xywh {140 320 65 30} color 55 maximum 0
+    }
+    Fl_Value_Output vol_out {
+      label {Volume:}
+      xywh {275 320 65 30} color 55
+    }
+  }
+} 

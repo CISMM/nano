@@ -1,0 +1,122 @@
+Package NMG:  nanoManipulator graphics
+
+The nmg package handles all graphics for the nanoManipulator.
+No function outside this library should, or should need to,
+have any specific graphics code (vrml.C is a resasonable exception).
+Nobody else is guaranteed to have a valid graphics context.  An
+instantiation of nmg_Graphics may be a local implementation running GL,
+or a stub communicating via shared memory to a coprocess, or an image-
+based renderer receiving data from PixelFlow, or ...
+
+There should be NO user interface code in this directory!  That means
+no Tclvars;  declare the Tclvars outside and pass them in through
+member functions on nmg_Graphics*.  This may be awkward, but is what
+we need for the distributed nanoManipulator.
+
+nmg_Graphics:
+  An abstract base class for microscape's graphics.  A checklist
+for extending nmg_Graphics is at the end of this file.
+
+nmg_Graphics_Implementation:
+  The standard implementation of nmg_Graphics.
+It uses Open GL and has all of the PixelFlow code included.
+It is built on top of the old graphics modules from microscape.
+
+nmg_Graphics_Null:
+  A "null" implementation of nmg_Graphics that calls very few
+graphics routines.  Meant for timing tests.
+
+nmg_Graphics_Remote:
+  A local stub implementation of nmg_Graphics that uses VRPN to
+communicate with a remote nmg_Graphics_Implementation.
+
+openGL:
+  Implements the draw_objects() routine passed to vlib.
+It updates stale display lists by calling routines in spm_gl.
+It sets up material parameters and calls routines to render
+the decorations on the surface.
+On PixelFlow it also sets up the lighting.
+
+graphics:
+  Contains all the random routines culled from other parts of the
+code when GL calls were isolated in this one directory.
+It controls lighting and texturing.
+
+spm_gl:
+  Contains routines to build triangle stripped display lists for
+the surface and to do other low-level rendering tasks.
+
+globjects:
+  Describes Open GL objects that are drawn in the world
+other than the surface itself.
+It includes routines to create and draw the icons for the hand,
+the aiming lines, and text on the screen.
+
+chartjunk:
+  Has routines for drawing all the text that appears in screenspace.
+For conceptual clarity it probably should also include the other
+features that are toggled by the "chartjunk" button.
+It is the only module in the nmg Graphics package that relies on the
+nmm Microscope package.
+
+pxflShader:
+  declares constants and variables used to control the shaders
+on PixelFlow.
+
+graphics_globals:
+  declares and defines all the global variables used by graphics.
+It defines everything declared in pxflShader.
+This is inconsistent.
+
+font:
+  standard library for writing on the screen.
+
+nmg_Funclist:
+  utility class that keeps track of functions to call during rendering.
+One funclist is maintained in globjects for each coordinate space.
+
+
+
+
+Depends on:  Tcl_Linkvar, BCGrid, BCPlane, Position, PPM, nmb (Base),
+and nmm (Microscope).
+
+
+
+
+To extend nmg_Graphics with a function foo (bar), you need to write
+all the following (and provide implementations;  everything except
+nmg_Graphics_Implementation::foo() should be obvious from the similar
+functions, and nmg_Graphics_Implementation::foo() is where you actually
+add your new function):
+
+nmg_Graphics.h
+  public:
+    virtual void nmg_Graphics::foo (bar) = 0;
+  protected:
+    int d_foo_type;
+    char * nmg_Graphics::encode_foo (int *, bar)
+    int nmg_Graphics::decode_foo (const char *, bar *)
+
+nmg_GraphicsRemote.h
+  public:
+    virtual void nmg_Graphics_Remote::foo (bar);
+
+nmg_GraphicsImpl.h
+  public:
+    virtual void nmg_Graphics_Implementation::foo (bar);
+  protected:
+    static int handle_foo (void *, vrpn_HANDLERPARAM);
+
+You will also need to modify the following:
+
+    nmg_Graphics::nmg_Graphics (vrpn_Connection *, const char *)
+      d_foo_type = c->register_message_type("nmg Graphics foo");
+
+    nmg_Graphics_Implementation::nmg_Graphics_Implementation
+      connection->register_handler(d_foo_type, handle_foo, this,
+                                   vrpn_ANY_SENDER);
+
+  
+
+

@@ -1,0 +1,108 @@
+##############################################################################
+#
+# Typical stuff
+#
+
+CWD := $(shell $(PWD_COMMAND))
+
+THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
+
+OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS),$(THIS_DIR))
+
+###############################################################################
+#
+# Got more CFLAGS?
+#
+
+ifdef EXTRA_CFLAGS
+   CFLAGS += $(EXTRA_CFLAGS)
+endif
+
+##############################################################################
+#
+# Expand the uses libs stuff
+#
+
+ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+   ifdef USES_LIBS
+      USES_LIBS_TMP := $(foreach lib,$(USES_LIBS),\
+      $(shell $(SEARCH_PROG) $(HW_OS) $(lib) $(SEARCH_PATH)))
+      USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
+      USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
+      LIBS          := $(addprefix -l,$(USES_LIBS)) $(LIBS)
+   endif
+
+   ifdef NAUGHTY
+      USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
+   endif
+endif
+
+###############################################################################
+#
+# Specifics for a library
+#
+
+ifndef SRC_SUFFIXES
+   SRC_SUFFIXES := .C .c .cc
+endif
+
+ifndef APP_SRC
+   APP_SRC := $(foreach suffix,$(SRC_SUFFIXES),$(wildcard *$(suffix)))
+   APP_SRC := $(filter-out $(EXCLUDE_SRC),$(APP_SRC)))
+endif
+
+ifndef APP_OBJ
+   APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
+                          $(addsuffix .o,$(strip $(basename $(APP_SRC)))))
+endif
+
+ifndef APP_NAME
+   APP_NAME := $(notdir $(CWD))
+endif
+
+ifndef APP_EXEC
+   APP_EXEC := $(OBJECT_DIR)/$(APP_NAME)
+endif
+
+###############################################################################
+#
+# Special targets
+#
+
+.PHONY: default
+default: $(OBJECT_DIR) $(APP_EXEC)
+
+.PHONY: all
+all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
+
+.PHONY: clean
+clean: 
+	-rm -rf $(OBJECT_DIR) 
+
+.PHONY: thisclean
+thisclean:
+	-rm -f $(addprefix $(OBJECT_DIR)/,*.o $(APP_NAME))
+
+#############################################################################
+#
+# implicit rule for all .c files
+#
+
+.SUFFIXES: .c .C .cc .o .a
+
+$(OBJECT_DIR):
+	-mkdir -p $(FULL_OBJECT_DIR)
+	-ln -sf $(FULL_OBJECT_DIR) $(TOP_LEVEL_OBJ_DIR)
+	-mkdir -p $(OBJECT_DIR)
+
+$(OBJECT_DIR)/%.o: %.c
+	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+
+$(OBJECT_DIR)/%.o: %.cc
+	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+
+$(OBJECT_DIR)/%.o: %.C
+	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+
+$(APP_EXEC): $(APP_OBJ)
+	$(CC) -o $@ $^ $(USES_LIBS_LD) $(LOAD_FLAGS) $(LIBS)

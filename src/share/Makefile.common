@@ -1,0 +1,407 @@
+#############################################################################
+#	Makefile for the nanoManipulator client application.  Needs to be
+# built using 'gmake'.  Should run on any architecture that is currently
+# supported.  It should be possible to build simultaneously on multiple
+# architectures.
+#
+# Author: Russ Taylor, 08/22/1997
+#	  
+# {{{ ChangeLog
+#
+# modified:
+#	9/5/97 Renee Maheshwari
+#		-integrated RenderMan compilation with compilation
+#		 on HP's, so compiling on HP will automatically include
+#		 RenderMan capabilities
+#      10/3/97 Tom Hudson (drawing on examples by Dan Aliaga)
+#               -Added support for recursively compiling a subdirectory (scope).
+#                This isn't perfect, since we still need a list of the
+#                object files.
+#               -Added support for ../include as a repository for common
+#                header files.
+#      10/20/97 Sang-Uok Kum
+#               -Changed the flags for pxflow compiling. Now you don't have
+#                to change the flags everytime. It uses the env. var. that is
+#                defined by pbase. 
+#	5/13/98 Tom Hudson
+#		-Used $(patsubst) and INCLUDE_FILES and export
+#		 to get rid of replication of include paths in sub-Makefiles
+#		 Also export HW_OS, CC, OBJECT_DIR and COMMON_INCLUDE_DIR
+#	7/16/98 Tom Hudson
+#		-Added FULL_OBJECT_DIR to put object files in non-replicated
+#		 space:  stm/src/not_backed_up
+#	8/19/98 Tom Hudson
+#		-Changed VLIB and VRPN includes/linking to look for a copy
+#		 in src/`whoami`/ first and use src/ otherwise.
+#      11/23/98 Tanner Lovelace
+#               -Changed QUAT includes/linking to look for a copy in
+#                src/`whoami`/ first and use HMD_..._DIR otherwise
+#	1/23/98 Xiaohu Guan
+#		-integrated vrpn version of nmm_Microscope_Remote class with
+#		 non-vrpn version of Microscope class. You can switch between
+#		 these two by adding/removing -DUSE_VRPN_MICROSCOPE from
+#		 DEFINES flag.
+#       4/20/99 Tanner Lovelace
+#		-Integrated Makefile to work under the Cygnus Solutions
+#		 cygwin environment under Windows NT.
+#      11/04/99 Chris Weigle
+#               -Nano reorganization.  Used this Makefile for defining common
+#                and architecture specific variables (so the individual lib/
+#                app/util Makefiles don't need to have the logic for figuring
+#                such things out).
+#############################################################################
+
+ifeq ($(MAKELEVEL),0)
+
+##########################
+# }}}
+# {{{ common definitions
+#
+
+##########################
+#
+# Get my architecture
+#
+
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),FreeBSD)             # hw_os does not exist on FreeBSD at UNC
+   HW_OS := pc_FreeBSD
+else
+   ifeq ($(UNAME),CYGWIN_NT-4.0)    # Cygwin may not have HW_OS
+      HW_OS := pc_cygwin
+   else
+      ifeq ($(UNAME),Linux)         # Cygwin may not have HW_OS
+         HW_OS := pc_linux
+      else                          # everybody else has hw_os
+         HW_OS := $(shell hw_os)
+      endif
+   endif
+endif
+
+##########################
+#
+# How do I link?
+#
+
+ifeq ($(HW_OS),pc_cygwin)           # Cygwin doesn't do links right yet
+   LINK = cp
+else
+   LINK = ln -sf
+endif
+
+##########################
+#
+# Get my username
+#
+
+ifeq ($(HW_OS),pc_linux)
+   WHOAMI := $(shell /usr/bin/whoami)
+else
+   ifeq ($(HW_OS),sparc_solaris)
+      WHOAMI := $(shell /usr/ucb/whoami)
+   else
+      ifeq ($(HW_OS),pc_cygwin)     # This is set up in NT
+         WHOAMI := $(USERNAME)
+      else
+         WHOAMI := $(shell /bin/whoami)
+      endif
+   endif
+endif
+
+##########################
+#
+# How do I get the real PWD
+#
+
+PWD_COMMAND := pwd
+ifeq ($(findstring pc_,$(HW_OS)),pc_)
+   PWD_COMMAND := pwd -P
+endif
+
+##########################
+#
+# Which C++ compiler
+# depends on which arch
+#
+
+ifdef PBASE_ROOT                    # Must be flow
+   ifeq ($(PXFL_COMPILER),aCC)      # We commonly use multiple compilers here
+      HW_OS := hp_flow_aCC
+      CC    := /opt/aCC/bin/aCC -G
+   else
+      HW_OS := hp_flow
+      CC    := g++
+   endif
+else
+   ifeq ($(HW_OS),sgi_irix)         # "-32":  force 32-bit compilation
+                                    # to be compatible with our libraries
+      CC := CC -32 -fullwarn
+   else
+      ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
+         CC := CC +w
+      else                          # default case
+         CC := g++ -Wall
+      endif
+   endif
+endif
+
+##########################
+# }}}
+# {{{ directories
+#
+
+##########################
+#
+# SGI shared memory
+#
+
+ifeq ($(HW_OS),sgi_irix)
+   SHMEM_LIBS := -lmpc
+endif
+
+##########################
+#
+# Paths to everything
+#
+
+DEFAULT_PROJ_HOME    := /afs/cs.unc.edu/project/stm
+DEFAULT_PROJ_SRC_DIR := $(DEFAULT_PROJ_HOME)/src
+DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
+DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
+
+ifndef MY_PROJ_SRC_DIR
+   MY_PROJ_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/$(WHOAMI)
+endif
+
+TOP_LEVEL_DIR     := $(MY_PROJ_SRC_DIR)/nano
+TOP_LEVEL_SRC_DIR := $(TOP_LEVEL_DIR)/src
+TOP_LEVEL_OBJ_DIR := $(TOP_LEVEL_DIR)/obj
+
+ifndef MY_NANO_OBJ_DIR
+   FULL_OBJECT_DIR := $(DEFAULT_PROJ_OBJ_DIR)/$(WHOAMI)-nano/$(HW_OS)
+else
+   TOP_LEVEL_OBJ_DIR := $(MY_NANO_OBJ_DIR)
+   FULL_OBJECT_DIR   := $(TOP_LEVEL_OBJ_DIR)/obj/$(HW_OS)
+endif
+
+TCL_INC_DIR := /net/nano/nano3/tcltk.sgi_irix/include
+TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib
+
+###############################################################################
+#
+# Need to use a library?  Just say so ...
+#
+
+SEARCH_PATH := $(MY_ALT_LIB_DIR) $(MY_NANO_OBJ_DIR) $(TOP_LEVEL_DIR) \
+               $(DEFAULT_NANO_SRC_DIR) $(MY_PROJ_SRC_DIR) $(DEFAULT_PROJ_SRC_DIR)
+
+SEARCH_PROG := $(TOP_LEVEL_SRC_DIR)/share/find-lib.sh
+
+##########################
+#
+# }}}
+# {{{ PixelFlow Porting Base settings
+#
+
+ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
+   include $(PBASE_ROOT)/include/gmake/defs.mk
+   APLINKLIBS := $(PRELINKLIBS) $(OPENGL_LINKLIBS)
+endif
+
+##########################
+#
+# }}}
+# {{{ Include flags
+#
+
+SYS_INCLUDE := $(TCL_INC_DIR) \
+               /usr/local/contrib/include /usr/local/contrib/mod/include
+
+ifeq ($(HW_OS),pc_cygwin)
+   SYS_INCLUDE := /usr/local/include 
+endif
+
+ifeq ($(HW_OS),pc_linux)
+   SYS_INCLUDE := $(TCL_INC_DIR) \
+                  /usr/include /usr/local/contrib/include \
+                  /usr/local/contrib/mod/include /usr/include/bsd \
+                  /usr/local/contrib/unmod/include/Mesa
+endif
+
+ifeq ($(HW_OS),sgi_irix)
+   SYS_INCLUDE := $(TCL_INC_DIR) /usr/local/contrib/mod/include
+endif
+
+INCLUDE_FLAGS := $(addprefix -I, . $(SYS_INCLUDE))
+
+ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
+   INCLUDE_FLAGS := $(APDEBUG) $(APCCFLAGS) $(APIFLAGS) -Dhpux -DFLOW \
+                    $(INCLUDE_FLAGS)
+endif
+
+ifeq ($(HW_OS),hp700_hpux10)
+   INCLUDE_FLAGS += +a1
+endif
+
+##########################
+#
+# }}}
+# {{{ Load flags
+#
+
+LOAD_FLAGS := -g $(addprefix -L, $(TCL_LIB_DIR) /usr/local/lib \
+                                 /usr/local/contrib/unmod/lib \
+                                 /usr/local/contrib/mod/lib)
+
+ifeq ($(HW_OS),pc_cygwin)
+  LOAD_FLAGS += -L/usr/X11R6.4/lib
+endif
+
+ifeq ($(HW_OS),sgi_irix)
+  LOAD_FLAGS += -L/usr/lib/internal -old_ld
+endif
+
+ifeq ($(HW_OS),pc_linux)
+  LOAD_FLAGS += -L/usr/X11R6/lib
+endif
+
+ifeq ($(HW_OS),hp700_hpux10)
+  LOAD_FLAGS += -L/usr/lib/X11R5
+endif
+
+ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
+   APLFLAGS   := $(filter-out -static,$(APLFLAGS))
+   LOAD_FLAGS := $(filter-out -L./$(HW_OS),$(LOAD_FLAGS))
+
+   ifeq ($(HW_OS),hp_flow)
+      LOAD_FLAGS := $(filter-out $(V_OPENGL_LIB_DIRS),$(LOAD_FLAGS))
+   endif
+
+   LOAD_FLAGS := $(LOAD_FLAGS) $(APDEBUG) $(APCCFLAGS) $(APCFLAGS) \
+                 $(APLFLAGS) $(V_OPENGL_LIB_DIRS) -L/usr/lib/X11R5
+endif
+
+##########################
+# }}}
+# {{{ Libraries
+#
+
+##########################
+#
+# Graphics
+#
+
+ifeq ($(HW_OS),sgi_irix)
+   GRAPHICS_LIBS := -lGLU -lGL
+endif
+
+ifeq ($(HW_OS), hp700_hpux10)
+   GRAPHICS_LIBS := -lMesaGL
+endif
+
+ifeq ($(HW_OS), pc_linux)
+   GRAPHICS_LIBS := -lMesaGL
+endif
+
+ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
+   GRAPHICS_LIBS := $(APLINKLIBS) -lpvm3
+endif
+
+##########################
+#
+# Intel architecture
+#
+
+ifeq ($(HW_OS),pc_linux)
+   ARCH_LIBS := $(addprefix -l,bsd dl pthread)
+endif
+
+ifeq ($(HW_OS),pc_cygwin)
+   ARCH_LIBS := $(addprefix -l,glut wsock32 user32 gdi32 comdlg32 glu32 \
+                               opengl32)
+endif
+
+##########################
+#
+# Tcl/Tk
+#
+
+TCL_LIBS := $(addprefix -l,itk itcl BLT tk tcl)
+
+ifeq ($(HW_OS),pc_cygwin)
+   TCL_LIBS := $(addprefix -l,BLT24 tk80 tcl80 itk30 itcl30)
+endif
+
+ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on SGI
+   TCL_LIBS := -B static $(TCL_LIBS) -B dynamic
+endif
+
+ifeq ($(HW_OS),pc_linux)            # Tcl must load statically on Linux
+   TCL_LIBS := -B static $(TCL_LIBS) -B dynamic
+endif
+
+ifeq ($(HW_OS), hp700_hpux10)       # Tcl must load statically on HPUX
+   TCL_LIBS := $(subst -l,-l:lib,$(addsuffix .a,$(TCL_LIBS)))
+endif
+
+##########################
+#
+# All together now
+#
+
+LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+
+ifeq ($(HW_OS), hp700_hpux10)
+   LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+endif
+
+ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
+   LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+endif
+
+##########################
+#
+# }}}
+# {{{ Defines for the compilation, CFLAGS
+#
+
+DEFINES := -DINCLUDE_CALLBACK_CODE -DUSE_VRPN_MICROSCOPE
+
+ifeq ($(HW_OS),pc_cygwin)
+  DEFINES += -DV_GLUT
+endif
+
+DEFINES += -DPROJECTIVE_TEXTURE
+
+CFLAGS += $(INCLUDE_FLAGS) $(DEFINES) -g
+
+###########################
+#
+# }}}
+# {{{ exports
+
+export HW_OS
+export WHOAMI
+
+export PWD_COMMAND
+
+export CC
+
+export TOP_LEVEL_DIR
+export TOP_LEVEL_SRC_DIR
+export TOP_LEVEL_OBJ_DIR
+
+export SEARCH_PATH
+export SEARCH_PROG
+
+export FULL_OBJECT_DIR
+
+export INCLUDE_FLAGS
+
+export LOAD_FLAGS
+export LIBS
+
+export DEFINES
+export CFLAGS
+
+endif

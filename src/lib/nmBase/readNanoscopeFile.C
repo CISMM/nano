@@ -1,0 +1,623 @@
+#include	<stdlib.h>
+#include	<stdio.h>
+
+/* local defines
+**/
+#define CTL_Z	(26)
+#define BSLASH	'\\'
+#define RET	(15)
+#define NL	'\n'
+
+#define	HEIGHT			(0)
+#define CURRENT			(1)
+#define DEFLECTION		(2)
+#define AUXC			(3)
+#define DO_SWAP			(10)
+
+#define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
+
+const int NANOSCOPE_GRID_X = 256;
+const int NANOSCOPE_GRID_Y = 256;
+
+double scan_size = 1000.0;
+int image_mode = HEIGHT;
+
+int header_size = 8192;
+int auxiliary_grids = 0;
+
+// globals used for multi-layer files (added by qliu on 6/27/95)
+int auxiliary_grid_offset[100];
+int auxiliary_grid_image_mode[100];
+double auxiliary_grid_scale[100];
+
+
+#ifdef	_WIN32
+// Windows doesn't have the strncasecmp function.
+int	strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	unsigned i = 0;	// Index passing through the characters
+
+	for (i = 0; i < n; i++) {
+		// See if we've reached the end of one or both strings
+		if ( s1[i] == 0 ) {
+			if ( s2[i] == 0 ) return 0;
+			else return -1;
+		} else if ( s2[i] == 0 ) {
+			return 1;
+		}
+
+		// See if this character breaks the tie
+		if ( tolower(s1[i]) < tolower(s2[i]) ) return -1;
+		if ( tolower(s1[i]) > tolower(s2[i]) ) return 1;
+	}
+	return 0;	// Got to the end of the characters to test
+}
+#endif
+
+
+/******************************************************************************\
+@readNanoscopeFileWithoutHeader
+--------------------------------------------------------------------------------
+   description: 
+        author: ?
+ last modified: 9-10-95 by Kimberly Passarella Jones
+\******************************************************************************/
+int 
+BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
+{
+    int	i_scrap;
+    char s_scrap[255];
+
+    // the first line in the file should contain "_File_Type 7" 
+    if (fscanf(file, "%s %d", s_scrap, &i_scrap) != 2)
+    {
+	perror("BCGrid::readNanoscopeFileWithoutHeader: could not read file type!");
+	return -1;
+    }	
+    if (i_scrap != 7)
+    {
+	fprintf(stderr,"BCGrid::readNanoscopeFile: unknown file type");
+	fprintf(stderr,"   (I can only read type 7, this is type %d)\n",
+		i_scrap);
+	return -1;
+    }	
+
+    char line[255];
+
+    // look for line containing "num_samp = [num]" 
+    do
+    {
+	fgets(line, sizeof(line)-1, file);
+	if (strncmp(line, "num_samp", strlen("num_samp")) == 0)
+	{
+	    if (sscanf(line, "%s %s %d", s_scrap, s_scrap, &i_scrap) != 3)
+	    {
+		fprintf(stderr,"Error in BCGrid::readNanoscopeFile: could not  parse line containing number of samples!\n");
+		return -1;
+	    }
+	    break; // found line sought so leave loop
+	}
+    } while (!feof(file));
+    
+    if (feof(file)) // never found line containing "num_samp = [num]" 
+    { 
+	fprintf(stderr,"Error in BCGrid::readNanoscopeFile: could not find number of samples!\n");
+	return -1;
+    }
+
+    _num_x = _num_y = i_scrap;
+
+    // guess min/max x, and y
+    _min_x = -10;
+    _max_x = 10;
+    _min_y = -10;
+    _max_y = 10;
+
+    if (fseek(file, (long)(-_num_x * _num_y * 2), 2) != 0)
+    {
+	perror("BCGrid::readNanoscopeFileWithoutHeader: could not move file pointer!");
+	return -1;
+    }
+
+    BCPlane* plane = addNewPlane(filename, "nm", TIMED);
+
+    if (plane->readNanoscopeFileWithoutHeader(file) == -1)
+	return -1;
+    
+    float scrap;
+    
+    if (fscanf(file,"%f",&scrap) == 1) 
+    {
+	fprintf(stderr, "BCGrid::readNanoscopeFile: Not at file end upon completion!\n");
+	return 1;
+    }
+
+    return 0;
+} // readNanoscopeFileWithoutHeader
+
+
+/******************************************************************************\
+@readBinaryNanoscopeFile
+--------------------------------------------------------------------------------
+   description: 
+        author: ?
+ last modified: 9-10-95 by Kimberly Passarella Jones
+\******************************************************************************/
+int 
+BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
+{
+    char *units_name;
+    BCDebug debug("BCGrid::readBinaryNanoscopeFile", GRID_CODE);
+
+    _num_x = NANOSCOPE_GRID_X;
+    _num_y = NANOSCOPE_GRID_Y;
+
+    if (parseNanoscopeFileHeader(file))
+    {
+	fprintf(stderr, "BCGrid::readBinaryNanoscopeFile: could not parse header!\n");
+	return -1;
+    }
+
+    // move file pointer to first position at end of header
+    if (fseek(file, header_size, SEEK_SET ))
+    {
+	perror("BCGrid::readBinaryNanoscopeFile: could not move file pointer!");
+	return -1;
+    }
+
+    _min_x = _min_y = 0.0;
+    _max_x = _max_y = scan_size;
+
+    switch (image_mode) {
+	case HEIGHT:
+	case DEFLECTION:
+		units_name = (char *)"nm";
+		break;
+	case AUXC:
+		units_name = (char *)"V";
+		break;
+	case CURRENT:
+		units_name = (char *)"nA";
+		break;
+	default:
+		units_name = (char *)"unknown";
+    }
+    BCPlane* plane = addNewPlane(filename, units_name, TIMED);
+    
+    // if Endian_tst is false, you will need swap bytes
+    int	Endian_int = 1;
+    char *Endian_tst = ( char * )(&Endian_int);
+
+    plane->_image_mode = image_mode;
+    if (!*Endian_tst)
+	plane->_image_mode += DO_SWAP;
+
+    plane->readBinaryNanoscopeFile(file);
+    
+    // load auxiliary grids
+    if (auxiliary_grids > 0)
+    {
+	printf("There ");
+	if (auxiliary_grids > 1)
+	    printf("are ");
+	else
+	    printf("is ");
+	printf("%d auxiliary data grid", auxiliary_grids);
+	if (auxiliary_grids > 1)
+	    printf("s.\n");
+	else
+	    printf(".\n");
+
+	for (int  i = 0; i < auxiliary_grids; i++)
+	{
+	    char name[255];
+	    sprintf(name, "auxiliary%d", i);
+	    
+	    plane = addNewPlane(name, "", NOT_TIMED);
+	    
+	    plane->_scale =  auxiliary_grid_scale[i];
+	    plane->_image_mode = auxiliary_grid_image_mode[i];
+
+	    if (!*Endian_tst)
+		plane->_image_mode += DO_SWAP;
+
+	    // move file pointer to beginning of this auxiliary grid
+	    if (fseek(file, auxiliary_grid_offset[i], 0))
+	    {
+		perror("BCGrid::readBinaryNanoscopeFile: could not move file pointer!");
+		return -1;
+	    }
+
+	    plane->readBinaryNanoscopeFile(file);
+	}
+    }
+    
+    char scrap;
+    
+    if (fread(&scrap, 1, 1, file) == 1)
+	perror("BCGrid::readBinaryNanoscopeFile: WARNING: Not at file end upon completion!");
+        
+    fclose(file);
+
+    return 0;
+    
+} // readBinaryNanoscopeFile
+
+
+/******************************************************************************\
+@readAsciiNanoscopeFile
+--------------------------------------------------------------------------------
+   description: 
+        author: ?
+ last modified: 9-10-95 by Kimberly Passarella Jones
+\******************************************************************************/
+int 
+BCGrid::readAsciiNanoscopeFile(FILE *file, const char *filename)
+{   
+    _num_x = NANOSCOPE_GRID_X;
+    _num_y = NANOSCOPE_GRID_Y;
+
+    if (parseNanoscopeFileHeader(file))
+    {
+	fprintf(stderr, "BCGrid::readAsciiNanoscopeFile: could not parse header!\n");
+	return -1;
+    }
+    
+    // move file pointer to first position at end of header
+    if (fseek(file, header_size, 0))
+    {
+	perror("BCGrid::readAsciiNanoscopeFile: could not move file pointer!");
+	return -1;
+    }
+
+    _min_x = _min_y = 0.0;
+    _max_x = _max_y = scan_size;
+
+    BCPlane* plane = addNewPlane(filename, "nm", TIMED);
+    
+    plane->_image_mode = image_mode;
+
+    plane->readAsciiNanoscopeFile(file);
+    
+    if (auxiliary_grids > 0)
+    {
+	printf("There ");
+	if (auxiliary_grids > 1)
+	    printf("are ");
+	else
+	    printf("is ");
+	printf("%d auxiliary data grid", auxiliary_grids);
+	if (auxiliary_grids > 1)
+	    printf("s.\n");
+	else
+	    printf(".\n");
+	
+	for (int i = 0; i < auxiliary_grids; i++)
+	{
+	    char name[255];
+	    sprintf(name, "auxiliary %d", i);
+	    
+	    plane = addNewPlane(name, "", NOT_TIMED);
+	    plane->_image_mode = auxiliary_grid_image_mode[i];
+	    
+	    if (fseek( file,  auxiliary_grid_offset[i], 0) )
+	    {
+		perror("BCGrid::readAsciiNanoscopeFile: could not move file pointer!");
+		return -1;
+	    }
+
+	    plane->readAsciiNanoscopeFile(file);
+	}
+
+    }
+
+    short scrap;
+    if (fscanf(file, "%hd", &scrap) != 0)
+	perror("BCGrid::readBinaryNanoscopeFile: WARNING: Not at file end upon completion!");
+
+    fclose(file);
+
+    return 0;
+    
+} // readAsciiNanoscopeFile
+
+	
+/******************************************************************************\
+@parseNanoscopeFileHeader
+--------------------------------------------------------------------------------
+   description: This method parses the headers of binary or ascii Nanoscope
+                files. In the process, it ignores information that is not
+		needed (or understood).
+        author: Mark Finch
+ last modified: 9-9-96 by Russ Taylor
+\******************************************************************************/
+int
+BCGrid::parseNanoscopeFileHeader(FILE* file)
+{
+    BCDebug debug("BCGrid::parseNanoscopeFileHeader", GRID_CODE);
+
+    char image_type[BUFSIZ];
+    int	ngot = 1;
+    int	pastline;
+	
+    // counters
+    int scale_count = 0;	// How many "Z scale height" entries found?
+    int scale_count_2 = 0;	// How many "Z scale" entries found?
+    int image_count = 0;	// How many image sets in this file?
+    
+    auxiliary_grids = -1;
+	
+    char token[BUFSIZ];
+
+    // Scan the file until we get to the end or find a backslash
+    while ( (CTL_Z != (*token = fgetc(file))) &&
+	    (BSLASH != *token) ) {};
+
+    // Make sure we found a backslash; if not, no header
+    if (BSLASH != *token) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header!");
+	return -1;
+    }
+		
+    do {
+	// For ASCII file parsing, this is used to watch for a completely
+	// blank line.  This indicates we didn't just pass one.
+	pastline = 0;
+
+	// Read in all characters up to but not including a colon or a
+	// backslash.  The colon indicates a value follows on the same
+	// line; the backslash indicates we've gotten to the next line
+	// in the file (which starts a new token).
+
+	fscanf(file, "%[^:\\]", token);
+
+	// Check to see if we recognize the token.  If so, gather the
+	// parameter (after the colon).
+
+	if (!strncasecmp(token, "Scan size", strlen("Scan size"))) {
+	    ngot = fscanf(file, ": %lg", &scan_size);
+	} else if (!strncasecmp(token, "Z atten.", strlen("Z atten."))) {
+	    ngot = fscanf(file, ": %lg", &_attenuation_in_z);
+//	    printf("XXX Z atten is %g\n",_attenuation_in_z);
+	} else if (!strncasecmp(token, "Z scale auxc", strlen("Z scale auxc"))){
+	    ngot = fscanf(file, ": %lg", &_z_scale_auxc );
+//	    printf("XXX Z scale auxc is %g\n",_z_scale_auxc);
+	}
+	else if (!strncasecmp(token,"Z scale height",strlen("Z scale height")))
+	{
+	    // read multi-layer data (added by qliu on 6/27/95)
+	    if (scale_count > 0)
+		ngot = fscanf(file, ": %lg",
+			&(auxiliary_grid_scale[scale_count-1]));
+	    else
+		ngot = fscanf(file, ": %lg", &_z_scale );
+//	    printf("XXX Z scale height is %g\n",_z_scale);
+	    scale_count++;
+	} else if (!strncasecmp( token, "Z scale", strlen(token))) {
+	    // XXX This used to have code to read multi-mode data, written
+	    // by Qiang Liu.  The problem is that they seem to have changed
+	    // the format (or it doesn't match the book), and when you do
+	    // a resampling of a file, it puts out the actual scale to units
+	    // of nm on the line, rather than an index into a list of scales.
+	    // I've changed it to work with this type of file.  I hope it will
+	    // also work with multi-mode types still.
+	    // I'm working by the seat of my pants and noticing that the scale
+	    // looks versy close when we take the number in parentheses:
+	    //    \Z scale: 47.0512 nm (862)
+	    // rather than the 47, we take the 862.  Is this generally true???
+	    double scrapd;
+	    char   scraps[100];
+	    if (scale_count_2 > 0) {
+		ngot = fscanf(file, ": %lg %s (%lg)", &scrapd, scraps,
+			&(auxiliary_grid_scale[scale_count_2-1]));
+	    } else {
+		ngot = fscanf(file, ": %lg %s (%lg)", &scrapd,scraps,&_z_scale);
+		if (ngot == 0) {
+		  fprintf(stderr,
+			"ERROR: Can't read Z scale params in Nanoscope file\n");
+		  return -1;
+		}
+//		printf("XXX Z scale is %g\n",_z_scale);
+	    }
+	    scale_count_2++;
+	}     
+	else if (!strncasecmp(token, "Image data", strlen("Image data")))
+	{
+	    // read  multi-layer data (added by qliu 6/27/95)
+	    if (image_count > 0) {	// Assume all but first are AUXC
+		char temp[BUFSIZ]; // not used for now
+		ngot = fscanf(file, ": %s", temp);
+		auxiliary_grid_image_mode[image_count-1] = AUXC;
+	    } else {
+		ngot = fscanf(file, ": %s", image_type);
+	    }
+
+	    image_count++;
+	}
+
+	else if (!strncasecmp(token, "Detect sens.", strlen("Detect sens."))) {
+		ngot = fscanf(file, ": %lg", &_detection_sensitivity );
+//		printf("XXX Detector sens. is %g\n",_detection_sensitivity);
+	} else if (!strncasecmp(token, "Z sensitivity", strlen(token))) {
+		ngot = fscanf(file, ": %lg", &_z_sensitivity);
+//		printf("XXX Z sensitivity is %g\n",_z_sensitivity);
+	} else if (!strncasecmp(token, "In sensitivity",strlen(token))) {
+		ngot = fscanf(file, ": %lg", &_input_sensitivity);
+//		printf("XXX In sensitivity is %g\n",_input_sensitivity);
+	} else if (!strncasecmp(token, "Z max", strlen("Z max"))) {
+		ngot = fscanf(file, ": %lg", &_z_max);
+//		printf("XXX Z max is %g\n",_z_max);
+	} else if (!strncasecmp(token, "In1 max", strlen("In1 max"))) {
+		ngot = fscanf(file, ": %lg", &_input_1_max);
+//		printf("XXX In1 max is %g\n",_input_1_max);
+	} else if (!strncasecmp(token, "In2 max", strlen("In2 max"))) {
+		ngot = fscanf(file, ": %lg", &_input_2_max);
+//		printf("XXX In2 max is %g\n",_input_2_max);
+	} else if (!strncasecmp(token, "Samps/line", strlen("Samps/line"))) {
+	    ngot = fscanf(file, ": %hd %hd", &_num_x, &_num_y);
+	    
+	    if (ngot < 2)
+		_num_y =_num_x;
+
+	} else if (!strncasecmp(token, "Data offset", strlen("Data offset"))) {
+	    // read multi-layer data (added by qliu on 6/27/95)
+	    if (auxiliary_grids >= 0)
+		ngot = fscanf(file, ": %d", &(auxiliary_grid_offset[auxiliary_grids]) );
+	    else
+		ngot = fscanf(file, ": %d", &header_size);
+
+	    auxiliary_grids++;
+	}
+
+	// Since ngot is set to 1 to start with and only reset when we are
+	// reading parameters, if it is zero that means we couldn't get some
+	// parameter we were looking for.
+	if (!ngot) {
+	    fprintf(stderr,
+		"BCGrid:parseNanoscopeFileHeader: error reading %s!\n", token);
+	    return -1;
+	}
+
+        // skip to next token or end of header
+	// (EOF is CTL_Z on binary or blank line on Ascii)
+	while ( (CTL_Z != *token)
+		&&
+		(CTL_Z != (*token = fgetc(file)))
+		&&
+		(BSLASH != *token) )
+	{
+	    // If we passed a newline and have passed no tokens since, we
+	    // must be at the end of the header.  Mark as CTL_Z to drop us
+	    // out of the parsing loop.	    
+		if (NL == *token) {
+		if (pastline)
+		    *token = CTL_Z;
+		else
+		    pastline = 1;
+	    }
+
+		// If the token is -1, we are at the end of the file, so quit.
+		// This is needed in Cygwin (windows NT), but not in the Unix
+		// code.
+#ifdef	_WIN32
+		if (-1 == *token) {
+			*token = CTL_Z;
+		}
+#endif
+	}
+
+    } while (CTL_Z != *token);
+
+    // set image_mode according to image_type (image_mode
+    // is used in transform to determine how to convert a short
+    // to a height value
+    if (!strncasecmp(image_type, "Height", strlen("Height")))
+	image_mode = HEIGHT;
+    else if (!strncasecmp(image_type, "Current", strlen("Current")))
+	image_mode = CURRENT;
+    else if (!strncasecmp(image_type, "Deflection", strlen("Deflection")))
+	image_mode = DEFLECTION;
+    else if (!strncasecmp(image_type, "AUX", strlen("AUX")))
+	image_mode = AUXC;	// XXX Assuming Aux C... could be others
+    
+    return 0;
+    
+} // parseNanoscopeFileHeader
+
+
+/******************************************************************************\
+@transform
+--------------------------------------------------------------------------------
+   description: 
+        author: ?
+ last modified: 9-10-95 by Kimberly Passarella Jones
+\******************************************************************************/
+double
+BCGrid::transform(short* datum, int image_mode, double transform_scale)
+{
+    char  *b1 = (char *) datum;
+    char  *b0 = b1 + 1;
+
+    // Swap the bytes in the datum if we need to.  Once swapped, clear the
+    // DO_SWAP bit to allow us to select which method to use to convert
+    if (image_mode & DO_SWAP) {
+	SWAP(*b1, *b0);
+	image_mode -= DO_SWAP;
+    }
+
+
+/*XXX
+{ static int min = 0;
+  static int max = 0;
+  if (*datum < min) { min = *datum; printf("min %d, max %d\n",min,max); }
+  if (*datum > max) { max = *datum; printf("min %d, max %d\n",min,max); }
+}*/
+
+    // Convert the raw data to its correct units.  See section A.2 in
+    // version 2.5 of: Digital Instruments Nanoscope III Scanning Probe
+    // Microscope Control System User's Manual (orange cover).  This
+    // describes how to convert from raw values to units.
+
+    switch (image_mode)
+    {
+      case HEIGHT: {
+	double normalized = (*datum)/65536.0;
+	double volts = normalized * (2*_z_max);
+	double nm = volts * _z_sensitivity;
+	double attenuated_nm = nm * (_attenuation_in_z / 65536.0);
+	double scaled = attenuated_nm * (_z_scale / 65536.0);
+
+/*XXX
+{ static float min = 0;
+  static float max = 0;
+  float value = scaled * transform_scale;
+  if (value < min) { min = value; printf("minh %f, maxh %f\n",min,max); }
+  if (value > max) { max = value; printf("minh %f, maxh %f\n",min,max); }
+}*/
+
+	return scaled * transform_scale;
+      }
+
+      case DEFLECTION: {
+	double normalized = (*datum)/65536.0;
+	double scaled = normalized * (_z_scale / 65536.0);
+	double nm = scaled * (2*_input_1_max) * _input_sensitivity /
+		    _detection_sensitivity;
+
+/*XXX
+{ static float min = 0;
+  static float max = 0;
+  float value = nm * transform_scale;
+  if (value < min) { min = value; printf("mind %f, maxf %d\n",min,max); }
+  if (value > max) { max = value; printf("mind %f, maxf %d\n",min,max); }
+}*/
+
+	return nm * transform_scale;
+      }
+
+      case AUXC: {
+	double normalized = (*datum)/65536.0;
+	double scaled = normalized * (_z_scale_auxc / 65536.0);
+//XXX The DI seems to be off by about a factor of 8 from our equation.
+// Dave thinks that the input sensitivity is really always 1, so I'll tak
+// that out.
+//	double volts = scaled * (2*_input_2_max) * _input_sensitivity;
+	double volts = scaled * (2*_input_2_max);
+
+/*XXX
+{ static float min = 0;
+  static float max = 0;
+  float value = volts * transform_scale;
+  if (value < min) { min = value; printf("minv %f, maxv %f\n",min,max); }
+  if (value > max) { max = value; printf("minv %f, maxv %f\n",min,max); }
+}*/
+
+	return volts * transform_scale;
+      }
+
+      default :
+	return -1;
+    }
+
+}
+
