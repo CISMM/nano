@@ -1,5 +1,7 @@
 USES_LIBS := tclLinkVar nmBase nmImageViewer nmGraphics ImgFormat nmMScope vrpn vogl quat
 
+USES_EXTERNAL_LIBS := TclTk
+
 # normal.c is in here, and it uses mf.h from the app/nano directory.
 # Should be removed soon. 
 NAUGHTY := 1
