@@ -1,3 +1,25 @@
+2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* microscape.c : Turned itself into microscape.C while I wasn't watching,
+		so had to insert these patches by hand.  Added code to let the
+		user interact using a DirecInput force-feedback joystick rather
+		than a Phantom.  Opens a local server if the handTrackerName is
+		Joystick* and a Phantom server if it is Phantom*.  For joystick,
+		also modified the center code to set the lighting at 45 degrees
+		and the surface parallel to the screen for better interaction.
+		Includes an AnalogFly tracker built on top of the joystick.
+		Includes code to use the buttons on the joystick to do most of
+		the Magellan functions (no button corresponding to the Grab Mode
+		button, since the finger trigger is numbered "1").  To make this
+		code work, you need to compile VRPN to use DirectInput as
+		described on the web page and then add VRPN_USE_DIRECTINPUT to
+		the definitions for the nano project and add the following libraries
+		to the link line: dxguid.lib dxerr8.lib dinput8.lib.  I'll put
+		them in the external directory (as well as the needed include
+		files).
+	* microscape.h : same.
+	* minit.c : same.
+
 2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.C: added global nmui_AFM_SEM_CalibrationUI object

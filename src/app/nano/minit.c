@@ -69,6 +69,10 @@
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
+#ifndef	NO_JOYSTICK_SERVER
+#include <vrpn_DirectXFFJoystick.h>
+#include <vrpn_Tracker_AnalogFly.h>
+#endif
 
 
 int x_init(char* argv[]);
@@ -125,11 +129,100 @@ x_init(char* argv[])
 }
 
 /*********
- * callback for vrpn_Button_Remote for phantom stylus button (registered below)
-   there is only one button so we just put the state into the state variable
+ * callback for vrpn_Button_Remote for phantom stylus button (registered below).
+   For the Phantom, there is only one button but for the Joystick there are 8.
+   If the button number is greater than zero, we do the same thing that the
+   Magellan would do for the same button number (we increment the button
+   callback number to make it match the number printed on the Magellan).
   *********/
-void handle_phant_button_change(void *userdata, const vrpn_BUTTONCB b){
+void handle_phant_button_change(void *userdata, const vrpn_BUTTONCB b) {
+  if (b.button == 0) {
    *(int *)userdata = b.state;
+  } else {
+   // if it's a button release event, ignore it. 
+   if (b.state == 0) return;
+   switch (b.button+1) {
+   case 1: 		/* Grab World mode */
+       if (user_0_mode != USER_GRAB_MODE) {
+           user_0_mode = USER_GRAB_MODE;
+       } else {
+           // Special case - quasi-mode testing. Scale and Grab
+           user_0_mode = USER_SCALE_UP_MODE;
+       }
+       break;
+   case 2:
+       // Cycling button - cycles through Light, Measure, Scale up, Scale down.
+       if (user_0_mode == USER_LIGHT_MODE) {
+           user_0_mode = USER_MEASURE_MODE;
+       } else if (user_0_mode == USER_MEASURE_MODE) {
+           user_0_mode = USER_SCALE_UP_MODE;
+       } else {
+           // Scale up and down are the same state, now. 
+//  if (user_0_mode == USER_SCALE_UP_MODE) {
+//             user_0_mode = USER_SCALE_DOWN_MODE;
+//         } else {
+           user_0_mode = USER_LIGHT_MODE;
+       }
+       break;
+       
+   case 3:
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
+       // Cycling button -cycles through Touch Live and Select
+       if (user_0_mode == USER_PLANEL_MODE) {
+           user_0_mode = USER_SERVO_MODE;
+       } else {
+           user_0_mode = USER_PLANEL_MODE;
+       }
+       break;
+   case 4:              /* Commit button */
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
+       tcl_commit_pressed = 1;
+      // we must call "handle_commit_change" explicitly, 
+      // because tclvars are set to ignore changes from C.
+          // no longer needed
+          // handle_commit_change(tcl_commit_pressed, NULL);
+       break;
+   case 5:              /* Center the surface */
+       center();
+       break;
+   case 6: 		/* Touch Stored mode */
+       if (user_0_mode == USER_PLANE_MODE) {
+           user_0_mode = USER_REGION_MODE;
+       } else {
+           user_0_mode = USER_PLANE_MODE;
+       }
+
+       break;
+   case 7: 		/* XY & Z lock */
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
+#if 1
+       if( !xy_lock && !z_lock )
+	 { xy_lock = 1; }
+       else if( xy_lock && !z_lock )
+	 { xy_lock = 0;  z_lock = 1; }
+       else if( !xy_lock && z_lock )
+	 { xy_lock = 1; }
+       else // xy_lock && z_lock
+	 { xy_lock = 0;  z_lock = 0; }
+#else
+       // XXX 3rdTech only
+       xy_lock = !xy_lock;
+#endif
+       break;
+   case 8:              /* Cancel button */
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
+       tcl_commit_canceled = 1;
+      // we must call "handle_commit_cancel" explicitly, 
+      // because tclvars are set to ignore changes from C.
+       // no longer needed
+       // handle_commit_cancel(tcl_commit_canceled, NULL);
+       break;
+   }
+  }
 }
 
 int handle_phantom_conn_dropped(void * /*userdata*/, vrpn_HANDLERPARAM /*p*/){
@@ -713,41 +806,81 @@ phantom_init (vrpn_Connection * local_device_connection,
               vrpn_Button_Remote ** phantButton,
               vrpn_Tracker_Remote ** vrpnHandTracker*/)
 {
-    if (strcmp(handTrackerName, "null") != 0){
-        // Are we going to set up a server, too? Check the name.
-        // If it includes an @, we look on another machine. Otherwise, local. 
-#ifndef NO_PHANTOM_SERVER
-        char * bp= NULL;
-        bp = strchr(handTrackerName, '@');
-        if (bp == NULL) {
-            // If there is no local connection, we can't do anything.
-            if (local_device_connection == NULL) {
-              return 0;
-            }
-            
-            // Sleep to get phantom in reset positon
-            // Should notify user...
-            //vrpn_SleepMsecs(2000);
-            // 60 update a second, I guess. 
-            phantServer = new vrpn_Phantom((char *) handTrackerName, 
-                                           local_device_connection, 60);
-            if (phantServer==NULL) {
-              return -1;
-            }
-        } else 
-#endif
-        {
-            // If it's not a local phantom, get the remote connection.
-            local_device_connection =
-              vrpn_get_connection_by_name(handTrackerName);
-            if (local_device_connection == NULL) {
-              return -1;
-            }
+    // If the hand tracker name has an "@" sign in it, we are going to
+    // be connecting to a remote device.  Open the connection that we will
+    // be using.  We do this here so that the remote ForceDevice can connect
+    // using a connection pointer whether the server is local or remote.
+    if (strchr(handTrackerName, '@') != NULL) {
+        // If it's not a local phantom, get the remote connection.
+        local_device_connection = vrpn_get_connection_by_name(handTrackerName);
+        if (local_device_connection == NULL) {
+          return -1;
         }
-    } else {
-    
+
+    } else if (strstr(handTrackerName, "Phantom") != NULL) {
+#ifdef NO_PHANTOM_SERVER
+	fprintf(stderr, "phantom_init(): Asked for a local Phantom, but not compiled in\n");
+	return -1;
+#else
+        // If there is no local connection, we can't do anything.
+        if (local_device_connection == NULL) {
+          return 0;
+        }
+        
+        // Sleep to get phantom in reset positon
+        // Should notify user...
+        //vrpn_SleepMsecs(2000);
+        // 60 update a second, I guess. 
+        phantServer = new vrpn_Phantom((char *) handTrackerName, 
+                                       local_device_connection, 60);
+        if (phantServer==NULL) {
+          return -1;
+        }
+#endif
+
+    } else if (strstr(handTrackerName, "Joystick") != NULL) {
+#ifdef NO_JOYSTICK_SERVER
+	fprintf(stderr, "Asked for a local Joystick, but not compiled in\n");
+	return -1;
+#else
+        // If there is no local connection, we can't do anything.
+        if (local_device_connection == NULL) {
+          return 0;
+        }
+
+	// Create the joystick for analog and buttons
+        joyServer = new vrpn_DirectXFFJoystick((char *) handTrackerName, 
+                                       local_device_connection, 200, 200);
+        if (joyServer==NULL) {
+	  fprintf(stderr, "phantom_init(): Could not create Joystick\n");
+          return -1;
+        }
+
+	// Create the tracker to link to the joystick and provide transforms.
+	// We put "*" in the name to indicate that it should use the same
+	// connection.
+	char  analogName[1024];
+	sprintf(analogName, "*%s", (char*)handTrackerName);
+	vrpn_Tracker_AnalogFlyParam afp;
+	afp.x.name = (char*)analogName;
+	afp.x.channel = 0;
+	afp.x.offset = 0;
+	afp.x.thresh = 0;
+	afp.x.scale = 0.07;
+	afp.x.power = 1;
+	afp.y = afp.x; afp.y.channel = 1; afp.y.scale = -0.07;
+	afp.z = afp.x; afp.z.channel = 6; afp.z.scale = 0.2; afp.z.offset = 1.5;
+	afp.sz = afp.x; afp.sz.channel = 5; afp.sz.scale = 0.06;
+	joyflyServer = new vrpn_Tracker_AnalogFly((char*) handTrackerName,
+				local_device_connection, &afp, 200, vrpn_true);
+        if (joyflyServer==NULL) {
+	  fprintf(stderr, "phantom_init(): Could not create AnalogFly\n");
+          return -1;
+        }
+#endif
+    } else {    
         // Make a mouse phantom server - the mouse acts like a phantom
-        // Only if there is no real phantom - they conflict. 
+        // Only if there is no real phantom or joystick - they conflict. 
         mousePhantomServer = nm_MouseInteractor::createMouseInteractor(
                                               (char *) handTrackerName, 
                                               local_device_connection, 60);
@@ -756,9 +889,9 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
     }
 
-    // If we get here, some phantom server has been created or contacted.
-    forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 
-                                              local_device_connection);
+	// If we get here, some phantom server has been created or contacted.
+	forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 
+						  local_device_connection);
         // Already set to [0.2, 1.0] by default
         //MAX_K = 1.0f;
         //MIN_K = 0.2f;

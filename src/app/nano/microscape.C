@@ -42,6 +42,10 @@
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
+#ifndef	NO_JOYSTICK_SERVER
+#include <vrpn_DirectXFFJoystick.h>
+#include <vrpn_Tracker_AnalogFly.h>
+#endif
 
 
 // ############ getpid hack
@@ -1423,6 +1427,12 @@ static char local_ModeName [256];
 /// local Phantom Server - only used if TRACKER env var doesn't
 /// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
+#endif
+#ifndef	NO_JOYSTICK_SERVER
+/// Local Joystick server -- only used if TRACKER env var
+/// doesn't contain a machine name of IP address for the Joystick.
+vrpn_DirectXFFJoystick	*joyServer = NULL;
+vrpn_Tracker_AnalogFly	*joyflyServer = NULL;
 #endif
 nm_MouseInteractor * mousePhantomServer = NULL;
 
@@ -8819,6 +8829,13 @@ vrpn_Connection* c;
 	phantServer->mainloop();
       }
 #endif
+#ifndef	NO_JOYSTICK_SERVER
+      if (joyServer) {
+	joyServer->mainloop();
+	joyflyServer->mainloop();
+      }
+#endif
+
       if (mousePhantomServer) {
           mousePhantomServer->mainloop();
       }
@@ -9209,6 +9226,16 @@ vrpn_Connection* c;
 	delete phantServer;
 	phantServer = NULL;
     }
+#endif
+#ifndef	NO_JOYSTICK_SERVER
+      if (joyServer) {
+	delete joyServer;
+	joyServer = NULL;
+      }
+      if (joyflyServer) {
+	delete joyflyServer;
+	joyflyServer = NULL;
+      }
 #endif
     if (mousePhantomServer) {
         delete mousePhantomServer;
@@ -10164,13 +10191,6 @@ static void find_center_xforms (q_vec_type * lock_userpos,
        screen_mid[1] = (screenLL[1] + screenUR[1]) / 2.0;
        screen_mid[2] = (screenLL[2] + screenUR[2]) / 2.0;
 
-/*	XXX Put this back in in order to allow the image to take up
-	only the lower-left corner of the screen (for the nanoWorkbench,
-	as opposed to the flat-screen CRT that we are now using.
-       screen_mid[0] = (screenLL[0] + screen_mid[0]) / 2.0;
-       screen_mid[1] = (screenLL[1] + screen_mid[1]) / 2.0;
-       screen_mid[2] = (screenLL[2] + screen_mid[2]) / 2.0;
-*/
        // Now find the rotation of the screen.  First find the outward
        // pointing normal.  (Used to find the INWARD pointing normal,
        // if cross-product is right-handed.  TCH Jul 00)
@@ -10198,8 +10218,13 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 
        /* Now line up the sides of the screens with the line that is
 	* halfway between the y-axis and the z-axis (to tilt the surface
-	* away from the user). */
-       q_set_vec(pos_y, 0.0, 1.0, 1.0);
+	* away from the user). If we are using the joystick, then line
+	* the surface up parallel to the screen by using the Y axis. */
+       if (joyServer != NULL) {
+	 q_set_vec(pos_y, 0.0, 1.0, 0.0);
+       } else {
+	 q_set_vec(pos_y, 0.0, 1.0, 1.0);
+       }
        q_xform(left_side_vec, screenz_to_worldz, left_side_vec);
        q_from_two_vecs(screeny_to_worldy, left_side_vec, pos_y);
        q_mult(*lock_userrot, screeny_to_worldy, screenz_to_worldz);
@@ -10213,59 +10238,30 @@ static void find_center_xforms (q_vec_type * lock_userpos,
        *lock_userscale *= 0.75;
 
        q_xform(screen_mid, *lock_userrot, screen_mid);
-    }
-    else {
-      //null_head_tracker is true
 
-      // What do these numbers mean??
-      screen_mid[0] = 0.0;
-      screen_mid[1] = 1.0;
-      screen_mid[2] = -1.0;
+    } else {//null_head_tracker is true
 
-      // 45 degree rotation about a point outside the plane.
-      q_make(*lock_userrot, 1.0, 0.0, 0.0, M_PI/4.0);
+      // If we are not using the joystick, we want a 45 degree
+      // rotation about a point outside the plane.  If we are
+      // using the joystick, we want the surface to be parallel
+      // to the screen.  We also want to translate the surface
+      // so that it ends up in the middle of the screen
+      if (joyServer != NULL) {
+	screen_mid[0] = 0.0;
+	screen_mid[1] = 0.0;
+	screen_mid[2] = -1.8;
+	q_make(*lock_userrot, 0.0, 0.0, 0.0, 1.0);
+      } else {
+	// What do these numbers mean??
+	screen_mid[0] = 0.0;
+	screen_mid[1] = 1.0;
+	screen_mid[2] = -1.0;
+	q_make(*lock_userrot, 1.0, 0.0, 0.0, M_PI/4.0);
+      }
 
-      /* Determine the scale up factor */
-      /* MODIFIED DANIEL ROHRER */
-//      if(ScreenWidthMetersY > ScreenWidthMetersX){
-                *lock_userscale = 0.55 * len_y / ScreenWidthMetersY ;
-//      }
-//      else{
-//              *lock_userscale = len_x / ScreenWidthMetersX * 0.7 / 1.0;
-//      }
+      *lock_userscale = 0.55 * len_y / ScreenWidthMetersY ;
     } // end if (!null_head_tracker)
   
-#if 0
-    //  All of this is overwritten by get_Plane_Centers.
-
-    /* The middle of the screen will be the middle of the grid in X and Y    */
-    /* and Z will be the height at the center of the plane (if it is nonzero)*/
-    /* or else the average of the non-zero elements in the plane.            */
-     mid_z = plane->scaledValue((plane->numX())/2, (plane->numY())/2);
-     float minz = mid_z;
-     if (mid_z == 0.0) {
-         int     x,y;
-         double  avg = 0.0;
-         int     count = 0;
-
-         for (x = 0; x < plane->numX(); x++) {
-           for (y = 0; y < plane->numY(); y++) {
-             if (plane->scaledValue(x,y) != 0) {
-                 avg += plane->scaledValue(x,y);
-		 if (plane->scaledValue(x,y) < minz)
-		   minz = plane->scaledValue(x,y);
-                 count++;
-             }
-           }
-         }
-         if (count > 0) {
-                 avg /= count;
-         }
-         mid_z = avg;
-     }
-     //intf("center mid_z avg %f  min %f\n", mid_z, minz);
-#endif
-
     float mid_x, mid_y, mid_z;
     get_Plane_Centers(&mid_x, &mid_y, &mid_z);
     //printf("center mid_z mm %f\n", mid_z);
@@ -10279,14 +10275,6 @@ static void find_center_xforms (q_vec_type * lock_userpos,
     (*lock_userpos)[Q_X] += mid_x;
     (*lock_userpos)[Q_Y] += mid_y;
     (*lock_userpos)[Q_Z] += mid_z;
-
-//     screen_mid[0] = (screenLL[0] + screenUR[0]) / 2.0;
-//     screen_mid[1] = (screenLL[1] + screenUR[1]) / 2.0;
-//     screen_mid[2] = (screenLL[2] + screenUR[2]) / 2.0;
-
-//     q_xform(screen_mid, *lock_userrot, screen_mid);
-//     q_vec_scale(screen_mid, *lock_userscale, screen_mid);
-//     q_vec_add(screen_mid, *lock_userpos, screen_mid);
 
   // this magic number scales down the user so that the phantom can reach
   // the entire surface when the surface is filling the whole screen. 
@@ -10309,6 +10297,13 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 void center (void) {
   // Reset the light position to its original one
   graphics->resetLightDirection();
+  
+  // If we are using the joystick, we want to have the light coming from 45
+  // degrees (halfway between the Y and Z axes).
+  if (joyServer != NULL) {
+    q_vec_type  lightdir = {0.0, 1.0, 1.0};
+    graphics->setLightDirection(lightdir);
+  }
 
   v_xform_type lock;
   

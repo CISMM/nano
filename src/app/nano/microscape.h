@@ -63,6 +63,8 @@ class vrpn_Tracker_AnalogFly;
 class vrpn_Text_Receiver;
 #endif
 class vrpn_Phantom;
+class vrpn_DirectXFFJoystick;
+class vrpn_Tracker_AnalogFly;
 class nm_MouseInteractor;
 
 #define	MICROSCAPE_MAJOR_VERSION	(10)
@@ -117,6 +119,8 @@ extern	float		MAX_K;  /* for each device		  */
 #define HOLD_EVENT	3	///< button pressed at least twice in a row
 
 extern  vrpn_Phantom * phantServer;
+extern	vrpn_DirectXFFJoystick *joyServer;
+extern	vrpn_Tracker_AnalogFly	*joyflyServer;
 extern  nm_MouseInteractor * mousePhantomServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker;
