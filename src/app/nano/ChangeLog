@@ -1,3 +1,7 @@
+2001-09-17  David Marshburn  <marshbur@cs.unc.edu>
+
+	* interaction.c: removed ^M's and commented-out print functions.  
+
 2001-09-14 <millerj@cs.unc.edu>
 	*interaction.c, .h : added direct step capability. Display will get updated when steps
 	are taken in xy__lock, when selecting xy_lock, the z_position of the microscope gets set

@@ -529,16 +529,17 @@ void handle_user_mode_change(vrpn_int32, void *)
     // interaction(), below. 
 }
 
-void handle_xyLock (vrpn_int32, void *) {
-	if (!microscope->haveMutex()) {
-		xy_lock = 0;
-	}
-		//get Z position of when xy_lock was set for direct step
-		if (microscope->haveMutex() && microscope->state.modify.tool == DIRECT_STEP) {
-			nmui_Util::getHandInWorld(0, xy_pos);
-			z_pos = xy_pos[2];
-			//printf("z_pos when xylock is set: %f" , z_pos);
-		}
+void handle_xyLock (vrpn_int32, void *) 
+{
+  if (!microscope->haveMutex()) {
+    xy_lock = 0;
+  }
+
+  //get Z position of when xy_lock was set for direct step
+  if (microscope->haveMutex() && microscope->state.modify.tool == DIRECT_STEP) {
+    nmui_Util::getHandInWorld(0, xy_pos);
+    z_pos = xy_pos[2];
+  }
 }
 
 
@@ -558,10 +559,8 @@ static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 
   if (vrpnHandTracker) {
     vrpnHandTracker->set_update_rate(v);
-//fprintf(stderr, "Set force device update rate to %.5f\n", v);
   } else {
-//fprintf(stderr, "No force device, "
-                //"so can't force device update rate to %.5f\n", v);
+
   }
 
 }
@@ -603,12 +602,6 @@ val, (float) feel_redundantInterval);
 
 // static
 void handle_redundantInterval_change (vrpn_float64, void *) {
-
-// Input value is always 0???
-
-//fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
-//feel_numRedundant, (float) feel_redundantInterval);
-//fprintf(stderr, "RI is %.5f\n", (float) feel_redundantInterval);
 
   if (microscopeRedundancyController) {
     microscopeRedundancyController->set
@@ -707,8 +700,6 @@ static void drawLineStep (Position * prevPt, Position * currPt) {
 
   // Draw a line between prevPt and currPt
   // Used to wait until we got the report before we sent the next line.
-  //printf("drawLineStep: line %f %f to %f %f\n", 
-  //	   x, y, currPt->x(), currPt->y());
   microscope->DrawLine(x, y, currPt->x(), currPt->y());
 }
 
@@ -770,7 +761,6 @@ static void drawLine (void) {
       microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
     }
 
-    //printf("drawLine: peizo relax done\n");
     // start modification force!
     // We're already in modifcation mode using slow_line_3d
     if (microscope->state.modify.tool != SLOW_LINE_3D) {
@@ -781,7 +771,6 @@ static void drawLine (void) {
     // these calls to sleep should maybe be replaced with a 
     // barrier synch as used in init_slow_line
     sleep(1);
-    //printf("drawLine: in modify mode.\n");
 
     // Slow line tool doesn't do the modification now, it
     // waits for the user to press Play or Step controls.
@@ -805,8 +794,6 @@ static void drawLine (void) {
 					 (currPt->x() - x)) - M_PI_2;
 
     // Draw a line between prevPt and currPt
-    //printf("drawLine: line %f %f to %f %f\n", 
-    //       x, y, currPt->x(), currPt->y());
     microscope->DrawLine(x, y, currPt->x(), currPt->y());
 
 
@@ -817,7 +804,6 @@ static void drawLine (void) {
     // Delete these points so they are not used again. 
     p.start();
     while(p.notDone()) {
-      //printf("commit - remove func: %d\n", (p.curr())->iconID());
       p.del();
     }
 
@@ -846,7 +832,6 @@ static void drawLine (void) {
 void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
 
-    //printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -893,7 +878,6 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 
 	    pos_list.start();
 	    while(pos_list.notDone()) {
-		//printf("cancel - remove func: %d\n", (p.curr())->iconID());
 		// get rid of the icons marking the line endpoints
  		pos_list.del();  //this moves the pointer forward to the next point.
  	    }
@@ -968,7 +952,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    // This comparison sets the smallest possible scan region 
 	    // to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
 	    // only do something if region has been specified.
-	    //printf ( "Setting region, size %f\n", microscope->state.select_region_rad);
+
 	    // here's how the region is specified. 
 	    //x_min = centerx - rad;
 	    //x_max = centerx + rad;
@@ -1010,7 +994,6 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
     BCPlane * plane;
-    //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
     if (tcl_commit_canceled != 1) return;
@@ -1031,12 +1014,10 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	if (!p.empty()) {
 	    // delete stored points (so we don't use them again!)
 	    // get rid of the rubber band line.
-	   //printf("Clearing stored polyline points.\n");
 	    graphics->emptyPolyline();
 
 	    p.start();
 	    while(p.notDone()) {
-		//printf("cancel - remove func: %d\n", (p.curr())->iconID());
 		// get rid of the icons marking the line endpoints
  		p.del();  //this moves the pointer forward to the next point.
  	    }
@@ -1056,7 +1037,6 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	      decoration->num_slow_line_3d_markers = 0;
 	    }
 
-	    //fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
 	}
 	// I think we should always resume scan - if the user hits "cancel"
 	// that should mean "start over", so we always begin scanning again.
@@ -1095,7 +1075,6 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 
 static void handle_phantom_reset (vrpn_int32, void *)
 {
-    //printf("handle phantom reset invoked\n");
     if (tcl_phantom_reset_pressed != 1) return;
 
     if (reset_phantom())
@@ -1414,14 +1393,12 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     force = Arm_knobs[MOD_FORCE_KNOB];
     if( microscope->state.modify.mode == CONTACT ) {
       if( force != old_mod_con_force ) {
-	//printf("Changing setpoint based on mod force knob\n");
 	microscope->state.modify.setpoint = microscope->state.modify.setpoint_min +
 	  force * (microscope->state.modify.setpoint_max - microscope->state.modify.setpoint_min);
 	old_mod_con_force = force;
       }
     } else if ( microscope->state.modify.mode == TAPPING ) {
       if( force != old_mod_tap_force ) {
-	//printf("Changing amplitude based on mod force knob\n");
 	microscope->state.modify.amplitude = microscope->state.modify.amplitude_min +
 	  force * (microscope->state.modify.amplitude_max - microscope->state.modify.amplitude_min);
 	old_mod_tap_force = force;
@@ -1431,7 +1408,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     force = Arm_knobs[IMG_FORCE_KNOB];
     if( (microscope->state.image.mode == CONTACT) || (microscope->state.image.mode == GUARDED_SCAN) ) {
       if( force != old_img_con_force ) {
-	//printf("Changing setpoint based on image force knob\n");
 	microscope->state.image.setpoint =
 	  microscope->state.image.setpoint_min +
 	  force * (microscope->state.image.setpoint_max -
@@ -1440,7 +1416,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       }
     } else if ( microscope->state.image.mode == TAPPING ) {
       if( force != old_img_tap_force ) {
-	//printf("Changing amplitude based on image force knob\n");
 	microscope->state.image.amplitude =
 	  microscope->state.image.amplitude_min +
 	  force * (microscope->state.image.amplitude_max -
@@ -1489,7 +1464,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       handle_commit_change(tcl_commit_pressed, NULL);
     }
     if( PRESS_EVENT == eventList[CANCEL_BT] ) {
-      //printf("Cancel from button box.\n");
       tcl_commit_canceled = !tcl_commit_canceled; 
       // we must call "handle_commit_cancel" explicitly, 
       // because tclvars are set to ignore changes from C.
@@ -1515,7 +1489,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     /* If there has been a mode change, clear old stuff and set new mode */
     if (mode_change) {
 	if (timer) { timer->activate(timer->getListHead()); }
-	//fprintf(stderr, "Mode change.\n");
       // If the user was going to go into a disabled mode, change them
       // into GRAB mode instead.  Some modes are currently not
       // implemented or not used.
@@ -1739,7 +1712,6 @@ void handle_lightDir_change (vrpn_float64, void *) {
   lightdir[X] = tcl_lightDirX;
   lightdir[Y] = tcl_lightDirY;
   lightdir[Z] = tcl_lightDirZ;
-  //printf("New light dir %f %f %f\n",lightdir[X] , lightdir[Y], lightdir[Z]); 
   graphics->setLightDirection(lightdir);
 }
 
@@ -1819,7 +1791,6 @@ doScale(int whichUser, int userEvent, double scale_factor)
         scale_factor = 1.0 + 10.0 
             *(-trackerFromHand.xlate[2]
               + startTrackerFromHand.xlate[2]);
-        //printf("%f\n",scale_factor);
         if (scale_factor < 0.01) scale_factor = 0.01;
 
         // now scale by scale amount, use square to emphasize
@@ -2134,7 +2105,6 @@ int doMeasure(int whichUser, int userEvent)
             fprintf(stderr, "Error in doMeasure: could not get plane!\n");
             return -1;
         }
-//fprintf(stderr, "doMeasure:  hpn %s.\n", dataset->heightPlaneName->string());
 
 	// Move the tip to the hand x,y location 
 	// Set its height based on data at this point
@@ -2414,11 +2384,8 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	      {
 		/* Save current hand position as one point on the polyline-
 		 * The list is saved in microscope->state.modify.stored_points*/
-		//printf("Line mode release event\n");
 
-
-		/* don't send a stop surface when not surfacing (?)
-		 */
+		/* don't send a stop surface when not surfacing (?) */
                 monitor.stopSurface();
                 monitor.stopForceField();
 
@@ -2646,7 +2613,6 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    /* if user is below the surface on the initial press, don't send
 	       the surface, because the user will get a strong upward force. */
 	    aboveSurf = touch_surface(whichUser, clipPos);
-//fprintf(stderr, "doFeelFromGrid() PRESS %.5f above surface.\n", aboveSurf);
 	    if (aboveSurf > 0) {
               monitor.startSurface();
 	    }
@@ -2656,7 +2622,6 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    /* stylus continues to be pressed */
 	    /* Apply force to the user based on grid */
 	    aboveSurf = touch_surface(whichUser, clipPos);
-//fprintf(stderr, "doFeelFromGrid() HOLD %.5f above surface.\n", aboveSurf);
 	    if (monitor.surfaceGoing || (aboveSurf > 0)) {
               monitor.startSurface();
 	    }
@@ -2809,8 +2774,6 @@ int doFeelLive (int whichUser, int userEvent)
   // xy_lock fixes the hand in one position, until it is released
 
   if (!xy_lock) {
-
-   
      if (microscope->state.modify.tool == CONSTR_FREEHAND) {
         // Constrained freehand only allows motion along a line
          nmui_Util::getHandInWorld(whichUser, clipPos);
@@ -2830,35 +2793,32 @@ int doFeelLive (int whichUser, int userEvent)
 	  nmui_Util::getHandInWorld(whichUser, clipPos);
 	  clipPos[0] = xy_pos[0];
 	  clipPos[1] = xy_pos[1];
-  } else if (xy_lock && microscope->state.modify.tool == DIRECT_STEP) {
-	  
-	  //if we are in xy_lock and in direct_Step mode, we want to be able to move microscope
-	  // and update position on screen
-	  if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE) {
-		  BCPlane* plane = dataset->inputGrid->getPlaneByName
-			  (dataset->heightPlaneName->string());
-
-		  //current position of microscope
-		  clipPos[0] = microscope->state.data.inputPoint->x();
-		  clipPos[1] = microscope->state.data.inputPoint->y();
-		  //printf(" x %f   y %f",clipPos[0], clipPos[1] );
-
-		  //height on BCPlane
-		  double height;
-		  plane -> valueAt(&height,clipPos[0],clipPos[1]);
-		  clipPos[2] = height;
-	  } else {
-		  // Direct_STEP_3D
-		  clipPos[0] = microscope->state.data.inputPoint->x();
-		  clipPos[1] = microscope->state.data.inputPoint->y();
-		  clipPos[2] = z_pos;
-	  }
+  } else if (xy_lock && microscope->state.modify.tool == DIRECT_STEP) {    
+    //if we are in xy_lock and in direct_Step mode, we want to be able to move microscope
+    // and update position on screen
+    if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE) {
+      BCPlane* plane = dataset->inputGrid->getPlaneByName
+	(dataset->heightPlaneName->string());
+      
+      //current position of microscope
+      clipPos[0] = microscope->state.data.inputPoint->x();
+      clipPos[1] = microscope->state.data.inputPoint->y();
+      
+      //height on BCPlane
+      double height;
+      plane -> valueAt(&height,clipPos[0],clipPos[1]);
+      clipPos[2] = height;
+    } else {
+      // Direct_STEP_3D
+      clipPos[0] = microscope->state.data.inputPoint->x();
+      clipPos[1] = microscope->state.data.inputPoint->y();
+      clipPos[2] = z_pos;
+    }
   }
 
   // Used only for direct Z control - we need to have the Z converted
   // into NM (divided by plane scale).  If plane scale approaches
   // zero, nmOK becomes false
-
   q_vec_copy(clipPosNM, clipPos);
   nmOK = nmui_Util::convertPositionToNM(plane, clipPosNM);
 
@@ -2866,16 +2826,13 @@ int doFeelLive (int whichUser, int userEvent)
   decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
   nmui_Util::moveSphere(clipPos, graphics);
 
-
   // if the style is sweep, set up additional icon for sweep width
   if (microscope->state.modify.style == SWEEP) {
     setupSweepIcon(whichUser, clipPos, plane);
   }
 
-  switch ( userEvent ) {
-	    
+  switch ( userEvent ) {	    
     case PRESS_EVENT:
-
 #if 0
       // ASSUMPTION:  we won't have a grab occur until after the
       // release event, so if we figure out an up vector now it'll
@@ -2913,7 +2870,6 @@ int doFeelLive (int whichUser, int userEvent)
 
       /* Request a reading from the current location,
        * and wait till tip gets there */
-
       microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
 
       break;
@@ -2924,8 +2880,6 @@ int doFeelLive (int whichUser, int userEvent)
 
         // Feelahead mode IGNORES the commit button;  it never
         // leaves image mode.
-
-//fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
 
         adaptor.updateSampleAlgorithm(microscope);
 
@@ -3018,7 +2972,6 @@ int doFeelLive (int whichUser, int userEvent)
         if (!p.empty()) {
           // delete stored points (so we don't use them again!)
           // get rid of the rubber band line.
-          //printf("Clearing stored polyline points.\n");
           // This gets Done when we enter Image mode.
           //graphics->emptyPolyline();
             
@@ -3026,7 +2979,6 @@ int doFeelLive (int whichUser, int userEvent)
 
           while(p.notDone()) {
 
-      	    //printf("cancel - remove func: %d\n", (p.curr())->iconID());
       	    // get rid of the icons marking the line endpoints
       	    p.del();  //this moves the pointer forward to the next point.
           }
@@ -3267,7 +3219,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         (A* plane->maxX() + B*plane->minY() + C ) < 0 &&
         (A* plane->minX() + B*plane->maxY() + C ) < 0 &&
         (A* plane->minX() + B*plane->minY() + C ) < 0 ) {
-        //printf("fail1, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
         return 1;
     }
     cx2 = region_center_x +cos(region_angle)*-region_width
@@ -3281,7 +3232,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         (A* plane->maxX() + B*plane->minY() + C ) > 0 &&
         (A* plane->minX() + B*plane->maxY() + C ) > 0 &&
         (A* plane->minX() + B*plane->minY() + C ) > 0 ) {
-        //printf("fail2, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
     // We need these later, so calc now before angle changes.
@@ -3304,12 +3254,10 @@ static int regionOutsidePlane(BCPlane* plane ,
     B = -sign;
     C = sign *(-cx1 * tan(region_angle) + cy1);
     
-    //printf("%f ", (A* plane->maxX() + B*plane->maxY() + C ));
     if ((A* plane->maxX() + B*plane->maxY() + C ) > 0 &&
         (A* plane->maxX() + B*plane->minY() + C ) > 0 &&
         (A* plane->minX() + B*plane->maxY() + C ) > 0 &&
         (A* plane->minX() + B*plane->minY() + C ) > 0 ) {
-        //printf("fail3, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
         return 1;
     }
     
@@ -3319,7 +3267,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         (A* plane->maxX() + B*plane->minY() + C ) < 0 &&
         (A* plane->minX() + B*plane->maxY() + C ) < 0 &&
         (A* plane->minX() + B*plane->minY() + C ) < 0 ) {
-        //printf("fail4, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
 
@@ -3333,7 +3280,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         ( -cy2 + C ) > 0 &&
         ( -cy3 + C ) > 0 &&
         ( -cy4 + C ) > 0 ) {
-        //printf("fail5, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
     A = 0;
@@ -3344,7 +3290,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         ( -cy2 + C ) < 0 &&
         ( -cy3 + C ) < 0 &&
         ( -cy4 + C ) < 0 ) {
-        //printf("fail6, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
     //A = infinity;
@@ -3356,7 +3301,6 @@ static int regionOutsidePlane(BCPlane* plane ,
         ( -cx2 + C ) > 0 &&
         ( -cx3 + C ) > 0 &&
         ( -cx4 + C ) > 0 ) {
-        //printf("fail7, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
     //A = infinity;
@@ -3368,14 +3312,9 @@ static int regionOutsidePlane(BCPlane* plane ,
         ( -cx2 + C ) < 0 &&
         ( -cx3 + C ) < 0 &&
         ( -cx4 + C ) < 0 ) {
-        //printf("fail8, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
         return 1;
     }
-
-    //printf("pass, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
-    
     return 0;
-
 }
 
 /**
@@ -3557,7 +3496,7 @@ doRegion(int whichUser, int userEvent)
     default:
         break;
     }
-//printf("a %f w %f h %f\n", Q_RAD_TO_DEG(region_angle), region_width, region_height);
+
     // Display the scan region extent as the user plans to change it. 
     // Draw the new bounding box and center handle for the region. 
     graphics->positionRegionBox(
