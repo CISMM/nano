@@ -21,7 +21,7 @@ export NM_TCL_DIR=/nsrc/nano/src/share/tcl/
 
 # Root of MS Visual Studio. 
 # Use ls with paths of this form to determine which numbers to use. 
-export MSVSDir=/c/PROGRA~1/MICROS~1
+export MSVSDir=/c/PROGRA~1/MICROS~2
 
 #
 # VcOsDir is used to help create either a Windows 95 or Windows NT specific path.
