@@ -33,6 +33,12 @@ VRPN_MESSAGE Scale{
   float32 scale
 }
 
+VRPN_MESSAGE Trans{
+  float32 x
+  float32 y
+  float32 z
+}
+
 VRPN_MESSAGE Cylinder{
   float32 x
   float32 y

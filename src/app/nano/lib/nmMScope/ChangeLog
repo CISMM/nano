@@ -1,3 +1,16 @@
+2002-04-05 Andrea HIlchey <hilchey@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope_Remote.Cdef : filled in 
+	encode_and_sendTrans stubbed out function so that it sends
+	translation
+
+	* nmm_AFMSIMSERVER_Report.vrpndef : added Trans message type
+	for sending translation
+
+	* nmm_SimulatedMicroscope.Cdef,hdef : added receive function for
+	handling receipt of translations and variables dealing with
+	translations
+
 2002-04-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.Cdef (RcvInImgMode):  only jump to scan line

@@ -172,6 +172,17 @@ RECEIVE_MSG Scale {
 
 }
 
+RECEIVE_MSG Trans {
+//  float32 x,y,z
+
+    trans_x = (float)x;
+	trans_y = (float)y;
+	trans_z = (float)z;
+	
+	transRcv = true;
+
+}
+
 RECEIVE_MSG Triangle {
 //  float32 _1v1
 //  float32 _1v2

@@ -95,7 +95,7 @@ HANDLERS nmm_AFMSIM_Report ;
 //
 int nmm_SimulatedMicroscope_Remote::
 handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
-  int i;
+  //int i;
   float midpt_x,midpt_y,midpt_z;
   const char * buffer = grpc_p.buffer;
   nmm_SimulatedMicroscope_Remote* grpc_me = (nmm_SimulatedMicroscope_Remote *) userdata;
@@ -360,9 +360,14 @@ encode_and_sendScale(vrpn_float32 scale){
 //
 void nmm_SimulatedMicroscope_Remote::
 encode_and_sendTrans(vrpn_float32 x, vrpn_float32 y, vrpn_float32 z){
-  
-
-// just a stub for now
+  //variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_Trans(&len,x,y,z);//encode msgbuf
+  int retval = -1;
+  if((retval = Send((long)len, d_Trans_type, msgbuf)) == -1){
+	cout << "problem sending Trans" << endl;
+  }//send stuff  
 
 }
 //

@@ -58,6 +58,7 @@ public:
 	bool triangleRcv;		//true when there are triangles to process
 	bool cylRcv;			//true when cylinders to process
 	bool scaleRcv;
+	bool transRcv;
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
 							//knowledgeof Node class
@@ -66,6 +67,7 @@ public:
 	double get_x_offset(){return d_xmin;};
 	double get_y_offset(){return d_ymin;};
     float _scale;
+	float trans_x,trans_y,trans_z;
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;
