@@ -2,7 +2,15 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <math.h>
+
+#ifndef sgi
 #include <vector.h>					// ghost-stl vector
+#endif
+
+#ifdef sgi
+#include <vector>
+#endif
+
 #include "URender.h"
 #include "WaveFrontFileGenerator.h"
 
@@ -28,12 +36,6 @@ pid_t getpid();
 
 #define MAXLENGTH 512		// buffer size
 
-#define INVERT_NORMALS 1	// determines whether or not to 
-							// invert the normals (CW vs CCW)
-							// should be a user-controlled setting, 
-							// but works for now
-
-
 
 
 // auxilliary data structures
@@ -56,10 +58,6 @@ typedef struct {
 	vector<int> faces;		// tells which faces each vertex is incident upon
 							// used for calculating normals
 } back_point;
-
-
-
-
 
 
 
@@ -443,7 +441,7 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	// invert normals if wanted
-	if (INVERT_NORMALS) {
+	if (!Pobject->GetCCW()) {
 		for (i = 0; i < norms.size(); i++) {
 			for (j = 0; j < 3; j++) {
 				norms[i][j] *= -1.0;
@@ -486,7 +484,7 @@ void BuildList(URender *Pobject, GLuint dl,
 	face* f;
 	float v[4];
 
-    glNewList(dl, GL_COMPILE);	//init display list
+	glNewList(dl, GL_COMPILE);	//init display list
 	for (int i = 0; i < g->faces.size(); i++) {
 		f = &faces[g->faces[i]];
 		glBegin(GL_POLYGON);
@@ -510,7 +508,7 @@ void BuildList(URender *Pobject, GLuint dl,
 			// give GL the vertex
 			// GL needs an array, not a vector
 			for (int k = 0; k < 4; k++) {
-				v[k] = verts[f->index[j] - 1][k];
+				v[k] = verts[f->index[j] - 1][k]; 
 			}
             glVertex4fv(v);
 			Pobject->UpdateBoundsWithPoint(v[0], v[1], v[2]);

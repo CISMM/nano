@@ -36,3 +36,9 @@ int URAxis::Render(void * /*userdata*/ )
   
 }
 
+int URAxis::Scale(void *) 
+{
+	// Do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}

@@ -21,6 +21,7 @@ public:
     
     //standard functions
     int Render(void *userdata=NULL);
+	int Scale(void *userdata=NULL); // for scaling objects with new surfaces
     GeometryGenerator* GetGenerator();
     
     //Geometry functions

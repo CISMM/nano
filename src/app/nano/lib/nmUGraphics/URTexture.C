@@ -61,7 +61,6 @@ int URTexture::LoadPPMFile(char *filename, int *filter)
 		cerr << "Couldn't open texture file " << filename << "\n";
 		return -1;	
 	}
-
   
 	buf[0]='\0';
 	//check for magic number (is it a PPM file?)
@@ -199,6 +198,10 @@ void URTexture::Compile2DTexture()
 	
 }
 
+int URTexture::Scale(void* userdata) {
+	// do nothing
+	return 1;
+}
 
 int URTexture::Render(void * /*userdata*/ )
 {  

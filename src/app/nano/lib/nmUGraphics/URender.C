@@ -78,6 +78,13 @@ int URender::Render(void * /*userdata*/ ){
   else return ITER_STOP;
 }
 
+int URender::Scale(void * userdata) {	
+	//base class does nothing
+	cerr << "Base class Scaling\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
 void URender::DrawBounds(){
 
        	glColor3f(1,0,0);

@@ -5,6 +5,8 @@
 #include "microscape.h"
 #include "v.h"		//vlib functions for get hand and head in world
 
+#include "URPolygon.h"
+
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99
 //       this was implicitly declared.  Needed to add decl.
@@ -301,44 +303,37 @@ UTree* UTree::Select(URender& root)
 #endif
 
 /*======================= ITERATOR FUNCTIONS ===============================*/
-int UTree::Do(IteratorFunction ifunc,void *data){
+int UTree::Do(IteratorFunction ifunc, void *data){
 	int i;
 	int err;    
 	
     //check this nodes return value and decide to continue on its children
     //based on that
 
-    // XXX THE PUSH AND POP SHOULD NOT BE HERE -- THIS IS A GENERALIZED ITERAATOR
-
-    if(contents){
-	glPushMatrix();
-	contents->GetLocalXform().Push_As_OGL();
-        err=(contents->*ifunc)(data);
+	if(contents){
+		// calls the appropriate function (URPolygon::Render() for imported .obj files)
+        err = (contents->*ifunc)(data);
     }
     else {cerr << "Unexpected empty contents\n"; err=ITER_ERROR; }
 
     switch(err){
         case ITER_ERROR:
         	cerr << "Encountered error operating on tree\n";
-		glPopMatrix();
 		return err;
-	case ITER_STOP:
-		glPopMatrix();
+		case ITER_STOP:
 		return err;
-	case ITER_CONTINUE:
+		case ITER_CONTINUE:
 		break;
-	default:
+		default:
         	cerr << "You should not be here -- UTREE:DO\n";
-                break;
+        break;
     }
-
 
     for(i=0; i < num_children; i++){
     	children[i]->Do(ifunc,data);
     }
 
-    glPopMatrix();	//you should never get here unless you had valid contents
-
+	//you should never get here unless you had valid contents
     return err;
 }
 

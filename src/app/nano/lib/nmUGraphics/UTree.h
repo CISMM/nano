@@ -65,7 +65,7 @@ class UTree{
 		}
 
 		//iterators
-	        int Do(IteratorFunction ifunc,void *userdata=NULL);
+	        int Do(IteratorFunction ifunc, void *userdata=NULL);
 
 		//get functions
 		const char* TGetName();

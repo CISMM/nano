@@ -42,6 +42,8 @@ protected:
 	int selected;  
 	int show_bounds;	//not used yet
 	int wireframe;		//not used yet
+	int disp_proj_text;
+	int CCW;			// true if load as counter clockwise, false if load as clockwise
 
 	//bounding box
 	BBOX bounds;	
@@ -82,10 +84,15 @@ public:
 	void SetVisibility(int s);
 	void SetRecursion(int r);
 	void SetSelect(int s){ if(s>0) selected=1; else selected=0;}
+	void SetProjText(int b) { disp_proj_text = b; }
+	void SetCCW(int b) { CCW = b; }
+
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
 	int GetSelect(){ return selected;}
+	int ShowProjText() { return disp_proj_text; }
+	int GetCCW() { return CCW; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
@@ -119,6 +126,7 @@ public:
 	//UTree::Do iterative functions
 
 	virtual int Render(void *userdata=NULL);
+	virtual int Scale(void *userdata=NULL);
 	int IntersectLine(void *userdata=NULL);
 
 	//SelectionSet* IntersectPoint(double p[3]);

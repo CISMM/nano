@@ -48,6 +48,7 @@ public:
 	//UDATA OBJECT INSTEAD SINCE IT TECHNICALLY CONTAINS DATA FOR A 
 	//RENDERABLE BUT IT CALLS GL STUFF SO ITS KIND OF BOTH?
 	int Render(void *userdata=NULL);
+	int Scale(void *userdata=NULL);
 	void PostRender();
 	void Compile2DTexture();
   
