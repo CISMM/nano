@@ -1,3 +1,8 @@
+2002-02-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (updateColorMapTextureAlpha): added new virtual function
+	to allow this file to compile
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (updateWorldExtents): made this less ugly

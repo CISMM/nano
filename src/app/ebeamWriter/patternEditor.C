@@ -704,6 +704,10 @@ void PatternEditor::setDisplayColorMapRange(nmb_Image *image,
 //  printf("Sorry, setDisplayColorMapRange is not implemented\n");
 }
 
+void PatternEditor::updateColorMapTextureAlpha(float alpha)
+{
+}
+
 void PatternEditor::updateImage(nmb_Image *image)
 {
   d_viewer->dirtyWindow(d_mainWinID);

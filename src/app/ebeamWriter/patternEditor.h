@@ -108,6 +108,7 @@ class PatternEditor : public nmb_ImageDisplay {
    virtual void setDisplayColorMapRange(nmb_Image *image,
                         float data_min, float data_max,
                         float color_min, float color_max);
+   virtual void updateColorMapTextureAlpha(float alpha);
    virtual void updateImage(nmb_Image *image);
 
   protected:
