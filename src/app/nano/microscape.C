@@ -195,119 +195,526 @@ static imported_obj_list* object_list = NULL;
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.
 
+/// Quit the program from Tcl
 static void handle_tcl_quit(vrpn_int32 new_value, void *userdata);
-static  void    handle_contour_color_change(vrpn_int32 new_value, void *userdata);
+/// Signal from Tcl to quit the program
+Tclvar_int tcl_quit("quit_program_now", 0, handle_tcl_quit);
+
+//-----------------------------------------------------------------------
+// Contour controls
+// This section deals with selecting the contour lines to apply to the surface.
+static void handle_contour_color_change(vrpn_int32 new_value, void *userdata);
 //need this separate from color because of float new_value
-/*static  void    handle_contour_opacity_change(float new_value, void *userdata);*/
+//static void handle_contour_opacity_change(float new_value, void *userdata);
 static void handle_contour_width_change(vrpn_float64 new_value, void *userdata);
+static void handle_texture_scale_change (vrpn_float64, void *);
+/// Width of the contour lines, in percent %. BAD name. 
+TclNet_float texture_scale ("texture_spacing",10);
+/// Spacing between contour lines, in heightplane units (usually nm). 
+TclNet_float contour_width ("contour_width", 10.0);
+TclNet_int contour_r ("contour_r", 255);
+TclNet_int contour_g ("contour_g", 55);
+TclNet_int contour_b ("contour_b", 55);
+TclNet_int contour_changed ("contour_changed", 0);
+
+
+//-----------------------------------------------------------------------
+/// Texture blend controls
+// This section deals with selecting the alpha for the checkerboard pattern.
+// It includes both a string to allow choosing the field to map alpha
+// from, the min and max colors, and the min and max values that are
+// mapped to the min and max alphas.
 static void handle_alpha_dataset_change(const char *new_value, void *userdata);
 static void handle_alpha_slider_change (vrpn_float64, void *);
-static void handle_color_change (vrpn_float64, void *);
+
+// The limits on the Tk slider where min and max value are selected
+Tclvar_float	alpha_slider_min_limit ("alpha_slider_min_limit", 0);
+Tclvar_float	alpha_slider_max_limit ("alpha_slider_max_limit", 1);
+
+// The positions of the min and max values within the Tk slider
+Tclvar_float	alpha_slider_min ("alpha_slider_min", 0);
+Tclvar_float	alpha_slider_max ("alpha_slider_max", 1);
+
+//-----------------------------------------------------------------------
+/// Colormap/surface color controls
+static void handle_color_minmax_change (vrpn_float64, void *);
+static void handle_surface_color_change(vrpn_int32 new_value, void *userdata);
+static void handle_colormap_change(const char *new_value, void *userdata);
+static void handle_color_dataset_change (const char *, void * _mptr);
+
+/// This is the list of color map files from which mappings can be made.  It
+/// should be loaded with the files in the colormap directory, and "none".
+static Tclvar_list_of_strings	colorMapNames("colorMapNames");
+
+/// Default location for colormaps, if NANO_ROOT is not set. 
+static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
+/// This is a string that lets the user choose a color map to use.
+static	char	*colorMapDir = NULL;
+
+static ColorMap	* colorMaps[100] = { NULL };		
+  ///< Color maps currently loaded
+  // limit to 100 because that's the limit of nmb_ListOfStrings
+ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
+/// width and height of colormap image used in the colormap choice popup menu
+static const int colormap_width = 24, colormap_height = 128;
+
+// This section deals with selecting the color to apply to the surface.
+// It includes both a string to allow choosing the field to map color
+// from, the min and max colors, and the min and max values that are
+// mapped to the min and max colors.
+
+static int	minC[3] = {150,50,150};
+static int	maxC[3] = {250,50,50};
+
+/// The limits on the Tk slider where min and max value are selected
+Tclvar_float	color_min_limit("color_min_limit",0);
+Tclvar_float	color_max_limit("color_max_limit",1);
+TclNet_int surface_r ("surface_r", 192);
+TclNet_int surface_g ("surface_g", 192);
+TclNet_int surface_b ("surface_b", 192);
+TclNet_int surface_color_changed ("surface_color_changed", 1);
+// NANOX
+/// The positions of the min and max values within the Tk slider
+TclNet_float	color_min("color_min",0);
+TclNet_float	color_max("color_max",1);
+TclNet_float	data_min("data_min",0);
+TclNet_float	data_max("data_max",1);
+
+//-----------------------------------------------------------------------
+/// ?? Doesn't appear in user interface, 6/01
 static void handle_opacity_slider_change (vrpn_float64, void *);
+/// The positions of the min and max values withing the Tk slider
+TclNet_float    opacity_slider_min("opacity_slider_min",0);
+TclNet_float    opacity_slider_max("opacity_slider_max",1);
+
+//-----------------------------------------------------------------------
+/// Rulergrid controls
+// This section deals with selecting the offset in x and y and the scale of
+// the ruler grid that can be overlaid on the surface.  It also has an
+// integer that tells whether to do the ruler or not.  It also controls the
+// orientation and specifies what image (if any) to use in place of the
+// ruler.
 static void handle_rulergrid_offset_change (vrpn_float64, void *);
 static void handle_rulergrid_scale_change (vrpn_float64, void *);
-static void handle_null_data_alpha_change( vrpn_int32 val, void *userdata );
-
-///so we can track hand position of collaborator(s)
-static void handle_collab_machine_name_change(const char *new_value, void *userdata);
-
-static  void    handle_x_dataset_change(const char *new_value, void *userdata);
-
-static  void    handle_surface_color_change(vrpn_int32 new_value, void *userdata);
-static	void    handle_colormap_change(const char *new_value, void *userdata);
-static void handle_color_dataset_change (const char *, void * _mptr);
-static void handle_sound_dataset_change (const char *, void * _mptr);
-static void handle_openStaticFilename_change (const char *, void * userdata);
-static void handle_closeMicroscope_change (vrpn_int32, void * );
-static	void	handle_exportFileName_change(const char *new_value, void *userdata);
-static  void    handle_exportPlaneName_change(const char *new_value, void *userdata);
-static  void    handle_exportScene_Filename_change(const char *new_value, void *userdata);
-static  void    handle_sumPlaneName_change(const char *new_value, void *userdata);
-static  void    handle_adhPlaneName_change(const char *new_value, void *userdata);
-static  void    handle_flatPlaneName_change(const char *new_value, void *userdata);
-static  void	handle_lblflatPlaneName_change(const char *new_value, void *userdata);
-static	void	handle_adhesion_average_change(vrpn_float64 new_value, void *userdata);
-static	void	handle_filterPlaneName_change(const char *new_value, void *userdata);
-static  void    handle_rulergrid_selected_change(vrpn_int32 new_value, void *userdata);
-static	void	handle_rulergrid_color_change(vrpn_int32 new_value, void *userdata);
-///need this separate from color because of float new_value
-static  void    handle_rulergrid_opacity_change(vrpn_float64 new_value, void *userdata);
-static	void	handle_friction_slider_change (vrpn_float64, void * userdata);
-static  void	handle_bump_slider_change (vrpn_float64, void * userdata);
-static  void    handle_buzz_slider_change (vrpn_float64, void * userdata);
-static	void	handle_compliance_slider_change (vrpn_float64, void * userdata);
-static  void    handle_ruler_widthx_change(vrpn_float64 new_value, void *userdata);
-static  void    handle_ruler_widthy_change(vrpn_float64 new_value, void *userdata);
-static	void	handle_rulergrid_angle_change(vrpn_float64 new_value, void *userdata);
-static	void	handle_replay_rate_change(vrpn_int32 new_value, void *userdata);
-static  void    handle_set_stream_time_change(vrpn_int32 new_value, void *);
-static  void    handle_joymove (vrpn_float64, void *);
-static  void    handle_recovery_time_change (vrpn_float64, void *);
-static	void	handle_texture_scale_change (vrpn_float64, void *);
-static	void	handle_clear_markers_change (vrpn_int32, void *);
-static	void	handle_markers_shown_change (vrpn_int32, void *);
-static	void	handle_markers_height_change (vrpn_int32, void *);
-
-static	void	handle_rewind_stream_change (vrpn_int32 new_value, void * userdata);
-static	void	handle_shiny_change (vrpn_int32 new_value, void * userdata);
-static	void	handle_local_viewer_change (vrpn_int32 new_value, void * userdata);
-static	void	handle_diffuse_change (vrpn_float64 new_value, void * userdata);
-static  void    handle_surface_alpha_change (vrpn_float64 new_value, void * userdata);
-static	void	handle_specular_color_change (vrpn_float64 new_value, void * userdata);
-static	void	handle_sphere_scale_change (vrpn_float64 new_value, void * userdata);
-
-static	void	handle_save_xform_change (vrpn_int32 new_value, void * userdata);
-static	void	handle_set_xform_change (vrpn_int32 new_value, void * userdata);
-static void handle_global_icon_scale_change (vrpn_float64, void *);
-
-static void handle_withdraw_tip_change (vrpn_int32, void *);
-
-/// Callback functions for latency compensation techniques.
-static void handle_trueTip_change (vrpn_int32, void *);
-static void handle_trueTip_scale_change (vrpn_float64, void *);
-static void handle_constraint_mode_change (vrpn_int32, void *);
-static void handle_constraint_kspring_change (vrpn_float64, void *);
-
-/// Callback for screen capture
-static void handle_screenImageFileName_change(const char *new_value, void *userdata);
-
+static void handle_rulergrid_selected_change(vrpn_int32 new_value, void *userdata);
+static void handle_rulergrid_color_change(vrpn_int32 new_value, void *userdata);
+static void handle_rulergrid_opacity_change(vrpn_float64 new_value, void *userdata);
+static void handle_ruler_widthx_change(vrpn_float64 new_value, void *userdata);
+static void handle_ruler_widthy_change(vrpn_float64 new_value, void *userdata);
+static void handle_rulergrid_angle_change(vrpn_float64 new_value, void *userdata);
 static void handle_rulergridOrientLine_change (vrpn_int32, void *);
 static void handle_rulergridPositionLine_change (vrpn_int32, void *);
 
-/// VRPN callback functions
-static void	handle_tracker2room_change(void *userdata, 
+/// if on, set the rulergrid position by the red line
+TclNet_int rulergrid_position_line ("rulergrid_position_line", 0,
+                                    handle_rulergridPositionLine_change, NULL);
+/// if on, set the rulergrid angle by the green line
+TclNet_int rulergrid_orient_line ("rulergrid_orient_line", 0,
+                                  handle_rulergridOrientLine_change, NULL);
+/// otherwise set with these sliders
+TclNet_float rulergrid_xoffset ("rulergrid_x", 0);
+TclNet_float rulergrid_yoffset ("rulergrid_y", 0);
+TclNet_float rulergrid_scale ("rulergrid_scale", 500);
+TclNet_float rulergrid_angle ("rulergrid_angle", 0);
+TclNet_float ruler_width_x ("ruler_width_x", 1);
+TclNet_float ruler_width_y ("ruler_width_y", 1);
+///set default Rulergrid opacity to 70% instead of 100%
+TclNet_float ruler_opacity ("ruler_opacity", 70);
+
+//The quoted parameters are the variable names in tcl-space
+//TclNet_int ruler_r ("ruler_r", 255);
+//TclNet_int ruler_g ("ruler_g", 255);
+//TclNet_int ruler_b ("ruler_b", 55);
+TclNet_string ruler_color ("ruler_color","#ffff64");
+TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
+TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
+
+//PPM	*rulerPPM = NULL;	///< Image to use for the ruler
+static char * rulerPPMName = NULL;   ///< Name of image to use for the ruler
+
+//-----------------------------------------------------------------------
+/// Obsolete. 2D grayscale data display. 
+static void handle_x_dataset_change(const char *new_value, void *userdata);
+/// Obsolete. The limits on the Tk slider where min and max value are selected
+Tclvar_float    x_min_scale ("x_min_scale", 0);
+Tclvar_float    x_max_scale ("x_max_scale", 1);
+/// Obsolete. The positions of the min and max values within the Tk slider
+Tclvar_float    x_min_value ("x_min_value", 0);
+Tclvar_float    x_max_value ("x_max_value", 1);
+/// Obsolete. The string that is used to determine which inputGrid field to use
+Tclvar_string	xPlaneName ("x_comes_from", "");
+
+
+//-----------------------------------------------------------------------
+/// Doesn't appear in user interface, 6/01
+
+// This section deals with selecting the data set to map to sound.
+// It includes both a string to allow choosing the field to map
+// from and the scale of the mapping.
+static void handle_sound_dataset_change (const char *, void * _mptr);
+
+Tclvar_string	soundPlaneName("sound_comes_from","");
+/*Tclvar_float sound_scale("sound_scale",1);*/
+
+Tclvar_float sound_slider_min("sound_slider_min",0);
+Tclvar_float sound_slider_max("sound_slider_max",1);
+Tclvar_float sound_slider_min_limit("sound_slider_min_limit",0);
+Tclvar_float sound_slider_max_limit("sound_slider_max_limit",1);
+
+//-----------------------------------------------------------------------
+/// File input/output, live connection to SPM
+static void handle_openStaticFilename_change (const char *, void * userdata);
+static void handle_closeMicroscope_change (vrpn_int32, void * );
+static void handle_exportFileName_change(const char *new_value, void *userdata);
+static void handle_exportPlaneName_change(const char *new_value, void *userdata);
+static void handle_exportScene_Filename_change(const char *new_value, void *userdata);
+
+/// Filename to get data from. Setting this variable in tcl triggers
+/// the open file process.
+TclNet_string openStaticFilename("open_static_filename", "",
+                                 handle_openStaticFilename_change, NULL);
+
+/// Stream Filename. Setting this variable in tcl triggers
+/// the open stream process.
+TclNet_string openStreamFilename("open_stream_filename", "");
+
+/// SPM Device name. Setting this variable triggers open device process
+TclNet_string openSPMDeviceName("open_spm_device_name", "");
+
+/// Log file name. If it's something other than "none" when the device
+/// is opened, try to log to the filename specified. 
+Tclvar_string openSPMLogName("open_spm_log_name", "");
+
+/// The following two variables are used for error checking when the program
+/// starts from the command line.  If the user specifies a device (-d) without
+/// specifying an outputStream (-o), check_streamfile_save gets sets right before
+/// microscope initialization, causing a dialog box to prompt the user for a
+/// fileName (see filemenu.tcl [popup_check_streamfile_dialog]).  
+Tclvar_int check_streamfile_save("check_streamfile_save",0);
+
+/// check_file_exists will always get set before microscope initialization,
+/// causing the program to ensure that the file specified with -o does not
+/// already exist.  If it does exist, the user is prompted for a new fileName
+/// (see filemenu.tcl [popup_check_file_exists])
+Tclvar_int check_file_exists("check_file_exists",0);
+
+/// When you choose a plane of data to save, this list is set
+/// to the possible formats.
+static Tclvar_list_of_strings export_formats("export_formats");
+
+/// Plane of data to save in a file
+Tclvar_string	exportPlaneName("export_plane","");
+/// The format the plane of data will use, chosen from export_formats
+Tclvar_string	exportFileType("export_filetype","");
+/// Filename to save the data in. Setting this variable in tcl triggers
+/// the save process.
+Tclvar_string newExportFileName("export_filename", "");
+
+/// Filename to save scene description into.  Setting this variable in
+/// tcl triggers the save process.
+Tclvar_string exportScene_Filename("export_scene_filename", "");
+
+
+/// Flag to close any open files or connections.
+Tclvar_int closeMicroscope("close_microscope", 0,
+                           handle_closeMicroscope_change, NULL);
+
+// Deals with an image type for a screen capture
+/// Callback for screen capture
+static void handle_screenImageFileName_change(const char *new_value, void *userdata);
+const char **screenImage_formats_list = ImageType_names;
+Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
+
+Tclvar_string    screenImageFileType("screenImage_format", "");
+Tclvar_string newScreenImageFileName("screenImage_filename", "");
+
+
+//-----------------------------------------------------------------------
+// This section deals with the creation of new data planes that are
+// derived from other planes.  It provides variables
+// for the name of the new plane and the name of the plane(s) to use
+// for sources.  The names are selected from lists.
+/// Calculated data plane controls. 
+static void handle_sumPlaneName_change(const char *new_value, void *userdata);
+static void handle_adhPlaneName_change(const char *new_value, void *userdata);
+static void handle_flatPlaneName_change(const char *new_value, void *userdata);
+static void handle_lblflatPlaneName_change(const char *new_value, void *userdata);
+Tclvar_string	newFlatPlaneName("flatplane_name","");
+
+//added 1-9-99 by Amy Henderson
+Tclvar_string newLBLFlatPlaneName("lblflatplane_name","");
+
+Tclvar_string	sumPlane1Name ("sum_first_plane","");
+Tclvar_string	sumPlane2Name ("sum_second_plane","");
+Tclvar_float	sumScale("sum_scale",-1.0);
+Tclvar_string	newSumPlaneName ("sumplane_name","");
+
+//-----------------------------------------------------------------------
+// These are widgets which allow the use to pick the name and parameters 
+// of the image processing program, like input and output.
+// The result of the filter/processing is a calculated plane
+// "proc" is short for "processing"
+
+static void handle_filterPlaneName_change(const char *new_value, void *userdata);
+
+/// This is the list of image processing programs available.  It
+/// should be loaded with the files in the image proc directory, and "none".
+Tclvar_list_of_strings procProgNames("filter_names");
+
+static  char    defaultFilterDir[] = "/afs/unc/proj/stm/etc/filters";
+static	char	*procImageDir;
+
+/// This is the filter program name.
+Tclvar_string	procProgName ("pick_program", "");
+/// The string that is used to determine which inputGrid field to use
+Tclvar_string	procPlaneName ("pick_plane", "");
+/// Parameters to pass literally to the filter program
+Tclvar_string	procParams ("proc_params","");
+
+/// This is the output plane 
+Tclvar_string	newFilterPlaneName("filterplane_name","");
+
+/// Determine the angle for programs that use it.
+Tclvar_float procAngle ("proc_angle", 0.0f);
+/// Determine the scale for programs that use it.
+Tclvar_float procScale ("proc_scale", 1.0f);
+
+//-----------------------------------------------------------------------
+/// ?? Obsolete? Adhesion planes not supported in interface 6/01
+static void handle_adhesion_average_change(vrpn_float64 new_value, void *userdata);
+Tclvar_string	adhPlane1Name("first_plane","");
+Tclvar_string	adhPlane2Name("last_plane","");
+Tclvar_string	newAdhPlaneName("adhesionplane_name","");
+static	char	lastAdhPlaneName[1000] = "";
+Tclvar_float	adhNumToAvg("adhesion_average",3);
+
+//-----------------------------------------------------------------------
+/// Haptic visualization of data. 
+static void handle_compliance_slider_change (vrpn_float64, void * userdata);
+static void handle_compliance_dataset_change(const char *, void * userdata);
+Tclvar_float    compliance_slider_min("compliance_slider_min",0);
+Tclvar_float    compliance_slider_max("compliance_slider_max",0);
+Tclvar_float	compliance_slider_min_limit("compliance_slider_min_limit",0);
+Tclvar_float	compliance_slider_max_limit("compliance_slider_max_limit",1);
+Tclvar_string compliancePlaneName ("compliance_comes_from", "");
+
+static void handle_friction_slider_change (vrpn_float64, void * userdata);
+static void handle_friction_dataset_change(const char *, void * userdata);
+Tclvar_float    friction_slider_min("friction_slider_min",0);
+Tclvar_float	friction_slider_max("friction_slider_max",1);
+/// The limits on the Tk slider where min and max value are selected
+Tclvar_float	friction_slider_min_limit("friction_slider_min_limit",0);
+Tclvar_float	friction_slider_max_limit("friction_slider_max_limit",1);
+Tclvar_string frictionPlaneName ("friction_comes_from", "");
+
+static void handle_bump_slider_change (vrpn_float64, void * userdata);
+static void handle_bump_dataset_change(const char *, void * userdata);
+Tclvar_float    bump_slider_min("bump_slider_min",0);
+Tclvar_float    bump_slider_max("bump_slider_max",1);
+// The limits on the Tk slider where min and max value are selected
+Tclvar_float    bump_slider_min_limit("bump_slider_min_limit",0);
+Tclvar_float    bump_slider_max_limit("bump_slider_max_limit",1);
+Tclvar_string bumpPlaneName ("bumpsize_comes_from", "");
+
+static void handle_buzz_slider_change (vrpn_float64, void * userdata);
+static void handle_buzz_dataset_change(const char *, void * userdata);
+Tclvar_float    buzz_slider_min("buzz_slider_min",0);
+Tclvar_float    buzz_slider_max("buzz_slider_max",1);
+// The limits on the Tk slider where min and max value are selected
+Tclvar_float    buzz_slider_min_limit("buzz_slider_min_limit",0);
+Tclvar_float    buzz_slider_max_limit("buzz_slider_max_limit",1);
+Tclvar_string buzzPlaneName ("buzzing_comes_from", "");
+
+// ?? Where is handle_adhesion_slider_change?
+static void    handle_adhesion_dataset_change(const char *, void * userdata);
+Tclvar_float    adhesion_slider_min("adhesion_slider_min",0);
+Tclvar_float	adhesion_slider_max("adhesion_slider_max",1);
+// The limits on the Tk slider where min and max value are selected
+Tclvar_float	adhesion_slider_min_limit("adhesion_slider_min_limit",0);
+Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
+Tclvar_string adhesionPlaneName ("adhesion_comes_from", "");
+
+Tclvar_float    default_spring_k("spring_k_slider",0.5);
+
+//-----------------------------------------------------------------------
+/// Navigate window, moves the surface view. 
+static void handle_joymove (vrpn_float64, void *);
+/// These tcl vars link to a pad which rotates the view of the surface.
+/// They are defined in panel_tools.tcl, and instantiated in view.tcl
+
+Tclvar_float	joy0x("joy0(x)",0.0,
+		      handle_joymove, (void*)"t");
+Tclvar_float	joy0y("joy0(y)",0.0,
+		      handle_joymove, (void*)"t");
+Tclvar_float	joy0z("joy0(z)",0.0,
+			handle_joymove, (void*)"t");
+Tclvar_float	joy1x("joy1(x)",0.0,
+			handle_joymove, (void*)"r");
+Tclvar_float	joy1y("joy1(y)",0.0,
+			handle_joymove, (void*)"r");
+Tclvar_float	joy1z("joy1(z)",0.0,
+			handle_joymove, (void*)"r");
+Tclvar_float	joy0b("joy0(b)",0.0, NULL, NULL);
+Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
+
+//-----------------------------------------------------------------------
+/// Changes recovery time for force device - i.e. the Phantom. 
+static void handle_recovery_time_change (vrpn_float64, void *);
+/// Not in user interface, 6/01
+TclNet_float recovery_time ("recovery_time", 1);
+
+//-----------------------------------------------------------------------
+/// Callbacks controling view of AFM and AFM results. 
+static void handle_clear_markers_change (vrpn_int32, void *);
+static void handle_markers_shown_change (vrpn_int32, void *);
+static void handle_markers_height_change (vrpn_int32, void *);
+/// Clear modify markers now. 
+Tclvar_int clearMarkers ("clear_markers", 0,
+                         handle_clear_markers_change);
+/// Change the number of pulse or scrape markers to show
+Tclvar_int numMarkersShown ("number_of_markers_shown", 1000,
+                            handle_markers_shown_change);
+/// Offset above surface for markers, to make sure they are visible. 
+Tclvar_int markerHeight ("marker_height", 100,
+                         handle_markers_height_change);
+
+//-----------------------------------------------------------------------
+// Streamfiles
+static void handle_rewind_stream_change (vrpn_int32 new_value, void * userdata);
+static void handle_replay_rate_change(vrpn_int32 new_value, void *userdata);
+static void handle_set_stream_time_change(vrpn_int32 new_value, void *);
+// NANOX
+/// Streamfile replay rate
+TclNet_int replay_rate("stream_replay_rate", 1,
+			 handle_replay_rate_change, NULL);
+
+/// Signal that the stream file should be rewound to the beginning
+TclNet_int	rewind_stream("rewind_stream",0,
+			handle_rewind_stream_change, NULL);
+
+//checkthis
+/// This is the time value to jump to in the stream file. 
+TclNet_float set_stream_time ("set_stream_time", 0);
+/// This is a flag (0/1) to say " jump to new time now!"
+TclNet_int set_stream_time_now ("set_stream_time_now", 0,
+                             handle_set_stream_time_change, NULL);
+
+
+//-----------------------------------------------------------------------
+// Callbacks for graphics and
+// other surface appearance controls. 
+
+static void handle_null_data_alpha_change( vrpn_int32 val, void *userdata );
+/// Invalid data asigned alpha = 0 when this is = 1. 
+TclNet_int toggle_null_data_alpha ("null_data_alpha_pressed", 0);
+
+static void handle_shiny_change (vrpn_int32 new_value, void * userdata);
+/// Specular lighting exponent. 1-128 are valid, higher values mean sharper
+/// highlights.
+TclNet_int shiny ("shiny", 55);
+
+static void handle_local_viewer_change (vrpn_int32 new_value, void * userdata);
+/// Is the viewer considered local, or infinitely far away, for lighting 
+/// calculations? Infinite is faster, but gives weird-looking uniform lighting. 
+TclNet_int local_viewer ("local_viewer", 1);
+
+static void handle_surface_alpha_change (vrpn_float64, void * userdata);
+/// Opacity of the whole surface.
+TclNet_float surface_alpha ("surface_alpha", 1.0);
+
+static void handle_diffuse_change (vrpn_float64, void * userdata);
+static void handle_specular_color_change (vrpn_float64, void * userdata);
+// Diffuse and specular should add up to 1.0, but we over-brighten a little bit. 
+TclNet_float diffuse ("diffuse", 0.5);	
+TclNet_float specular_color ("specular_color", 0.7);
+
+static void handle_config_cj_change (vrpn_int32, void *);
+/// Display (or not) the text, icons and measure info. If turned off, only the
+/// surface is displayed, for pretty screen captures.
+Tclvar_int config_chartjunk ("chart_junk",  1, 
+                             handle_config_cj_change, NULL);
+
+static void handle_global_icon_scale_change (vrpn_float64, void *);
+/// Scale for all hand icons, except red sphere. 
+Tclvar_float global_icon_scale ("global_icon_scale", 1.0);
+
+static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata);
+/// Scaling factor for the red sphere hand-icon. Should be sized in world
+/// space to be in nano-meters, default is 12.5 nm. 
+Tclvar_float sphere_scale ("sphere_scale", 12.5f);
+
+static void handle_save_xform_change (vrpn_int32 new_value, void * userdata);
+static void handle_set_xform_change (vrpn_int32 new_value, void * userdata);
+/// Aron Helser Temporary, testing how to save and restore a viewpoint
+Tclvar_int save_xform ("save_xform", 0);
+/// Aron Helser Temporary, testing how to save and restore a viewpoint
+Tclvar_int set_xform ("set_xform", 0);
+
+static void handle_config_fp_change (vrpn_int32, void *);
+/// Triangle-display method: filled or wireframe
+Tclvar_int config_filled_polygons ("filled_triangles", 1, 
+                                   handle_config_fp_change, NULL);
+
+static void handle_config_ss_change (vrpn_int32, void *);
+/// Triangle-display method: smooth or flat shading. 
+Tclvar_int config_smooth_shading ("smooth_shading",  1, 
+                                  handle_config_ss_change, NULL);
+
+static void    handle_stride_change (vrpn_int32 newval, void * userdata);
+/// Deal with the stride between rows on the grid for tesselation.  This is
+/// the step size between one row/column of the display list and the next.
+TclNet_int tclstride ("tesselation_stride", 1);
+
+//-----------------------------------------------------------------------
+/// Tom Hudson's latency compensation techniques
+/// Callback functions for latency compensation techniques.
+static void handle_trueTip_change (vrpn_int32, void *);
+static void handle_trueTip_scale_change (vrpn_float64, void *);
+Tclvar_int truetip_showing ("truetip_showing", 0);
+Tclvar_float truetip_scale ("truetip_scale", 1);
+
+static void handle_constraint_mode_change (vrpn_int32, void *);
+static void handle_constraint_kspring_change (vrpn_float64, void *);
+Tclvar_int constraint_mode ("constraint_mode", 0);
+Tclvar_float constraint_kspring ("constraint_kspring", 10.0f);
+
+//-----------------------------------------------------------------------
+/// VRPN callback function, Hand tracker (i.e. Phantom motion). 
+static void handle_tracker2room_change(void *userdata, 
 					const vrpn_TRACKERTRACKER2ROOMCB info);
-static void	handle_sensor2tracker_change(void *userdata, 
+/// VRPN callback function, Hand tracker (i.e. Phantom motion). 
+static void handle_sensor2tracker_change(void *userdata, 
 					const vrpn_TRACKERCB info);
-
-static void handle_collab_sensor2tracker_change(void *userdata,
+/* Not currently used
+static void handle_sensor2tracker_quat_change(void *userdata,
 					const vrpn_TRACKERCB info);
-/**< handle_collab_sensor2tracker_change is the callback for the position
-	and orientation messages sent from the nM_coord_change_server (to
-	track a collaborator's hand position) */
-
-static void handle_collab_mode_change(void *userdata,
-					const vrpn_ANALOGCB info);
-/**< handle_collab_mode_change is the callback for the mode
-   that track a collaborator's mode */
-
-/**** Not currently used
-static void	handle_sensor2tracker_quat_change(void *userdata,
-					const vrpn_TRACKERCB info);
-static void	handle_forcedevice_scp_change(void *userdata, 
+static void handle_forcedevice_scp_change(void *userdata, 
 					const vrpn_FORCESCPCB info);
 */
-static void	handle_unit2sensor_change(void *userdata,
-					const vrpn_TRACKERUNIT2SENSORCB info);
 
-//static  void handle_import_filename_change (const char *, void *);
-//static  void    handle_load_import_file_change (vrpn_int32, void *);
-static void handle_load_button_press_change (vrpn_int32, void *);
+//-----------------------------------------------------------------------
+/// NANOX Collaboration. so we can track hand position of collaborator(s)
+static void handle_collab_machine_name_change(const char *new_value, void *userdata);
+
+/** handle_collab_sensor2tracker_change is the callback for the position
+    and orientation messages sent from the nM_coord_change_server (to
+    track a collaborator's hand position) */
+static void handle_collab_sensor2tracker_change(void *userdata,
+					const vrpn_TRACKERCB info);
+
+/** handle_collab_mode_change is the callback for the mode
+    that track a collaborator's mode */
+static void handle_collab_mode_change(void *userdata,
+					const vrpn_ANALOGCB info);
+
+static void handle_unit2sensor_change(void *userdata,
+					const vrpn_TRACKERUNIT2SENSORCB info);
 
 // NANOX
 /// synchronization UI handlers
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
+
 static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
                                               void * userdata);
 static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
@@ -316,50 +723,155 @@ static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
                                                void * userdata);
 static void handle_collab_measure_change (nmb_Dataset * data,
                                           int which_line);
+// NANOX - XXX
+/// Quick method of sharing measure line locations
+TclNet_float measureRedX ("measure_red_x", 0.0);
+TclNet_float measureRedY ("measure_red_y", 0.0);
+TclNet_float measureGreenX ("measure_green_x", 0.0);
+TclNet_float measureGreenY ("measure_green_y", 0.0);
+TclNet_float measureBlueX ("measure_blue_x", 0.0);
+TclNet_float measureBlueY ("measure_blue_y", 0.0);
+
 static void handle_center_pressed (vrpn_int32, void *);
+Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
 static void handle_mutex_request (vrpn_int32, void *);
 static void handle_mutex_release (vrpn_int32, void *);
+TclNet_int request_mutex ("request_mutex", 0);
+TclNet_int release_mutex ("release_mutex", 0);
 
+// NANOX
+// TCH 19 Jan 00 - Turned these into netvars that were logged on
+// interfaceLogConnection but were NOT part of rootUIControl so that
+// they wouldn't be shared but that while replaying logs we could
+// determine which state to use.
+TclNet_int share_sync_state ("share_sync_state", 0);
+TclNet_int copy_to_private_state ("copy_to_private_state", 0);
+TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
+
+///to get the name of the machine where the collaborator is whose hand
+///position we want to track
+TclNet_string collab_machine_name ("collab_machine_name", "");
+
+static void handle_finegrained_changed (vrpn_int32 value, void *) ;
+Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
+                                 handle_finegrained_changed, NULL);
+
+//-----------------------------------------------------------------------
 // TCH network adaptations Nov 2000
 static void handle_recordAdaptations_change (int, void *);
 static void handle_msTimestampsName_change (const char *, void *);
 
+
+//-----------------------------------------------------------------------
+//Import from tube_foundry and external model files. 
+
+//static  void handle_import_filename_change (const char *, void *);
+//static void handle_load_import_file_change (vrpn_int32, void *);
+/// Load an external model of a tube or virus. BAD name.
+static void handle_load_button_press_change (vrpn_int32, void *);
+
+///Tcl variable for getting filename containing geometry info for
+///object that we want to import
+Tclvar_string import_filename ("import_filename", "");
+///Button which signals that we should import the object whose
+///geometry is contained above
+Tclvar_int load_import_file ("load_import_file",0);
+Tclvar_int load_button_press ("load_button_press", 0);
+
+//-----------------------------------------------------------------------
 //Shape Analysis callback functions
 static void handle_analyze_shape(vrpn_int32 , void *);
+/// These variables are for controlling shape analysis
+Tclvar_int	analyze_shape("analyze_shape",0, handle_analyze_shape);
+Tclvar_int	shape_mask("shape_mask",1);
+Tclvar_int	shape_order("shape_order",0);
+Tclvar_int	pre_flatten("pre_flatten",1);
+Tclvar_int	auto_adapt("auto_adapt",1);
+Tclvar_float	blurring("blurring",4);
+Tclvar_float	aspect_ratio("aspect_ratio",2);
+Tclvar_float	correlation("correlation",0.6);
+Tclvar_float	intensity_thresh("intensity_thresh",0.6);
+Tclvar_string	shape_mask_file("shape_mask_file", "mask");
+Tclvar_string	shape_order_file("shape_order_file", "order");
 
+nma_ShapeAnalyze shape_analysis;
+
+//-----------------------------------------------------------------------
 //Visualization callback functions
-static void handle_viz_change(vrpn_int32 , void *);
-static void handle_viz_dataset_change(const char *, void *);
+static void handle_viz_change(vrpn_int32 , void *);  ///< Which viz
+static void handle_viz_dataset_change(const char *, void *);  ///< Which dataset to vis
 static void handle_viz_max_change(vrpn_float64 , void *);
 static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
 static void handle_viz_tex_new(const char *, void *);
 static void handle_viz_tex(const char *, void *);
+// These variables are for controlling visualizations
+bool created_region = false;
+int viz_region = 0;
+Tclvar_int	viz_choice("viz_choice",0, handle_viz_change);
+Tclvar_float	viz_max_limit("viz_max_limit",1);
+Tclvar_float	viz_min_limit("viz_min_limit",0);
+Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
+Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
+Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
+Tclvar_string   viz_comes_from("viz_comes_from", "", handle_viz_dataset_change);
+//Probably should make all of these TclNet's
+TclNet_float    viztex_scale ("viztex_scale", 500);
 
+//This should probably be generalized to just a method for
+//loading textures and anything that wants one can use it, but
+//this will do for now
+Tclvar_list_of_strings viz_tex_files("viz_tex_files");
+Tclvar_string viz_tex_new("viz_tex_new", "", handle_viz_tex_new);
+Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
+
+static char * vizPPMName = NULL;   ///< Name of image to use for viz tex.
+
+//-----------------------------------------------------------------------
 // Guardedscan interface
 static void handle_guardedscan_planeacquire(vrpn_int32, void* a_pObject);
 static void handle_guardedscan_guarddepth(vrpn_float64, void* a_pObject);
+/// Guardedscan interface
+Tclvar_float guarded_plane_depth("imagep_guarddepth", 0.0f);
+Tclvar_int guarded_plane_acquire("guardedscan_plane_acquire", 0);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
  
+//-----------------------------------------------------------------------
 #if 0
 // TCH Dissertation
 static void handle_toggle_phantom_recording (vrpn_int32, void *);
 static void handle_phantom_playback_once (vrpn_int32, void *);
 static void handle_toggle_phantom_playback (vrpn_int32, void *);
+// TCH Dissertation
+// May 2001
+// Record & playback short Phantom segments from inside nano
+
+Tclvar_string phantom_record_name ("phantom_record_name", "");
+Tclvar_string phantom_replay_name ("phantom_replay_name", "");
+Tclvar_int phantom_record_now ("phantom_record_now", 0,
+                               handle_toggle_phantom_recording);
+Tclvar_int phantom_replay_now ("phantom_replay_now", 0,
+                               handle_phantom_playback_once);
+Tclvar_int phantom_replay_many ("phantom_replay_many", 0,
+                               handle_toggle_phantom_playback);
+static int phantomReplayRepeat = 0;
 #endif
 
-// Error recovery
+//-----------------------------------------------------------------------
+/// Error recovery
 static void openDefaultMicroscope();
 
-// colaboration initialization
+//-----------------------------------------------------------------------
+/// colaboration initialization
 void setupSynchronization (CollaborationManager * cm,
                            nmb_Dataset * dset,
                            nmm_Microscope_Remote * m);
 
-//Ubergraphics centering
+//-----------------------------------------------------------------------
+///Ubergraphics centering
 static void CenterUbergraphics(void);
 
 /*******************
@@ -399,7 +911,7 @@ static float	alpha_blue = 0.0;
 
 #ifndef NO_XWINDOWS
 /// only used in the unix version of microscape.
-static	void	update_xdisp_on_plane_change (BCPlane * p,
+static void update_xdisp_on_plane_change (BCPlane * p,
                                               int x, int y, void *) {
 
   // If x or y are negative, this means "whole grid update"
@@ -498,244 +1010,21 @@ static Tclvar_string msTimestampsName
 // TCL initialization section.
 //-----------------------------------------------------------------------
 
-/// Signal from Tcl to quit the program
-Tclvar_int tcl_quit("quit_program_now", 0, handle_tcl_quit);
 
 /// Host where the user interface of microscape is running.
 static Tclvar_string my_hostname("my_hostname", "localhost");
 
-//-----------------------------------------------------------------------
-/// This is the list of color map files from which mappings can be made.  It
-/// should be loaded with the files in the colormap directory, and "custom".
-
-static Tclvar_list_of_strings	colorMapNames("colorMapNames");
-
-//-----------------------------------------------------------------------
-/// This is a string that lets the user choose a color map to use.
-
-static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
-static	char	*colorMapDir = NULL;
-
-static ColorMap	* colorMaps[100] = { NULL };		///< Color maps currently loaded
-// limit to 100 because that's the limit of nmb_ListOfStrings
-ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
-// width and height of colormap image used in the colormap choice popup menu
-static const int colormap_width = 24, colormap_height = 128;
-
-
-
-/// Filename to get data from. Setting this variable in tcl triggers
-/// the open file process.
-TclNet_string openStaticFilename("open_static_filename", "",
-                                 handle_openStaticFilename_change, NULL);
-
-/// Stream Filename. Setting this variable in tcl triggers
-/// the open stream process.
-TclNet_string openStreamFilename("open_stream_filename", "");
-
-/// SPM Device name. Setting this variable triggers open device process
-TclNet_string openSPMDeviceName("open_spm_device_name", "");
-
-/// Log file name. If it's something other than "none" when the device
-/// is opened, try to log to the filename specified. 
-Tclvar_string openSPMLogName("open_spm_log_name", "");
-
-// The following two variables are used for error checking when the program
-// starts from the command line.  If the user specifies a device (-d) without
-// specifying an outputStream (-o), check_streamfile_save gets sets right before
-// microscope initialization, causing a dialog box to prompt the user for a
-// fileName (see filemenu.tcl [popup_check_streamfile_dialog]).  
-Tclvar_int check_streamfile_save("check_streamfile_save",0);
-
-// check_file_exists will always get set before microscope initialization,
-// causing the program to ensure that the file specified with -o does not
-// already exist.  If it does exist, the user is prompted for a new fileName
-// (see filemenu.tcl [popup_check_file_exists])
-Tclvar_int check_file_exists("check_file_exists",0);
-
-/// When you choose a plane of data to save, this list is set
-/// to the possible formats.
-static Tclvar_list_of_strings export_formats("export_formats");
-
-/// Plane of data to save in a file
-Tclvar_string	exportPlaneName("export_plane","");
-/// The format the plane of data will use, chosen from export_formats
-Tclvar_string	exportFileType("export_filetype","");
-/// Filename to save the data in. Setting this variable in tcl triggers
-/// the save process.
-Tclvar_string newExportFileName("export_filename", "");
-
-/// Filename to save scene description into.  Setting this variable in
-/// tcl triggers the save process.
-Tclvar_string exportScene_Filename("export_scene_filename", "");
-
-
-/// Flag to close any open files or connections.
-Tclvar_int closeMicroscope("close_microscope", 0,
-                           handle_closeMicroscope_change, NULL);
-
-//-----------------------------------------------------------------------
-// This section deals with selecting the color to apply to the surface.
-// It includes both a string to allow choosing the field to map color
-// from, the min and max colors, and the min and max values that are
-// mapped to the min and max colors.
-
-static int	minC[3] = {150,50,150};
-static int	maxC[3] = {250,50,50};
-
-/// The limits on the Tk slider where min and max value are selected
-Tclvar_float	color_min_limit("color_min_limit",0);
-Tclvar_float	color_max_limit("color_max_limit",1);
-TclNet_int surface_r ("surface_r", 192);
-TclNet_int surface_g ("surface_g", 192);
-TclNet_int surface_b ("surface_b", 192);
-TclNet_int surface_color_changed ("surface_color_changed", 1);
-
-
-// NANOX
-/// The positions of the min and max values within the Tk slider
-TclNet_float	color_min("color_min",0);
-TclNet_float	color_max("color_max",1);
-TclNet_float	data_min("data_min",0);
-TclNet_float	data_max("data_max",1);
-
-/// The positions of the min and max values withing the Tk slider
-TclNet_float    opacity_slider_min("opacity_slider_min",0);
-TclNet_float    opacity_slider_max("opacity_slider_max",1);
-
-
-// NANOX
-/// Streamfile controls
-TclNet_int replay_rate("stream_replay_rate", 1,
-			 handle_replay_rate_change, NULL);
-
-/// Signal that the stream file should be rewound to the beginning
-TclNet_int	rewind_stream("rewind_stream",0,
-			handle_rewind_stream_change, NULL);
-
-//checkthis
-/// This is the time value to jump to in the stream file. 
-TclNet_float set_stream_time ("set_stream_time", 0);
-/// This is a flag (0/1) to say " jump to new time now!"
-TclNet_int set_stream_time_now ("set_stream_time_now", 0,
-                             handle_set_stream_time_change, NULL);
-
-// NANOX - XXX
-/// Quick method of sharing measure line locations
-TclNet_float measureRedX ("measure_red_x", 0.0);
-TclNet_float measureRedY ("measure_red_y", 0.0);
-TclNet_float measureGreenX ("measure_green_x", 0.0);
-TclNet_float measureGreenY ("measure_green_y", 0.0);
-TclNet_float measureBlueX ("measure_blue_x", 0.0);
-TclNet_float measureBlueY ("measure_blue_y", 0.0);
-
-
-/// the Tk slider for recovery time
-/// XXX What is recovery time for? Adhesion?
-TclNet_float recovery_time ("recovery_time", 1);
-
-// The string that is used to determine which inputGrid field to use
-
-Tclvar_float    compliance_slider_min("compliance_slider_min",0);
-Tclvar_float    compliance_slider_max("compliance_slider_max",0);
-Tclvar_float	compliance_slider_min_limit("compliance_slider_min_limit",0);
-Tclvar_float	compliance_slider_max_limit("compliance_slider_max_limit",1);
-///This section deals with the compliance plane
-Tclvar_string compliancePlaneName
-               ("compliance_comes_from", "");
-
-Tclvar_float    friction_slider_min("friction_slider_min",0);
-Tclvar_float	friction_slider_max("friction_slider_max",1);
-/// The limits on the Tk slider where min and max value are selected
-Tclvar_float	friction_slider_min_limit("friction_slider_min_limit",0);
-Tclvar_float	friction_slider_max_limit("friction_slider_max_limit",1);
-
-//This section deals with the friction plane
-Tclvar_string frictionPlaneName
-               ("friction_comes_from", "");
-
-Tclvar_float    bump_slider_min("bump_slider_min",0);
-Tclvar_float    bump_slider_max("bump_slider_max",1);
-// The limits on the Tk slider where min and max value are selected
-Tclvar_float    bump_slider_min_limit("bump_slider_min_limit",0);
-Tclvar_float    bump_slider_max_limit("bump_slider_max_limit",1);
-//This section deals with the bump plane
-Tclvar_string bumpPlaneName ("bumpsize_comes_from", "");
-
-Tclvar_float    buzz_slider_min("buzz_slider_min",0);
-Tclvar_float    buzz_slider_max("buzz_slider_max",1);
-// The limits on the Tk slider where min and max value are selected
-Tclvar_float    buzz_slider_min_limit("buzz_slider_min_limit",0);
-Tclvar_float    buzz_slider_max_limit("buzz_slider_max_limit",1);
-//This section deals with the buzz plane
-Tclvar_string buzzPlaneName
-               ("buzzing_comes_from", "");
-
-Tclvar_float    adhesion_slider_min("adhesion_slider_min",0);
-Tclvar_float	adhesion_slider_max("adhesion_slider_max",1);
-// The limits on the Tk slider where min and max value are selected
-Tclvar_float	adhesion_slider_min_limit("adhesion_slider_min_limit",0);
-Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
-
-//This section deals with the adhesion plane
-Tclvar_string adhesionPlaneName
-               ("adhesion_comes_from", "");
-
-Tclvar_float    default_spring_k("spring_k_slider",0.5);
-//-----------------------------------------------------------------------
-// This section deals with selecting the data set to map to sound.
-// It includes both a string to allow choosing the field to map
-// from and the scale of the mapping.
-
-Tclvar_string	soundPlaneName("sound_comes_from","");
-/*Tclvar_float sound_scale("sound_scale",1);*/
-
-Tclvar_float sound_slider_min("sound_slider_min",0);
-Tclvar_float sound_slider_max("sound_slider_max",1);
-Tclvar_float sound_slider_min_limit("sound_slider_min_limit",0);
-Tclvar_float sound_slider_max_limit("sound_slider_max_limit",1);
-
-//-----------------------------------------------------------------------
-// This section deals with selecting the offset in x and y and the scale of
-// the ruler grid that can be overlaid on the surface.  It also has an
-// integer that tells whether to do the ruler or not.  It also controls the
-// orientation and specifies what image (if any) to use in place of the
-// ruler.
-
-//instead, put these in the rulergrid dialog box
-
-/// if on, set the rulergrid position by the red line
-TclNet_int rulergrid_position_line ("rulergrid_position_line", 0,
-                                    handle_rulergridPositionLine_change, NULL);
-/// if on, set the rulergrid angle by the green line
-TclNet_int rulergrid_orient_line ("rulergrid_orient_line", 0,
-                                  handle_rulergridOrientLine_change, NULL);
-/// otherwise set with these sliders
-TclNet_float rulergrid_xoffset ("rulergrid_x", 0);
-TclNet_float rulergrid_yoffset ("rulergrid_y", 0);
-TclNet_float rulergrid_scale ("rulergrid_scale", 500);
-TclNet_float rulergrid_angle ("rulergrid_angle", 0);
-TclNet_float ruler_width_x ("ruler_width_x", 1);
-TclNet_float ruler_width_y ("ruler_width_y", 1);
-
-/// alpha toggle variable
-TclNet_int toggle_null_data_alpha ("null_data_alpha_pressed", 0);
-
-///set default Rulergrid opacity to 70% instead of 100%
-TclNet_float ruler_opacity ("ruler_opacity", 70);
-
-
-//The quoted parameters are the variable names in tcl-space
-//TclNet_int ruler_r ("ruler_r", 255);
-//TclNet_int ruler_g ("ruler_g", 255);
-//TclNet_int ruler_b ("ruler_b", 55);
-TclNet_string ruler_color ("ruler_color","#ffff64");
-TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
-TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
-
 //-----------------------------------------------------------------
-/// Enables the realigning textues... (toggle button on main tcl window)
+// Enables the realigning textues... (toggle button on main tcl window)
 // XXX This function is not included in the one screen tcl interface.
+static void handle_display_textures_selected_change(vrpn_int32, void *);
+static void handle_realign_textures_selected_change(vrpn_int32 value, void *);
+static void handle_set_realign_center_change (vrpn_int32 value, void * userdata);
+static void handle_texture_dataset_change (const char *, void * userdata);
+static void handle_texture_conversion_map_change(const char *, void * userdata);
+static void handle_realign_textures_slider_change (vrpn_float64, void * userdata);
+static void handle_realign_plane_name_change (const char *, void * userdata);
+
 Tclvar_int display_realign_textures ("display_dataset", 0);
 Tclvar_int realign_textures_enabled ("realign_dataset", 0);
 Tclvar_int set_realign_center ("set_center", 0);
@@ -750,240 +1039,38 @@ Tclvar_float realign_textures_slider_max("realign_textures_slider_max", 1.0);
 
 Tclvar_string	newRealignPlaneName("realignplane_name","");
 
-TclNet_int shiny ("shiny", 55);
-TclNet_int local_viewer ("local_viewer", 1);
-TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
-TclNet_float surface_alpha ("surface_alpha", 1.0);
-TclNet_float specular_color ("specular_color", 0.7);
-
-static void handle_config_fp_change (vrpn_int32, void *);
-static void handle_config_ss_change (vrpn_int32, void *);
-static void handle_config_cj_change (vrpn_int32, void *);
-
-//-----------------------------------------------------------------------
-/// Configure triangle-display methods
-Tclvar_int config_filled_polygons
-     ("filled_triangles", 1, handle_config_fp_change, NULL);
-Tclvar_int config_smooth_shading
-     ("smooth_shading",  1, handle_config_ss_change, NULL);
-Tclvar_int config_chartjunk
-     ("chart_junk",  1, handle_config_cj_change, NULL);
-
-
-/// Tom Hudson's latency compensation techniques
-
-Tclvar_int truetip_showing ("truetip_showing", 0);
-Tclvar_float truetip_scale ("truetip_scale", 1);
-
-Tclvar_int constraint_mode ("constraint_mode", 0);
-Tclvar_float constraint_kspring ("constraint_kspring", 10.0f);
-
-//-----------------------------------------------------------------------
-/// This section deals with an image type for a screen capture
-const char **screenImage_formats_list = ImageType_names;
-Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
-
-Tclvar_string    screenImageFileType("screenImage_format", "");
-Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 //-----------------------------------------------------------------
-/// These variables are for controlling visualizations
-bool created_region = false;
-int viz_region = 0;
-Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
-Tclvar_float	viz_max_limit("viz_max_limit",1);
-Tclvar_float	viz_min_limit("viz_min_limit",0);
-Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
-Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
-Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
-Tclvar_string   viz_comes_from("viz_comes_from", "", handle_viz_dataset_change);
-//Probably should make all of these TclNet's
-TclNet_float    viztex_scale ("viztex_scale", 500);
 
-//This should probably be generalized to just a method for
-//loading textures and anything that wants one can use it, but
-//this will do for now
-Tclvar_list_of_strings viz_tex_files("viz_tex_files");
-Tclvar_string viz_tex_new("viz_tex_new", "", handle_viz_tex_new);
-Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
-
-//-----------------------------------------------------------------
-/// These variables are for controlling shape analysis
-Tclvar_int	analyze_shape("analyze_shape",0, handle_analyze_shape);
-Tclvar_int	shape_mask("shape_mask",1);
-Tclvar_int	shape_order("shape_order",0);
-Tclvar_int	pre_flatten("pre_flatten",1);
-Tclvar_int	auto_adapt("auto_adapt",1);
-Tclvar_float	blurring("blurring",4);
-Tclvar_float	aspect_ratio("aspect_ratio",2);
-Tclvar_float	correlation("correlation",0.6);
-Tclvar_float	intensity_thresh("intensity_thresh",0.6);
-Tclvar_string	shape_mask_file("shape_mask_file", "mask");
-Tclvar_string	shape_order_file("shape_order_file", "order");
-
-nma_ShapeAnalyze shape_analysis;
-//-----------------------------------------------------------------
-
-
-//PPM	*rulerPPM = NULL;	///< Image to use for the ruler
-static char * rulerPPMName = NULL;   ///< Name of image to use for the ruler
-static char * vizPPMName = NULL;   ///< Name of image to use for the ruler
+// Obsolete. Pxfl. 
 static PPM * alphaPPM = NULL;	///< Image to use for the alpha blending
 static PPM * bumpPPM = NULL;	///< Image to use for the bump mapping
 static PPM * noisePPM = NULL;   ///< Uniform noise image for spot noise shader 
 
-//---------------------
-/// Scaling factor for the sphere icon
-Tclvar_float sphere_scale ("sphere_scale", 12.5f);
-
 //-----------------------------------------------------------------------
-// This section deals with selecting the contour lines to apply to the surface.
-// It includes a string to determine when to map them from and a float
-// value to determine their spacing.
-TclNet_float texture_scale ("texture_spacing",10);
-TclNet_float contour_width ("contour_width", 10.0);
-TclNet_int contour_r ("contour_r", 255);
-TclNet_int contour_g ("contour_g", 55);
-TclNet_int contour_b ("contour_b", 55);
-TclNet_int contour_changed ("contour_changed", 0);
-
-//-----------------------------------------------------------------------
-// This section deals with selecting the alpha for the checkerboard pattern.
-// It includes both a string to allow choosing the field to map alpha
-// from, the min and max colors, and the min and max values that are
-// mapped to the min and max alphas.
-
-// The limits on the Tk slider where min and max value are selected
-Tclvar_float	alpha_slider_min_limit ("alpha_slider_min_limit", 0);
-Tclvar_float	alpha_slider_max_limit ("alpha_slider_max_limit", 1);
-
-// The positions of the min and max values within the Tk slider
-Tclvar_float	alpha_slider_min ("alpha_slider_min", 0);
-Tclvar_float	alpha_slider_max ("alpha_slider_max", 1);
-
-// The limits on the Tk slider where min and max value are selected
-Tclvar_float    x_min_scale ("x_min_scale", 0);
-Tclvar_float    x_max_scale ("x_max_scale", 1);
-
-// The positions of the min and max values within the Tk slider
-Tclvar_float    x_min_value ("x_min_value", 0);
-Tclvar_float    x_max_value ("x_max_value", 1);
-
-
-/// The string that is used to determine which inputGrid field to use
-Tclvar_string	xPlaneName ("x_comes_from", "");
-
-//-----------------------------------------------------------------------
-/// This is the list of image processing programs available.  It
-/// should be loaded with the files in the image proc directory, and "none".
-
-//nmb_ListOfStrings	procProgNames;
-Tclvar_list_of_strings procProgNames("filter_names");
-
-//-----------------------------------------------------------------------
-/// These are widgets which allow the use to pick the name and parameters 
-/// of the image processing program, like input and output.
-/// "proc" is short for "processing"
-
-static  char    defaultFilterDir[] = "/afs/unc/proj/stm/etc/filters";
-static	char	*procImageDir;
-
-/// This is the filter program name.
-Tclvar_string	procProgName ("pick_program", "");
-/// The string that is used to determine which inputGrid field to use
-Tclvar_string	procPlaneName ("pick_plane", "");
-Tclvar_string	procParams ("proc_params","");
-
-/// This is the output plane 
-Tclvar_string	newFilterPlaneName("filterplane_name","");
-
-/// Float scales to determine the angle and scale for programs that use them
-Tclvar_float procAngle ("proc_angle", 0.0f);
-Tclvar_float procScale ("proc_scale", 1.0f);
-
-
+// Obsolete? Only used for Pxfl????
 /// A list of the textures which can be used for the pxfl shader. 
 nmb_ListOfStrings	textureNames;
 
 static  char    defaultTextureDir[] = "/afs/unc/proj/stm/etc/textures";
 static	char	*textureDir;
 
-// A test list of textures. 
-// Tclvar_string	textureName ("texture_name", "");
-
 //----------------------------------------------------------------------
-// This section deals with the creation of new data planes that are
-// derived from other planes.  It provides variables
-// for the name of the new plane and the name of the plane(s) to use
-// for sources.  The names are selected from lists.
-
-Tclvar_string	newFlatPlaneName("flatplane_name","");
-
-//added 1-9-99 by Amy Henderson
-Tclvar_string newLBLFlatPlaneName("lblflatplane_name","");
-
-Tclvar_string	sumPlane1Name ("sum_first_plane","");
-Tclvar_string	sumPlane2Name ("sum_second_plane","");
-Tclvar_float	sumScale("sum_scale",-1.0);
-Tclvar_string	newSumPlaneName ("sumplane_name","");
-
-Tclvar_string	adhPlane1Name("first_plane","");
-Tclvar_string	adhPlane2Name("last_plane","");
-Tclvar_string	newAdhPlaneName("adhesionplane_name","");
-static	char	lastAdhPlaneName[1000] = "";
-
 Tclvar_string newResamplePlaneName("resample_plane_name", "");
 
-Tclvar_float	adhNumToAvg("adhesion_average",3);
-
-
-// Aron Helser Temporary, testing how to save and restore a viewpoint
-Tclvar_int save_xform ("save_xform", 0);
-Tclvar_int set_xform ("set_xform", 0);
-
-//----------------------------------------------------------------------
-/// These tcl vars link to a pad which rotates the view of the surface.
-/// They are defined in panel_tools.tcl, and instantiated in view.tcl
-
-Tclvar_float	joy0x("joy0(x)",0.0,
-		      handle_joymove, (void*)"t");
-Tclvar_float	joy0y("joy0(y)",0.0,
-		      handle_joymove, (void*)"t");
-Tclvar_float	joy0z("joy0(z)",0.0,
-			handle_joymove, (void*)"t");
-Tclvar_float	joy1x("joy1(x)",0.0,
-			handle_joymove, (void*)"r");
-Tclvar_float	joy1y("joy1(y)",0.0,
-			handle_joymove, (void*)"r");
-Tclvar_float	joy1z("joy1(z)",0.0,
-			handle_joymove, (void*)"r");
-Tclvar_float	joy0b("joy0(b)",0.0, NULL, NULL);
-Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 
 //----------------------------------------------------------------------
 
-// Change the number of pulse or scrape markers to show
-
-Tclvar_int clearMarkers ("clear_markers", 0,
-                         handle_clear_markers_change);
-Tclvar_int numMarkersShown ("number_of_markers_shown", 1000,
-                            handle_markers_shown_change);
-Tclvar_int markerHeight ("marker_height", 100,
-                         handle_markers_height_change);
+//----------------------------------------------------------------------
 
 
-Tclvar_int withdraw_tip ("withdraw_tip", 0, handle_withdraw_tip_change, NULL);
 
-
-Tclvar_float global_icon_scale ("global_icon_scale", 1.0);
-
-/// Controls for the french Ohmmeter - creates many tcl widgets
+/// Controls for the french Ohmmeter. Uses ohmmeter.tcl for widgets. 
 Ohmmeter *the_french_ohmmeter_ui = NULL;
 
 /// Controls for the VI curve generator -
 /// uses keithley2400.tcl for most widgets.
 nma_Keithley2400_ui * keithley2400_ui = NULL;
-
 
 /// Controls for the SEM
 nms_SEM_ui * sem_ui = NULL;
@@ -992,41 +1079,19 @@ nms_SEM_ui * sem_ui = NULL;
 nmr_RegistrationUI *alignerUI = NULL;
 nmr_Registration_Proxy *aligner = NULL;
 
-//Controls for tip convolution
+/// Controls for tip convolution
 nmtc_TipConvolution *ConvTip = NULL;
 
 #ifdef NANO_WITH_ROBOT
 RobotControl * robotControl = NULL;
 #endif
 
+//---------------------------------------------------------------------------
 /// Scales how much normal force is felt when using Direct Z Control
 Tclvar_float directz_force_scale("directz_force_scale", 1.0);
 
 
-// NANOX
-// TCH 19 Jan 00 - Turned these into netvars that were logged on
-// interfaceLogConnection but were NOT part of rootUIControl so that
-// they wouldn't be shared but that while replaying logs we could
-// determine which state to use.
-TclNet_int share_sync_state ("share_sync_state", 0);
-TclNet_int copy_to_private_state ("copy_to_private_state", 0);
-TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
-
-///to get the name of the machine where the collaborator is whose hand
-///position we want to track
-TclNet_string collab_machine_name ("collab_machine_name", "");
-
-TclNet_int request_mutex ("request_mutex", 0);
-TclNet_int release_mutex ("release_mutex", 0);
-
-
-Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
-
 //---------------------------------------------------------------------------
-/// Deal with the stride between rows on the grid for tesselation.  This is
-/// the step size between one row/column of the display list and the next.
-
-TclNet_int tclstride ("tesselation_stride", 1);
 
 /// If 0, we are using the phantom's trigger button by press and hold.
 /// If 1, we are using the phantom's trigger button as a toggle.
@@ -1036,9 +1101,6 @@ Tclvar_int phantom_button_mode("phantom_button_mode", 0);
 /// Allow interface to display frame rate, if desired. 
 Tclvar_float frame_rate("frame_rate", 0);
 
-/// Guardedscan interface
-Tclvar_float guarded_plane_depth("imagep_guarddepth", 0.0f);
-Tclvar_int guarded_plane_acquire("guardedscan_plane_acquire", 0);
 
 // END tcl declarations
 //----------------------------------------------------------------------
@@ -1050,20 +1112,16 @@ Tclvar_int guarded_plane_acquire("guardedscan_plane_acquire", 0);
 float MAX_K = 1.0f;
 float MIN_K = 0.2f;
 
-int stride;       // used in VRML.C and nowhere else!
-
-static char * bdboxName;
-static char * headTrackerName;
-static char * handTrackerName;	// = phantom server name
+int stride;       ///< used in VRML.C and nowhere else!
 
 //----------------------------------------------------------------------
 // file-scoped globals
 
+static char * bdboxName;
+static char * headTrackerName;
+static char * handTrackerName;	///< = phantom server name
+
 static long displayPeriod = 0L; ///< minimum interval between displays 
-
-// replaced by microscope->ReadMode()
-//static int read_mode = READ_FILE;	///< Where get info from? 
-
 
 // HACK TCH 18 May 98 - program doesn't run with glenable 0
 static int glenable = 1;           ///< Default gl display is enabled 
@@ -1072,23 +1130,6 @@ static int tkenable = 1;           ///< Default is to use Tk control panels
 static int drawOnlyOnCenter=0;	///< Only draw a frame when the user centers?
 
 static int ttyFD;			///< File desc for TTY device 
-
-#if 0
-// TCH Dissertation
-// May 2001
-// Record & playback short Phantom segments from inside nano
-
-Tclvar_string phantom_record_name ("phantom_record_name", "");
-Tclvar_string phantom_replay_name ("phantom_replay_name", "");
-Tclvar_int phantom_record_now ("phantom_record_now", 0,
-                               handle_toggle_phantom_recording);
-Tclvar_int phantom_replay_now ("phantom_replay_now", 0,
-                               handle_phantom_playback_once);
-Tclvar_int phantom_replay_many ("phantom_replay_many", 0,
-                               handle_toggle_phantom_playback);
-static int phantomReplayRepeat = 0;
-#endif
-
 
 /***********
  * globals for drawing the graph
@@ -1303,7 +1344,6 @@ struct MicroscapeInitializationState {
 
   // TCH Dissertation May 2001
   // Turn on latency adaptations from the command line
-
   vrpn_bool laUseUDP;
   vrpn_bool laUseQM;
   int laQMT;
@@ -1660,7 +1700,10 @@ void handle_tcl_quit(vrpn_int32 , void *)
 }
 
 //---------------------------------------------------------------------------
-/// Deal with changes in the stride between rows on the grid for tesselation.
+// TCL CALLBACKS.
+//---------------------------------------------------------------------------
+
+/** Deal with changes in the stride between rows on the grid for tesselation. */
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -1679,24 +1722,13 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
   }
 }
 
-
-/*Import from tube_foundry*/
-
-///Tcl variable for getting filename containing geometry info for
-///object that we want to import
-Tclvar_string import_filename ("import_filename", "");
-///Button which signals that we should import the object whose
-///geometry is contained above
-Tclvar_int load_import_file ("load_import_file",0);
-Tclvar_int load_button_press ("load_button_press", 0);
-
 static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setAlphaSliderRange(alpha_slider_min, alpha_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
-static void handle_color_change (vrpn_float64, void * userdata) {
+static void handle_color_minmax_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorMinMax(color_min, color_max);
   g->setDataColorMinMax(data_min, data_max);
@@ -1765,9 +1797,6 @@ void handle_finegrained_changed (vrpn_int32 value, void *) {
   }
 }
 
-
-Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
-                                 handle_finegrained_changed, NULL);
 
 // NANOX
 
@@ -1858,6 +1887,7 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   }
 }
 
+//-----------------------------------------------------------------------
 /// Handle the color change of the rulergrid
 static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2412,8 +2442,15 @@ static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
 
   }
 
-} // end handle_copy_to_shared
+}
 
+/**
+ * Currently assumes that only the most recently added peer is
+ *  "valid";  others are a (small?) memory/network leak.
+ */
+static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
+
+} // end handle_copy_to_shared
 
 static int handle_timed_sync_request (void *) {
   // Write the current elapsed time of the stream
@@ -2495,7 +2532,8 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
   center();
   tcl_center_pressed = 0;
 }
-// Handler for set_stream_time_now, NOT set_stream_time. 
+
+/// Handler for set_stream_time_now, NOT set_stream_time. 
 static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
 //fprintf(stderr, "handle_set_stream_time_change to %d (flag %d).\n",
 //(vrpn_int32) set_stream_time, (vrpn_int32) set_stream_time_now);
@@ -2705,7 +2743,7 @@ static void handle_realign_plane_name_change (const char *, void * userdata) {
 
 
 /// Handle setting or clearing of ruler selected
-static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
+static void handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   if (value) {
@@ -2722,7 +2760,7 @@ static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 }
 
 /// Handle rulergrid angle change -- recompute sin() and cos() of angle
-static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) {
+static void handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridAngle(value);
@@ -2767,7 +2805,7 @@ static void     handle_contour_width_change (vrpn_float64, void * userdata) {
   g->setContourWidth(contour_width);}
 
 // this should probably be moved to microscape_handlers.c
-static	void	handle_alpha_dataset_change (const char *, void * userdata)
+static void handle_alpha_dataset_change (const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 	BCPlane	* plane = dataset->inputGrid->getPlaneByName
@@ -2884,7 +2922,7 @@ static void handle_surface_color_change (vrpn_int32, void * userdata) {
   }
 }
 
-static	void	handle_colormap_change (const char *, void * userdata) {
+static void handle_colormap_change (const char *, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorMapName(dataset->colorMapName->string());
@@ -2959,7 +2997,7 @@ static int forget_modification_data ()
 /** See if the user has given a name to the open filename other
  than "".  If so, we should open a file and set the value
  back to "". If there are any errors, report them and leave name alone.  */
-static	void	handle_openStaticFilename_change (const char *, void *)
+static void handle_openStaticFilename_change (const char *, void *)
 {
     fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
     fprintf(stderr,"Filename length: %d\n",strlen(openStaticFilename));
@@ -3040,7 +3078,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     
     //AFMState.c limits length of stream filenames to 255
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
-    sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
+    // Include the "//" to make it an official URL, and make sure
+    // VRPN doesn't strip a leading "//" from a path in WIN that is 
+    // on a networked computer. 
+    sprintf(istate->afm.deviceName, "file://%s", istate->afm.inputStreamName);
 
     vrpn_Connection * new_microscope_connection =
         vrpn_get_connection_by_name (istate->afm.deviceName);
@@ -3281,7 +3322,7 @@ static void openDefaultMicroscope()
  than "".  If so, we should export a file and set the value
  back to "". If there are any errors, report them and leave name alone. 
 */
-static	void	handle_exportFileName_change (const char *, void *)
+static void handle_exportFileName_change (const char *, void *)
 {
 
     if (strlen(newExportFileName) > 0) {
@@ -3323,7 +3364,7 @@ static	void	handle_exportFileName_change (const char *, void *)
  export types. So if we change planes, we may need to change
  the list of export types. 
 */
-static  void    handle_exportPlaneName_change (const char *, void *ud)
+static void handle_exportPlaneName_change (const char *, void *ud)
 {
     nmb_Dataset *d = (nmb_Dataset *)ud;
 
@@ -3397,7 +3438,7 @@ static void handle_exportScene_Filename_change (
 /** See if the user has given a name to the filtered plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
-static	void	handle_filterPlaneName_change(const char *, void *) {
+static void handle_filterPlaneName_change(const char *, void *) {
 
     if (strlen(newFilterPlaneName.string()) > 0) {
 
@@ -3488,7 +3529,7 @@ static void handle_lblflatPlaneName_change(const char *, void *)
 /** See if the user has given a name to the sum plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
-static	void	handle_sumPlaneName_change(const char *, void *)
+static void handle_sumPlaneName_change(const char *, void *)
 {
   if( strlen( newSumPlaneName.string( ) ) <= 0 )
     return;
@@ -3515,7 +3556,7 @@ static	void	handle_sumPlaneName_change(const char *, void *)
 /** See if the user has given a name to the adhesion plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
-static	void	handle_adhPlaneName_change(const char *, void *)
+static void handle_adhPlaneName_change(const char *, void *)
 {
 
     if (strlen(newAdhPlaneName.string()) > 0) {
@@ -3542,7 +3583,7 @@ static	void	handle_adhPlaneName_change(const char *, void *)
 }
 
 
-static	void	handle_adhesion_average_change(vrpn_float64 val, void *)
+static void handle_adhesion_average_change(vrpn_float64 val, void *)
 {
 
 	// Make sure that the number is an integer.
@@ -3574,7 +3615,7 @@ static v_xform_type save_diff_xform = { { 0, 0, 0},
 static q_vec_type save_light_dir = { 0, 0, 0 };
 
 /// Aron Helser Temporary, testing how to save and restore a viewpoint
-static	void	handle_save_xform_change (vrpn_int32, void * userdata)
+static void handle_save_xform_change (vrpn_int32, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   v_xform_type cent_xf;
@@ -3595,7 +3636,7 @@ static	void	handle_save_xform_change (vrpn_int32, void * userdata)
 }
 
 /// Aron Helser Temporary, testing how to save and restore a viewpoint
-static	void	handle_set_xform_change (vrpn_int32, void * userdata)
+static void handle_set_xform_change (vrpn_int32, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   v_xform_type cent_xf;
@@ -3615,10 +3656,6 @@ collabVerbose(5, "handle_set_xform_change:  updateWorldFromRoom().\n");
 
   g->setLightDirection(save_light_dir);
  
-}
-static void handle_withdraw_tip_change (vrpn_int32, void *) 
-{
-    microscope->WithdrawTip();
 }
 
 static void handle_global_icon_scale_change (vrpn_float64 value, void * userdata) {
@@ -4172,7 +4209,7 @@ int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
 
 /// Handles call back for setting the name for the file to write screen
 /// captures into. At this point, the type of file is known as well.
-static	void	handle_screenImageFileName_change (const char *, void *userdata)
+static void handle_screenImageFileName_change (const char *, void *userdata)
 {
    // See if the user has given a name other than ""
    if (strlen(newScreenImageFileName.string()) > 0)
@@ -4910,11 +4947,11 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_alpha_slider_change, g);
   alpha_slider_max.addCallback
             (handle_alpha_slider_change, g);
-  color_min.addCallback(handle_color_change, g);
-  color_max.addCallback(handle_color_change, g);
-  data_min.addCallback(handle_color_change, g);
+  color_min.addCallback(handle_color_minmax_change, g);
+  color_max.addCallback(handle_color_minmax_change, g);
+  data_min.addCallback(handle_color_minmax_change, g);
   surface_color_changed.addCallback(handle_surface_color_change, g);
-  data_max.addCallback(handle_color_change, g);
+  data_max.addCallback(handle_color_minmax_change, g);
   opacity_slider_min.addCallback
             (handle_opacity_slider_change, g);
   opacity_slider_max.addCallback
@@ -7400,6 +7437,8 @@ int main (int argc, char* argv[])
     initialize_rtt();
 
     VERBOSE(1, "About to init microscope\n");
+
+    //fprintf(stderr, "About to init microscope\n");
 
     // If user has specified a stream file with -i option, try
     // to open it as a VRPN stream file. 

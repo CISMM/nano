@@ -48,6 +48,8 @@ void setupStateCallbacks (nmm_Microscope_Remote * ms) {
       (handle_doRelaxComp_change, ms);
   ms->state.scanning.addCallback
       (handle_scanning_change, ms);
+  ms->state.withdraw_tip.addCallback
+      (handle_withdraw_tip_change, ms);
 
   ms->state.modify.mode.addCallback
     (handle_Mmode_change, ms);
@@ -248,6 +250,8 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
       (handle_doRelaxComp_change, ms);
   ms->state.scanning.removeCallback
       (handle_scanning_change, ms);
+  ms->state.withdraw_tip.removeCallback
+      (handle_withdraw_tip_change, ms);
 
   ms->state.modify.mode.removeCallback
     (handle_Mmode_change, ms);
@@ -469,6 +473,14 @@ void handle_scanning_change (vrpn_int32 , void * _mptr) {
         microscope->PauseScan();
     }
     
+}
+
+/// Withdraw the tip from the surface. Has no effect while scanning. 
+void handle_withdraw_tip_change (vrpn_int32, void * _mptr) 
+{
+    if (microscope->state.withdraw_tip) {
+        microscope->WithdrawTip();
+    }
 }
 
 void handle_grid_resolution_change (vrpn_int32, void * _mptr) {

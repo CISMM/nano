@@ -104,15 +104,17 @@ void nmb_Line::normalize (BCPlane * plane) {
     d_bottom[1] = plane->maxY();
   }
 
-  d_top[2] = plane->maxAttainableValue() * plane->scale();
-  d_bottom[2] = plane->minAttainableValue() * plane->scale();
-  // Above works fine for stream files, where m**AttainableValues is
-  // determined by the scanner range. But for static files, it is the
-  // range of the data, which can be very small, resulting in short lines. 
-  //So let's make the line height about twice the
-  // xy extent of the surface
-  // NOTE: this totally ignores units - the plane might not be in 
-  // of nm like the xy range is. 
+  // BUG note: Don't use m**AttainableValue, because that creates very long
+  // lines, which cause transformation problems and quantized XY position due
+  // to round-off error on the NVidia Quadra boards (I think... 6/2001)
+  d_top[2] = plane->maxNonZeroValue() * plane->scale();
+  d_bottom[2] = plane->minNonZeroValue() * plane->scale();
+  // We're using the range of the data, which can be very small, resulting in
+  // short lines.  So let's make the line height about twice the xy extent of
+  // the surface.
+  // NOTE: this totally ignores units, intentionally - we want to ignore the
+  // plane's scale and units to get lines of fairly consistent length on the
+  // screen. 
   float range = plane->maxX() - plane->minX();
   if (( d_top[2] - d_bottom[2] ) < range) {
     d_top[2] += range;

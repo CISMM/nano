@@ -1,3 +1,15 @@
+2001-06-21  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c: Numerous spacing, comment and re-ordering changes,
+	to organize Tclvars and their handlers into groups. 
+	(handle_withdraw_tip_change): moved to microscopeHandlers.C
+	(handle_openStreamFilename_change): Change file:%s
+	to file://%s so it's always a proper URL. Fixes bug with stream
+	files on network drives. 
+	* microscopeHandlers.C (handle_withdraw_tip_change): added.
+	(setupStateCallbacks): added handle_withdraw_tip_change.
+	(teardownStateCallbacks): same
+
 2001-06-18  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* microscape.c: changed handle_analyze_shape function so that
@@ -53,7 +65,9 @@
 	
 	* microscape.c (handle_color_dataset_change): add
 	(handle_sound_dataset_change): add
-
+	(setupCallbacks): New members, re-organize.
+	(teardownCallbacks): same. 
+	
 2001-06-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C:  changes to accomodate new PlaneSync.

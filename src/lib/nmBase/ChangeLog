@@ -1,3 +1,13 @@
+2001-06-21  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Line.C (normalize): Line height based on data range, to
+	avoid very tall lines. Tall lines create quantized positions on
+	some graphics cards. 
+
+	* BCPlane.C (minNonZeroValue): If no real data, return 0. Helps in
+	nmb_Line. 
+	(maxNonZeroValue): same.
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmb_Types.h : remove dead code, move all #include statements to

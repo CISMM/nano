@@ -165,12 +165,12 @@ BCPlane::minNonZeroValue()
 	    }
 	}
 	
-	if (_max_nonzero_value == _min_nonzero_value &&
-            _max_nonzero_value == 0) // no real data has been stored in the grid
-	{
-	    _max_nonzero_value = -1.0e33;
-	    _min_nonzero_value = 1.0e33;
-	}
+//  	if (_max_nonzero_value == _min_nonzero_value &&
+//              _max_nonzero_value == 0) // no real data has been stored in the grid
+//  	{
+//  	    _max_nonzero_value = -1.0e33;
+//  	    _min_nonzero_value = 1.0e33;
+//  	}
 	
 	_modified_nz = 0;
 	return _min_nonzero_value;
@@ -214,12 +214,12 @@ BCPlane::maxNonZeroValue()
 	    }
 	}
 
-	if (_max_nonzero_value == _min_nonzero_value &&
-            _max_nonzero_value == 0) // no real data has been stored in the grid
-	{
-	    _max_nonzero_value = -1.0e33;
-	    _min_nonzero_value = 1.0e33;
-	}
+//  	if (_max_nonzero_value == _min_nonzero_value &&
+//              _max_nonzero_value == 0) // no real data has been stored in the grid
+//  	{
+//  	    _max_nonzero_value = -1.0e33;
+//  	    _min_nonzero_value = 1.0e33;
+//  	}
 	    
 	_modified_nz = 0;
 	return _max_nonzero_value;

@@ -23,6 +23,7 @@ void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr);
 void handle_grid_resolution_change (vrpn_int32, void * _mptr);
 void handle_scan_angle_change (vrpn_float64, void * _mptr);
 void handle_scanning_change (vrpn_int32, void * _mptr);
+void handle_withdraw_tip_change (vrpn_int32, void * _mptr);
 
 void handle_Mmode_change (vrpn_int32, void * _mptr);
 void handle_Mstyle_change (vrpn_int32, void * _mptr);
