@@ -56,3 +56,4 @@ class MSIFileGenerator : public FileGenerator {
 };
 
 #endif
+

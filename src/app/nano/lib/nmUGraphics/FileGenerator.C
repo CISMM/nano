@@ -51,3 +51,4 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
     }	
     return (FileGenerator*)NULL;
 }
+
