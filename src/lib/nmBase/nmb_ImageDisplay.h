@@ -55,6 +55,9 @@ class nmb_ImageDisplay {
 
   /// display the image with all current colormap settings updated
   virtual void updateImage(nmb_Image *image) = 0;
+
+  /// change the alpha of the projective texture for the colormap texture
+  virtual void updateAlpha(float alpha) = 0;
 };
 
 #endif

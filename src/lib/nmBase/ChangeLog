@@ -1,3 +1,8 @@
+2002-10-24  David Borland <borland@cs.unc.edu>
+
+        * nmb_ImageDisplay.h : added a function declaration for use in setting
+        the colormap (slow) texture's alpha value.
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Point.h : added an assertion to make sure that the z value is not
