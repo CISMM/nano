@@ -1,3 +1,11 @@
+2003-03-17  David Borland  <borland@cs.unc.edu>
+        * microscape .C: Removed callbacks for old eroder connection.  
+        Added callbacs for  Mathematical Morhphology code.  The user can 
+        now dilate, erode, open, or close any heightfield by an image 
+        representing an AFM tip.
+
+        * nano.dsp: added nmb_MorphologyPlane class to nmBase.
+
 2003-12-08  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C (main):  at the end of main loop, first time through,
