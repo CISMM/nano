@@ -51,6 +51,100 @@ void nmb_Transform_TScShR::setIdentity()
   d_matrix[15] = 1.0;
 }
 
+void nmb_Transform_TScShR::setParameter(nmb_TransformParameter type, 
+                                        double value)
+{
+  switch (type) {
+    case NMB_ROTATE_X:
+      setRotation(NMB_X, value);
+      break;
+    case NMB_ROTATE_Y:
+      setRotation(NMB_Y, value);
+      break;
+    case NMB_ROTATE_Z:
+      setRotation(NMB_Z, value);
+      break;
+    case NMB_TRANSLATE_X:
+      d_translation[0] = value;
+      break;
+    case NMB_TRANSLATE_Y:
+      d_translation[1] = value;
+      break;
+    case NMB_TRANSLATE_Z:
+      d_translation[2] = value;
+      break;
+    case NMB_SCALE_X:
+      d_scale[0] = value;
+      break;
+    case NMB_SCALE_Y:
+      d_scale[1] = value;
+      break;
+    case NMB_SCALE_Z:
+      d_scale[2] = value;
+      break;
+    case NMB_SHEAR_X:
+      d_shear[0] = value;
+      break;
+    case NMB_SHEAR_Y:
+      d_shear[1] = value;
+      break;
+    case NMB_SHEAR_Z:
+      d_shear[2] = value;
+      break;
+    default:
+      printf("nmb_Transform_TScShR::setParameter: unknown parameter\n");
+      return;
+  }
+  d_matrixNeedsUpdate = vrpn_TRUE;
+}
+
+double nmb_Transform_TScShR::getParameter(nmb_TransformParameter type)
+{
+  double result = 0;
+  switch (type) {
+    case NMB_ROTATE_X:
+      result = d_rotation[0];
+      break;
+    case NMB_ROTATE_Y:
+      result = d_rotation[1];
+      break;
+    case NMB_ROTATE_Z:
+      result = d_rotation[2];
+      break;
+    case NMB_TRANSLATE_X:
+      result = d_translation[0];
+      break;
+    case NMB_TRANSLATE_Y:
+      result = d_translation[1];
+      break;
+    case NMB_TRANSLATE_Z:
+      result = d_translation[2];
+      break;
+    case NMB_SCALE_X:
+      result = d_scale[0];
+      break;
+    case NMB_SCALE_Y:
+      result = d_scale[1];
+      break;
+    case NMB_SCALE_Z:
+      result = d_scale[2];
+      break;
+    case NMB_SHEAR_X:
+      result = d_shear[0];
+      break;
+    case NMB_SHEAR_Y:
+      result = d_shear[1];
+      break;
+    case NMB_SHEAR_Z:
+      result = d_shear[2];
+      break;
+    default:
+      printf("nmb_Transform_TScShR::getParameter: unknown parameter\n");
+      break;
+  }
+  return result;
+}
+
 void nmb_Transform_TScShR::setRotation(nmb_Axis axis, 
                                          double angle_radians)
 {
@@ -226,6 +320,14 @@ void nmb_Transform_TScShR::scale(double sx, double sy, double sz)
   d_scale[0] *= sx;
   d_scale[1] *= sy;
   d_scale[2] *= sz;
+  d_matrixNeedsUpdate = vrpn_TRUE;
+}
+
+void nmb_Transform_TScShR::addScale(double dsx, double dsy, double dsz)
+{
+  d_scale[0] += dsx;
+  d_scale[1] += dsy;
+  d_scale[2] += dsz;
   d_matrixNeedsUpdate = vrpn_TRUE;
 }
 

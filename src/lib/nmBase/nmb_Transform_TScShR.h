@@ -50,9 +50,9 @@
 */
 
 typedef enum {NMB_ROTATE_X, NMB_ROTATE_Y, NMB_ROTATE_Z,
-      NMB_TRANSLATE_X, NMB_TRANSLATE_Y, NMB_TRANSLATE_Z,
-      NMB_SCALE_X, NMB_SCALE_Y, NMB_SCALE_Z,
-      NMB_SHEAR_X, NMB_SHEAR_Y, NMB_SHEAR_Z} nmb_TransformParameter;
+   NMB_TRANSLATE_X, NMB_TRANSLATE_Y, NMB_TRANSLATE_Z,
+   NMB_SCALE_X, NMB_SCALE_Y, NMB_SCALE_Z,
+   NMB_SHEAR_X, NMB_SHEAR_Y, NMB_SHEAR_Z} nmb_TransformParameter;
 
 typedef enum {NMB_X, NMB_Y, NMB_Z} nmb_Axis;
 
@@ -62,6 +62,9 @@ class nmb_Transform_TScShR {
     nmb_Transform_TScShR & operator = (const nmb_Transform_TScShR &);
 
     void setIdentity();
+
+    void setParameter(nmb_TransformParameter type, double value);
+    double getParameter(nmb_TransformParameter type);
 
     void setRotation(nmb_Axis axis, double angle_radians);
     double getRotation(nmb_Axis axis);
@@ -76,7 +79,8 @@ class nmb_Transform_TScShR {
     double getScale(nmb_Axis axis);
     void scale(nmb_Axis, double scale);
     void scale(double sx, double sy, double sz);
-    
+    void addScale(double dsx, double dsy, double dsz);   
+
     void setShear(nmb_Axis axis, double shear);
     double getShear(nmb_Axis axis);
     void shear(nmb_Axis axis, double shear);
