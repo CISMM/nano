@@ -3461,6 +3461,16 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
    newScreenImageFileName = (const char *) "";
 }
 
+
+// This is an ImageMode handler. Makes sure the next time we enter
+// directZ mode we don't get surprised by wierd forces.
+int invalidate_directz_forces(void * userdata) {
+    nmm_Microscope_Remote * m = (nmm_Microscope_Remote *)userdata;
+    m->state.modify.freespace_normal_force = BOGUS_FORCE;
+    m->state.modify.freespace_lat_force = BOGUS_FORCE;
+    return 0;
+}
+
 int register_vrpn_callbacks(void){
     vrpn_Tracker_Remote *headT = vrpnHeadTracker[0];
     int head_sensor = headSensor[0];
@@ -5676,6 +5686,8 @@ int main(int argc, char* argv[])
 
     // delete polyline markers (after graphics pointer initialized):
     microscope->registerImageModeHandler(clear_polyline, graphics);
+
+    microscope->registerImageModeHandler(invalidate_directz_forces, microscope);
 
     setupCallbacks(dataset, graphics);
     setupCallbacks(graphics);

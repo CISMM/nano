@@ -503,7 +503,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 		//	   x, y, currPt->x(), currPt->y());
 		microscope->DrawLine(x, y, currPt->x(), currPt->y());
 	    }
-	    // Find out if the list of points has at least two points in it
+	    // Delete these points so they are not used again. 
 	    p.start();
 	    while(p.notDone()) {
 	      //printf("commit - remove func: %d\n", (p.curr())->iconID());
@@ -1382,6 +1382,10 @@ int specify_directZ_force(int whichUser)
      q_vec_type		up = { 0.0, 0.0, 1.0 };
      v_xform_type               WorldFromTracker, TrackerFromWorld;
 
+     // If directz hasn't been initialized, do nothing. 
+     if (microscope->state.modify.freespace_normal_force == BOGUS_FORCE) {
+	 return 0;
+     }
      point[X] = microscope->state.data.inputPoint->x();
      point[Y] = microscope->state.data.inputPoint->y();
 
@@ -1773,7 +1777,8 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    graphics->setRubberSweepLineEnd(TopL, TopR);
 	    
 	    /* Apply force to the user based on current sample points */
-	    if( microscope->state.relaxComp >= 0 ) {
+	    // XXX needs new test with new nmm_relaxComp object
+	    //if( microscope->state.relaxComp >= 0 ) {
               touch_surface(whichUser, clipPos);
               if (forceDevice  && config_haptic_enable) {
                 if (!SurfaceGoing) {
@@ -1783,7 +1788,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
                   forceDevice->sendSurface();
                 }
               }
-	    }
+	      //}
 	    
 	    break;
 
@@ -2271,13 +2276,13 @@ int doFeelLive(int whichUser, int userEvent)
 	    // Start using the forcefield to apply a constant force.
 	    // Apply force to the user based on current measured force 
 	    // XXX needs new test with new nmm_relaxComp object
-	    if( microscope->state.relaxComp >= 0 ) {
+	    //if( microscope->state.relaxComp >= 0 ) {
 		specify_directZ_force(whichUser);
 		if (forceDevice && config_haptic_enable) {
 		    forceDevice->sendForceField();
 		    ForceFieldGoing = 1;
 		}
-	    }
+		//}
 	   
 	} else {
 
@@ -2285,7 +2290,7 @@ int doFeelLive(int whichUser, int userEvent)
 
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
-	    if( microscope->state.relaxComp >= 0 ) {
+	  //if( microscope->state.relaxComp >= 0 ) {
               touch_surface(whichUser, clipPos);
               if (forceDevice  && config_haptic_enable) {
                 if (!SurfaceGoing) {
@@ -2295,7 +2300,7 @@ int doFeelLive(int whichUser, int userEvent)
                   forceDevice->sendSurface();
                 }
               }
-	    }
+	      //}
 	}
 	break;
 	
@@ -2329,7 +2334,8 @@ int doFeelLive(int whichUser, int userEvent)
 	      // delete stored points (so we don't use them again!)
 	      // get rid of the rubber band line.
 	      //printf("Clearing stored polyline points.\n");
-	      graphics->emptyPolyline();
+	       // This gets Done when we enter Image mode.
+	       //graphics->emptyPolyline();
 	      
 	      p.start();
 	      while(p.notDone()) {
