@@ -65,7 +65,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\..\..\external\pc_win32\include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c /Tp
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\..\..\external\pc_win32\include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -107,6 +107,10 @@ SOURCE=..\input.cpp
 # Begin Source File
 
 SOURCE=..\lightcol.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope.cpp
 # End Source File
 # Begin Source File
 
@@ -336,6 +340,14 @@ SOURCE=.\linear88.5.dat
 # Begin Source File
 
 SOURCE=.\monomer4nm.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope_Remote.Cdef
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope_Remote.hdef
 # End Source File
 # Begin Source File
 
