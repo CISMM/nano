@@ -1,0 +1,17 @@
+2002-01-17 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* scan.cpp : fixed a memory leak (oops!)
+
+	* sim.cpp : some reformatting
+
+	* 3d_afm.dsp : fixed some settings so that simulator runs correctly
+	(added include paths, libraries, etc.)
+
+2002-01-15 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* scan.cpp : added a zDistanceScaled array which scaled the height 
+	array values so that the display in the simulator matches that in 
+	nano when the data is sent across--no need to change z scale in nano
+
+	* sim.cpp : now data is sent constantly
+
