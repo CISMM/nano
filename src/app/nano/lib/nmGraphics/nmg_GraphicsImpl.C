@@ -51,15 +51,17 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
-  grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
-
-    //fprintf(stderr,
-    //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
-
-  nmb_PlaneSelection planes; planes.lookup(data);
-  int i;
-
+  if (d_dataset == NULL) {
+      grid_size_x = 12;
+      grid_size_y = 12;
+  } else {
+      grid_size_x = d_dataset->inputGrid->numX();
+      grid_size_y = d_dataset->inputGrid->numX();
+  }
+  
+  //fprintf(stderr,
+  //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
+  
   g_inputGrid = data->inputGrid;
   strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
   strcpy(g_colorPlaneName, data->colorPlaneName->string());
@@ -69,17 +71,17 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   // do pgl_init() stuff
 
 #ifdef FLOW
-  g_data_tex_size = max(data->inputGrid->numX(),
-                        data->inputGrid->numY());
-  g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+    g_data_tex_size = max(grid_size_x, grid_size_y);
+    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
 #endif
 
   /* initialize graphics  */
   printf("Initializing graphics...\n");
 
-  if ( v_open() != V_OK )
+  if ( v_open() != V_OK ) {
       exit(V_ERROR);
-
+  }
+  
   fprintf(stderr, "Done.\n");
 
   initDisplays();
@@ -90,9 +92,10 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   /* Set up the viewing info */
   
   /* Set initial user mode */
-  for (i = 0; i < NUM_USERS; i++)
-    g_user_mode[i] = USER_GRAB_MODE;
-
+  int i;
+  for (i = 0; i < NUM_USERS; i++) {
+      g_user_mode[i] = USER_GRAB_MODE;
+  }
   /* set up user and object trees     */
   printf("Creating the world...\n");
   v_create_world(NUM_USERS, d_displayIndexList);
@@ -150,6 +153,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
    * There is one list for each row of data points except for
    * the last.  Since these are for rows scanning in X fastest,
    * we have one per Y index. */
+  nmb_PlaneSelection planes; planes.lookup(data);
   if (build_grid_display_lists(planes, 1, &grid_list_base,
                                &num_grid_lists, g_minColor, g_maxColor)) {
     fprintf(stderr,"ERROR: Could not build grid display lists\n");
@@ -170,18 +174,18 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
 #endif
 
-  if (g_VERTEX_ARRAY) 
-    fprintf(stderr,"Vertex Array extension used.\n");
-  else
-     fprintf(stderr,"Vertex Array extension not supported.\n");
-
-  if (g_VERTEX_ARRAY)
-    if (!init_vertexArray(data->inputGrid->numX(),
-                          data->inputGrid->numY()) ) {
+  if (g_VERTEX_ARRAY) {
+      fprintf(stderr,"Vertex Array extension used.\n");
+  } else {
+      fprintf(stderr,"Vertex Array extension not supported.\n");
+  }
+  if (g_VERTEX_ARRAY) {
+      if (!init_vertexArray(grid_size_x,
+                            grid_size_y) ) {
           fprintf(stderr," init_vertexArray: out of memory.\n");
           exit(0);
-     }
-
+      }
+  }
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
