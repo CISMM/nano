@@ -8,8 +8,9 @@
 #include	<Tcl_Linkvar.h>
 #include	<Tcl_Netvar.h>
 
-#include "nma_Keithley2400.h"
-#include "nmb_Types.h"	// for vrpn_bool
+#include <nmb_Types.h>	// for vrpn_bool
+
+#include <nma_Keithley2400.h>
 
 #define VICURVE_FILE_SUFFIX ".vic"
 #define VICURVE_TCL_FILE "keithley2400.tcl"

@@ -1,9 +1,10 @@
 #ifndef _NMA_KEITHLEY2400_H
 #define _NMA_KEITHLEY2400_H
 
-#include "nmb_Device.h"
-#include "vrpn_Connection.h"
-#include "vrpn_GPIBDevice.h"
+#include <vrpn_Connection.h>
+#include <vrpn_GPIBDevice.h>
+
+#include <nmb_Device.h>
 
 // User routine to handle a message giving the a VI curve 
 typedef struct {

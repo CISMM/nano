@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <math.h>
-#include "vrpn_Ohmmeter.h"
 
 // Include vrpn_Shared.h _first_ to avoid conflicts with sys/time.h 
 // and netinet/in.h and ...
-#include "vrpn_Shared.h"
+#include <vrpn_Shared.h>
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #include <netinet/in.h>
 #endif
+
+#include "vrpn_Ohmmeter.h"
 
 #define ASSERT(x)	assert(x)
 

@@ -1,7 +1,7 @@
 #ifndef _VRPN_GPIBDEVICE_H
 #define _VRPN_GPIBDEVICE_H
 
-#include "vrpn_Connection.h"
+#include <vrpn_Connection.h>
 
 //#ifdef _WIN32
 //#include "windows.h"
