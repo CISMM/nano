@@ -21,23 +21,13 @@ class nmb_String;  // from nmb_String.h
 #endif
 
 #include "Topo.h"
+#include "nmb_CalculatedPlane.h"
 
 // class nmb_Dataset
 //
 // Tom Hudson, November 1997
 
-/// List of flatten planes, and the data necessary to calculate one.
-struct flatten_data {
-    BCPlane * flat_plane;
-    BCPlane * from_plane;
-    double dx, dy, offset;
-};
-struct flatten_node {
-    flatten_data * data;
-    flatten_node * next;
-};
-struct lblflatten_node;
-struct sum_node;
+// struct sum_node;
 
 /**
    Contains a (pointer to a) BCGrid with all known data from microscopes,
@@ -50,6 +40,7 @@ class nmb_Dataset {
 
   public:
 
+    // Constructor.
     nmb_Dataset (vrpn_bool useFileResolution, int xSize, int ySize,
                  float xMin, float xMax, float yMin, float yMax,
                  int readMode, const char ** fileNames, int numFiles,
@@ -58,10 +49,9 @@ class nmb_Dataset {
                  nmb_String * (* string_allocator) (const char *),
                  nmb_ListOfStrings * (* list_of_strings_allocator) (),
                  TopoFile &topoFile);
-      // Constructor.
 
+    // Destructor.
     ~nmb_Dataset (void);
-      // Destructor.
 
     BCGrid * inputGrid;
         ///< incoming data from microscope (data may be changed 
@@ -79,7 +69,7 @@ class nmb_Dataset {
     nmb_Subgrid range_of_change;
         ///< portion of inputGrid that changed since the last render
 
-	nmb_String * alphaPlaneName;
+    nmb_String * alphaPlaneName;
       ///< name of the plane whose data should control
       ///< alphablending of a texture
     nmb_String * colorPlaneName;
@@ -92,21 +82,21 @@ class nmb_Dataset {
       ///< name of the plane to render opacity for
     nmb_String * heightPlaneName;
       ///< name of the plane to render as height (Z)
-	nmb_String * transparentPlaneName;
+    nmb_String * transparentPlaneName;
       ///< plane that defines the alpha values for all
-	  ///< the points on the surface
-	nmb_String * maskPlaneName;
+      ///< the points on the surface
+    nmb_String * maskPlaneName;
       ///< name of the plane whose data should control
       ///< what to draw for the various visualizations
-	nmb_String * vizPlaneName;
+    nmb_String * vizPlaneName;
       ///< name of the plane to control display of visualizations
 
     vrpn_bool done;
       ///< 1 if a subroutine has failed and directs us to exit
 
 
-    // MANIPULATORS
 
+    // MANIPULATORS
     int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
       ///< Load files with the same grid size into this grid.
       ///< Load files with any grid size if no meaningful data has 
@@ -141,61 +131,25 @@ class nmb_Dataset {
       ///<   Estimates adhesion from a series of planes with numeric
       ///< names containing deflection data.
 
-    int computeSumPlane (const char * outputPlane,
-                         const char * firstInputPlane,
-                         const char * secondInputPlane,
-                         double scale);
-      ///< Creates outputPlane as firstPlane + scale * secondPlane.
-      ///< Output plane is updated as first and second plane change.
-
-
-    BCPlane* computeFlattenedPlane (const char * outputPlane,
-                               const char * inputPlane,
-                 float redX, float greenX, float blueX,
-                 float redY, float greenY, float blueY);
-      ///<   Projects (x1, y1)...(x3, y3) onto the inputPlane,
-      ///< solves for the transformation that moves the corresponding points
-      ///< into a flat plane, and creates outputPlane from inputPlane via that
-      ///< transformation.  Output plane is updated as input plane changes.
-      ///< Tells collaborative host, if any, to create the same plane.
-
-    void registerFlatPlaneCallback (void * userdata,
-                                    void (*) (void *, const flatten_data *));
-    int computeFlattenedPlane (const char * outputPlane,
-                               const char * inputPlane,
-                               double dx, double dy, double offset);
-      ///< This version should be protected but needs to be visible to
-      ///< nmui_PlaneSync, which starts to suggest that maybe the plane
-      ///< computation code should be escalated.
-
-    int computeLBLFlattenedPlane (const char * outputPlane,
-				  const char * inputPlane);
 
     float getFirstLineAvg(BCPlane *);
     ///< Computes average of the first scan line in the plane provided. 
 
-  private:
+
+    const char* getHostname( ) const;
+    ///< returns what this Dataset currently thinks the hostname is.
+
+
+   void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
+   ///< adds a new plane to the list of calculated planes and calls
+   ///< any callbacks registered to listen for new (calc'd) plane creation.
+
+private:
 
     int mapInputToInputNormalized (const char * inputName,
                                    const char * ouputName);
 
-    static void updateFlattenOnPlaneChange (BCPlane *, int x, int y,
-                                            void * userdata);
-    static void updateSumOnPlaneChange (BCPlane *, int x, int y,
-                                        void * userdata);
-    static void updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
-					       void * userdata);
-
-
-    flatten_node * d_flat_list_head;
-    lblflatten_node * d_lblflat_list_head;
-    sum_node * d_sum_list_head;
-    struct newFlatPlaneCB {
-      void * userdata;
-      void (* cb) (void *, const flatten_data *);
-      newFlatPlaneCB * next;
-    };
-    newFlatPlaneCB * d_flatPlaneCB;
+    nmb_CalculatedPlaneNode* calculatedPlane_head;
 
     nmb_String * d_hostname;
 };

@@ -209,7 +209,7 @@ class nmb_Image {
 
 /// container class for BCGrid/BCPlane-based images
 class nmb_ImageGrid : public nmb_Image{
-    friend nmb_Dataset;
+    friend class nmb_Dataset;
   public:
 	nmb_ImageGrid(const char *name, const char *units, short x, short y);
         // makes a wrapper object which is responsible for deallocating 
@@ -441,6 +441,10 @@ class nmb_ImageList {
 		int i;
 		return getImageByName(name, i);
 	}
+        nmb_Image* getImageByPlane( BCPlane* plane)
+        {
+          return getImageByName( *(plane->name( )) ); 
+        }
 	nmb_Image *removeImageByName(BCString name);
         int numImages() {
             return num_images;

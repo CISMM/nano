@@ -1,0 +1,324 @@
+
+#include "nmb_LBLFlattenedPlane.h"
+
+
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 )
+#endif
+
+
+
+nmb_LBLFlattenedPlane::
+nmb_LBLFlattenedPlane( const char* inputPlaneName,
+		       const char* outputPlaneName,
+		       nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+  : sourcePlane ( NULL ),
+    flatPlane ( NULL ),
+    firstLineAvg ( 0 )
+{
+  // Are all the pointer arguments valid?
+  if( inputPlaneName == NULL || outputPlaneName == NULL
+      || dataset == NULL || dataset->inputGrid == NULL )
+    {
+      char s[] = "Internal error in nmb_LBLFlattenPlane:  invalid argument.";
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+
+  // Is the destination plane name the same as the source plane name?
+  if( strcmp( outputPlaneName, inputPlaneName ) == 0 ) 
+    {
+      char s[] = "Cannot create flattened plane.  "
+	"Plane cannot flatten from itself.";
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+  
+  // try to get the requested source plane...
+  this->sourcePlane = dataset->inputGrid->getPlaneByName(inputPlaneName);
+  if( this->sourcePlane == NULL )
+    {
+      char s[] = "Cannot create flattened plane.  "
+	"Could not get input plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, inputPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+
+  // Add the host name to the plane name so we can distinguish
+  // where the plane came from
+  char newOutputPlaneName[256];
+#if 1
+  // XXX change this to use gethostname(); remove d_hostname from nmb_Dataset
+  if( dataset->getHostname( ) ) {
+    sprintf(newOutputPlaneName, "%s from %s", outputPlaneName, 
+	    dataset->getHostname( ) );
+  } else {
+    sprintf(newOutputPlaneName, "%s from noHostname", outputPlaneName);
+  }
+#else
+  // XXX 3rdTech only - no weird plane names.
+  sprintf(newOutputPlaneName, "%s", outputPlaneName);
+  // YOUR CLOSE-MINDED PLANE-NAMING TECHINIQUES WILL BE YOUR
+  // DOWNFALL WHEN THE REVOLUTION COMES!!1!11!  ALL PLANE
+  // NAMES ARE BEAUTIFUL!!!!!
+#endif
+  
+  // create the lbl-flattened plane
+  this->flatPlane = createLBLFlattenedPlane( dataset, newOutputPlaneName );
+
+  // add ourselves to the dataset
+  dataset->addNewCalculatedPlane( this );
+  
+  // register ourselves to receive plane updates
+  sourcePlane->add_callback( sourcePlaneChangeCallback, this );
+
+  // let interested parties know a new plane has been created.
+  nmb_CalculatedPlane::addNewCalculatedPlane( this );
+
+} // end nmb_LBLFlattenedPlane( ... )
+
+
+
+BCPlane* nmb_LBLFlattenedPlane::
+createLBLFlattenedPlane( nmb_Dataset* dataset,
+			 const char* outputPlaneName )
+  throw( nmb_CalculatedPlaneCreationException )
+{
+  // Precondition:  there does not exist a plane of name 
+  //  outputPlaneName in dataset
+  BCPlane* outputPlane = dataset->inputGrid->getPlaneByName( outputPlaneName );
+  
+  if( outputPlane != NULL )
+    {
+      // a plane already exists by this name, and we disallow that.
+      char s[] = "Cannot create flattened plane.  "
+	"A plane already exists of the name:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, outputPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+  
+  // plane of name "outputPlaneName" does not exist already
+  char newunits[1000];
+  sprintf(newunits, "%s_lbl_flat", sourcePlane->units()->Characters());
+  outputPlane 
+    = dataset->inputGrid->addNewPlane(outputPlaneName, newunits, NOT_TIMED);
+  if( outputPlane == NULL ) 
+    {
+      char s[] = "Could not create lbl flattened plane.  Can't make plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, outputPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+
+  // do some image stuff
+  TopoFile tf;
+  nmb_Image *im = dataset->dataImages->getImageByPlane( sourcePlane );
+  nmb_Image *output_im = new nmb_ImageGrid( outputPlane );
+  if( im != NULL ) 
+    {
+      im->getTopoFileInfo(tf);
+      output_im->setTopoFileInfo(tf);
+    } 
+  else 
+    fprintf(stderr, "nmb_LBLFlattenedPlane: Warning, "
+	    "input image not in list\n");
+  dataset->dataImages->addImage(output_im);
+  
+  //Fill the output plane with the line-by-line flattened plane
+  int x = 0, y = 0;
+  float avgVal = 0, diff = 0;
+
+  //First, find the average height value of the 1st 2 scan lines and copy the
+  //first scan line (unchanged) to the output plane
+  for( x = 0; x <= dataset->inputGrid->numX() - 1; x++ ) 
+    {
+      outputPlane->setValue(x, 0, sourcePlane->value(x, 0));
+      this->firstLineAvg += sourcePlane->value(x, 0);
+      avgVal += sourcePlane->value(x, 1);
+    }
+  
+  this->firstLineAvg /= (float) dataset->inputGrid->numX();
+  avgVal /= (float) dataset->inputGrid->numX();
+  diff = this->firstLineAvg - avgVal;
+
+  //Compute average height value of current line, and flatten the previous
+  //scan line before writing it (prev. line) to the output plane
+  for( y = 1; y <= dataset->inputGrid->numY() - 2; y++ ) 
+    {
+      avgVal = 0;
+      for (x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+	{
+	  outputPlane->setValue( x, y, 
+				sourcePlane->value(x, y - 1) + diff ); 
+	  avgVal += sourcePlane->value( x, y + 1 );
+	}
+      avgVal = avgVal / (float) dataset->inputGrid->numX();
+      diff = this->firstLineAvg - avgVal;
+  }
+
+  //flatten and output the last scan line
+  for( x = 0; x <= dataset->inputGrid->numX() - 1; x++ ) 
+    {
+      float newVal = sourcePlane->value( x, dataset->inputGrid->numY() - 1) 
+	+ diff;
+      outputPlane->setValue( x, dataset->inputGrid->numY() - 1,
+			     newVal );
+    }
+
+  outputPlane->setMinAttainableValue( sourcePlane->minAttainableValue() );
+  outputPlane->setMaxAttainableValue( sourcePlane->maxAttainableValue() );
+
+  return outputPlane;
+} // end nmb_LBLFlattenedPlane::createLBLFlattenedPlane( ... )
+
+
+
+/* static */
+void nmb_LBLFlattenedPlane::
+sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
+			   void* userdata )
+{
+  nmb_LBLFlattenedPlane * us = (nmb_LBLFlattenedPlane *) userdata;
+  if( plane != us->sourcePlane ) 
+    {
+      cerr << "Internal Error:  nmb_LBLFlattenedPlane::"
+	   << "sourcePlaneChangeCallback called with inconsistent "
+	   << "nmb_LBLFlattenedPlane and source plane." 
+	   << endl;
+      return;
+    }
+  us->_handleSourcePlaneChange( x, y );
+  
+} // end sourcePlaneChangeCallback( ... )
+
+
+
+void nmb_LBLFlattenedPlane::
+_handleSourcePlaneChange( int x, int y )
+{
+  float avgVal = 0;
+  float diff = 0;
+
+  // only recalculated at the end of a line.
+  if( x != sourcePlane->numX() - 1 ) return;
+
+  for( int i = 0; i < sourcePlane->numX(); i++ ) 
+    {
+      avgVal += sourcePlane->value(i, y);
+    }
+  avgVal /= sourcePlane->numX();
+
+  // update the current line
+  diff = firstLineAvg - avgVal; 
+  for( i = 0; i < sourcePlane->numX(); i++ )
+    {
+      flatPlane->setValue( i, y, 
+			   sourcePlane->value( i, y ) + diff );
+    }
+} // end _handleSourcePlaneChange( ... )
+
+
+
+void nmb_LBLFlattenedPlane::
+sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
+		     vrpn_int32 synchCalculatedPlaneMessageType ) const
+{
+  char planemsg [1024];
+  char * bufptr = planemsg;
+  vrpn_int32 msglen = 1024;
+
+  vrpn_buffer( &bufptr, &msglen, LBL_FLATTENED_PLANE_TYPE );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) flatPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, sourcePlane->name()->Characters(),
+	      sourcePlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, flatPlane->name()->Characters(),
+	      flatPlane->name()->Length() );
+  
+  timeval now;
+  gettimeofday(&now, NULL);
+  conn->pack_message(1024 - msglen, now, synchCalculatedPlaneMessageType, 
+		     senderID, planemsg, vrpn_CONNECTION_RELIABLE);
+} // end sendCalculatedPlane( ... )
+
+
+
+/* static */
+nmb_CalculatedPlane* nmb_LBLFlattenedPlane::
+_handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+{
+  const char * bufptr = p.buffer;
+  vrpn_int32 planeType;
+
+  vrpn_unbuffer( &bufptr, &planeType );
+  if( planeType != nmb_CalculatedPlane::LBL_FLATTENED_PLANE_TYPE )
+    {
+      char s[] = "Could not create flattened plane from remote source.  "
+	"Wrong type.";
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+
+  vrpn_int32 outputPlaneNameLen;
+  vrpn_int32 sourcePlaneNameLen;
+
+  vrpn_unbuffer( &bufptr, &sourcePlaneNameLen );
+  vrpn_unbuffer( &bufptr, &outputPlaneNameLen );
+
+  char* sourcePlaneName = new char[ sourcePlaneNameLen + 1 ];
+  char* outputPlaneName = new char[ outputPlaneNameLen + 1 ];
+  vrpn_unbuffer( &bufptr, sourcePlaneName, sourcePlaneNameLen );
+  vrpn_unbuffer( &bufptr, outputPlaneName, outputPlaneNameLen );
+  sourcePlaneName[sourcePlaneNameLen] = '\0';
+  outputPlaneName[outputPlaneNameLen] = '\0';
+
+  nmb_LBLFlattenedPlane* newFlatPlane = new nmb_LBLFlattenedPlane;
+  
+  // Is the destination plane name the same as the source plane name?
+  if( strcmp( outputPlaneName, sourcePlaneName ) == 0 ) 
+    {
+      char s[] = "Cannot create flattened plane.  "
+	"Plane cannot flatten from itself.";
+      delete outputPlaneName;
+      delete sourcePlaneName;
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+  
+  // try to get the requested source plane...
+  newFlatPlane->sourcePlane 
+    = dataset->inputGrid->getPlaneByName(sourcePlaneName);
+  if( newFlatPlane->sourcePlane == NULL )
+    {
+      char s[] = "Cannot create flattened plane from remote. " \
+	" Could not get input plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, sourcePlaneName );
+      delete outputPlaneName;
+      delete sourcePlaneName;
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+
+  // create output plane
+  newFlatPlane->flatPlane 
+    = newFlatPlane->createLBLFlattenedPlane( dataset, outputPlaneName );
+
+  // add new flattened plane to the dataset
+  dataset->addNewCalculatedPlane( newFlatPlane );
+  
+  // register new flattened plane to receive plane updates
+  newFlatPlane->sourcePlane->add_callback( sourcePlaneChangeCallback, 
+					   newFlatPlane );
+
+  delete outputPlaneName;
+  delete sourcePlaneName;
+  return newFlatPlane;
+} // _handle_PlaneSynch( ... )
+
+
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

@@ -24,35 +24,6 @@
 #endif
 
 
-/**
-Stores data needed to compute a new plane from two others.  The
-formula used is:  output_plane = first_plane + (second_plane * scale);
-To do the subtraction of two planes (make this the default), the scale
-should be set to -1.
-*/
-struct sum_data {
-    BCPlane * sum_plane;
-    BCPlane * first_plane;
-    BCPlane * second_plane;
-    double  scale;
-};
-
-struct sum_node{
-    sum_data * data;
-    sum_node * next;
-};
-
-struct lblflatten_data {
-    BCPlane * lblflat_plane;
-    BCPlane * from_plane;
-    float firstLineAvgVal;
-};
-
-struct lblflatten_node {
-    lblflatten_data * data;
-    lblflatten_node * next;
-};
-
 
 nmb_Dataset::nmb_Dataset
               (vrpn_bool useFileResolution, int xSize, int ySize,
@@ -86,39 +57,16 @@ nmb_Dataset::nmb_Dataset
   vizPlaneName (string_allocator("none")),
 
   done (0),
-
-  d_flat_list_head(NULL),
-  d_lblflat_list_head(NULL),
-  d_sum_list_head(NULL),
-  d_flatPlaneCB (NULL),
+  calculatedPlane_head( NULL ),
   d_hostname(hostname)
 
 {
-  //BCPlane * std_dev_plane;
-
   int i;
   // files not loaded as grid files should not be height fields by default
   for (i = 0; i < dataImages->numImages(); i++) {
       dataImages->getImage(i)->setHeightField(vrpn_FALSE);
   }
-//    if (inputGrid->empty())
-//      fprintf(stderr, "nmb_Dataset:  Cannot scan grid.\n");
-
-//    if (readMode == READ_FILE) {
-//        if ((!useFileResolution) &&
-//            ((inputGrid->numX() > xSize) || (inputGrid->numY() > ySize))) {
-//                printf("Decimating input grid to %d x %d...\n", xSize, ySize);
-//                inputGrid->decimate(xSize, ySize);
-//        } else {
-//            printf("Not decimating input grid, resolution is %d x %d\n",
-//                inputGrid->numX(), inputGrid->numY());
-//        }
-//    }
-
   ensureHeightPlane();
-
-  //if ((readMode == READ_DEVICE) || (readMode == READ_STREAM))
-    //std_dev_plane = inputGrid->addNewPlane("std_dev", "nm", TIMED);
 
   // Make a friction grid from deflection data (if it exists),
   // or from an auxiliary grid
@@ -164,9 +112,6 @@ nmb_Dataset::~nmb_Dataset (void) {
   if (inputGrid)
     delete inputGrid;
 
-  // XXX Clean up computed planes lists
-  // Clean up flat plane callback list.
-
   if (alphaPlaneName)
     delete alphaPlaneName;
   if (colorPlaneName)
@@ -177,8 +122,8 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete contourPlaneName;
   if (heightPlaneName)
     delete heightPlaneName;
-
 }
+
 
 /**
    Loads a list of files, by calling BCGrid::loadFiles, then
@@ -404,512 +349,25 @@ int nmb_Dataset::computeAdhesionFromDeflection
 }
 
 
-int nmb_Dataset::computeSumPlane (const char * outputPlane,
-                                  const char * firstInputPlane,
-                                  const char * secondInputPlane,
-                                  double scale)
+
+// adds a new plane to the list of calculated planes
+void nmb_Dataset::
+addNewCalculatedPlane( nmb_CalculatedPlane* plane )
 {
-        BCPlane * inplanes [2];   // Two input planes
-        BCPlane * outplane;      // Output plane
-        int     x,y;
-        sum_node *sum_ptr, *pre;
-        static  sum_node * d_sum_list_head=NULL;
-
-
-        //Check if the outplane has same name with one of the
-        //planes. This should be avoided because of the callbacks.
-
-        if(!strcmp(outputPlane, firstInputPlane) ||
-           !strcmp(outputPlane, secondInputPlane)){
-           fprintf(stderr,
-                  "compute_sum_plane(): can not add from itself\n");
-           return -1;
-        }
-
-        //
-        // Look up the input planes.
-        //
-        inplanes[0] = inputGrid->getPlaneByName(firstInputPlane);
-        if (!inplanes[0]) {
-                fprintf(stderr, "compute_sum_plane(): No %s\n",
-                        firstInputPlane);
-                return -1;      // No plane, so cant make it
-        }
-        inplanes[1] = inputGrid->getPlaneByName(secondInputPlane);
-        if (!inplanes[1]) {
-                fprintf(stderr, "compute_sum_plane(): No %s\n",
-                        secondInputPlane);
-                return -1;      // No plane, so cant make it
-        }
-
-        //
-        // Ensure that the units match on the input planes.
-        // Actually, only warn if they are not the same
-        //
-        if ( strcmp(inplanes[0]->units()->Characters(),
-                    inplanes[1]->units()->Characters()) != 0) {
-                fprintf(stderr, "compute_sum_plane(): Unit mismatch\n");
-                fprintf(stderr, "    (%s vs. %s)\n",
-                        inplanes[0]->units()->Characters(),
-                        inplanes[1]->units()->Characters());
-        }
-
-        //
-        // Create sum plane, if it does not yet exist.  Use the units for
-        // the first plane.  It is assumed that the second will have been
-        // scaled appropriately.
-        //
-        if ( (outplane = inputGrid->getPlaneByName(outputPlane)) == NULL) {
-            outplane = inputGrid->addNewPlane(outputPlane,
-                       inplanes[0]->units()->Characters(), NOT_TIMED);
-            if (outplane == NULL) {
-                fprintf(stderr,
-                  "compute_sum_plane(): Can not make plane %s\n",outputPlane);
-                return -1;
-            }
-            TopoFile tf;
-            nmb_Image *im = dataImages->getImageByName(firstInputPlane);
-            nmb_Image *output_im = new nmb_ImageGrid(outplane);
-            if (im) {
-                im->getTopoFileInfo(tf);
-                output_im->setTopoFileInfo(tf);
-            }
-            dataImages->addImage(output_im);
-        }
-        else {  //the output plane already exist
-            pre=sum_ptr=d_sum_list_head;
-            while(sum_ptr) {
-                if(sum_ptr->data->sum_plane == outplane) {
-                     sum_ptr->data->first_plane->remove_callback
-                            (updateSumOnPlaneChange,(void *)sum_ptr);
-                     sum_ptr->data->second_plane->remove_callback
-                            (updateSumOnPlaneChange, (void *)sum_ptr);
-                     pre->next = sum_ptr->next;
-                     free(sum_ptr->data);
-                     free(sum_ptr);
-                     break;
-                 }
-                 else {
-                     pre = sum_ptr;
-                     sum_ptr=sum_ptr->next;
-                 }
-             }
-        }
-
-        //
-        // Fill the sum plane with the weighted sum between the two planes
-        // at each point.
-        //
-        for (x = 0; x < inputGrid->numX(); x++) {
-         for (y = 0; y < inputGrid->numY(); y++) {
-            outplane->setValue(x,y,
-                      inplanes[0]->value(x,y) + scale*inplanes[1]->value(x,y));
-         }
-        }
-
-        outplane->setMinAttainableValue(outplane->minValue());
-        outplane->setMaxAttainableValue(outplane->maxValue());
-
-        sum_data * sum_struct = new sum_data;
-        if (sum_struct == NULL) {
-                fprintf(stderr,"compute_sum_plane(): Out of memory!\n");
-                return -1;
-        }
-
-        // Fill in the structure that will be used by the callback
-        // when new data arrives for one of the planes.
-        sum_struct->first_plane = inplanes[0];
-        sum_struct->second_plane = inplanes[1];
-        sum_struct->sum_plane = outplane;
-        sum_struct->scale = scale;
-
-        sum_node *ptr = new sum_node;
-        if (ptr == NULL) {
-                fprintf(stderr,"compute_sum_plane(): Out of memory!\n");
-                return -1;
-        }
-
-        ptr->data = sum_struct;
-
-        //insert the new node as the head of the list
-        ptr->next=d_sum_list_head;
-        d_sum_list_head=ptr;
-
-        inplanes[0]->add_callback(updateSumOnPlaneChange, sum_struct);
-
-        inplanes[1]->add_callback(updateSumOnPlaneChange, sum_struct);
-        return 0;
-}
-
-//---------------------------------------------------------------------------
-/**
-Compute a new plane that is a flattening of an height plane according to
-the positions of three measure lines.
-After the flattening, the intersections of three measure lines to the
-surface have the same z value.
-@warning XXX When we implement dynamic updates based on scan data, we need
-    hook up callbacks for the two planes feeding into this.
-@return NULL on failure.
-*/
-BCPlane* nmb_Dataset::computeFlattenedPlane
-                        (const char * outputPlane,
-                         const char * inputPlane,
-                         float redX, float greenX, float blueX,
-                         float redY, float greenY, float blueY) {
-
-  BCPlane * outplane;      // Output plane
-  double  offset, dx, dy;
-  double  z1, z2, z3;
-  double  x1, x2, x3, y1, y2, y3;
-  flatten_data flatten_struct;
-
-  if(strcmp(outputPlane, inputPlane)==0) {
-     fprintf(stderr,
-            "compute_flattened_plane(): can not flatten from itself\n");
-     return NULL;
-  }
-
-  BCPlane * plane = inputGrid->getPlaneByName(inputPlane);
-  if (plane == NULL)
-  {
-      fprintf(stderr,
-             "compute_flattened_plane(): could not get input plane!\n");
-      return NULL;
-  }
-
-  x1 = plane->xInGrid(redX);
-  x2 = plane->xInGrid(greenX);
-  x3 = plane->xInGrid(blueX);
-
-  y1 = plane->yInGrid(redY);
-  y2 = plane->yInGrid(greenY);
-  y3 = plane->yInGrid(blueY);
-
-  if (( plane->valueAt(&z1, redX, redY)) ||
-      ( plane->valueAt(&z2, greenX, greenY))||
-      ( plane->valueAt(&z3, blueX, blueY))) {
-      fprintf(stderr,"compute_flattened_plane(): "
-              "measure lines out of bounds.\n");
-      return NULL;
-  }
-  if (x3 == x1) {
-      // These two points are co-linear in a bad way - swap point 2 and point 3
-      x3 = plane->xInGrid(greenX);
-      x2 = plane->xInGrid(blueX);
-
-      y3 = plane->yInGrid(greenY);
-      y2 = plane->yInGrid(blueY);
-      plane->valueAt(&z3, greenX, greenY);
-      plane->valueAt(&z2, blueX, blueY);
-  }
-  
-  //solve dx,dy for
-  // z3-z1= dx(x3-x1) + dy(y3-y1)
-  // z2-z1= dx(x2-x1) + dy(y2-y1)
-
-  if (x3 == x1) {
-      // These points are also co-linear in a bad way - abort.
-      fprintf(stderr,"compute_flattened_plane(): overlapping points.\n");
-      return NULL;
-  }
-  double k;
-  k = (x2 - x1) / (x3 - x1);
-
-  //test if those points are collinear
-  if( ( (y2-y1)*(x3-x1)+ (y1-y3)*(x2-x1) )== 0) {
-       fprintf(stderr,"compute_flattened_plane(): collinear points.\n");
-       return NULL;
-  }
-
-  dy = (z2 - z1 + (z1 - z3) * k) / (y2 - y1 + (y1 - y3) * k);
-  dx = (z3 - z1 - dy * (y3 - y1)) / (x3 - x1);
-  offset = dx * inputGrid->numX() / 2 + dy * inputGrid->numY() / 2;
-
-  // Add the host name to the plane name so we can distinguish
-  // where the plane came from
-  char new_outputPlane[256];
-#if 1
-  if (d_hostname) {
-      sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname->string());
-  } else {
-      sprintf(new_outputPlane, "%s from local", outputPlane);
-  }
-#else
-  // XXX 3rdTech only - no weird plane names.
-  sprintf(new_outputPlane, "%s", outputPlane);
-#endif
-
-  computeFlattenedPlane(new_outputPlane, inputPlane, dx, dy, offset);
-
-  outplane = inputGrid->getPlaneByName(new_outputPlane);
-
-  flatten_struct.dx = dx;
-  flatten_struct.dy = dy;
-  flatten_struct.offset = offset;
-  flatten_struct.from_plane = plane;
-  flatten_struct.flat_plane = outplane;
-
-  newFlatPlaneCB * st;
-
-  for (st = d_flatPlaneCB; st; st = st->next) {
-    (*st->cb)(st->userdata, &flatten_struct);
-  }
-
-  return outplane;
-}
-
-int nmb_Dataset::computeFlattenedPlane
-                        (const char * outputPlane,
-                         const char * inputPlane,
-                         double dx, double dy, double offset) {
-
-  BCPlane * outplane;      // Output plane
-  int     x, y;
-  flatten_node * flat_ptr, * pre;
-
-  if(strcmp(outputPlane, inputPlane)==0) {
-     fprintf(stderr,
-            "compute_flattened_plane(): can not flatten from itself\n");
-     return -1;
-  }
-
-  BCPlane * plane = inputGrid->getPlaneByName(inputPlane);
-  if (plane == NULL)
-  {
-      fprintf(stderr,
-             "compute_flattened_plane(): could not get height plane!\n");
-      return -1;
-  }
-
-
-  // Create output plane, if it does not yet exist
-  outplane = inputGrid->getPlaneByName(outputPlane);
-  if (outplane == NULL) {
-      char        newunits [1000];
-      sprintf(newunits, "%s_flat", plane->units()->Characters());
-      outplane = inputGrid->addNewPlane(outputPlane, newunits, NOT_TIMED);
-      if (outplane == NULL) {
-          fprintf(stderr,
-            "compute_flattened_plane(): Can't make plane %s\n",outputPlane);
-          return -1;
-      }
-      TopoFile tf;
-      nmb_Image *im = dataImages->getImageByName(inputPlane);
-      nmb_Image *output_im = new nmb_ImageGrid(outplane);
-      if (im) {
-          im->getTopoFileInfo(tf);
-          output_im->setTopoFileInfo(tf);
-      } else {
-          fprintf(stderr, "nmb_Dataset: Warning, input image not in list\n");
-      }
-      dataImages->addImage(output_im);
-  } else {         //the output plane already exist
-      pre = flat_ptr = d_flat_list_head;
-      while (flat_ptr) {
-         if ( flat_ptr->data->flat_plane == outplane ) {
-	     // userdata must be the same as when we added the callback!
-            flat_ptr->data->from_plane->remove_callback
-              (updateFlattenOnPlaneChange, (void *) (flat_ptr->data));
-            pre->next = flat_ptr->next;
-            free(flat_ptr->data);
-            free(flat_ptr);
-            break;
-         }
-         else {
-            pre = flat_ptr;
-            flat_ptr = flat_ptr->next;
-         }
-     }
-  }
-
-  //
-  // Fill the output plane with the flattened plane (shear applied
-  // at each point).
-  //
-  for (x = 0; x < inputGrid->numX(); x++) {
-    for (y = 0; y < inputGrid->numY(); y++) {
-      outplane->setValue(x, y,
-                         plane->value(x, y) + offset - dx * x - dy * y);
+  nmb_CalculatedPlaneNode* node = new nmb_CalculatedPlaneNode;
+  if( !node ) 
+    {
+      fprintf(stderr, "nmb_Dataset::addNewCalculatedPlane:  "
+	      "Out of memory.\n");
+      return;
     }
-  }
+  node->data = plane;
+  node->next = calculatedPlane_head;
+  calculatedPlane_head = node;
 
-  fprintf(stderr, "Flattening: dx=%g, dy=%g, offset=%g\n", dx, dy, offset);
-  outplane->setMinAttainableValue(plane->minAttainableValue());
-  outplane->setMaxAttainableValue(plane->maxAttainableValue());
-  // I think this OK. Except for static file, mxxAttainableValue is from
-  // the range of the scanner, not the data range itself. 
-
-  flatten_data  *flatten_struct = new flatten_data;
-  if (flatten_struct == NULL) {
-    fprintf(stderr,"compute_flattened_plane(): Out of memory!\n");
-    return -1;
-  }
-
-  flatten_struct->dx = dx;
-  flatten_struct->dy = dy;
-  flatten_struct->offset = offset;
-  flatten_struct->from_plane = plane;
-  flatten_struct->flat_plane = outplane;
-
-  flatten_node * ptr = new flatten_node;
-  if (ptr == NULL) {
-    fprintf(stderr,"compute_flattened_plane(): Out of memory!\n");
-    return -1;
-  }
-
-  ptr->data = flatten_struct;
-
-  //insert the new node as the head of the list
-  ptr->next = d_flat_list_head;
-  d_flat_list_head = ptr;
-
-  plane->add_callback(updateFlattenOnPlaneChange, flatten_struct);
-
-  return 0;
-}
-
-void nmb_Dataset::registerFlatPlaneCallback (void * userdata,
-                  void (* cb) (void *, const flatten_data *)) {
-  newFlatPlaneCB * st = new newFlatPlaneCB;
-
-  if (!st) {
-    fprintf(stderr, "nmb_Dataset::registerFlatPlaneCallback:  "
-                    "Out of memory.\n");
-    return;
-  }
-  st->userdata = userdata;
-  st->cb = cb;
-  st->next = d_flatPlaneCB;
-  d_flatPlaneCB = st;
-}
+} // end addNewCalculatedPlane( ... )
 
 
-int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
-					   const char * inputPlane)
-{
-
-  BCPlane * outplane;      // Output plane
-  int     x, y;
-  lblflatten_node * lblflat_ptr, * pre;  
-  float avgVal = 0;  //average height value of the current scan line
-  float firstAvgVal = 0;  //average height value of the 1st scan line
-  float diff = 0;  //difference between firstAvgVal and avgVal
-
-//This is necessary because of the callbacks.
-  if(strcmp(outputPlane, inputPlane)==0) {
-	fprintf(stderr, "computeLBLFlattenedPlane(): can not line-by-line flatten from itself\n");
-	return -1;
-  } //end if
-
-  BCPlane * plane = inputGrid->getPlaneByName(inputPlane);
-  if (plane == NULL) {
-	fprintf(stderr, "computeLBLFlattenedPlane(): could not get height plane!\n");
-	return -1;
-  } //end if
-
-  //Create output plane, if it does not yet exist
-  outplane = inputGrid->getPlaneByName(outputPlane);
-  if (outplane == NULL) {
-	char        newunits [1000];
-	sprintf(newunits, "%s_flat", plane->units()->Characters());
-	outplane = inputGrid->addNewPlane(outputPlane, newunits, NOT_TIMED);
-	if (outplane == NULL) {
-	    fprintf(stderr, "computeLBLFlattenedPlane():"
-                  " Can't make plane %s\n", outputPlane);
-	    return -1;
-	} //end if
-        nmb_Image *im = dataImages->getImageByName(inputPlane);
-        nmb_Image *output_im = new nmb_ImageGrid(outplane);
-        TopoFile tf;
-        if (im) {
-            im->getTopoFileInfo(tf);
-            output_im->setTopoFileInfo(tf);
-        } else {
-            fprintf(stderr, "Warning: image not in list\n");
-        }
-        dataImages->addImage(output_im);
-  } //end if
-  else {    //the output plane already exists (I don't know why you'd
-	    //output to a plane that already exists.)
-	pre = lblflat_ptr = d_lblflat_list_head;
-	while (lblflat_ptr) {
-		if (lblflat_ptr->data->lblflat_plane == outplane) {
-			lblflat_ptr->data->from_plane->remove_callback
-                        (updateLBLFlattenOnPlaneChange, 
-                         (void *)(lblflat_ptr->data));
-			pre->next = lblflat_ptr->next;
-			free(lblflat_ptr->data);
-			free(lblflat_ptr);
-			break;
-		} //end if
-		else {
-			pre = lblflat_ptr;
-			lblflat_ptr = lblflat_ptr->next;
-		} //end else
-	} //end while
-  } //end else
-
-  //Fill the output plane with the line-by-line flattened plane
-
-  //First, find the average height value of the 1st 2 scan lines and copy the
-  //first scan line (unchanged) to the output plane
-  for (x = 0; x < inputGrid->numX(); x++) {
-	outplane->setValue(x, 0, plane->value(x, 0));
-	firstAvgVal += plane->value(x, 0);
-	avgVal += plane->value(x, 1);
-  } //end for
-
-  firstAvgVal = firstAvgVal / inputGrid->numX();
-  avgVal = avgVal / inputGrid->numX();
-  diff = firstAvgVal - avgVal;
-
-  //Compute average height value of current line, and flatten the previous
-  //scan line before writing it (prev. line) to the output plane
-  for (y = 2; y < inputGrid->numY(); y++) {
-	avgVal = 0;
-	for (x = 0; x < inputGrid->numX(); x++) {
-		avgVal += plane->value(x, y);
-		outplane->setValue(x, y - 1, plane->value(x, y - 1) + diff); 
-	} //end for
-	avgVal = avgVal / inputGrid->numX();
-	diff = firstAvgVal - avgVal;
-  } //end for
-
-  //flatten and output the last scan line
-  for (x = 0; x < inputGrid->numX(); x++) {
-  	outplane->setValue(x, inputGrid->numY() - 1,
-			   plane->value(x, inputGrid->numY() - 1) + diff);
-  } //end for
-
-  outplane->setMinAttainableValue(plane->minAttainableValue());
-  outplane->setMaxAttainableValue(plane->maxAttainableValue());
-
-  lblflatten_data *lblflatten_struct = new lblflatten_data;
-  if (lblflatten_struct == NULL) {
-	fprintf(stderr, "computeLBLFlattenedPlane(): Out of memory!\n");
-	return -1;
-  } //end if
-
-  lblflatten_struct->lblflat_plane = outplane;
-  lblflatten_struct->from_plane = plane;
-  lblflatten_struct->firstLineAvgVal = firstAvgVal;
-
-  lblflatten_node *ptr = new lblflatten_node;
-  if (ptr == NULL) {
-	fprintf(stderr, "computeLBLFlattenedPlane(): Out of memory!\n");
-	return -1;
-  } //end if
-
-  ptr->data = lblflatten_struct;
-
-  //insert the new node as the head of the list
-  ptr->next = d_lblflat_list_head;
-  d_lblflat_list_head = ptr;
-
-  plane->add_callback(updateLBLFlattenOnPlaneChange, lblflatten_struct);
-  return 0;
-
-} //end computeLBLFlattenedPlane
 
 
 /** Map a plane in the input grid into a plane in the output grid, normalizing
@@ -987,47 +445,6 @@ int     nmb_Dataset::mapInputToInputNormalized (const char * in_name,
 }
 
 
-// static
-void nmb_Dataset::updateFlattenOnPlaneChange (BCPlane *, int x, int y,
-                                              void * userdata) {
-  flatten_data * data = (flatten_data *) userdata;
-
-  data->flat_plane->setValue(x, y,
-                             data->from_plane->value(x, y) +
-                             data->offset - data->dx * x - data->dy * y);
-}
-
-// static
-void nmb_Dataset::updateSumOnPlaneChange (BCPlane *, int x, int y,
-                                          void * userdata) {
-  sum_data * data = (sum_data *) userdata;
-
-  data->sum_plane->setValue(x, y,
-                            data->first_plane->value(x, y) +
-                            data->second_plane->value(x, y) * data->scale);
-}
-
-void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
-						 void * userdata) {
-  lblflatten_data * data = (lblflatten_data *) userdata;
-  float avgVal = 0;
-  float diff;
-  int i;
-
-  // this is to force this function only to do stuff once per line
-  if (x != data->from_plane->numX()-1) return;
-
-  for (i = 0; i < data->from_plane->numX(); i++) {
-	avgVal += data->from_plane->value(i, y);
-  }
-  avgVal = avgVal / data->from_plane->numX();
-  diff = data->firstLineAvgVal - avgVal; 
-  for (i = 0; i < data->from_plane->numX(); i++) {
-	data->lblflat_plane->setValue(i, y, data->from_plane->value(i, y) + diff);
-  } //end for
-} //end updateLBLFlattenOnPlaneChange
-
-
 float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
 {
     float avgVal = 0;
@@ -1039,4 +456,11 @@ float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
     //printf("Found line average %g\n", avgVal);
     return avgVal;
 
+}
+
+
+const char*
+nmb_Dataset::getHostname( ) const
+{
+  return d_hostname->string( );
 }
