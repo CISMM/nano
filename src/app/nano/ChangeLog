@@ -1,5 +1,7 @@
-2001-12-10    <marshbur@cs.unc.edu>
+2001-12-10  David Marshburn  <marshbur@cs.unc.edu>
 
+	* CollaborationManager.C (initialize):  small change to 
+	isLoggingInterface call
 
 2001-12-10  David Marshburn  <marshbur@cs.unc.edu>
 

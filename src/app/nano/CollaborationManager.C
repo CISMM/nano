@@ -328,7 +328,7 @@ void CollaborationManager::initialize
     if( d_log )
       d_interfaceLog 
         = new vrpn_Synchronized_Connection( d_interfaceLogPort, NULL,
-                                            isLoggingInterface ? sfbuf : NULL, 
+                                            isLoggingInterface() ? sfbuf : NULL, 
                                             d_NIC_IP );
   }
 
