@@ -1,3 +1,13 @@
+2002-01-31 David Marshburn  <marshbur@cs.unc.edu>
+
+	* GPIBKeithley2400.C:  changes to program and Tcl initialization.
+	* vi_client.dsp:  new, project to build vi_client on PC.  Uses non-
+	static run-time library.
+	* vi_curve.dsp:  renamed to vi_server.dsp.
+	* vi_server.dsp:  new, project to build vi_server on PC.  Also, now 
+	uses non-static run-time library.
+	* vi_curve.dsw:  new and renamed projects.
+
 2001-09-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Makefile (USES_LIBS): uses nmMP

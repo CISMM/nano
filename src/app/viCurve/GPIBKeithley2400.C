@@ -18,13 +18,9 @@ extern "C" {
 #include	<itk.h>
 #include        <blt.h>
 }
-// for some reason blt.h doesn't declare this procedure.
-// I copied this prototype from bltUnixMain.c, but I had to add
-// the "C" so it would link with the library.
-extern "C" int Blt_Init (Tcl_Interp *interp);
 
-#include	"Tcl_Linkvar.h"
-
+#include "Tcl_Linkvar.h"
+#include "Tcl_Interpreter.h"
 
 #include "nma_Keithley2400_ui.h"
 static void parseArguments(int argc, char **argv);
@@ -41,55 +37,15 @@ static char tcl_default_dir [] = "./";
 
 //------------------------------------------------------------
 // Duplicate functionality from microscape.
-int	init_Tk ()
+int init_Tk( char* tcl_script_dir )
 {
-	Tk_Window       tk_control_window;
+  tcl_interp = Tcl_Interpreter::getInterpreter();
+  // this does all the initialization when creating the interpreter
 
-	tcl_interp = Tcl_CreateInterp();
-
-	printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
-
-	/* Start a Tcl interpreter */
-	if (Tcl_Init(tcl_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Tcl_Init failed: %s\n",tcl_interp->result);
-		return(-1);
-	}
-
-	/* Initialize Tk using the Tcl interpreter */
-	if (Tk_Init(tcl_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Tk_Init failed: %s\n",tcl_interp->result);
-		return(-1);
-	}
-
-	/* Initialize Tcl packages */
-	if (Blt_Init(tcl_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",tcl_interp->result);
-		return(-1);
-	}
-
-	if (Itcl_Init(tcl_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",tcl_interp->result);
-		return(-1);
-	}
-	if (Itk_Init(tcl_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",tcl_interp->result);
-		return(-1);
-	}
-	/* Start a Tk mainwindow to hold the widgets */
-	tk_control_window = Tk_MainWindow(tcl_interp);
-	if (tk_control_window == NULL) {
-		fprintf(stderr,"Tk can't make window: %s\n",
-			tcl_interp->result);
-		return(-1);
-	}
-
-
-	return(0);
+  // tell Tcl where to find our scripts
+  Tcl_SetVar( tcl_interp, "tcl_script_dir", tcl_script_dir, TCL_GLOBAL_ONLY);
+     
+  return(0);
 }
 
 
@@ -161,28 +117,32 @@ void usage(char *program_name){
 static char outputStreamName[128];
 static int isWritingStreamFile = 0;
 static int isReadingStreamFile = 0;
+static int isReadingDevice = 0;
 static char * vi_device_name = NULL;
 void parseArguments(int argc, char **argv){
-	int i;
-	for (i = 1; i < argc; i++){
-		if (!strcmp(argv[i], "-o")){
-			if (++i >= argc) usage(argv[0]);
-			isWritingStreamFile = 1;
-			strcpy(outputStreamName, argv[i]);
-		}
-		else if (!strcmp(argv[i], "-d")){
-			if (++i >= argc) usage(argv[0]);
-			vi_device_name = strdup(argv[i]);
-		}
-		else if (!strcmp(argv[i], "-i")){
-			if (++i >= argc) usage(argv[0]);
-			isReadingStreamFile = 1;
-			vi_device_name = new char[14 + strlen(argv[i])+1];
-			sprintf(vi_device_name,"vi_curve@file://%s", argv[i]);
-		}
-		else
-			usage(argv[0]);
-	}
+  int i;
+  for (i = 1; i < argc; i++){
+    if (!strcmp(argv[i], "-o")){
+      if (++i >= argc) usage(argv[0]);
+      isWritingStreamFile = 1;
+      strcpy(outputStreamName, argv[i]);
+    }
+    else if (!strcmp(argv[i], "-d")){
+      if (++i >= argc) usage(argv[0]);
+      isReadingDevice = 1;
+      if( vi_device_name != NULL ) 
+        delete vi_device_name;
+      vi_device_name = strdup(argv[i]);
+    }
+    else if (!strcmp(argv[i], "-i")){
+      if (++i >= argc) usage(argv[0]);
+      isReadingStreamFile = 1;
+      vi_device_name = new char[14 + strlen(argv[i])+1];
+      sprintf(vi_device_name,"vi_curve@file://%s", argv[i]);
+    }
+    else
+      usage(argv[0]);
+  }      
 }
 
 
@@ -190,37 +150,39 @@ void parseArguments(int argc, char **argv){
 int	main(unsigned argc, char *argv[])
 {
   unsigned short def_port_no = 4545;
-  char *tcl_script_dir;
+  char *tcl_script_dir, * nano_root;
+  
+  // -------------------------------------------
+  // get environment variables
+  nano_root = getenv( "NANO_ROOT" );
+  tcl_script_dir = getenv( "NM_TCL_DIR" );
+  vi_device_name = getenv( "NM_VICRVE" );
+
+
+  // --------------------------------------------------------------
+  // set tcl_script_dir
+  if(  tcl_script_dir == NULL )
+  {
+    if( nano_root != NULL )
+    {
+      tcl_script_dir = new char[ strlen( nano_root ) + 100 ];
+      sprintf( tcl_script_dir, "%s/share/tcl/", nano_root );
+    }
+    else // no NANO_ROOT
+    {
+      // try NM_TCL_DIR
+      if( tcl_script_dir == NULL )
+        tcl_script_dir = tcl_default_dir;
+    }
+  }
   
   parseArguments(argc, argv);
   
-  // --------------------------------------------------------------
-  // set tcl_script_dir
-  char* nano_root = getenv( "NANO_ROOT" );
-  if( nano_root != NULL )
-    {
-      // NM_TCL_DIR overrides NANO_ROOT
-      tcl_script_dir = getenv( "NM_TCL_DIR" );
-      if(  tcl_script_dir == NULL )
-	{
-	  tcl_script_dir = new char[ strlen( nano_root ) + 100 ];
-	  sprintf( tcl_script_dir, "%s/share/tcl/", nano_root );
-	}
-      // else use NM_TCL_DIR
-    }
-  else // no NANO_ROOT
-    {
-      // try NM_TCL_DIR
-      tcl_script_dir = getenv( "NM_TCL_DIR" );
-      if( tcl_script_dir == NULL )
-	tcl_script_dir = tcl_default_dir;
-    }
-  
-  
   //------------------------------------------------------------------
   // Generic Tcl startup.  Getting an interpreter and mainwindow.
-  init_Tk();
-  init_Tk_controls();
+  Tcl_FindExecutable(argv[0]);
+  init_Tk( tcl_script_dir );
+  init_Tk_controls( );
   
   // Initialize our connections to the things we are going to control.
   // defaults to port 4545

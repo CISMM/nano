@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "vi_curve"=.\vi_curve.dsp - Package Owner=<4>
+Project: "NMmp"=..\..\lib\nmMP\NMmp.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -11,6 +11,87 @@ Package=<5>
 
 Package=<4>
 {{{
+}}}
+
+###############################################################################
+
+Project: "nmAux"=..\nano\lib\nmAux\nmAux.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmBase"=..\..\lib\nmBase\nmBase.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tclLinkVar"=..\..\lib\tclLinkVar\tclLinkVar.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "vi_client"=.\vi_client.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name nmAux
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmBase
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name NMmp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tclLinkVar
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "vi_server"=.\vi_server.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name nmBase
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmAux
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name NMmp
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -27,4 +108,3 @@ Package=<3>
 
 ###############################################################################
 
-
