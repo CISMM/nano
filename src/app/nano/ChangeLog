@@ -1,3 +1,9 @@
+2000-10-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* interaction.c (drawLine) : fixes to re-enable updatableQueue properly
+	it still may not be disabled in all places that it should but it
+	is better that it be overly enabled than overly disabled
+
 2000-10-16  Tom Hudson  <hudson@cs.unc.edu>
 
 	* interaction.c (updateMicroscopeRTTEstimate) : new function

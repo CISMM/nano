@@ -589,6 +589,7 @@ static void drawLine (void) {
       if (value == NULL) {
 	fprintf(stderr, "drawLine():  "
 		"could not get input point!\n");
+        microscope->EnableUpdatableQueue(VRPN_TRUE);
 	return;
       }
       printf("drawLine: points in list, doing modify.\n");
@@ -631,6 +632,7 @@ static void drawLine (void) {
       microscope->state.modify.slow_line_committed = VRPN_TRUE;
       // Call this function to initialize the slow_line tool
       init_slow_line(microscope);
+      microscope->EnableUpdatableQueue(vrpn_TRUE);
       return;
     }
     p.next();
