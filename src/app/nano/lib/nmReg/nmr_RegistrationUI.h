@@ -1,6 +1,5 @@
 #ifndef NMR_REGISTRATIONUI_H
 #define NMR_REGISTRATIONUI_H
-
 #include "nmg_Graphics.h"
 #include "nmb_Image.h"
 #include "nmb_String.h"

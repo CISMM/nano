@@ -183,6 +183,8 @@ $analysismenu add radiobutton -label "Measure Lines" \
     -variable user_0_mode -value 9 
 $analysismenu add command -label "Data Registration..." \
     -command "show.registration"
+$analysismenu add command -label "Tip Convolution..." \
+    -command "show.tip_conv"
 #        $analysismenu add command -label  "Import Objects..." -command \
 #		{.message_dialog activate}
 #        $analysismenu add command -label  "Filter a plane..." -command \
@@ -316,6 +318,7 @@ source [file join ${tcl_script_dir} streamfile.tcl]
 source [file join ${tcl_script_dir} shared_ptr.tcl]
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
+source [file join ${tcl_script_dir} tip_conv.tcl]
 # Dialogs accessed from the menus, like  vi_win, 
 # and nav_win.
 source [file join ${tcl_script_dir} toplevels.tcl]

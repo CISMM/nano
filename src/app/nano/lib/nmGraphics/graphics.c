@@ -243,7 +243,7 @@ void makeCheckImage (void)
             //
             // which wouldn't generate a warning and would be faster.  But,
             // since this change is untested, I'll leave it alone for now.
-            c = (((i & 0x4) == 0) ^ ((j & 0x4)) == 0);
+            c = ((i & 0x4) == 0) ^ ((j & 0x4) == 0);
 
             checkImage[0][i][j][0] = (GLubyte) (c * g_alpha_r * 255);
             checkImage[0][i][j][1] = (GLubyte) (c * g_alpha_g * 255);

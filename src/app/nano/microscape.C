@@ -82,9 +82,11 @@ pid_t getpid();
 // Registration
 #include "nmr_Registration_Proxy.h"
 #include "nmr_RegistrationUI.h"
-// 
+ 
 #include "RobotControl.h"
 #endif
+//Tip Convolution
+#include "nmtc_TipConvolution.h"
 
 #include "x_util.h" /* qliu */
 #include "x_aux.h"
@@ -836,6 +838,9 @@ nms_SEM_ui * sem_ui = NULL;
 /// Controls for registration
 nmr_RegistrationUI *alignerUI = NULL;
 nmr_Registration_Proxy *aligner = NULL;
+
+//Controls for tip convolution
+nmtc_TipConvolution *ConvTip = NULL;
 
 #ifdef NANO_WITH_ROBOT
 RobotControl * robotControl = NULL;
@@ -6158,6 +6163,8 @@ VERBOSE(1, "Creating Ugraphics");
   aligner = new nmr_Registration_Proxy(istate.alignerName);
   alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
       aligner);
+
+  ConvTip = new nmtc_TipConvolution(graphics, dataset->dataImages);
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?

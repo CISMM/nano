@@ -216,15 +216,18 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
     plane = grid->addNewPlane(name_str, units_str, 0);
     min_x_set = MAXSHORT; min_y_set = MAXSHORT;
     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+  
     for (int i = 0; i < numExportFormats(); i++){
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
+  
     if (strcmp(units, "nm") == 0) {
         is_height_field = vrpn_TRUE;
     } else {
         is_height_field = vrpn_FALSE;
     }
+
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
