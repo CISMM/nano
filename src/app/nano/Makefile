@@ -1,5 +1,5 @@
 USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
-             nmRobotControl nmReg nmImageViewer nmTipConvolution \
+             nmReg nmImageViewer nmTipConvolution \
              nmMP tclLinkVar nmBase ImgFormat nmAnalyze \
              vrpn vogl quat
 
@@ -16,21 +16,22 @@ endif
 
 ifdef NANO_WITH_ROBOT
    EXTRA_CFLAGS += -DNANO_WITH_ROBOT 
+   USES_LIBS += nmRobotControl
 endif
 
 ifdef VIEWER
-NO_MSCOPE_CONNECTION := 1
-APP_SUFFIX := _view
+   NO_MSCOPE_CONNECTION := 1
+   APP_SUFFIX := _view
 endif
 
 # new name for a viewer-only app.
 ifdef APP_SUFFIX
-ifdef VC
-   APP_NAME := nano$(APP_SUFFIX).exe
-else
-   APP_NAME := nano$(APP_SUFFIX)
-endif
-BAREDEFINES += APP_SUFFIX='"$(APP_SUFFIX)"'
+   ifdef VC
+      APP_NAME := nano$(APP_SUFFIX).exe
+   else
+      APP_NAME := nano$(APP_SUFFIX)
+   endif
+   BAREDEFINES += APP_SUFFIX='"$(APP_SUFFIX)"'
 endif
 
 include ../Makefile.share

@@ -108,9 +108,11 @@ pid_t getpid();
 // Registration
 #include "nmr_Registration_Proxy.h"
 #include "nmr_RegistrationUI.h"
- 
+
+#ifdef NANO_WITH_ROBOT
 #include "RobotControl.h"
-#endif
+#endif // NANO_WITH_ROBOT
+#endif // PROJECTIVE_TEXTURE
 //Tip Convolution
 #include "nmtc_TipConvolution.h"
 
