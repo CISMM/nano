@@ -1,3 +1,9 @@
+2001-08-05    <marshbur@cs.unc.edu>
+
+	* globjects.c: removed calls to add/remove the collaborators hand to the vir_world
+	funclist during init_world_modechange and clear_world_modechange.  This keeps
+	the collaborator's hand from showing when one collaborator is in private state.
+
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (positionRegionBox): Respond to REG_DEL state

@@ -263,12 +263,6 @@ int clear_world_modechange(int mode, int style, int tool_param)
     break;
   }
 
-  /* The other user's hand doesn't depend on what your hand is doing,
-     but we seem to need this anyway... */
-  if (g_draw_collab_hand) {
-    removeFunctionFromFunclist(&vir_world, collabHand_id);
-  }
-
   // We added them in init_world_modechange, so we should remove them here.
   //if (g_config_measurelines) {
   removeFunctionFromFunclist(&vir_world, red_line_struct_id);
@@ -393,14 +387,6 @@ int init_world_modechange(int mode, int style, int tool_param)
 		(void *)g_scanlinePt, "scanline_indicator");
   }
 
-  /* The other user's hand doesn't depend on what your hand is doing,
-     but we seem to need this anyway... */
-  if (g_draw_collab_hand) {
-    collabHand_id =
-        addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
-			      "draw_list(collab_hand_struct)");
-  }
-  /* */
   return 0;
 }
 
