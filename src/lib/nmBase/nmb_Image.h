@@ -107,6 +107,7 @@ class nmb_Image {
         void getWorldToImageTransform(double *matrix44);
 
         virtual void setTopoFileInfo(TopoFile &tf) = 0;
+        virtual void getTopoFileInfo(TopoFile &tf) = 0;
 
 	virtual BCString *name() = 0;
 	virtual BCString *unitsX() = 0;
@@ -155,6 +156,7 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual BCString *unitsX();
 	virtual BCString *unitsY();
         virtual void setTopoFileInfo(TopoFile &tf);
+        virtual void getTopoFileInfo(TopoFile &tf);
 	virtual vrpn_uint8 *rawDataUnsignedByte();
 
         virtual int numExportFormats();
@@ -181,6 +183,7 @@ class nmb_ImageGrid : public nmb_Image{
 	BCString units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;
         TopoFile d_topoFileDefaults;
+        static TopoFile s_topoFileDefaults;
 };
 
 class nmb_Image8bit : public nmb_Image {
@@ -211,8 +214,14 @@ class nmb_Image8bit : public nmb_Image {
     virtual BCString *unitsX();
     virtual BCString *unitsY();
  
-    virtual void setTopoFileInfo(TopoFile &) {};
-
+    virtual void setTopoFileInfo(TopoFile &) {
+      fprintf(stderr, 
+          "Warning: nmb_Image8bit::setTopoFileInfo not implemented\n");
+    }
+    virtual void getTopoFileInfo(TopoFile &) {
+      fprintf(stderr, 
+          "Warning: nmb_Image8bit::getTopoFileInfo not implemented\n");
+    }
     virtual int numExportFormats();
     virtual nmb_ListOfStrings *exportFormatNames();
     virtual const char *exportFormatType(int type);

@@ -1327,7 +1327,34 @@ long nmm_Microscope_Remote::SetModForce () {
                               1000.0 * state.modify.speed,
                               state.modify.watchdog);
   }
-  else if (state.modify.style == FORCECURVE)
+  else if (state.modify.style == FORCECURVE) {
+    switch (state.modify.mode) {
+      case TAPPING:
+        if (EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
+                                state.modify.d_gain, state.modify.setpoint,
+                                    state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenutation,
+                                       state.modify.phase)) {
+            fprintf(stderr, "Error, can't enter oscillating mode\n");
+            return -1;
+	}
+         
+        break;
+      case CONTACT:
+        if (EnterContactMode(state.modify.p_gain, state.modify.i_gain,
+                                   state.modify.d_gain, state.modify.setpoint)){
+	    fprintf(stderr, "Error, can't enter contact mode\n");
+            return -1;
+	}
+        break;
+      default:
+        fprintf(stderr, "Error, unknown modify mode"
+                           " (not contact or tapping)\n");
+        return 0;
+    }
     return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -1345,7 +1372,7 @@ long nmm_Microscope_Remote::SetModForce () {
                                 state.modify.fc_sample_delay,
                                 state.modify.fc_pullback_delay,
                                 state.modify.fc_feedback_delay);
-  else {
+  } else {
     fprintf(stderr,"shouldn't be here\n");
     return 0;
   }
@@ -3383,6 +3410,8 @@ void nmm_Microscope_Remote::RcvInImgMode (void) {
   //if (!state.doRelaxUp) { ... }
 
   doImageModeCallbacks();
+
+  d_mod_window_pad = state.numLinesToJumpBack;
 
   // did we just come out of modifying and did we receive at least one 
   // point result?

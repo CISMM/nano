@@ -918,13 +918,28 @@ generic_entry $nmInfo(pref_icons).sphere_scale sphere_scale \
 pack $nmInfo(preferences).icons -fill both
 pack $nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
 	-side top -fill x
+#
+# Acquisition Parameters
+#
+iwidgets::Labeledframe $nmInfo(preferences).acquisition \
+	-labeltext "Acquisition Parameters" \
+	-labelpos nw
+set nmInfo(pref_acq) [$nmInfo(preferences).acquisition childsite]
+
+set num_lines_to_jump_back 10
+generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
+	"Post-modify jumpback" integer
+
+pack $nmInfo(preferences).acquisition -fill both
+pack $nmInfo(pref_acq).jump_back -side top -fill x
 
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
 	$nmInfo(pref_surf_shading).diffuse \
 	$nmInfo(pref_surf_tris).surface_alpha  \
-	$nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale
+	$nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
+	$nmInfo(pref_acq).jump_back
 
 #
 # Coupling

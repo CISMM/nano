@@ -239,6 +239,9 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         nmb_ImageBounds im3D_bounds;
         im_3D->getBounds(im3D_bounds);
         new_image->setBounds(im3D_bounds);
+        TopoFile tf;
+        im_3D->getTopoFileInfo(tf);
+        new_image->setTopoFileInfo(tf);
         d_newResampleImageName = (const char *) "";
         nmr_Util::createResampledImage((*im_2D), (*im_3D),
                                        d_imageTransform, (*new_image));
@@ -259,7 +262,9 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
                 (const char *)(im_2D->unitsValue()),
                 res_x, res_y);
         printf("allocated image\n");
-
+        TopoFile tf;
+        im_3D->getTopoFileInfo(tf);
+        new_image->setTopoFileInfo(tf);
         printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);

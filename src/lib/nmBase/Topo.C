@@ -89,6 +89,7 @@ int TopoFile::parseHeader(int in_descriptor){
 	// allocate a header of the right size.
 	header = new char[nOffset];
 	if(header==NULL){ fprintf(stderr,"Unable to allocate room for header\n"); exit(-1);}
+        iHeaderLength = nOffset;
 
 	// Go back to the beginning of the file.
         if(lseek(in_descriptor, 0, SEEK_SET) == -1) {   /* Error */
@@ -124,6 +125,7 @@ int TopoFile::parseHeader(const char *buf, vrpn_int32 length){
 			       "buffer.  Aborting.\n");
 	                return -1;
 		}
+                iHeaderLength = length;
 		memcpy(header, buf, length);
 	}
 
@@ -858,6 +860,7 @@ int TopoFile::parseData(int handle){
                         (long)iCols, (long)iRows, (long)iLayers);
 		return -1;
         }
+        iGridDataLength = size;
 
         /* Seeking to where the data should start - this was not done in the
          * code from Topometrix. */
@@ -1409,6 +1412,7 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
                 fprintf(stderr,"Unable to allocate griddata\n"); 
                 return -1;
         }
+        iGridDataLength = iCols*iRows;
 
         // Data is stored in the Topo file in column-major order
         // starting from the lower left corner.
@@ -1536,6 +1540,7 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
 		fprintf(stderr,"Unable to allocate griddata\n"); 
 		return -1;
 	}
+        iGridDataLength = iCols*iRows;
 
 	// Data is stored in the Topo file in column-major order
         // starting from the lower left corner.
@@ -1648,6 +1653,7 @@ int TopoFile::gridToTopoData(BCGrid* G){
 
 		griddata=new vrpn_uint16[iLayers*iCols*iRows];
 		if(griddata == NULL){ fprintf(stderr,"Unable to allocate griddata\n"); return -1;}
+                iGridDataLength = iLayers*iCols*iRows;
 
 		// Data is stored in the Topo file in column-major order
                 // starting from the lower left corner.
@@ -1693,6 +1699,7 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
     iRelease = 400;
     iOffset = 2112;
     header = new char[iOffset];
+    iHeaderLength = iOffset;
     // Set whole header to be zero.
     memset(header, 0, iOffset*sizeof(char));
     sprintf(header, "#R4.00# 2112\n08/10/98 00:04:34\nconverted file\n");
@@ -1906,4 +1913,96 @@ void TopoFile::convertWin31ToNT (const char * /*w*/) {
     sScanParam.iOldDACmaxY = usSwap(w+715);                
     sScanParam.iNonContactMode = sSwap(w+717);                        
   */
+}
+
+TopoFile::TopoFile()
+{
+    header=NULL;
+    valid_header=0;
+    valid_grid=0;
+    griddata = NULL;
+    iHeaderLength = 0;
+    iGridDataLength = 0;
+    initForConversionToTopo(1.0, 0.0);
+}
+
+TopoFile::TopoFile(const TopoFile &t)
+{
+    iRelease = t.iRelease;
+    iOffset = t.iOffset;
+    memcpy(szRelease, t.szRelease, N_RELEASE);
+    memcpy(szDatetime, t.szDatetime, N_DATETIME);
+    memcpy(szDescription, t.szDescription, N_DESCRIPTION);
+    iRows = t.iRows;
+    iCols = t.iCols;
+    fXmin = t.fXmin;
+    fXmax = t.fXmax;
+    fYmin = t.fYmin;
+    fYmax = t.fYmax;
+    fDACtoWorld = t.fDACtoWorld;
+    fDACtoWorldZero = t.fDACtoWorldZero;
+    iWorldUnitType = t.iWorldUnitType;
+    iXYUnitType = t.iXYUnitType;
+    memcpy(szWorldUnit, t.szWorldUnit, 10);
+    memcpy(szXYUnit, t.szXYUnit, 10);
+    iLayers = t.iLayers;
+    rRoi = t.rRoi;
+    valid_grid = vrpn_FALSE;
+    iGridDataLength = 0;
+    griddata = NULL;
+    header = NULL;
+    iHeaderLength = t.iHeaderLength;
+    if (iHeaderLength > 0) {
+       header = new char[iHeaderLength];
+       if (!header) {
+          iHeaderLength = 0;
+          fprintf(stderr, "TopoFile::TopoFile: Error: out of memory (1)\n");
+          return;
+       }
+       memcpy(header, t.header, iHeaderLength*sizeof(char));
+    }
+}
+
+TopoFile &TopoFile::operator = (const TopoFile &t)
+{
+    iRelease = t.iRelease;
+    iOffset = t.iOffset;
+    memcpy(szRelease, t.szRelease, N_RELEASE);
+    memcpy(szDatetime, t.szDatetime, N_DATETIME);
+    memcpy(szDescription, t.szDescription, N_DESCRIPTION);
+    iRows = t.iRows;
+    iCols = t.iCols;
+    fXmin = t.fXmin;
+    fXmax = t.fXmax;
+    fYmin = t.fYmin;
+    fYmax = t.fYmax;
+    fDACtoWorld = t.fDACtoWorld;
+    fDACtoWorldZero = t.fDACtoWorldZero;
+    iWorldUnitType = t.iWorldUnitType;
+    iXYUnitType = t.iXYUnitType;
+    memcpy(szWorldUnit, t.szWorldUnit, 10);
+    memcpy(szXYUnit, t.szXYUnit, 10);
+    iLayers = t.iLayers;
+    rRoi = t.rRoi;
+    valid_grid = vrpn_FALSE;
+    iGridDataLength = 0;
+    griddata = NULL;
+    header = NULL;
+    iHeaderLength = t.iHeaderLength;
+    if (iHeaderLength > 0) {
+       header = new char[iHeaderLength];
+       if (!header) {
+          iHeaderLength = 0;
+          fprintf(stderr, "TopoFile::TopoFile: Error: out of memory (1)\n");
+          return *this;
+       }
+       memcpy(header, t.header, iHeaderLength*sizeof(char));
+    }
+    return *this;
+}
+
+TopoFile::~TopoFile()
+{
+    if(header!=NULL) delete [] header;
+    if(griddata!=NULL) delete [] griddata;
 }

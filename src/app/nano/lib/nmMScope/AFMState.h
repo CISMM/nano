@@ -481,6 +481,8 @@ struct AFMState {
     // used to call relax_init() and as the Z value to use
     // when ignoring new points
 
+  // for jump to scanline feature (after a modification)
+  Tclvar_int numLinesToJumpBack;
 
 };
 

@@ -397,7 +397,9 @@ private:
 
     vrpn_bool valid_grid;
     char* header;
+    vrpn_int32 iHeaderLength;
     vrpn_uint16 *griddata;
+    vrpn_int32 iGridDataLength;
 
 
     int parseReleaseString(const char *release, vrpn_int32 * verNumber, vrpn_int32* nOffset);
@@ -413,16 +415,10 @@ private:
     void fixUpDocStruct(void);		//version 4.0 fix
     void convertWin31ToNT (const char *);  // version 5.0 fix
 public:
-    TopoFile(){
-		  header=NULL;
-		  valid_header=0;
-		  valid_grid=0;
-		  griddata = NULL;
-    } 
-    ~TopoFile(){
-		    if(header!=NULL) delete [] header;
-		    if(griddata!=NULL) delete [] griddata;	
-    }
+    TopoFile();
+    TopoFile(const TopoFile &tf);
+    TopoFile &operator = (const TopoFile &);
+    ~TopoFile();
     int initForConversionToTopo(double scale_nm,double offset_nm);
     int printDocInfo();
     int printScanParams();

@@ -9,4 +9,4 @@ APP_DIR=app/$APP_EXE;
 FULL_EXE=`../app_exec $APP_DIR $APP_EXE`;
 
 echo $FULL_EXE $*
-exec gdb $FULL_EXE $*
+exec gdb-4.17 $FULL_EXE $*

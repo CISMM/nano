@@ -227,13 +227,17 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
     }
 }
 
-nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image()
+nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
+    units_x("nm"), units_y("nm")
 {
     // WARNING: assumes (non-zero value <==> value was set) as
     // did BCPlane::findValidDataRange()
 
     plane = p;
     grid = NULL;
+    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+
     int i,j;
     for (i = 0; i < plane->numX(); i++){
         for (j = 0; j < plane->numY(); j++){
@@ -383,6 +387,12 @@ void nmb_ImageGrid::setTopoFileInfo(TopoFile &tf)
 {
     d_topoFileDefaults = tf;
 }
+
+void nmb_ImageGrid::getTopoFileInfo(TopoFile &tf)
+{
+    tf = d_topoFileDefaults;
+}
+
 
 vrpn_uint8 *nmb_ImageGrid::rawDataUnsignedByte() { return NULL;}
 
@@ -636,6 +646,7 @@ nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
         printf("file contained: \n");
 	for (p = g->head(); p != NULL; p = p->next()){
 	    im = new nmb_ImageGrid(p);
+            im->setTopoFileInfo(topoFile);
 	    addImage(im);
             printf("  %s\n", (const char *)(*(im->name())));
 	    printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());

@@ -118,6 +118,7 @@ nmb_Dataset::nmb_Dataset
   for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
     	nmb_Image *im = new nmb_ImageGrid(p);
+        im->setTopoFileInfo(topoFile);
     	dataImages->addImage(im);
     }
   }
@@ -155,6 +156,7 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
   for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
       nmb_Image *im = new nmb_ImageGrid(p);
+      im->setTopoFileInfo(topoFile);
       dataImages->addImage(im);
     }
   }
@@ -406,7 +408,14 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
                   "compute_sum_plane(): Can not make plane %s\n",outputPlane);
                 return -1;
             }
-            dataImages->addImage(new nmb_ImageGrid(outplane));
+            TopoFile tf;
+            nmb_Image *im = dataImages->getImageByName(firstInputPlane);
+            nmb_Image *output_im = new nmb_ImageGrid(outplane);
+            if (im) {
+                im->getTopoFileInfo(tf);
+                output_im->setTopoFileInfo(tf);
+            }
+            dataImages->addImage(output_im);
         }
         else {  //the output plane already exist
             pre=sum_ptr=list_head;
@@ -610,7 +619,16 @@ int nmb_Dataset::computeFlattenedPlane
             "compute_flattened_plane(): Can't make plane %s\n",outputPlane);
           return -1;
       }
-      dataImages->addImage(new nmb_ImageGrid(outplane));
+      TopoFile tf;
+      nmb_Image *im = dataImages->getImageByName(inputPlane);
+      nmb_Image *output_im = new nmb_ImageGrid(outplane);
+      if (im) {
+          im->getTopoFileInfo(tf);
+          output_im->setTopoFileInfo(tf);
+      } else {
+          fprintf(stderr, "nmb_Dataset: Warning, input image not in list\n");
+      }
+      dataImages->addImage(output_im);
   } else {         //the output plane already exist
       pre = flat_ptr = list_head;
       while (flat_ptr) {
@@ -727,7 +745,16 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
                   " Can't make plane %s\n", outputPlane);
 	    return -1;
 	} //end if
-        dataImages->addImage(new nmb_ImageGrid(outplane));
+        nmb_Image *im = dataImages->getImageByName(inputPlane);
+        nmb_Image *output_im = new nmb_ImageGrid(outplane);
+        TopoFile tf;
+        if (im) {
+            im->getTopoFileInfo(tf);
+            output_im->setTopoFileInfo(tf);
+        } else {
+            fprintf(stderr, "Warning: image not in list\n");
+        }
+        dataImages->addImage(output_im);
   } //end if
   else {    //the output plane already exists (I don't know why you'd
 	    //output to a plane that already exists.)
@@ -858,7 +885,16 @@ int     nmb_Dataset::mapInputToInputNormalized (const char * in_name,
                         out_name);
                 return -1;
         }
-	dataImages->addImage(new nmb_ImageGrid(color));
+        nmb_Image *input_im = dataImages->getImageByName(in_name);
+        nmb_Image *output_im = new nmb_ImageGrid(color);
+        TopoFile tf;
+        if (input_im) {
+            input_im->getTopoFileInfo(tf);
+            output_im->setTopoFileInfo(tf);
+        } else {
+            fprintf(stderr, "Warning: image not in list\n");
+        }
+	dataImages->addImage(output_im);
 
         //
         // Map the input to output, normalizing it

@@ -11,7 +11,7 @@ class Timer {
 	inline Timer() {
 	  initialized = 0; enabled = 1; 
 	  max_framelog = 0; frame_time = new long int[1];};
-	inline ~Timer() { delete frame_time; }
+	inline ~Timer() { delete [] frame_time; }
 	inline void	enable(void) {enabled = 1;};
 	inline void	disable(void) {enabled = 0; initialized = 0;};
 	inline void	read(char *msg = "") {

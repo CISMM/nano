@@ -455,7 +455,8 @@ AFMState::AFMState (const AFMInitializationState & i) :
     current_epoch (0),
     subscan_count (0),
 
-    lastZ (0.0f)
+    lastZ (0.0f),
+    numLinesToJumpBack("num_lines_to_jump_back", 10)
 
 {
   strcpy(deviceName, i.deviceName);
