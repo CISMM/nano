@@ -133,7 +133,7 @@ proc show_tool {name path nm element op} {
     } elseif { $tool == 3 } {
 	# Slow line tool
 	$path configure -text "Slow Line"
-    }
+    } 
 }
 
 proc show_control {name path nm element op} {

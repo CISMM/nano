@@ -61,6 +61,7 @@ class nmb_Decoration {
     int rateOfTime;  ///< seconds/second, instream_rate or 1 if live
     int user_mode;  ///< user_mode[0] from interaction.c
 
+
     /// surface modification markers
     int num_markers_shown;
     int marker_height;

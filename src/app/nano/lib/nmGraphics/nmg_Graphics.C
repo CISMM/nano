@@ -111,6 +111,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setRulergridOffset");
   d_setRulergridOpacity_type =
     c->register_message_type("nmg Graphics setRulergridOpacity");
+  d_setNullDataAlphaToggle_type =
+    c->register_message_type("nmg Graphics setNullDataAlphaToggle");
   d_setRulergridScale_type =
     c->register_message_type("nmg Graphics setRulergridScale");
   d_setRulergridWidths_type =
@@ -1159,6 +1161,33 @@ int nmg_Graphics::decode_setRulergridColor
   CHECK(vrpn_unbuffer(&buf, b));
   return 0;
 }
+
+char * nmg_Graphics::encode_setNullDataAlphaToggle (int *len, int val) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setNullDataAlphaToggle:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, val);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setNullDataAlphaToggle (const char *buf, int * val) {
+  if (!buf || !val) return -1;
+  CHECK(vrpn_unbuffer(&buf, val));
+  return 0;
+}
+
 
 char * nmg_Graphics::encode_setRulergridOffset
                      (int * len, float x, float y) {

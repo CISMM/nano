@@ -37,7 +37,6 @@ struct Vertex_Struct {
 //extern int read_mode;
 
 extern Vertex_Struct **vertexptr;
-
 extern  int     init_vertexArray(int x, int y);
 extern  void    specify_vertexArray(nmb_PlaneSelection plane, int i, int count);
 

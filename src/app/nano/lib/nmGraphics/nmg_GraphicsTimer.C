@@ -335,6 +335,11 @@ void nmg_Graphics_Timer::setRulergridOffset (float x, float y) {
   d_imp->setRulergridOffset(x, y);
 }
 
+void nmg_Graphics_Timer::setNullDataAlphaToggle (int val) {
+  activateTimer();
+  d_imp->setNullDataAlphaToggle(val);
+}
+
 void nmg_Graphics_Timer::setRulergridOpacity (float alpha) {
   activateTimer();
   d_imp->setRulergridOpacity(alpha);

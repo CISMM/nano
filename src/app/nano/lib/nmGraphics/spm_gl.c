@@ -8,6 +8,7 @@
  * either uniform or of Z relative to X and Y, to distort the coordinates
  * present in the grid file.  All scaling or other transformations should
  * be set up before calling these routines.
+
  */
 #ifdef _WIN32
 #include        <windows.h>  // This must be included before <GL/gl.h>
@@ -22,7 +23,7 @@
 #include <nmb_PlaneSelection.h>
 
 #include "spm_gl.h"
-//#include "Tcl_Linkvar.h"
+#include "Tcl_Linkvar.h"
 #include "graphics_globals.h"
 #include "BCPlane.h"
 #include "Timer.h"
@@ -41,8 +42,6 @@
 #endif
 
 Vertex_Struct ** vertexptr = NULL;
-
-
 
 //---------------------------------------------------------------------------
 // Vector utility routines.
@@ -188,8 +187,6 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
 }
 
 
-
-
 /*	This routine will create the openGL commands needed to display a
  * triangle strip for one of the strips needed to show a grid.  This routine
  * displays a strip along the X axis;  the "which" parameter selects from the
@@ -324,6 +321,12 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   int i;
   GLfloat Normal [3];
   GLfloat Vertex [3];
+
+  /* Put the vertex at the correct location */
+   
+  Vertex[0]= (float) planes.height->xInWorld(x);
+  Vertex[1]= (float) planes.height->yInWorld(y);
+  Vertex[2]= (float) planes.height->valueInWorld(x, y);
   
   /* Make sure it is a legal vertex */
   if ( (x < 0) || (x > planes.height->numX() - 1) ||
@@ -363,15 +366,28 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     Color[0] = 1.0f;
     Color[1] = 1.0f;
     Color[2] = 1.0f;
-    Color[3] = g_surface_alpha * 255;
-  } else if (g_PRERENDERED_COLORS) {
+    
+    if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+      Color[3] = 0.0f;
+    }
+    else {
+          Color[3] = g_surface_alpha * 255;
+    }
+  } 
+  else if (g_PRERENDERED_COLORS) {
     Color[0] = planes.red->value(x, y);
     Color[1] = planes.green->value(x, y);
     Color[2] = planes.blue->value(x, y);
-    Color[3] = g_surface_alpha * 255;
+    if ( (g_null_data_alpha_toggle) && Vertex[2] == 0.0 ) {
+      Color[3] = 0.0f;
+    }
+    else {
+      Color[3] = g_surface_alpha * 255;
+    }
       // XXX why do the other implementations cast this to a GLubyte
       // before writing it into a float?
-  } else if (planes.color) {
+  } 
+  else if (planes.color) {
     double scale = (planes.color->value(x, y) - g_color_slider_min) /
       (g_color_slider_max - g_color_slider_min);
     scale = min(1.0, scale);
@@ -379,12 +395,24 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     if (g_curColorMap) {    // Use the color map loaded from file
       float r, g, b, a;
       g_curColorMap->lookup(scale, &r, &g, &b, &a);
-      Color[0] = r; Color[1] = g; Color[2] = b; Color[3] = (GLubyte) (g_surface_alpha * 255);
-    } else {      // Use the CUSTOM color mapping tool
+      Color[0] = r; Color[1] = g; Color[2] = b; 
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+	Color[3] = (GLubyte) 0;
+      }
+      else {
+        Color[3] = (GLubyte) (g_surface_alpha * 255);
+      }
+    } 
+    else {      // Use the CUSTOM color mapping tool
       for (i = 0; i < 3; i++) {
 	double  color_diff = (maxColor[i] - minColor[i]);
 	Color[i] = minColor[i] + (color_diff * scale);
-        Color[3] = (GLubyte) (g_surface_alpha * 255);
+	if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+	  Color[3] = (GLubyte) 0;
+	}
+	else {
+	   Color[3] = (GLubyte) (g_surface_alpha * 255);
+     	}
       
       }
     }
@@ -394,10 +422,21 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
       vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
       vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255); 
-      vertexArrayPtr->Color[3] = (GLubyte) (g_surface_alpha * 255);
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+	vertexArrayPtr->Color[3] = 0;
+      }
+      else {
+        vertexArrayPtr->Color[3] = (GLubyte) (g_surface_alpha * 255);
+      }
     }
     else {
-      glColor4fv(Color);
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
+	Color[3] = 0.0;
+	glColor4fv(Color);
+      }
+      else {
+	glColor4fv(Color);
+      }
     }
   }
 
@@ -626,12 +665,6 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
 
 #endif
   
-  /* Put the vertex at the correct location */
-  
-  Vertex[0]= (float) planes.height->xInWorld(x);
-  Vertex[1]= (float) planes.height->yInWorld(y);
-  Vertex[2]= (float) planes.height->valueInWorld(x, y);
-  
   if(g_VERTEX_ARRAY) {
     vertexArrayPtr->Vertex[0] = Vertex[0];
     vertexArrayPtr->Vertex[1] = Vertex[1];
@@ -725,7 +758,7 @@ int spm_y_strip( nmb_PlaneSelection planes,
   VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
 	for (y = 0; y < planes.height->numY(); y += g_stride) {	// bottom->top
 	  for (x = which+g_stride; x >= which; x -= g_stride) {// right->left
- if (describe_gl_vertex(planes, minColor,maxColor, x,y, NULL)) {
+	    if (describe_gl_vertex(planes, minColor,maxColor, x,y, NULL)) {
 		return(-1);
 	    }
 	  }
@@ -836,7 +869,9 @@ void    spm_set_surface_materials(void)
 
 	/* Set a color, in case the color is not being adjusted per vertex. */
 	/* Use the min color for this. */
-        g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
+
+	g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
+
 	glColor4dv(g_minColor);
 
 	// Turn texture mapping to the appropriate state

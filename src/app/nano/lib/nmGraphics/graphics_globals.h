@@ -151,6 +151,7 @@ extern float g_rulergrid_cos;
 extern int g_ruler_r;
 extern int g_ruler_g;
 extern int g_ruler_b;
+extern int g_null_data_alpha_toggle;
 extern float g_ruler_opacity;
 extern float g_ruler_width_x;
 extern float g_ruler_width_y;

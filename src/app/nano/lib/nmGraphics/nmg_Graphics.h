@@ -274,6 +274,9 @@ class nmg_Graphics {
     virtual void setRulergridOpacity (float alpha) = 0;
       // Sets the alpha value to use with the rulergrid.
     virtual void setRulergridScale (float) = 0;
+      // Toggles whether or not to set the data with z-values 0.0 (i.e.
+      // it hasn't been received yet) to be rendered invisible or not
+    virtual void setNullDataAlphaToggle( int v ) = 0;
       // Sets the number of nanometers between rulings in the
       // rulergrid.
     virtual void setRulergridWidths (float x, float y) = 0;
@@ -419,6 +422,7 @@ class nmg_Graphics {
     vrpn_int32 d_setRulergridAngle_type;
     vrpn_int32 d_setRulergridColor_type;
     vrpn_int32 d_setRulergridOffset_type;
+    vrpn_int32 d_setNullDataAlphaToggle_type;
     vrpn_int32 d_setRulergridOpacity_type;
     vrpn_int32 d_setRulergridScale_type;
     vrpn_int32 d_setRulergridWidths_type;
@@ -564,6 +568,8 @@ class nmg_Graphics {
     int decode_setRulergridColor (const char * buf, int * r, int * g, int * b);
     char * encode_setRulergridOffset (int * len, float x, float y);
     int decode_setRulergridOffset (const char * buf, float * x, float * y);
+    char * encode_setNullDataAlphaToggle (int * len, int val);
+    int decode_setNullDataAlphaToggle (const char *buf, int * val);
     char * encode_setRulergridOpacity (int * len, float alpha);
     int decode_setRulergridOpacity (const char * buf, float * alpha);
     char * encode_setRulergridScale (int * len, float);

@@ -929,17 +929,23 @@ set nmInfo(pref_acq) [$nmInfo(preferences).acquisition childsite]
 set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
 	"Post-modify jumpback" integer
+checkbutton $nmInfo(pref_acq).null_data_alpha \
+	-text "Alpha blend null data" \
+	-variable null_data_alpha_pressed
 
 pack $nmInfo(preferences).acquisition -fill both
 pack $nmInfo(pref_acq).jump_back -side top -fill x
+pack $nmInfo(pref_acq).null_data_alpha -fill x -side left
 
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
 	$nmInfo(pref_surf_shading).diffuse \
 	$nmInfo(pref_surf_tris).surface_alpha  \
-	$nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
+	$nmInfo(pref_icons).icon_scale \
+	$nmInfo(pref_icons).sphere_scale \
 	$nmInfo(pref_acq).jump_back
+#	$nmInfo(pref_acq).null_alpha_data
 
 #
 # Coupling
@@ -954,4 +960,8 @@ checkbutton $nmInfo(pref_coupling).finegrained_coupling \
 
 pack $nmInfo(preferences).coupling -fill both
 pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
+
+
+
+
 

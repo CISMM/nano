@@ -113,6 +113,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setRulergridAngle (float);
     virtual void setRulergridColor (int r, int g, int b);
     virtual void setRulergridOffset (float x, float y);
+    virtual void setNullDataAlphaToggle( int );
     virtual void setRulergridOpacity (float alpha);
     virtual void setRulergridScale (float);
     virtual void setRulergridWidths (float x, float y);
@@ -249,6 +250,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setRulergridColor (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridOffset (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridOpacity (void *, vrpn_HANDLERPARAM);
+    static int handle_setNullDataAlphaToggle( void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridScale (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridWidths (void *, vrpn_HANDLERPARAM);
     static int handle_setSpecularity (void *, vrpn_HANDLERPARAM);

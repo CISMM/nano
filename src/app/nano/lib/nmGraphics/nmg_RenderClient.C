@@ -199,6 +199,12 @@ void nmg_Graphics_RenderClient::setRulergridOffset (float a, float b) {
 }
 
 // virtual
+void nmg_Graphics_RenderClient::setNullDataAlphaToggle (int val) {
+  blockTimer();
+  nmg_Graphics_Remote::setNullDataAlphaToggle (val);
+}
+
+// virtual
 void nmg_Graphics_RenderClient::setRulergridScale (float a) {
   blockTimer();
   nmg_Graphics_Remote::setRulergridScale (a);

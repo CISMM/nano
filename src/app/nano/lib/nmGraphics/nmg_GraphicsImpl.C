@@ -302,6 +302,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setRulergridOffset_type,
                                handle_setRulergridOffset,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setNullDataAlphaToggle_type,
+			       handle_setNullDataAlphaToggle,
+			       this, vrpn_ANY_SENDER);
   connection->register_handler(d_setRulergridOpacity_type,
                                handle_setRulergridOpacity,
                                this, vrpn_ANY_SENDER);
@@ -2053,6 +2056,11 @@ void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
   causeGridRedraw();
 }
 
+void nmg_Graphics_Implementation::setNullDataAlphaToggle( int v ) {
+  g_null_data_alpha_toggle = v;
+  causeGridRedraw();
+}
+
 void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOpacity().\n");
   g_ruler_opacity = alpha;
@@ -3041,6 +3049,17 @@ int nmg_Graphics_Implementation::handle_setRulergridOffset
 
   CHECK(it->decode_setRulergridOffset(p.buffer, &x, &y));
   it->setRulergridOffset(x, y);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setNullDataAlphaToggle
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int val;
+
+  CHECK(it->decode_setNullDataAlphaToggle(p.buffer, &val));
+  it->setNullDataAlphaToggle(val);
   return 0;
 }
 

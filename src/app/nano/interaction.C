@@ -207,6 +207,7 @@ Tclvar_int xy_lock("xy_lock_pressed");
 static int	tcl_trigger_just_forced_on = 0;
 static int	tcl_trigger_just_forced_off = 0;
 static void	handle_trigger_change( vrpn_int32 val, void *userdata );
+
 Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
 
 /**
@@ -355,7 +356,6 @@ fprintf(stderr, "No force device, "
   }
 
 }
-
 
 static void handle_trigger_change( vrpn_int32 val, void * )
 {

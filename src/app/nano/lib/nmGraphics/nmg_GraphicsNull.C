@@ -155,6 +155,7 @@ void nmg_Graphics_Null::enableRulergrid (int ) {}
 void nmg_Graphics_Null::setRulergridAngle (float ) {}
 void nmg_Graphics_Null::setRulergridColor (int , int , int ) {}
 void nmg_Graphics_Null::setRulergridOffset (float , float ) {}
+void nmg_Graphics_Null::setNullDataAlphaToggle( int ) {}
 void nmg_Graphics_Null::setRulergridOpacity (float ) {}
 void nmg_Graphics_Null::setRulergridScale (float ) {}
 void nmg_Graphics_Null::setRulergridWidths (float , float ) {}

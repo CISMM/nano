@@ -179,6 +179,7 @@ static void handle_alpha_slider_change (vrpn_float64, void *);
 static void handle_color_slider_change (vrpn_float64, void *);
 static void handle_rulergrid_offset_change (vrpn_float64, void *);
 static void handle_rulergrid_scale_change (vrpn_float64, void *);
+static void handle_null_data_alpha_change( vrpn_int32 val, void *userdata );
 
 ///so we can track hand position of collaborator(s)
 static void handle_collab_machine_name_change(const char *new_value, void *userdata);
@@ -599,6 +600,9 @@ TclNet_float rulergrid_scale ("rulergrid_scale", 500);
 TclNet_float rulergrid_angle ("rulergrid_angle", 0);
 TclNet_float ruler_width_x ("ruler_width_x", 1);
 TclNet_float ruler_width_y ("ruler_width_y", 1);
+
+/// alpha toggle variable
+TclNet_int toggle_null_data_alpha ("null_data_alpha_pressed", 0);
 
 ///set default Rulergrid opacity to 128 (50%) instead of 255 (100%)
 TclNet_float ruler_opacity ("ruler_opacity", 128);
@@ -1160,6 +1164,8 @@ void shutdown_connections (void) {
   rulergrid_changed.bindConnection(NULL);
   rulergrid_enabled.bindConnection(NULL);
 
+  toggle_null_data_alpha.bindConnection(NULL);
+
   //display_realign_textures.bindConnection(NULL);
 
     share_sync_state.bindConnection(NULL);
@@ -1305,6 +1311,15 @@ static void handle_rulergrid_offset_change (vrpn_float64, void * userdata) {
   //cause_grid_redraw(0.0, NULL);
 }
 
+/**
+ * callback function for the Use null data alpha button in preferences.
+ */
+static void handle_null_data_alpha_change(vrpn_int32 val, void * userdata)
+{
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  g->setNullDataAlphaToggle(val);
+}
+
 static void handle_rulergrid_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridScale(rulergrid_scale);
@@ -1315,6 +1330,7 @@ static void handle_x_value_change (vrpn_float64, void *) {
 //fprintf(stderr, "In handle_x_value_change()\n");
   x_set_scale(x_min_value, x_max_value);
 }
+
 
 // NANOX
 
@@ -2418,6 +2434,9 @@ static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridAngle(value);
 }
+
+/// Handle the null data alpha value widget toggle change
+
 
 static void handle_replay_rate_change (vrpn_int32 value, void *) {
 
@@ -3846,6 +3865,9 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_load_import_file_change, g);
   load_button_press.addCallback
     (handle_load_button_press_change, g);
+
+  toggle_null_data_alpha.addCallback
+    (handle_null_data_alpha_change, g);
 
   alpha_slider_min.addCallback
             (handle_alpha_slider_change, g);
@@ -6386,7 +6408,6 @@ VERBOSE(1, "Entering main loop");
       // limited to only 2 channels by the Topometrix dsp code and I
       // haven't written the code to add the second channel
     }
-
     /* Run the Tk event handler if we are using Tk in any of the code */
     if( tkenable || (interp != NULL) ) {
 	VERBOSE(4, "  Handling Tk events");

@@ -46,7 +46,7 @@ float g_buzz_slider_min = 0.0f;
 float g_buzz_slider_max = 1.0f;
 
 int g_hand_color;  // XXX no initial value
-
+int g_null_data_alpha_toggle = 0;
 float g_icon_scale = 0.25f;
 
 // position:  has it moved?  do we need to generate a new display list

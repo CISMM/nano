@@ -1247,26 +1247,6 @@ void nmg_Graphics_Remote::setRulergridColor (int r, int g, int b) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setRulergridOffset (float x, float y) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setRulergridOffset(&len, x, y);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setRulergridOffset_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setRulergridOffset:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
 void nmg_Graphics_Remote::setRulergridOpacity (float alpha) {
   struct timeval now;
   char * msgbuf;
@@ -1287,6 +1267,26 @@ void nmg_Graphics_Remote::setRulergridOpacity (float alpha) {
     delete [] msgbuf;
 }
 
+void nmg_Graphics_Remote::setRulergridOffset (float x, float y) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_setRulergridOffset(&len, x, y);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setRulergridOffset_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setRulergridOffset:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
 void nmg_Graphics_Remote::setRulergridScale (float scale) {
   struct timeval now;
   char * msgbuf;
@@ -1300,6 +1300,27 @@ void nmg_Graphics_Remote::setRulergridScale (float scale) {
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::setRulergridScale:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::setNullDataAlphaToggle (int val) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_setNullDataAlphaToggle(&len, val);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, 
+			   d_setNullDataAlphaToggle_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setNullDataAlphaToggle:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

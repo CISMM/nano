@@ -154,9 +154,12 @@ extern	Tclvar_int using_phantom_button;	// microscape.c
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 
+/// Also handles the runtime alpha selection values
 extern  Tclvar_float            color_slider_min_limit;
 extern  Tclvar_float            color_slider_max_limit;
 extern  TclNet_float            color_slider_min, color_slider_max;
+extern int noDataAlpha;
+
 
 //--------------------------------------------------------------------------
 ///These select the plane to map compliance from and teh scale of the mapping.
@@ -216,6 +219,10 @@ extern  TclNet_float rulergrid_xoffset;
 extern  TclNet_float rulergrid_yoffset;
 extern  TclNet_float rulergrid_angle;
 extern	TclNet_int rulergrid_enabled;
+
+//---------------------------------------------------------------------------
+/// This is for toggling the null data alpha compensation on and off
+extern  TclNet_int toggle_null_data_alpha;
 
 //---------------------------------------------------------------------------
 /// These select the plane to map alpha from and the scale of the mapping. 

@@ -101,6 +101,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setRulergridAngle (float);
     virtual void setRulergridColor (int r, int g, int b);
     virtual void setRulergridOffset (float x, float y);
+    virtual void setNullDataAlphaToggle (int val);
     virtual void setRulergridOpacity (float alpha);
     virtual void setRulergridScale (float);
     virtual void setRulergridWidths (float x, float y);

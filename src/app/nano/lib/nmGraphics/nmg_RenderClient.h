@@ -54,6 +54,7 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setTextureTransform (double *);
     virtual void setRulergridAngle (float);
     virtual void setRulergridOffset (float, float);
+    virtual void setNullDataAlphaToggle (int);
     virtual void setRulergridScale (float);
     virtual void setRulergridWidths (float, float);
     virtual void setSpecularity (int);
