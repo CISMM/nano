@@ -2,6 +2,15 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+11.3:  (May 10, 2004) 
+	- fixed a bug that caused nano to crash when doing force curves.
+	  also, nano should no longer print lots of point-result error
+	  messages.
+	- mathematical morphology tool for dilating and eroding a surface
+	  with an image of a tip.
+	- added ability to read files of the STM-format used at the 
+	  University of Hamburg Dept. of Physics.
+
 
 11.2:  (Jan. 19, 2004) This begins the beta-only releases of nano.  The
 	last fully tested release was Aug. 2002; this release incorporates
