@@ -1501,6 +1501,20 @@ proc acceptModifyVars {varlist} {
     global nmInfo
     global save_bg $varlist
 
+    #direct step variables
+    global sphere_axis setting_direct_step_axis modifyp_tool newmodifyp_tool
+#take care of direct step issues
+if {$modifyp_tool == 8 } {
+  #we were in direct step
+  if {$newmodifyp_tool != 8 } {
+     #we are switching out of direct step
+     #disable direct step axis visualizations
+     set sphere_axis 0
+     set setting_direct_step_axis 0
+     set import_grab_object 0
+    }
+   }
+
     # Save changes made by the user
     # modifyp_* = newmodifyp_*
     foreach val [set $varlist] {
@@ -1513,6 +1527,7 @@ proc acceptModifyVars {varlist} {
 
     # Mimick action of "Quick/Full" button
     switch_view
+
 }
 
 ##############################

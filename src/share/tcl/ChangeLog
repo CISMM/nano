@@ -1,4 +1,13 @@
-2002-07008 Jameson Miller
+2002-07-18 Jameson Miller <millerj@cs.unc.edu>
+	*directStep.tcl : new tcl Widgets for displaying axis that follows
+	microscope tip, reseting the direct step axis object. when selecting
+	the "grab Axis" the user is put into grab mode.
+
+	*modify.tcl : when exiting direct step, the direct step axes are
+	removed from the screen.
+	
+
+2002-07-08 Jameson Miller <millerj@cs.unc.edu>
 	* directStep.tcl : new controls for handling axis object. re-did
 	User Interface for stepping along user defined axis.
 

@@ -489,6 +489,8 @@ pack $takestep(axis_controls_3) -anchor nw
 pack $takestep(axis_controls_4) -anchor nw
 pack $takestep(axis_controls_5) -anchor nw
 
+# level 1
+# translation sliders
 
 floatscale $takestep(axis_controls_1).import_transx_slide -1000.0 6000.0 100 1 1 \
 	import_transx "X Translation"
@@ -500,6 +502,7 @@ pack $takestep(axis_controls_1).import_transy_slide -side left
 
 floatscale $takestep(axis_controls_1).import_transz_slide -1000.0 6000.0 100 1 1 \
 	import_transz "Z Translation"
+pack $takestep(axis_controls_1).import_transz_slide -side left
 
 # level 2 buttons
 # locking the translation
@@ -514,6 +517,7 @@ pack $takestep(axis_controls_2).import_lock_transy_button -side left
 
 checkbutton $takestep(axis_controls_2).import_lock_transz_button \
     -text "Lock Z Translation" -variable import_lock_transz
+pack $takestep(axis_controls_2).import_lock_transz_button -side left
 
 checkbutton $takestep(axis_controls_2).import_tune_trans_button \
     -text "Fine Tune Translations" -variable import_tune_trans
@@ -532,7 +536,7 @@ pack $takestep(axis_controls_3).import_roty_slide -side left
 
 floatscale $takestep(axis_controls_3).import_rotz_slide -360 360 1000 1 1 \
 	import_rotz "Z Rotation"
-# pack $takestep(axis_controls_3).import_rotz_slide -side left
+pack $takestep(axis_controls_3).import_rotz_slide -side left
 
 # level 4
 # rotation locks
@@ -546,19 +550,27 @@ pack $takestep(axis_controls_4).import_lock_roty_button -side left
 
 checkbutton $takestep(axis_controls_4).import_lock_rotz_button \
     -text "Lock Z Rotation" -variable import_lock_rotz
-# pack $takestep(axis_controls_4).import_lock_rotz_button
+pack $takestep(axis_controls_4).import_lock_rotz_button -side left
 
 checkbutton $takestep(axis_controls_4).import_tune_rot_button \
     -text "Fine Tune Rotations" -variable import_tune_rot
 pack $takestep(axis_controls_4).import_tune_rot_button -side left
 
 #level 5
-# fine tuning
+# grabing the object and other useful functions
 
-checkbutton $takestep(axis_controls_5).import_grab_object \
-    -text "Grab axis" -variable import_grab_object
-pack $takestep(axis_controls_5).import_grab_object
+# this should also put us into grab mode. 
+checkbutton $takestep(axis_controls_5).ds_grab_object \
+    -text "Grab axis" -variable import_grab_object -command set_ds_grab_object
+pack $takestep(axis_controls_5).ds_grab_object -side left
 
+checkbutton $takestep(axis_controls_5).ds_sphere_axis \
+	-text "sphere_axis" -variable sphere_axis
+pack $takestep(axis_controls_5).ds_sphere_axis -side left
+
+button $takestep(axis_controls_5).ds_reset_axis \
+  -text "reset axis" -command {reset_ds_obj}
+pack $takestep(axis_controls_5).ds_reset_axis -side left
 
 # ---------------------------------------------------------
 pack  $takestep(goto).go_to_pos -side left
@@ -636,8 +648,34 @@ proc set_ds_axis {nm el op} {
 	set current_object_new "axis.dsa"
 	set import_scale 300
     } else {
-	# "hide.import_objects"
+    #maybe close the axis object here?
+
+	# this doesn't work
+    global modelFile nmInfo import_file_label
+
+    set modelFile ""
+    set import_file_label "all"
     }
+
+}
+
+proc reset_ds_obj { } {
+global import_transx import_transy import_transz
+global import_rotx import_roty import_rotz
+set import_transx 0
+set import_transy 0
+set import_transz 0
+
+set import_rotx 0
+set import_roty 0
+set import_rotz 0
+}
+proc set_ds_grab_object { } {
+global import_grab_object
+global user_0_mode
+if {$import_grab_object == 1} {
+   set user_0_mode 1
+}
 
 }
 
@@ -726,13 +764,7 @@ proc show_direct_step_controls {nm el op} {
 	    pack forget $takestep(current_pos_c).cur_z
 	    pack forget $takestep(current_pos_c).value_cur_z
 
-	    #these widgets are in the axis controls
-	    pack forget $takestep(axis_controls_1).import_transz
-	    pack forget $takestep(axis_controls_2).import_lock_transz
-	    pack forget $takestep(axis_controls_3).import_rotz_slide
-	    pack forget $takestep(axis_controls_4).import_lock_rotz_button
-
-	    pack $takestep(ds).color_axis
+	    pack $takestep(ds).color_axis -side left
 	    pack $takestep(color_axis).stepping_c -side left -anchor nw
 	    pack $takestep(color_axis).step_size_frame_c -anchor nw
 	    pack $takestep(color_axis).go_to_pos_frame_c -anchor nw
@@ -747,7 +779,7 @@ proc show_direct_step_controls {nm el op} {
 
 	} else {
 	    
-	    pack $takestep(ds).color_axis
+	    pack $takestep(ds).color_axis -side left
 	    pack $takestep(color_axis).stepping_c -side left
 	    pack $takestep(color_axis).z_stepping_c -side left -anchor nw
 	    pack $takestep(color_axis).step_size_frame_c -anchor nw
@@ -757,18 +789,10 @@ proc show_direct_step_controls {nm el op} {
 	    
 	    pack $takestep(stepSize_c).step_z_size_c -side left
 	    pack $takestep(pos_c).z_pos_c -side left
-	    #pack $takestep(current_pos_c).cur_z_c $takestep(current_pos).value_cur_z -side left
+	    pack $takestep(current_pos_c).cur_z_c $takestep(current_pos).value_cur_z -side left
 
 	    pack forget $takestep(axis_controls_2).import_tune_trans_button
 	    pack forget $takestep(axis_controls_4).import_tune_rot_button
-
-	    #add Z widgets into the axis controls frame
-	    pack $takestep(axis_controls_1).import_transz_slide -side left
-	    pack $takestep(axis_controls_2).import_lock_transz_button -side left
-	    pack $takestep(axis_controls_3).import_rotz_slide -side left
-	    pack $takestep(axis_controls_4).import_lock_rotz_button -side left
-	    pack $takestep(axis_controls_2).import_tune_trans_button -side left
-	    pack $takestep(axis_controls_4).import_tune_rot_button -side left
 
 	    pack $takestep(ds).axis_controls -anchor nw
 	}
