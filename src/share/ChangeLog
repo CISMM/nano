@@ -1,3 +1,8 @@
+2000-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+        * Merged thirdtech_branch for Makefile.depend to fix
+        dependency problems on pc_win32 (uses .obj instead of .o)
+
 2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* Added -lglui before -lglut to allow multiScope to compile.
