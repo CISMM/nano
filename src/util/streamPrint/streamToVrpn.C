@@ -154,8 +154,6 @@ int	translate_packet(stm_stream *instream)
   static	char    buffer[MAXBUF];   /* Holds data from the client */
   int     bufsize;        /* Number of characters read */
   char    *bufptr;        /* Current location in buffer */
-  static	char	outbuffer[2*MAXBUF];	/* Holds output data */
-  char	*outbufptr;
 
   char header[5000];
   vrpn_int32 iscrap;
@@ -186,7 +184,6 @@ int	translate_packet(stm_stream *instream)
 
   /* While the buffer has not been used up, read more reports */
   bufptr = buffer;        /* Point bufptr to buffer start */
-  outbufptr = outbuffer;	/* Point output buffer to start */
 
   while ( (bufptr-buffer) < bufsize ) {
     int	data_type;

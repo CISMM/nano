@@ -368,7 +368,7 @@ int	stm_read_block_from_stream(stm_stream* s, /* Stream to write to */
   /* Advance the pointer */
   s->cur += len;
   
-  return(len);
+  return((int)len);
 }
 
 
