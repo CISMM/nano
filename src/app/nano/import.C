@@ -7,6 +7,7 @@
 #include <URTexture.h>
 #include <FileGenerator.h>
 #include <MSIFileGenerator.h>
+
 #include <string.h>
 
 #include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
@@ -118,14 +119,10 @@ static void handle_current_object(const char*, void*) {
 static void handle_import_file_change (const char *, void *) {
     static char * old_name = "";
     static const float convert = 1.0f/255;
-	    
-printf("here\n");
-
-printf("%s\n", modelFile.string());
 
 
     if (modelFile.string()) {  
-        if (/*strcmp(modelFile.string(),"") != 0*/ 1) {          
+        if (strcmp(modelFile.string(),"") != 0) {          
             //Only try to create the object if there is a file specified.
             URPolygon *obj = new URPolygon;
 			obj->SetCCW(import_CCW);
@@ -253,9 +250,6 @@ static  void handle_import_axis_step_change (vrpn_int32, void *)
 
 static  void handle_import_scale_change (vrpn_float64, void *)
 {
-// ONLY SENDS SCALE INFO IF NOT ALL SELECTED RIGHT NOW...CHANGE THIS
-
-
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		double i = import_scale;
@@ -272,7 +266,6 @@ static  void handle_import_scale_change (vrpn_float64, void *)
 				(SimulatedMicroscope != NULL)) {
 				SimulatedMicroscope->encode_and_sendScale(import_scale);
 			}
-
 		}
 	}
 }
@@ -290,6 +283,14 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 			URender &obj = node->TGetContents();
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
+			
+			// if a tube file, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
+			}
 		}
     }
 }
@@ -307,6 +308,14 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 			URender &obj = node->TGetContents();
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
+			
+			// if a tube file, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
+			}
 		}
     }
 }
@@ -324,6 +333,14 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 			URender &obj = node->TGetContents();
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
+						
+			// if a tube file, send trans
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
+			}
 		}
     }
 }
@@ -341,6 +358,15 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 		    URender &obj = node->TGetContents();
 		    const q_type &rot = obj.GetLocalXform().GetRot();
 		    obj.GetLocalXform().SetRotate(import_rotx, rot[1], rot[2], rot[3]);
+						
+			// if a tube file, send rot
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
+														obj.GetLocalXform().GetRot()[1],
+														obj.GetLocalXform().GetRot()[2],
+														obj.GetLocalXform().GetRot()[3]);
+			}
 		}
     }
 }
@@ -358,6 +384,15 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 	        URender &obj = node->TGetContents();
 	        const q_type &rot = obj.GetLocalXform().GetRot();
 	        obj.GetLocalXform().SetRotate(rot[0], import_roty, rot[2], rot[3]);
+									
+			// if a tube file, send rot
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
+														obj.GetLocalXform().GetRot()[1],
+														obj.GetLocalXform().GetRot()[2],
+														obj.GetLocalXform().GetRot()[3]);
+			}
 	    }
 	}
 }
@@ -375,6 +410,15 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 	        URender &obj = node->TGetContents();
 	        const q_type &rot = obj.GetLocalXform().GetRot();
 	        obj.GetLocalXform().SetRotate(rot[0], rot[1], import_rotz, rot[3]);
+									
+			// if a tube file, send rot
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
+														obj.GetLocalXform().GetRot()[1],
+														obj.GetLocalXform().GetRot()[2],
+														obj.GetLocalXform().GetRot()[3]);
+			}
 	   }
 	}
 }

@@ -1,3 +1,7 @@
+2002-04-02  David Borland <borland@cs.unc.edu>
+        * import.C:  Added automatic sending of tube translation and rotation 
+        to AFM simulator
+
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.C (handle_viz_dataset_change): Change the order of
