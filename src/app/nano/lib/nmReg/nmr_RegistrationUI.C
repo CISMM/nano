@@ -375,7 +375,9 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
 {
     //printf("nmr_RegistrationUI::handle_registrationImage3D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
-    if (!me->d_dataset) return;
+    // Don't do anything if reg window is not open - instead we will
+    // be called explicitly in handle_registrationEnabled_change below. 
+    if (!me->d_dataset || !me->d_registrationEnabled) return;
     nmb_Image *im = me->d_dataset->dataImages()->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
@@ -407,7 +409,9 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
 {
     //printf("nmr_RegistrationUI::handle_registrationImage2D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
-    if (!me->d_dataset) return;
+    // Don't do anything if reg window is not open - instead we will
+    // be called explicitly in handle_registrationEnabled_change below. 
+    if (!me->d_dataset || !me->d_registrationEnabled) return;
     nmb_Image *im = me->d_dataset->dataImages()->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
@@ -539,7 +543,7 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
 
     if (value) {
       // set up texture in graphics
-      double dmin,dmax,cmin,cmax;
+      double dmin=0,dmax=1,cmin=0,cmax=1;
       me->d_imageDisplay->setDisplayColorMap(im,
          me->d_2DImageCMap->getColorMapName(), "");
       me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax,
@@ -665,6 +669,12 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (value) {
         me->d_aligner->setGUIEnable(vrpn_TRUE);
+        //Init images
+        handle_registrationImage3D_change(
+            me->d_registrationImageName3D.string(), me);
+        handle_registrationImage2D_change(
+            me->d_registrationImageName2D.string(), me);
+
         // We're popping up our window. Set the 3D image to 
         // height plane if we have any clue what that is. 
 /*
