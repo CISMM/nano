@@ -54,12 +54,17 @@ class PatternEditor {
                              double exposure);
    void setDrawingTool(PE_DrawTool tool);
    void clearShape();
+   void addTestGrid(double startX_nm, double startY_nm,
+                    double endX_nm, double endY_nm,
+                    int numHorizontal, int numVertical);
    void saveImageBuffer(const char *filename,
                 const ImageType filetype);
    void setViewport(double minX_nm, double minY_nm, 
                     double maxX_nm, double maxY_nm);
-   list<PatternShape> shapeList();
-   list<PatternPoint> dumpPointList();
+   void getViewport(double &minX_nm, double &minY_nm,
+                    double &maxX_nm, double &maxY_nm);
+   list<PatternShape> &getShapeList();
+   void setShapeList(list<PatternShape> &shapes);
 
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 
@@ -87,6 +92,9 @@ class PatternEditor {
    void mainWinNMToPixels(const double dist_nm,double &dist_pixels);
    void zoomBy(double centerX_nm, double centerY_nm,
                            double magFactor);
+
+   void clampMainWinRectangle(double &xmin, double &ymin,
+                              double &xmax, double &ymax);
 
    // stuff for creating a pattern
    int startShape(ShapeType type);
@@ -169,9 +177,10 @@ class PatternEditor {
    
    list<ImageElement> d_images;
    list<PatternShape> d_pattern;
-   list<PatternPoint> d_dumpPoints;
    list<PatternPoint>::iterator d_selectedPoint;
    list<PatternShape>::iterator d_selectedShape;
+
+   vrpn_bool d_viewportSet;
 
 };
 

@@ -1,4 +1,5 @@
 #include "exposureManager.h"
+#include "delay.h"
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -22,11 +23,13 @@ ExposureManager::ExposureManager():
   d_beam_current_picoAmps(0),
 
   d_line_overlap_factor(2),
-  d_area_overlap_factor(4)
+  d_area_overlap_factor(4),
+  d_timingCalibrationDone(vrpn_FALSE),
+  d_overhead_per_point_msec(0)
 {
-
 }
 
+#pragma optimize("",off)
 void ExposureManager::convert_nm_to_DAC(
      const double x_nm, const double y_nm, int &xDAC, int &yDAC)
 {
@@ -35,6 +38,7 @@ void ExposureManager::convert_nm_to_DAC(
          (int)floor(y_nm*(double)d_ySpan_DACunits/d_ySpan_nm)-1;
   return;
 }
+#pragma optimize("",on)
 
 void ExposureManager::getDwellTimes(double &line_sec, double &area_sec)
 {
@@ -44,8 +48,9 @@ void ExposureManager::getDwellTimes(double &line_sec, double &area_sec)
 }
 
 void ExposureManager::exposePattern(list<PatternShape> shapes,
-                     list<PatternPoint> dump_points,
-                     nmm_Microscope_SEM_Remote *sem, int mag)
+                     nmm_Microscope_SEM_Remote *sem, int mag, 
+                     int &numPointsGenerated, double &totalExposureTimeSec,
+                     ExposeMode mode, int recursion_level)
 {
 #ifdef USE_POINT_MESSAGES
 
@@ -54,158 +59,264 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
   double dwell_time_sec;
   vrpn_int32 dwell_time_nsec;
   int x_DAC, y_DAC;
-  int pointCount = 0;
 
   sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
   sem->getMaxScan(d_xSpan_DACunits, d_ySpan_DACunits);
 
-  printf("starting test\n");
-  struct timeval start_time, end_time;
-  gettimeofday(&start_time, NULL);
-  for (shape = shapes.begin();
-       shape != shapes.end(); shape++) {
-    initShape(*shape);
-    while (getNextPoint(pnt_nm, dwell_time_sec)) {
-      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
-      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
-      pointCount++;
-    }
+  // only printout timing for the complete list of shapes and not for sublists
+  if (recursion_level == 0) {
+    numPointsGenerated = 0;
+    totalExposureTimeSec = 0;
+    printf("starting test\n");
+    struct timeval start_time, end_time;
+    gettimeofday(&start_time, NULL);
+    exposePattern(shapes, sem, mag, numPointsGenerated,
+                  totalExposureTimeSec, vrpn_FALSE, 1);
+    gettimeofday(&end_time, NULL);
+    struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
+    double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
+    double elapsed_time_sec = elapsed_time_msec*0.001;
+    double time_per_point_msec = elapsed_time_msec/(double)numPointsGenerated;
+    printf("ending test\n");
+    printf("%d points generated at %g msec per point\n",
+        numPointsGenerated, time_per_point_msec);
   }
-  gettimeofday(&end_time, NULL);
-  struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
-  double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
-  double elapsed_time_sec = elapsed_time_msec*0.001;
-  double time_per_point_msec = elapsed_time_msec/(double)pointCount;
-  printf("ending test\n");
-  printf("%d points generated at %g msec per point\n",
-      pointCount, time_per_point_msec);
 
-
-  pointCount = 0;
   for (shape = shapes.begin();
        shape != shapes.end(); shape++) {
-    printf("Starting shape\n");
-    initShape(*shape);
-    while (getNextPoint(pnt_nm, dwell_time_sec)) {
-      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
-      sem->setPointDwellTime(dwell_time_nsec);
-      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
-      sem->goToPoint(x_DAC, y_DAC);
-      pointCount++;
-      if (pointCount % 200 == 0) {
-         sem->mainloop();
+    if ((*shape).d_type == PS_COMPOSITE) {
+      exposePattern((*shape).d_shapes, sem, mag, 
+                    numPointsGenerated, totalExposureTimeSec,
+                    mode, recursion_level+1);
+    } else {
+      printf("Starting shape\n");
+      initShape(*shape);
+      while (getNextPoint(pnt_nm, dwell_time_sec)) {
+        numPointsGenerated++;
+        dwell_time_nsec = (vrpn_int32)floor(dwell_time_sec*1e9);
+        totalExposureTimeSec += dwell_time_sec;
+        convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+        if (mode == NORMAL_EXPOSE) {
+          sem->setPointDwellTime(dwell_time_nsec);
+          sem->goToPoint(x_DAC, y_DAC);
+          if (numPointsGenerated % 200 == 0) {
+            sem->mainloop();
+          }
+        }
       }
+      if (mode == NORMAL_EXPOSE) {
+        sem->mainloop();
+      }
+      printf("Finished with shape\n");
     }
-    printf("Finished with shape\n");
   }
 #else 
 
   list<PatternShape>::iterator shape;
   list<PatternPoint>::iterator point;
-  vrpn_int32 numPoints;
+  vrpn_int32 numPointsInShape;
   vrpn_float32 exposure_uCoul_per_cm2;
   vrpn_float32 lineWidth_nm;
   vrpn_float32 *x_nm, *y_nm;
   int i;
 
-  sem->setBeamCurrent(d_beam_current_picoAmps);
-  sem->setBeamWidth(d_beam_width_nm);
-  sem->clearExposePattern();
+  if (recursion_level == 0) {
+    if (mode == NORMAL_EXPOSE) {
+      sem->setBeamCurrent(d_beam_current_picoAmps);
+      sem->setBeamWidth(d_beam_width_nm);
+      sem->clearExposePattern();
+    }
+    numPointsGenerated = 0;
+    totalExposureTimeSec = 0.0;
+  }
 
   for (shape = shapes.begin();
        shape != shapes.end(); shape++) {
-    numPoints = 0;
-    for (point = (*shape).pointListBegin();
-         point != (*shape).pointListEnd(); point++) {
-      numPoints++;
+
+    // convert the point list into a pair of arrays if this is a simple shape
+    if ((*shape).d_type != PS_COMPOSITE) {
+      numPointsInShape = 0;
+      for (point = (*shape).pointListBegin();
+           point != (*shape).pointListEnd(); point++) {
+        numPointsInShape++;
+      }
+      x_nm = new vrpn_float32[numPointsInShape];
+      y_nm = new vrpn_float32[numPointsInShape];
+      exposure_uCoul_per_cm2 = (*shape).d_exposure_uCoulombs_per_square_cm;
+      lineWidth_nm = (*shape).d_lineWidth_nm;
+      i = 0;
+      for (point = (*shape).pointListBegin();
+           point != (*shape).pointListEnd(); point++) {
+        x_nm[i] = (*point).d_x;
+        y_nm[i] = (*point).d_y;
+        i++;
+      }
+      setExposure(exposure_uCoul_per_cm2);
+      double dwell_time_sec = 0;
+      initShape(*shape);
+      PatternPoint pnt_nm;
+
+      while (getNextPoint(pnt_nm, dwell_time_sec)) {
+        numPointsGenerated++;
+        totalExposureTimeSec += dwell_time_sec;
+      }
     }
-    x_nm = new vrpn_float32[numPoints];
-    y_nm = new vrpn_float32[numPoints];
-    exposure_uCoul_per_cm2 = (*shape).d_exposure_uCoulombs_per_square_cm;
-    lineWidth_nm = (*shape).d_lineWidth_nm;
-    i = 0;
-    for (point = (*shape).pointListBegin();
-         point != (*shape).pointListEnd(); point++) {
-      x_nm[i] = (*point).d_x;
-      y_nm[i] = (*point).d_y;
-      i++;
+
+    if ((*shape).d_type == PS_POLYLINE && (mode == NORMAL_EXPOSE)) {
+      sem->addPolyline(exposure_uCoul_per_cm2, lineWidth_nm, numPointsInShape,
+                         x_nm, y_nm);
+    } else if ((*shape).d_type == PS_POLYGON && (mode == NORMAL_EXPOSE)){
+      sem->addPolygon(exposure_uCoul_per_cm2, numPointsInShape, x_nm, y_nm);
+    } else if ((*shape).d_type == PS_DUMP && (mode == NORMAL_EXPOSE)){
+      sem->addDumpPoint(x_nm[0], y_nm[0]);
+    } else if ((*shape).d_type == PS_COMPOSITE) {
+      exposePattern((*shape).d_shapes, sem, mag,
+                    numPointsGenerated, totalExposureTimeSec,
+                    mode, recursion_level+1);
     }
-    if ((*shape).d_type == PS_POLYLINE) {
-      sem->addPolyline(exposure_uCoul_per_cm2, lineWidth_nm, numPoints, 
-                       x_nm, y_nm);
-    } else if ((*shape).d_type == PS_POLYGON){
-      sem->addPolygon(exposure_uCoul_per_cm2, numPoints, x_nm, y_nm);
+
+    if ((*shape).d_type != PS_COMPOSITE) {
+      delete [] x_nm;
+      delete [] y_nm;
     }
-    delete [] x_nm;
-    delete [] y_nm;
   }
-  sem->addDumpPoint(0.0, 0.0);
-  sem->exposePattern();
+  if (recursion_level == 0 && (mode == NORMAL_EXPOSE)) {
+    sem->exposePattern();
+  }
 
 #endif
 
 }
 
+#pragma optimize("",off)
 void ExposureManager::exposePattern(list<PatternShape> shapes,
-                     list<PatternPoint> dump_points,
-                     nmm_Microscope_SEM_EDAX *sem, int mag)
+                     nmm_Microscope_SEM_EDAX *sem, int mag,
+                     int &numPointsGenerated, double &totalExposureTimeSec,
+                     ExposeMode mode, int recursion_level)
 {
   list<PatternShape>::iterator shape;
   PatternPoint pnt_nm;
   double dwell_time_sec;
   vrpn_int32 dwell_time_nsec;
   int x_DAC, y_DAC;
-  int pointCount = 0;
+  struct timeval t_start, t_end;
 
   sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
   sem->getMaxScan(d_xSpan_DACunits, d_ySpan_DACunits);
 
-  printf("starting test\n");
-  struct timeval start_time, end_time;
-  gettimeofday(&start_time, NULL);
+  // search the list for a dump point to use for timing test
+  int x_DACdump0, y_DACdump0;
+  shape = shapes.begin();
+  list<PatternPoint>::iterator dumpPnt;
+  vrpn_bool dumpPointFound = vrpn_FALSE;
+  while (shape != shapes.end()) {
+    if ((*shape).d_type == PS_DUMP) {
+      dumpPnt = (*shape).pointListBegin();
+      if (dumpPnt != (*shape).pointListEnd()) {
+        convert_nm_to_DAC((*dumpPnt).d_x, (*dumpPnt).d_y, 
+                          x_DACdump0, y_DACdump0);
+        dumpPointFound = vrpn_TRUE;
+        break;
+      }
+    }
+    shape++;
+  }
+
+  if (!dumpPointFound) {
+    printf("Warning: no dump point found to be used for timing test\n");
+    x_DACdump0 = 0;
+    y_DACdump0 = 0;
+  }
+
+  if (recursion_level == 0) {
+    Delay::beginRealTimeSection();
+    d_numPointsTotal = 0;
+    d_exposureTimeTotal_sec = 0.0;
+    numPointsGenerated = 0;
+    totalExposureTimeSec = 0.0;
+    
+    if (!d_timingCalibrationDone) {
+      printf("starting timing calibration test\n");
+      struct timeval start_time, end_time;
+
+      gettimeofday(&start_time, NULL);
+      exposePattern(shapes, sem, mag, d_numPointsTotal, 
+                    d_exposureTimeTotal_sec, DUMP_EXPOSE_MIN_DWELL, 1);
+
+      gettimeofday(&end_time, NULL);
+      struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
+      double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
+      d_overhead_per_point_msec = 
+                        elapsed_time_msec/(double)d_numPointsTotal;
+      printf("ending timing calibration test\n");
+      printf("%d points generated in %g msec; %g msec per point\n",
+          d_numPointsTotal, elapsed_time_msec, d_overhead_per_point_msec);
+      d_timingCalibrationDone = vrpn_TRUE;
+    } else {
+      exposePattern(shapes, sem, mag, d_numPointsTotal, d_exposureTimeTotal_sec,
+                    NO_SEM_COMMANDS, 1);
+    }
+    gettimeofday(&t_start, NULL);
+  }
+
   for (shape = shapes.begin();
        shape != shapes.end(); shape++) {
-    initShape(*shape);
-    while (getNextPoint(pnt_nm, dwell_time_sec)) {
-      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
-      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
-      pointCount++;
+
+    if ((*shape).d_type != PS_COMPOSITE) {
+      printf("Starting shape\n");
+      initShape(*shape);
+      while (getNextPoint(pnt_nm, dwell_time_sec)) {
+        dwell_time_nsec = (vrpn_int32)floor(dwell_time_sec*1e9);
+        dwell_time_sec = dwell_time_nsec*(1e-9); 
+        if (mode == NORMAL_EXPOSE) {
+          sem->setPointDwellTime(dwell_time_nsec, vrpn_FALSE);
+        } else if (mode == DUMP_EXPOSE_MIN_DWELL) {
+          sem->setPointDwellTime(0, vrpn_FALSE);
+        }
+        convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+        vrpn_bool shouldReportStatus = (totalExposureTimeSec >=
+                     ceil(totalExposureTimeSec)-dwell_time_sec);
+        if (mode == NORMAL_EXPOSE) {
+          sem->goToPoint(x_DAC, y_DAC, vrpn_FALSE, d_overhead_per_point_msec);
+          if (shouldReportStatus) {
+            sem->reportExposureStatus(d_numPointsTotal,
+                                      numPointsGenerated,
+                                      d_exposureTimeTotal_sec,
+                                      totalExposureTimeSec);
+          }
+        } else if (mode == DUMP_EXPOSE_MIN_DWELL) {
+          sem->goToPoint(x_DACdump0, y_DACdump0, vrpn_FALSE, 0);
+        }
+        numPointsGenerated++;
+        totalExposureTimeSec += dwell_time_sec;
+      }
+      printf("Finished with shape\n");
+    } else {
+      exposePattern((*shape).d_shapes, sem, mag, 
+           numPointsGenerated, totalExposureTimeSec, 
+           mode, recursion_level+1);
     }
   }
-  gettimeofday(&end_time, NULL);
-  struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
-  double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
-  double elapsed_time_sec = elapsed_time_msec*0.001;
-  double time_per_point_msec = elapsed_time_msec/(double)pointCount;
-  printf("ending test\n");
-  printf("%d points generated at %g msec per point\n",
-      pointCount, time_per_point_msec);
 
+  if (recursion_level == 0) {
+    gettimeofday(&t_end, NULL);
+    Delay::endRealTimeSection();
+    double total_elapsed_time = vrpn_TimevalMsecs(t_end) - 
+                                vrpn_TimevalMsecs(t_start);
+    printf("actual total exposure time = %g msec\n", 
+           total_elapsed_time);
+    sem->reportExposureStatus(d_numPointsTotal, d_numPointsTotal,
+                              d_exposureTimeTotal_sec, d_exposureTimeTotal_sec);
+    numPointsGenerated = d_numPointsTotal;
+    totalExposureTimeSec = d_exposureTimeTotal_sec;
 
-  pointCount = 0;
-  for (shape = shapes.begin();
-       shape != shapes.end(); shape++) {
-    printf("Starting shape\n");
-    initShape(*shape);
-	if ((*shape).d_type == PS_POLYLINE) {
-		dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
-	} else {
-		dwell_time_nsec = (vrpn_int32)floor(d_area_dwell_time_sec*1e9);	
-	}
-	sem->setPointDwellTime(dwell_time_nsec, vrpn_FALSE);
-	
-    while (getNextPoint(pnt_nm, dwell_time_sec)) {
-      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
-      sem->goToPoint(x_DAC, y_DAC, vrpn_FALSE);
-      pointCount++;
-    }
-    printf("Finished with shape\n");
   }
+
 }
+#pragma optimize("",on)
 
 /* this version is disabled for testing initShape and getNextPoint
 void ExposureManager::exposePattern(list<PatternShape> shapes,
-                     list<PatternPoint> dump_points,
                      nmm_Microscope_SEM_Remote *sem, int mag)
 {
   list<PatternShape>::iterator shape;
@@ -235,7 +346,8 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
     } else {
       numShapes++;
       setExposure((*shape).d_exposure_uCoulombs_per_square_cm);
-      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
+      dwell_time_nsec = (vrpn_int32)floor(dwell_time_sec*1e9);
+
       sem->setPointDwellTime(dwell_time_nsec);
       for (point = (*shape).pointListBegin();
          point != (*shape).pointListEnd(); point++) {
@@ -328,9 +440,12 @@ void ExposureManager::setColumnParameters(double minDwellTime_sec,
 
 }
 
-// setup for exposure of the specified shape
+// setup for exposure of the specified shape (for simple shapes only)
 int ExposureManager::initShape(PatternShape &shape)
 {
+  if (shape.d_type == PS_COMPOSITE) {
+    return -1;
+  }
   setExposure(shape.d_exposure_uCoulombs_per_square_cm);
 
 
@@ -369,6 +484,7 @@ int ExposureManager::initShape(PatternShape &shape)
       return -1;
     }
   } else {
+    printf("this shouldn't happen\n");
     return -1;
   }
   return 0;

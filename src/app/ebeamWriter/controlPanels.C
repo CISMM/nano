@@ -14,6 +14,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_saveImageFileName("save_image_filename", ""),
    d_saveImageFileType("save_image_filetype", ""),
    d_saveImageName("export_plane", ""),
+   d_openPatternFileName("open_pattern_filename", ""),
+   d_savePatternFileName("save_pattern_filename", ""),
+
    d_saveImageFormatList(new Tclvar_list_of_strings()),
    d_bufferImageFileName("bufferImage_filename", ""),
    d_bufferImageFormat("bufferImage_format", ""),
@@ -21,6 +24,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 300),
    d_drawingTool("drawing_tool", 1),
    d_clearDrawing("clear_drawing", 0),
+   d_addTestGrid("add_test_grid", 0),
 
    d_imageColorChanged("image_color_changed", 0),
    d_imageRed("image_r", 255),
@@ -65,6 +69,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semBeamWidth_nm("sem_beam_width_nm", 200),
    d_semBeamCurrent_picoAmps("sem_beam_current_picoAmps", 1),
    d_semBeamExposePushed("sem_beam_expose_now", 0),
+   d_semBeamExposeEnabled("sem_beam_expose_enabled", 0),
+   d_semDoTimingTest("sem_do_timing_test", 0),
+   d_semExposureStatus("sem_exposure_status", "N/A"),
 
    d_patternEditor(pe),
    d_aligner(rp),
@@ -126,8 +133,8 @@ void ControlPanels::setImageList(nmb_ImageList *data)
      return;
   }
   // send the images off to the proxy
-  d_aligner->setImage(NMR_SOURCE, src_im);
-  d_aligner->setImage(NMR_TARGET, tgt_im);
+  d_aligner->setImage(NMR_SOURCE, src_im, vrpn_TRUE, vrpn_FALSE);
+  d_aligner->setImage(NMR_TARGET, tgt_im, vrpn_TRUE, vrpn_FALSE);
   updateCurrentImageControls();
 }
 
@@ -142,14 +149,17 @@ void ControlPanels::displayDwellTimes()
   double beamCurrent = (double)(d_semBeamCurrent_picoAmps);
   double exposure = (double)(d_exposure_uCoulombs_per_square_cm);
 
-  d_exposureManager->setColumnParameters(100e-6,
-										beam_width_nm,
-										beamCurrent);
+  d_exposureManager->setColumnParameters(100e-6, beam_width_nm, beamCurrent);
   d_exposureManager->setExposure(exposure);
   double line_dwell_sec, area_dwell_sec;
   d_exposureManager->getDwellTimes(line_dwell_sec, area_dwell_sec);
-  printf("line: %g usec, area: %g usec\n", line_dwell_sec*1e6, area_dwell_sec*1e6);
+  printf("line: %g usec, area: %g usec\n", 
+            line_dwell_sec*1e6, area_dwell_sec*1e6);
 
+  if (line_dwell_sec < 0.0001 || area_dwell_sec < 0.0001) {
+    fprintf(stderr, "WARNING, WARNING, WARNING:"
+      " dwell time is below EDAX limit; exposure may be inconsistent\n");
+  }
 }
 
 void ControlPanels::setupCallbacks()
@@ -159,11 +169,14 @@ void ControlPanels::setupCallbacks()
   d_openImageFileName.addCallback(handle_openImageFileName_change, this);
   d_saveImageFileName.addCallback(handle_saveImageFileName_change, this);
   d_saveImageName.addCallback(handle_saveImageName_change, this);
+  d_openPatternFileName.addCallback(handle_openPatternFileName_change, this);
+  d_savePatternFileName.addCallback(handle_savePatternFileName_change, this);
 
   d_lineWidth_nm.addCallback(handle_lineWidth_nm_change, this);
   d_exposure_uCoulombs_per_square_cm.addCallback(handle_exposure_change, this);
   d_drawingTool.addCallback(handle_drawingTool_change, this);
   d_clearDrawing.addCallback(handle_clearDrawing_change, this);
+  d_addTestGrid.addCallback(handle_addTestGrid_change, this);
 
   d_imageColorChanged.addCallback(handle_imageColorChanged_change, this);
   d_imageOpacity.addCallback(handle_imageOpacity_change, this);
@@ -212,6 +225,9 @@ void ControlPanels::setupCallbacks()
   d_semBeamCurrent_picoAmps.addCallback(handle_semBeamCurrent_change, this);
   d_semBeamExposePushed.addCallback(
          handle_semBeamExposePushed_change, this);
+  d_semDoTimingTest.addCallback(
+         handle_semDoTimingTest_change, this);
+
 
   // other types of callbacks
   d_aligner->registerChangeHandler((void *)this, handle_registration_change);
@@ -342,6 +358,35 @@ void ControlPanels::handle_saveImageFileName_change(const char * /*new_value*/,
   me->d_saveImageFileName = "";
 }
 
+//static 
+void ControlPanels::handle_openPatternFileName_change(const char *new_value,
+                                                      void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("open pattern file %s\n", (const char *)me->d_openPatternFileName);
+  if (strlen((const char *)me->d_openPatternFileName) <= 0) return;
+
+  if ((me->d_patternFile).readFromFile(
+                                  (const char *)me->d_openPatternFileName)){
+    return;
+  }
+  me->d_patternEditor->setShapeList((me->d_patternFile).getPattern());
+  me->d_openPatternFileName = "";
+}
+
+//static 
+void ControlPanels::handle_savePatternFileName_change(const char *new_value,
+                                                      void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("save pattern file %s\n", (const char *)me->d_savePatternFileName);
+  if (strlen((const char *)me->d_savePatternFileName) <= 0) return;
+
+  (me->d_patternFile).setPattern(me->d_patternEditor->getShapeList());
+  (me->d_patternFile).writeToFile((const char *)me->d_savePatternFileName);
+  me->d_savePatternFileName = "";
+}
+
 // static
 void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 {
@@ -387,6 +432,39 @@ void ControlPanels::handle_clearDrawing_change(int /*new_value*/, void *ud)
   ControlPanels *me = (ControlPanels *)ud;
   printf("clear drawing: %d\n", (int)(me->d_clearDrawing));
   me->d_patternEditor->clearShape();
+}
+
+// static
+void ControlPanels::handle_addTestGrid_change(int /*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  //printf("add test grid: %d\n", (int)(me->d_addTestGrid));
+  double minX_nm, minY_nm;
+  double maxX_nm, maxY_nm;
+  double xSpan_nm, ySpan_nm;
+  int numHorizontal, numVertical;
+
+//  me->d_patternEditor->getViewport(minX_nm, minY_nm, maxX_nm, maxY_nm);
+  me->d_SEM->getScanRegion_nm(xSpan_nm, ySpan_nm);
+
+  // shrink the scan region by 1% on each side to avoid going outside the scan
+  // region in later calculations
+  double inset = 0.01;
+  minX_nm = inset*xSpan_nm;
+  minY_nm = inset*ySpan_nm;
+  maxX_nm = xSpan_nm - minX_nm;
+  maxY_nm = ySpan_nm - minY_nm;
+
+  numVertical = 10;
+  double x_incr = (maxX_nm - minX_nm)/(double)(numVertical-1);
+  double y_incr = x_incr;
+  double y_span = (maxY_nm - minY_nm);
+  numHorizontal = floor(y_span/y_incr) + 1;
+  y_span = (numHorizontal-1)*y_incr;
+  maxY_nm = minY_nm + y_span;
+
+  me->d_patternEditor->addTestGrid(minX_nm, minY_nm, maxX_nm, maxY_nm,
+             numHorizontal, numVertical);
 }
 
 // static
@@ -542,8 +620,9 @@ void ControlPanels::handleRegistrationChange
       nmr_ImageType which_image;
       vrpn_int32 res_x, res_y;
       vrpn_float32 sizeX, sizeY;
-      vrpn_bool height_field;
-      d_aligner->getImageParameters(which_image, res_x, res_y, sizeX, sizeY);
+      vrpn_bool flipX, flipY;
+      d_aligner->getImageParameters(which_image, res_x, res_y, sizeX, sizeY,
+                                    flipX, flipY);
       // this is just a confirmation of settings so we probably don't need 
       // to do anything
       break;
@@ -639,14 +718,16 @@ void ControlPanels::handleSEMChange(
   nmb_PixelType pix_type;
   int i,j;
   vrpn_float32 mag = 1;
-
+  vrpn_int32 numPointsTotal, numPointsDone;
+  vrpn_float32 timeTotal_sec, timeDone_sec;
+  char status[128];
   vrpn_uint8 *uint8_data = NULL;
   vrpn_uint16 *uint16_data = NULL;
   vrpn_float32 *float32_data = NULL;
   nmb_Image *currentImage;
   char currentImageName[256];
   int index = 0;
-
+  double percentDone = 0.0;
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
   double imageRegionWidth = 1000;
@@ -854,6 +935,15 @@ void ControlPanels::handleSEMChange(
       printf("REPORT_MAGNIFICATION: %f\n", mag);
       d_semAcquisitionMagnification = mag;
       break;
+    case nmm_Microscope_SEM::REPORT_EXPOSURE_STATUS:
+      info.sem->getExposureStatus(numPointsTotal, numPointsDone,
+                                  timeTotal_sec, timeDone_sec);
+//      printf("REPORT_EXPOSURE_STATUS: (%d, %d, %g, %g)\n",
+//              numPointsTotal, numPointsDone, timeTotal_sec, timeDone_sec);
+      percentDone = timeDone_sec/timeTotal_sec;
+      sprintf(status, "%g%% done", percentDone);
+      d_semExposureStatus = status;
+      break;
     default:
       printf("unknown message type: %d\n", info.msg_type);
       break;
@@ -875,7 +965,7 @@ void ControlPanels::handle_sourceImageName_change(
      return;
   }
   // send the image off to the proxy
-  me->d_aligner->setImage(NMR_SOURCE, im);
+  me->d_aligner->setImage(NMR_SOURCE, im, vrpn_TRUE, vrpn_FALSE);
 }
 
 // static
@@ -892,7 +982,7 @@ void ControlPanels::handle_targetImageName_change(const char *new_value, void *u
      return;
   }
   // send image off to the proxy
-  me->d_aligner->setImage(NMR_TARGET, im);
+  me->d_aligner->setImage(NMR_TARGET, im, vrpn_TRUE, vrpn_FALSE);
 }
 
 // static
@@ -904,7 +994,7 @@ void ControlPanels::handle_resampleImageName_change(
   printf("resampling %s onto %s at resolution %dx%d\n",
           (const char *)me->d_sourceImageName, 
           (const char *)me->d_targetImageName,
-          me->d_resampleResolutionX, me->d_resampleResolutionY);
+          (int)(me->d_resampleResolutionX), (int)(me->d_resampleResolutionY));
 
   printf("this feature is disabled\n");
 /*
@@ -1183,13 +1273,26 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
   }
   me->d_exposureManager->setColumnParameters(dwell_time_sec,
               beam_width_nm, beamCurrent);
+  int numPointsGenerated = 0;
   expose_point_count = 0;
-  me->d_exposureManager->exposePattern(me->d_patternEditor->shapeList(),
-                                       me->d_patternEditor->dumpPointList(),
-                                     me->d_SEM, me->d_semExposureMagnification);
+  double totalExposureTimeSec = 0.0;
+  me->d_exposureManager->exposePattern(me->d_patternEditor->getShapeList(),
+                                     me->d_SEM, me->d_semExposureMagnification,
+                                     numPointsGenerated, totalExposureTimeSec);
+  printf("Done exposing pattern:"
+         " (%d points; total time expected: %g seconds)\n",
+       numPointsGenerated, totalExposureTimeSec);
   if (me->d_SEM) {
     me->d_SEM->setExternalScanControlEnable(externalControlSave);
   }
+}
+
+// static
+void ControlPanels::handle_semDoTimingTest_change(int /*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("sem timing test: %d\n", (int)me->d_semDoTimingTest);
+  me->d_semBeamExposeEnabled = 1;
 }
 
 /*

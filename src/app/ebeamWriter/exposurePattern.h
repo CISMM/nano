@@ -14,7 +14,7 @@ class PatternPoint {
    double d_x, d_y;
 };
 
-typedef enum {PS_POLYLINE, PS_POLYGON} ShapeType;
+typedef enum {PS_POLYLINE, PS_POLYGON, PS_COMPOSITE, PS_DUMP} ShapeType;
 
 class PatternShape {
   public:
@@ -22,11 +22,14 @@ class PatternShape {
     PatternShape(const PatternShape &sh);
     int operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
     void addPoint(double x, double y);
+    void addSubShape(const PatternShape &sh);
     void removePoint();
+    void clearPoints();
     void translate(double x, double y)
     { d_trans_x += x; d_trans_y += y; }
     void draw(double units_per_pixel_x, double units_per_pixel_y);
     void drawThinPolyline(double units_per_pixel_x, double units_per_pixel_y);
+    void drawDumpPoint(double units_per_pixel_x, double units_per_pixel_y);
     void drawThickPolyline(double units_per_pixel_x, double units_per_pixel_y);
     void drawPolygon(double units_per_pixel_x, double units_per_pixel_y);
     list<PatternPoint>::iterator pointListBegin();
@@ -41,7 +44,10 @@ class PatternShape {
     double d_exposure_uCoulombs_per_square_cm;
     list<PatternPoint> d_points;
     ShapeType d_type;
+    list<PatternShape> d_shapes; // contains child shapes if this is a composite
     double d_trans_x, d_trans_y;
 };
+
+
 
 #endif

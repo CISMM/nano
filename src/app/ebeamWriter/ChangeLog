@@ -1,3 +1,54 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.C (handle_openPatternFileName_change),
+                          (handle_savePatternFileName_change): 
+        adds capability to save and load files containing
+	vector descriptions of exposure patterns
+	(handle_addTestGrid_change): adds a special grid shape to the pattern
+	handleSEMChange): added a progress display to the exposure control panel
+	(handle_semDoTimingTest_change): this function will be used to make
+        measurements which will determine the timing of exposures based on
+	the time to execute the code that controls the SEM - 
+	I need to break up the exposePattern() function into one that just does
+	this and one that just does the exposure
+	* exposureManager.C (exposePattern): many changes to the client and
+	server versions of this function to make it possible to execute these
+	in various test modes for timing measurements - also, fixes many
+	problems with timing of exposure
+	this function now gets called recursively in order
+	to traverse a hierarchical shape list (used for the test grid feature)
+	* exposurePattern.Ch: made two new shape types for dump points and 
+        composite shapes and added drawing routines for these
+
+	* main.C (main): made it so if the server is running in the same
+	process it now runs in its own thread and communication is
+	synchronized through the nmb_Device message buffer which is now
+	protected by a mutex (this was necessary to let the user interface
+	code run at the same time as the exposure code so that intermediate
+	status updates for the exposure can be displayed to the user)
+	Added a flag that is mirrored in tcl so that certain controls are
+	disabled during an exposure (this is simply to increase 
+	user-friendliness because there is no reason we can't add more commands
+	on after the current one which initiated the exposure but they won't
+	be executed until after the exposure is done so it is better to keep
+	the user from filling up the command queue like this)
+	(serverThreadStart): this is the function that contains the 
+	server mainloop
+
+	* patternEditor.C (addDumpPoint): removed (no longer a special case)
+	(updateDumpPoint): "
+	(addTestGrid): convenience function to add a grid shape
+	(getViewport): new function
+	(clampMainWinRectangle): new function - this is related to various
+	other changes to fix badness in the zooming interface
+	(navWinEventHandler): fixed a bunch of problems with this - user is
+	now constrained to select a region that has the right aspect ratio
+	(in general): replaced a bunch of ImageViewer coordinate and dimension
+	transformation function calls with ones that are more general
+	(mainWinEventHandler): added ability to specify dump points
+
+	* patternFile.Ch: new class to manage files that store patterns
+
 2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile - made this program compile on sgi

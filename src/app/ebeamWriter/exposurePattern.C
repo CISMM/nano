@@ -19,6 +19,7 @@ PatternShape::PatternShape(const PatternShape &sh): d_ID(s_nextID),
    d_type(sh.d_type), d_trans_x(sh.d_trans_x), d_trans_y(sh.d_trans_y)
 {
   d_points = sh.d_points;
+  d_shapes = sh.d_shapes;
   s_nextID++;
 }
 
@@ -27,11 +28,46 @@ void PatternShape::addPoint(double x, double y)
   d_points.push_back(PatternPoint(x, y));
 }
 
+void PatternShape::addSubShape(const PatternShape &sh)
+{
+  d_shapes.push_back(sh);
+}
+
 void PatternShape::removePoint()
 {
   if (!d_points.empty())
     d_points.pop_back();
   return;
+}
+
+void PatternShape::clearPoints()
+{
+  d_points.clear();
+}
+
+void PatternShape::drawDumpPoint(double units_per_pixel_x,
+                                 double units_per_pixel_y)
+{
+  if (d_points.empty()) return;
+  glColor4f(1.0, 1.0, 0.0, 1.0);
+
+  list<PatternPoint>::iterator pntIter = d_points.begin();
+
+  double size = 1.5;
+  float xmin, xmax, ymin, ymax;
+  
+  xmin = (*pntIter).d_x - size*units_per_pixel_x;
+  ymin = (*pntIter).d_y - size*units_per_pixel_y;
+  xmax = (*pntIter).d_x + size*units_per_pixel_x;
+  ymax = (*pntIter).d_y + size*units_per_pixel_y;
+  float x[4] = {xmin, xmin, xmax, xmax};
+  float y[4] = {ymin, ymax, ymax, ymin};
+  glBegin(GL_LINE_LOOP);
+    glVertex3f(x[0], y[0], 0.0);
+    glVertex3f(x[1], y[1], 0.0);
+    glVertex3f(x[2], y[2], 0.0);
+    glVertex3f(x[3], y[3], 0.0);
+  glEnd();
 }
 
 void PatternShape::drawThinPolyline(double units_per_pixel_x,
@@ -71,11 +107,13 @@ void PatternShape::drawThinPolyline(double units_per_pixel_x,
     glEnd();
   }
 
+/*
   glColor4f(1.0, 1.0, 1.0, 1.0);
   glBegin(GL_LINE_STRIP);
   glVertex3f(x_max, y_min, 0.0);
   glVertex3f(x_max+units_per_pixel_x*10.0, y_min-units_per_pixel_y*10.0, 0.0);
   glEnd();
+*/
 }
 
 void PatternShape::drawPolygon(double units_per_pixel_x,
@@ -113,6 +151,8 @@ void PatternShape::drawPolygon(double units_per_pixel_x,
 void PatternShape::drawThickPolyline(double units_per_pixel_x,
                                      double units_per_pixel_y)
 {
+  if (d_points.empty()) return;
+
   double x_start, y_start;
   double x0, y0, x1, y1, x2, y2;
   double lenA, lenB;
@@ -235,10 +275,20 @@ void PatternShape::draw(double units_per_pixel_x,
                         double units_per_pixel_y) {
   if (d_type == PS_POLYGON) {
     drawPolygon(units_per_pixel_x, units_per_pixel_y);
-  } else if (d_lineWidth_nm > 0){
-    drawThickPolyline(units_per_pixel_x, units_per_pixel_y);
-  } else {
-    drawThinPolyline(units_per_pixel_x, units_per_pixel_y);
+  } else if (d_type == PS_POLYLINE) {
+    if (d_lineWidth_nm > 0) {
+      drawThickPolyline(units_per_pixel_x, units_per_pixel_y);
+    } else {
+      drawThinPolyline(units_per_pixel_x, units_per_pixel_y);
+    }
+  } else if (d_type == PS_COMPOSITE){
+    list<PatternShape>::iterator shape = d_shapes.begin();
+    while (shape != d_shapes.end()) {
+      (*shape).draw(units_per_pixel_x, units_per_pixel_y);
+      shape++;
+    }
+  } else if (d_type == PS_DUMP){
+    drawDumpPoint(units_per_pixel_x, units_per_pixel_y);
   }
 }
 
@@ -255,14 +305,29 @@ list<PatternPoint>::iterator PatternShape::pointListEnd()
 double PatternShape::minY()
 {
   double result;
-  list<PatternPoint>::iterator pnt = d_points.begin();
-  result = (*pnt).d_y;
-  pnt++;
-  while (pnt != d_points.end()){
-    if ((*pnt).d_y < result) {
-      result = (*pnt).d_y;
-    }
+  if (d_type != PS_COMPOSITE) {
+    if (d_points.empty()) return 0.0;
+    list<PatternPoint>::iterator pnt = d_points.begin();
+    result = (*pnt).d_y;
     pnt++;
+    while (pnt != d_points.end()){
+      if ((*pnt).d_y < result) {
+        result = (*pnt).d_y;
+      }
+      pnt++;
+    }
+  } else {
+    if (d_shapes.empty()) return 0.0;
+    list<PatternShape>::iterator shape = d_shapes.begin();
+    result = (*shape).minY();
+    shape++;
+    double test;
+    while (shape != d_shapes.end()) {
+      test = (*shape).minY();
+      if (test < result) {
+        result = test;
+      }
+    }
   }
   return result;
 }
@@ -270,14 +335,29 @@ double PatternShape::minY()
 double PatternShape::maxY()
 {
   double result;
-  list<PatternPoint>::iterator pnt = d_points.begin();
-  result = (*pnt).d_y;
-  pnt++;
-  while (pnt != d_points.end()){
-    if ((*pnt).d_y > result) {
-      result = (*pnt).d_y;
-    }
+  if (d_type != PS_COMPOSITE) {
+    if (d_points.empty()) return 0.0;
+    list<PatternPoint>::iterator pnt = d_points.begin();
+    result = (*pnt).d_y;
     pnt++;
+    while (pnt != d_points.end()){
+      if ((*pnt).d_y > result) {
+        result = (*pnt).d_y;
+      }
+      pnt++;
+    }
+  } else {
+    if (d_shapes.empty()) return 0.0;
+    list<PatternShape>::iterator shape = d_shapes.begin();
+    result = (*shape).minY();
+    shape++;
+    double test;
+    while (shape != d_shapes.end()) {
+      test = (*shape).minY();
+      if (test > result) {
+        result = test;
+      }
+    }
   }
   return result;
 }

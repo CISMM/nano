@@ -1,3 +1,9 @@
+/*
+main.C : this file contains the main() function for the seegerizer. This
+ program can either connect to a remote sem server or run the sem server in
+ a separate thread and connect to it locally
+*/
+
 // stuff for tcl/tk graphical user interface 
 #include <tcl.h>
 #include <tk.h>
@@ -23,6 +29,8 @@
 #include "nmm_Microscope_SEM_Remote.h"
 #include "nmm_Microscope_SEM_EDAX.h"
 #include "controlPanels.h"
+
+#include "thread.h"
 
 /* arguments:
 
@@ -72,6 +80,8 @@ static vrpn_bool virtualAcquisition = vrpn_FALSE;
 static TransformFile transformFile;
 
 static Tclvar_int timeToQuit ("time_to_quit", 0);
+static Tclvar_int semControlsEnabled("sem_controls_enabled", 1);
+static vrpn_bool needToDisableSEMControls = vrpn_FALSE;
 
 vrpn_Connection *local_connection;
 PatternEditor *patternEditor = NULL;
@@ -88,6 +98,13 @@ static Tcl_Interp *tk_control_interp;
 void nullDisplayFunc() { ; }
 void nullIdleFunc() { ; }
 #endif
+
+/**************** stuff for multithreading ******************/
+static ThreadData td;
+void serverThreadStart(void *ud);
+Thread *serverThread;
+/************************************************************/
+
 
 int main(int argc, char **argv)
 {
@@ -172,8 +189,27 @@ int main(int argc, char **argv)
       sem_server = new nmm_Microscope_SEM_EDAX("localSEM",
                                           internal_device_connection, 
                                           virtualAcquisition);
+      sem_server->setBufferEnable(vrpn_TRUE); // don't receive incoming
+					      // data or parameters except
+                                              // where we call sendBuffer() -
+                                              // in the client/UI thread
       sem = new nmm_Microscope_SEM_Remote("localSEM", 
                                           internal_device_connection);
+      sem->setBufferEnable(vrpn_TRUE); // don't send outgoing commands except
+                                       // where we call sendBuffer() - in
+				       // the server thread
+
+      td.ps = new Semaphore(0);
+      serverThread = new Thread(serverThreadStart, td);
+      serverThread->go();
+      int retval = td.ps->p();
+      if (retval != 1) {
+        fprintf(stderr, "main process wasn't successfully released to run\n");
+        serverThread->kill();
+        exit(0);
+      }
+      // set it to 1 so either thread can push it
+      td.ps->v();
     }
 
 
@@ -226,6 +262,8 @@ int main(int argc, char **argv)
 
     ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
+    semControlsEnabled = 1;
+
     if (sem_server) {
       sem_server->reportResolution();
       sem_server->reportPixelIntegrationTime();
@@ -246,22 +284,25 @@ int main(int argc, char **argv)
           fprintf(stderr, "main: Tclvar_mainloop error\n");
           return -1;
       }
+      if (internal_device_connection) {
+        sem_server->sendBuffer(); // may execute Tcl code in response to
+                                  // incoming data and we can only do that
+                                  // in this thread
+      } else if (sem) {
+        sem->mainloop();
+      }
 
-      if (sem) {
-          sem->mainloop();
-      }
-      if (internal_device_connection){
-          internal_device_connection->mainloop();
-      }
-      if (sem_server) {
-          sem_server->mainloop();
-      }
       if (aligner) {
           aligner->mainloop();
       }
 
       image_viewer->mainloop();
 
+      if (needToDisableSEMControls && (semControlsEnabled != 0)) {
+        semControlsEnabled = 0;
+      } else if (!needToDisableSEMControls && (semControlsEnabled == 0)) {
+        semControlsEnabled = 1;
+      }
     }
 
     return 0;
@@ -355,4 +396,34 @@ int init_Tk(){
 #endif
 #endif
   return 0;
+}
+
+void serverThreadStart(void *ud)
+{
+  ThreadData *threadData = (ThreadData *)ud;
+  Semaphore *ps = threadData->ps;
+  printf("releasing main thread\n");
+  ps->v();
+
+  while(!timeToQuit){
+    if (internal_device_connection){
+      internal_device_connection->mainloop();
+      if (sem) {
+        if (sem->numBufferedMessages() > 0) {
+          // we can't disable tcl controls here through a Tclvar because
+          // we can only use Tclvars in the main thread where all the other
+          // tcl stuff is - instead we set one indirectly through this flag
+          // this is important because we don't want the user pushing lots of
+          // buttons and not seeing any results because the server is busy
+          // executing a previous command
+          needToDisableSEMControls = vrpn_TRUE; 
+          sem->sendBuffer();
+          needToDisableSEMControls = vrpn_FALSE;
+        }
+      }
+    }
+    if (sem_server) {
+      sem_server->mainloop();
+    }
+  }
 }

@@ -8,6 +8,7 @@
 #include "nmr_Registration_Proxy.h"
 #include "nmm_EDAX.h"
 #include "exposureManager.h"
+#include "patternFile.h"
 
 // This class manages variables linked to the control panel components of
 // the GUI
@@ -32,11 +33,16 @@ class ControlPanels {
    static void handle_saveImageFileName_change(const char *new_value,
                                                  void *ud);
    static void handle_saveImageName_change(const char *new_value, void *ud);
+   static void handle_openPatternFileName_change(const char *new_value, 
+                                                 void *ud);
+   static void handle_savePatternFileName_change(const char *new_value,
+                                                 void *ud);
 
    static void handle_lineWidth_nm_change(double new_value, void *ud);
    static void handle_exposure_change(double new_value, void *ud);
    static void handle_drawingTool_change(int new_value, void *ud);
    static void handle_clearDrawing_change(int new_value, void *ud);
+   static void handle_addTestGrid_change(int new_value, void *ud);
 
    static void handle_imageColorChanged_change(int new_value, void *ud);
    static void handle_imageOpacity_change(double new_value, void *ud);
@@ -73,6 +79,7 @@ class ControlPanels {
    static void handle_semBeamWidth_change(double new_value, void *ud);
    static void handle_semBeamCurrent_change(double new_value, void *ud);
    static void handle_semBeamExposePushed_change(int new_value, void *ud);
+   static void handle_semDoTimingTest_change(int new_value, void *ud);
 
    static void handle_registration_change(void *ud,
                               const nmr_ProxyChangeHandlerData &info);
@@ -97,10 +104,8 @@ class ControlPanels {
    Tclvar_string d_saveImageFileName;
    Tclvar_string d_saveImageFileType;
    Tclvar_string d_saveImageName;
-   Tclvar_string d_openTransformFileName;
-   Tclvar_string d_transformFileName;
    Tclvar_string d_openPatternFileName;
-   Tclvar_string d_patternFileName;
+   Tclvar_string d_savePatternFileName;
 
    // Tcl variables linked to control panels
    // drawing parameters:
@@ -108,6 +113,7 @@ class ControlPanels {
    Tclvar_float d_exposure_uCoulombs_per_square_cm;
    Tclvar_int d_drawingTool;
    Tclvar_int d_clearDrawing;
+   Tclvar_int d_addTestGrid;
 
    // display parameters:
    Tclvar_int d_imageColorChanged;
@@ -154,9 +160,12 @@ class ControlPanels {
    Tclvar_float d_semBeamWidth_nm;
    Tclvar_float d_semBeamCurrent_picoAmps;
    Tclvar_int d_semBeamExposePushed;
- 
+   Tclvar_int d_semBeamExposeEnabled;
+   Tclvar_int d_semDoTimingTest;
+   Tclvar_string d_semExposureStatus;
 
    PatternEditor *d_patternEditor;
+   PatternFile d_patternFile;
    nmr_Registration_Proxy *d_aligner;
    nmm_Microscope_SEM_Remote *d_SEM;
    ExposureManager *d_exposureManager;

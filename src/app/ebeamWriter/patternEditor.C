@@ -80,6 +80,7 @@ PatternEditor::PatternEditor()
    d_currShape = NULL;
 
    d_grabInProgress = vrpn_FALSE;
+   d_viewportSet = vrpn_FALSE;
 }
 
 PatternEditor::~PatternEditor()
@@ -252,20 +253,53 @@ void PatternEditor::clearShape()
   return;
 }
 
-void PatternEditor::addDumpPoint(const double x, const double y)
+void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
+                                double maxX_nm, double maxY_nm,
+                                int numHorizontal, int numVertical)
 {
-  d_dumpPoints.push_back(PatternPoint(x, y));
-}
-
-void PatternEditor::updateDumpPoint(double const x, double const y)
-{
-  if (!d_dumpPoints.empty()) {
-    d_dumpPoints.pop_back();
-    d_dumpPoints.push_back(PatternPoint(x, y));
-  } else {
-    fprintf(stderr, "Error, can't update dump point: none in list\n");
+  double xIncrement_nm = 
+                         (maxX_nm - minX_nm)/(double)(numVertical-1);
+  double yIncrement_nm = 
+                         (maxY_nm - minY_nm)/(double)(numHorizontal-1);
+  if (d_shapeInProgress) {
+    endShape();
   }
-  return;
+  PatternShape grid(0, 0, PS_COMPOSITE);
+  PatternShape gridline(d_lineWidth_nm, 
+                        d_exposure_uCoulombs_per_square_cm, PS_POLYLINE);
+
+  double x_begin, y_begin, x_end, y_end;
+  int i; 
+
+  // do horizontal lines first
+  x_begin = minX_nm;
+  y_begin = minY_nm;
+  x_end = maxX_nm;
+  y_end = y_begin;
+  for (i = 0; i < numHorizontal; i++) {
+    gridline.addPoint(x_begin, y_begin);
+    gridline.addPoint(x_end, y_end);
+    grid.addSubShape(gridline);
+    gridline.clearPoints();
+    y_begin += yIncrement_nm;
+    y_end += yIncrement_nm;
+  }
+  // now do vertical lines
+  x_begin = minX_nm;
+  y_begin = minY_nm;
+  x_end = x_begin;
+  y_end = maxY_nm;
+  for (i = 0; i < numVertical; i++) {
+    gridline.addPoint(x_begin, y_begin);
+    gridline.addPoint(x_end, y_end);
+    grid.addSubShape(gridline);
+    gridline.clearPoints();
+    x_begin += xIncrement_nm;
+    x_end += xIncrement_nm;
+  }
+
+  d_pattern.push_back(grid);
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 int PatternEditor::findNearestShapePoint(double x, double y, 
@@ -371,16 +405,27 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   d_viewer->setWindowSize(d_mainWinID, newWinWidth, newWinHeight);
   d_viewer->dirtyWindow(d_mainWinID);
   d_viewer->dirtyWindow(d_navWinID);
+  d_viewportSet = vrpn_TRUE;
 }
 
-list<PatternShape> PatternEditor::shapeList()
+void PatternEditor::getViewport(double &minX_nm, double &minY_nm,
+                                double &maxX_nm, double &maxY_nm)
+{
+  minX_nm = d_mainWinMinX_nm;
+  minY_nm = d_mainWinMinY_nm;
+  maxX_nm = d_mainWinMaxX_nm;
+  maxY_nm = d_mainWinMaxY_nm;
+}
+
+list<PatternShape> &PatternEditor::getShapeList()
 {
   return d_pattern;
 }
 
-list<PatternPoint> PatternEditor::dumpPointList()
+void PatternEditor::setShapeList(list<PatternShape> &shapes)
 {
-  return d_dumpPoints;
+  d_pattern = shapes;
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 int PatternEditor::mainWinEventHandler(
@@ -415,7 +460,6 @@ int PatternEditor::handleMainWinEvent(
              // adjust current line being drawn
              if (getUserMode() == PE_DRAWMODE && 
                  (event.state & IV_LEFT_BUTTON_MASK)) {
-               d_viewer->toImage(event.winID, &x, &y);
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                updatePoint(x_world_nm, y_world_nm);
                d_viewer->dirtyWindow(event.winID);
@@ -423,7 +467,6 @@ int PatternEditor::handleMainWinEvent(
          //} else if (event.state & IV_RIGHT_BUTTON_MASK) {
              // move the currently grabbed object if there is one
              else if (getUserMode() == PE_GRABMODE) {
-                 d_viewer->toImage(event.winID, &x, &y);
                  mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                  updateGrab(x_world_nm, y_world_nm);
              }
@@ -439,10 +482,13 @@ int PatternEditor::handleMainWinEvent(
                  startShape(PS_POLYLINE);
                } else if (d_drawingTool == PE_POLYGON) {
                  startShape(PS_POLYGON);
+               } else if (d_drawingTool == PE_DUMP_POINT) {
+                 startShape(PS_DUMP); 
+               } else if (d_drawingTool == PE_SELECT) {
+
                }
                setUserMode(PE_DRAWMODE);
              }
-             d_viewer->toImage(event.winID, &x, &y);
              mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
              startPoint(x_world_nm, y_world_nm);
              d_viewer->dirtyWindow(event.winID);
@@ -456,9 +502,7 @@ int PatternEditor::handleMainWinEvent(
 /*
              // otherwise, look for something close by to select
              else {
-               d_viewer->toImage(event.winID, &x, &y);
-               mainWinPositionToWorld(x, y,
-                                          x_world_nm, y_world_nm);
+               mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
                if (grab(x_world_nm, y_world_nm)) {
                   setUserMode(PE_GRABMODE);
                }
@@ -473,12 +517,14 @@ int PatternEditor::handleMainWinEvent(
          x = event.mouse_x; y = event.mouse_y;
          switch(event.button) {
            case IV_LEFT_BUTTON:
-             d_viewer->toImage(event.winID, &x, &y);
-             mainWinPositionToWorld(x, y,
-                     x_world_nm, y_world_nm);
+             mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
              if (getUserMode() == PE_DRAWMODE) {
                // set the point
                finishPoint(x_world_nm, y_world_nm);
+               if (d_drawingTool == PE_DUMP_POINT) {
+                 endShape();
+                 setUserMode(PE_IDLE);
+               }
              }
              d_viewer->dirtyWindow(event.winID);
              break;
@@ -486,7 +532,6 @@ int PatternEditor::handleMainWinEvent(
 /*
              // release the currently grabbed object
              if (getUserMode() == PE_GRABMODE) {
-               d_viewer->toImage(event.winID, &x, &y);
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                updateGrab(x_world_nm, y_world_nm);
              }
@@ -500,17 +545,13 @@ int PatternEditor::handleMainWinEvent(
          x = event.mouse_x; y = event.mouse_y;
          switch(event.keycode) {
            case 'z':
-             d_viewer->toImage(event.winID, &x, &y);
-             mainWinPositionToWorld(x, y,
-                 centerX_nm, centerY_nm);
+             mainWinPositionToWorld(x, y, centerX_nm, centerY_nm);
              zoomBy(centerX_nm, centerY_nm, 2.0);
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
            case 'Z':
-             d_viewer->toImage(event.winID, &x, &y);
-             mainWinPositionToWorld(x, y,
-                 centerX_nm, centerY_nm);
+             mainWinPositionToWorld(x, y, centerX_nm, centerY_nm);
              zoomBy(centerX_nm, centerY_nm, 0.5);
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
@@ -589,26 +630,37 @@ void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
        ymax += y_shift;
     }
 
-    d_mainWinMinX_nm = xmin;
-    d_mainWinMaxX_nm = xmax;
-    d_mainWinMinY_nm = ymin;
-    d_mainWinMaxY_nm = ymax;
 
     double temp;
-    if ((d_mainWinMinX_nm > d_mainWinMaxX_nm) || 
-        (d_mainWinMinY_nm > d_mainWinMaxY_nm)) {
+    if ((xmin > xmax) || 
+        (ymin > ymax)) {
        printf("zoomBy: min/max swapped: this shouldn't happen\n");
-       if (d_mainWinMinX_nm > d_mainWinMaxX_nm) {
-           temp = d_mainWinMinX_nm;
-           d_mainWinMinX_nm = d_mainWinMaxX_nm;
-           d_mainWinMaxX_nm = temp;
+       if (xmin > xmax) {
+           temp = xmin;
+           xmin = xmax;
+           xmax = temp;
        }
-       if (d_mainWinMinY_nm > d_mainWinMaxY_nm) {
-           temp = d_mainWinMinY_nm;
-           d_mainWinMinY_nm = d_mainWinMaxY_nm;
-           d_mainWinMaxY_nm = temp;
+       if (ymin > ymax) {
+           temp = ymin;
+           ymin = ymax;
+           ymax = temp;
        }
     }
+    setViewport(xmin, ymin, xmax, ymax);
+}
+
+void PatternEditor::clampMainWinRectangle(double &xmin, double &ymin,
+                              double &xmax, double &ymax)
+{
+  xmin = max(xmin, d_worldMinX_nm);
+  ymin = max(ymin, d_worldMinY_nm);
+  xmax = min(xmax, d_worldMaxX_nm);
+  ymax = ymin + (xmax - xmin)*(d_mainWinHeight)/
+                (double)(d_mainWinWidth);
+  if (ymax > d_worldMaxY_nm) {
+    ymin -= (ymax - d_worldMaxY_nm);
+    ymax = d_worldMaxY_nm;
+  }
 }
 
 int PatternEditor::mainWinDisplayHandler(
@@ -679,8 +731,7 @@ int PatternEditor::mainWinDisplayHandler(
     me->d_mainWinMaxY_nm = me->d_mainWinMaxYadjust_nm;
   }
 
-  // for each image, load the texture matrix, setup automatic texture-mapping
-  // of that image, draw a simple polygon on which to texture the image
+  // draw each image currently enabled
   list<ImageElement>::iterator currImage;
   int i = 0;
   for (currImage = me->d_images.begin(); 
@@ -835,7 +886,6 @@ int PatternEditor::navWinEventHandler(
 	 x = event.mouse_x; y = event.mouse_y;
          if (event.state & IV_LEFT_BUTTON_MASK ||
              event.state & IV_RIGHT_BUTTON_MASK) {
-             me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y,
                  me->d_navDragEndX_nm, me->d_navDragEndY_nm);
              me->d_viewer->dirtyWindow(event.winID);
@@ -850,6 +900,10 @@ int PatternEditor::navWinEventHandler(
                                     me->d_navDragEndY_nm);
              me->d_mainWinMinYadjust_nm = min(me->d_navDragStartY_nm,
                                     me->d_navDragEndY_nm);
+             me->clampMainWinRectangle(me->d_mainWinMinXadjust_nm,
+                                       me->d_mainWinMinYadjust_nm,
+                                       me->d_mainWinMaxXadjust_nm,
+                                       me->d_mainWinMaxYadjust_nm);
              me->d_viewer->dirtyWindow(me->d_mainWinID);
          } else if (event.state & IV_RIGHT_BUTTON_MASK) {
              double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
@@ -862,6 +916,10 @@ int PatternEditor::navWinEventHandler(
              me->d_mainWinMinXadjust_nm += t_x;
              me->d_mainWinMaxYadjust_nm += t_y;
              me->d_mainWinMinYadjust_nm += t_y;
+             me->clampMainWinRectangle(me->d_mainWinMinXadjust_nm,
+                                       me->d_mainWinMinYadjust_nm,
+                                       me->d_mainWinMaxXadjust_nm,
+                                       me->d_mainWinMaxYadjust_nm);
              me->d_viewer->dirtyWindow(me->d_mainWinID);
          }
          break;
@@ -871,7 +929,6 @@ int PatternEditor::navWinEventHandler(
            case IV_LEFT_BUTTON:
              // start dragging a rectangle
              me->setUserMode(PE_SET_REGION);
-             me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, x, y);
              me->d_navDragStartX_nm = x;
              me->d_navDragStartY_nm = y;
@@ -880,7 +937,6 @@ int PatternEditor::navWinEventHandler(
              me->d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
-             me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, x, y);
              if (x > me->d_mainWinMinX_nm && x < me->d_mainWinMaxX_nm &&
                  y > me->d_mainWinMinY_nm && y < me->d_mainWinMaxY_nm) {
@@ -904,15 +960,14 @@ int PatternEditor::navWinEventHandler(
              // copy the dragged rectangle into the main displayed rectangle
              if (me->getUserMode() == PE_SET_REGION){
                me->setUserMode(PE_IDLE);
-               me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y, 
                  me->d_navDragEndX_nm, me->d_navDragEndY_nm);
                xmin = min(me->d_navDragStartX_nm, me->d_navDragEndX_nm);
                ymin = min(me->d_navDragStartY_nm, me->d_navDragEndY_nm);
                xmax = max(me->d_navDragStartX_nm, me->d_navDragEndX_nm);
                ymax = max(me->d_navDragStartY_nm, me->d_navDragEndY_nm);
-               ymax = ymin + (xmax - xmin)*(me->d_mainWinHeight)/
-                             (double)(me->d_mainWinWidth);
+              
+               me->clampMainWinRectangle(xmin, ymin, xmax, ymax);
                me->setViewport(xmin, ymin, xmax, ymax);
 /*
                me->d_mainWinMaxX_nm = max(me->d_navDragStartX_nm,
@@ -933,15 +988,17 @@ int PatternEditor::navWinEventHandler(
                // copy the translated rectangle into the main 
                // displayed rectangle
                me->setUserMode(PE_IDLE);
-               me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y,
                                        me->d_navDragEndX_nm, me->d_navDragEndY_nm);
                double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
                double t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
-               me->d_mainWinMaxX_nm += t_x;
-               me->d_mainWinMinX_nm += t_x;
-               me->d_mainWinMaxY_nm += t_y;
-               me->d_mainWinMinY_nm += t_y;
+               xmin = me->d_mainWinMinX_nm + t_x;
+               ymin = me->d_mainWinMinY_nm + t_y;
+               xmax = me->d_mainWinMaxX_nm + t_x;
+               ymax = me->d_mainWinMaxY_nm + t_y;
+               me->clampMainWinRectangle(xmin, ymin, xmax, ymax);
+               me->setViewport(xmin, ymin, xmax, ymax);
+
                me->d_viewer->dirtyWindow(event.winID);
                me->d_viewer->dirtyWindow(me->d_mainWinID);
              }
@@ -1044,21 +1101,32 @@ int PatternEditor::navWinDisplayHandler(
 void PatternEditor::navWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
+  x_nm = x; y_nm = y;
+  d_viewer->toImagePnt(d_navWinID, d_worldMaxX_nm, d_worldMinX_nm,
+                    d_worldMinY_nm, d_worldMaxY_nm, &x_nm, &y_nm);
+/*
   x_nm = d_worldMinX_nm + x*(d_worldMaxX_nm - d_worldMinX_nm);
   y_nm = d_worldMinY_nm + y*(d_worldMaxY_nm - d_worldMinY_nm);
+*/
 }
 
 void PatternEditor::mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
+  x_nm = x; y_nm = y;
+  d_viewer->toImagePnt(d_mainWinID, d_mainWinMaxX_nm, d_mainWinMinX_nm,
+                    d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_nm, &y_nm);
+/*
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
   y_nm = d_mainWinMinY_nm + y*(d_mainWinMaxY_nm - d_mainWinMinY_nm);
+*/
 }
 
 void PatternEditor::worldToMainWinPosition(const double x_nm,
                                      const double y_nm, 
                              double &x_norm, double &y_norm)
 {
+
   double delX = d_mainWinMaxX_nm - d_mainWinMinX_nm;
   double delY = d_mainWinMaxY_nm - d_mainWinMinY_nm;
   if (delX != 0) {
@@ -1071,21 +1139,26 @@ void PatternEditor::worldToMainWinPosition(const double x_nm,
   } else {
     fprintf(stderr, "Warning, y range is 0\n");
   }
+
 }
 
 void PatternEditor::mainWinNMToPixels(const double x_nm, const double y_nm,
                                       double &x_pixels, double &y_pixels)
 {
-  worldToMainWinPosition(x_nm, y_nm, x_pixels, y_pixels);
-  d_viewer->toPixels(d_mainWinID, &x_pixels, &y_pixels);
+  //worldToMainWinPosition(x_nm, y_nm, x_pixels, y_pixels);
+  //d_viewer->toPixels(d_mainWinID, &x_pixels, &y_pixels);
+  x_pixels = x_nm; y_pixels = y_nm;
+  d_viewer->toPixelsPnt(d_mainWinID, d_mainWinMaxX_nm, d_mainWinMinX_nm,
+                     d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_pixels, &y_pixels);
 }
 
 void PatternEditor::mainWinNMToPixels(const double dist_nm,
                                       double &dist_pixels)
 {
   double d0 = 0, d1 = 0;
-  worldToMainWinPosition(dist_nm, d0, dist_pixels, d1);
-  d_viewer->toPixels(d_mainWinID, &dist_pixels, &d1);
+  mainWinNMToPixels(dist_nm, d0, dist_pixels, d1);
+//  worldToMainWinPosition(dist_nm, d0, dist_pixels, d1);
+//  d_viewer->toPixels(d_mainWinID, &dist_pixels, &d1);
 }
 
 
@@ -1166,30 +1239,16 @@ vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
 {
   list<PatternShape>::iterator shapeRef;
   list<PatternPoint>::iterator pntRef;
-  list<PatternPoint>::iterator dumpPntRef;
 
-  double minDist, minDistPixels, dumpMinDist;
+  double minDist, minDistPixels;
   double x_pnt, y_pnt;
   //double x_offset, y_offset;
   vrpn_bool selectedSomething = vrpn_FALSE;
-  if (findNearestShapePoint(x_nm, y_nm, shapeRef, pntRef, minDist) &&
-      findNearestPoint(d_dumpPoints, x_nm, y_nm, dumpPntRef, dumpMinDist)) {
+  if (findNearestShapePoint(x_nm, y_nm, shapeRef, pntRef, minDist)) {
       return vrpn_FALSE;
   }
-  if (minDist > dumpMinDist) {
-    mainWinNMToPixels(dumpMinDist, minDistPixels);
-    if (minDistPixels < PE_SELECT_DIST) {
-      d_selectedPoint = dumpPntRef;
-      x_pnt = (*d_selectedPoint).d_x;
-      y_pnt = (*d_selectedPoint).d_y;
-      d_grabOffsetX = x_nm - x_pnt;
-      d_grabOffsetY = y_nm - y_pnt;
-      d_grabInProgress = vrpn_TRUE;
-      selectedSomething = vrpn_TRUE;
-    }
-  } else {
-    mainWinNMToPixels(minDist, minDistPixels);
-    if (minDistPixels < PE_SELECT_DIST) {
+  mainWinNMToPixels(minDist, minDistPixels);
+  if (minDistPixels < PE_SELECT_DIST) {
       d_selectedShape = shapeRef;
       d_selectedPoint = pntRef;
       x_pnt = (*d_selectedPoint).d_x;
@@ -1198,7 +1257,6 @@ vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
       d_grabOffsetY = y_nm - y_pnt;
       d_grabInProgress = vrpn_TRUE;
       selectedSomething = vrpn_TRUE;
-    }
   }
   return selectedSomething;
 }
@@ -1217,8 +1275,6 @@ int PatternEditor::startPoint(const double x_nm, const double y_nm)
     printf("adding point to current shape\n");
     d_currShape->addPoint(x_nm, y_nm);
     return 0;
-  } else if (d_drawingTool == PE_DUMP_POINT){
-    addDumpPoint(x_nm, y_nm);
   } else if (d_drawingTool == PE_SELECT){
     selectPoint(x_nm, y_nm);
   } else {
@@ -1235,9 +1291,6 @@ int PatternEditor::updatePoint(const double x_nm, const double y_nm)
     if (d_shapeInProgress) {
       d_currShape->removePoint();
       d_currShape->addPoint(x_nm, y_nm);
-      return 0;
-    } else if (d_drawingTool == PE_DUMP_POINT){
-      updateDumpPoint(x_nm, y_nm);
       return 0;
     } else if (d_drawingTool == PE_SELECT && d_grabInProgress){
       updateGrab(x_nm, y_nm);

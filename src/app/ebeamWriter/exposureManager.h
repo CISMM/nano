@@ -29,16 +29,36 @@ class EdgeTableEntry {
   double d_deltaX; // in nm per d_area_inter_dot_dist_nm
 };
 
+typedef enum {NORMAL_EXPOSE, DUMP_EXPOSE_MIN_DWELL, NO_SEM_COMMANDS} ExposeMode;
+// NORMAL_EXPOSE: exposes all points as you would expect
+// DUMP_EXPOSE_MIN_DWELL: goes through all the calculations for all points 
+//   but then uses dump points in place of other pattern points and sets the
+//   dwell to the minimum duration possible - used for computing minimum
+//   exposure time (an offset which gets subtracted from the requested dwell
+//   time to compute how much delay to insert in between point exposures)
+// NO_SEM_COMMANDS: goes through all calculations for all points but doesn't
+//   actually send any commands to the SEM - may be used 
+//   for computing the total number of points and time of an exposure although
+//   this could certainly done more efficiently (without actually computing the
+//   point coordinates) but this an easy way to ensure consistency
+
+
 class ExposureManager {
  public:
   ExposureManager();
 
   void exposePattern(list<PatternShape> shapes, 
-                     list<PatternPoint> dump_points,
-                     nmm_Microscope_SEM_Remote *sem, int mag);
+                     nmm_Microscope_SEM_Remote *sem, int mag,
+                     int &numPointsGenerated,
+                     double &totalExposureTimeSec,
+		     ExposeMode mode = NORMAL_EXPOSE, 
+                     int recursion_level = 0);
   void exposePattern(list<PatternShape> shapes,
-                     list<PatternPoint> dump_points,
-                     nmm_Microscope_SEM_EDAX *sem, int mag);
+                     nmm_Microscope_SEM_EDAX *sem, int mag,
+                     int &numPointsGenerated,
+                     double &totalExposureTimeSec,
+                     ExposeMode mode = NORMAL_EXPOSE,
+                     int recursion_level = 0);
 
   void setExposure(double uCoul_per_cm);
   void setColumnParameters(double minDwellTime_sec,
@@ -77,6 +97,15 @@ class ExposureManager {
   // some parameters that need to be tuned
   double d_line_overlap_factor;
   double d_area_overlap_factor;
+
+  // parameters that get calculated in the first exposure (timing calibration
+  // to compensate for code execution time)
+  vrpn_bool d_timingCalibrationDone;
+  double d_overhead_per_point_msec;
+
+  // info about the latest pattern which is being/was exposed
+  int d_numPointsTotal;
+  double d_exposureTimeTotal_sec;
 
   // other
   PatternShape *d_currShape;
