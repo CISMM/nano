@@ -1,10 +1,16 @@
-#include "GL/glut.h"
+// stuff for tcl/tk graphical user interface 
+#include <tcl.h>
+#include <tk.h>
+#include <blt.h>
+#include <Tcl_Linkvar.h>
+
 #include <stdio.h>
+
+#include "GL/glut.h"
 #include "patternEditor.h"
 #include "nmb_ImageTransform.h"
+#include "transformFile.h"
 #include "nmr_Util.h"
-
-PatternEditor *pe = NULL;
 
 /* arguments:
 
@@ -31,23 +37,12 @@ t20 t21 t22 t23
 t30 t31 t32 t33
 */
 
-class TransformFileEntry {
-  public:
-    TransformFileEntry():transform(4,4) 
-    { fileName[0] = '\0'; }
-    
-    char fileName[256];
-    static const int maxFileName;
-    nmb_ImageTransformAffine transform;
-};
-
-const int TransformFileEntry::maxFileName = 256;
-
 static int parseArgs(int argc, char **argv);
-static int loadTransformationFile(char *filename,
-                                  list<TransformFileEntry> data);
-static int saveTransformationFile(char *filename,
-                                  list<TransformFileEntry> data);
+static int init_Tk();
+// for some reason blt.h doesn't declare this procedure.
+// I copied this prototype from bltUnixMain.c, but I had to add
+// the "C" so it would link with the library.
+extern "C" int Blt_Init (Tcl_Interp *interp);
 
 #define MAX_PLANNING_IMAGES 10
 static nmb_ListOfStrings planningImageNameList;
@@ -56,9 +51,12 @@ static int numPlanningImages = 0;
 nmb_ImageList *planningImages = NULL;
 
 static nmb_Image *liveImage;
-static list<TransformFileEntry> transformFile;
 static char transformFileName[256];
-static vrpn_bool timeToQuit = vrpn_FALSE;
+static TransformFile transformFile;
+static Tclvar_int timeToQuit ("time_to_quit", 0);
+
+PatternEditor *pe = NULL;
+static Tcl_Interp *tk_control_interp;
 
 int main(int argc, char **argv)
 {
@@ -77,7 +75,7 @@ int main(int argc, char **argv)
     FILE *test = fopen(transformFileName, "r");
     if (test) {
        fclose(test);
-       loadTransformationFile((char *)transformFileName, transformFile);
+       transformFile.load((char *)transformFileName);
     }
 
     TopoFile defaultTopoFileSettings;
@@ -98,31 +96,53 @@ int main(int argc, char **argv)
                                  0.0, 0.0, 1.0, 0.0,
                                  0.0, 0.0, 0.0, 1.0};
     nmb_Image *currImage;
-    list<TransformFileEntry>::iterator currTransformEntry;
 
     for (i = 0; i < planningImages->numImages(); i++){
         currImage = planningImages->getImage(i);
         currImage->normalize();
         currImage->setWorldToImageTransform(default_matrix);
         // search for this image in the list of transformations we loaded
-        for (currTransformEntry = transformFile.begin();
-             currTransformEntry != transformFile.end();
-             currTransformEntry++){
-           if (strcmp((*currTransformEntry).fileName, 
-                      (currImage->name())->Characters()) == 0) {
-               (*currTransformEntry).transform.getMatrix(matrix);
-               currImage->setWorldToImageTransform(matrix);
-               printf("setting world to image transform for %s\n",
+        if (transformFile.lookupImageTransformByName(
+                          currImage->name()->Characters(),
+                          matrix)) {
+            currImage->setWorldToImageTransform(matrix);
+            printf("setting world to image transform for %s\n",
                    currImage->name()->Characters());
-           }
         }
         pe->addImage(currImage);
     }
 
     pe->show();
 
-    while(!timeToQuit)
+    char *tcl_script_dir;
+    char command[128];
+
+    if ((tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
+         tcl_script_dir = "./";
+    }
+    init_Tk();
+    Tclvar_init(tk_control_interp);
+
+    // Hide the main window.
+    sprintf(command, "wm withdraw .");
+    TCLEVALCHECK(tk_control_interp, command);
+
+    // source the litho_main.tcl file
+    sprintf(command, "source %s%s",tcl_script_dir,"litho_main.tcl");
+    if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
+        fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
+              tk_control_interp->result);
+        return 0;
+    }
+
+    while(!timeToQuit){
       glutProcessEvents_UNC();
+      while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
+      if (Tclvar_mainloop()) {
+          fprintf(stderr, "main: Tclvar_mainloop error\n");
+          return -1;
+      }
+    }
 
     return 0;
 }
@@ -159,104 +179,25 @@ static int parseArgs(int argc, char **argv)
   return 0;
 }
 
-static int loadTransformationFile(char *filename, 
-                                  list<TransformFileEntry> data)
-{
-  FILE *inFile = fopen(filename, "r");
-  if (!inFile) {
-    fprintf(stderr, "Error opening file: %s\n", filename);
-    return -1;
-  }
-  vrpn_bool entryOkay;
-  int numEntries = data.size();
-  int numFileEntries;
-  char *temp, *name;
-  const int maxLineLength = 512;
-  char line[maxLineLength];
-  double matrix[16];
-  fgets(line, maxLineLength, inFile);
-  if (!line) {
-    fprintf(stderr, "Error reading first line of transformation file\n");
-    return -1;
-  }
-  strtok(line, " ");
-  temp = strtok(NULL, " ");
-  if (temp == NULL ||
-    sscanf(temp, "%d", &numFileEntries) != 1) {
-    fprintf(stderr, "Error, couldn't read number from first line\n");
-    fclose(inFile);
-    return -1;
-  }
-  numEntries += numFileEntries;
-  fgets(line, maxLineLength, inFile);
-  int num = 0;
-  int i;
-  while (line) {
-    entryOkay = vrpn_TRUE;
-    strtok(line, " ");
-    name = strtok(NULL, " ");
-    if (!name || (strlen(name) == 0)) {
-      fprintf(stderr, "Error at entry %d loading transformation file\n",
-                       num);
-      entryOkay = vrpn_FALSE;
-      break;
-    }
-    for (i = 0; i < 4; i++) {
-      fgets(line, maxLineLength, inFile);
-      if (!line ||
-          sscanf(line, "%g %g %g %g", 
-             &matrix[i], &matrix[i+4], &matrix[i+8], &matrix[i+12]) != 4){
-         fprintf(stderr, "Error while reading transformation\n");
-         entryOkay = vrpn_FALSE;
-         break;
-      }
-    }
-    if (entryOkay) {
-      // add it to the list
-      TransformFileEntry newEntry;
-#ifdef _WIN32
-      _snprintf(newEntry.fileName, newEntry.maxFileName, "%s", name);
-#else
-      snprintf(newEntry.fileName, newEntry.maxFileName, "%s", name);
-#endif
-      newEntry.transform.setMatrix(matrix);
-      data.push_back(newEntry);
-      num++;
-    } else {
-      break;
-    }
-    fgets(line, maxLineLength, inFile);
-  }
-
-  if (data.size() != numEntries) {
-    fprintf(stderr, "Error, did not read the specified number of entries"
-                    " from file %s\n", filename);
-  }
-  fclose(inFile);
-  return 0;
+int init_Tk(){
+        tk_control_interp = Tcl_CreateInterp();
+        printf("init_Tk(): just created the tcl/tk interpreter\n");
+        /* Start a Tcl interpreter */
+        if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
+                fprintf(stderr, "Tcl_Init failed: %s\n",
+                tk_control_interp->result);
+                return -1;
+        }
+        /* Initialize Tk using the Tcl interpreter */
+        if (Tk_Init(tk_control_interp) == TCL_ERROR) {
+                fprintf(stderr, "Tk_Init failed: %s\n",
+                tk_control_interp->result);
+                return -1;
+        }
+        if (Blt_Init(tk_control_interp) == TCL_ERROR) {
+                fprintf(stderr, "Package_Init failed: %s\n",
+                tk_control_interp->result);
+                return -1;
+        }
+        return 0;
 }
- 
-static int saveTransformationFile(char *filename, 
-                                  list<TransformFileEntry> data)
-{
-  FILE *outFile = fopen(filename, "w");
-  list<TransformFileEntry>::iterator currEntry;
-  double matrix[16];
-
-  int num = 0, i;
-
-  num = data.size();
-  fprintf(outFile, "num_files %d\n", num);
-  for (currEntry = data.begin();
-       currEntry != data.end(); currEntry++)
-  {
-    fprintf(outFile, "file_name %s\n", (*currEntry).fileName);
-    (*currEntry).transform.getMatrix(matrix);
-    for (i = 0; i < 4; i++){
-        fprintf(outFile, "%g %g %g %g\n",
-              matrix[i], matrix[i+4], matrix[i+8], matrix[i+12]);
-    }
-  }
-  fclose(outFile);
-}
-

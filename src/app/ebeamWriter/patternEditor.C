@@ -1,7 +1,9 @@
 #include "patternEditor.h"
 #include "GL/gl.h"
 
-PatternEditor::PatternEditor()
+PatternEditor::PatternEditor():
+  d_lineWidth_nm("line_width_nm", 0),
+  d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 0)
 {
    d_viewer = ImageViewer::getImageViewer();
    char *display_name = (char *)getenv("DISPLAY");
@@ -36,10 +38,10 @@ PatternEditor::PatternEditor()
    d_settingRegion = VRPN_FALSE;
    d_settingTranslation = VRPN_FALSE;
 
-   d_dragStartX_nm = d_worldMinX_nm;
-   d_dragStartY_nm = d_worldMinY_nm;
-   d_dragEndX_nm = d_worldMaxX_nm;
-   d_dragEndY_nm = d_worldMaxY_nm;
+   d_navDragStartX_nm = d_worldMinX_nm;
+   d_navDragStartY_nm = d_worldMinY_nm;
+   d_navDragEndX_nm = d_worldMaxX_nm;
+   d_navDragEndY_nm = d_worldMaxY_nm;
    
 }
 
@@ -92,12 +94,44 @@ int PatternEditor::mainWinEventHandler(
 
     switch(event.type) {
       case RESIZE_EVENT:
+         me->d_mainWinWidth = event.width;
+         me->d_mainWinHeight = event.height;
          break;
       case MOTION_EVENT:
+         if (event.state & IV_LEFT_BUTTON_MASK) {
+             // adjust current line being drawn
+         } else if (event.state & IV_RIGHT_BUTTON_MASK) {
+             // move the currently grabbed object if there is one
+         }
          break;
       case BUTTON_PRESS_EVENT:
+         switch(event.button) {
+           case IV_LEFT_BUTTON:
+             // start dragging a line
+             break;
+           case IV_RIGHT_BUTTON:
+             // see if we are near something and if so then select it
+             // and grab it, otherwise deselect the currently selected object
+
+             d_nearDistX_nm = d_nearDistX_pix*
+                        (d_mainWinMaxX_nm-d_mainWinMinX_nm)/d_mainWinWidth;
+
+             break;
+           default:
+             break;
+         }
          break;
       case BUTTON_RELEASE_EVENT:
+         switch(event.button) {
+           case IV_LEFT_BUTTON:
+             // set the end point
+             break;
+           case IV_RIGHT_BUTTON:
+             // release the currently grabbed object
+             break;
+           default:
+             break;
+         }
          break;
       case KEY_PRESS_EVENT:
          switch(event.keycode) {
@@ -223,8 +257,13 @@ int PatternEditor::mainWinDisplayHandler(
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  glOrtho(me->d_mainWinMinX_nm, me->d_mainWinMaxX_nm, 
-          me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
+  if (me->d_settingRegion || me->d_settingTranslation) {
+    glOrtho(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxXadjust_nm,
+            me->d_mainWinMinYadjust_nm, me->d_mainWinMaxYadjust_nm, -1, 1);
+  } else {
+    glOrtho(me->d_mainWinMinX_nm, me->d_mainWinMaxX_nm, 
+            me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
+  }
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -270,8 +309,10 @@ int PatternEditor::mainWinDisplayHandler(
      }
 
      if (textureOkay) {
+/*
        printf("Loading texture %s with type %d\n", 
               (*currImage)->name()->Characters(), (*currImage)->pixelType());
+*/
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_LUMINANCE,
               pixType, texture);
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -279,6 +320,7 @@ int PatternEditor::mainWinDisplayHandler(
        (*currImage)->getWorldToImageTransform(worldToImage);
        nmb_ImageBounds ib;
        (*currImage)->getBounds(ib);
+/*
        for (int j = 0; j < 4; j++){
            printf("%g %g %g %g\n", worldToImage[j*4], worldToImage[j*4+1],
                                    worldToImage[j*4+2], worldToImage[j*4+3]);
@@ -288,14 +330,22 @@ int PatternEditor::mainWinDisplayHandler(
             ib.getY(nmb_ImageBounds::MIN_X_MIN_Y),
             ib.getX(nmb_ImageBounds::MAX_X_MAX_Y), 
             ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
+*/
        glLoadMatrixd(worldToImage);
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
        glColor4f(1.0, 1.0, 1.0, 0.5);
-       glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMinY_nm, 0);
-       glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMinY_nm, 0);
-       glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMaxY_nm, 0);
-       glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMaxY_nm, 0);
+       if (me->d_settingRegion || me->d_settingTranslation) {
+         glVertex3f(me->d_mainWinMinXadjust_nm, me->d_mainWinMinYadjust_nm, 0);
+         glVertex3f(me->d_mainWinMaxXadjust_nm, me->d_mainWinMinYadjust_nm, 0);
+         glVertex3f(me->d_mainWinMaxXadjust_nm, me->d_mainWinMaxYadjust_nm, 0);
+         glVertex3f(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxYadjust_nm, 0);
+       } else {
+         glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMinY_nm, 0);
+         glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMinY_nm, 0);
+         glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMaxY_nm, 0);
+         glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMaxY_nm, 0);
+       }
        glEnd();
      }
      i++;
@@ -321,15 +371,40 @@ int PatternEditor::navWinEventHandler(
 
     switch(event.type) {
       case RESIZE_EVENT:
+         me->d_navWinWidth = event.width;
+         me->d_navWinHeight = event.height;
          break;
       case MOTION_EVENT:
          if (event.state & IV_LEFT_BUTTON_MASK ||
              event.state & IV_RIGHT_BUTTON_MASK) {
              me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y,
-                 me->d_dragEndX_nm, me->d_dragEndY_nm);
+                 me->d_navDragEndX_nm, me->d_navDragEndY_nm);
              me->d_viewer->dirtyWindow(event.winID);
-             printf("got motion event\n");
+//             printf("got motion event\n");
+         }
+         if (event.state & IV_LEFT_BUTTON_MASK) {
+             me->d_mainWinMaxXadjust_nm = max(me->d_navDragStartX_nm,
+                                    me->d_navDragEndX_nm);
+             me->d_mainWinMinXadjust_nm = min(me->d_navDragStartX_nm,
+                                    me->d_navDragEndX_nm);
+             me->d_mainWinMaxYadjust_nm = max(me->d_navDragStartY_nm,
+                                    me->d_navDragEndY_nm);
+             me->d_mainWinMinYadjust_nm = min(me->d_navDragStartY_nm,
+                                    me->d_navDragEndY_nm);
+             me->d_viewer->dirtyWindow(me->d_mainWinID);
+         } else if (event.state & IV_RIGHT_BUTTON_MASK) {
+             double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
+             double t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
+             me->d_mainWinMaxXadjust_nm = me->d_mainWinMaxX_nm;
+             me->d_mainWinMinXadjust_nm = me->d_mainWinMinX_nm;
+             me->d_mainWinMaxYadjust_nm = me->d_mainWinMaxY_nm;
+             me->d_mainWinMinYadjust_nm = me->d_mainWinMinY_nm;
+             me->d_mainWinMaxXadjust_nm += t_x;
+             me->d_mainWinMinXadjust_nm += t_x;
+             me->d_mainWinMaxYadjust_nm += t_y;
+             me->d_mainWinMinYadjust_nm += t_y;
+             me->d_viewer->dirtyWindow(me->d_mainWinID);
          }
          break;
       case BUTTON_PRESS_EVENT:
@@ -339,10 +414,10 @@ int PatternEditor::navWinEventHandler(
              me->d_settingRegion = VRPN_TRUE;
              me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, x, y);
-             me->d_dragStartX_nm = x;
-             me->d_dragStartY_nm = y;
-             me->d_dragEndX_nm = me->d_dragStartX_nm;
-             me->d_dragEndY_nm = me->d_dragStartY_nm;
+             me->d_navDragStartX_nm = x;
+             me->d_navDragStartY_nm = y;
+             me->d_navDragEndX_nm = me->d_navDragStartX_nm;
+             me->d_navDragEndY_nm = me->d_navDragStartY_nm;
              me->d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
@@ -352,10 +427,10 @@ int PatternEditor::navWinEventHandler(
                  y > me->d_mainWinMinY_nm && y < me->d_mainWinMaxY_nm) {
                 // start translating
                 me->d_settingTranslation = VRPN_TRUE;
-                me->d_dragStartX_nm = x;
-                me->d_dragStartY_nm = y;
-                me->d_dragEndX_nm = me->d_dragStartX_nm;
-                me->d_dragEndY_nm = me->d_dragStartY_nm;
+                me->d_navDragStartX_nm = x;
+                me->d_navDragStartY_nm = y;
+                me->d_navDragEndX_nm = me->d_navDragStartX_nm;
+                me->d_navDragEndY_nm = me->d_navDragStartY_nm;
                 me->d_viewer->dirtyWindow(event.winID);
              }
              break;
@@ -370,15 +445,15 @@ int PatternEditor::navWinEventHandler(
              me->d_settingRegion = VRPN_FALSE;
              me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, 
-                 me->d_dragEndX_nm, me->d_dragEndY_nm);
-             me->d_mainWinMaxX_nm = max(me->d_dragStartX_nm,
-                                    me->d_dragEndX_nm);
-             me->d_mainWinMinX_nm = min(me->d_dragStartX_nm,
-                                    me->d_dragEndX_nm);
-             me->d_mainWinMaxY_nm = max(me->d_dragStartY_nm,
-                                    me->d_dragEndY_nm);
-             me->d_mainWinMinY_nm = min(me->d_dragStartY_nm,
-                                    me->d_dragEndY_nm);
+                 me->d_navDragEndX_nm, me->d_navDragEndY_nm);
+             me->d_mainWinMaxX_nm = max(me->d_navDragStartX_nm,
+                                    me->d_navDragEndX_nm);
+             me->d_mainWinMinX_nm = min(me->d_navDragStartX_nm,
+                                    me->d_navDragEndX_nm);
+             me->d_mainWinMaxY_nm = max(me->d_navDragStartY_nm,
+                                    me->d_navDragEndY_nm);
+             me->d_mainWinMinY_nm = min(me->d_navDragStartY_nm,
+                                    me->d_navDragEndY_nm);
              me->d_viewer->dirtyWindow(event.winID);
              me->d_viewer->dirtyWindow(me->d_mainWinID);
              break;
@@ -389,9 +464,9 @@ int PatternEditor::navWinEventHandler(
                me->d_settingTranslation = VRPN_FALSE;
                me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y,
-                                       me->d_dragEndX_nm, me->d_dragEndY_nm);
-               double t_x = me->d_dragEndX_nm - me->d_dragStartX_nm;
-               double t_y = me->d_dragEndY_nm - me->d_dragStartY_nm;
+                                       me->d_navDragEndX_nm, me->d_navDragEndY_nm);
+               double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
+               double t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
                me->d_mainWinMaxX_nm += t_x;
                me->d_mainWinMinX_nm += t_x;
                me->d_mainWinMaxY_nm += t_y;
@@ -449,18 +524,18 @@ int PatternEditor::navWinDisplayHandler(
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
     glColor3f(1.0, 1.0, 0.0);
-    glVertex3f(me->d_dragStartX_nm, me->d_dragStartY_nm, 0);
-    glVertex3f(me->d_dragEndX_nm, me->d_dragStartY_nm, 0);
-    glVertex3f(me->d_dragEndX_nm, me->d_dragEndY_nm, 0);
-    glVertex3f(me->d_dragStartX_nm, me->d_dragEndY_nm, 0);
+    glVertex3f(me->d_navDragStartX_nm, me->d_navDragStartY_nm, 0);
+    glVertex3f(me->d_navDragEndX_nm, me->d_navDragStartY_nm, 0);
+    glVertex3f(me->d_navDragEndX_nm, me->d_navDragEndY_nm, 0);
+    glVertex3f(me->d_navDragStartX_nm, me->d_navDragEndY_nm, 0);
     glEnd();
   } else if (me->d_settingTranslation) {
     // draw the current tentative setting
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
     glColor3f(1.0, 1.0, 0.0);
-    double t_x = me->d_dragEndX_nm - me->d_dragStartX_nm;
-    double t_y = me->d_dragEndY_nm - me->d_dragStartY_nm;
+    double t_x = me->d_navDragEndX_nm - me->d_navDragStartX_nm;
+    double t_y = me->d_navDragEndY_nm - me->d_navDragStartY_nm;
     glVertex3f(me->d_mainWinMinX_nm + t_x, me->d_mainWinMinY_nm + t_y, 0);
     glVertex3f(me->d_mainWinMaxX_nm + t_x, me->d_mainWinMinY_nm + t_y, 0);
     glVertex3f(me->d_mainWinMaxX_nm + t_x, me->d_mainWinMaxY_nm + t_y, 0);
