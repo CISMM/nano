@@ -237,9 +237,12 @@ void makeCheckImage (void)
             // [juliano 2/2000]: the next line is correct.  It's taken out of
             // the OpenGL red book.  It relies on bool being represented as
             // the nubmer one, which is guaranteed by the C and C++ standards.
-            // equivalent (untested) would be:
-            //    !(((i&4)^(j&4))>>2)
-            // which wouldn't generate a warning.
+            // Semantically equivalent and faster (but untested) would be:
+            //
+            //   !(((i & 0x4) ^ (j & 0x4)) >>2)
+            //
+            // which wouldn't generate a warning and would be faster.  But,
+            // since this change is untested, I'll leave it alone for now.
             c = (((i & 0x4) == 0) ^ ((j & 0x4)) == 0);
 
             checkImage[0][i][j][0] = (GLubyte) (c * g_alpha_r * 255);

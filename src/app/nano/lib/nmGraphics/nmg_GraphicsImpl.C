@@ -24,7 +24,10 @@
 
 #include "Timer.h"
 
+#undef min  // XXX this is kind of a hack; should have a better fix
 #define min(a,b) ((a)<(b)?(a):(b))
+
+#undef max  // XXX this is kind of a hack; should have a better fix
 #define max(a,b) ((a)>(b)?(a):(b))
 
 #define CHECK(a) if (a == -1) return -1
