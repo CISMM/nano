@@ -22,7 +22,9 @@ class ImageElement {
 
    int operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
    int operator< (const ImageElement& ie) {
-       return (d_image->areaInWorld() > ie.d_image->areaInWorld());
+       return ((d_image->areaInWorld() > ie.d_image->areaInWorld()) ||
+               (d_opacity > ie.d_opacity));
+               
    }
    
    double d_red;

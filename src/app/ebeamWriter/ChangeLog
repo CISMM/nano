@@ -1,3 +1,14 @@
+2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (setImageOpacity): added a call to sort the images
+	since the order now depends on opacity
+	(updateDisplayTransform): changes the worldToImage transformation in
+	the image object and recalculates the image overlay order in the display
+        * patternEditor.h (ImageElement::operator<): checks opacity too now
+	so if an image is smaller or less opaque then it gets to go in front
+	of the other images
+	* seegerizer_common.dsp : added new files from registration library
+
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	This version includes changes to make the program run with the

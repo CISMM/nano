@@ -188,6 +188,7 @@ void PatternEditor::setImageOpacity(nmb_Image *im, double opacity)
           (*imIter).d_opacity = opacity;
      }
   }
+  d_images.sort();
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -534,8 +535,17 @@ void PatternEditor::removeImageFromDisplay(nmb_Image *image)
 void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform)
 {
   // really this is only necessary if the image is currently displayed
-  d_images.sort();
-  d_viewer->dirtyWindow(d_mainWinID);
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++) {
+    if ((*imIter).d_image == image) {
+      image->setWorldToImageTransform(transform);
+      if ((*imIter).d_enabled) {
+        d_images.sort();
+        d_viewer->dirtyWindow(d_mainWinID);
+      }
+    }
+  }
 }
 
 void PatternEditor::setDisplayColorMap(nmb_Image *image,
