@@ -1,3 +1,19 @@
+2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmm_MicroscopeRemote.C (DisplayModResult) : Changed how this sets
+        top and bottom. unscaled value is passed instead of scaled value so
+        that if user changes scale later the new scale can be applied to the
+        markers by setting the scale in nmb_Decoration
+        * nmm_MicroscopeRemote.C (RcvResultData) : Added a check of the
+        variable state.modify.slow_line_committed before accessing 
+        state.modify.slow_line_prevPt/slow_line_currPt because unless its
+        true these may be uninitialized (caused a crash on PC when using
+        slow line 3D)
+        * nmm_MicroscopeRemote.C (handle_barrierSynch) : made it so this
+        function doesn't do anything if we're reading from a file since it
+        only does stuff that affects a live microscope (was printing out an
+        error message because we weren't in slow line 3D mode)
+
 2000-09-05  Adam Seeger  <seeger@cs.unc.edu>
 	
 	* nmm_RelaxComp.[hC] (updateMicroscope) : added this new function

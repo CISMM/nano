@@ -39,6 +39,8 @@
 
 #include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
 
+#include "error_display.h"
+
 //#include <microscape.h>  // for spm_verbosity
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -2223,19 +2225,22 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
   if (state.acquisitionMode == MODIFY) {
     if (((unsigned) x < (unsigned) d_dataset->inputGrid->numX()) &&
         ((unsigned) y < (unsigned) d_dataset->inputGrid->numY())) {
-      top[2] = heightPlane->scaledValue(x, y);
-
+      top[2] = heightPlane->value(x, y);
       if (_checkZ) {
-        if (_z)
-          bottom[2] = _z->value() * heightPlane->scale();
-        else
-          bottom[2] = top[2];
+        if (_z) {
+          // what if scale changes?
+          top[2] = _z->value();// * heightPlane->scale();
+        } else {
+          top[2] = top[2];
+        }
       } else {
-        bottom[2] = _height * heightPlane->scale();
+        // what if scale changes?
+        top[2] = _height;// * heightPlane->scale();
       }
+      bottom[2] = top[2];
       //if (glenable)
       //      d_decoration->addScrapeMark(top, bottom);
-      d_decoration->addScrapeMark(top, bottom, heightPlane->scaledValue(x, y));
+      d_decoration->addScrapeMark(top, bottom, heightPlane->value(x, y));
 
     }
   }
@@ -4020,12 +4025,23 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   if ((state.acquisitionMode == MODIFY || state.cannedLineVisible) &&
       (!d_relax_comp.is_ignoring_points())) {
 
-    if (state.modify.tool == SLOW_LINE_3D) {
+    // if we haven't committed then we don't know that
+    // state.modify.slow_line_prevPt and
+    // state.modify.slow_line_currPt have been initialized at this point
+    // (see code that gives us this assertion at interaction.c:drawLine(), 
+    //  line 495)
+    if (state.modify.tool == SLOW_LINE_3D &&
+        state.modify.slow_line_committed) {
 
-      float z1 =  state.modify.slow_line_prevPt->z();
-      float z2 =  state.modify.slow_line_currPt->z();
-      z_value->setValue( z2*(state.modify.slow_line_position_param) +
+      if (state.modify.slow_line_prevPt != NULL &&
+          state.modify.slow_line_currPt != NULL) {
+          float z1 =  state.modify.slow_line_prevPt->z();
+          float z2 =  state.modify.slow_line_currPt->z();
+          z_value->setValue( z2*(state.modify.slow_line_position_param) +
               z1*(1.0-state.modify.slow_line_position_param));
+      } else {
+          display_error_dialog("RcvResultData: expected init_slow_line to be done (programmer error)\n");
+      }
     }
 // Causes the white tick marks/modify markers to show up.      
     DisplayModResult(state.data.inputPoint->x(),
@@ -4730,6 +4746,12 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
 {
    nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
 //   printf("got barrier synch message for slow line(?)\n");
+
+   if (me->ReadMode() != READ_DEVICE) {
+       // we have nothing to do in this case (this message is only for
+       // control over a live microscope)
+       return 0;
+   }
    if (strcmp(msg->comment, RELAX_MSG) == 0) {
       if ((me->state.modify.tool != SLOW_LINE)&&
 	  (me->state.modify.tool != SLOW_LINE_3D)) {
