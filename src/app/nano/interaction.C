@@ -43,6 +43,7 @@
 #include <nmb_Line.h>
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
+#include <nmb_TimerList.h>
 
 #include <nmm_Globals.h>
 #ifndef USE_VRPN_MICROSCOPE	// #ifndef #else #endif	Added by Tiger
@@ -69,7 +70,7 @@
 
 #include "microscopeHandlers.h"
 #include "globals.h"
-#include "microscape.h"  // for lots of #defines
+#include "microscape.h"  // for lots of #defines, graphicsTimer
 #include "interaction.h"
 
 #include "vrpn_ForceDevice.h"
@@ -232,11 +233,17 @@ Tclvar_int	tcl_commit_canceled("cancel_commit", 0 , handle_commit_cancel);
 Tclvar_int	tcl_phantom_reset_pressed("reset_phantom", 0, 
 				handle_phantom_reset);
 
+// turn linearization of haptics stimuli on/off
+Tclvar_int friction_linear("friction_linear", 0);
+Tclvar_int adhesion_linear("adhesion_linear", 0);
+Tclvar_int compliance_linear("compliance_linear", 0);
+Tclvar_int bumpscale_linear("bumpscale_linear", 0);
+Tclvar_int buzzscale_linear("buzzscale_linear", 0);
+
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
-void dispatch_event(int, int, int);
-int interaction(int bdbox_buttons[], double bdbox_dials[], int bPressed);
+void dispatch_event(int, int, int, nmb_TimerList *);
 int qmf_lookat(q_type ,  q_vec_type,  q_vec_type,  q_vec_type);
 int doLight(int, int);
 int doFly(int, int);
@@ -258,6 +265,10 @@ int plane_norm(int);
 int set_aim_line_color(float);
 int meas_cross( float, float, float, float, float);
 int doMeasure(int, int);
+
+//to take a log in an arbitrary base to linearize magnitude perception of
+//haptic stimuli 
+double log_any_base(double, double);
 
 int doLine(int, int);
 int doFeelFromGrid(int, int);
@@ -601,7 +612,7 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
  *
  *****************************************************************************/
 
-void	dispatch_event(int user, int mode, int event)
+void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
 {
     int ret = 0;
 
@@ -689,7 +700,7 @@ void	dispatch_event(int user, int mode, int event)
  *****************************************************************************/
 
 int interaction(int bdbox_buttons[], double bdbox_dials[], 
-		int phantButtonPressed)
+		int phantButtonPressed, nmb_TimerList * timer)
 {
     int		user;
     int i;
@@ -777,7 +788,7 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 		// a HOLD_EVENT correctly if it is not preceded by
 		// a PRESS event (AAS)
 		if (eventList[0] != HOLD_EVENT) {
-		    dispatch_event(user, user_mode[user], eventList[0]);
+		    dispatch_event(user, user_mode[user], eventList[0], timer);
 		}
 		eventList[0] = HOLD_EVENT;
 	}
@@ -826,12 +837,17 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 	  // Yeah, it's confusing, but it makes the default value of
 	  // all the knobs be 50, instead of 0, so the phantom feels
 	  // right. So leave it in.
+          // It'd be better for the Phantom to be changed to expect
+          // a default value of 0, or tcl_offsets to contain this shift,
+          // so there!  Or at least it would be if we weren't constraining
+          // values to [0,1] but to [-.5,.5] instead.
 	  Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i] + 0.5;
 	  //Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i];
-	    if (Arm_knobs[i] > 1.0)
+	    if (Arm_knobs[i] > 1.0) {
 	    	Arm_knobs[i] -= 1.0;
-	    else if (Arm_knobs[i] < 0.0)
+	    } else if (Arm_knobs[i] < 0.0) {
 		Arm_knobs[i] += 1.0;
+            }
 	}
 
     /*******************************************************************/
@@ -841,6 +857,7 @@ for ( user = 0; user < NUM_USERS; user++ ) {
     /** the vtk_update_control_panel() returns VTK_NO, and the events **/
     /** can be legitimately used to perform other functions.          **/
     /*******************************************************************/
+
     if (do_cpanels) {
 	    /* check the pulse control panel */
 	    if (pulse_enabled) {
@@ -925,33 +942,40 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 	** Center command is a special case
 	**/
 	if( PRESS_EVENT == eventList[CENT_BT] ) {
+          if (timer) { timer->activate(timer->getListHead()); }
 	  center();
-		}
+	}
 
 	/* Clear pulses
 	**/
 	if(PRESS_EVENT == eventList[CLEAR_BT] ) {
+          if (timer) { timer->activate(timer->getListHead()); }
 		handleCharacterCommand("C", &dataset->done, 1);
 	}
 
 	/* Select All (maximum scan range)
 	**/
 	if(PRESS_EVENT == eventList[ALL_BT] ) {
+          if (timer) { timer->activate(timer->getListHead()); }
 		handleCharacterCommand("A", &dataset->done, 1);
 	}
 
 	/* code dealing with locking the sweep width (qliu 6/29/95)*/
-	if(PRESS_EVENT == eventList[LOCK_BT] )
+	if(PRESS_EVENT == eventList[LOCK_BT] ) {
 	  lock_width=1;	
-	if(RELEASE_EVENT == eventList[LOCK_BT] )
+	}
+        if(RELEASE_EVENT == eventList[LOCK_BT] ) {
 	  lock_width=0;
-
+        }
+        
         /* code dealing with locking the tip in sharp tip mode */
 	/* locks the tip in one place so you can take repeated measurements */
-        if( PRESS_EVENT == eventList[XY_LOCK_BT] )
+        if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
           xy_lock =1;
-        if( RELEASE_EVENT ==eventList[XY_LOCK_BT] )  
+        }
+        if( RELEASE_EVENT ==eventList[XY_LOCK_BT] ) {
           xy_lock =0;
+        }
 
 	/* Handle a "commit" or "cancel" button press/release on
 	 * the real button box by causing a callback to
@@ -991,11 +1015,13 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 	mode_change |= butt_mode(eventList, user_mode+user);
 	// also check to see if the modify style has changed -
 	// can affect hand icon as well.
-	if (user_mode[user] == USER_PLANEL_MODE)
+	if (user_mode[user] == USER_PLANEL_MODE) {
 	    mode_change |= microscope->state.modify.style_changed;
+        }
 
 	/* If there has been a mode change, clear old stuff and set new mode */
 	if (mode_change) {
+          if (timer) { timer->activate(timer->getListHead()); }
 	    //fprintf(stderr, "Mode change.\n");
 	    // If the user was going to go into a disabled mode, change them
 	    // into GRAB mode instead.  Some modes are currently not
@@ -1014,8 +1040,8 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 		 * previous mode and an PRESS_EVENT to the new mode
 		 * so that all setup/cleanup code is executed. */
 		if (eventList[TRIGGER_BT] == HOLD_EVENT) {
-		    dispatch_event(user, last_mode[user], RELEASE_EVENT);
-		    dispatch_event(user, user_mode[user], PRESS_EVENT);
+		    dispatch_event(user, last_mode[user], RELEASE_EVENT, timer);
+		    dispatch_event(user, user_mode[user], PRESS_EVENT, timer);
 		}		    
 
 VERBOSE(6, "    Calling graphics->setUserMode().");
@@ -1033,10 +1059,24 @@ VERBOSE(6, "    Calling graphics->setUserMode().");
 		microscope->state.modify.style_changed = 0;
 	}
 
+ // quick approximation
+ switch (eventList[0]) {
+   case PRESS_EVENT:
+   case RELEASE_EVENT:
+   case HOLD_EVENT:
+     if (timer) {
+       timer->activate(timer->getListHead());
+     }
+     break;
+   default:
+     break;
+
+ }
+
 VERBOSE(6, "    Calling dispatch_event().");
 
 	/* Handle the current event, based on the user mode and user */
-	dispatch_event(user, user_mode[user], eventList[0]);
+	dispatch_event(user, user_mode[user], eventList[0], timer);
 	lastTriggerEvent = eventList[0];
 
     } /* End of excluded events due to control panel taking them */
@@ -1242,9 +1282,11 @@ doScale(int whichUser, int userEvent, double scale_factor)
     switch ( userEvent )
     {
       case HOLD_EVENT:
-	v_scale_about_hand(whichUser,
-		&v_world.users.xforms[whichUser], scale_factor);
-        updateWorldFromRoom();
+        v_xform_type temp;
+        v_x_copy(&temp, &v_world.users.xforms[whichUser]);
+
+	v_scale_about_hand(whichUser, &temp, scale_factor);
+        updateWorldFromRoom(&temp);
 	break;
 
       case PRESS_EVENT:
@@ -1256,7 +1298,6 @@ doScale(int whichUser, int userEvent, double scale_factor)
 
 return 0;
 }	/* doScale */
-
 
 /*****************************************************************************
  *
@@ -1290,6 +1331,7 @@ void specify_surface_compliance(int x, int y)
 
         Kspring = (plane->value(x,y) - compliance_slider_min) /
                  (compliance_slider_max - compliance_slider_min);
+	//already linear scaling with perception, so don't have to take log
 	printf("kspring: %f\n", Kspring);
         Kspring = min(1,Kspring);   /*click scale to be in [0,1] */
         Kspring = max(0,Kspring);
@@ -1341,6 +1383,10 @@ void specify_sound(int x, int y)
    firstExecution = 0;
 }
 
+double log_any_base(double base, double x)
+{
+	return log(x) / log(base);
+}
 
 void specify_surface_friction(int x, int y)
 {
@@ -1376,6 +1422,12 @@ void specify_surface_friction(int x, int y)
     
     kS = (plane->value(x,y) - friction_slider_min) / 
       (friction_slider_max - friction_slider_min);
+
+    if (friction_linear == 1) {
+      kS = log_any_base(1.5, kS); /* 1.5 because perceived magnitude is
+				    proportional to x^1.5, but we want to get a
+				    linear scaling with perception. */
+    }
     
     kS = min(1,kS);   /*click scale to be in [0,1] */
     kS = max(0,kS);
@@ -1389,7 +1441,6 @@ void specify_surface_friction(int x, int y)
   if (forceDevice) forceDevice->setSurfaceFdynamic(0.5 * kS);
   firstExecution = 0;
 }
-
 
 void specify_surface_bumpsize(int x, int y)
 {
@@ -1427,6 +1478,14 @@ void specify_surface_bumpsize(int x, int y)
 	wavelength = (plane->value(x,y) - plane->minValue())/
 		(plane->maxValue() - plane->minValue());
 
+	if (bumpscale_linear == 1) {
+	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
+							 magnitude is
+							 proportional to x^0.8
+							 but we want to get a
+							 linear scaling with
+							 perception. */
+	}
     wavelength = min(1,wavelength);   /*clamp scale to be in [0,1] */
     wavelength = max(0,wavelength);
 	wavelength = 0.0004 + wavelength*0.004;	// XXX magic number
@@ -1481,6 +1540,11 @@ void specify_surface_buzzamplitude(int x, int y)
 
 	amp = (plane->value(x,y) - plane->minValue()) /
 		(plane->maxValue() - plane->minValue());
+	if (buzzscale_linear == 1) {
+	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
+                                //proportional to x^0.95, but we want to get a
+                                //linear scaling with perception.
+        }
     amp = min(1,amp);   /*click scale to be in [0,1] */
     amp = max(0,amp);
 
@@ -1497,8 +1561,6 @@ void specify_surface_buzzamplitude(int x, int y)
   }
   firstExecution = 0;
 }
-
-
 
 /*****************************************************************************
  *
@@ -1972,6 +2034,11 @@ void specify_point_friction(void)
  
         kS = ( value->value()  - friction_slider_min) /
                 (friction_slider_max - friction_slider_min);
+	if (friction_linear == 1) {
+	  kS = log_any_base(1.5, kS); /*1.5 because perceived magnitude is
+					proportional to x^1.5, but we want to get a
+					linear scaling with perception. */
+	}
         kS = min(1,kS);   /*click scale to be in [0,1] */
         kS = max(0,kS);
 
@@ -2023,6 +2090,16 @@ void specify_point_bumpsize(void)
 
         wavelength = ( value->value()  - bump_slider_min) /
                 (bump_slider_max - bump_slider_min);
+	if (bumpscale_linear == 1) {
+	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
+							 magnitude is
+							 proportional to
+							 x^0.86, but we want
+							 to get a linear
+							 scaling with
+							 perception. */
+	}
+
         wavelength = min(1,wavelength);   /*click scale to be in [0,1] */
         wavelength = max(0,wavelength);
 
@@ -2074,6 +2151,11 @@ void specify_point_buzzamplitude(void)
 
         amp = ( value->value()  - buzz_slider_min) /
                 (buzz_slider_max - buzz_slider_min);
+	if (buzzscale_linear == 1) {
+	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
+                                //proportional to x^0.95, but we want to get a
+                                //linear scaling with perception.
+        }
         amp = min(1,amp);   /*click scale to be in [0,1] */
         amp = max(0,amp);
 
@@ -2793,9 +2875,9 @@ int doPositionScanline(int whichUser, int userEvent)
     
 	// convert x and y from nm to % of scan region
     microscope->state.scanline.x_end = 100.0*(p1[0] - plane->minX())/
-										(plane->maxX() - plane->minX());
+                                       (plane->maxX() - plane->minX());
     microscope->state.scanline.y_end = 100.0*(p1[1] - plane->minY())/
-										(plane->maxY() - plane->minY());
+					(plane->maxY() - plane->minY());
     microscope->state.scanline.z_end = p1[2]/(plane->scale());
     // note: if z scale is > 1.0 then we are effectively giving the
     // user a finer adjustment over the height of the scanline
@@ -3308,6 +3390,8 @@ doWorldGrab(int whichUser, int userEvent)
     decoration->aimLine.moveTo(worldFromHand.xlate[0],
                             worldFromHand.xlate[1], plane);
 
+  v_xform_type temp;
+
 switch ( userEvent )
     {
 
@@ -3328,12 +3412,10 @@ switch ( userEvent )
 	v_x_invert(&handFromRoom, &roomFromHand);
 
 	/* this gives new world_from_room   */
-	v_x_compose(&v_world.users.xforms[whichUser],
-		&oldWorldFromHand, &handFromRoom);
-
+	v_x_compose(&temp, &oldWorldFromHand, &handFromRoom);
 
         // NANOX
-        updateWorldFromRoom();
+        updateWorldFromRoom(&temp);
 
 	break;
 
@@ -3407,18 +3489,29 @@ void initializeInteraction (void) {
 
 static int lock_xform = 0;
 
-void updateWorldFromRoom (void) {
+void updateWorldFromRoom (v_xform_type * t) {
+
+  graphicsTimer.activate(graphicsTimer.getListHead());
 
   lock_xform = 1;
 
-  tcl_wfr_xlate_X = v_world.users.xforms[0].xlate[0];
-  tcl_wfr_xlate_Y = v_world.users.xforms[0].xlate[1];
-  tcl_wfr_xlate_Z = v_world.users.xforms[0].xlate[2];
-  tcl_wfr_rot_0 = v_world.users.xforms[0].rotate[0];
-  tcl_wfr_rot_1 = v_world.users.xforms[0].rotate[1];
-  tcl_wfr_rot_2 = v_world.users.xforms[0].rotate[2];
-  tcl_wfr_rot_3 = v_world.users.xforms[0].rotate[3];
-  tcl_wfr_scale = v_world.users.xforms[0].scale;
+  if (!t) {
+    t = &v_world.users.xforms[0];
+  }
+
+  tcl_wfr_xlate_X = t->xlate[0];
+  tcl_wfr_xlate_Y = t->xlate[1];
+  tcl_wfr_xlate_Z = t->xlate[2];
+  tcl_wfr_rot_0 = t->rotate[0];
+  tcl_wfr_rot_1 = t->rotate[1];
+  tcl_wfr_rot_2 = t->rotate[2];
+  tcl_wfr_rot_3 = t->rotate[3];
+
+  lock_xform = 0;
+  // Only trigger vlib things once, on the last assignment.
+
+  tcl_wfr_scale = t->scale;
+
 
 //fprintf(stderr, "Set TCL world xlate to:  (%.5f %.5f %.5f)\n",
 //(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
@@ -3428,7 +3521,6 @@ void updateWorldFromRoom (void) {
 //(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
 //fprintf(stderr, "Set TCL world scale to %.5f\n",
 //(vrpn_float64) tcl_wfr_scale);
-  lock_xform = 0;
 }
 
 

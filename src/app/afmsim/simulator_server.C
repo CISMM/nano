@@ -21,7 +21,6 @@ TopoFile GTF; // added 4/19/99
 // Yucky that this is global, and scope doesn't regulate scanning within
 // itself.
 int currentline;
-float scan_time_diff = .50000;  	// Time between scanning new line
 
 static int num_x, num_y;
 static int port = 4500;
@@ -40,10 +39,8 @@ int x, y;
 long quitType;
 
 
-void change_scan_rate( float speed )
-{
-  scan_time_diff = speed;
-}
+
+
 
 int handle_quit (void * userdata, vrpn_HANDLERPARAM) 
 {
@@ -87,6 +84,7 @@ int initJake (int x, int y)
 
 int jakeMain () 
 {
+  float scan_time_diff = .0050000;  	// Time between scanning new line
 
   if (g_isWaiting) {
     //fprintf(stderr, "Waiting...\n");

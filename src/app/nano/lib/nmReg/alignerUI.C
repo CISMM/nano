@@ -10,7 +10,7 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
     Tcl_Interp *tcl_interp, const char *tcl_script_dir):
 	datasetRegistrationPlaneName3D("none"),
 	datasetRegistrationPlaneName2D("none"),
-	newResamplePlaneName("reg(resample_plane_name", NULL),
+	newResamplePlaneName("reg(resample_plane_name)", NULL),
 	datasetRegistrationEnabled("reg_window_open", 0),
 	datasetRegistrationNeeded("reg(registration_needed)", 0),
 	datasetRegistrationRotate3DEnabled("reg(rotate3D_enable)", 0),
@@ -41,10 +41,10 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
 	aligner = new Aligner(num_image_windows);
 
 	datasetRegistrationPlaneName3D.initializeTcl
-		("topography_data", "$reg_widgets(selection3D)");
+		("topography_data", "$reg_widgets(reg_frame).selection3D");
 	datasetRegistrationPlaneName3D.bindList(images->imageNameList());
 	datasetRegistrationPlaneName2D.initializeTcl
-		("texture_data", "$reg_widgets(selection2D)");
+		("texture_data", "$reg_widgets(reg_frame).selection2D");
 	datasetRegistrationPlaneName2D.bindList(images->imageNameList());
 
 

@@ -1,4 +1,4 @@
- # Data sets
+# Data sets
 #   These are widgets specifically used to map or create data sets
 #
 # Sets up widgets inside the $dataset frame, and must be sourced
@@ -785,6 +785,12 @@ frame .frictionscale -relief raised -bd 4
 pack .frictionscale -fill both -side $packside1 -in $mapping1
 
 
+## want to be able to turn linearization of friction magnitude perception
+## on / off
+checkbutton .frictionscale.linear -text "linearize friction" -variable \
+	friction_linear
+pack .frictionscale.linear -side bottom
+
 #
 # It requires the the russ_widgets scripts have been executed to define
 # the minmaxscale procedure.
@@ -840,6 +846,12 @@ proc friction_scale_newscale {name element op} {
 frame .bumpscale -relief raised -bd 4
 pack .bumpscale -fill both -side $packside1 -in $mapping5
 
+# want to be able to turn on/off linearization of magnitude perception
+# for bumpscale
+
+checkbutton .bumpscale.linear -text "linearize bumpsize" -variable \
+	bumpscale_linear
+pack .bumpscale.linear -side bottom
 
 #
 # It requires the the russ_widgets scripts have been executed to define
@@ -896,6 +908,11 @@ proc bump_scale_newscale {name element op} {
 frame .buzzscale -relief raised -bd 4
 pack .buzzscale -fill both -side $packside1 -in $mapping5
 
+# want to be able to turn on/off linearization of magnitude perception for
+# buzzing
+checkbutton .buzzscale.linear -text "linearize buzzing" -variable \
+	buzzscale_linear
+pack .buzzscale.linear -side bottom
 
 #
 # It requires the the russ_widgets scripts have been executed to define
@@ -956,7 +973,12 @@ proc buzz_scale_newscale {name element op} {
 frame .adhesionscale -relief raised -bd 4
 pack .adhesionscale -fill both -side $packside1 -in $mapping1
 
+## Once we get adhesion working, want to be able to turn linearization of it
+## on / off
 
+checkbutton .adhesionscale.linear -text "linearize adhesion" -variable \
+	adhesion_linear
+pack .adhesionscale.linear -side bottom
 
 if {$adhesion_slider_min_limit != $adhesion_slider_max_limit} {
         minmaxscale .adhesionscale.scale $adhesion_slider_min_limit \
@@ -997,6 +1019,11 @@ proc adhesion_scale_newscale {name element op} {
 #
 frame .compliancescale -relief raised -bd 4
 pack .compliancescale -fill both -side $packside1 -in $mapping1
+
+## add ability to turn linearized compliance magnitude perception on/off
+checkbutton .compliancescale.linear -text "linearize compliance" -variable \
+	compliance_linear
+pack .compliancescale.linear -side bottom
 
 #
 # It requires the the russ_widgets scripts have been executed to define

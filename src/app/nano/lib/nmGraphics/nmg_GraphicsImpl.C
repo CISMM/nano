@@ -188,6 +188,9 @@ fprintf(stderr,
   connection->register_handler(d_causeGridRedraw_type,
                                handle_causeGridRedraw,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_causeGridRebuild_type,
+                               handle_causeGridRebuild,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_enableChartjunk_type,
                                handle_enableChartjunk,
                                this, vrpn_ANY_SENDER);
@@ -448,6 +451,7 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
 
 void nmg_Graphics_Implementation::mainloop (void) {
 
+  
 //fprintf(stderr, "nmg_Graphics_Implementation::mainloop().\n");
 
   // BUG:  do we have one frame of latency here?
@@ -1922,14 +1926,15 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
     case CONTOUR:
 // This mode is possible if we can reimplement contour texture stuff
 // not using glXXXPointerEXT() and glDrawArraysEXT()
-#ifndef _WIN32
+//#ifndef _WIN32
       fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
       g_texture_mode = GL_TEXTURE_1D;
-#else
+/*#else
       fprintf(stderr, "nmg_Graphics_Implementation: " 
 		"CONTOUR mode not available in win32\n");
       g_texture_mode = GL_FALSE;
 #endif
+*/
       break;
     case BUMPMAP:
       fprintf(stderr,
@@ -2343,6 +2348,15 @@ int nmg_Graphics_Implementation::handle_causeGridRedraw
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->causeGridRedraw();
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_causeGridRebuild
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->causeGridRebuild();
   return 0;
 }
 

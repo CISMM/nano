@@ -7,21 +7,12 @@
 #include "BCPlane.h"
 #include "nmb_Util.h"		
 
-//////////////////////////////////////////////////////////////////
-// This is to ensure that the proper simulation module is included 
-#ifdef AFMSIM
 #ifndef WARRENCNTSIM_H
 #include "warrencntsim.h"
 #endif
-#endif
 
-#ifndef SURFACE
-#ifndef SURFACE_H
-#include "surface.h"
-#endif
-#endif
-//////////////////////////////////////////////////////////////////
 
+#define AFMSIM
 
 // Tom Hudson 10 June 99
 // Things that were declared in the header file by the 145 team
@@ -290,16 +281,6 @@ nmm_Microscope_Simulator( const char * _name,
 				RcvResumeWindowScan,
 				this);
   //RcvEcho
-  /*************************************************************/
-  // Added in place of Echo to relay what mode "microscope is in"
-  d_connection->register_handler(d_MarkModify_type,
-				RcvMarkModify,
-				this);
-
-  d_connection->register_handler(d_MarkImage_type,
-				RcvMarkImage,
-				this);
-  /*************************************************************/
 
   d_Shutdown_type = d_connection->register_message_type
 	  (vrpn_dropped_last_connection);
@@ -348,7 +329,7 @@ stm_init(void)
  **************************************************************************/
  
   // 500 nm/sec = 0.5 microns/sec. This is fairly slow.
-  stm_nmeters_per_second = 20000;
+  stm_nmeters_per_second = 500;
   
   stm_grid_num_x = num_x;	// Added by JakeK this sets the size of the Grid
   stm_grid_num_y = num_y;	// and allows us to use variable grid size
@@ -411,7 +392,7 @@ stm_init(void)
   float pv=1, iv=0.5, dv=0;      	// Reasonable default values...
   spm_report_latest_PID(pv,iv,dv);	// Report PID Values
 
-  spm_report_latest_scanrate (stm_nmeters_per_second);	// report nM/second
+  spm_report_latest_scanrate (500);	// report nM/second
   spm_report_latest_resolution();	// report latest grid size selected.
   spm_report_latest_region();		// report currently selected scan region
 
@@ -1064,11 +1045,6 @@ RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM )
   return 0;
 }
 
-
-///////////////////////////////////////////////////////////
-// This is now an obsolete message replaced by MarkModify//
-//   and MarkImage      JakeK                            //
-///////////////////////////////////////////////////////////
 // This message handled by real Topo AFM
 int nmm_Microscope_Simulator::
 RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p )
@@ -1083,42 +1059,6 @@ RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p )
 
   return 0;
 }
-
-
-
-
-
-
-	// Tiger	HACK HACK HACK	handling new message type for echo Modify Mode.
-int nmm_Microscope_Simulator::
-RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p )
-{
-  nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
-  const char * bufptr = _p.buffer;
-
-  if ( tmp->spm_echo_ModifyMode( bufptr ) ) {
-     ServerError( "nmm_Microscope_Simulator::RcvMarkModify: spm_echo_ModifyMode failed" );
-     return -1;
-  }
-
-  return 0;
-}
-
-	// Tiger	HACK HACK HACK	handling new message type for echo Image Mode.
-int nmm_Microscope_Simulator::
-RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p )
-{
-  nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
-  const char * bufptr = _p.buffer;
-
-  if ( tmp->spm_echo_ImageMode( bufptr ) ) {
-     ServerError( "nmm_Microscope_Simulator::RcvMarkImage: spm_echo_ImageMode failed" );
-     return -1;
-  }
-
-  return 0;
-}
-
 
 // This message handled by real Topo AFM
 int nmm_Microscope_Simulator::
@@ -1573,7 +1513,7 @@ stm_scan_window( const char *bufptr )
 		   stm_window_xmax, stm_window_ymax);
   
   // Start the new scan!!
-  mic_start = 1;
+
   // Record that we are scanning.
   stm_current_mode = STM_SCAN_MODE;
 
@@ -1593,8 +1533,8 @@ stm_resume_window_scan()
   ServerOutputAdd( 2, "stm_resume_window_scan: Resume window scan cmd rcvd" );
 
   // Start the new scan!!
-  currentline = 0;	// Current line to scan is 0th line
   mic_start = 1;	// Microscape is ready to start scanning again
+  currentline = 0;	// Current line to scan is 0th line
 
   // Record that we are scanning.
   stm_current_mode = STM_SCAN_MODE;
@@ -1610,19 +1550,9 @@ set_the_scan_rate( float speed )
  ***************************************************************************/
 
   stm_nmeters_per_second = speed;
-  change_scan_rate(stm_nmeters_per_second);
   return;
 }
 
-
-
-////////////////////////////////////////////////////////////////////////////
-// Modified my JakeK							  //
-//    This now makes a call to a function in simulator_server, which is   //
-//    responsible for controling the scan rate of the simulator.          //
-//    the num_y*50/stm_nmeters_per_second is a bit of a hack to translate //
-//    the data passed into a reasonable change in the scan rate.          //
-////////////////////////////////////////////////////////////////////////////
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
 stm_set_rate_nmeters( const char *bufptr )
@@ -1641,9 +1571,9 @@ stm_set_rate_nmeters( const char *bufptr )
     ServerOutputAdd( 2, "nmm_Microscope_Simulator::stm_set_rate_nmeters: No parameter passed for STM_SET_RATE_NMETERS" );
     return -1;
   }
-  change_scan_rate(num_y*50/stm_nmeters_per_second); // XXX HACK JAKEK
+
   ServerOutputAdd( 2, "Set rate cmd rcvd = %f", stm_nmeters_per_second );
-  
+
   return 0;
 }
 
@@ -2288,7 +2218,7 @@ afm_contact_mode( const char *bufptr )
   ServerOutputAdd(2, "afm_contact_mode: Set Point: %f", setpt);
   set_point = setpt;	// Added by JakeK for midify
   afm_mode = CONTACT_MODE;
-  mic_start = 1;
+
   return spm_report_contact_mode();
 }
 
@@ -2316,7 +2246,7 @@ afm_tapping_mode( const char *bufptr )
   ServerOutputAdd(2, "afm_tapping_mode: Drive Amplitude: %f", driveAmp);
   set_point = setpt;		// Added by JakeK for modify
   afm_mode = TAPPING_MODE;
-  mic_start = 1;
+
   return spm_report_tapping_mode();
 }
 
@@ -2332,89 +2262,6 @@ spm_echo( const char */*bufptr*/ )
 
   return 0;
 }
-
-// Tiger	XXX HACK	We had spm_echo before, but now using following
-//						two functions, one for Modify Mode, one for
-//						Image Mode.
-int nmm_Microscope_Simulator::
-spm_echo_ModifyMode( const char *bufptr )
-{
-  long len;
-  char * msgbuf;
-  int retval;
-
-  // This message doesn't need to contain any info, but VRPN won't send
-  // an empty message...
-  if (decode_MarkModify(&bufptr) == -1) {
-     ServerOutputAdd(2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode: bad parameters passed to spm_enable_voltsource");
-     return -1;
-  }
-
-  msgbuf = encode_MarkModify(&len);
-  if ( !msgbuf ) {
-    ServerOutputAdd( 2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode:  Buffer overflow!!" );
-    return -1;
-  } else {
-    retval = Send( len, d_InModMode_type, msgbuf );
-    if ( retval ) {
-      ServerOutputAdd( 2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode:  Couldn't pack message to send to client." );
-      return -1;
-	}
-  }
-
-  return 0;
-}
-
-
-
-
-
-// Tiger	XXX HACK	We had spm_echo before, but now using following
-//						two functions, one for Modify Mode, one for
-//						Image Mode.
-int nmm_Microscope_Simulator::
-spm_echo_ImageMode( const char *bufptr )
-{
-  long len;
-  char * msgbuf;
-  int retval;
-
-  // NANO BEGIN		DEBUGGING
-  ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode(): Client want to go into Image mode!!!");
-  // NANO END
-
-  // This message doesn't need to contain any info, but VRPN won't send
-  // an empty message...
-  if (decode_MarkImage(&bufptr) == -1) {
-     ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode: bad parameters passed to spm_enable_voltsource");
-     return -1;
-  }
-
-  // If we were just in Forcecurve Style or Sewing Style, 
-  // we will get this message before we have re-enabled 
-  // param_reporting. So I am going to comment this out. 9/22/99
-  // I did a test, and it doesn't seem to affect line mode... 
-  //if (!UpdateFeedbackParamsNow) {  // HACK HACK HACK  don't want to interrupt line mode
-  //ServerOutputAdd(2, "nmm_Microscope_Topometrix::spm_echo_ImageMode: Line mode is reporting, cannot interrupt!!!");
-  //} else {
-	msgbuf = encode_MarkImage(&len);
-	if ( !msgbuf ) {
-		ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_echo_ImageMode: Buffer overflow!!" );
-		return -1;
-	} else {
-		retval = Send( len, d_InImgMode_type, msgbuf );
-		if ( retval ) {
-			ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_echo_ImageMode:  Couldn't pack message to send to client." );
-			return -1;
-		}
-	}
-	//}
-
-  return 0;
-}
-
-
-
 
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
@@ -3272,9 +3119,9 @@ punch_in( float /*posx*/, float /*posy*/ )
 
 
 ///////////////////////////////////////////////////////////////////////////
-// JakeK and AFMS team. Changed so that it gets point data for live
-// touches by making a call to the simulated data provided by whatever 
-// simulation is compiled in. 
+// JakeK and AFMS team. Changed so that it gets point data for live touches
+// from our surface data structure instead of asking for it from the 
+// real microscope
 ///////////////////////////////////////////////////////////////////////////
 
 int nmm_Microscope_Simulator::
@@ -3288,12 +3135,12 @@ report_point_set( float x, float y )
   if(set_point > 1)		// Checks to see if surface is to be modified
   {
      float point_value[numsets];
-     moveTipToXYLoc( (x), (y), set_point); // Call to simulation to move tip 
+     moveTipToXYLoc( (x-(num_x/2)), (y-(num_y/2))); 
   }
 
   float point_value[numsets];
   float z;
-  getImageHeightAtXYLoc( (x), (y), &z ); // Call to simulation to get data
+  getImageHeightAtXYLoc( (x-(num_x/2)), (y-(num_y/2)), &z );
   point_value[0] = z;
   
   spm_report_point_datasets(d_PointResultData_type, x, y, point_value, numsets);
@@ -3545,6 +3392,7 @@ spm_report_contact_mode(void)
       return -1;
     }
   }
+ 
   return 0;
 }
 
@@ -3589,6 +3437,7 @@ spm_report_tapping_mode(void)
       return -1;
     }
   }
+
   return 0;
 }
 
@@ -3684,8 +3533,8 @@ spm_report_force_curve_data()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// JakeK: This has been modified such that the data comes from the
-// simulated surface provided by the module compiled in.
+// JakeK and AFMS team: This was changed to enable us to send window data from
+// our data structure surface
 ///////////////////////////////////////////////////////////////////////////////
 
 int nmm_Microscope_Simulator::
@@ -3745,7 +3594,7 @@ spm_report_window_line_data(int currentline){
   {
     for(int j=0; j < fieldCount; j++)
     {
-       getImageHeightAtXYLoc( (i), (currentline), &z); // Get data from simulation
+       getImageHeightAtXYLoc( (i-(num_x/2)), (currentline-(num_y/2)), &z);
        data[j][i] = z;
     }
   }

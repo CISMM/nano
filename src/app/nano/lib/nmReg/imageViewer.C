@@ -206,6 +206,16 @@ int ImageViewer::createWindow(char *display_name,
                                (float)window[num_windows].win_width;
     window[num_windows].im_y_per_pixel = (float)window[num_windows].im_height /
                                (float)window[num_windows].win_height;
+    if (window[num_windows].image)
+        delete window[num_windows].image;
+    window[num_windows].image = new float[window[num_windows].im_width*
+					window[num_windows].im_height];
+    int i;
+    for (i = 0; i < window[num_windows].im_width*
+			window[num_windows].im_height; i++){
+        window[num_windows].image[i] = 0.0;
+    }
+
     num_windows++;
 //    showWindow(num_windows);
     return num_windows;
@@ -460,7 +470,18 @@ void ImageViewer::mainloop() {
                     if (event.xkey.state & Button3Mask)
                         ivw_event.state |= IV_RIGHT_BUTTON_MASK;
 
-		    ivw_event.keycode = event.xkey.keycode;
+		   //ivw_event.keycode = event.xkey.keycode;
+
+         // Above line replaced with following block.
+         // Stolen from glut ... this handles key mappings under X.
+         // This makes most special keys send '\0' to the handler ...
+         // Do we care?
+         // Weigle - 02/10/00
+         {
+            char tmp[1];
+            XLookupString((XKeyEvent *)&event.xkey, tmp, sizeof(tmp), NULL, NULL);
+            ivw_event.keycode = tmp[0];
+         }
                     if (window[i].event_handler)
                         window[i].event_handler(ivw_event, 
 				window[i].event_handler_ud);
@@ -700,6 +721,11 @@ int ImageViewer::setWindowDisplayHandler(int winID,
 int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
     int win_index = winID-1;
     int i;
+    // don't do anything if the resolution isn't changing
+    if (window[win_index].im_width == im_w && 
+        window[win_index].im_height == im_h)
+        return 0;
+
     if (window[win_index].image)
 	delete window[win_index].image;
     window[win_index].image = new float[im_w*im_h];

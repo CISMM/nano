@@ -20,6 +20,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void loadRulergridImage (const char *);
 
     virtual void causeGridRedraw (void);
+    virtual void causeGridRebuild (void);
 
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);
@@ -87,6 +88,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void rotateTextures ( int on, float theta );
     virtual void setTextureCenter( float dx, float dy );
 
+    virtual void loadRawDataTexture(const int which, const char *image_name,
+        const int start_x, const int start_y);
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y,
        int end_x, int end_y);

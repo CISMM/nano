@@ -63,6 +63,8 @@ class nmg_Graphics {
 
     virtual void causeGridRedraw (void) = 0;
       // Forces the entire set of display lists to be regenerated.
+    virtual void causeGridRebuild (void) = 0;
+      // Forces the entire set of display lists to be regenerated.
 
     virtual void enableChartjunk (int on) = 0;
       // Controls display of chartjunk (text in screenspace).
@@ -186,6 +188,8 @@ class nmg_Graphics {
     virtual void rotateTextures ( int on, float theta ) = 0;
     virtual void setTextureCenter( float dx, float dy ) = 0;
 
+    virtual void loadRawDataTexture(const int which, const char *image_name,
+        const int start_x, const int start_y) = 0;
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y, 
        int end_x, int end_y) = 0;
@@ -310,6 +314,7 @@ class nmg_Graphics {
     vrpn_int32 d_resizeViewport_type;
     vrpn_int32 d_loadRulergridImage_type;
     vrpn_int32 d_causeGridRedraw_type;
+    vrpn_int32 d_causeGridRebuild_type;
     vrpn_int32 d_enableChartjunk_type;
     vrpn_int32 d_enableFilledPolygons_type;
     vrpn_int32 d_enableSmoothShading_type;
@@ -417,9 +422,6 @@ class nmg_Graphics {
 
     char * encode_resizeViewport (int * len, int, int);
     int decode_resizeViewport (const char * buf, int *, int *);
-
-    char * encode_causeGridRedraw (int * len);
-    int decode_causeGridRedraw (const char * buf);
 
     char * encode_enableChartjunk (int * len, int);
     int decode_enableChartjunk (const char * buf, int *);

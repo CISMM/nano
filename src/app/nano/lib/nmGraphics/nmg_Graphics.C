@@ -37,6 +37,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics loadRulergridImage");
   d_causeGridRedraw_type =
     c->register_message_type("nmg Graphics causeGridRedraw");
+  d_causeGridRebuild_type =
+    c->register_message_type("nmg Graphics causeGridRebuild");
   d_enableChartjunk_type =
     c->register_message_type("nmg Graphics enableChartjunk");
   d_enableFilledPolygons_type =
@@ -247,14 +249,6 @@ int nmg_Graphics::decode_resizeViewport (const char * buf,
   if (!buf || !width || !height) return -1;
   CHECK(nmb_Util::Unbuffer(&buf, width));
   CHECK(nmb_Util::Unbuffer(&buf, height));
-  return 0;
-}
-
-char * nmg_Graphics::encode_causeGridRedraw (int * len) {
-  return NULL;
-}
-
-int nmg_Graphics::decode_causeGridRedraw (const char * buf) {
   return 0;
 }
 

@@ -410,10 +410,6 @@ class nmm_Microscope_Simulator: public nmm_Microscope
 
      int spm_echo( const char *bufptr );
 
-     int spm_echo_ModifyMode( const char *bufptr );     // Tiger new
-
-     int spm_echo_ImageMode( const char *bufptr );      // Tiger new
-
      int spm_enable_voltsource( const char *bufptr );
 
      int spm_disable_voltsource( const char *bufptr );
@@ -518,8 +514,6 @@ class nmm_Microscope_Simulator: public nmm_Microscope
      static int RcvSampleApproachNM( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvSetStdDelay( void *_userdata, vrpn_HANDLERPARAM _p );

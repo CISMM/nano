@@ -48,6 +48,7 @@
 //#include <nmg_GraphicsNull.h>  // for timing tests
 #include <nmg_RenderServer.h>
 #include <nmg_RenderClient.h>
+#include <nmg_GraphicsTimer.h>
 
 // ui
 #include <ModFile.h>
@@ -732,8 +733,6 @@ Tclvar_selector	adhPlane2Name("last_plane",".adhesion_plane.choice");
 Tclvar_selector	newAdhPlaneName("adhesionplane_name",NULL);
 static	char	lastAdhPlaneName[1000] = "";
 
-Tclvar_selector newResamplePlaneName("resample_plane_name", NULL);
-
 Tclvar_float_with_scale	adhNumToAvg("adhesion_average",".sliders", 3,100, 3);
 
 
@@ -803,7 +802,7 @@ TclNet_int copy_inactive_state ("copy_inactive_state", 0);
 
 //to get the name of the machine where the collaborator is whose hand
 //position we want to track
-TclNet_selector collab_machine_name ("collab_machine_name", NULL);
+TclNet_selector collab_machine_name ("collab_machine_name", "");
 
 
 static vrpn_bool loggingInterface = VRPN_FALSE;
@@ -992,11 +991,11 @@ static vrpn_Analog_Server * rtt_server = NULL;
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
-void Usage(char* s);
-int main(int argc, char* argv[]);
-void handleTermInput(int ttyFD, vrpn_bool* donePtr);
-int handleMouseEvents();
-void get_Plane_Extents(float*,float*,float*);
+void Usage (char * s);
+int main (int argc, char * argv []);
+void handleTermInput (int ttyFD, vrpn_bool * donePtr);
+int handleMouseEvents (nmb_TimerList *);
+void get_Plane_Extents (float *,float *,float *);
 void center (void);
 void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
  double * lock_userscale);
@@ -1013,6 +1012,10 @@ void guessAdhesionNames (void);
   #endif
 #endif
 
+    
+// REMOTERENDERING
+nmb_TimerList graphicsTimer;
+nmb_TimerList collaborationTimer;
 
 #ifdef TIMING_TEST
 
@@ -1786,7 +1789,9 @@ static void handle_set_stream_time_change(vrpn_int32 time, void *) {
 #ifdef USE_VRPN_MICROSCOPE
 //     if (mVCController)
 //       mVCController->SetStreamToTime(newStreamTime);
-  vrpnLogFile->play_to_time(newStreamTime);
+  if (vrpnLogFile) {
+    vrpnLogFile->play_to_time(newStreamTime);
+  }
 #else
   microscope->SetStreamToTime(newStreamTime);
 #endif
@@ -1797,9 +1802,6 @@ static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSpecularity(new_value);
-  // Not strictly necessary for standalone operation but doesn't cost much,
-  // and *is* necessary for operation as a RenderServer
-  //cause_grid_redraw(0.0, NULL);
 }
 
 
@@ -1807,25 +1809,18 @@ static void handle_diffuse_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setDiffusePercent(new_value);
-  // Not strictly necessary for standalone operation but doesn't cost much,
-  // and *is* necessary for operation as a RenderServer
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_surface_alpha_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSurfaceAlpha(new_value);
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_specular_color_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSpecularColor(new_value);
-  // Not strictly necessary for standalone operation but doesn't cost much,
-  // and *is* necessary for operation as a RenderServer
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata) {
@@ -1853,7 +1848,7 @@ static void handle_genetic_textures_selected_change(vrpn_int32 value, void *user
                         nmg_Graphics::MANUAL_REALIGN_COORD);
     }
   }
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 // This button creates a window with the genetic textures parameters
@@ -2104,7 +2099,6 @@ static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 		        nmg_Graphics::RULERGRID_COORD);
     }
   }
-//  g->enableRulergrid(value);
 //  cause_grid_redraw(0.0, NULL);
 }
 
@@ -2113,7 +2107,6 @@ static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) 
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridAngle(value);
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_replay_rate_change (vrpn_int32 value, void *) {
@@ -2156,14 +2149,12 @@ static void handle_contour_color_change (vrpn_int32, void * userdata) {
 
 //fprintf(stderr, "Contour color now %d, %d, %d.\n",
 //(int) contour_r, (int) contour_g, (int) contour_b);
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static void     handle_contour_width_change (vrpn_float64, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setContourWidth(contour_width);
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static	void	handle_alpha_dataset_change (const char *, void * userdata)
@@ -2189,7 +2180,6 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
                 g->setPatternMapName(dataset->alphaPlaneName->string());
                 g->setAlphaPlaneName(dataset->alphaPlaneName->string());
 
-//		cause_grid_redraw(0.0, NULL);
         } else {
 	  fprintf(stderr, "Warning, couldn't find alpha plane: %s\n",
 		dataset->alphaPlaneName->string());
@@ -2277,7 +2267,6 @@ static	void	handle_colormap_change (const char *, void * userdata) {
           curColorMap = &colorMap;
   }
 
-  //cause_grid_redraw(0.0, NULL);
 }
 
 static	void	handle_exportFileName_change (const char *, void *)
@@ -2348,9 +2337,6 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
 	exportFileType = "none";
     }
 }
-
-// MOVED to nmb_Dataset
-//int	compute_filtered_plane(char *outplane)
 
 static	void	handle_filterPlaneName_change(const char *, void *) {
 
@@ -2544,16 +2530,17 @@ static	void	handle_set_xform_change (vrpn_int32, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   v_xform_type cent_xf;
+  v_xform_type temp;
   
   // find the transforms to take us to the centered view
   find_center_xforms(&cent_xf.xlate, &cent_xf.rotate, &cent_xf.scale);
 
   // Add the saved difference xform to the center xform
-  q_vec_add(v_world.users.xforms[0].xlate, save_diff_xform.xlate, cent_xf.xlate );
-  //  q_add(v_world.users.xforms[0].rotate, save_diff_xform.rotate, cent_xf.rotate);
-  q_copy(v_world.users.xforms[0].rotate, save_diff_xform.rotate);
-  v_world.users.xforms[0].scale = save_diff_xform.scale + cent_xf.scale;
-  updateWorldFromRoom();
+  q_vec_add(temp.xlate, save_diff_xform.xlate, cent_xf.xlate );
+  q_copy(temp.rotate, save_diff_xform.rotate);
+  temp.scale = save_diff_xform.scale + cent_xf.scale;
+  
+  updateWorldFromRoom(&temp);
 
   g->setLightDirection(save_light_dir);
  
@@ -2591,8 +2578,6 @@ fprintf(stderr, "Couldn't find plane for contour mode;  "
 
   g->setContourPlaneName(dataset->contourPlaneName->string());
   g->causeGridRedraw();
-
-        //cause_grid_redraw(0.0, NULL);
 }
 
 void    handle_adhesion_dataset_change(const char *, void * userdata)
@@ -2612,8 +2597,6 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
         }
         // On PxFl, map adhesion plane to hatch map
         g->setHatchMapName(adhesionPlaneName.string());
-
-        //cause_grid_redraw(0.0, _mptr);
 }
 
 void    handle_friction_dataset_change(const char *, void * userdata)
@@ -2632,8 +2615,6 @@ void    handle_friction_dataset_change(const char *, void * userdata)
         }
         // On PxFl, map friction plane to bump map
         g->setBumpMapName(frictionPlaneName.string());
-
-        //cause_grid_redraw(0.0, _mptr);
 }
 
 void    handle_bump_dataset_change(const char *, void * userdata)
@@ -2650,7 +2631,6 @@ void    handle_bump_dataset_change(const char *, void * userdata)
                 g->setBumpSliderRange(bump_slider_min,
                                                  bump_slider_max);
         }
-        //cause_grid_redraw(0.0, _mptr);
 }
 
 void    handle_buzz_dataset_change(const char *, void * userdata)
@@ -2667,7 +2647,6 @@ void    handle_buzz_dataset_change(const char *, void * userdata)
                 g->setBuzzSliderRange(buzz_slider_min,
                                                  buzz_slider_max);
         }
-        //cause_grid_redraw(0.0, _mptr);
 }
 
 
@@ -2685,7 +2664,6 @@ void    handle_compliance_dataset_change(const char *, void * userdata) {
                                                    compliance_slider_max);
         }
 
-        //cause_grid_redraw(0.0, _mptr);
 }
 
 
@@ -2789,8 +2767,8 @@ static void handle_joymove(vrpn_float64 , void *userdata)
 			v_x_compose(&modxform,&modxform,&temp);
 			/*recalculate world to room xform and save*/
 			v_x_invert(&modxform,&modxform);
-			v_x_copy(&v_world.users.xforms[0],&modxform);
-                        updateWorldFromRoom();
+                        //v_x_copy(&v_world.users.xforms[0],&modxform);
+                        updateWorldFromRoom(&modxform);
 			break;
 	    case 0: // this is a release
 		    break;
@@ -2813,8 +2791,8 @@ static void handle_joymove(vrpn_float64 , void *userdata)
                 modxform.xlate[1]=shadowxform.xlate[1]+deltay;
                 modxform.xlate[2]=shadowxform.xlate[2]+deltaz;
                 v_x_invert(&modxform,&modxform);
-                v_x_copy(&v_world.users.xforms[0],&modxform);
-                updateWorldFromRoom();
+                //v_x_copy(&v_world.users.xforms[0],&modxform);
+                updateWorldFromRoom(&modxform);
 		break;
 	    case 0: // release
 		break;
@@ -4518,9 +4496,6 @@ int main(int argc, char* argv[])
     float looplen;
     long            n = 0L;
     long	    n_displays = 0L;
-    
-    // REMOTERENDERING
-    nmb_TimerList microscapeTimer;
 
     int		i;
     int retval;
@@ -4884,6 +4859,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Using local GL graphics implementation.\n");
         graphics = new nmg_Graphics_Implementation(dataset,minC, maxC, 
 							rulerPPMName);
+        graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
         break;
 
       case SHMEM_GRAPHICS:
@@ -4905,6 +4881,7 @@ int main(int argc, char* argv[])
 
           shmem_connection = vrpn_get_connection_by_name (qualifiedName);
           graphics = new nmg_Graphics_Remote (shmem_connection);
+          graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
         }
         break; 
 
@@ -4991,7 +4968,9 @@ int main(int argc, char* argv[])
              (dataset, minC, maxC, renderClientInputConnection,
               nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
               100, 100,
-              renderServerControlConnection, &microscapeTimer);
+              renderServerControlConnection, &graphicsTimer);
+
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
 
         break;
 
@@ -5021,7 +5000,9 @@ int main(int argc, char* argv[])
         graphics = new nmg_Graphics_RenderClient
              (dataset, minC, maxC, renderClientInputConnection,
               nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
-              512, 512, renderServerControlConnection, &microscapeTimer);
+              512, 512, renderServerControlConnection, &graphicsTimer);
+
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
 
         break;
 
@@ -5615,14 +5596,15 @@ VERBOSE(1, "Entering main loop");
     // REMOTERENDER
     // user interface timestamp happens here
 
-    microscapeTimer.newTimestep();
+    graphicsTimer.newTimestep();
 
       /* routine for handling all user interaction, including:
        * sdi button box, knob box, phantom button, 
        * Tcl button box simulator, Tcl knob box simulator. */
       if(glenable) {
 	VERBOSE(4,"  Calling interaction()");
-	interaction(bdboxButtonState,bdboxDialValues,phantButtonState);
+	interaction(bdboxButtonState, bdboxDialValues, phantButtonState,
+                    &graphicsTimer);
       }
 
       ttest0(t_avg_i, "inter");
@@ -5715,7 +5697,7 @@ VERBOSE(1, "Entering main loop");
     }
     
     /* Check for mouse events in the X window display */
-    handleMouseEvents();
+    handleMouseEvents(&graphicsTimer);
 
 #ifdef	PROJECTIVE_TEXTURE
     if (aligner_ui) {
@@ -5803,7 +5785,9 @@ VERBOSE(1, "Entering main loop");
 	printf("    (%.5f seconds per display iteration)\n", looplen);
   }
 
-  microscapeTimer.report();
+  printf("---------------\n");
+  printf("Graphics Timer:\n");
+  graphicsTimer.report();
 
   if(glenable){
     /* shut down trackers and a/d devices    */
@@ -6002,34 +5986,10 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 			center();
 		break;
 
-	    case '?': 
-		fprintf(stderr, "'?' (report input/output stream position, "
-                                "in bytes) declared obsolete 30 June 98.\n");
-		break;
-
-	    case '>': 
-		fprintf(stderr, "'>' (skip forward in input stream) "
-                                "declared obsolete 30 June 98.\n");
-		break;
-
-	    case '<': 
-		fprintf(stderr, "'<' (skip backward in input stream) "
-                                "declared obsolete 30 June 98.\n");
-
 	    case '*':
 			printf( "Adjusting light position\n" );
 			mode_change = 1;	/* Will make icon change */
 			user_mode[0] = USER_LIGHT_MODE;
-		break;
-
-	    case 'L': {		/* Lock head */
-			printf( "Head locking obsolete\n" );
-		}
-		break;
-
-	    case 'l': {		/* Unlock head */
-			printf( "Head locking obsolete\n" );
-		}
 		break;
 
 	    case 'A': {		/* Select All */
@@ -6051,33 +6011,6 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		user_mode[0] = USER_GRAB_MODE;
 		break;
 
-	    case 'P': 		/* Pulse mode */
-		printf("Pulse mode no longer available\n");
-		//mode_change = 1;	/* Will make icon change */
-		//user_mode[0] = USER_PULSE_MODE;
-		break;
-
-	    case '#': 		/* Comb mode */
-		//if (read_mode == READ_DEVICE) {
-		   printf("Comb mode no longer available\n");
-		   //mode_change = 1;	/* Will make icon change */
-		   //user_mode[0] = USER_COMB_MODE;
-		   //}
-		//else printf("Comb mode available only on live data!!!!");
-		break;
-
-	    case '/': 		/* Sweep mode */
-		printf("Sweep mode no longer available - use Touch Before Modify\n");
-		break;
-
-	    case 'N': 		/* Blunt tip mode */
-		printf("Blunt tip mode no longer available\n");
-		break;
-
-	    case '|': 		/* Line mode */
-		printf("Line mode no longer available - use Touch Before Modify\n");
-		break;
-
 	    case '%': 		/* Measure mode */
 		printf("Measure mode\n");
 		mode_change = 1;	/* Will make icon change */
@@ -6094,10 +6027,6 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		printf("Scale Down mode\n");
 		mode_change = 1;	/* Will make icon change */
 		user_mode[0] = USER_SCALE_DOWN_MODE;
-		break;
-
-	    case 'E': 		/* E Engrave mode */
-		printf("Engrave mode no longer supported\n");
 		break;
 
 	    case 024: 		/* ^T Touch grid plane mode (Canned)*/
@@ -6369,7 +6298,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 #define M_SHEAR 7
 #define M_PICK 8
 
-int handleMouseEvents()
+int handleMouseEvents (nmb_TimerList * timer)
 {
   static int prev_x,prev_y; 	
   static double wanted_x = -2;
@@ -6393,15 +6322,22 @@ int handleMouseEvents()
     
     v_xform_type temp;
     
-    if(VLIB_dpy && XPending(VLIB_dpy) > 0){
-      XNextEvent(VLIB_dpy,&event);
-      switch(event.type){
+    if (VLIB_dpy && (XPending(VLIB_dpy) > 0)) {
+
+      XNextEvent(VLIB_dpy, &event);
+      switch (event.type) {
+
       case ConfigureNotify: //"used for mono CRT only"
+
 	graphics->resizeViewport(event.xconfigure.width,
 				 event.xconfigure.height);
 	break;
+
       case ButtonPress:
 	  
+fprintf(stderr, "handleMouseEvent() got ButtonPress.\n");
+          timer->activate(timer->getListHead());
+
 	  qvtemp[Q_X]=event.xbutton.x;
 	  qvtemp[Q_Y]=event.xbutton.y;
 	  qvtemp[Q_Z]=0;
@@ -6511,18 +6447,21 @@ int handleMouseEvents()
 	break;
 
       case ButtonRelease:
+
 	if (event.xbutton.button == Button3){
 	  mouse3button = 0;
 	}
-	mode=M_NULL;
+	mode = M_NULL;
 	break;
+
       case MotionNotify:
+
 	if( user_mode[0] == USER_GRAB_MODE ||
 	    user_mode[0] == USER_CENTER_TEXTURE_MODE ) {
 
 	  // deltax/y are used to calculate surface transformations:
-	  deltax=event.xmotion.x-startx;
-	  deltay=event.xmotion.y-starty;
+	  deltax = event.xmotion.x - startx;
+	  deltay = event.xmotion.y - starty;
 	  
 	  // Calculations for Realigning Textures:
 	  // realign_* variables are used to calculate texture realignment
@@ -6530,12 +6469,12 @@ int handleMouseEvents()
 	  realign_x2 = event.xmotion.x;
 	  realign_y2 = event.xmotion.y;
 	  
-	  while(XCheckWindowEvent(VLIB_dpy,VLIB_win,
-				  PointerMotionMask,&event)){
+	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
+				   PointerMotionMask, &event)) {
 
 	    // surface transformations:
-	    deltax=event.xmotion.x-startx;
-	    deltay=event.xmotion.y-starty;
+	    deltax = event.xmotion.x - startx;
+	    deltay = event.xmotion.y - starty;
 	    
 	    // texture realignment
 	    if ( realign_start ) {
@@ -6554,6 +6493,9 @@ int handleMouseEvents()
 
 
 	  if ( mode == M_ROTATE ){
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
 
 	    // Texture Realignment
 	    if ( realign_textures_enabled ) {
@@ -6583,16 +6525,19 @@ int handleMouseEvents()
 	      
 	      /*recalculate world to room xform and save*/
 	      v_x_invert(&modxform,&modxform);
-	      v_x_copy(&v_world.users.xforms[0],&modxform);
+	      //v_x_copy(&v_world.users.xforms[0],&modxform);
 
               // HACK?
-              updateWorldFromRoom();
+              updateWorldFromRoom(&modxform);
 
 	    }
 
 	  }
 
 	  else if ( mode == M_ZOOM ){
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
 
 	    // Texture Realignment
 	    if ( realign_textures_enabled ) {
@@ -6606,13 +6551,16 @@ int handleMouseEvents()
 	      modxform.xlate[2]=shadowxform.xlate[2]+deltay/500;
 	      /*recalculate world to room xform and save*/
 	      v_x_invert(&modxform,&modxform);
-	      v_x_copy(&v_world.users.xforms[0],&modxform);
+	      //v_x_copy(&v_world.users.xforms[0],&modxform);
               // HACK?
-              updateWorldFromRoom();
+              updateWorldFromRoom(&modxform);
 	    }
 	  }
 
 	  else if ( mode == M_TRANSLATE ) {
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
 
 	    // Texture Realignment
 	    if ( realign_textures_enabled ) {
@@ -6628,13 +6576,16 @@ int handleMouseEvents()
 	      modxform.xlate[0]=shadowxform.xlate[0]+deltax/1000;
 	      modxform.xlate[1]=shadowxform.xlate[1]-deltay/1000;
 	      v_x_invert(&modxform,&modxform);
-	      v_x_copy(&v_world.users.xforms[0],&modxform);
+	      //v_x_copy(&v_world.users.xforms[0],&modxform);
               // HACK?
-              updateWorldFromRoom();
+              updateWorldFromRoom(&modxform);
 	    }
 	  }
 	  
 	  else if ( mode == M_SCALE ){
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
 
 	    // Texture Realignment
 	    if ( realign_textures_enabled ) {
@@ -6643,6 +6594,9 @@ int handleMouseEvents()
 	  }
 	  
 	  else if ( mode == M_SHEAR ) {
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
 
 	    // Texture Realignment
 	    if ( realign_textures_enabled ) {
@@ -6655,19 +6609,23 @@ int handleMouseEvents()
 				    PointerMotionMask,&event));
 	  }	
 	}
-	else if( user_mode[0] == USER_LIGHT_MODE ){
-	  if( mode == M_TRANSLATE ){
-	    deltay=event.xmotion.y-starty;
-	    deltax=event.xmotion.x-startx;
-	    while(XCheckWindowEvent(VLIB_dpy,VLIB_win,
-				    PointerMotionMask,&event)){
-	      deltay=event.xmotion.y-starty;
-	      deltax=event.xmotion.x-startx;
+	else if ( user_mode[0] == USER_LIGHT_MODE ) {
+	  if ( mode == M_TRANSLATE ){
+
+fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+          timer->activate(timer->getListHead());
+
+	    deltay = event.xmotion.y - starty;
+	    deltax = event.xmotion.x - startx;
+	    while(XCheckWindowEvent(VLIB_dpy, VLIB_win,
+				    PointerMotionMask, &event)){
+	      deltay=event.xmotion.y - starty;
+	      deltax=event.xmotion.x - startx;
 	    }
-	    L[0]=T[0]+deltax*10;
-	    L[1]=T[1]-deltay*10;
+	    L[0]=T[0] + deltax * 10;
+	    L[1]=T[1] - deltay * 10;
 	    L[2]=T[2];
-	    v_x_xform_vector(L,&shadowxform,L);
+	    v_x_xform_vector(L, &shadowxform, L);
 	    graphics->setLightDirection(L);
 	  }
 	  else{
@@ -6922,19 +6880,21 @@ int handleMouseEvents()
       
     }
     return(0);
-  }
+}
   
+
+
   
   /* Quick function to compare two vectors since this isn't in quatlib.
    * Probably should be added there.
    */
-  int vec_cmp (const q_vec_type a, const q_vec_type b) {
-    return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
-  }
-  
-  // MOVED to graphics.c
-  //void	reset_light_position(void)
 
+int vec_cmp (const q_vec_type a, const q_vec_type b) {
+  return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
+}
+
+
+  
 // globals used:
 //  dataset:  from microscape.c
 
@@ -7138,25 +7098,28 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
 }
 
 
-void center(void) {
+void center (void) {
   // Reset the light position to its original one
   graphics->resetLightDirection();
 
-  q_vec_type lock_userpos; 
-  q_type lock_userrot;
-  double lock_userscale;
+  v_xform_type lock;
+  //q_vec_type lock_userpos; 
+  //q_type lock_userrot;
+  //double lock_userscale;
   
   // find the transforms to take us to the centered view
-  find_center_xforms(&lock_userpos, &lock_userrot, &lock_userscale);
+  //find_center_xforms(&lock_userpos, &lock_userrot, &lock_userscale);
+  find_center_xforms(&lock.xlate, &lock.rotate, &lock.scale);
   
   /* Copy the new values to the world xform for user 0 */
   printf("Setting head xlate to (%f, %f, %f)\n",
-        lock_userpos[V_X], lock_userpos[V_Y], lock_userpos[V_Z]);
+        //lock_userpos[V_X], lock_userpos[V_Y], lock_userpos[V_Z]);
+        lock.xlate[V_X], lock.xlate[V_Y], lock.xlate[V_Z]);
 
-  v_world.users.xforms[0].xlate[V_X] = lock_userpos[V_X];
-  v_world.users.xforms[0].xlate[V_Y] = lock_userpos[V_Y];
-  v_world.users.xforms[0].xlate[V_Z] = lock_userpos[V_Z];
-  cerr << "L: " << lock_userpos[V_X] << " " << lock_userpos[V_Y] << " " << lock_userpos[V_Z] << "\n";
+  //v_world.users.xforms[0].xlate[V_X] = lock_userpos[V_X];
+  //v_world.users.xforms[0].xlate[V_Y] = lock_userpos[V_Y];
+  //v_world.users.xforms[0].xlate[V_Z] = lock_userpos[V_Z];
+  //cerr << "L: " << lock_userpos[V_X] << " " << lock_userpos[V_Y] << " " << lock_userpos[V_Z] << "\n";
 
 /*XXX Center causes seg fault on nWC after the resize has happened
   if the rotation sets are done under Linux.  It does not fail if they
@@ -7167,19 +7130,24 @@ void center(void) {
 //         v_world.users.xforms[0].rotate[V_Y],
 //         v_world.users.xforms[0].rotate[V_Z],
 //         v_world.users.xforms[0].rotate[V_W]);
+  //printf("Setting head rotate to (%f, %f, %f: %f)\n",
+        //lock_userrot[V_X], lock_userrot[V_Y], lock_userrot[V_Z],
+        //lock_userrot[V_W]);
   printf("Setting head rotate to (%f, %f, %f: %f)\n",
-        lock_userrot[V_X], lock_userrot[V_Y], lock_userrot[V_Z],
-        lock_userrot[V_W]);
+        lock.rotate[V_X], lock.rotate[V_Y], lock.rotate[V_Z],
+        lock.rotate[V_W]);
 
-  v_world.users.xforms[0].rotate[V_X] = lock_userrot[V_X];
-  v_world.users.xforms[0].rotate[V_Y] = lock_userrot[V_Y];
-  v_world.users.xforms[0].rotate[V_Z] = lock_userrot[V_Z];
-  v_world.users.xforms[0].rotate[V_W] = lock_userrot[V_W];
+  //v_world.users.xforms[0].rotate[V_X] = lock_userrot[V_X];
+  //v_world.users.xforms[0].rotate[V_Y] = lock_userrot[V_Y];
+  //v_world.users.xforms[0].rotate[V_Z] = lock_userrot[V_Z];
+  //v_world.users.xforms[0].rotate[V_W] = lock_userrot[V_W];
 
-  printf("Setting head scale to %f\n", lock_userscale);
+  //printf("Setting head scale to %f\n", lock_userscale);
+  printf("Setting head scale to %f\n", lock.scale);
 
-  v_world.users.xforms[0].scale = lock_userscale;
-  updateWorldFromRoom();
+  //v_world.users.xforms[0].scale = lock_userscale;
+
+  updateWorldFromRoom(&lock);
 
 
 //UGRAPHICS NOTE:: THIS IS A TEMPORARY HACK TO MAKE THE UGRAPHICS OBJECTS APPEAR IN FRONT

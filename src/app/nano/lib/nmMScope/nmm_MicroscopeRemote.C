@@ -1488,6 +1488,8 @@ long nmm_Microscope_Remote::AcquireScanline(){
   }
 
   float x, y, z, angle, slope = 0;
+
+  // get the starting location of the scan line in nm
   state.scanline.getStartPoint(p, &x, &y, &z);
   angle = state.scanline.angle*M_PI/180.0;
   slope = state.scanline.slope_nm_per_micron;

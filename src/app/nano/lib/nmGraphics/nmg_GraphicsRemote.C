@@ -96,6 +96,21 @@ void nmg_Graphics_Remote::causeGridRedraw (void) {
   }
 }
 
+void nmg_Graphics_Remote::causeGridRebuild (void) {
+  struct timeval now;
+  int retval;
+
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(0, now, d_causeGridRebuild_type,
+                           d_myId, NULL, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::causeGridRebuild:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
 void nmg_Graphics_Remote::enableChartjunk (int value) {
   struct timeval now;
   char * msgbuf;
@@ -1069,6 +1084,12 @@ void nmg_Graphics_Remote::setTextureCenter( float dx, float dy ) {
 //
 // End Realign Textures Remote Code:
 //
+
+void nmg_Graphics_Remote::loadRawDataTexture
+       (const int which, const char *image_name,
+        const int start_x, const int start_y) {
+  // TODO BUG BUG BUG
+}
 
 void nmg_Graphics_Remote::updateTexture(int which,
        const char *image_name,

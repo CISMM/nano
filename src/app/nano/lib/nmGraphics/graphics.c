@@ -142,8 +142,17 @@ void createPyramid (float center, float width, int white_flag)
       //to the ImageWidth, so we "wrap around" the texture map
       if (translation < 0)
 	translation = contourImageWidth + translation;
+#ifndef __CYGWIN__
       contourImage[(int) translation][3] = (int) opacity;
-
+#else
+      contourImage[(int) translation][3] = 255;
+      contourImage[(int)(translation)][0] = (int)
+	((float)contourImage[(int)(translation)][0]*(float)opacity/255.0);
+      contourImage[(int)(translation)][1] = (int)
+	((float)contourImage[(int)(translation)][1]*(float)opacity/255.0);
+      contourImage[(int)(translation)][2] = (int)
+	((float)contourImage[(int)(translation)][2]*(float)opacity/255.0);
+#endif
       //if this is the white line, overwrite the white color
       if (white_flag == 1)
 	{
@@ -187,7 +196,11 @@ void makeTexture (void) {
      contourImage[i][0] = g_contour_r;
      contourImage[i][1] = g_contour_g;
      contourImage[i][2] = g_contour_b;
+#ifndef __CYGWIN__
      contourImage[i][3] = 0;
+#else
+     contourImage[i][3] = 255;
+#endif
   }
 
   //fill in the correct pixels for each of the ten lines
@@ -447,9 +460,6 @@ void buildRulergridTexture (void) {
     fprintf(stderr, "made ruler textures\n");
 ___________________**********************/
 #endif
-
-  g_tex_image_width = g_tex_installed_width = rulerImageWidth;
-  g_tex_image_height = g_tex_installed_height = rulerImageHeight;
 
 }
 

@@ -37,7 +37,8 @@
 struct nmb_Timestamp {
   vrpn_int32 serialNumber;
   timeval timestamp;
-  vrpn_bool pending;
+  vrpn_bool pending;  // True if blocked
+  vrpn_bool active;
   nmb_Timestamp * next;
 };
 
@@ -59,10 +60,20 @@ class nmb_TimerList {
     timeval getListHeadTime (void);
         // Returns timestamp most recently added.
 
-    void blockList (vrpn_int32 sN);
-    void unblockList (vrpn_int32 sN);
+    void block (vrpn_int32 sN);
+        // Blocks timestamp with serial number SN, preventing it from being
+        // completed during newTimestep().
+    void unblock (vrpn_int32 sN);
+        // Unblocks timestamp with serial number SN so that it can be processed
+        // during newTimestamp().
+
+    void activate (vrpn_int32 sN);
+        // Marks timestamp with serial number SN as active, so that it gets
+        // tracked separately.  We should generalize this eventually to a
+        // set of bins?
 
     void report (void);
+        // Prints out statistics about accumulated timestamps.
 
     ///////
 
@@ -81,6 +92,12 @@ class nmb_TimerList {
 
     timeval d_totalTimeComplete;
     vrpn_int32 d_totalTimestampsComplete;
+
+    timeval d_totalActiveTimeComplete;
+    vrpn_int32 d_totalActiveTimestampsComplete;
+
+    timeval d_totalBlockedTimeComplete;
+    vrpn_int32 d_totalBlockedTimestampsComplete;
 
     nmb_Timestamp * d_list;
     nmb_Timestamp * d_freePool;

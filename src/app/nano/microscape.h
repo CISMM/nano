@@ -28,6 +28,8 @@
 #include <nmb_Types.h>
 #include <display.h>
 
+#include <nmb_TimerList.h>
+
 // Removed many header files to speed up compilation
 
 #include <vrpn_ForceDevice.h>
@@ -278,6 +280,9 @@ extern TopoFile GTF;
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
 // mytimer, frametimer, stm_new_frame, mode_change, tcl_offsets, user_mode,
 // justCentered, ohmmeter_enabled, xenable, xg_start
+
+extern nmb_TimerList graphicsTimer;
+extern nmb_TimerList collaborationTimer;
 
 #endif	/* MICROSCAPE_H */
 

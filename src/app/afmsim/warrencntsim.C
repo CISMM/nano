@@ -1,6 +1,5 @@
 #include "warrencntsim.h"
 
-
 /**************************************************************************************/
 /**************************************************************************************/
 // GLOBAL VARIABLES
@@ -14,14 +13,14 @@ int selectedOb = NULLOB;	// object currently selected by user
 float zHeight[MAX_GRID][MAX_GRID];	// array of heights: image scan data
 float zBuffer[ 128*128 ];			// raw values (normalized) from Z-buffer
 int gridSize = 64;		// scan grid resolution
-float scanLength = 128.;	// scan grid total width/height
-float scanXMin =  0.;
-float scanYMin =  0.;
+float scanLength = 40.;	// scan grid total width/height
+float scanStep   = scanLength / gridSize;
 float scanNear =  -100.;	// near end of Z-buffer range
 float scanFar  =   100.;	// far  end of Z-buffer range
-float scanXMax =   scanXMin + scanLength;
-float scanYMax =   scanYMin + scanLength;
-float scanStep   = scanLength / gridSize;
+float scanXMin =  -25.;
+float scanXMax =   25.;
+float scanYMin =  -25.;
+float scanYMax =   25.;
 
 // simulation 
 SIM_STATE prevState;	// state of sim before previous simulation-step
@@ -53,10 +52,10 @@ float viewYawAngle   =  PI/2.;
 float viewPitchAngle = -PI/3.;	// was -PI/2.
 float windowWidth  = 600.;
 float windowHeight = 600.;
-float orthoFrustumCenterX = 64.;	// area of XY plane always visible for all window aspect ratios
-float orthoFrustumCenterY = 64.;
-float orthoFrustumWidthNominal  = 128. + 10.;
-float orthoFrustumHeightNominal = 128. + 10.;
+float orthoFrustumCenterX = 0.;	// area of XY plane always visible for all window aspect ratios
+float orthoFrustumCenterY = 0.;
+float orthoFrustumWidthNominal = 50.;
+float orthoFrustumHeightNominal = 50.;
 // actual bounds of current ortho view frustum matching window aspect ratio
 float orthoFrustumLeftEdge;
 float orthoFrustumBottomEdge;
@@ -98,14 +97,7 @@ int
 main(int argc, char *argv[])
 {
 #ifdef AFMSIM
-	// AFMSIM is #defined when the CNT simulator is being linked with
-	// the AFM simulator.  If so, call initJake to initialize the
-	// AFM simulator code.  
-	initJake( 128, 128 );	
-			// args: width & height of scan region 
-			// The scan performed by the AFM simulator will runs over this
-			// region of the XY-plane: [-width/2,width/2] x [-height/2,height/2]
-			// (ie, the scan is centered at the origin).  
+	initJake(orthoFrustumWidthNominal , orthoFrustumHeightNominal);
 #endif
 
 	// Deal with command line.
@@ -209,10 +201,6 @@ void
 commonIdleFunc( void )
 {
 #ifdef AFMSIM
-	// AFMSIM is #defined when the CNT simulator is being linked with
-	// the AFM simulator.  If so, call jakeMain each iteration of the
-	// main loop to service the image data requests and tip movement
-	// commands.  
 	jakeMain();
 #endif
 
@@ -633,6 +621,7 @@ commonKeyboardFunc(unsigned char key, int x, int y)
 	case 'p':	viewPitchAngle += -5. * DEG_TO_RAD;	break;
 	case 'V':	viewYawAngle = PI/2.;  viewPitchAngle = -PI/3.; break; // std view
 
+
 	case 'q':	// quit
 	case 27:	// Esc
 		// Exit program.  
@@ -903,9 +892,9 @@ initObs( void )
 			// tip length of 0.001 is workaround for prob with zero tip length
 
 	// create tubes
-	addObject( numObs, TUBE, Vec2d(  60.,  40.), 0., 0.,10., 1.,   NULLOB, NULLOB, 0. );
-	addObject( numObs, TUBE, Vec2d(  60.,  60.), 0., 0.,20., 2.,   NULLOB, NULLOB, 0. );
-	addObject( numObs, TUBE, Vec2d(  60.,  80.), 0., 0.,40., 4.,   NULLOB, NULLOB, 0. );
+	addObject( numObs, TUBE, Vec2d( 6., 0.), 0., 0., 4., 1.,   NULLOB, NULLOB, 0. );
+	addObject( numObs, TUBE, Vec2d( 0.,-6.), 0., 0.,10., 3.,   NULLOB, NULLOB, 0. );
+	addObject( numObs, TUBE, Vec2d( 0., 4.), 0., 0.,20., 2.,   NULLOB, NULLOB, 0. );
 
 
 	// make a couple segmented tubes.
@@ -1036,7 +1025,7 @@ toggleSim(void)
 /**************************************************************************************/
 // move tip to new position
 int
-moveTipToXYLoc( float x, float y, float set_point)
+moveTipToXYLoc( float x, float y )
 {
 	// move tip
 	int tip = 0;
@@ -1213,7 +1202,7 @@ drawSphere( float radius )
 
 /**************************************************************************************/
 void
-showPoint( Vec2d vPoint, int color, float size /* = 1. */, float zHeight /* = 0. */ )
+showPoint( Vec2d vPoint, int color, float size, float zHeight )
 {
 	glPushMatrix();
 
@@ -1328,7 +1317,7 @@ drawPolygon( void )
 
 /**************************************************************************************/
 void
-drawLine( Vec2d pt1, Vec2d pt2, int color, float z1 /* = 0. */, float z2 /* = 0. */ )
+drawLine( Vec2d pt1, Vec2d pt2, int color, float z1, float z2 )
 {
 	// draw line between the two points
 	setColor( color );
@@ -3055,7 +3044,7 @@ getImageHeightAtXYLoc( float x, float y, float* z )
 	}
 
 	// return the maximum z-height for all tubes.
-	*z = maxZ;
+	*z = maxZ + (x - scanXMin);
 
 	return 0;
 }
@@ -3076,8 +3065,8 @@ showGrid( void )
 	assert( gridSize < MAX_GRID, "gridSize too big" );
 	for( int i=0; i<gridSize-1; i++ ) {
 		for( int j=0; j<gridSize-1; j++ ) {
-			float x = i * scanStep  +  scanXMin;
-			float y = j * scanStep  +  scanYMin;
+			float x = i * scanStep  -  scanLength/2.;
+			float y = j * scanStep  -  scanLength/2.;
 			float dx = scanStep;
 			float dy = scanStep;
 
@@ -3240,8 +3229,8 @@ doImageScan( void )
 		// ie, do an image scan.
 		for( i=0; i<gridSize; i++ ) {
 			for( j=0; j<gridSize; j++ ) {
-				float x = i * scanStep  +  scanXMin;
-				float y = j * scanStep  +  scanYMin;
+				float x = i * scanStep  -  scanLength/2.;
+				float y = j * scanStep  -  scanLength/2.;
 
 				float* pz = &(zHeight[i][j]);
 				getImageHeightAtXYLoc( x, y, pz );

@@ -1,7 +1,6 @@
 #ifndef WARRENCNTSIM_H
 #define WARRENCNTSIM_H
 
-
 /**************************************************************************************/
 /**************************************************************************************/
 // Carbon nanotube (CNT) Simulator Program.  
@@ -245,7 +244,7 @@ void	showObjectLabels( void );
 void	drawObjects( void );
 void	drawStuff( void );
 void	simStep(void);
-int		moveTipToXYLoc( float x, float y, float set_point);
+int		moveTipToXYLoc( float x, float y );
 int		getImageHeightAtXYLoc( float x, float y, float* z );
 void	crossProduct( float  x1, float  y1, float  z1,
 			  float  x2, float  y2, float  z2,
@@ -286,11 +285,3 @@ void	reshapeWindowFuncDummy( int newWindowWidth, int newWindowHeight );
 int		main(int argc, char *argv[]);
 
 #endif  // WARRENCNTSIM_H
-
-
-
-
-
-
-
-

@@ -329,7 +329,7 @@ int nmg_Graphics_RenderClient_Implementation::handle_timerSN
   const char * bp = p.buffer;
 
   vrpn_unbuffer(&bp, &sn);
-  gp->d_timer->unblockList(sn);
+  gp->d_timer->unblock(sn);
 
 fprintf(stderr, "Unblocked timestamp #%d.\n", sn);
 

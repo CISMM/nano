@@ -79,7 +79,7 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
     // Should only happen on startup.
     return;
   }
-  d_timer->blockList(sn);
+  d_timer->block(sn);
 
   // Pack the message
   msglen = 24;
