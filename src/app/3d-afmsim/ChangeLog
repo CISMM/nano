@@ -1,3 +1,23 @@
+2002-04-04  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* sim.cpp : added code to handle grouping of objects.  
+	mouseFuncMain checks whether the shift button is held down, and
+	if it is, groups all objects left-clicked on while that instance
+	of holding down the shift button persists.  when new instance of
+	shift button down occurs, new group is formed.  if button
+	clicked on object in a group while shift button held down,
+	object is removed from group.  supposed to work like powerpoint.
+
+	* 3dobject.cpp,h : added the following functions:
+
+	int changeGroup(OB* obj,int* new_group_number);
+	bool inGroup(OB* obj,int* group_number);
+	void removeFromGroup(OB* obj,int* group_number);
+
+	deal with grouping of objects, and moving, rotating objects
+	within a group.  rotations of grouped objects rotate 
+	all objects in group around group center.
+
 2002-03-29  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* 3dobject.h,.cpp : added capabilities to group objects

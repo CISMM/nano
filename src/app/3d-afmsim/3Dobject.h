@@ -70,6 +70,9 @@ public :
 };
 
 int addToGroup(OB* obj,int* group_number);
+int changeGroup(OB* obj,int* new_group_number);
+bool inGroup(OB* obj,int* group_number);
+void removeFromGroup(OB* obj,int* group_number);
 
 // subclass of OB
 class Ntube : public OB {

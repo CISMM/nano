@@ -237,7 +237,7 @@ The following will have effect only on nano tubes
 
 . 'e', 'E' - change roll
 . 'f', 'F' - change yaw
-. 'g', 'g' - change pitch
+. 'h', 'H' - change pitch
 
 
 Important Note :

@@ -912,67 +912,305 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 
 void Ntube :: keyboardFunc(unsigned char key, int x, int y) {
   Vec3d left, right;
+  int i;
 
   switch (key) {
-  case '+' :       
-    setPos_z(pos.z+DIST_UNIT);
+  case '+' : 
+      for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				n->setPos_z(n->pos.z+DIST_UNIT);
+			}
+	  }
     break;
   case '-' : 
-    setPos_z(pos.z-DIST_UNIT);
+    for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				n->setPos_z(n->pos.z-DIST_UNIT);
+			}
+	  }
     break;
     /* Now we consider various rotations */
   case 'x' :
     if (leng) {
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+		
+		//rotate objects about themselves
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'X' :
     if (leng) {
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'y' :
     if (leng) {
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'Y' :
     if (leng) {
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'z' :
     if (leng) {
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'Z' :
-    if (leng) {      
-      left = pos - axis*leng/2.;
-      right = pos + axis*leng/2.;
-      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
-      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
-      set(left,right,diam);
+    if (leng) {  
+		//find the group center
+		Vec3d group_center;
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		//translate objects to position ANGLE_UNIT rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT) + group_center;
+			this_obj->setPos(new_pos);
+		}
+
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			if(this_obj->type == NTUBE){
+				
+				Ntube * n = (Ntube *)this_obj;
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+				n->set(left,right,n->diam);
+			}
+			else if(this_obj->type == TRIANGLE){
+				Triangle * t = (Triangle *)this_obj;
+				Vec3d a,b,c;
+
+				a = t->pos+Vec3d(t->a - t->pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+				b = t->pos+Vec3d(t->b - t->pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+				c = t->pos+Vec3d(t->c - t->pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+				t->set(a,b,c);				
+			}
+		}
     }
     break;
   case 'e' :
@@ -987,10 +1225,10 @@ void Ntube :: keyboardFunc(unsigned char key, int x, int y) {
   case 'F' :
     setYaw(yaw - ANGLE_UNIT);
     break;
-  case 'g' :
+  case 'h' :
     setPitch(pitch + ANGLE_UNIT);
     break;
-  case 'G' :
+  case 'H' :
     setPitch(pitch - ANGLE_UNIT);
     break;
     /* Object manipulation */
@@ -1033,7 +1271,7 @@ void Ntube :: moveGrabbedOb(Vec3d vMouseWorld) {
 	Vec3d new_pos(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z);
     Vec3d diff(new_pos.x,new_pos.y,new_pos.z);
 	diff -= pos;
-	for(int i = 0; i < number_in_group[obj_group];i++){
+	for(int i = 0; i < number_in_group[obj_group];i++){//obj_group local to 'this'
 		OB * this_obj = group_of_obs[obj_group][i];
 		Vec3d this_pos;
 		this_pos += this_obj->pos;
@@ -1046,6 +1284,10 @@ void Ntube :: moveGrabbedOb(Vec3d vMouseWorld) {
 void
 addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
 		 int *group_number) {
+
+	//testing
+	/*group_number = new int();
+	*group_number = 0;*/
 
 	Ntube *n = new Ntube(type,pos,yaw,roll,pitch,leng,diam);
 	ob[numObs] = n;
@@ -1063,20 +1305,137 @@ int addToGroup(OB* obj,int* group_number){
 		*group_number = numGroups;
 		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
 		numGroups++;//one more group now
+		obj->obj_group = *group_number;
 		cout << "group number: " << *group_number << endl;
 	}
 	else if(group_of_obs[*group_number] == NULL){//group specified is empty, start it
 		group_of_obs[*group_number] = new OB*[MAXOBS];
 		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
+		obj->obj_group = *group_number;
 		cout << "group number: " << *group_number << endl << "number in group: "
 			 << number_in_group[*group_number] << endl;
 	}
 	else{//group specified is nonempty, add to existing group
 		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
+		obj->obj_group = *group_number;
 		cout << "group number: " << *group_number << endl << "number in group: "
 			 << number_in_group[*group_number] << endl;
 	}
 	return *group_number;
+}
+
+bool inGroup(OB* obj,int* group_number){
+	int i = *group_number;
+	for(int j = 0;j < number_in_group[i];j++){
+		if(group_of_obs[i][j] == obj){
+			return true;	
+		}
+	}
+	return false;
+}
+
+void removeFromGroup(OB* obj,int* group_number){
+	int i = *group_number;
+	for(int j = 0;j < number_in_group[i];j++){
+		if(group_of_obs[i][j] == obj){
+			for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+				group_of_obs[i][k] = group_of_obs[i][k+1];
+			}
+			group_of_obs[i][number_in_group[i]-1] = NULL;
+			number_in_group[i]--;
+			cout << "object removed from group number " << *group_number << endl;
+			break;			
+		}
+	}
+	int* new_group = NULL;//put it in its own group now
+	addToGroup(obj,new_group);
+
+}
+
+int changeGroup(OB* obj,int* new_group_number){
+	bool removed = false;
+
+	if(new_group_number == NULL){//no group specified, create one
+		group_of_obs[numGroups] = new OB*[MAXOBS];
+		new_group_number = new int();
+		*new_group_number = numGroups;
+		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
+
+		//remove from old group
+		for(int i = 0;i < numGroups; ++i){
+			for(int j = 0;j < number_in_group[i];j++){
+				if(group_of_obs[i][j] == obj){
+					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+						group_of_obs[i][k] = group_of_obs[i][k+1];
+					}
+					group_of_obs[i][number_in_group[i]-1] = NULL;
+					number_in_group[i]--;
+					removed = true;
+					obj->obj_group = *new_group_number;
+					cout << "object removed from group number " << i << " and added to group number "
+						 << *new_group_number << endl;
+					break;
+				}
+			}
+			if(removed)	break;
+		}
+
+		numGroups++;//one more group now
+		cout << "group number: " << *new_group_number << endl << "number in group: "
+			 << number_in_group[*new_group_number] << endl;
+	}
+	else if(group_of_obs[*new_group_number] == NULL){//group specified is empty, start it
+		group_of_obs[*new_group_number] = new OB*[MAXOBS];
+		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
+
+		//remove from old group
+		for(int i = 0;i < numGroups; ++i){
+			for(int j = 0;j < number_in_group[i];j++){
+				if(group_of_obs[i][j] == obj){
+					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+						group_of_obs[i][k] = group_of_obs[i][k+1];
+					}
+					group_of_obs[i][number_in_group[i]-1] = NULL;
+					number_in_group[i]--;
+					removed = true;
+					obj->obj_group = *new_group_number;
+					cout << "object removed from group number " << i << " and added to group number "
+						 << *new_group_number << endl;
+					break;
+				}
+			}
+			if(removed)	break;
+		}
+
+		cout << "group number: " << *new_group_number << endl << "number in group: "
+			 << number_in_group[*new_group_number] << endl;
+	}
+	else{//group specified is nonempty, add to existing group
+		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
+
+		//remove from old group
+		for(int i = 0;i < numGroups; ++i){
+			for(int j = 0;j < number_in_group[i];j++){
+				if(group_of_obs[i][j] == obj){
+					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+						group_of_obs[i][k] = group_of_obs[i][k+1];
+					}
+					group_of_obs[i][number_in_group[i]-1] = NULL;
+					number_in_group[i]--;
+					removed = true;
+					obj->obj_group = *new_group_number;
+					cout << "object removed from group number " << i << " and added to group number "
+						 << *new_group_number << endl;
+					break;
+				}
+			}
+			if(removed)	break;
+		}
+
+		cout << "group number: " << *new_group_number << endl << "number in group: "
+			 << number_in_group[*new_group_number] << endl;
+	}
+	return *new_group_number;
 }
 
 /* Class : Triangle  */
@@ -1340,14 +1699,26 @@ void Triangle :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
 
 void Triangle :: moveGrabbedOb(Vec3d vMouseWorld) {
   // As vMouseWorld changes, move the object
-  setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, pos.z));
+  	Vec3d new_pos(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z);
+    Vec3d diff(new_pos.x,new_pos.y,new_pos.z);
+	diff -= pos;
+	for(int i = 0; i < number_in_group[obj_group];i++){//obj_group local to 'this'
+		OB * this_obj = group_of_obs[obj_group][i];
+		Vec3d this_pos;
+		this_pos += this_obj->pos;
+		this_pos += diff;
+		this_obj->setPos(this_pos);
+	}
 }
 
 void addTriangle(Vec3d a, Vec3d b, Vec3d c,int* group_number) {
   ob[numObs] = new Triangle(a,b,c);
-  selectedOb = numObs;  
-  addToGroup(ob[numObs],group_number);
+  selectedOb = numObs; 
+  //testing
+  /*group_number = new int();
+  *group_number = 0;*/
+  int num = addToGroup(ob[numObs],group_number);
+  ob[numObs]->obj_group = num;
   numObs++;
-  ob[numObs]->obj_group = *group_number;
 }
 

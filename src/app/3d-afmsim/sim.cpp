@@ -168,6 +168,11 @@ int TriangleCounter = 0;
 bool once_thru = false;
 FILE *file;
 float current_scale;
+bool grouping;
+int* group;
+bool first_in_group = true;
+int bcounter = 0;
+int oldShift = 0;
 
 Tclvar_string cname("tclname","");
 
@@ -604,8 +609,9 @@ void displayFuncDepth( void ) {
 	}
 	else if(SimMicroscopeServer.scaleRcv){
 		float _scale = SimMicroscopeServer._scale;
-		float new_scale = _scale/current_scale;
-		current_scale = _scale;
+		float new_scale = _scale/current_scale;	//"un-apply" old scaling and apply new one
+		current_scale = _scale;					//record what the current scale is so can change 
+												//in the same way next time
 		
 		for(int i=0; i<numObs; i++ ) {
 			ob[i]->scale(new_scale);
@@ -863,7 +869,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     draw_objects = 1;
       }
       break;
-    case 'n' :
+	case 'n' :
 	  //deal with length
 	  cout << "Enter a radius: " << flush;
       done = false;
@@ -1254,8 +1260,37 @@ void mouseFuncMain( int button, int state, int x, int y ) {
 
   switch( button ) {
   case GLUT_LEFT_BUTTON: 
-    if( state == GLUT_DOWN )
-    {buttonpress=LEFT_BUTTON;grabNearestOb(xy_or_xz);}
+    if( state == GLUT_DOWN ){
+		cout << "processing button press " << bcounter++ << endl;
+		buttonpress=LEFT_BUTTON;
+		int nState = GetKeyState(VK_SHIFT);
+	
+		if(nState < 0){//indicates shift button held down
+			selectedOb = findNearestObToMouse(xy_or_xz);
+			cout << "grouping" << endl;
+			if(nState != oldShift/*first_in_group*/){//new shift -> new group
+				oldShift = nState;//oldShift gives last shift val, shift down val toggles
+							      //between -127 and -128, so we can tell if new shift down
+							      //or old one still going...
+
+				cout << "first in group" << endl;
+				if(group == NULL)	group = new int();
+				*group = changeGroup(ob[selectedOb],NULL);//change group
+				//first_in_group = false;
+			}
+			else{//old shift, process objects under that shift hold-down
+				if(inGroup(ob[selectedOb],group)){//still holding down shift but changed mind...
+					removeFromGroup(ob[selectedOb],group);
+				}
+				else{
+					changeGroup(ob[selectedOb],group);
+				}
+			}
+		}
+		else{
+			grabNearestOb(xy_or_xz);
+		}
+	}
     else if( state == GLUT_UP ) {}
     break;
   case GLUT_RIGHT_BUTTON: 
@@ -1648,7 +1683,7 @@ void Usage(char *progname)
 <<endl
 <<". 'e', 'E' - change roll" << endl
 <<". 'f', 'F' - change yaw" << endl
-<<". 'g', 'g' - change pitch" << endl
+<<". 'h', 'H' - change pitch" << endl
 <<endl
 <<endl
 <<"Important Note :" << endl
