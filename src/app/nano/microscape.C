@@ -1199,7 +1199,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
     peerName[0] = '\0';
     logPath[0] = '\0';
     logTimestamp.tv_sec = 0;
-    logTimeStamp.tv_usec = 0;
+    logTimestamp.tv_usec = 0;
 }
 
 
