@@ -1,12 +1,17 @@
+2001-08-07  David Marshburn  <marshbur@cs.unc.edu>
+
+	* globjects.c: added "region select" to the list MODE_NAMES
+
 2001-08-06  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* chartjunk.c: Changed "Scale Up Mode" to "Scale Mode"
 
 2001-08-05    <marshbur@cs.unc.edu>
 
-	* globjects.c: removed calls to add/remove the collaborators hand to the vir_world
-	funclist during init_world_modechange and clear_world_modechange.  This keeps
-	the collaborator's hand from showing when one collaborator is in private state.
+	* globjects.c: removed calls to add/remove the collaborators hand to 
+	the vir_world funclist during init_world_modechange and 
+	clear_world_modechange.  This keeps the collaborator's hand from 
+	showing when one collaborator is in private state.
 
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
