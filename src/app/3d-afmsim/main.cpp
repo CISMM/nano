@@ -5,7 +5,7 @@
 #include <vector>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
-#include "vec3d.h"
+#include "Vec3d.h"
 #include "3Dobject.h"
 #include "ConeSphere.h"
 #include "Tips.h"
@@ -30,12 +30,16 @@ GLuint list_cylinder;
 #define DEPTHSIZE MAX_GRID
 
 
+#define _DNA 1
+
 typedef int Bool;
 static int dblBuf  = GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH;
 //static int singleBuf  = GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH;
 Ntube nullntube;
 
 OB *ob[MAXOBS];
+Dna *dna = NULL;
+
 Vec3d vertex[MAXVERTICES];
 
 int numObs;
@@ -49,7 +53,7 @@ int selected_triangle_side;
 #define SOLID_AFM 2
 
 int afm_scan=SEMI_SOLID_AFM;
-int draw_objects=0;
+int draw_objects=1;
 
 
 //int solid_afm_scan=0;
@@ -115,13 +119,15 @@ double thetax=0.,thetay=0.;
 double cone_sphere_list_radius;
 int tesselation = 30;
 
+
+
 /* Here are our AFM tips */
 // third arg is the default
 
 // all units in nm
 // XXX Edit the following lines to adjust the radius and tilt of the tip
 SphereTip sp(5.);
-InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*30.,tesselation);
+InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*20.,tesselation);
 Tip tip(sp,ics,tesselation,INV_CONE_SPHERE_TIP);
 //Tip tip(sp,ics,SPHERE_TIP);
 
@@ -134,8 +140,7 @@ void	setColor( int colorIndex );
 //void	drawCylinder( double diameter, double height );
 //void	drawTube( double diameter, double length);
 void	lighting( void );
-void	addbject(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
-		 int nextSeg, int prevSeg);
+void	addbject(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam);
 void	addTriangle(Vec3d a, Vec3d b, Vec3d c);
 void	drawObjects( void );
 void	drawFrame( void );
@@ -155,23 +160,19 @@ void	showGrid( void );
 void	displayFuncDepth( void );
 void	reshapeWindowFuncDummy( int newWindowWidth, int newWindowHeight );
 void	commonKeyboardFunc(unsigned char key, int x, int y);
+void write_to_unca(char *filename);
 void	mouseFuncMain( int button, int state, int x, int y );
 void	mouseMotionFuncMain(int x, int y );
-void	calcMouseWorldLoc( int xMouse, int yMouse );
-double  norm_xy( Vec3d v );
-double  vec_xy_Distance( Vec3d pt1, Vec3d pt2 );
-int     findNearestObToMouse( void );
-void    moveGrabbedOb( void );
-void    grabNearestOb( void );
+void	calcMouseWorldLoc( int xMouse, int yMouse, int xy_or_xz);
+int     findNearestObToMouse(int xy_or_xz);
 void    select_triangle_side(void);
-void write_to_unca(char *filename);
+void grabNearestOb(int xy_or_xz);
+
 
 /* We have a type field. Later, I plan to distingush spheres from ntubes */
 void
-addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
-	 int nextSeg, int prevSeg )
-{
-  ob[numObs] = new Ntube(type,pos,yaw,roll,pitch,leng,diam,nextSeg,prevSeg);
+addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam) {
+  ob[numObs] = new Ntube(type,pos,yaw,roll,pitch,leng,diam);
   selectedOb = numObs;
   numObs++;
 }
@@ -181,6 +182,17 @@ void addTriangle(Vec3d a, Vec3d b, Vec3d c) {
   selectedOb = numObs;
   numObs++;
 }
+
+
+Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs) {
+  Dna *d = new Dna(P1, P2, dP1, dP2, length, numSegs);
+  ob[numObs] = d;
+  ob[numObs]->type = DNA;
+  selectedOb = numObs;
+  numObs++;
+  return d;
+}
+
 
 // Draw the objects.
 void
@@ -202,12 +214,13 @@ drawObjects( void )
     // current object is red
     if ( i == selectedOb ) setColor( RED );
 
-
+    // draw the object
     ob[i]->draw();
-    
-    
+
+
     // to be able to select individual side of a triangle, we do this
-    if ((buttonpress == RIGHT_BUTTON) && (glutGetWindow() == mainWindowID)) {
+    //    if ((buttonpress == RIGHT_BUTTON) && (glutGetWindow() == mainWindowID)) {
+    if ((buttonpress == RIGHT_BUTTON)) {
       if (ob[i]->type == TRIANGLE) {
 	Ntube temp;
 	Triangle tri = *(Triangle *) ob[selectedOb];
@@ -235,7 +248,6 @@ drawObjects( void )
   }
 }
 
-
 void
 drawFrame( void )
 {
@@ -262,8 +274,6 @@ drawFrame( void )
     // Draw the image scan grid.
     showGrid();
   }
-  // end of display frame, so flip buffers
-  glutSwapBuffers();
 }
 
 #if DISP_LIST
@@ -283,7 +293,7 @@ void make_sphere() {
   glEndList();
 }
 
-// display list for a sphere
+// display list for a cylinder
 void make_cylinder() {
   static GLUquadricObj* qobj;
 
@@ -389,8 +399,9 @@ initObs( void )
 
   // a nano tube
   // addNtube(NTUBE,  Vec3d( 25., 30., 45.), 0., 40., 0., 20, 10.,   NULLOB, NULLOB);
-  addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.,   NULLOB, NULLOB);
+  //  addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.);
   //addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.,   NULLOB, NULLOB);
+  //  addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.);
 
   //  addTriangle(Vec3d(55.8418,20.437,20), Vec3d(81.6421,45.6232,35), Vec3d (42.5162,53.9397,35));
   //  addTriangle(Vec3d(60,20,20), Vec3d(80,50,35), Vec3d (40,50,35));
@@ -429,7 +440,7 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
       maxx = ((!maxx) || (x > maxx)) ? x : maxx;
       maxy = ((!maxy) || (y > maxy)) ? y : maxy;
       maxz = ((!maxz) || (z > maxz)) ? z : maxz;
-      addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 1., rad,   NULLOB, NULLOB);
+      addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 1., rad);
     }
     else
       stop=1;
@@ -615,10 +626,38 @@ void monster_process_y() {
 }
 
 
-int
-main(int argc, char *argv[])
-{
+void init_sim(char *filename) {
+  double dna_length;
+  int numSegments;
+  Vec3d P1, P2, dP1, dP2;
 
+  FILE *f = fopen(filename,"r");
+
+  fscanf(f,"%d",&numSegments);
+
+  fscanf(f,"%lf",&dna_length);
+
+  fscanf(f,"%lf",&P1.x);
+  fscanf(f,"%lf",&P1.y);
+  fscanf(f,"%lf",&P1.z);
+
+  fscanf(f,"%lf",&P2.x);
+  fscanf(f,"%lf",&P2.y);
+  fscanf(f,"%lf",&P2.z);
+
+  fscanf(f,"%lf",&dP1.x);
+  fscanf(f,"%lf",&dP1.y);
+  fscanf(f,"%lf",&dP1.z);
+
+  fscanf(f,"%lf",&dP2.x);
+  fscanf(f,"%lf",&dP2.y);
+  fscanf(f,"%lf",&dP2.z);
+
+  dna = addDna(P1, P2, dP1, dP2, dna_length, numSegments);
+}
+
+int main(int argc, char *argv[])
+{
   adjustOrthoProjectionParams();
 
   if (argc > 1) {// load from a file
@@ -640,7 +679,10 @@ main(int argc, char *argv[])
   }
   else {
     initObs();
+    init_sim("1.dat");
   }
+
+
 
   // Deal with command line.
   glutInit(&argc, argv);
@@ -653,7 +695,7 @@ main(int argc, char *argv[])
   
   // MAIN WINDOW
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
-  glutInitWindowPosition( 0, 0 );
+  glutInitWindowPosition( 50, 0 );
   mainWindowID = glutCreateWindow( "3D AFM simulator - Top View" );
   adjustOrthoProjectionToWindow();
 
@@ -682,6 +724,8 @@ main(int argc, char *argv[])
   glutInitWindowPosition( 800, 0 );
   viewWindowID = glutCreateWindow( "Front View" );
   adjustOrthoProjectionToViewWindow();
+  glutMouseFunc(mouseFuncMain);
+  glutMotionFunc(   mouseMotionFuncMain );
 
 #if DISP_LIST
   make_sphere();
@@ -698,7 +742,7 @@ main(int argc, char *argv[])
 
   // Depth WINDOW
   glutInitWindowSize( (int)DEPTHSIZE, (int)DEPTHSIZE );
-  glutInitWindowPosition( 0, 650 );
+  glutInitWindowPosition( 50, 650 );
   depthWindowID = glutCreateWindow( "Depth window" );
 
 #if DISP_LIST
@@ -732,24 +776,36 @@ void write_to_unca(char *filename) {
 }
 
 
+int sim_cnt=0;
+extern int sim_done, numSegments;
+extern Vec3d *newpos;
+int first=1;
+int run_cnt=0;
 /**************************************************************************************/
 // This routine is called only after input events.
+#define PERIOD 30
 void
 displayFuncMain( void )
 {
   if (!stopAFM) {
     glutSetWindow( mainWindowID );
+
     // draw graphics for this frame
-    drawFrame();
-  }
-#if 0
-  if (done_afm_scan) {
-    //    stopAFM = 1;
-    //    write_to_unca("try.out");
-    cout <<"done\n";
-    exit(0);
-  }
+#if 1
+    //    if (!dna->done_run()) {
+    if (dna) {
+      dna->run();
+    }
+    //    }
+    if ((run_cnt % PERIOD) == 0) {
+      drawFrame();
+      // end of display frame, so flip buffers
+      glutSwapBuffers();
+    }
+    run_cnt++;
 #endif
+
+  }
 }
 
 void
@@ -759,7 +815,13 @@ displayFuncView( void )
     glutSetWindow( viewWindowID );
     glPushMatrix();
     glRotatef(-90, 1.0, 0.0, 0.0 ); 
-    drawFrame();
+#if _DNA
+    if ((run_cnt % PERIOD) == 0) {
+      drawFrame();
+      // end of display frame, so flip buffers
+      glutSwapBuffers();
+    }
+#endif
     glPopMatrix();
   }
 }
@@ -771,8 +833,14 @@ displayFuncDepth( void )
 {
   if (!stopAFM) {
     glutSetWindow( depthWindowID );
-    // in Z-buffer of Depth Window using graphics hardware.
-    doImageScanApprox();
+#if _DNA
+    if ((run_cnt % PERIOD) == 0) {
+      // in Z-buffer of Depth Window using graphics hardware.
+      doImageScanApprox();
+      // end of display frame, so flip buffers
+      glutSwapBuffers();
+    }
+#endif
   }
 }
 
@@ -1033,8 +1101,6 @@ imageScanDepthRender( void )  {
     }
   }
 
-  // end of display frame, so flip buffers
-  glutSwapBuffers();
   //glFlush();
   //glFinish();
 
@@ -1146,11 +1212,11 @@ commonKeyboardFunc(unsigned char key, int x, int y)
     }
     break;
   case 'n' :
-    addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM,   NULLOB, NULLOB);
+    addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM);
     selectedOb = numObs-1;
     break;
   case 's' :
-    addNtube( SPHERE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., 0., DEFAULT_DIAM,   NULLOB, NULLOB);
+    addNtube( SPHERE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., 0., DEFAULT_DIAM);
     selectedOb = numObs-1;
     break;
   case 't' :
@@ -1242,22 +1308,37 @@ commonKeyboardFunc(unsigned char key, int x, int y)
 }
 
 
+  
+
 // Callback routine: called for mouse button events.
 void
 mouseFuncMain( int button, int state, int x, int y )
 {
-  calcMouseWorldLoc( x, y );
+
+  int xy_or_xz;
+
+  int win = glutGetWindow();
+
+  if (win == mainWindowID) {
+    xy_or_xz = XY_GRAB;
+  }
+  else if (win == viewWindowID) {
+    xy_or_xz = XZ_GRAB;
+  }
+
+  calcMouseWorldLoc( x, y, xy_or_xz);
 
   switch( button ) {
   case GLUT_LEFT_BUTTON: 
-    if(      state == GLUT_DOWN )	{buttonpress=LEFT_BUTTON;grabNearestOb();}
+    if(      state == GLUT_DOWN )	{buttonpress=LEFT_BUTTON;grabNearestOb(xy_or_xz);}
     else if( state == GLUT_UP )		{}
     break;
   case GLUT_RIGHT_BUTTON: 
     /* this selects one side of the triangle so that we can perform all
      * our nanotube operations on that side. 
      */
-    if(      state == GLUT_DOWN )	{buttonpress=RIGHT_BUTTON; select_triangle_side();}
+    if(      state == GLUT_DOWN )	{buttonpress=RIGHT_BUTTON; select_triangle_side();
+    }
     else if( state == GLUT_UP )		{}
     break;
   }
@@ -1273,15 +1354,27 @@ mouseFuncMain( int button, int state, int x, int y )
 void
 mouseMotionFuncMain( int x, int y )
 {
+  int xy_or_xz;
+
+  int win = glutGetWindow();
+
+  if (win == mainWindowID) {
+    xy_or_xz = XY_GRAB;
+  }
+  else if (win == viewWindowID) {
+    xy_or_xz = XZ_GRAB;
+  }
 
   if (buttonpress == LEFT_BUTTON) {
     // Map mouse cursor window coords to world coords.
     // Since we're using an orthoscopic projection parallel to the Z-axis,
     // we can map (x,y) in window coords to (x,y,0) in world coords.
-    calcMouseWorldLoc( x, y );
+    calcMouseWorldLoc( x, y, xy_or_xz);
     
     // Move the grabbed object, if any, to match mouse movement.
-    moveGrabbedOb();
+    //    moveGrabbedOb();
+    ob[selectedOb]->moveGrabbedOb(vMouseWorld);
+
     
     //	glutPostRedisplay();
   }
@@ -1292,7 +1385,7 @@ mouseMotionFuncMain( int x, int y )
 // based on the window width and height and the edges of
 // the frustum of the orthoscopic projection.
 void
-calcMouseWorldLoc( int xMouse, int yMouse ) 
+calcMouseWorldLoc( int xMouse, int yMouse, int xy_or_xz ) 
 {
   double xMouseNormalized;
   double yMouseNormalized;
@@ -1308,42 +1401,33 @@ calcMouseWorldLoc( int xMouse, int yMouse )
   // invert normalized Y due to up being - in mouse coords, but + in ortho coords.
   yMouseNormalized = 1. - yMouseNormalized;
 
-  // calculate cursor position in ortho frustum's XY plane
-  vMouseWorld.x = (xMouseNormalized * orthoFrustumWidth)  + orthoFrustumLeftEdge;
-  vMouseWorld.y = (yMouseNormalized * orthoFrustumHeight) + orthoFrustumBottomEdge;
-  vMouseWorld.z = 0; 
-}
-
-Vec3d oldMousePos;
-
-// search for nearest ob to cursor, and set grab offset vector.
-void
-grabNearestOb( void )
-{
-  selectedOb =  findNearestObToMouse();
-  // calculate grab offset vector
-  if( selectedOb != NULLOB ) {
-    vGrabOffset = ob[selectedOb]->pos   - vMouseWorld;
+  if (xy_or_xz == XY_GRAB) {
+    // calculate cursor position in ortho frustum's XY plane
+    vMouseWorld.x = (xMouseNormalized * orthoFrustumWidth)  + orthoFrustumLeftEdge;
+    vMouseWorld.y = (yMouseNormalized * orthoFrustumHeight) + orthoFrustumBottomEdge;
+    vMouseWorld.z = 0; 
   }
-  moveGrabbedOb();
-}
-
-void
-moveGrabbedOb( void )
-{
-  // move the selected object, if any, to correspond with the mouse movement
-  if( selectedOb != NULLOB) {
-    ob[selectedOb]->setPos(Vec3d((vMouseWorld.x + vGrabOffset.x),
-				 (vMouseWorld.y + vGrabOffset.y),
-				 ob[selectedOb]->pos.z));
-    
+  else {
+    // calculate cursor position in ortho frustum's XY plane
+    vMouseWorld.y = 0; 
+    vMouseWorld.x = (xMouseNormalized * orthoFrustumWidth)  + orthoFrustumLeftEdge;
+    vMouseWorld.z = (yMouseNormalized * orthoFrustumHeight) + orthoFrustumBottomEdge;
   }
 }
 
-// searches through all objects to find the object nearest the mouse cursor.
-// returns the index of the object, or NULLOB if no objects are within threshold.
-int
-findNearestObToMouse( void ) {
+
+void grabNearestOb(int xy_or_xz)
+{
+  selectedOb =  findNearestObToMouse(xy_or_xz);
+  if (selectedOb == NULLOB) {
+    return;
+  }
+
+  ob[selectedOb]->grabOb(vMouseWorld, xy_or_xz);
+  ob[selectedOb]->moveGrabbedOb(vMouseWorld);
+}
+
+int findNearestObToMouse(int xy_or_xz) {
   int i;
   int nearestOb = NULLOB;
   double nearestDist = 1000000.;
@@ -1352,7 +1436,12 @@ findNearestObToMouse( void ) {
   
   for( i=0; i<numObs; i++ ) {
     if (ob[i] == UNUSED) continue;
-    dist = vec_xy_Distance( vMouseWorld, ob[i]->pos );
+    if (xy_or_xz == XY_GRAB) {
+      dist = ob[i]->xy_distance(vMouseWorld);
+    }
+    else {
+      dist = ob[i]->xz_distance(vMouseWorld);
+    }
     if( dist < nearestDist  &&  dist < thresholdDist ) {
       nearestDist = dist;
       nearestOb   = i;
@@ -1361,6 +1450,7 @@ findNearestObToMouse( void ) {
   return nearestOb;
 }
 
+/* XXXX : Add xy or yz mode */
 void
 findNearestTriangleSideToMouse( void ) {
   int i;
@@ -1372,9 +1462,9 @@ findNearestTriangleSideToMouse( void ) {
     if (ob[i] == UNUSED) continue;
     if (ob[i]->type == TRIANGLE) {
       Triangle *tri = (Triangle *) ob[i];
-      double dist1 = vec_xy_Distance( vMouseWorld, tri->ab.pos );
-      double dist2 = vec_xy_Distance( vMouseWorld, tri->bc.pos );
-      double dist3 = vec_xy_Distance( vMouseWorld, tri->ca.pos );
+      double dist1 = tri->ab.xy_distance( vMouseWorld);
+      double dist2 = tri->bc.xy_distance( vMouseWorld);
+      double dist3 = tri->ca.xy_distance( vMouseWorld);
 
       if (dist2 < dist3) {
 	if (dist1 < dist2) {
@@ -1406,22 +1496,7 @@ findNearestTriangleSideToMouse( void ) {
   selectedOb = nearestTriangle;
 }
 
-
 void select_triangle_side() {
   findNearestTriangleSideToMouse();
 }
 
-double
-vec_xy_Distance( Vec3d pt1, Vec3d pt2 )
-{
-  return norm_xy( pt1 - pt2 );
-}
-
-// norm in x and y only
-double
-norm_xy( Vec3d v )
-{
-  return sqrt( (v.x * v.x)  +  (v.y * v.y) );
-}
-
-  

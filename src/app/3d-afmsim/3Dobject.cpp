@@ -1,5 +1,4 @@
 /*$Id$*/
-
 /* Object definitions */
 
 #include <stdlib.h>		//stdlib.h vs cstdlib
@@ -29,7 +28,16 @@ void OB :: setPos_z(double _z) {
   setPos(tpos);
 }
 
+// norm in x and y only
+double OB :: norm_xy( Vec3d v )
+{
+  return sqrt( (v.x * v.x)  +  (v.y * v.y) );
+}
 
+double OB :: norm_xz( Vec3d v )
+{
+  return sqrt( (v.x * v.x)  +  (v.z * v.z) );
+}
 
 /* Class : Ntube  */
 
@@ -43,19 +51,16 @@ Ntube::Ntube( void ) {
   pitch = 0.;
   leng = 0.;
   diam = 0.;
-  nextSeg = NULLOB;
-  prevSeg = NULLOB;
-  moved = 0;
 }
 
 
 // constructor for OB
 // we have a type field here because later I may distinguish ntubes from spheres
-Ntube::Ntube(int type, Vec3d pos, double yaw, double roll, double pitch, double length, double diameter, int nextSeg, int prevSeg) {
-  set(type,pos,yaw,roll,pitch,length,diameter,nextSeg,prevSeg);
+Ntube::Ntube(int type, Vec3d pos, double yaw, double roll, double pitch, double length, double diameter) {
+  set(type,pos,yaw,roll,pitch,length,diameter);
 }
 
-void Ntube::set(int _type, Vec3d _pos, double _yaw, double _roll, double _pitch, double _length, double _diameter, int _nextSeg, int _prevSeg ) {
+void Ntube::set(int _type, Vec3d _pos, double _yaw, double _roll, double _pitch, double _length, double _diameter) {
 
   Vec3d vec, t1, t2, t3;
 
@@ -72,8 +77,6 @@ void Ntube::set(int _type, Vec3d _pos, double _yaw, double _roll, double _pitch,
     leng = _length;
   }
   diam = _diameter;
-  nextSeg = _nextSeg;
-  prevSeg = _prevSeg;
 
   // set the axis
   vec = Vec3d(1,0,0);
@@ -124,7 +127,8 @@ void Ntube :: set( Vec3d a, Vec3d b, double diam) {
     yaw = -yaw;
   }
 
-  set(type,(a+b)/2.,yaw,0.,pitch,t.magnitude(),diam,NULLOB,NULLOB);
+
+  set(type,(a+b)/2.,yaw,0.,pitch,t.magnitude(),diam);
 }
 
 void Ntube :: translate(Vec3d t) {
@@ -191,6 +195,15 @@ void Ntube :: setPitch(double _pitch) {
   pitch  = _pitch;
   recalc_all();
 }
+
+Vec3d Ntube :: getLeftEndPt() {// the one away from the direction of the axis
+  return (pos - axis * (leng/2.));
+}
+
+Vec3d Ntube :: getRightEndPt() { // the one in the direction of the axis
+  return (pos + axis * (leng/2.));
+}
+
 
 float zBuffer2[ 128*128 ];			
 extern int mousepress;
@@ -539,6 +552,24 @@ void Ntube::print() {
   cout << "pos x " << pos.x << " y " << pos.y << " z " << pos.z << " yaw " << yaw << " pitch " << pitch << " roll " << roll << " length " << leng << " diam " << diam << endl;
 }
 
+double Ntube :: xy_distance(Vec3d vMouseWorld) {
+  return norm_xy(vMouseWorld - pos);
+}
+
+double Ntube :: xz_distance(Vec3d vMouseWorld) {
+  return norm_xz(vMouseWorld - pos);
+}
+
+void Ntube :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
+  // store the grab offset
+  vGrabOffset = pos   - vMouseWorld;
+}
+
+void Ntube :: moveGrabbedOb(Vec3d vMouseWorld) {
+  // As vMouseWorld changes, move the object
+  setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z));
+}
+
 /* Class : Triangle  */
 
 Triangle :: Triangle(void) {
@@ -732,3 +763,22 @@ void Triangle :: print() {
   exit(0);
 #endif
 }
+
+double Triangle :: xy_distance(Vec3d vMouseWorld) {
+  return norm_xy(vMouseWorld - pos);
+}
+
+double Triangle :: xz_distance(Vec3d vMouseWorld) {
+  return norm_xz(vMouseWorld - pos);
+}
+
+void Triangle :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
+  // store the grab offset
+  vGrabOffset = pos   - vMouseWorld;
+}
+
+void Triangle :: moveGrabbedOb(Vec3d vMouseWorld) {
+  // As vMouseWorld changes, move the object
+  setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, pos.z));
+}
+

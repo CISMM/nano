@@ -30,8 +30,8 @@ all: main
 
 include depend
 
-OBJS = vec3d.o ConeSphere.o 3Dobject.o Tips.o Unca.o main.o 
-FILES= vec3d.cpp ConeSphere.cpp 3Dobject.cpp Tips.cpp Unca.cpp main.cpp 
+OBJS = Vec3d.o ConeSphere.o 3Dobject.o Tips.o Unca.o main.o dna.o
+FILES= Vec3d.cpp ConeSphere.cpp 3Dobject.cpp Tips.cpp Unca.cpp main.cpp dna.cpp
 main : $(OBJS) defns.h
 	$(CXX) -o32 -o sim $(OBJS) $(LDFLAGS) $(GLUT_LIBS) $(GL_LIBS) $(SYS_LIBS)
 

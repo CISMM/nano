@@ -10,3 +10,10 @@ Run
 
 Example
 ./pdb <lac.pdb > lac.data
+
+
+
+Note : explanation of different terms in the pdb file.
+
+	  #  atom name residue name  chain id   residue #    x     y         z
+ATOM      1  N         LYS           A          2            9.626 105.388  -2.970  1.00105.50           N  
