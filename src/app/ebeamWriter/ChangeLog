@@ -1,6 +1,12 @@
+2003-02-10  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (setCanvasImage): added quick fix to help avoid user
+	confusion - setting the canvas image automatically enables the image in
+	the display and disables display of the previous canvas image 
+
 2003-02-04  Adam Seeger  <seeger@cs.unc.edu>
 
-        * patternFile.C (readFromFile): fixed bug - had to clear previous 
+    * patternFile.C (readFromFile): fixed bug - had to clear previous 
         pattern
 	* patternEditor.C (updateColorMapTextureAlpha): added new virtual function
 	to allow this file to compile

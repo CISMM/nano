@@ -636,7 +636,11 @@ void PatternEditor::clearExposurePoints()
 
 void PatternEditor::setCanvasImage(nmb_Image *image)
 {
+	if (d_canvasImage) {
+		setImageEnable(d_canvasImage, vrpn_FALSE);
+	}
 	d_canvasImage = image;
+	setImageEnable(image, vrpn_TRUE);
 	d_viewer->dirtyWindow(d_mainWinID);
 }
 
