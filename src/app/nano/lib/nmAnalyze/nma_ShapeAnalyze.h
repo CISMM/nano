@@ -8,6 +8,8 @@ class CNT_IA;
 #include <vrpn_Connection.h>
 
 
+int nma_ShapeAnalyzeCounter;
+
 /////////////////////////////////////////////////////////////////
 // Class:       nma_ShapeAnalyze
 // Description: Interface class to the shape analysis code to
@@ -17,6 +19,7 @@ class nma_ShapeAnalyze
 {
 public:
 	nma_ShapeAnalyze();
+        ~nma_ShapeAnalyze();
 
 	void setScale(float, float, float);
 	void setBlur(float);
@@ -47,6 +50,8 @@ private:
 	int d_ordWrite;
 
 	CNT_IA *d_cntRec;
+       
+	ofstream fout;
 
 };
 
@@ -62,7 +67,9 @@ class nma_ShapeIdentifiedPlane
 public:
 	friend class nmb_CalculatedPlane;
 
-        nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, char* outputPlaneName, double * cntMask);
+        nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, 
+				 char* outputPlaneName, double * cntMask);
+        ~nma_ShapeIdentifiedPlane();
   
 	// Accessor.  Returns that calculated plane.
 	BCPlane* getCalculatedPlane(){return NULL;}//fill these in later

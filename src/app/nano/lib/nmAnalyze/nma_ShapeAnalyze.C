@@ -4,6 +4,7 @@
 
 #include <BCPlane.h>
 #include <BCString.h>
+#include <fstream.h>
 #include <nmb_PlaneSelection.h>
 #include "nma_ShapeAnalyze.h"
 #include "cnt_ia.h"
@@ -13,25 +14,42 @@ nma_ShapeAnalyze::
 nma_ShapeAnalyze()
   :	d_maskWrite(1), d_ordWrite(0)
 {
+        nma_ShapeAnalyzeCounter = 0;
+  
 	strcpy(d_imgMaskFile, "mask.ppm");
 	strcpy(d_imgOrdFile, "order.ppm");
 	strcpy(d_txtFile, "mask");
 
 	d_cntRec = new CNT_IA();
+
+	fout.open("settings.txt");//save settings for plane (analysis) whether
+	                          //or not plane is saved
+	fout << "Settings:" << endl << endl;
 }
+
+nma_ShapeAnalyze::
+~nma_ShapeAnalyze(){
+        delete d_cntRec;
+        fout.close();
+}
+
 
 void nma_ShapeAnalyze::
 setScale(float xscale, float yscale, float zscale)
 {
 	// set PIXEL <-> nm conversion scale factor (x, y, z)
-	d_cntRec->cnt_image_setScal(xscale, yscale, zscale);													
+	d_cntRec->cnt_image_setScal(xscale, yscale, zscale);	
+        fout << "x scale: " << xscale << endl;
+        fout << "y scale: " << yscale << endl;
+        fout << "z scale: " << zscale << endl;
 }
 
 void nma_ShapeAnalyze::
 setBlur(float sigma)
 {
 	// set SIGMA for image blurring -- default=1.5
-	d_cntRec->cnt_image_setSigm(sigma);
+        d_cntRec->cnt_image_setSigm(sigma);
+        fout << "Gaussian Blurring: " << sigma << endl;
 }
 
 void nma_ShapeAnalyze::
@@ -39,6 +57,7 @@ setCorrelation(float correlation)
 {
 	// set CORRELATION  factor for CNT fitting -- default=0.6
 	d_cntRec->cnt_image_setCorr(correlation);	
+        fout << "Tube Width Correlation (0 - 1): " << correlation << endl;
 }
 
 void nma_ShapeAnalyze::
@@ -46,6 +65,7 @@ setAspectRatio(float aspect)
 {
 	// set ASPECT ratio for CNT recognition -- default=2.0
 	d_cntRec->cnt_image_setAspt(aspect);			
+        fout << "Aspect Ratio for Tube Recognition: " << aspect << endl;
 }
 
 void nma_ShapeAnalyze::
@@ -59,7 +79,8 @@ void nma_ShapeAnalyze::
 setPreFlatten(int preFlatten)
 {
 	// set PRE-FLATTENING flag -- default=1
-	d_cntRec->cnt_image_setFlat(preFlatten);		
+	d_cntRec->cnt_image_setFlat(preFlatten);
+        fout << "Pre-Flatten" << preFlatten << endl;		
 }
 
 void nma_ShapeAnalyze::
@@ -67,6 +88,7 @@ setAutoAdapt(int autoAdapt)
 {
 	// set AUTO-ADAPTION flag -- default=1
 	d_cntRec->cnt_image_setAuto(autoAdapt);		
+        fout << "Auto-Set Intensity Threshold: " << autoAdapt << endl;
 }
 
 void nma_ShapeAnalyze::
@@ -130,15 +152,16 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 	d_cntRec->cnt_image_label();
 //	d_cntRec->cnt_image_order(d_txtFile);
 
-	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as dataset->inputGrid, but
-	//can change it later to get planes in other related BCGrids as well
+	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
+        //dataset->inputGrid, but can change it later to get planes in other 
+        //related BCGrids as well
 
 	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters(), currentGrid, imagePlane);
 	
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
 	if (d_maskWrite) {
-	  d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
+	  //d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
 
           nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
 	}
@@ -154,13 +177,20 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
 
 nma_ShapeIdentifiedPlane::
-	  nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, char* outputPlaneName, double * cntMask)
-	    : d_sourcePlane(sourcePlane), d_dataset(dataset), d_outputPlaneName(outputPlaneName),d_cntMask(cntMask)
+	  nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, char* outputPlaneName, 
+				   double * cntMask)
+	    : d_sourcePlane(sourcePlane), d_dataset(dataset), d_outputPlaneName(outputPlaneName),
+              d_cntMask(cntMask)
 {
     create_ShapeIdentifiedPlane();
-
 }
 
+nma_ShapeIdentifiedPlane::
+~nma_ShapeIdentifiedPlane(){
+  delete d_sourcePlane;
+  delete d_outputPlane;
+  delete d_dataset;
+}
 
 void nma_ShapeIdentifiedPlane::
 create_ShapeIdentifiedPlane()
@@ -169,27 +199,35 @@ create_ShapeIdentifiedPlane()
   //local variables for code simplification
   BCGrid* sourcePlaneParentGrid = d_sourcePlane->GetGrid();
 
+  
+  char uniqueOutputPlaneName[50];
+  nma_ShapeAnalyzeCounter++;
+  sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyzeCounter, d_outputPlaneName);
+  //allows files to be named different things so you can make more than one shape-identified file
+  //per run of nano
+  
+
   //check if other plane with name we want to give it is already in the grid
   //see if we can name the new plane with "d_imgMaskFile" as a name, will be NULL if we can
-  d_outputPlane = sourcePlaneParentGrid->getPlaneByName(d_outputPlaneName);  
+  d_outputPlane = sourcePlaneParentGrid->getPlaneByName(uniqueOutputPlaneName);  
   if( d_outputPlane != NULL )
     {
       // a plane already exists by this name, and we disallow that.
       char s[] = "Cannot create new height plane.  A plane already exists of the name:  ";
       char msg[1024];
-      sprintf( msg, "%s%s.", s, d_outputPlaneName );
+      sprintf( msg, "%s%s.", s, uniqueOutputPlaneName );
     }  
 
   //adding new plane  
   char newunits[1000];
   sprintf(newunits, "boolean");
   d_outputPlane 
-    = sourcePlaneParentGrid->addNewPlane(d_outputPlaneName, newunits, NOT_TIMED);
+    = sourcePlaneParentGrid->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
   if( d_outputPlane == NULL ) 
     {
       char s[] = "Could not create new height plane.  Can't make plane:  ";
       char msg[1024];
-      sprintf( msg, "%s%s.", s, d_outputPlaneName );
+      sprintf( msg, "%s%s.", s, uniqueOutputPlaneName );
     }
 
   
@@ -231,7 +269,7 @@ create_ShapeIdentifiedPlane()
   d_dataset->addNewCalculatedPlane( this );
 
   //add to list of names so show up in the pull-down menu of avail. planes
-  d_dataset->inputPlaneNames->addEntry(d_outputPlaneName);
+  d_dataset->inputPlaneNames->addEntry(uniqueOutputPlaneName);
   
   // register ourselves to receive plane updates
   d_sourcePlane->add_callback(sourcePlaneChangeCallback, this);

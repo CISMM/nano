@@ -41,6 +41,7 @@ CNT_IA::~CNT_IA()
 // read in image array from BCPlane
 void CNT_IA::cnt_image_read(BCPlane *imagePlane) //*
 {
+  if(imagePlane){//to make sure there
 	int x, y, imgX, imgY;
 //	unsigned char *img;
 
@@ -60,6 +61,10 @@ void CNT_IA::cnt_image_read(BCPlane *imagePlane) //*
 	cnt_image_x = imgX;
 	cnt_image_y = imgY;
 	cnt_image_height = imagePlane->maxValue() - imagePlane->minValue();
+	}
+	else{
+	  cout << "cnt_image_read():  imagePlane failure\n";
+	}
 }
 
 
@@ -686,7 +691,8 @@ void CNT_IA::cnt_image_order(char *txtFile)
 	long max_id;
 	double theta, dx, dy;
 	int i = 0;
-	int count;
+	int count = cnt_image_x * cnt_image_y;//my best guess as to what count should be
+	                                      //--it was unitialized before
 	int *Xs = new int [count];
 	int *Ys = new int [count];
 
