@@ -59,7 +59,8 @@ vrpn_int32 StartingToRelax_type;
 vrpn_int32 TopoFileHeader_type;
 vrpn_int32 ForceCurveData_type;
 vrpn_int32 InForceCurveStyle_type;
-
+vrpn_int32 ScanRange_type;
+vrpn_int32 ReportSlowScan_type;
 
 void Usage(char *s)
 {
@@ -171,7 +172,7 @@ int	translate_packet(stm_stream *instream)
 
     case AFM_FORCE_SET_FAILURE:
       stm_unbuffer_float (&bufptr, &fscrap); 
-      printf("AFM_FORCE_SET_FAILURE (%g)\n", &fscrap);
+      printf("AFM_FORCE_SET_FAILURE (%g)\n", fscrap);
       break;
 
     case AFM_FORCE_PARAMETERS: 
@@ -272,7 +273,7 @@ int	translate_packet(stm_stream *instream)
       vrpn_buffer(&vbp, &vbuflen, zmin);
       stm_unbuffer_float (&bufptr, &zmax);
       vrpn_buffer(&vbp, &vbuflen, zmax);
-      connection->pack_message(10000 - vbuflen, now, ReportMaxScanRangeNM_type,
+      connection->pack_message(10000 - vbuflen, now, ScanRange_type,
                                myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
@@ -488,16 +489,9 @@ int	translate_packet(stm_stream *instream)
 
     case SPM_REPORT_SLOW_SCAN:
       stm_unbuffer_int (&bufptr, &iscrap);
-      printf("SPM_REPORT_SLOW_SCAN (%d) =>", iscrap)
-      if (iscrap) {
-        connection->pack_message(10000 - vbuflen, now, SlowScanPause_type,
-                                 myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
-        printf("SlowScanPause ()\n");
-      } else {
-        connection->pack_message(10000 - vbuflen, now, SlowScanResume_type,
-                                 myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
-        printf("SlowScanResume ()\n");
-      }
+      vrpn_buffer(&vbp, &vbuflen, iscrap);
+      connection->pack_message(10000 - vbuflen, now, ReportSlowScan_type,
+				myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
       break;
 
     case SPM_CLIENT_HELLO:
@@ -983,7 +977,10 @@ void	main(unsigned argc, char *argv[])
       connection->register_message_type("ForceCurveData");
   InForceCurveStyle_type =
       connection->register_message_type("InForceCurveStyle");
-
+  ScanRange_type =
+      connection->register_message_type("nmm Microscope ScanRange");
+  ReportSlowScan_type =
+      connection->register_message_type("nmm Microscope ReportSlowScan");
 
   /* Scan in the input file and translate to the output file until
    * the end of the input file is reached. */

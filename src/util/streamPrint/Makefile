@@ -30,6 +30,12 @@ vrpn_newStreamPrint:
 	$(MAKE) APP_NAME=vrpn_newStreamPrint \
                 GENERATED_SRC= \
                 EXCLUDE_SRC="streamEdit.c streamPrint.c streamToNewVrpn.C streamToVrpn.C vrpn_streamTimeFix.C vrpn_headerPrint.C vrpn_uiHeaderPrint.C" \
+               MAKECMDGOALS=""
+
+streamToVrpn:
+	$(MAKE) APP_NAME=streamToVrpn \
+                GENERATED_SRC= \
+                EXCLUDE_SRC="streamEdit.c streamPrint.c streamToNewVrpn.C vrpn_streamTimeFix.C vrpn_headerPrint.C vrpn_uiHeaderPrint.C vrpnsp.C" \
                 MAKECMDGOALS=""
 
 streamToNewVrpn:
