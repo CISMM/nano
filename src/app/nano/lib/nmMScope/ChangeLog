@@ -1,3 +1,8 @@
+2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmMScopeGenerate.dsp:  changed the custom build rules so that 
+	this project can be built as a part of any workspace.
+
 2002-03-12  Aron Helser  <helser@cs.unc.edu>
 
 	* .cvsignore: Added nmm_AFMSIMSERVER_Report.Ch, since they are

@@ -72,13 +72,12 @@ SOURCE=.\nmm_MicroscopeRemote.hdef
 !IF  "$(CFG)" == "nmMScopeGenerate - Win32 Debug"
 
 # PROP Ignore_Default_Tool 1
-# Begin Custom Build
-WkspDir=.
+# Begin Custom Build - Performing Custom Build Step on $(InputPath)
 InputPath=.\nmm_MicroscopeRemote.hdef
 InputName=nmm_MicroscopeRemote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -106,12 +105,11 @@ SOURCE=.\nmm_SimulatedMicroscope.hdef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SimulatedMicroscope.hdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -139,12 +137,11 @@ SOURCE=.\nmm_SimulatedMicroscope_Remote.hdef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SimulatedMicroscope_Remote.hdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -176,12 +173,11 @@ SOURCE=.\nmm_MicroscopeRemoteGen.Cdef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_MicroscopeRemoteGen.Cdef
 InputName=nmm_MicroscopeRemoteGen
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -209,12 +205,11 @@ SOURCE=.\nmm_SimulatedMicroscope.Cdef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SimulatedMicroscope.Cdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -242,12 +237,11 @@ SOURCE=.\nmm_SimulatedMicroscope_Remote.Cdef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SimulatedMicroscope_Remote.Cdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' '$(InputPath)' "
 
 # End Custom Build
 
@@ -279,12 +273,11 @@ SOURCE=.\nmm_AFM_Control.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_AFM_Control.vrpndef
 InputName=nmm_AFM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -322,12 +315,11 @@ SOURCE=.\nmm_AFM_Report.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_AFM_Report.vrpndef
 InputName=nmm_AFM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -365,12 +357,11 @@ SOURCE=.\nmm_AFMSIM_Report.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_AFMSIM_Report.vrpndef
 InputName=nmm_AFMSIM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -408,12 +399,11 @@ SOURCE=.\nmm_AFMSIMSERVER_Report.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_AFMSIMSERVER_Report.vrpndef
 InputName=nmm_AFMSIMSERVER_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -435,12 +425,11 @@ SOURCE=.\nmm_Monitor.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_Monitor.vrpndef
 InputName=nmm_Monitor
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -478,12 +467,11 @@ SOURCE=.\nmm_SPM_Control.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SPM_Control.vrpndef
 InputName=nmm_SPM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
@@ -521,12 +509,11 @@ SOURCE=.\nmm_SPM_Report.vrpndef
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-WkspDir=.
 InputPath=.\nmm_SPM_Report.vrpndef
 InputName=nmm_SPM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+	C:\cygwin\bin\bash --login -c "cd $OLDPWD; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
    $(BuildCmds)
