@@ -1251,7 +1251,7 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
       double l, double r, double b, double t, 
       double tx, double ty, double scx, double scy)
 {
-    int win_index = get_window_index_from_winID(winID);
+  int win_index = get_window_index_from_winID(winID);
   void *texture;
   int texwidth, texheight;
   vrpn_bool textureOkay = VRPN_TRUE;
@@ -1282,121 +1282,167 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
   }
 
   if (textureOkay) {
+    double matrix[16];
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     glOrtho(l, r, b, t, -1, 1);
+    glGetDoublev(GL_PROJECTION_MATRIX, matrix);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
+    // these are the actual dimensions of the texture as stored in memory
+    // note that the border may be different sizes on the left and right and
+    // top and bottom
     texwidth = image->width() +
                image->borderXMin()+image->borderXMax();
     texheight = image->height() +
                image->borderYMin()+image->borderYMax();
 
-    int bordSizeXPixels = image->borderXMin();
-    int bordSizeYPixels = image->borderYMin();
+    // when drawing the texture, we really only care about the border size
+    // to the extent that it affects how it determines the offset to the
+    // start of the actual image in the texture array and this only depends
+    // on these two border parameters:
+    int skipPixels = image->borderXMin();
+    int skipRows = image->borderYMin();
 
 //    printf("begin drawPixels for %s\n", image->name()->Characters());
 
+    // these are the dimensions of the texture minus the border
     int imageWidth = image->width();
     int imageHeight = image->height();
 
+    // compute some useful ratios:
+    // world units per window pixels in x
     double wuPerWindowPixelX = fabs(r - l)/(double)winWidth;
+    // world units per window pixels in y
     double wuPerWindowPixelY = fabs(t - b)/(double)winHeight;
+    // world units per image pixels in x
     double wuPerImagePixelX = 1.0/(fabs(scx)*imageWidth);
+    // world units per image pixels in y
     double wuPerImagePixelY = 1.0/(fabs(scy)*imageHeight);
 
+    // and the following ratio tells us the pixel zoom
     double windowPixelPerImagePixelX = wuPerImagePixelX/wuPerWindowPixelX;
     double windowPixelPerImagePixelY = wuPerImagePixelY/wuPerWindowPixelY;
 
-    int skipRows = bordSizeYPixels;
-    int skipPixels = bordSizeXPixels;
-    GLfloat transX_wu = -tx/scx; // convert from image units to world units
-    GLfloat transY_wu = -ty/scy;
-    
-    /* XXX - the following two conditional statements are a bit nasty 
-	but it seems to work - if one follows the signs carefully I think
-        it might be possible to write this a lot more concisely but I don't
-	have time to figure it out right now */
+    // compute the raster position in world units 
+    GLdouble rasterPos_wu[2] = {-tx/scx, -ty/scy};
+
+    // if the raster position as we have currently calculated it would be
+    // clipped but there is still some part of the image that shouldn't be 
+    // clipped then we will detect that here 
+    // (first checking in X and then in Y)
+    double boundX, boundY;
     int skipIncX, skipIncY;
-    if (scx > 0) {
-      double minX;
-      if ((r-l) < 0) {
-        minX = r;
-      } else {
-        minX = l;
-      }
-      if (transX_wu <= minX) {
-        skipIncX = (int)ceil((minX - transX_wu)/wuPerImagePixelX);
-        skipPixels += skipIncX;
-        // add a little extra to make sure that roundoff error doesn't lead to
-        // a negative and invalid raster position
-        transX_wu += skipIncX*wuPerImagePixelX + 0.001;
-      }
+
+    // figure out whether the image should be drawn starting at the left or
+    // right side of the screen - that determines where the image gets cut in
+    // the x direction
+    if (scx*(r-l) < 0) {
+       boundX = r;
     } else {
-      double maxX;
-      if ((r-l) < 0) {
-        maxX = l;
-      } else {
-        maxX = r;
-      }
-      if (transX_wu >= maxX) {
-        skipIncX = (int)ceil((transX_wu - maxX)/wuPerImagePixelX);
-        skipPixels += skipIncX;
-        // add a little extra to make sure that roundoff error doesn't lead to
-        // a negative and invalid raster position
-        transX_wu -= skipIncX*wuPerImagePixelX + 0.001;
-      }
+       boundX = l;
     }
-    if (scy > 0) {
-      double minY;
-      if ((t-b) < 0) {
-        minY = t;
-      } else {
-        minY = b;
-      }
-      if (transY_wu <= minY) {
-        skipIncY = (int)ceil((minY - transY_wu)/wuPerImagePixelY);
-        skipRows += skipIncY;
-        // add a little extra to make sure that roundoff error doesn't lead to
-        // a negative and invalid raster position
-        transY_wu += skipIncY*wuPerImagePixelY + 0.001;
-      }
-    } else {
-      double maxY;
-      if ((t-b) < 0) {
-        maxY = t;
-      } else {
-        maxY = b;
-      }
-      if (transY_wu >= maxY) {
-        skipIncY = (int)ceil((transY_wu - maxY)/wuPerImagePixelY);
-        skipPixels += skipIncY;
-        // add a little extra to make sure that roundoff error doesn't lead to
-        // a negative and invalid raster position
-        transY_wu -= skipIncY*wuPerImagePixelY + 0.001;
-      }
+    // now we check whether in fact the raster position is clipped in x and if
+    // so then we adjust it by shifting in the drawing direction until it
+    // won't be clipped; we do this by cutting out skipIncX pixels from either
+    // the right or left side of the image as it appears on the screen
+    if (scx*(rasterPos_wu[0] - boundX) <= 0) {
+      skipIncX = (int)ceil(fabs(rasterPos_wu[0] - boundX)/wuPerImagePixelX);
+      skipPixels += skipIncX;
+      rasterPos_wu[0] += (scx > 0)*skipIncX*wuPerImagePixelX;
     }
 
+    // figure out whether the image should be drawn starting at the top or
+    // bottom side of the screen - that determines where the image gets cut in
+    // the y direction
+    if (scy*(t-b) < 0) {
+       boundY = t;
+    } else {
+       boundY = b;
+    }
+    // now we check whether in fact the raster position is clipped in y and if
+    // so then we adjust it by shifting in the drawing direction until it
+    // won't be clipped; we do this by cutting out skipIncY pixels from either
+    // the top or bottom side of the image as it appears on the screen
+    if (scy*(rasterPos_wu[1] - boundY) <= 0) {
+      skipIncY = (int)ceil(fabs(rasterPos_wu[1] - boundY)/wuPerImagePixelY);
+      skipRows += skipIncY;
+      rasterPos_wu[1] += (scy > 0)*skipIncY*wuPerImagePixelY;
+    }
+
+    // check to see if the raster position is outside the viewport by
+    // transforming it into screen coordinates
+    // this is essentially duplicating what would happen in openGL if we
+    // called glRasterPos2dv(rasterPos_wu) at this point
+    GLdouble rasterPos_sc[2];
+    // we only have a scale and translation
+    // (assuming the axis aligned orthographic projection as specified above)
+    double projScaleX = matrix[0], projScaleY = matrix[5];
+    double projTransX = matrix[12], projTransY = matrix[13];
+    rasterPos_sc[0] = rasterPos_wu[0]*projScaleX + projTransX;
+    rasterPos_sc[1] = rasterPos_wu[1]*projScaleY + projTransY;
+
+    // we will get clipping of the raster position if the it is outside of
+    // the rectangle [-1,1]x[-1,1] so
+    // figure out what increment to add to the raster position in world units
+    // to ensure that the transformed raster position isn't clipped due to
+    // roundoff error
+    GLdouble rasterPos_wu_incr[2] = {0.0, 0.0};
+    if (rasterPos_sc[0] <= -0.9999) {
+      rasterPos_wu_incr[0] = +0.9999/projScaleX;
+    } else if (rasterPos_sc[0] >= 0.9999) {
+      rasterPos_wu_incr[0] = -0.001/projScaleX;
+    }
+    if (rasterPos_sc[1] <= -0.9999) {
+      rasterPos_wu_incr[1] = +0.001/projScaleY;
+    } else if (rasterPos_sc[1] >= 0.9999) {
+      rasterPos_wu_incr[1] = -0.001/projScaleY;
+    }
+    // now add the fudge factor
+    rasterPos_wu[0] += rasterPos_wu_incr[0];
+    rasterPos_wu[1] += rasterPos_wu_incr[1];
+
+    // if we cut up the image to avoid clipping the starting raster postion
+    // then we need to recompute the actual size of the image which gets
+    // drawn on the screen
+    // compute the number of border pixels (pixels that don't get drawn) 
+    // in x and y
     int totalRowBorder = image->borderXMax() + skipPixels;
-    int rowWidth = texwidth - totalRowBorder;
     int totalColBorder = image->borderYMax() + skipRows;
+    // the number of the pixels in x and y that do get drawn are the total
+    // width and height of the array minus the above:
+    int rowWidth = texwidth - totalRowBorder;
     int colHeight = texheight - totalColBorder;
 
-    glRasterPos2f(transX_wu, transY_wu);
-    GLfloat pos[4];
-    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    // set the starting position on the screen where the image will be drawn
+    glRasterPos2dv(rasterPos_wu);
+
+    // just in case, check to see if the raster position is valid and if not
+    // output some debugging info
     GLboolean valid[1];
     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, valid);
     if (valid[0] != GL_TRUE) {
-      printf("raster pos not valid\n");
+      GLfloat actual_pos[4];
+      glGetFloatv(GL_CURRENT_RASTER_POSITION, actual_pos);
+      rasterPos_sc[0] = projScaleX*rasterPos_wu[0] + projTransX;
+      rasterPos_sc[1] = projScaleY*rasterPos_wu[1] + projTransY;
+      printf("raster pos: (%g, %g)->(%g, %g), actual:(%g, %g) not valid\n",
+          rasterPos_wu[0], rasterPos_wu[1], rasterPos_sc[0], rasterPos_sc[1],
+          actual_pos[0], actual_pos[1]);
       return -1;
     }
+
+    // set some parameters that tell openGL which pixels not to draw
     glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
+
+    // now set the pixel zoom; the image may be flipped in x or y depending on
+    // the scale factors and the orientation of the world view so we calculate
+    // whether or not to flip the image here:
     if ((r-l)*scx < 0) {
       windowPixelPerImagePixelX *= -1;
     }

@@ -1,3 +1,8 @@
+2001-07-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* imageViewer.C (drawImageAsPixels): made this a bit cleaner, more
+	correct and added a lot more comments
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* imageViewer.Ch (setColorMinMax): new
