@@ -37,3 +37,9 @@ export LIB="$MSVCDir/LIB;$MSVCDir/MFC/LIB;$LIB"
 #export VSCommonDir=
 
 # export PATH MSDevDir MSVCDir INCLUDE LIB
+
+# Some additional setup so we can run:
+export PATH="/nsrc/obj/pc_win32/app/nano:/e/Progra~1/Tcl/Bin:$PATH"
+export TCL_LIBRARY=`cygtclpath /e/Progra~1/Tcl/lib/tcl8.2`
+export TK_LIBRARY=`cygtclpath /e/Progra~1/Tcl/lib/tk8.2`
+export ITCL_LIBRARY=`cygtclpath /e/Progra~1/Tcl/lib/itcl3.1`

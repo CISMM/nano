@@ -8,7 +8,7 @@
 #include "nmg_GraphicsImpl.h"
 
 #include <GL/gl.h>
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
 #include <GL/glu.h>
 #endif
 #include <v.h>
@@ -184,24 +184,24 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
 #endif
 
-  if (g_VERTEX_ARRAY) 
-    fprintf(stderr,"Vertex Array extension used.\n");
-  else
-     fprintf(stderr,"Vertex Array extension not supported.\n");
-
-  if (g_VERTEX_ARRAY)
+//    if (g_VERTEX_ARRAY) {
+//      fprintf(stderr,"Vertex Array extension used.\n");
+//    } else {
+//       fprintf(stderr,"Vertex Array extension not supported.\n");
+//    }
+  if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(grid_size_x,
 			  grid_size_y) ) {
       fprintf(stderr," init_vertexArray: out of memory.\n");
       exit(0);
     }
-
+  }
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
 
   // genetic textures:
-  fprintf( stderr, "Genetic Texture: initializing remote\n" );
+  //fprintf( stderr, "Genetic Texture: initializing remote\n" );
 
   vrpn_Connection * gac;
 
@@ -737,7 +737,7 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
 _______________________________********************/
 #endif
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   // Build the texture map and set the mode for 2D textures
   if (gluBuild2DMipmaps(GL_TEXTURE_2D,4, texture_size, texture_size,
                         GL_RGBA, GL_UNSIGNED_BYTE, texture) != 0) {
@@ -1405,7 +1405,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
 #else
 
-#if defined(__CYGWIN__)
+#if defined(_WIN32)
 
 /*
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
@@ -1794,14 +1794,14 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
   int i,j, k;
-  fprintf(stderr, "initializing textures\n");
+  //fprintf(stderr, "initializing textures\n");
 
   for (i = 0; i < N_TEX; i++) {
      g_tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
      g_tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
      g_tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
      g_tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-#ifdef __CYGWIN__
+#ifdef _WIN32
      g_tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
 #else
      g_tex_blend_func[i] = GL_DECAL;
@@ -1884,18 +1884,18 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 
   buildContourTexture();
 
-#if defined(sgi) || defined(FLOW) || defined(__CYGWIN__)
-  fprintf(stderr, "Initializing checkerboard texture.\n");
+#if defined(sgi) || defined(FLOW) || defined(_WIN32)
+  //fprintf(stderr, "Initializing checkerboard texture.\n");
   makeCheckImage();
   buildAlphaTexture();
 
-  fprintf(stderr, "Initializing ruler texture.");
+  //fprintf(stderr, "Initializing ruler texture.");
   if (g_rulerPPM) {
     makeAndInstallRulerImage(g_rulerPPM);
   } else {
     makeRulerImage();
     buildRulergridTexture();
-    fprintf(stderr, " Using default grid.\n");
+    //fprintf(stderr, " Using default grid.\n");
   }
   if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making ruler texture.\n");
@@ -1962,7 +1962,7 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   }
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
-#ifdef __CYGWIN__
+#ifdef _WIN32
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
        g_tex_installed_width[COLORMAP_TEX_ID],
        g_tex_installed_height[COLORMAP_TEX_ID],
@@ -2189,7 +2189,7 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 // This mode is possible if we can reimplement contour texture stuff
 // not using glXXXPointerEXT() and glDrawArraysEXT()
 //#ifndef _WIN32
-      fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
+        //fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
       g_texture_mode = GL_TEXTURE_1D;
 /*#else
       fprintf(stderr, "nmg_Graphics_Implementation: " 
@@ -2199,27 +2199,27 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 */
       break;
     case BUMPMAP:
-      fprintf(stderr,
-        "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
+//        fprintf(stderr,
+//          "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case HATCHMAP:
-      fprintf(stderr,
-        "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
+//        fprintf(stderr,
+//          "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case PATTERNMAP:
-      fprintf(stderr,
-	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
+//        fprintf(stderr,
+//  	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case RULERGRID:
-      fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
+//        fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case ALPHA:
 #ifndef _WIN32
-      fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
+//        fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
       g_texture_mode = GL_TEXTURE_3D_EXT;
 #else
       fprintf(stderr, "nmg_Graphics_Implementation:"
@@ -2496,7 +2496,7 @@ void nmg_Graphics_Implementation::createScreenImage
    const ImageType  type
 )
 {
-   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
+//   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
   int w, h;
   unsigned char * pixels = NULL;
 
@@ -3411,7 +3411,7 @@ int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 512, 512,
                         GL_RGB, GL_FLOAT, it->gaRemote->data[0]) != 0) { 
     printf(" Error making mipmaps, using texture instead.\n");

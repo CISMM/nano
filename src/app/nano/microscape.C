@@ -17,7 +17,8 @@
 #if !defined (_WIN32) || defined (__CYGWIN__)
 #include <dirent.h>
 #else
-#include <direct.h>
+// Special file in the nmBase directory because VC++ doesn't have it's own. 
+#include <vc_dirent.h>
 #endif
 
 #include <tcl.h>
@@ -785,8 +786,8 @@ Tclvar_string	newFlatPlaneName("flatplane_name","");
 //added 1-9-99 by Amy Henderson
 Tclvar_string newLBLFlatPlaneName("lblflatplane_name","");
 
-Tclvar_string	sumPlane1Name ("first_plane","");
-Tclvar_string	sumPlane2Name ("second_plane","");
+Tclvar_string	sumPlane1Name ("sum_first_plane","");
+Tclvar_string	sumPlane2Name ("sum_second_plane","");
 Tclvar_float	sumScale("sum_scale",-1.0);
 Tclvar_string	newSumPlaneName ("sumplane_name","");
 
@@ -3687,10 +3688,10 @@ loadColorMaps
 */
 int	loadColorMapNames(void)
 {
-#if !defined (_WIN32) || defined (__CYGWIN__)
+    //#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-#endif
+        //#endif
 	// Set the default entry to use the custom color controls
 	colorMapNames.addEntry("CUSTOM");
 
@@ -3699,7 +3700,7 @@ int	loadColorMapNames(void)
 		colorMapDir = defaultColormapDirectory;
 	}
 
-#if !defined (_WIN32) || defined (__CYGWIN__)
+        //#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(colorMapDir)) == NULL) {
@@ -3713,7 +3714,7 @@ int	loadColorMapNames(void)
 	    }
 	}
 	closedir(directory);
-#endif
+        //#endif
 	return 0;
 }
 

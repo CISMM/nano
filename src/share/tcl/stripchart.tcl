@@ -130,7 +130,7 @@ proc add_time_dist_controls { } {
     # switch which variable corresponds to the X axis
     $win.rb add time -text "Time" -command {change_x_axis gm_timevec}
     $win.rb add dist -text "Arc length" -command {change_x_axis gm_svec}
-    # Add a trailing _x to the axis namse so they are not the same as the
+    # Add a trailing _x to the axis names so they are not the same as the
     # axis added in "Graphmod.C" by calling "add_stripchart_element"
     # However, we need to pass in vector name without trailing "_x" 
     # so we get the real data.
@@ -215,15 +215,24 @@ proc add_stripchart_element { name id intensity min max} {
     scan $name gm_%s labelname
     pack [label $win.label -text "$labelname"] -side top -anchor nw
 
+    # When un-checked, stop graphing this data, stop displaying
+    # element in the legend, hide it's axis
     checkbutton $win.active -text "Active" -variable graphmod($name-active) \
 	-command "
 	if { \$graphmod($name-active) } {
-          \$graphmod(stripchart) element configure $name -hide no
+          \$graphmod(stripchart) element configure $name -hide no -label $name
+          \$graphmod(stripchart) axis configure $name -hide no 
+#-limitsformat \"%4.4g\"
         } else {
-          \$graphmod(stripchart) element configure $name -hide yes
+          \$graphmod(stripchart) element configure $name -hide yes -label \"\"
+          \$graphmod(stripchart) axis configure $name -hide yes 
+#-limitsformat \"\"
         }"
     button $win.getaxis -text "Use Y axis" \
-	-command "\$graphmod(stripchart) yaxis use $name"
+            -command "
+            if { \$graphmod($name-active) } { 
+                \$graphmod(stripchart) yaxis use $name 
+            }"
     checkbutton $win.invert -text "Invert" -variable graphmod($name-invert) \
 	-command "
 	if { \$graphmod($name-invert) } {

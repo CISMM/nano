@@ -479,8 +479,8 @@ void handle_linescan_start (vrpn_int32 val, void *_mptr) {
   if (val == 0) return;
 
   Point_value *value =
-	microscope->state.data.inputPoint->getValueByPlaneName
-			((char *) dataset->heightPlaneName);
+      microscope->state.data.inputPoint->getValueByPlaneName(
+                            dataset->heightPlaneName->string());
   if (value == NULL) {
       fprintf(stderr, "handle_linescan_start():  "
                       "could not get input point!\n");
@@ -488,7 +488,7 @@ void handle_linescan_start (vrpn_int32 val, void *_mptr) {
   }
 
   BCPlane *p = dataset->inputGrid->getPlaneByName(
-					(char*)dataset->heightPlaneName);
+                            dataset->heightPlaneName->string());
   if (p == NULL) {
 	fprintf(stderr, "Error in handle_linescan_start:"
 		" could not get plane!\n");
@@ -518,7 +518,7 @@ void handle_linescan_position (vrpn_float64, void *_mptr) {
   float p0[3], p1[3];
 
   BCPlane* plane = dataset->inputGrid->getPlaneByName(
-        (char*)dataset->heightPlaneName);
+                            dataset->heightPlaneName->string());
   if (plane == NULL)
   {
         fprintf(stderr, "Error in handle_linescan_position:"
@@ -545,7 +545,7 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
 
 /// Update the grid scale and rebuild the display lists
 /// whenever the Z scale changes.
- void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
+void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   BCPlane * plane =
     dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
   // If user is feeling from data at the same time that she is changing

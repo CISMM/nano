@@ -312,12 +312,13 @@ Tclvar_float adhesion_decrease_per("adhesion_decrease_per", .03, NULL, NULL);
 
 void handle_lightDir_change (vrpn_float64, void *);
 
+// These defaults match those set in nmGraphics/graphics.c:resetLightDir()
 TclNet_float tcl_lightDirX
      ("tcl_lightDirX", 0.0, handle_lightDir_change, NULL);
 TclNet_float tcl_lightDirY
      ("tcl_lightDirY", 1.0, handle_lightDir_change, NULL);
 TclNet_float tcl_lightDirZ
-     ("tcl_lightDirZ", 0.5, handle_lightDir_change, NULL);
+     ("tcl_lightDirZ", 0.1, handle_lightDir_change, NULL);
 
 void handle_worldFromRoom_change (vrpn_float64, void *);
 
@@ -661,12 +662,12 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
 }
 
 void setupHaptics (int mode) {
-  static nmui_HSCanned cannedHaptics (dataset);
-  static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
-  static nmui_HSLivePlane liveHaptics (dataset, microscope);
+  static nmui_HSCanned cannedHaptics;
+  static nmui_HSMeasurePlane measureHaptics(decoration);
+  static nmui_HSLivePlane liveHaptics;
 
-  static nmui_GridFeatures gridStrategy (&cannedHaptics, dataset);
-  static nmui_PointFeatures pointStrategy (microscope);
+  static nmui_GridFeatures gridStrategy (&cannedHaptics);
+  static nmui_PointFeatures pointStrategy;
 
 
   if (config_haptic_plane) {
@@ -1269,7 +1270,7 @@ void handle_lightDir_change (vrpn_float64, void *) {
   lightdir[X] = tcl_lightDirX;
   lightdir[Y] = tcl_lightDirY;
   lightdir[Z] = tcl_lightDirZ;
-
+  //printf("New light dir %f %f %f\n",lightdir[X] , lightdir[Y], lightdir[Z]); 
   graphics->setLightDirection(lightdir);
 }
 
@@ -1380,12 +1381,12 @@ double touch_surface (int, q_vec_type handpos) {
   // Set up the approximating plane or force field...
 
   haptic_manager.surface()->setLocation(handpos);
-  haptic_manager.surface()->update();
+  haptic_manager.surface()->update(microscope);
   haptic_manager.surface()->sendForceUpdate(forceDevice);
 
   // Set up buzzing, bumps, friction, compliance, ...
 
-  haptic_manager.surfaceFeatures().update();
+  haptic_manager.surfaceFeatures().update(microscope);
 
   return haptic_manager.surface()->distanceFromSurface();
 }
@@ -1995,10 +1996,10 @@ int doFeelFromGrid(int whichUser, int userEvent)
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
         nmui_Util::moveSphere(clipPos, graphics);
 
-    static nmui_HSCanned cannedHaptics (dataset);
-    static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
+    static nmui_HSCanned cannedHaptics;
+    static nmui_HSMeasurePlane measureHaptics (decoration);
 
-    static nmui_GridFeatures strategy (&cannedHaptics, dataset);
+    static nmui_GridFeatures strategy (&cannedHaptics);
 
     if (config_haptic_plane) {
       haptic_manager.setSurface(&measureHaptics);

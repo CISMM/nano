@@ -119,6 +119,7 @@ proc show_tool {name path nm element op} {
     }
 }
 
+if { !$thirdtech_ui } {
 proc show_control {name path nm element op} {
     upvar #0 $name control
     if { $control == 0 } {
@@ -129,7 +130,7 @@ proc show_control {name path nm element op} {
 	$path configure -text "Direct Z"
     } 
 }
-
+}
 trace variable imagep_mode w \
 	"show_mode imagep_mode $nmInfo(imagestate).image_mode"
 
@@ -139,10 +140,13 @@ trace variable modifyp_style w \
 	"show_style modifyp_style $nmInfo(modifystate).mod_style"
 trace variable modifyp_tool w \
 	"show_tool modifyp_tool $nmInfo(modifystate).mod_tool"
+if { !$thirdtech_ui } {
 trace variable modifyp_control w \
 	"show_control modifyp_control $nmInfo(modifystate).mod_control"
-
+}
+if { !$thirdtech_ui } {
 pack $nmInfo(modifystate).mod_control -side bottom -anchor nw
+}
 pack $nmInfo(modifystate).mod_mode $nmInfo(modifystate).mod_style \
 	$nmInfo(modifystate).mod_tool \
 	-side left -anchor nw
@@ -311,10 +315,14 @@ trace variable newmodifyp_style w flip_mod_style
 
 trace variable newmodifyp_tool w flip_mod_tool
 
+if { !$thirdtech_ui } {
 trace variable newmodifyp_control w flip_mod_control
+}
 
 trace variable modifyp_mode w "updateFromC modifyp_mode "
+if { !$thirdtech_ui } {
 trace variable modifyp_control w "updateFromC modifyp_control "
+}
 trace variable modifyp_style w "updateFromC modifyp_style "
 trace variable modifyp_tool w "updateFromC modifyp_tool "
 
@@ -355,12 +363,13 @@ trace variable modifyp_feedback_delay w "updateFromC modifyp_feedback_delay "
 
 trace variable modifyp_step_size w "updateFromC modifyp_step_size "
 
+if { !$thirdtech_ui } {
 trace variable modifyp_max_z_step w "updateFromC modifyp_max_z_step "
 trace variable modifyp_max_xy_step w "updateFromC modifyp_max_xy_step "
 trace variable modifyp_min_z_setpoint w "updateFromC modifyp_min_z_setpoint "
 trace variable modifyp_max_z_setpoint w "updateFromC modifyp_max_z_setpoint "
 trace variable modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
-
+}
 
 # these traces change the color of Accept and Cancel when you haven't
 # pressed Accept yet.
@@ -407,11 +416,13 @@ trace variable newmodifyp_feedback_delay w modBackgChReal
 
 trace variable newmodifyp_step_size w modBackgChReal
 
+if { !$thirdtech_ui } {
 trace variable newmodifyp_max_z_step w modBackgChReal
 trace variable newmodifyp_max_xy_step w modBackgChReal
 trace variable newmodifyp_min_z_setpoint w modBackgChReal
 trace variable newmodifyp_max_z_setpoint w modBackgChReal
 trace variable newmodifyp_max_lat_setpoint w modBackgChReal
+}
 
 #
 #setup Modify box
@@ -575,6 +586,7 @@ generic_entry $nmInfo(modifyfull).toolparam.step-size newmodifyp_step_size \
 set mod_line_list  "$nmInfo(modifyfull).toolparam.step-size"
 set mod_slow_line_list "$nmInfo(modifyfull).toolparam.step-size"
 
+if { !$thirdtech_ui } {
 #setup Modify control box
 label $nmInfo(modifyfull).control.label -text "Control" 
 pack $nmInfo(modifyfull).control.label -side top -anchor nw
@@ -601,6 +613,7 @@ generic_entry $nmInfo(modifyfull).controlparam.max_lat_setpoint newmodifyp_max_l
 
 set mod_directz_list  "$nmInfo(modifyfull).controlparam.max_z_step $nmInfo(modifyfull).controlparam.max_xy_step $nmInfo(modifyfull).controlparam.min_z_setpoint $nmInfo(modifyfull).controlparam.max_z_setpoint $nmInfo(modifyfull).controlparam.max_lat_setpoint"
 eval [concat iwidgets::Labeledwidget::alignlabels $mod_directz_list]
+}
 
 #
 #

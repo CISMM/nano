@@ -608,7 +608,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
 #endif
 
 
-#if defined(sgi) || defined(__CYGWIN__) || defined(FLOW)
+#if defined(sgi) || defined(_WIN32) || defined(FLOW)
 
   if (g_PRERENDERED_TEXTURE) {
     GLfloat tc [2];

@@ -174,7 +174,7 @@ int build_list_set
 
   if (subset.empty()) return 0;
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
     if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
@@ -389,7 +389,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
     fprintf(stderr, "    allocated display lists from %d for %d.\n",
 	    *base, *num);
   
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
   // use vertex array extension
   if (g_VERTEX_ARRAY) {

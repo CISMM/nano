@@ -472,11 +472,11 @@ endif
 
 BAREDEFINES += PROJECTIVE_TEXTURE
 
-ifeq ($(HW_OS),pc_win32)
-  DEFINES = $(addprefix /D,$(BAREDEFINES))
-else
+# ifeq ($(HW_OS),pc_win32)
+#   DEFINES = $(addprefix /D,$(BAREDEFINES))
+# else
   DEFINES = $(addprefix -D,$(BAREDEFINES))
-endif
+# endif
 
 CFLAGS += -g
 

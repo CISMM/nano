@@ -65,6 +65,13 @@ if {[catch {set tcl_script_dir $env(NM_TCL_DIR) }] } {
     set tcl_script_dir .
 }
 
+#
+# 3rdTech modifications:
+#   There are several parts of the interface we don't expose in the
+#   commercial version. This flag turns them off.
+#
+set thirdtech_ui 1
+
 #appearance variables
     # vertical padding between floatscales - image and modify windows
 set fspady 3
@@ -130,6 +137,8 @@ $filemenu add command -label "Open static file..." -underline 0 \
 	-command "open_static_file"
 $filemenu add command -label "Open stream file..." \
 	-command "open_stream_file"
+$filemenu add command -label "Open SPM connection..." \
+	-command {.message_dialog activate}
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
@@ -156,13 +165,14 @@ $setupmenu add command -label "Color Map..." -command \
 	"show.colorscale"
 $setupmenu add command -label "Contour Lines..." -command \
 	"show.contour_lines"
+if { !$thirdtech_ui } {
 $setupmenu add command -label "Texture Blend..." -command \
 	"show.alphascale"
+}
 $setupmenu add command -label "Haptic..." -command \
 	"show.haptic"
 $setupmenu add command -label "Preferences..." -command \
 		"show.preferences"
-#	{.message_dialog activate}
 
 
 
@@ -184,6 +194,8 @@ set analysismenu .menu.analysis
 menu $analysismenu -tearoff 0
 .menu add cascade -label "Analysis" -menu $analysismenu -underline 0
 
+$analysismenu add command -label  "Calculate Data Planes..."  \
+    -command "show.calc_planes"
 $analysismenu add command -label  "Rulergrid..."  \
     -command "show.rulergrid"
 $analysismenu add radiobutton -label "Measure Lines" \
@@ -216,6 +228,7 @@ $toolmenu add command -label "Stripchart" \
 $toolmenu add command -label "Replay Control" \
 	-command "show.streamfile"
 
+if { !$thirdtech_ui } {
 $toolmenu add command -label "Collaboration" \
 	-command "show.sharedptr"
 
@@ -231,7 +244,7 @@ $toolmenu add command -label "Latency Adaptation" \
 
 $toolmenu add command -label "SEM" \
     -command "show.sem_win"
-
+}
 
 #### HELP menu #############################
 #set helpmenu .menu.help
@@ -288,9 +301,22 @@ pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 	$w2.toolbar.speed_detail5 $w2.toolbar.speed \
 	-side left 
 
-radiobutton $w2.toolbar.demotouch -text "Touch Surface" \
-	-variable user_0_mode -value 11 
-pack $w2.toolbar.demotouch -side left -padx 5
+set pause_scan 0
+button $w2.toolbar.pause_scan -text "Stop\nScan" \
+	-command {
+    global pause_scan w2
+    if {$pause_scan} {
+        $w2.toolbar.pause_scan configure -text "Stop\nScan"
+        set pause_scan 0
+    } else {
+        $w2.toolbar.pause_scan configure -text "Resume\nScan"
+        set pause_scan 1
+    }
+}
+
+button $w2.toolbar.withdraw_tip -text "Withdraw\nTip" \
+        -command "set withdraw_tip 1"
+pack $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip -side left -padx 5
 
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]

@@ -59,7 +59,7 @@
 #define rulerImageWidth  64
 
 // default position of the light:  overhead, at infinity
-static GLfloat l0_position [4] = { 0.0, 1.0, 1.0, 0.0 };
+static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
 static GLubyte contourImage [contourImageWidth][4];
 static GLubyte checkImage [checkImageDepth][checkImageWidth]
@@ -853,7 +853,7 @@ void getLightDirection (q_vec_type * v) {
 void resetLightDirection (void) {
   l0_position[0] = 0.0;
   l0_position[1] = 1.0;
-  l0_position[2] = 0.5;
+  l0_position[2] = 0.1;
   l0_position[3] = 0.0;
 }
 

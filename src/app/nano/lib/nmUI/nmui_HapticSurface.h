@@ -49,7 +49,7 @@ class nmui_HapticSurface {
       ///< Specify current location of the user's hand,
       ///< in microscope coordinates (?!).
 
-    virtual void update (void) = 0;
+    virtual void update (nmm_Microscope_Remote *) =0;
       ///< Recompute all output values based on current state.
       ///< Necessary because we assume things are dynamic and volatile;
       ///< we can't assume that nothing's changed since the last call
@@ -108,7 +108,7 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSCanned (nmb_Dataset *);
+    nmui_HSCanned ();
     virtual ~nmui_HSCanned (void);
 
     // ACCESSORS
@@ -118,11 +118,9 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (void);
+    virtual void update (nmm_Microscope_Remote *);
 
   protected:
-
-    nmb_Dataset * d_dataset;
 
     int d_gridX;
     int d_gridY;
@@ -140,16 +138,15 @@ class nmui_HSMeasurePlane : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSMeasurePlane (nmb_Dataset *, nmb_Decoration *);
+    nmui_HSMeasurePlane ( nmb_Decoration *);
     virtual ~nmui_HSMeasurePlane (void);
 
     // MANIPULATORS
 
-    virtual void update (void);
+    virtual void update (nmm_Microscope_Remote *);
 
   protected:
 
-    nmb_Dataset * d_dataset;
     nmb_Decoration * d_decoration;
 
 };
@@ -166,17 +163,13 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
   public:
 
-#ifndef USE_VRPN_MICROSCOPE
-    nmui_HSLivePlane (nmb_Dataset *, Microscope *);
-#else
-    nmui_HSLivePlane (nmb_Dataset *, nmm_Microscope_Remote *);
-#endif
+    nmui_HSLivePlane ();
 
     virtual ~nmui_HSLivePlane (void);
 
     // MANIPULATORS
 
-    virtual void update (void);
+    virtual void update (nmm_Microscope_Remote *);
 
   protected:
 
@@ -186,13 +179,6 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
     q_vec_type d_lastPoint;
     q_vec_type d_lastNormal;
 
-    nmb_Dataset * d_dataset;
-
-#ifndef USE_VRPN_MICROSCOPE
-    Microscope * d_microscope;
-#else
-    nmm_Microscope_Remote * d_microscope;
-#endif
 };
 
 
@@ -205,11 +191,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
   public:
 
-#ifndef USE_VRPN_MICROSCOPE
-    nmui_HSFeelAhead (nmb_Dataset *, Microscope *);
-#else
-    nmui_HSFeelAhead (nmb_Dataset *, nmm_Microscope_Remote *);
-#endif
+    nmui_HSFeelAhead ();
       ///< Set of point results used is
       ///< microscope->state.data.receivedPointList.
 
@@ -217,22 +199,15 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (void);
+    virtual void update (nmm_Microscope_Remote *);
 
 
 
   protected:
 
-    void updateModel (void);
+    void updateModel ();
     static void newPointListReceivedCallback (void *);
     ///< Registered on the microscope.
-
-    nmb_Dataset * d_dataset;
-#ifndef USE_VRPN_MICROSCOPE
-    Microscope * d_microscope;
-#else
-    nmm_Microscope_Remote * d_microscope;
-#endif
 
 };
 
@@ -241,27 +216,16 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
 
   public:
 
-#ifndef USE_VRPN_MICROSCOPE
-    nmui_HSDirectZ (nmb_Dataset *, Microscope *);
-#else
-    nmui_HSDirectZ (nmb_Dataset *, nmm_Microscope_Remote *);
-#endif
+    nmui_HSDirectZ ();
 
     virtual ~nmui_HSDirectZ (void);
 
     // MANIPULATORS
 
-    virtual void update (void);
+    virtual void update (nmm_Microscope_Remote *);
     virtual void sendForceUpdate (vrpn_ForceDevice * device);
 
   protected:
-
-    nmb_Dataset * d_dataset;
-#ifndef USE_VRPN_MICROSCOPE
-    Microscope * d_microscope;
-#else
-    nmm_Microscope_Remote * d_microscope;
-#endif
 
     q_vec_type d_UP;
 

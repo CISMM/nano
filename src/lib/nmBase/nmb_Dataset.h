@@ -36,6 +36,8 @@ struct flatten_node {
     flatten_data * data;
     flatten_node * next;
 };
+struct lblflatten_node;
+struct sum_node;
 
 /**
    Contains a (pointer to a) BCGrid with all known data from microscopes,
@@ -165,6 +167,10 @@ class nmb_Dataset {
     static void updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
 					       void * userdata);
 
+
+    flatten_node * d_flat_list_head;
+    lblflatten_node * d_lblflat_list_head;
+    sum_node * d_sum_list_head;
     struct newFlatPlaneCB {
       void * userdata;
       void (* cb) (void *, const flatten_data *);

@@ -34,43 +34,43 @@ nmui_SurfaceFeatureStrategy::~nmui_SurfaceFeatureStrategy (void) {
 }
 
 //virtual
-vrpn_bool nmui_SurfaceFeatureStrategy::buzzingEnabled (void) const {
+vrpn_bool nmui_SurfaceFeatureStrategy::buzzingEnabled (nmm_Microscope_Remote *) const {
   return vrpn_false;
 }
 
 //virtual
-vrpn_bool nmui_SurfaceFeatureStrategy::bumpsEnabled (void) const {
+vrpn_bool nmui_SurfaceFeatureStrategy::bumpsEnabled (nmm_Microscope_Remote *) const {
   return vrpn_false;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointAdhesionValue (void) {
+double nmui_SurfaceFeatureStrategy::pointAdhesionValue (nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::scaledPointBuzzAmplitude (void) {
+double nmui_SurfaceFeatureStrategy::scaledPointBuzzAmplitude (nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::scaledPointBumpSizeValue (void) {
+double nmui_SurfaceFeatureStrategy::scaledPointBumpSizeValue (nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointComplianceValue (void) {
+double nmui_SurfaceFeatureStrategy::pointComplianceValue (nmm_Microscope_Remote * ) {
   return max( 0.01, min(1.0, (double)default_spring_k) );
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointFrictionValue (void) {
+double nmui_SurfaceFeatureStrategy::pointFrictionValue (nmm_Microscope_Remote * ) {
   return max(0.0, Arm_knobs[FRICTION_KNOB]);
 }
 
 // virtual
 double nmui_SurfaceFeatureStrategy::dynamicFrictionKspring
-        (double staticFrictionKspring) {
+        (double staticFrictionKspring, nmm_Microscope_Remote *) {
   return 0.5 * staticFrictionKspring;
 }
 
@@ -91,15 +91,15 @@ nmui_SurfaceFeatures::~nmui_SurfaceFeatures (void) {
 
 }
 
-void nmui_SurfaceFeatures::update (void) {
+void nmui_SurfaceFeatures::update (nmm_Microscope_Remote * scope) {
 
   if (d_strategy) {
 
-    specifyAdhesion();
-    specifyBuzzAmplitude();
-    specifyBumpSize();
-    specifyCompliance();
-    specifyFriction();
+    specifyAdhesion(scope);
+    specifyBuzzAmplitude(scope);
+    specifyBumpSize(scope);
+    specifyCompliance(scope);
+    specifyFriction(scope);
 
   }
 
@@ -141,11 +141,11 @@ void nmui_SurfaceFeatures::setAdhesionConstant (double kAdh) {
 
 
 
-void nmui_SurfaceFeatures::specifyAdhesion (void) {
+void nmui_SurfaceFeatures::specifyAdhesion (nmm_Microscope_Remote * scope) {
   double adhesion_range;
   double adh;
 
-  adh = d_strategy->pointAdhesionValue();
+  adh = d_strategy->pointAdhesionValue(scope);
 
   if (adhesion_slider_min != adhesion_slider_max) {
     adhesion_range = adhesion_slider_max - adhesion_slider_min;
@@ -160,15 +160,15 @@ void nmui_SurfaceFeatures::specifyAdhesion (void) {
   // do nothing
 }
 
-void nmui_SurfaceFeatures::specifyBuzzAmplitude (void) {
+void nmui_SurfaceFeatures::specifyBuzzAmplitude (nmm_Microscope_Remote * scope) {
   double amp;
 
-  if (!d_strategy->buzzingEnabled()) {
+  if (!d_strategy->buzzingEnabled(scope)) {
     setBuzzing(0.0);
     return;
   }
 
-  amp = d_strategy->scaledPointBuzzAmplitude();
+  amp = d_strategy->scaledPointBuzzAmplitude(scope);
 
   // Percieved magnitude of buzzing is proportional to x^0.95
   if (d_useLinearBuzzing) {
@@ -185,15 +185,15 @@ void nmui_SurfaceFeatures::specifyBuzzAmplitude (void) {
   setBuzzing(amp);
 }
 
-void nmui_SurfaceFeatures::specifyBumpSize (void) {
+void nmui_SurfaceFeatures::specifyBumpSize (nmm_Microscope_Remote * scope) {
   double wavelength;
 
-  if (!d_strategy->bumpsEnabled()) {
+  if (!d_strategy->bumpsEnabled(scope)) {
     setSurfaceTexture(0.0);
     return;
   }
 
-  wavelength = d_strategy->scaledPointBumpSizeValue();
+  wavelength = d_strategy->scaledPointBumpSizeValue(scope);
 
   // Percieved magnitude of bumps is proportional to lambda^0.86
   if (d_useLinearBumps) {
@@ -211,11 +211,11 @@ void nmui_SurfaceFeatures::specifyBumpSize (void) {
 
 }
 
-void nmui_SurfaceFeatures::specifyCompliance (void) {
+void nmui_SurfaceFeatures::specifyCompliance (nmm_Microscope_Remote * scope) {
   double compliance_range;
   double kS;
 
-  kS = d_strategy->pointComplianceValue();
+  kS = d_strategy->pointComplianceValue(scope);
 
   if (compliance_slider_max != compliance_slider_min) {
     compliance_range = compliance_slider_max - compliance_slider_min;
@@ -238,13 +238,13 @@ void nmui_SurfaceFeatures::specifyCompliance (void) {
   setCompliance(kS);
 }
 
-void nmui_SurfaceFeatures::specifyFriction (void) {
+void nmui_SurfaceFeatures::specifyFriction (nmm_Microscope_Remote * scope) {
   double friction_range;
   double localValue;
   double kS;
   double dynamic_kS;
 
-  localValue = d_strategy->pointFrictionValue();
+  localValue = d_strategy->pointFrictionValue(scope);
 
   if (friction_slider_max != friction_slider_min) {
     friction_range = friction_slider_max - friction_slider_min;
@@ -265,7 +265,7 @@ void nmui_SurfaceFeatures::specifyFriction (void) {
 
   }
 
-  dynamic_kS = d_strategy->dynamicFrictionKspring(kS);
+  dynamic_kS = d_strategy->dynamicFrictionKspring(kS, scope);
   setFriction(kS, dynamic_kS);
 }
 
@@ -308,9 +308,8 @@ void nmui_SurfaceFeatures::setCompliance (double kS) {
 
 
 
-nmui_PointFeatures::nmui_PointFeatures (nmm_Microscope_Remote * scope) :
-    nmui_SurfaceFeatureStrategy (),
-    d_microscope (scope) {
+nmui_PointFeatures::nmui_PointFeatures () :
+    nmui_SurfaceFeatureStrategy () {
 
 }
 
@@ -322,9 +321,9 @@ nmui_PointFeatures::~nmui_PointFeatures (void) {
 
 
 // virtual
-vrpn_bool nmui_PointFeatures::buzzingEnabled (void) const {
+vrpn_bool nmui_PointFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) const {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (buzzPlaneName.string());
   double buzz_range = buzz_slider_max - buzz_slider_min;
 
@@ -335,9 +334,9 @@ vrpn_bool nmui_PointFeatures::buzzingEnabled (void) const {
 }
 
 // virtual
-vrpn_bool nmui_PointFeatures::bumpsEnabled (void) const {
+vrpn_bool nmui_PointFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (bumpPlaneName.string());
   if ((bump_slider_max == bump_slider_min) || !value) {
     return vrpn_false;
@@ -349,22 +348,22 @@ vrpn_bool nmui_PointFeatures::bumpsEnabled (void) const {
 
 
 // virtual
-double nmui_PointFeatures::pointAdhesionValue (void) {
+double nmui_PointFeatures::pointAdhesionValue (nmm_Microscope_Remote * scope) {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (adhesionPlaneName.string());
 
   if (!value) {
-    return nmui_SurfaceFeatureStrategy::pointAdhesionValue();
+    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(scope);
   }
 
   return value->value();
 }
 
 // virtual
-double nmui_PointFeatures::scaledPointBuzzAmplitude (void) {
+double nmui_PointFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope) {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (buzzPlaneName.string());
   double buzz_range = buzz_slider_max - buzz_slider_min;
 
@@ -372,22 +371,22 @@ double nmui_PointFeatures::scaledPointBuzzAmplitude (void) {
 }
 
 // virtual
-double nmui_PointFeatures::pointFrictionValue (void) {
+double nmui_PointFeatures::pointFrictionValue (nmm_Microscope_Remote * scope) {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (frictionPlaneName.string());
 
   if (!value) {
-    return nmui_SurfaceFeatureStrategy::pointFrictionValue();
+    return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
   }
 
   return value->value();
 }
 
 // virtual
-double nmui_PointFeatures::scaledPointBumpSizeValue (void) {
+double nmui_PointFeatures::scaledPointBumpSizeValue (nmm_Microscope_Remote * scope) {
   Point_value * value =
-    d_microscope->state.data.inputPoint->getValueByPlaneName
+    scope->state.data.inputPoint->getValueByPlaneName
          (bumpPlaneName.string());
   double bump_range = bump_slider_max - bump_slider_min;
 
@@ -412,8 +411,8 @@ double nmui_PointFeatures::magicBumpSize (double wavelength) {
 
 
 // virtual
-double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/) {
-  return nmui_SurfaceFeatureStrategy::pointFrictionValue();
+double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/, nmm_Microscope_Remote * scope) {
+  return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
 }
 
 
@@ -421,11 +420,9 @@ double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/) {
 
 
 
-nmui_GridFeatures::nmui_GridFeatures (nmui_HSCanned * surface,
-                                      nmb_Dataset * dataset) :
+nmui_GridFeatures::nmui_GridFeatures (nmui_HSCanned * surface) :
     nmui_SurfaceFeatureStrategy (),
-    d_hapticSurface (surface),
-    d_dataset (dataset) {
+    d_hapticSurface (surface) {
 
 }
 
@@ -437,9 +434,9 @@ nmui_GridFeatures::~nmui_GridFeatures (void) {
 
 
 // virtual
-vrpn_bool nmui_GridFeatures::buzzingEnabled (void) const {
+vrpn_bool nmui_GridFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) const {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(buzzPlaneName.string());
 
   if (!plane || (buzz_slider_max == buzz_slider_min)) {
     return vrpn_false;
@@ -449,9 +446,9 @@ vrpn_bool nmui_GridFeatures::buzzingEnabled (void) const {
 }
 
 // virtual
-vrpn_bool nmui_GridFeatures::bumpsEnabled (void) const {
+vrpn_bool nmui_GridFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(bumpPlaneName.string());
 
   if ((bump_slider_max == bump_slider_min) || !plane) {
     return vrpn_false;
@@ -461,12 +458,12 @@ vrpn_bool nmui_GridFeatures::bumpsEnabled (void) const {
 }
 
 // virtual
-double nmui_GridFeatures::pointAdhesionValue (void) {
+double nmui_GridFeatures::pointAdhesionValue (nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(adhesionPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(adhesionPlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointAdhesionValue();
+    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -474,9 +471,9 @@ double nmui_GridFeatures::pointAdhesionValue (void) {
 }
 
 // virtual
-double nmui_GridFeatures::scaledPointBuzzAmplitude (void) {
+double nmui_GridFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(buzzPlaneName.string());
   double val;
 
   val = plane->value(d_hapticSurface->getGridX(),
@@ -486,12 +483,12 @@ double nmui_GridFeatures::scaledPointBuzzAmplitude (void) {
 }
 
 // virtual
-double nmui_GridFeatures::pointComplianceValue (void) {
+double nmui_GridFeatures::pointComplianceValue (nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(compliancePlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(compliancePlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointComplianceValue();
+    return nmui_SurfaceFeatureStrategy::pointComplianceValue(scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -499,12 +496,12 @@ double nmui_GridFeatures::pointComplianceValue (void) {
 }
 
 // virtual
-double nmui_GridFeatures::pointFrictionValue (void) {
+double nmui_GridFeatures::pointFrictionValue (nmm_Microscope_Remote * scope) {
   BCPlane * plane = 
-    d_dataset->inputGrid->getPlaneByName(frictionPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(frictionPlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointFrictionValue();
+    return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -512,9 +509,9 @@ double nmui_GridFeatures::pointFrictionValue (void) {
 }
 
 // virtual
-double nmui_GridFeatures::scaledPointBumpSizeValue (void) {
+double nmui_GridFeatures::scaledPointBumpSizeValue (nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    d_dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
+    scope->Data()->inputGrid->getPlaneByName(bumpPlaneName.string());
   double val;
 
   val = plane->value(d_hapticSurface->getGridX(),

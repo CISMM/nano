@@ -63,12 +63,7 @@ set nmInfo(colorscale) [create_closing_toplevel colorscale "Color Map Setup" ]
 # Make a frame to hold the pull-down menu that selects from the list
 frame $nmInfo(colorscale).scales
 frame $nmInfo(colorscale).pickframe
-iwidgets::Labeledframe $nmInfo(colorscale).flat \
-	-labeltext "Create a flattened plane" \
-	-labelpos nw
-set nmInfo(flatplane) [$nmInfo(colorscale).flat childsite]
 
-pack  $nmInfo(colorscale).flat -side bottom -fill x
 pack $nmInfo(colorscale).pickframe $nmInfo(colorscale).scales -side left -fill both
 
 # Pop-up menu to choose which plane is displayed as a color map.
@@ -127,15 +122,6 @@ button $nmInfo(colorscale).scales.autoscale -text "Autoscale now" \
     set color_comes_from [$nmInfo(colorscale).pickframe.colormap_plane get]
 }
 pack $nmInfo(colorscale).scales.autoscale -side top -anchor nw
-
-# Allow the user to create a flattened plane from the height plane:
-label $nmInfo(flatplane).flatlabel -justify left -text \
-	"Position measure lines then\nenter a plane name:"
-generic_entry $nmInfo(flatplane).flatplane flatplane_name \
-	"Flatten plane" ""
-pack $nmInfo(flatplane).flatplane $nmInfo(flatplane).flatlabel \
-	-side bottom -anchor nw
-
 
 # these are semaphores, to prevent recursive callbacks from
 # screwing things up. "Trace" can be very annoying!
@@ -244,7 +230,13 @@ trace variable color_slider_max w color_scale_change_from_c
 # and other parameters of the CUSTOM color map. 
 #
 button $nmInfo(colorscale).pickframe.setcolor -text "Adjust Custom Colormap" -command adjust_color
-pack $nmInfo(colorscale).pickframe.setcolor
+pack $nmInfo(colorscale).pickframe.setcolor -anchor nw
+
+# Make it easy to create a flat plane to use for a color map.
+button $nmInfo(colorscale).pickframe.calc_planes -text "Calculate Data Planes..."  \
+    -command "show.calc_planes"
+pack $nmInfo(colorscale).pickframe.calc_planes -side bottom -anchor nw
+
 
 #set these so we can see do " wishx <mainwin.tcl" and test interface
 set minR 0
@@ -361,23 +353,8 @@ proc set_contour_color {} {
 # for mapping to contour lines and the inter-line spacing.  
 #
 
-iwidgets::dialog .contour_line_dialog -title "Adjust Contour Lines" 
-
-.contour_line_dialog hide Help
-.contour_line_dialog buttonconfigure OK -command {
-    set_contour_color
-    .contour_line_dialog deactivate 1
-}
-.contour_line_dialog buttonconfigure Apply -command {
-    set_contour_color
-}
-# "Cancel" button is already set up correctly
-
-proc show.contour_lines {} {
-    .contour_line_dialog activate
-}
-
-set nmInfo(contour_lines) [.contour_line_dialog childsite]
+set nmInfo(contour_lines) [create_closing_toplevel contour_lines \
+        "Adjust Contour Lines" ]
 
 generic_optionmenu $nmInfo(contour_lines).contour_dataset contour_comes_from \
 	"Contour dataset" inputPlaneNames
@@ -386,8 +363,8 @@ pack $nmInfo(contour_lines).contour_dataset -anchor nw
 button $nmInfo(contour_lines).set_color -text "Set contour color" -command {
     choose_color contour_color "Choose contour color"
     $nmInfo(contour_lines).colorsample configure -bg $contour_color
+    set_contour_color
 }
-
 
 # this sets the color of the sample frame to the color of the scales
 set contour_color [format #%02x%02x%02x $contour_r $contour_g $contour_b]
@@ -395,9 +372,11 @@ frame $nmInfo(contour_lines).colorsample -height 32 -width 32 -relief groove -bd
 
 #Choose the width of the lines that make up the contour display
 frame $nmInfo(contour_lines).lineslider
-floatscale $nmInfo(contour_lines).lineslider.linespacing 1 100 101 1 1 texture_spacing "Line spacing"
-floatscale $nmInfo(contour_lines).lineslider.linewidth 1 100 101 1 1 contour_width "Line width"
-#floatscale $nmInfo(contour_lines).lineslider.opacity 0 255 256 1 1 contour_opacity "opacity"
+generic_entry $nmInfo(contour_lines).lineslider.linespacing \
+        texture_spacing "Line spacing" real
+generic_entry $nmInfo(contour_lines).lineslider.linewidth \
+        contour_width "Line width" real
+#generic_entry $nmInfo(contour_lines).lineslider.opacity contour_opacity "opacity" integer
 # this triggers the callback to actually set the c variables
 
 pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample -side top -anchor e -pady 1m -padx 3m -fill x
@@ -406,6 +385,15 @@ pack $nmInfo(contour_lines).lineslider.linewidth \
 	$nmInfo(contour_lines).lineslider.linespacing \
 	-side top -fill x -pady $fspady
 #pack $nmInfo(contour_lines).lineslider.opacity -side top -fill x -pady $fspady
+
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(contour_lines).lineslider.linewidth \
+	$nmInfo(contour_lines).lineslider.linespacing 
+
+# Make it easy to create a flat plane to use for contours.
+button $nmInfo(contour_lines).calc_planes -text "Calculate Data Planes..."  \
+    -command "show.calc_planes"
+pack $nmInfo(contour_lines).calc_planes -side bottom -anchor nw
 
 #######
 # end contour line section

@@ -81,6 +81,9 @@ nmb_Dataset::nmb_Dataset
 
   done (0),
 
+  d_flat_list_head(NULL),
+  d_lblflat_list_head(NULL),
+  d_sum_list_head(NULL),
   d_flatPlaneCB (NULL),
   d_hostname(NULL)
 
@@ -148,6 +151,9 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete inputGrid;
   if (d_hostname)
       delete [] d_hostname;
+
+  // XXX Clean up computed planes lists
+  // Clean up flat plane callback list.
 
   if (alphaPlaneName)
     delete alphaPlaneName;
@@ -378,7 +384,7 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
         BCPlane * outplane;      // Output plane
         int     x,y;
         sum_node *sum_ptr, *pre;
-        static  sum_node * list_head=NULL;
+        static  sum_node * d_sum_list_head=NULL;
 
 
         //Check if the outplane has same name with one of the
@@ -442,7 +448,7 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
             dataImages->addImage(output_im);
         }
         else {  //the output plane already exist
-            pre=sum_ptr=list_head;
+            pre=sum_ptr=d_sum_list_head;
             while(sum_ptr) {
                 if(sum_ptr->data->sum_plane == outplane) {
                      sum_ptr->data->first_plane->remove_callback
@@ -497,8 +503,8 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
         ptr->data = sum_struct;
 
         //insert the new node as the head of the list
-        ptr->next=list_head;
-        list_head=ptr;
+        ptr->next=d_sum_list_head;
+        d_sum_list_head=ptr;
 
         inplanes[0]->add_callback(updateSumOnPlaneChange, sum_struct);
 
@@ -614,7 +620,6 @@ int nmb_Dataset::computeFlattenedPlane
 
   BCPlane * outplane;      // Output plane
   int     x, y;
-  static  flatten_node * list_head = NULL;
   flatten_node * flat_ptr, * pre;
 
   if(strcmp(outputPlane, inputPlane)==0) {
@@ -654,7 +659,7 @@ int nmb_Dataset::computeFlattenedPlane
       }
       dataImages->addImage(output_im);
   } else {         //the output plane already exist
-      pre = flat_ptr = list_head;
+      pre = flat_ptr = d_flat_list_head;
       while (flat_ptr) {
          if ( flat_ptr->data->flat_plane == outplane ) {
 	     // userdata must be the same as when we added the callback!
@@ -710,8 +715,8 @@ int nmb_Dataset::computeFlattenedPlane
   ptr->data = flatten_struct;
 
   //insert the new node as the head of the list
-  ptr->next = list_head;
-  list_head = ptr;
+  ptr->next = d_flat_list_head;
+  d_flat_list_head = ptr;
 
   plane->add_callback(updateFlattenOnPlaneChange, flatten_struct);
 
@@ -740,7 +745,6 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
 
   BCPlane * outplane;      // Output plane
   int     x, y;
-  static  lblflatten_node * list_head = NULL;
   lblflatten_node * lblflat_ptr, * pre;  
   float avgVal = 0;  //average height value of the current scan line
   float firstAvgVal = 0;  //average height value of the 1st scan line
@@ -782,7 +786,7 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
   } //end if
   else {    //the output plane already exists (I don't know why you'd
 	    //output to a plane that already exists.)
-	pre = lblflat_ptr = list_head;
+	pre = lblflat_ptr = d_lblflat_list_head;
 	while (lblflat_ptr) {
 		if (lblflat_ptr->data->lblflat_plane == outplane) {
 			lblflat_ptr->data->from_plane->remove_callback
@@ -853,8 +857,8 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
   ptr->data = lblflatten_struct;
 
   //insert the new node as the head of the list
-  ptr->next = list_head;
-  list_head = ptr;
+  ptr->next = d_lblflat_list_head;
+  d_lblflat_list_head = ptr;
 
   plane->add_callback(updateLBLFlattenOnPlaneChange, lblflatten_struct);
   return 0;

@@ -8,7 +8,11 @@
 # 
 # for widgets that change behavior of image mode
 #
- 
+
+# forward declaration so radiobox will work correctly.
+proc imBackgChReal {fooa element op} {
+}
+
 set nmInfo(image) [create_closing_toplevel image "Image Parameters"]
 set nmInfo(imagequick) [frame $nmInfo(image).quick]
 set nmInfo(imagefull) [frame $nmInfo(image).full]
@@ -85,9 +89,6 @@ frame $nmInfo(imagefull).styleparam
 frame $nmInfo(imagefull).tool 
 frame $nmInfo(imagefull).toolparam 
 
-# dummy entry widget to force focus to move away from real entry widgets.
-entry $nmInfo(imagefull).dummy_entry
-
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
 
@@ -104,24 +105,25 @@ set imagep_p_gain 1.0
 set imagep_i_gain 0.3
 set imagep_d_gain 0.0
 set imagep_amplitude 0.1
+set imagep_frequency 100000
+set imagep_input_gain 1.0
+# boolean, value of 0 is amplitude, 1 is phase
+set imagep_ampl_or_phase 0
+set imagep_drive_attenuation 1
+# this is the actual phase angle to use for feedback. 
+set imagep_phase 0.0
 set imagep_rate 1.0
 
 # list of all the variables above, imagep_*
-set imageplist "{mode style tool setpoint p_gain i_gain d_gain amplitude rate}"
+set imageplist [list mode style tool setpoint p_gain i_gain d_gain amplitude \
+        frequency input_gain ampl_or_phase drive_attenuation phase rate]
 
 # These variables only exist in tcl - the user changes
 # them, and then the "accept" button copies them into the vars
 # above, so the C code sees them.
-set newimagep_mode $imagep_mode
-set newimagep_style $imagep_style
-set newimagep_tool $imagep_tool
-
-set newimagep_setpoint $imagep_setpoint
-set newimagep_p_gain $imagep_p_gain
-set newimagep_i_gain $imagep_i_gain
-set newimagep_d_gain $imagep_d_gain
-set newimagep_amplitude $imagep_amplitude
-set newimagep_rate $imagep_rate
+foreach imagevar $imageplist {
+    set newimagep_$imagevar [set imagep_$imagevar]
+}
 
 # flips between sets of parameters
 trace variable newimagep_mode w flip_im_mode
@@ -146,28 +148,15 @@ proc updateFromC {realname name element op} {
 }
 
 # checks to see if C code changes values of our variables.
-trace variable imagep_mode w "updateFromC imagep_mode "
-trace variable imagep_style w "updateFromC imagep_style "
-trace variable imagep_tool w "updateFromC imagep_tool "
-
-trace variable imagep_setpoint  w "updateFromC imagep_setpoint "
-trace variable imagep_p_gain  w "updateFromC imagep_p_gain "
-trace variable imagep_i_gain  w "updateFromC imagep_i_gain "
-trace variable imagep_d_gain  w "updateFromC imagep_d_gain "
-trace variable imagep_amplitude  w "updateFromC imagep_amplitude "
-trace variable imagep_rate    w "updateFromC imagep_rate "
+foreach imagevar $imageplist {
+    trace variable imagep_$imagevar w "updateFromC imagep_$imagevar "
+}
 
 # Changes the accept and cancel buttons to pink
 # when these variables change, as a reminder to user.
-trace variable newimagep_mode w imBackgChReal
-trace variable newimagep_style w imBackgChReal
-trace variable newimagep_tool w imBackgChReal
-trace variable newimagep_setpoint w imBackgChReal
-trace variable newimagep_p_gain  w imBackgChReal
-trace variable newimagep_i_gain  w imBackgChReal
-trace variable newimagep_d_gain  w imBackgChReal
-trace variable newimagep_amplitude  w imBackgChReal
-trace variable newimagep_rate    w imBackgChReal
+foreach imagevar $imageplist {
+    trace variable newimagep_$imagevar w imBackgChReal
+}
 
 #
 #setup Image box
@@ -180,10 +169,14 @@ label $nmInfo(imagefull).mode.label -text "Image Mode"
 pack $nmInfo(imagefull).mode.label -side top -anchor nw
 radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
 radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1 
-button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars $imageplist"
-button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars $imageplist"
+button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars imageplist" -highlightthickness 0
+button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars imageplist" -highlightthickness 0
 pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact -side top -anchor nw -fill x
 pack $nmInfo(imagefull).mode.cancel $nmInfo(imagefull).mode.accept -side bottom -fill x
+
+# Special binding for accept button to make sure that all
+# entry widgets are finalized - happens when they loose focus.
+bind $nmInfo(imagefull).mode.accept <Enter> "focus $nmInfo(imagefull).mode.accept"
 
 # save the background color we use for "accept" and "revert" buttons
 set save_bg [$nmInfo(imagefull).mode.accept cget -background]
@@ -197,25 +190,55 @@ generic_entry $nmInfo(imagefull).modeparam.setpoint newimagep_setpoint \
 generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain "I-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain "D-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
 generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
-generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
+generic_entry $nmInfo(imagefull).modeparam.frequency newimagep_frequency \
+	"Frequency (10k 200k)" real 
+generic_entry $nmInfo(imagefull).modeparam.input_gain newimagep_input_gain \
+	"Input Gain (1 100)" real 
+generic_radiobox $nmInfo(imagefull).modeparam.ampl_or_phase newimagep_ampl_or_phase \
+	"" { "Amplitude" "Phase" }
+generic_entry $nmInfo(imagefull).modeparam.drive_attenuation newimagep_drive_attenuation \
+	"Drive Attenuation (1 10 100)" integer
+generic_entry $nmInfo(imagefull).modeparam.phase newimagep_phase \
+	"Phase (0 360)" real 
 
-pack    $nmInfo(imagefull).modeparam.setpoint  $nmInfo(imagefull).modeparam.p-gain \
-	$nmInfo(imagefull).modeparam.i-gain $nmInfo(imagefull).modeparam.d-gain \
+pack    $nmInfo(imagefull).modeparam.setpoint \
+        $nmInfo(imagefull).modeparam.p-gain \
+	$nmInfo(imagefull).modeparam.i-gain \
+        $nmInfo(imagefull).modeparam.d-gain \
         $nmInfo(imagefull).modeparam.rate \
 	-side top -fill x -pady $fspady
 
 iwidgets::Labeledwidget::alignlabels \
-    $nmInfo(imagefull).modeparam.setpoint  $nmInfo(imagefull).modeparam.p-gain \
-	$nmInfo(imagefull).modeparam.i-gain $nmInfo(imagefull).modeparam.d-gain \
-	$nmInfo(imagefull).modeparam.amplitude $nmInfo(imagefull).modeparam.rate 
-	
+    $nmInfo(imagefull).modeparam.setpoint \
+    $nmInfo(imagefull).modeparam.p-gain \
+    $nmInfo(imagefull).modeparam.i-gain \
+    $nmInfo(imagefull).modeparam.d-gain \
+    $nmInfo(imagefull).modeparam.rate \
+    $nmInfo(imagefull).modeparam.amplitude \
+    $nmInfo(imagefull).modeparam.frequency \
+    $nmInfo(imagefull).modeparam.input_gain \
+    $nmInfo(imagefull).modeparam.drive_attenuation \
+    $nmInfo(imagefull).modeparam.phase
+
 if {$newimagep_mode==0} {
-  pack $nmInfo(imagefull).modeparam.amplitude  -side top -fill x -pady $fspady
+    pack $nmInfo(imagefull).modeparam.amplitude \
+    $nmInfo(imagefull).modeparam.frequency \
+    $nmInfo(imagefull).modeparam.input_gain \
+    $nmInfo(imagefull).modeparam.drive_attenuation \
+    $nmInfo(imagefull).modeparam.ampl_or_phase \
+    $nmInfo(imagefull).modeparam.phase \
+    -side top -fill x -pady $fspady
 }
 
-set im_oscillating_list "$nmInfo(imagefull).modeparam.amplitude"
+set im_oscillating_list [list $nmInfo(imagefull).modeparam.amplitude \
+        $nmInfo(imagefull).modeparam.frequency \
+    $nmInfo(imagefull).modeparam.input_gain \
+    $nmInfo(imagefull).modeparam.drive_attenuation \
+    $nmInfo(imagefull).modeparam.ampl_or_phase \
+    $nmInfo(imagefull).modeparam.phase ]
 
 #setup Image style box
 label $nmInfo(imagefull).style.label -text "Style" 
@@ -291,13 +314,16 @@ proc imBackgChReal {fooa element op} {
 proc acceptImageVars {varlist} {
     global accepted_image_params
     global nmInfo
-    global save_bg
+    global save_bg $varlist
 
     # Entry widgets commit their value when they loose focus. 
-    # Change the focus to force them to commit their values. 
+    # Move the focus to next entry to force them to commit their values. 
     # We're going to close the window later anyway...
-    focus $nmInfo(imagefull).dummy_entry
-    foreach val $varlist {
+    # XXX Doesn't work! focus moves after this procedure...
+    #focus [tk_focusNext [focus]]
+    #update idletasks
+    # we pass in the name of a list, so this gets us the elements in the list.
+    foreach val [set $varlist] {
 	global imagep_$val
 	global newimagep_$val
 	set k [set newimagep_$val]
@@ -318,9 +344,10 @@ proc acceptImageVars {varlist} {
 
 proc cancelImageVars {varlist} {
     global nmInfo
-    global save_bg
+    global save_bg $varlist
 
-    foreach val $varlist {
+    # we pass in the name of a list, so this gets us the elements in the list.
+    foreach val [set $varlist] {
 	global imagep_$val
 	global newimagep_$val
 	if {[set newimagep_$val] !=  [set imagep_$val]} {
