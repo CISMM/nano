@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="3d_afm" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="eroder" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=3d_afm - Win32 Debug
+CFG=eroder - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "3d_afm.mak".
+!MESSAGE NMAKE /f "eroder.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "3d_afm.mak" CFG="3d_afm - Win32 Debug"
+!MESSAGE NMAKE /f "eroder.mak" CFG="eroder - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "3d_afm - Win32 Release" (based on "Win32 (x86) Console Application")
-!MESSAGE "3d_afm - Win32 Debug" (based on "Win32 (x86) Console Application")
+!MESSAGE "eroder - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "eroder - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -28,7 +28,7 @@ CFG=3d_afm - Win32 Debug
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -52,7 +52,7 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /machine:I386
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -81,26 +81,22 @@ LINK32=link.exe
 
 # Begin Target
 
-# Name "3d_afm - Win32 Release"
-# Name "3d_afm - Win32 Debug"
+# Name "eroder - Win32 Release"
+# Name "eroder - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
-
-SOURCE=..\3Dobject.cpp
-# End Source File
 # Begin Source File
 
 SOURCE=..\ConeSphere.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\dna.cpp
+SOURCE=..\draw.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\draw.cpp
+SOURCE=..\erode.cpp
 # End Source File
 # Begin Source File
 
@@ -112,11 +108,11 @@ SOURCE=..\lightcol.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\scan.cpp
+SOURCE=..\main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\sim.cpp
+SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.C
 # End Source File
 # Begin Source File
 
@@ -144,10 +140,6 @@ SOURCE=..\Vec3d.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\3Dobject.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\ConeSphere.h
 # End Source File
 # Begin Source File
@@ -160,6 +152,10 @@ SOURCE=..\draw.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\erode.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\input.h
 # End Source File
 # Begin Source File
@@ -168,11 +164,11 @@ SOURCE=..\lightcol.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\scan.h
+SOURCE=..\main.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\sim.h
+SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.h
 # End Source File
 # Begin Source File
 
@@ -249,11 +245,11 @@ SOURCE=..\..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmAnalyze\nmAnalyze.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -262,11 +258,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmAnalyze\nmAnalyze.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmMScope\nmMScope.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -275,11 +271,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmMScope\nmMScope.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUGraphics\nmUGraphics.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -288,11 +284,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUGraphics\nmUGraphics.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUI\nmUI.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -305,11 +301,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUI\nmUI.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmBase\nmBase.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -318,11 +314,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmBase\nmBase.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmImageViewer\nmImageViewer.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -331,11 +327,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmImageViewer\nmImageViewer.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmMP\NMmp.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -344,11 +340,11 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmMP\NMmp.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\tclLinkVar\tclLinkVar.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
 # PROP Exclude_From_Build 1
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 !ENDIF 
 
@@ -365,9 +361,9 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\lib\tclLinkVar\tclLinkVar.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmAnalyze\nmAnalyze.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -378,9 +374,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmAnalyze\nmAnalyze.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmAux\nmAux.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -391,9 +387,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmAux\nmAux.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmGraphics\nmGraphics.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -404,9 +400,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmGraphics\nmGraphics.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmMScope\nmMScope.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -417,9 +413,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmMScope\nmMScope.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmReg\nmReg.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -430,9 +426,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmReg\nmReg.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmSEM\nmSEM.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -443,9 +439,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmSEM\nmSEM.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmUGraphics\nmUGraphics.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -456,9 +452,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmUGraphics\nmUGraphics.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmUI\nmUI.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -473,9 +469,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmUI\nmUI.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmBase\nmBase.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -486,9 +482,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmBase\nmBase.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmImageViewer\nmImageViewer.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -499,9 +495,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmImageViewer\nmImageViewer.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmMP\NMmp.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -512,9 +508,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmMP\NMmp.lib
 
 SOURCE=..\..\..\..\obj\pc_win32\release\lib\tclLinkVar\tclLinkVar.lib
 
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
+!IF  "$(CFG)" == "eroder - Win32 Release"
 
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+!ELSEIF  "$(CFG)" == "eroder - Win32 Debug"
 
 # PROP Exclude_From_Build 1
 
@@ -523,9 +519,5 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\tclLinkVar\tclLinkVar.lib
 # End Source File
 # End Group
 # End Group
-# Begin Source File
-
-SOURCE=.\array.dat
-# End Source File
 # End Target
 # End Project
