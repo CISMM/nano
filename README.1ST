@@ -15,6 +15,10 @@ Variables you may want set in your shell:
                       /afs/cs.unc.edu/project/stm/src/not_backed_up).
                       A must for pc_cygwin!
 
+   NM_TLC_DIR      -- this checks-out to ./nano/src/share/tcl/ but
+                      there were no changes to content so only change
+                      this if you need to.
+
 
 How to compile nano (most archs):
    gmake in ./src/lib
@@ -49,7 +53,8 @@ Some things that have moved:
       ./src/app/nano/lib/nmAux
    4) active_set.*, stm_cmd.h, stm_file.* are now in
       ./src/app/nano/lib/nmMScope
-   5) probably some more, I'll update this as I remember them/am asked
+   5) tcl is in ./nano/src/share/tcl
+   6) probably some more, I'll update this as I remember them/am asked
 
 
 How to link to a particular library (as opposed to a default):
