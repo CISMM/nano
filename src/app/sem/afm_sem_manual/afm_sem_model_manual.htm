@@ -1,0 +1,262 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title>Manual for combined AFM and SEM alignment</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>Manual for model-based AFM-SEM alignment tool</h1>
+
+<p><img src="images/combination_view.jpg" width="644"
+height="568"></p>
+
+<h2>Introduction: </h2>
+
+<p>The tool for doing this is part of the NanoManipulator program.
+The purpose of doing this is to enable manipulations of specimens
+in the AFM/SEM which are too delicate to be scanned completely by
+the AFM. Instead, we touch the surface at only three user-selected
+points. This method makes use of the AFM tip as a landmark for
+registering the coordinate systems of the AFM and SEM.</p>
+
+<p>The procedure for calibration consists of the following steps:</p>
+
+<ol type="1" start="1" style="margin-top:0in">
+    <li>Start up the NanoManipulator program (nano) so that it
+        connects to the Observer AFM and Hitachi SEM.</li>
+    <li>Load a surface model in the form of an image where
+        intensity represents the topography of the model.</li>
+    <li>Set the scan regions for both the AFM and SEM</li>
+    <li>Open the SEM control panel and acquire an image with the
+        SEM</li>
+    <li>Open the AFM/SEM calibration control panel and align the
+        model image with the SEM image</li>
+    <li>Put the AFM in modify mode using direct-Z for 3D control
+        of the tip and create three on-surface landmarks and one
+        off-surface landmark</li>
+    <li>Generate the model geometry and solve for the alignment
+        transformations</li>
+</ol>
+
+<p>In the rest of this document I will describe in more detail
+what is involved in each of these steps.</p>
+
+<h2>1. Starting up the program:</h2>
+
+<p>Start up nano using the command-line options to specify the
+AFM and SEM servers and the stream file name:</p>
+
+<pre>nano -d AFM@servername -dsem SEM@servername:port -o streamFileName</pre>
+
+<p><u>Warning: Do not use the GUI-based method for connecting to
+the AFM and setting the stream file. It does not properly handle
+connecting and saving data from the SEM and may even cause the
+program to crash.</u></p>
+
+<p>The stream file data will be stored in two separate files:</p>
+
+<ol>
+    <li>streamFileName.nms contains the AFM data</li>
+    <li>streamFileName.nms.sem contains the SEM data</li>
+</ol>
+
+<p>To replay the stream files use the command line options in the
+following form:</p>
+
+<pre>nano -d file:streamFileName.nms -dsem file:streamFileName.nms.sem</pre>
+
+<h2>2. Loading a surface model</h2>
+
+<p>Go to the &#147;File&#148; menu and select &#147;Open Static
+File...&#148;. Select an image representing your model of the
+surface. Note that the scaling of image intensity with the height
+of the surface does not need to be specified, this is one of the
+parameters that will be determined by the calibration.</p>
+
+<h2>3. Set up AFM and SEM scan regions</h2>
+
+<p>Set up the AFM and SEM so that both scan regions cover the
+region on the specimen where you will do the manipulation. The
+scan regions must not change during the calibration procedure and
+for as long as you wish to use the result of the calibration. </p>
+
+<h2>4. Acquiring the first SEM image for alignment:</h2>
+
+<p>After setting the scan regions for both instruments, move the
+AFM tip so it obscures as little of the surface in the SEM image
+as possible.</p>
+
+<p>Next, go to the &#147;Tools&#148; menu and select &#147;SEM&#148;.
+This will open up the SEM control panel along with a window that
+displays the last acquired SEM image.</p>
+
+<p><img src="images/sem_controls.jpg" width="232" height="510"></p>
+
+<p>By default, the &#147;Acquire Continuously&#148; checkbox will
+be checked. You may wish to disable this checkbox to collect just
+a single image. Select a reasonable resolution such as 400x512 if
+it is not already selected. Next, push the &#147;Acquire Image&#148;
+button to collect the first image.</p>
+
+<h2>5. Aligning the SEM and model images</h2>
+
+<p class="MsoBodyTextIndent2">Go to the &#147;Tools&#148; menu
+and select &#147;AFM-SEM&#148;. This will open up the AFM-SEM
+Model calibrator control panel.</p>
+
+<p class="MsoBodyTextIndent2"><img
+src="images/afm_sem_model_calibrator_controls.jpg" width="409"
+height="876"></p>
+
+<p>You will notice that there are three sections in this control
+panel with a radio-button along the left side. These are labeled
+&#147;model&lt;--&gt;SEM&#148;, &#147;AFM&lt;--&gt;SEM contact&#148;,
+&#147;AFM&lt;--&gt;SEM free&#148;. Make sure the radio-button is
+set for &#147;model&lt;--&gt;SEM&#148; as shown above. You should
+see two additional windows labeled &#147;reference&#148; and
+&#147;adjustable&#148;. Under the model menu select the image
+representing the surface model. Under the SEM image menu select
+the image that you just acquired with the SEM - it should be
+named something like &#147;SEM_DATA08_400x512&#148;.</p>
+
+<p>Left click on one of the images to place a feature point and
+position it and its corresponding point in the other image so
+they line up with corresponding features. Do this three times so
+you get something that looks like this:</p>
+
+<table border="0">
+    <tr>
+        <td><img src="images/model_w_fiducials.jpg" width="408"
+        height="427"></td>
+        <td><img src="images/sem_w_fiducials.jpg" width="408"
+        height="427"></td>
+    </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<h2>6. Generating contact landmarks with the AFM tip</h2>
+
+<p>Click on the radio button for the &#147;AFM-SEM contact&#148;
+section of the AFM-SEM-Model Calibrator control panel. You will
+notice that the two windows for the model and SEM images will
+disappear and a new &#147;adjustable&#148; window will appear
+with a blue color. This window will be used to display the SEM
+image of the AFM tip.</p>
+
+<p>In this step, you will interactively position the tip at three
+locations on the surface and one location off the surface. In
+order to avoid scanning over fragile parts of the specimen and
+breaking them, all positioning will be done using the &#147;Direct
+Z&#148; mode which allows the tip to be moved in X,Y, and Z with
+feedback turned off. In the Modify Parameters window, click on
+the &#147;Full params&#148; button to expand the control panel.
+Under the Control setting, select &#147;Direct Z&#148;. You may
+see a message box popup at this point warning that the Z-piezo
+signal must be used. Just click Okay to dismiss this message box.
+</p>
+
+<p>The basic idea is illustrated in the following figure. For
+each placement of the tip, the program will acquire an SEM image
+and a corresponding 3D AFM position. This information, in
+combination with the alignment between the model image and SEM
+image will be sufficient for calibration.</p>
+
+<p>&nbsp;</p>
+
+<p><img src="images/four_tip_landmarks.jpg" width="605"
+height="486"></p>
+
+<h3>6.1. Adding a contact point:</h3>
+
+<p>Next, on the main NanoManipulator control panel switch into
+Touch mode and hit the Commit button. To move the tip, position
+the Phantom and press and hold the Phantom trigger button. Do not
+release the button until you have positioned the tip so it is
+just touching the surface with minimal change in the force signal
+(watch the oscilloscope window as you move the tip to check for
+changes in the force). As you are positioning the AFM tip, keep
+in mind that when you release the Phantom button, the apex of the
+tip must be visible in the SEM image. When you release the
+Phantom button the program will automatically do two things. It
+will store the current position of the AFM tip, and it will
+trigger the SEM to acquire an image. The SEM image will appear in
+the &#147;adjustable&#148; image window with a single feature
+point already placed on the image. A simulated version of what
+this should look like is shown below:</p>
+
+<p><img src="images/sem_of_tip.jpg" width="408" height="427"></p>
+
+<p>Left click on the feature point and drag it so that it is
+collocated with the tip apex in the SEM image. Although you may
+not know exactly which part of the tip is the apex, try to at
+least pick a point on the tip that is easily identified. </p>
+
+<p>Repeat step 6.1 two more times so there are three contact
+points acquired in total. If you make a mistake in adding a point
+for the &#147;AFM-SEM contact&#148; section you can select the
+point in the pull-down menu and click on &#147;Delete Point&#148;
+to undo it.</p>
+
+<h3>6.2. Adding an off-surface point</h3>
+
+<p>Repeat step 6.1 but instead of releasing the Phantom button
+when the tip is touching the surface, lift the tip far above the
+surface and release the button.</p>
+
+<h2>7. Calculate the alignment parameters</h2>
+
+<p>At this point we have sufficient data for calculating the
+alignment parameters. This should be indicated at the top of the
+control panel with the words &#147;Sufficient Data&#148; in green.
+If it says &#147;Insufficient Data&#148; go back and figure out
+which step you left out and make sure you have specified enough
+landmark points. Press the button labeled &#147;Update Solution&#148;.
+This will trigger the program to generate a geometric model from
+the selected model image and solve for the transformations
+between the model, AFM and SEM coordinate systems. It may take a
+bit longer the first time you try pressing the button because of
+the memory allocation required for the surface model.</p>
+
+<h2>8. Adjust visualization parameters</h2>
+
+<p>Next you probably want to see the result of the calibration
+calculations. Turn on the tip visualization by opening the &#147;AFM
+tip&#148; control panel from the &#147;Tools&#148; menu and
+enabling the &#147;Display Geometry&#148; checkbox. This should
+show the last tip position reported by the AFM.</p>
+
+<p>To see the model surface in relation to the AFM tip, enable
+the &#147;Draw Surface&#148; checkbox in the &#147;Display
+Settings&#148; section of the &#147;AFM-SEM-Model Calibrator&#148;
+control panel. This will give you an estimate for where the
+surface is in relation to the AFM tip although no AFM image has
+been acquired. So it doesn&#146;t interfere with viewing the
+model or tip, you may want to make the &#147;AFM&#148; surface
+normally displayed by the NanoManipulator invisible by setting
+its opacity to 0 in &#147;Setup-&gt;Display Settings&#148;. You
+should notice an arrow sticking out of the center of the model
+surface. This arrow indicates the direction of projection for the
+SEM (it points along the electron beam axis). </p>
+
+<p>To project the SEM image used for step 5 onto the surface
+enable the &#147;Draw Surface Texture&#148; checkbox at the
+bottom of the AFM-SEM-Model control panel.</p>
+
+<p>Alternatively, you may enable the &#147;Live SEM Texture&#148;
+checkbox to project the last acquired SEM image onto the model
+surface.</p>
+
+<p>Turn on live SEM acquisition by enabling the &#147;Acquire
+Continuously&#148; checkbox in the SEM control panel and clicking
+the &#147;Acquire Image&#148; button.</p>
+
+<p>You should be able to see the SEM image of the AFM tip
+projected onto the surface in approximately the same location
+where the tip model appears.</p>
+</body>
+</html>
