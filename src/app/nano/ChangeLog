@@ -1,3 +1,8 @@
+2001-11-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* x_graph.c : replaced get_the_interpreter() with 
+	Tcl_Interpreter::getInterpreter()
+
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* CollaborationManager.C : replaced get_the_interpreter() with

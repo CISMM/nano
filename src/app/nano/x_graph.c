@@ -4,12 +4,9 @@
 
 #include <tcl.h>
 #include <tk.h>
-
-#include "tcl_tk.h"
+#include <Tcl_Interpreter.h>
 
 int showgraph (float [], int, int, float, float, const char *);
-
-Tcl_Interp *interp=NULL;      /* Interpreter for this application. */
 
 /*
  * Command-line options:
@@ -24,7 +21,7 @@ int showgraph (float array [], int wi, int hi,
   int i;
   char scriptname[1000];
 
-  interp = get_the_interpreter();
+  Tcl_Interp *interp = Tcl_Interpreter::getInterpreter();
   
   sprintf(val,"%d",wi);
   Tcl_SetVar(interp,"wi",val,0);
