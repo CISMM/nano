@@ -1,4 +1,4 @@
-#include <vector>
+//#include <vector>
 
 #include <rhinoio.h>
 #include "nmg_Graphics.h"
@@ -373,7 +373,8 @@ void export_scene_to_openNURBS (
 
     
     // Now, build the viewport objects
-    std::vector<CRhinoViewport> my_viewports (total_num_viewports);
+    //std::vector<CRhinoViewport> my_viewports (total_num_viewports);
+    CRhinoViewport * my_viewports = new CRhinoViewport [total_num_viewports];
     for (int vn=0;  vn < total_num_viewports;  ++vn) {
         const v_viewport_type & v = display.viewports [vn];
         build_viewport (my_viewports[vn], v, vn);
@@ -406,6 +407,8 @@ void export_scene_to_openNURBS (
     // XXX error checking
 
     cout << "done." << endl;
+
+    delete [] my_viewports;
 }
 
 
