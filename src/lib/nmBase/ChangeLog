@@ -1,3 +1,7 @@
+2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmb_Debug.C : add collab_verbosity, collabVerbose()
+
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmb_TimerList.h : new data members nmb_TimerList::d_startTime,
