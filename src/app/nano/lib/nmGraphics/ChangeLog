@@ -1,3 +1,10 @@
+2000-08-24
+	* chartjunk.c (scale_display): changed to dynamically allocate 
+		the buffer for the message displayed on the screen 
+		containing the file name so that really long file names
+		don't get cut off. Also, changed sprintf to snprintf so
+		we don't print past the end of the buffer just in case.
+
 2000-08-17
 	* nmg_GraphicsImpl.C (createRealignTextures): changed to look at
 		minNonZeroValue instead of minValue

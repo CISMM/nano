@@ -123,7 +123,7 @@ int scale_display (void * data) {
   float * size;
   size = (float *) data;
 
-  char message[100];
+  char *message = NULL;
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
@@ -143,18 +143,32 @@ int scale_display (void * data) {
       fprintf(stderr, "Error in scale_display: could not get plane!\n");
   } else {
       scale = plane->scale();
-    sprintf(message,"Displaying %s (%s), scale x%g",
-          g_heightPlaneName,
-          plane->units()->Characters(), scale);
+      // get a reasonable estimate of the maximum size string we'll need
+      // and allocate the buffer
+      int mess_len = strlen(plane->units()->Characters()) + 
+		strlen(g_heightPlaneName) + 100;
+      message = new char[mess_len];
+      if (message != NULL) {
+	  // don't go past the end of the buffer!
+          snprintf(message,mess_len,"Displaying %s (%s), scale x%g",
+                  g_heightPlaneName,
+                  plane->units()->Characters(), scale);
+      } else {
+          fprintf(stderr, "Error: scale_display: out of memory\n");
+      }
   }
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef FLOW
-  drawStringInFont(myfont, message);
+  if (message != NULL) {
+    drawStringInFont(myfont, message);
+    delete [] message;
+  }
 #endif
   glPopMatrix(); 
 #ifndef FLOW
   glPopAttrib();
 #endif
+
   return(0);
 }
 
@@ -614,6 +628,7 @@ int addChartjunk (nmg_Funclist ** v_screen, float * screen_scale) {
   // measure_id =
   addFunctionToFunclist(v_screen, measure_display, NULL, "measure_display");
   addFunctionToFunclist(v_screen, scale_display, screen_scale, "scale_display");
+  printf("adding scale_display to v_screen: address=%d\n", scale_display);
   addFunctionToFunclist(v_screen, x_y_width_display, NULL, "x_y_width_display");
   // scale_id =
   addFunctionToFunclist(v_screen, height_at_hand_display, NULL,
