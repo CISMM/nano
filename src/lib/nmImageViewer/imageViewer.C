@@ -838,8 +838,25 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
 }
 
 // static
-void ImageViewer::specialCallbackForGLUT(int /*key*/, int /*x*/, int /*y*/) {
-
+void ImageViewer::specialCallbackForGLUT(int key, int x, int y) {
+    int curr_win = glutGetWindow();
+    ImageViewer *v = theViewer;
+    int i = v->get_window_index_from_glut_id(curr_win);
+    if (i < 0) {
+        fprintf(stderr,
+                "Error, ImageViewer::keyboardCallback, window not found\n");
+        return;
+    }
+    ImageViewerWindowEvent ivw_event;
+    ivw_event.winID = v->get_winID_from_window_index(i);
+    ivw_event.mouse_x = x;
+    ivw_event.mouse_y = y;
+    ivw_event.state = 0;
+    ivw_event.type = KEY_PRESS_EVENT;
+    ivw_event.keycode = key;
+    if (v->window[i].event_handler)
+	v->window[i].event_handler(ivw_event,
+		v->window[i].event_handler_ud);
 }
 
 #endif
