@@ -126,6 +126,7 @@ pid_t getpid();
 #include "nma_Keithley2400_ui.h"  // VI Curve generator - Keithley 2400
 #include "ohmmeter.h"   /* French ohmmeter */
 #include "nmui_SEM.h" // EDAX SEM
+#include "guardedscan.h"
 #include "Timer.h"
 #include "microscopeHandlers.h"
 #include "CollaborationManager.h"
@@ -329,8 +330,6 @@ static void handle_viz_max_change(vrpn_float64 , void *);
 static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
-static void handle_viz_tex_new(const char *, void *);
-static void handle_viz_tex(const char *, void *);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -755,7 +754,6 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 //-----------------------------------------------------------------
 /// These variables are for controlling visualizations
-//Probably should make all of these TclNet's
 Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
 Tclvar_float	viz_max_limit("viz_max_limit",1);
 Tclvar_float	viz_min_limit("viz_min_limit",0);
@@ -763,14 +761,8 @@ Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
 Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
 Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
 
+//Probably should make all of these TclNet's
 TclNet_float    viztex_scale ("viztex_scale", 500);
-
-//This should probably be generalized to just a method for
-//loading textures and anything that wants one can use it, but
-//this will do for now
-Tclvar_list_of_strings viz_tex_files("viz_tex_files");
-Tclvar_string viz_tex_new("viz_tex_new", "", handle_viz_tex_new);
-Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -1086,6 +1078,9 @@ vrpn_MousePhantom * mousePhantomServer = NULL;
 
 /// Phantom force device, used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
+
+/// Guarded scan object
+CGuardedScan* guardedScan = NULL;
 
 /// remote button for PHANToM
 vrpn_Button_Remote *phantButton = NULL;
@@ -4077,7 +4072,6 @@ static void handle_analyze_shape(vrpn_int32, void *)
 static void handle_viz_change(vrpn_int32, void *)
 {
 	graphics->chooseVisualization(viz_choice);
-    graphics->causeGridRebuild();
 }
 
 static void handle_viz_min_change(vrpn_float64, void *)
@@ -4118,17 +4112,10 @@ static void handle_viz_dataset_change(const char *, void *)
   graphics->causeGridRedraw();
 }
 
-static void handle_viz_tex_new(const char *, void *) {
-    viz_tex_files.addEntry(viz_tex_new.string());
-}
-
-static void handle_viz_tex(const char *, void *) {
-    graphics->loadVizImage(viz_tex.string());
-}
-
 static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setViztexScale(viztex_scale);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 // This is an ImageMode handler. Makes sure the next time we enter
@@ -6328,6 +6315,10 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
       return -1;
     }
 
+    if (graphics) {
+      // First time through graphics will be NULL. 
+      graphics->changeDataset(new_dataset);
+    }
 
     if (new_microscope->ReadMode() == READ_FILE)
       guessAdhesionNames(new_dataset);
@@ -6400,30 +6391,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     resetMeasureLines(new_dataset, decoration);
     decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
                             height_plane);
-
-    if (graphics) {
-      //Make sure the current visualization choice is 
-      //0, which corresponds to normal opaque mode
-      //I wanted to be able to set the value here and
-      //have it be reflected in TCL but not trigger
-      //a callback, and this seems to be the only
-      //way to do that...
-      viz_choice.d_ignoreChange = VRPN_TRUE;
-      viz_min.d_ignoreChange = VRPN_TRUE;
-      viz_max.d_ignoreChange = VRPN_TRUE;
-      viz_min_limit.d_ignoreChange = VRPN_TRUE;
-      viz_max_limit.d_ignoreChange = VRPN_TRUE;
-
-      viz_choice = 0;
-      viz_min = 0;
-      viz_max = 1;
-      viz_min_limit = 0;
-      viz_max_limit = 1;
-      graphics->chooseVisualization(viz_choice);
-
-      // First time through graphics will be NULL. 
-      graphics->changeDataset(new_dataset);
-    }
 
     VERBOSE(1, "Before SPM initialization");
     if (new_microscope->Initialize()) {
@@ -6799,10 +6766,7 @@ int main (int argc, char* argv[])
       graphics->loadRulergridImage(rulerPPMName);
     }
 
-    //Did the user want to load an initial texture for use with
-    //visualizations?
     if (vizPPMName) {        
-        viz_tex_files.addEntry(vizPPMName);
         graphics->loadVizImage(vizPPMName);
     }
 
@@ -6915,180 +6879,184 @@ int main (int argc, char* argv[])
     VERBOSE(1, "done initialising the control panels\n");
     init_Tk_variables ();
   }
-
-    // Load the names of usable color maps
-    VERBOSE(1, "Loading color maps");
-    loadColorMapNames(colorMapDir);
-
-    VERBOSE(1, "Before french ohmmeter initialization");
-    if ( tkenable ) {
-      // create the ohmmeter control panel
-      // Specification of ohmmeter device: first look at command line arg
-      // and then check environment variable
-      if (strcmp(istate.ohm.deviceName, "null") == 0){
-        char *ohm_device = getenv("OHMMETER");
-      	if (ohm_device != NULL){
-          strcpy(istate.ohm.deviceName, ohm_device);
-        }
+  
+  VERBOSE(1,"Before guarded scan initialization");
+  if(tkenable) {
+    guardedScan = new CGuardedScan;
+  }
+  
+  // Load the names of usable color maps
+  VERBOSE(1, "Loading color maps");
+  loadColorMapNames(colorMapDir);
+  
+  VERBOSE(1, "Before french ohmmeter initialization");
+  if ( tkenable ) {
+    // create the ohmmeter control panel
+    // Specification of ohmmeter device: first look at command line arg
+    // and then check environment variable
+    if (strcmp(istate.ohm.deviceName, "null") == 0){
+      char *ohm_device = getenv("OHMMETER");
+      if (ohm_device != NULL){
+	strcpy(istate.ohm.deviceName, ohm_device);
       }
-      if (strcmp(istate.ohm.deviceName, "null") != 0) {
-        printf("main: attempting to connect to ohmmeter: %s\n",
-                istate.ohm.deviceName);
-        ohmmeter_connection = vrpn_get_connection_by_name
-	  (istate.ohm.deviceName,
-	   istate.ohm.writingLogFile ? istate.ohm.outputLogName
-	   : (char *) NULL,
-	   NULL);
-        if (!ohmmeter_connection) {
-	  display_error_dialog( "Couldn't open connection to %s.\n",
-		  istate.ohm.deviceName);
-	  //exit(0);
-        } else {
-	  // Decide whether reading vrpn log file or a real device
-	  ohmmeterLogFile = ohmmeter_connection->get_File_Connection();
-	  if (ohmmeterLogFile){
-	    istate.ohm.readingLogFile = 1;
-	    // But the file name is hidden inside istate.ohm.deviceName and
-	    // only vrpn_Connection knows how to parse this
-	  } else {
-	    // If we are reading a microscope stream file, we DONT want 
-	    // to connect to a live ohmmeter - kill connection in this case.
-	    if (istate.afm.readingStreamFile == VRPN_TRUE) {
-	      ohmmeter_connection = NULL;
-	    }
-	  }
-
-	  // We have problems if the ohmmeter is not connected initially.
-	  if ((ohmmeter_connection != NULL) &&(ohmmeter_connection->connected())) {
-	      ohmmeter = new vrpn_Ohmmeter_Remote(istate.ohm.deviceName, 
-					ohmmeter_connection);
-	  } else {
-	      ohmmeter_connection = NULL;
-	      ohmmeter = NULL;
+    }
+    if (strcmp(istate.ohm.deviceName, "null") != 0) {
+      printf("main: attempting to connect to ohmmeter: %s\n",
+	     istate.ohm.deviceName);
+      ohmmeter_connection = vrpn_get_connection_by_name
+	(istate.ohm.deviceName,
+	 istate.ohm.writingLogFile ? istate.ohm.outputLogName
+	 : (char *) NULL,
+	 NULL);
+      if (!ohmmeter_connection) {
+	display_error_dialog( "Couldn't open connection to %s.\n",
+			      istate.ohm.deviceName);
+	//exit(0);
+      } else {
+	// Decide whether reading vrpn log file or a real device
+	ohmmeterLogFile = ohmmeter_connection->get_File_Connection();
+	if (ohmmeterLogFile){
+	  istate.ohm.readingLogFile = 1;
+	  // But the file name is hidden inside istate.ohm.deviceName and
+	  // only vrpn_Connection knows how to parse this
+	} else {
+	  // If we are reading a microscope stream file, we DONT want 
+	  // to connect to a live ohmmeter - kill connection in this case.
+	  if (istate.afm.readingStreamFile == VRPN_TRUE) {
+	    ohmmeter_connection = NULL;
 	  }
 	}
-      } // end if (strcmp(istate.ohm.deviceName, "null") != 0)
-      else {
-	ohmmeter = NULL;
+	
+	// We have problems if the ohmmeter is not connected initially.
+	if ((ohmmeter_connection != NULL) &&(ohmmeter_connection->connected())) {
+	  ohmmeter = new vrpn_Ohmmeter_Remote(istate.ohm.deviceName, 
+					      ohmmeter_connection);
+	} else {
+	  ohmmeter_connection = NULL;
+	  ohmmeter = NULL;
+	}
       }
-      if (ohmmeter != NULL) {
-	the_french_ohmmeter_ui = new Ohmmeter (get_the_interpreter(),
+    } // end if (strcmp(istate.ohm.deviceName, "null") != 0)
+    else {
+      ohmmeter = NULL;
+    }
+    if (ohmmeter != NULL) {
+      the_french_ohmmeter_ui = new Ohmmeter (get_the_interpreter(),
                                              tcl_script_dir, ohmmeter);
-        the_french_ohmmeter_ui->setMicroscope(microscope);
+      the_french_ohmmeter_ui->setMicroscope(microscope);
+    }
+  }
+  
+  VERBOSE(1, "Before Keithley 2400/VI Curve initialization");
+  if ( tkenable ) {
+    // Specification of vi_curve device: first look at command line arg
+    // and then check environment variable
+    if (strcmp(istate.vicurve.deviceName, "null") == 0){
+      char *vicurve_device = getenv("NM_VICRVE");
+      if (vicurve_device != NULL) 
+	strcpy(istate.vicurve.deviceName, vicurve_device);
+    }
+    // Make a connection
+    if (strcmp(istate.vicurve.deviceName, "null") != 0) {
+      printf("main: attempting to connect to vicurve: %s\n",
+	     istate.vicurve.deviceName);
+      vicurve_connection = vrpn_get_connection_by_name
+	(istate.vicurve.deviceName,
+	 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+	 : (char *) NULL,
+	 NULL);
+      if (!vicurve_connection) {
+	display_error_dialog( "Couldn't open connection to %s.\n",
+			      istate.vicurve.deviceName);
+	//exit(0);
+      } else {
+	// Decide whether reading vrpn log file or a real device
+	vicurveLogFile = vicurve_connection->get_File_Connection();
+	if (vicurveLogFile){
+	  istate.vicurve.readingLogFile = 1;
+	  // But the file name is hidden inside istate.vicurve.deviceName and
+	  // only vrpn_Connection knows how to parse this
+	} else {
+	  // If we are reading a microscope stream file, we DONT want 
+	  // to connect to a live device - kill connection in this case.
+	  if (istate.afm.readingStreamFile == VRPN_TRUE) {
+	    vicurve_connection = NULL;
+	  }
+	}
+	if (vicurve_connection != NULL) {
+	  // If we got to here, we have a connection to vi_curve -
+	  // create the beast.
+	  keithley2400_ui = new nma_Keithley2400_ui(get_the_interpreter(), 
+						    tcl_script_dir, 
+						    "vi_curve@dummyname.com", 
+						    vicurve_connection);
+	  // Allow the Keithley to take IV curves when we are doing a
+	  // modification - start when we enter modify mode, and stop
+	  // when we start imaging again.
+	  microscope->registerModifyModeHandler(
+						nma_Keithley2400_ui::EnterModifyMode, 
+						keithley2400_ui);
+	  microscope->registerImageModeHandler(
+					       nma_Keithley2400_ui::EnterImageMode, 
+					       keithley2400_ui);
+	} else {
+	  keithley2400_ui = NULL;
+	}
       }
     }
-
-    VERBOSE(1, "Before Keithley 2400/VI Curve initialization");
-    if ( tkenable ) {
-	// Specification of vi_curve device: first look at command line arg
-	// and then check environment variable
-	if (strcmp(istate.vicurve.deviceName, "null") == 0){
-	    char *vicurve_device = getenv("NM_VICRVE");
-	    if (vicurve_device != NULL) 
-		strcpy(istate.vicurve.deviceName, vicurve_device);
-	}
-	// Make a connection
-	if (strcmp(istate.vicurve.deviceName, "null") != 0) {
-	    printf("main: attempting to connect to vicurve: %s\n",
-		   istate.vicurve.deviceName);
-	    vicurve_connection = vrpn_get_connection_by_name
-		(istate.vicurve.deviceName,
-		 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-		 : (char *) NULL,
-		 NULL);
-	    if (!vicurve_connection) {
-		display_error_dialog( "Couldn't open connection to %s.\n",
-			istate.vicurve.deviceName);
-		//exit(0);
-	    } else {
-	      // Decide whether reading vrpn log file or a real device
-	      vicurveLogFile = vicurve_connection->get_File_Connection();
-	      if (vicurveLogFile){
-		istate.vicurve.readingLogFile = 1;
-		// But the file name is hidden inside istate.vicurve.deviceName and
-		// only vrpn_Connection knows how to parse this
-	      } else {
-		// If we are reading a microscope stream file, we DONT want 
-		// to connect to a live device - kill connection in this case.
-		if (istate.afm.readingStreamFile == VRPN_TRUE) {
-		  vicurve_connection = NULL;
-		}
-	      }
-	      if (vicurve_connection != NULL) {
-		// If we got to here, we have a connection to vi_curve -
-		// create the beast.
-		keithley2400_ui = new nma_Keithley2400_ui(get_the_interpreter(), 
-						      tcl_script_dir, 
-						      "vi_curve@dummyname.com", 
-						      vicurve_connection);
-		// Allow the Keithley to take IV curves when we are doing a
-		// modification - start when we enter modify mode, and stop
-		// when we start imaging again.
-		microscope->registerModifyModeHandler(
-			  nma_Keithley2400_ui::EnterModifyMode, 
-			  keithley2400_ui);
-		microscope->registerImageModeHandler(
-			 nma_Keithley2400_ui::EnterImageMode, 
-			 keithley2400_ui);
-	      } else {
-		keithley2400_ui = NULL;
-	      }
-	    }
-	}
+  }
+  
+  
+  VERBOSE(1, "Before SEM initialization");
+  if ( tkenable ) {
+    // Specification of sem device: first look at command line arg
+    // and then check environment variable
+    if (strcmp(istate.sem.deviceName, "null") == 0){
+      char *sem_device = getenv("NM_SEM");
+      if (sem_device != NULL)
+	strcpy(istate.sem.deviceName, sem_device);
     }
-
-
-    VERBOSE(1, "Before SEM initialization");
-    if ( tkenable ) {
-        // Specification of sem device: first look at command line arg
-        // and then check environment variable
-        if (strcmp(istate.sem.deviceName, "null") == 0){
-            char *sem_device = getenv("NM_SEM");
-            if (sem_device != NULL)
-                strcpy(istate.sem.deviceName, sem_device);
-        }
-        // Make a connection
-        if (strcmp(istate.sem.deviceName, "null") != 0) {
-            printf("main: attempting to connect to sem: %s\n",
-                   istate.sem.deviceName);
-            sem_connection = vrpn_get_connection_by_name
+    // Make a connection
+    if (strcmp(istate.sem.deviceName, "null") != 0) {
+      printf("main: attempting to connect to sem: %s\n",
+	     istate.sem.deviceName);
+      sem_connection = vrpn_get_connection_by_name
                 (istate.sem.deviceName,
                  istate.sem.writingLogFile ? istate.sem.outputLogName
                  : (char *) NULL,
                  NULL);
-            if (!sem_connection) {
-                display_error_dialog( "Couldn't open connection to %s.\n",
-                        istate.sem.deviceName);
-                //exit(0);
-            } else {
-              // Decide whether reading vrpn log file or a real device
-              fprintf(stderr, "Got connection\n");
-              semLogFile = sem_connection->get_File_Connection();
-              if (semLogFile){
-                istate.sem.readingLogFile = 1;
-                // But the file name is hidden inside istate.sem.deviceName and
-                // only vrpn_Connection knows how to parse this
-              }
-              // If we got to here, we have a connection to sem -
-              // create the beast.
-              sem_ui = new nms_SEM_ui(get_the_interpreter(),
-                                                      tcl_script_dir,
-                                                      "SEM@dummyname.com",
-                                                      sem_connection);
-            }
-        }
+      if (!sem_connection) {
+	display_error_dialog( "Couldn't open connection to %s.\n",
+			      istate.sem.deviceName);
+	//exit(0);
+      } else {
+	// Decide whether reading vrpn log file or a real device
+	fprintf(stderr, "Got connection\n");
+	semLogFile = sem_connection->get_File_Connection();
+	if (semLogFile){
+	  istate.sem.readingLogFile = 1;
+	  // But the file name is hidden inside istate.sem.deviceName and
+	  // only vrpn_Connection knows how to parse this
+	}
+	// If we got to here, we have a connection to sem -
+	// create the beast.
+	sem_ui = new nms_SEM_ui(get_the_interpreter(),
+				tcl_script_dir,
+				"SEM@dummyname.com",
+				sem_connection);
+      }
     }
-
-    // Set the startup replay rate on all devices, AFM, ohmmeter, vi_curve.
-    // decoration->rateOfTime should be set correctly from the command line.
-    handle_replay_rate_change (decoration->rateOfTime, NULL);
-
-
-  #ifdef NANO_WITH_ROBOT
-    robotControl = new RobotControl(microscope, dataset);
-    robotControl->show();
-  #endif
-
+  }
+  
+  // Set the startup replay rate on all devices, AFM, ohmmeter, vi_curve.
+  // decoration->rateOfTime should be set correctly from the command line.
+  handle_replay_rate_change (decoration->rateOfTime, NULL);
+  
+#ifdef NANO_WITH_ROBOT
+  robotControl = new RobotControl(microscope, dataset);
+  robotControl->show();
+#endif
+  
 #ifndef NO_RAW_TERM
   /* open raw terminal with echo if keyboard isn't off  */
   if (do_keybd == 1){
@@ -7097,7 +7065,7 @@ int main (int argc, char* argv[])
       display_error_dialog( "open_raw_term(): error opening terminal.\n");
   }
 #endif
-
+  
   //Prepare signal handler for ^C,so we save the stream file and exit cleanly
   VERBOSE(1,"Setting ^C Handle");
 
@@ -7377,6 +7345,15 @@ VERBOSE(1, "Entering main loop");
                      //(decoration->trueTipLocation);
       }
 
+      if(guardedScan) {
+	if(guardedScan->IsModeActive()) {
+	  // Performs a series of DirectZSteps, splatting the data to the current BCGrid.
+	  // (It will return after 30 steps)
+	  guardedScan->mainloop();
+	}
+      }
+
+
       /* good place to update displays, minimize latency from trackers */
 
       VERBOSE(4,"  Updating displays");
@@ -7619,6 +7596,11 @@ VERBOSE(1, "Entering main loop");
     if (forceDevice) {
 	delete forceDevice;
 	forceDevice = NULL;
+    }
+    
+    if(guardedScan) {
+      delete guardedScan;
+      guardedScan = NULL;
     }
 #ifndef NO_PHANTOM_SERVER
     if (phantServer) {
