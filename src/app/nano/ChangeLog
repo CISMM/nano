@@ -1,5 +1,11 @@
 2002-05-28 David Borland <borland@cs.unc.edu>
 
+        * interaction.C (doWorldGrab) : preliminary code for controlling
+	projective texture transformations with the phantom.  Still needs 
+	some work.
+
+2002-05-28 David Borland <borland@cs.unc.edu>
+
         * import.C : a couple of the new tcl widgets weren't getting updated
         when switching between objects.  Fixed this.
 

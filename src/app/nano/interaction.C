@@ -3884,6 +3884,7 @@ doWorldGrab(int whichUser, int userEvent)
     v_xform_type            roomFromHand, roomFromSensor, handFromRoom;
     static v_xform_type     oldWorldFromHand;
 	static v_xform_type		oldObject;
+	static qogl_matrix_type	oldTextureMatrix;
 
 	// for updating the object's tcl variables when rotating and translating
 	extern Tclvar_float import_transx;
@@ -3921,7 +3922,9 @@ doWorldGrab(int whichUser, int userEvent)
 			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
 			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
 		}
+	glGetDoublev(GL_TEXTURE_MATRIX, oldTextureMatrix);
 	}
+
 	break;
 
     case HOLD_EVENT:
@@ -3944,7 +3947,8 @@ doWorldGrab(int whichUser, int userEvent)
 	node = World.TGetNodeByName(*World.current_object);
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
-		if (obj.GetGrabObject() == 1) {
+//		if (obj.GetGrabObject() == 1) {
+		if (0) {
 			q_type q;
 			q_vec_type v;
 
@@ -4013,6 +4017,50 @@ doWorldGrab(int whichUser, int userEvent)
 			import_rotx = Q_RAD_TO_DEG(v[2]);
 			import_roty = Q_RAD_TO_DEG(v[1]);
 			import_rotz = Q_RAD_TO_DEG(v[0]);
+		}
+		else if (obj.GetGrabObject() == 1) {
+			q_type q;
+			q_vec_type v;
+			qogl_matrix_type mat;
+			// Transform Projective Texture
+
+/*
+glGetDoublev(GL_TEXTURE_MATRIX, mat);
+printf("current texture matrix\n");
+qogl_print_matrix(mat);
+printf("\n");
+*/
+			glMatrixMode(GL_TEXTURE);
+
+			// get translation
+			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
+			q_vec_scale(v, -0.001, v);	// this is just a hack for now...
+
+			// get rotation
+			q_invert(q, oldWorldFromHand.rotate);
+			q_mult(q, worldFromHand.rotate, q);
+			q_to_ogl_matrix(mat, q);
+
+			
+
+/*
+printf("v[0] = %f\n", v[0]);
+printf("v[1] = %f\n", v[1]);
+*/
+
+			// load old texture matrix, rotate, and translate
+			glLoadMatrixd(oldTextureMatrix);
+			glTranslated(v[0], v[1], 0);
+			glMultMatrixd(mat);
+
+
+
+/*
+glGetDoublev(GL_TEXTURE_MATRIX, mat);
+printf("new texture matrix\n");
+qogl_print_matrix(mat);
+printf("\n");
+*/
 		}
 		else {
 			updateWorldFromRoom(&temp);
