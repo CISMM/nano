@@ -72,6 +72,9 @@
 // from nmm_Microscope.h
 #define FC_MAX_HALFCYCLES (100)
 
+// I feel bad, but we need to know if there is an ohmmeter
+class vrpn_Ohmmeter_Remote;
+extern vrpn_Ohmmeter_Remote *ohmmeter;
 
 // Microscope
 //
@@ -3830,9 +3833,9 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
     return;
   }
 
-  if (spm_verbosity >= 1)
+  if (spm_verbosity >= 1) {
     state.data.inputPoint->print("  Result:");
-
+  }
   // Look up the value that corresponds to what is
   // mapped to the heightGrid, if we are getting that
   // data set.  This will make what we feel match what
@@ -3879,30 +3882,32 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
                      state.data.inputPoint->y(),
                      0.0f, z_value, VRPN_TRUE);
   }
-  if (state.modify.style != FORCECURVE)	{// XXX HACK - we need point results
-     // HACK - to get ohmmeter data in point results
-     char *res_channel_name = "Resistance";
-     char *res_channel_unit = "Ohms";
-     if (!d_res_channel_added) {
-        state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
-        d_res_channel_added = vrpn_TRUE;
-     }
-     Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
-     if (!pv) {
-       fprintf(stderr, "nmm_Microscope_Remote::RcvResultData: "
-	       "Unable to get ohmmeter channel\n");
-     } else {
-       pv->setValue(lastResistanceReceived);
-     }
-     // END HACK
-
+  if (state.modify.style != FORCECURVE)	{
+      // XXX HACK - we need point results
+      if (ohmmeter !=NULL) {
+          // HACK - to get ohmmeter data in point results
+          char *res_channel_name = "Resistance";
+          char *res_channel_unit = "Ohms";
+          if (!d_res_channel_added) {
+              state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
+              d_res_channel_added = vrpn_TRUE;
+          }
+          Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
+          if (!pv) {
+              fprintf(stderr, "nmm_Microscope_Remote::RcvResultData: "
+                      "Unable to get ohmmeter channel\n");
+          } else {
+              pv->setValue(lastResistanceReceived);
+          }
+          // END HACK
+      }
      
      doPointDataCallbacks(state.data.inputPoint); // to feel what we are
-							// doing but we don't
-							// want to store them
-							// in a modfile because
-							// its being used to
-							// store the force curve
+						// doing but we don't
+						// want to store them
+						// in a modfile because
+						// its being used to
+						// store the force curve
      
   }
   // latency compensation

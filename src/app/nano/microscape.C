@@ -5841,6 +5841,8 @@ int initialize_environment() {
     // Check for NANO_ROOT env var. If other things aren't set, 
     // they can be set relative to NANO_ROOT by default. 
     char * nano_root = getenv("NANO_ROOT");
+    tcl_script_dir=getenv("NM_TCL_DIR");
+    colorMapDir=getenv("NM_COLORMAP_DIR");
     if (nano_root) {
         char *env_string = new char [strlen(nano_root) + 50];
 #if defined (_WIN32) && !defined (__CYGWIN__)
@@ -5849,16 +5851,17 @@ int initialize_environment() {
             _putenv(env_string);
         }
 #endif
-        if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
+        if ( tcl_script_dir == NULL) {
             sprintf(env_string, "%s/share/tcl/", nano_root);
             tcl_script_dir = new char [strlen(env_string) + 1];
             strcpy(tcl_script_dir, env_string);
         }
-	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
+	if ( colorMapDir == NULL) {
             sprintf(env_string, "%s/share/colormaps", nano_root);
             colorMapDir = new char [strlen(env_string) + 1];
             strcpy(colorMapDir, env_string);
 	}
+        delete [] env_string;
     }
 
     // If these didn't get set up, use defaults. 

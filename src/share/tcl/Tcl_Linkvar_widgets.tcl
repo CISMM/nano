@@ -360,9 +360,19 @@ proc updateEntry {entry var name element op} {
     upvar #0 $entry.textbg mybg
     upvar #0 $var varval 
 #    puts "updateEntry $var $varval"
-      $entry delete 0 end 
-      $entry insert 0 $varval 
+
+    # the entry text won't change unless it is in "normal" state. 
+    set was_disabled 0
+    if { [$entry cget -state] == "disabled" } {
+        set was_disabled 1
+        $entry configure -state normal
+    }
+    $entry delete 0 end 
+    $entry insert 0 $varval 
     $entry configure -textbackground $mybg
+    if { $was_disabled } {
+        $entry configure -state disabled
+    }
 }
 
 # Called when the user hits "enter" in the entry widget
@@ -759,9 +769,18 @@ proc updateRadiobox {boxname var name element op} {
     # Make sure new value of variable is inside legal limits for 
     # the radiobox.
     if { ($varval >= 0) && ($varval <= [$boxname index end]) } {
+        # The radiobox won't change unless its state is "normal"
+        set was_disabled 0
+        if { [lindex [$boxname buttonconfigure $varval -state] end] == "disabled" } {
+            set was_disabled 1
+            $boxname buttonconfigure $varval -state normal
+        }
 	$boxname select $varval
+        if { $was_disabled } {
+            $boxname buttonconfigure $varval -state disabled
+        }
     } else {
-	# Illegal value !
+	#puts " Illegal value ! $var $varval [$boxname get]"
 	# Return to whatever value the radiobox used to have.
 	set varval [$boxname get]
     }

@@ -560,6 +560,10 @@ if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
 proc diable_widgets_for_commands_suspended { name el op } {
     global device_only_controls  
     global spm_commands_suspended
+    global spm_read_mode READ_DEVICE
+
+    # Don't do anything if we aren't talking to a device
+    if { $spm_read_mode != $READ_DEVICE } { return; }
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 

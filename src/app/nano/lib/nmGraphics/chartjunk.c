@@ -407,7 +407,7 @@ int mode_display (void *) {
       * removed from the code. When I commented out "comb mode", 
       * I got a seg-fault, even though the code was supposed to safely 
       * bypass this unused mode. */
-  case USER_LIGHT_MODE:       message = (char *)"Light Mode";          break;
+  case USER_LIGHT_MODE:       message = (char *)"Position Light Mode"; break;
   case USER_FLY_MODE:         message = (char *)"Fly Mode";            break;
   case USER_MEASURE_MODE:     message = (char *)"Measure Mode";        break;
      //case USER_PULSE_MODE:       message = (char *)"Pulse Mode";          break;
@@ -415,7 +415,7 @@ int mode_display (void *) {
      //case USER_SWEEP_MODE:       message = (char *)"Sweep Mode";          break;
      //case USER_BLUNT_TIP_MODE:   message = (char *)"Blunt Tip Mode";      break;
      //case USER_COMB_MODE:        message = (char *)"Comb Mode";           break;
-  case USER_PLANE_MODE:       message = (char *)"Touch Grid Mode"; break;
+  case USER_PLANE_MODE:       message = (char *)"Touch Stored Mode"; break;
   case USER_PLANEL_MODE:      message = (char *)"Touch & Prepare to Modify Mode"; break;
   case USER_SCALE_UP_MODE:    message = (char *)"Scale Up Mode";       break;
   case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Down Mode";     break;
