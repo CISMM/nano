@@ -42,6 +42,7 @@
 #include <quat.h>
 
 #include <vrpn_RedundantTransmission.h>
+#include <vrpn_ForceDevice.h>
 
 #include <BCPlane.h>
 #include <nmb_Dataset.h>
@@ -77,7 +78,6 @@
 #include "interaction.h"
 #include "minit.h"  // for reset_phantom()
 
-#include "vrpn_ForceDevice.h"
 
 /***************************
  * Local Defines
@@ -588,7 +588,7 @@ val, (float) feel_redundantInterval);
 }
 
 // static
-void handle_redundantInterval_change (vrpn_float64 val, void *) {
+void handle_redundantInterval_change (vrpn_float64, void *) {
 
 // Input value is always 0???
 
@@ -3146,11 +3146,11 @@ doRegion(int whichUser, int userEvent)
     q_matrix_type	hand_mat;
     q_vec_type          angles;
     float	        handx,handy, hand_angle;
-    float new_region_center_x = region_center_x;
-    float new_region_center_y = region_center_y;
-    float new_region_width = region_width;
-    float new_region_height = region_height;
-    float new_region_angle = region_angle;
+    //float new_region_center_x = region_center_x;
+    //float new_region_center_y = region_center_y;
+    //float new_region_width = region_width;
+    //float new_region_height = region_height;
+    //float new_region_angle = region_angle;
 
     BCPlane* plane = dataset->inputGrid->getPlaneByName
         (dataset->heightPlaneName->string());

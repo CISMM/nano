@@ -37,12 +37,12 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #include <vrpn_Text.h>
 #endif
+#include <vrpn_MousePhantom.h>
 
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
 
-#include "vrpn_MousePhantom.h"
 
 // ############ getpid hack
 #if defined (__CYGWIN__) 
@@ -344,6 +344,13 @@ static void handle_guardedscan_planeacquire(vrpn_int32, void* a_pObject);
 static void handle_guardedscan_guarddepth(vrpn_float64, void* a_pObject);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
+ 
+#if 0
+// TCH Dissertation
+static void handle_toggle_phantom_recording (vrpn_int32, void *);
+static void handle_phantom_playback_once (vrpn_int32, void *);
+static void handle_toggle_phantom_playback (vrpn_int32, void *);
+#endif
 
 // Error recovery
 static void openDefaultMicroscope();
@@ -1047,10 +1054,9 @@ float MIN_K = 0.2f;
 
 int stride;       // used in VRML.C and nowhere else!
 
-// used in minit.c;  we probably could/ought to pass these
-char * bdboxName;
-char * headTrackerName;
-char * handTrackerName;	// = phantom server name
+static char * bdboxName;
+static char * headTrackerName;
+static char * handTrackerName;	// = phantom server name
 
 //----------------------------------------------------------------------
 // file-scoped globals
@@ -1068,6 +1074,23 @@ static int tkenable = 1;           ///< Default is to use Tk control panels
 static int drawOnlyOnCenter=0;	///< Only draw a frame when the user centers?
 
 static int ttyFD;			///< File desc for TTY device 
+
+#if 0
+// TCH Dissertation
+// May 2001
+// Record & playback short Phantom segments from inside nano
+
+Tclvar_string phantom_record_name ("phantom_record_name", "");
+Tclvar_string phantom_replay_name ("phantom_replay_name", "");
+Tclvar_int phantom_record_now ("phantom_record_now", 0,
+                               handle_toggle_phantom_recording);
+Tclvar_int phantom_replay_now ("phantom_replay_now", 0,
+                               handle_phantom_playback_once);
+Tclvar_int phantom_replay_many ("phantom_replay_many", 0,
+                               handle_toggle_phantom_playback);
+static int phantomReplayRepeat = 0;
+#endif
+
 
 /***********
  * globals for drawing the graph
@@ -1277,7 +1300,19 @@ struct MicroscapeInitializationState {
   char colormap [256];
   char heightplane [256];
 
-  bool index_mode;
+  vrpn_bool index_mode;
+
+  // TCH Dissertation May 2001
+  // Turn on latency adaptations from the command line
+
+  vrpn_bool laUseUDP;
+  vrpn_bool laUseQM;
+  int laQMT;
+  int laQMD;
+  vrpn_bool laUseWPA;
+  vrpn_bool laUseFA;
+  int laFaN;
+  int laFaD;
 
 };
 
@@ -1309,7 +1344,16 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   phantomRate (60.0),  // standard default
   tesselation (1),
   packetlimit (0),
-  timeGraphics (vrpn_FALSE)
+  timeGraphics (vrpn_FALSE),
+  index_mode (VRPN_FALSE),
+  laUseUDP (vrpn_FALSE),
+  laUseQM (vrpn_FALSE),
+  laQMT (0),
+  laQMD (0),
+  laUseWPA (vrpn_FALSE),
+  laUseFA (vrpn_FALSE),
+  laFaN (0),
+  laFaD (0)
 {
   graphicsHost[0] = '\0';
   SPMhost[0] = '\0';
@@ -1323,8 +1367,6 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   colormap[0] = '\0';
   heightplane[0] = '\0';
   magellanName[0]= '\0';
-  
-  index_mode = false;
 }
 
 /*********
@@ -2058,7 +2100,9 @@ static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
 /// collaborator) so change the position onscreen.
 static void handle_collab_measure_change (nmb_Dataset * data,
                                           int whichLine) {
-    fprintf(stderr,"HANDLE_COLLAB_MEASURE_CHANGE\n");
+
+//fprintf(stderr,"HANDLE_COLLAB_MEASURE_CHANGE\n");
+
     // Ignore some changes caused by tcl variables. 
     if (ignoreCollabMeasureChange) return;
 
@@ -2262,6 +2306,8 @@ static void handle_synchronize_timed_change (vrpn_int32 value,
 
     default:
 
+      // Set our private replica without transmitting anything
+      // over the network.
       local_time_sync(NULL);
 
       // use shared state (#1)
@@ -3448,7 +3494,13 @@ static void handle_flatPlaneName_change(const char *, void *)
       return;
     }
   
-  newFlatPlaneName = (const char *) "";  
+  // Add the plane into the list of available ones.
+  // Here we DONT just use newFlatPlaneName, because 
+  // computeFlattenedPlane will change the name,
+  // to add "from hostname"
+  dataset->inputPlaneNames->addEntry(flatPlane->getName()->Characters());
+  newFlatPlaneName = (const char *) "";
+  
 } // end handle_flatPlaneName_change
 
 
@@ -4602,7 +4654,6 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
   if (!d || !m) return;
 
-
   ((Tclvar_string *) d->heightPlaneName)->
         initializeTcl("z_comes_from");
   ((Tclvar_string *) d->heightPlaneName)->addCallback
@@ -5102,6 +5153,136 @@ fprintf(stderr, "Saving report of queue to %s.\n", nbuf);
 }
 
 
+#if 0
+// TCH Dissertation
+// May 2001
+// Set up and tear down Phantom connections dynamically so we can record
+// and replay streamfiles
+
+// This doesn't work;  after tearing down the connection the Phantom
+// doesn't come back correctly when we set the new internal_device_connection
+// up, and then the Tcl stack gets corrupted somehow.
+
+void doSetupPhantomConnection
+                    (vrpn_bool logPhantom,
+                     const char * handTrackerName,
+                     const char * phantomLogPath = NULL,
+                     timeval * logTimestamp = NULL);
+void doTeardownPhantomConnection (void);
+
+
+// static
+void handle_toggle_phantom_recording (vrpn_int32 on, void *) {
+  vrpn_bool logPhantom;
+  timeval now;
+
+  // Tear down the phantom connection, then set it up again in the correct
+  // recording mode.
+
+  doTeardownPhantomConnection();
+  if (on) {
+    logPhantom = strlen(phantom_record_name);
+    gettimeofday(&now, NULL);
+    doSetupPhantomConnection(logPhantom, handTrackerName,
+                             phantom_record_name, &now);
+  } else {
+    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
+  }
+}
+
+// static
+void handle_phantom_playback_once (vrpn_int32, void *) {
+  doTeardownPhantomConnection();
+  doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
+  phantomReplayRepeat = 1;
+}
+
+// static
+void end_phantom_playback_once (void) {
+  doTeardownPhantomConnection();
+  doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
+  phantomReplayRepeat = 0;
+}
+
+// static
+void handle_toggle_phantom_playback (vrpn_int32 on, void *) {
+  doTeardownPhantomConnection();
+  if (on) {
+    doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
+    phantomReplayRepeat = 2;
+  } else {
+    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
+    phantomReplayRepeat = 0;
+  }
+}
+
+void doSetupPhantomConnection
+                    (vrpn_bool logPhantom,
+                     const char * handTrackerName,
+                     const char * phantomLogPath,
+                     timeval * logTimestamp) {
+  vrpn_Connection * c;
+  char phantomlog [256];
+  char * bp;
+
+  // Set up an internal device connection
+  sprintf(phantomlog, "%s/phantom-%d.log", phantomLogPath,
+          logTimestamp ? logTimestamp->tv_sec : 0L);
+
+  // See if it wasn't an internal device;  if so, open that connection
+  // explicitly in case we need to log.
+  bp = strchr(handTrackerName, '@');
+  if (bp) {
+    c = vrpn_get_connection_by_name (handTrackerName,
+                                     logPhantom ? phantomlog : NULL);
+  }
+
+  // If we're logging, and we didn't open it on the remote device, 
+  // we must intend to open it on the internal device connection.
+  internal_device_connection = new vrpn_Synchronized_Connection 
+           (wellKnownPorts->localDevice,
+            logPhantom && !bp ? phantomlog : NULL);
+
+  // BUG nmr_Registration_Proxy cached an internal_device_connection
+  // pointer and will crash if used after this point.
+
+  phantom_init(internal_device_connection, handTrackerName);
+
+  // nmui_HSFeelAhead caches force devices but will pick this change
+  // up on the next loop.
+  // As of May 2001 no other structure appears to cache
+  // a forceDevice pointer.
+}
+
+void doTeardownPhantomConnection (void) {
+  vrpn_Connection * c;
+  char * bp;
+
+  // Tear down the objects
+  teardown_phantom(&mousePhantomServer, &forceDevice, &phantButton,
+                   &vrpnHandTracker);
+
+  // Now tear down the connection
+
+  if (internal_device_connection) {
+    delete internal_device_connection;
+    internal_device_connection = NULL;
+  }
+
+  // BUG nmr_Registration_Proxy cached an internal_device_connection
+  // pointer and will crash if used after this point.
+
+  // See if it wasn't an internal device;  if so, delete that connection.
+  bp = strchr(handTrackerName, '@');
+  if (bp) {
+    c = vrpn_get_connection_by_name(handTrackerName);
+    if (c) {
+      delete c;
+    }
+  }
+}
+#endif
+
 
 void teardownSynchronization(CollaborationManager *cm, 
 			     nmb_Dataset *dset,
@@ -5493,6 +5674,7 @@ void setupSynchronization (CollaborationManager * cm,
     copy_to_shared_state.addCallback
         (handle_copy_to_shared, cm);
 
+  // OBSOLETE COMMENT
   // need to pass rootUIControl to handle_timed_sync_complete
   // so that it sees d_maintain as TRUE!
  
@@ -5665,23 +5847,24 @@ void ParseArgs (int argc, char ** argv,
 	}
 	replay_rate = decoration->rateOfTime;
       } else if ( strcmp( argv[i], "-index" ) == 0 ) {
-	istate->index_mode = true;
+	istate->index_mode = VRPN_TRUE;
       } else if ( strcmp(argv[i],"-Loop_num")==0) {
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
       } else if (!strcmp(argv[i], "-renderserver")) {
-          istate->graphics_mode = RENDER_SERVER;
+        istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
-          if (++i >= argc) Usage(argv[0]);
-          istate->graphics_mode = RENDER_CLIENT;
+        if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = RENDER_CLIENT;
+        strncpy(istate->graphicsHost, argv[i], 256);
       } else if (!strcmp(argv[i], "-trenderserver")) {
-          istate->graphics_mode = TEXTURE_SERVER;
+        istate->graphics_mode = TEXTURE_SERVER;
       } else if (!strcmp(argv[i], "-crenderserver")) {
-          istate->graphics_mode = CLOUD_SERVER;
+        istate->graphics_mode = CLOUD_SERVER;
       } else if (!strcmp(argv[i], "-trenderclient")) {
-          if (++i >= argc) Usage(argv[0]);
-          istate->graphics_mode = TEXTURE_CLIENT;
+        if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = TEXTURE_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
       } else if (!strcmp(argv[i], "-vrenderserver")) {
         istate->graphics_mode = VIDEO_SERVER;
@@ -5979,8 +6162,22 @@ void ParseArgs (int argc, char ** argv,
         istate->UDPport = atoi (argv[i]);
         printf ("UDPport: %d\n", istate->UDPport);
         istate->socketType = SOCKET_UDP;
- 
-
+      } else if (!strcmp(argv[i], "-udp")) {
+        istate->laUseUDP = VRPN_TRUE;
+      } else if (!strcmp(argv[i], "-qm")) {
+        istate->laUseQM = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        istate->laQMT = atoi(argv[i]);
+        if (++i >= argc) Usage(argv[0]);
+        istate->laQMD = atof(argv[i]);
+      } else if (!strcmp(argv[i], "-wpa")) {
+        istate->laUseWPA = VRPN_TRUE;
+      } else if (!strcmp(argv[i], "-fa")) {
+        istate->laUseFA = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        istate->laFaN = atoi(argv[i]);
+        if (++i >= argc) Usage(argv[0]);
+        istate->laFaD = atoi(argv[i]);
       } else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
@@ -6029,6 +6226,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
   fprintf(stderr, "       [-gverbosity n] [-cverbosity n]\n");
   fprintf(stderr, "       [-colorplane name] [-colormap name] [-heightplane name]\n");
+  fprintf(stderr, "       [-udp] [-qm t d] [-wpa] [-fa n d]\n");
   fprintf(stderr, "       \n");
 
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
@@ -6133,29 +6331,10 @@ void Usage(char* s)
   fprintf(stderr, "       -NIC IPaddress:  use network interface with given\n"
                   "       IP address.\n");
   fprintf(stderr, "       -perf: Print performance statistics\n");
-  /*
-  fprintf(stderr, "   OBSOLETE (ignored)\n");
-  fprintf(stderr, "       -call: Use callbacks (default)\n");
-  fprintf(stderr, "       -nocall: Do not use callbacks\n");
-  fprintf(stderr, "       -nodevice: Turn off A/D device\n");
-  fprintf(stderr, "       -nocpanels: Turn off the control panels\n");
-  fprintf(stderr, "       -nomenus: Turn off the menus\n");
-  fprintf(stderr, "       -measure: Put a measure line every dist nm "
-                         "(default 10)\n");
-  fprintf(stderr, "       -move: max tip move of dist nm per ms (def 100)\n");
-  fprintf(stderr, "       -dir: direction user facing (deg from north) \n");
-  fprintf(stderr, "       -std: Take num samples at rate per point\n");
-  fprintf(stderr, "             Multiply std_dev by scale to get [0,1]\n");
-  fprintf(stderr, "       -sub: Scan a square numXnum around mods (def 24)\n");
-  fprintf(stderr, "       -showcps: Start the control panels invisible\n");
-  fprintf(stderr, "       -showgrid: Start the measuring grid invisible\n");
-					// mod 03/15/94 mf per SW req.	
-  fprintf(stderr, "       -relax_up_also: Relax when back in image mode\n");
-  fprintf(stderr, "       -notk: to turn off tcl/tk interface\n");
-  fprintf(stderr, "       -ugraphics: Run with ubergraphics\n");
-  fprintf(stderr, "       -x: Use the x window display\n");
-  fprintf(stderr, "       -xc: Use the x window to display the contour map\n");
-  */
+  fprintf(stderr, "       -udp:  UDP for phantom responses\n");
+  fprintf(stderr, "       -qm t d:  queue monitoring (threshold, decay)\n");
+  fprintf(stderr, "       -wpa:  warped plane approximation FFB\n");
+  fprintf(stderr, "       -fa n d:  feelahead FFB, nxn samples d nm apart\n");
   exit(-1);
 }
 
@@ -6611,82 +6790,6 @@ void createGraphics (MicroscapeInitializationState & istate) {
   }// end switch (istate.graphics_mode)
 
 }
-/*
-void createForwarders (MicroscapeInitializationState & istate) {
-
-  if (istate.monitorPort != -1) {
-
-    vrpn_StreamForwarder * monitor;
-    char * sname = NULL;
-
-    sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-    fprintf(stderr, "Opening monitor connection on port %d;  "
-                    "service name is %s.\n", istate.monitorPort, sname);
-
-    monitor_forwarder_connection =
-       new vrpn_Synchronized_Connection (istate.monitorPort);
-
-    monitor = new vrpn_StreamForwarder
-                        (microscope_connection, sname,
-                         monitor_forwarder_connection, sname);
-
-    nmm_Microscope::registerMicroscopeInputMessagesForForwarding(monitor);
-
-    fprintf(stderr, "Blocking until monitor interface connects.\n");
-
-    while (!monitor_forwarder_connection->connected())
-      monitor_forwarder_connection->mainloop();
-
-    if (sname) {
-      delete [] sname;
-      sname = NULL;
-    }
-  }
-  if (istate.collabPort != -1) {
-
-    vrpn_StreamForwarder * collaborator;
-    vrpn_StreamForwarder * collaboratorReverse;
-    char * sname = NULL;
-
-    sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-    fprintf(stderr, "Opening collaborator connection on port %d;  "
-                    "service name is %s.\n", istate.collabPort, sname);
-
-    collab_forwarder_connection =
-        new vrpn_Synchronized_Connection (istate.collabPort);
-
-    // Hook up forwarders BOTH WAYS:
-    //   collaborator sends data to a collaborator (just like monitor).
-    //   collaboratorReverse sends commands from the collaborator to
-    //   the microscope controller.
-
-    collaborator = new vrpn_StreamForwarder
-                        (microscope_connection, sname,
-                         collab_forwarder_connection, sname);
-    collaboratorReverse = new vrpn_StreamForwarder
-                        (collab_forwarder_connection, sname,
-                         microscope_connection, sname);
-
-    nmm_Microscope::registerMicroscopeInputMessagesForForwarding
-                        (collaborator);
-    nmm_Microscope::registerMicroscopeOutputMessagesForForwarding
-                        (collaboratorReverse);
-
-    fprintf(stderr, "Blocking until collaborator interface connects.\n");
-
-    while (!collab_forwarder_connection->connected()) {
-      collab_forwarder_connection->mainloop();
-    }
-
-    if (sname) {
-      delete [] sname;
-      sname = NULL;
-    }
-  }
-}
-*/
 
 void initialize_rtt (void) {
 
@@ -7139,7 +7242,7 @@ int main (int argc, char* argv[])
     ParseArgs(argc, argv, &istate);
 
     /* Check set-up for indexing mode */
-    if( istate.index_mode == true )
+    if( istate.index_mode == VRPN_TRUE )
       if( !istate.afm.readingStreamFile )
 	{	
 	  cerr << "Error:  index mode requires a stream file" << endl;
@@ -7274,7 +7377,8 @@ int main (int argc, char* argv[])
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice,
             istate.logPhantom ? phantomlog : NULL);
-    if (peripheral_init(internal_device_connection, istate.magellanName)){
+    if (peripheral_init(internal_device_connection, handTrackerName,
+                        headTrackerName, bdboxName, istate.magellanName)){
         display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
         return(-1);
     } else if (register_vrpn_callbacks()) {
@@ -7630,6 +7734,8 @@ int main (int argc, char* argv[])
   robotControl = new RobotControl(microscope, dataset);
   robotControl->show();
 #endif
+  
+
 
   // did these in createNewMicroscope() but things were NULL then.
   linkMicroscopeToInterface(microscope);
@@ -7698,6 +7804,28 @@ int main (int argc, char* argv[])
     collab_machine_name = istate.peerName;
   }
 
+  // TCH Dissertation May 2001
+  // These things need to be acted on after all objects are created
+  // and all callbacks are registered.
+
+  if (istate.laUseUDP) {
+fprintf(stderr, "Using UDP for tip control.\n");
+    // Turn on UDP by turning on FEC with 0 replicas
+    feel_useRedundant = 1;
+  }
+  if (istate.laUseQM) {
+fprintf(stderr, "Using Queue Monitoring for tip control.\n");
+    feel_monitorThreshold = istate.laQMT;
+    feel_monitorDecay = istate.laQMD;
+    feel_useMonitor = 1;
+  }
+  if (istate.laUseWPA) {
+    // TODO
+  }
+  if (istate.laUseFA) {
+    // TODO
+    // microscope->state.modify.tool = FEELAHEAD;
+  }
 
 /* Start timing */
 VERBOSE(1, "Starting timing");
@@ -7710,7 +7838,7 @@ microscope->ResetClock();
   collaborationTimer.start();
 
   /* set up index mode, if we're doing that */
-  if( istate.index_mode == true )
+  if( istate.index_mode == VRPN_TRUE )
     {
       cout << "Index mode:  from \"" << dataset->heightPlaneName->string( ) << "\"" << endl;
       cout << "Index mode:  input stream:  " << istate.afm.inputStreamName << endl;
@@ -8067,6 +8195,44 @@ VERBOSE(1, "Entering main loop");
     if (aligner) {
        aligner->mainloop();
     }
+
+#if 0
+    // TCH Dissertation
+    // May 2001
+    // If we're replaying a Phantom stream file and we're at
+    // end of file, see what to do now
+
+    if (phantomReplayRepeat && vrpnHandTracker) {
+      vrpn_Connection * c;
+      vrpn_File_Connection * fc = NULL;
+      c = vrpn_get_connection_by_name (handTrackerName);
+      if (c) {
+        fc = c->get_File_Connection();
+      }
+      if (fc && fc->eof()) {
+        switch (phantomReplayRepeat) {
+
+          case 1:
+            // Tear down the connection to the stream file and reestablish
+            // normal Phantom operation.
+            end_phantom_playback_once();
+            break;
+
+          case 2:
+            // Rewind the stream file and keep going until they hit the
+            // Tcl button.
+            fc->reset();
+            break;
+
+          default:
+            fprintf(stderr, "Internal error - "
+                    "invalid phantomReplayRepeat value %d\n",
+                    phantomReplayRepeat);
+            break;
+        }
+      }
+    }
+#endif
 
     // for index mode:
     // if we've reached the end of the file, exit

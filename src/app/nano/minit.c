@@ -38,6 +38,8 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #include <vrpn_Text.h>
 #endif
+// Make the mouse behave like the Phantom. 
+#include <vrpn_MousePhantom.h>
 
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
@@ -67,8 +69,6 @@
 #include <vrpn_Phantom.h>
 #endif
 
-// Make the mouse behave like the Phantom. 
-#include "vrpn_MousePhantom.h"
 
 int x_init(char* argv[]);
 //  int stm_init (const vrpn_bool, const vrpn_bool, const vrpn_bool,
@@ -675,8 +675,49 @@ reset_phantom()
   return 0;
 }
 
+int teardown_phantom (vrpn_MousePhantom ** mousePhantomServer,
+              vrpn_ForceDevice_Remote ** forceDevice,
+              vrpn_Button_Remote ** phantButton,
+              vrpn_Tracker_Remote ** vrpnHandTracker) {
+  vrpn_Connection * c = NULL;
+
+  if (*vrpnHandTracker) {
+    c = (*vrpnHandTracker)->connectionPtr();
+  }
+  if (c) {
+    vrpn_int32 new_conn_id = c->register_message_type(vrpn_got_connection);
+    c->unregister_handler(new_conn_id, handle_phantom_reconnect, NULL);
+  }
+
+  if (*mousePhantomServer) {
+    delete *mousePhantomServer;
+  }
+  if (*forceDevice) {
+    delete *forceDevice;
+  }
+  if (*phantButton) {
+    delete *phantButton;
+  }
+  if (*vrpnHandTracker) {
+    delete *vrpnHandTracker;
+  }
+
+  mousePhantomServer = NULL;
+  forceDevice = NULL;
+  phantButton = NULL;
+  vrpnHandTracker = NULL;
+        
+  return 0;
+}
+
+
 int
-phantom_init(vrpn_Connection * local_device_connection)
+phantom_init (vrpn_Connection * local_device_connection,
+              const char * handTrackerName /*,
+              vrpn_MousePhantom ** mousePhantomServer,
+              vrpn_ForceDevice_Remote ** forceDevice,
+              vrpn_Button_Remote ** phantButton,
+              vrpn_Tracker_Remote ** vrpnHandTracker*/)
 {
     if (strcmp(handTrackerName, "null") != 0){
         // Are we going to set up a server, too? Check the name.
@@ -686,34 +727,43 @@ phantom_init(vrpn_Connection * local_device_connection)
         bp = strchr(handTrackerName, '@');
         if (bp == NULL) {
             // If there is no local connection, we can't do anything.
-            if (local_device_connection == NULL) return 0;
+            if (local_device_connection == NULL) {
+              return 0;
+            }
             
             // Sleep to get phantom in reset positon
             // Should notify user...
             //vrpn_SleepMsecs(2000);
             // 60 update a second, I guess. 
-            phantServer = new vrpn_Phantom(handTrackerName, 
+            phantServer = new vrpn_Phantom((char *) handTrackerName, 
                                            local_device_connection, 60);
-            if (phantServer==NULL) return -1;
+            if (phantServer==NULL) {
+              return -1;
+            }
         } else 
 #endif
         {
             // If it's not a local phantom, get the remote connection.
-            local_device_connection = vrpn_get_connection_by_name(handTrackerName);
-            if (local_device_connection == NULL) return -1;
+            local_device_connection =
+              vrpn_get_connection_by_name(handTrackerName);
+            if (local_device_connection == NULL) {
+              return -1;
+            }
         }
     } else {
     
         // Make a mouse phantom server - the mouse acts like a phantom
         // Only if there is no real phantom - they conflict. 
         mousePhantomServer = vrpn_MousePhantom::createMousePhantom(
-                                              handTrackerName, 
+                                              (char *) handTrackerName, 
                                               local_device_connection, 60);
-        if (mousePhantomServer==NULL) return -1;
+        if (mousePhantomServer==NULL) {
+          return -1;
+        }
     }
 
     // If we get here, some phantom server has been created or contacted.
-    forceDevice = new vrpn_ForceDevice_Remote(handTrackerName, 
+    forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 
                                               local_device_connection);
         // Already set to [0.2, 1.0] by default
         //MAX_K = 1.0f;
@@ -750,15 +800,13 @@ phantom_init(vrpn_Connection * local_device_connection)
         handSensor = 0;
 
         vrpn_Connection * c = NULL;
-        if (vrpnHandTracker)
+        if (vrpnHandTracker) {
           c = vrpnHandTracker->connectionPtr();
-	if (c == NULL) return -1;
+        }
+	if (c == NULL) {
+          return -1;
+        }
 
-//          vrpn_int32 dropped_conn_id =
-//                          c->register_message_type(vrpn_dropped_connection);
-//          c->register_handler(dropped_conn_id, handle_phantom_conn_dropped,
-//                  NULL);
-        
         vrpn_int32 new_conn_id =
             c->register_message_type(vrpn_got_connection);
         c->register_handler(new_conn_id, handle_phantom_reconnect, NULL);
@@ -769,16 +817,25 @@ phantom_init(vrpn_Connection * local_device_connection)
  *
  * peripheral_init - initialize force, tracker, buttons, sound devices
  * @return -1 on memory error, 0 otherwise.
+ * Ugly #ifdef inside parameter list should shut up warnings on SGIs
+ * without interfering with PC compiles.
  *
  */
 int
-peripheral_init(vrpn_Connection * local_device_connection,
-                char * input_magellan_name)
-{
+peripheral_init
+           (vrpn_Connection * local_device_connection,
+            const char * handTrackerName,
+            const char * headTrackerName,
+            const char * bdboxName,
+            char *
+#ifndef NO_MAGELLAN
+ input_magellan_name
+#endif
+) {
     int	i;
 
     /* initialize force device (single user) */
-    if (phantom_init(local_device_connection)){
+    if (phantom_init(local_device_connection, handTrackerName)){
 	fprintf(stderr, "Error: could not initialize force device.\n");
         vrpnHandTracker = NULL;
 	phantButton = NULL;
@@ -786,7 +843,7 @@ peripheral_init(vrpn_Connection * local_device_connection,
     }
 
     if (strcmp(headTrackerName, "null") != 0) {
-	vrpnHeadTracker = new vrpn_Tracker_Remote(headTrackerName);
+	vrpnHeadTracker = new vrpn_Tracker_Remote (headTrackerName);
 	headSensor = 0;
     } else {
 	vrpnHeadTracker = NULL;
@@ -807,8 +864,12 @@ peripheral_init(vrpn_Connection * local_device_connection,
     dialBox = NULL;
     if (strcmp(bdboxName, "null") != 0)
     {
-	if ((buttonBox = new vrpn_Button_Remote(bdboxName)) == NULL) return -1;
-	if ((dialBox = new vrpn_Analog_Remote(bdboxName)) == NULL) return -1;
+	if ((buttonBox = new vrpn_Button_Remote (bdboxName)) == NULL) {
+          return -1;
+        }
+	if ((dialBox = new vrpn_Analog_Remote (bdboxName)) == NULL) {
+          return -1;
+        }
 	if (buttonBox->register_change_handler(bdboxButtonState,
 		handle_bdbox_button_change))
 		fprintf(stderr, "Error: can't register vrpn_Button handler\n");
@@ -825,13 +886,13 @@ peripheral_init(vrpn_Connection * local_device_connection,
 
 #ifndef NO_MAGELLAN
     // Copy the name to global so we can connect (and reconnect later).
-    char * mn = new char[strlen(input_magellan_name) + 1];
+    char * mn = new char [strlen(input_magellan_name) + 1];
     strcpy (mn, input_magellan_name);
     magellan_name = mn;
     magellan_connection = local_device_connection;
     connect_Magellan();
-  
 #endif
+
     return 0;
 }
 

@@ -10,19 +10,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include "vrpn_Connection.h"
-#include "vrpn_Button.h"
-#include "vrpn_Tracker.h"
-#include "vrpn_ForceDevice.h"
-#include "vrpn_MousePhantom.h"
 
 #include <quat.h>
 
-#include <Tcl_Linkvar.h>
+#include <vrpn_Connection.h>
+#include <vrpn_Button.h>
+#include <vrpn_Tracker.h>
+#include <vrpn_ForceDevice.h>
+#include <vrpn_MousePhantom.h>
 
 #ifdef V_GLUT
 #include <GL/glut_UNC.h>
 #endif
+
+#include <Tcl_Linkvar.h>
 
 //  #ifndef	_WIN32
 //  #include <netinet/in.h>

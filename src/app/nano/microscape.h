@@ -133,14 +133,9 @@ void shutdown_Magellan();
 #endif
 /* end vrpn stuff */
 
-extern  char * headTrackerName;
-extern  char * handTrackerName;
-extern  char * bdboxName;
-
 // used in interaction.c
 extern int mouse3button;
 extern int using_mouse3button;
-extern int mode_change;
 extern int do_cpanels;
 
 #define VTK_NO 0

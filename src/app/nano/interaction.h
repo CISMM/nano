@@ -65,5 +65,15 @@ extern void position_sphere(float, float, float);
 #define RATE_KNOB               (3)
 #define RECOVERY_KNOB           (0) /* DIM recover cylces */
 
+// TCH Dissertation
+
+extern Tclvar_int feel_useRedundant;
+extern Tclvar_int feel_numRedundant;
+extern Tclvar_float feel_redundantInterval;
+
+extern Tclvar_int feel_useMonitor;
+extern Tclvar_int feel_monitorThreshold;
+extern Tclvar_float feel_monitorDecay;
+
 #endif  // INTERACTION_H
 

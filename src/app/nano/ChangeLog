@@ -1,3 +1,39 @@
+2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c : Make bdboxName, headTrackerName, handTrackerName
+	static.
+	Make InitializationState::index_mode vrpn_bool instead of bool
+	for consistency.
+	(main) : change parameters to peripheral_init(), use vrpn_bool
+        instead of bool.
+	(ParseArgs) : change index_mode to vrpn_bool instead of bool.
+	Add accidentally-lost line for -renderclient.
+	* microscape.h : Remove bdboxName, headTrackerName, handTrackerName.
+	* minit.c (teardown_phantom) : new function.
+	(phantom_init) : add new parameter(s) to reduce reliance on globals.
+	(peripheral_init) : same.
+	* minit.h : declare teardown_phantom and phantom_init,
+	change parameters to peripheral_init, add lots of comments.
+
+	* interaction.c : reorder #includes, fix brackets.
+	* microscape.c : same.
+	* minit.c : same.
+	* vrpn_MousePhantom.C : same.
+
+	* interaction.h : expose (extern) Tclvars for microscape.c
+	* microscape.c : add MicroscapeInitializationState::laUseUDP, laUseQM,
+	laQMT, laQMD, laUseWPA, laUseFA, laFaN, laFaD
+	Add much code that doesn't work, leaving it inside #if 0 for now.
+	(MicroscapeInitializationState constructor) : initialize new
+	variables.
+	(ParseArgs) : parse new command-line arguments.
+	(Usage) : document new command-line arguments, remove documentation
+        of obsolete arguments.
+	(main) : respond to new command-line arguments.
+
+	* microscape.c (createForwarders) : remove old code.
+	* microscape.h : remove things that shouldn't be shared.
+	
 2001-06-08  Aron Helser  <helser@cs.unc.edu>
 
 	* microscopeHandlers.Ch (handle_color_dataset_change): remove
