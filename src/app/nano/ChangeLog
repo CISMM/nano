@@ -1,10 +1,14 @@
+2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (register_vrpn_callbacks) : added hard-coded 
+	room from head tracker transform for workbench (Phillips 101 setup) only
+
 2001-04-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (handle_openSPMDeviceName_change) : turn off
         vrpn_System_TextPrinter error messages for
         microscopeRedundancyController.
 	(main) : same.
-
 
 2001-03-23  Jason Clark  <jclark@cs.unc.edu>
 

@@ -4145,14 +4145,22 @@ int register_vrpn_callbacks(void){
         headT->register_change_handler((void *)&V_TRACKER_FROM_HEAD_SENSOR,
 	    handle_sensor2tracker_change, headSensor);
 
+        char *envir = getenv("V_DISPLAY");
+        if (strstr(envir, "workbench") != NULL) {
+            q_vec_type  sfh_xlate = {0.00, 0.251, 0.486 };
+            q_type      sfh_quat = { 0.0, 0.0, 0.0, 1.0};
+            printf("XXX Setting workbench head-tracker offset by fiat\n");
+            v_update_user_xform(0, V_ROOM_FROM_HEAD_TRACKER,
+                sfh_xlate, sfh_quat);
+        } else {
+            headT->register_change_handler((void*)&V_ROOM_FROM_HEAD_TRACKER,
+                handle_tracker2room_change);
+            headT->request_t2r_xform();
+        }
 
         //fprintf(stderr, "DEBUG:  using remote vrpn config files for head tracker\n");
             headT->register_change_handler((void *)&V_SENSOR_FROM_HEAD_UNIT,
 	                                    handle_unit2sensor_change, headSensor);
-            headT->register_change_handler((void *)&V_ROOM_FROM_HEAD_TRACKER,
-                                            handle_tracker2room_change);
-
-            headT->request_t2r_xform();
             headT->request_u2s_xform(); ;
     }
     register_vrpn_phantom_callbacks();
