@@ -167,7 +167,7 @@ double x_to_y = 1.0;
 int TriangleCounter = 0;
 bool once_thru = false;
 FILE *file;
-float current_scale;
+float current_scale = 1;
 float current_trans_x = 0;
 float current_trans_y = 0;
 float current_trans_z = 0;
@@ -585,7 +585,7 @@ void displayFuncDepth( void ) {
 */
 	if(SimMicroscopeServer.cylRcv){
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
-		current_scale = SimMicroscopeServer._scale;
+		//current_scale = SimMicroscopeServer._scale;
 		float scale = current_scale * ratio;
 
 		float x,y,z,altitude,azimuth,length,radius;
@@ -599,53 +599,82 @@ void displayFuncDepth( void ) {
 			length = SimMicroscopeServer.cylHead->length*scale;
 			radius = SimMicroscopeServer.cylHead->radius*scale;
 
-			cout << "altitude: " << altitude << " azimuth: " << azimuth << endl;
+			Vec3d npos(x*scale,y*scale,z*scale);
+			cout << "altitude: " << altitude << " azimuth: " << azimuth << endl
+				 << "pos: " << npos << endl;
 
 			NANOTUBE_GROUP = numGroups;
 
 			addNtube(NTUBE, Vec3d(x*scale,y*scale,z*scale), 
 				azimuth*RAD_TO_DEG, 0*RAD_TO_DEG, altitude*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);	
 			//type,pos,yaw,roll,pitch,length,diameter,group
-			current_rot_z = azimuth;//in radians
-			current_rot_x = altitude;//in radians
 
 			SimMicroscopeServer.cylHolder = SimMicroscopeServer.cylHead;
 			SimMicroscopeServer.cylHead = SimMicroscopeServer.cylHead->next;
 			delete SimMicroscopeServer.cylHolder;	
+
+
+			int obj_group = NANOTUBE_GROUP;
+
+			Vec3d group_center;
+			for(int i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				group_center += this_obj->pos;
+			}
+			group_center /= number_in_group[obj_group];
+			//cout << "group center: " << group_center << endl;
 			
 		}
 		SimMicroscopeServer.cylRcv = false;
 		
 	}
-	else if(SimMicroscopeServer.scaleRcv){
+
+	if(SimMicroscopeServer.scaleRcv){
 		float _scale = SimMicroscopeServer._scale;
 		float new_scale = _scale/current_scale;	//"un-apply" old scaling and apply new one
 		current_scale = _scale;					//record what the current scale is so can change 
 												//in the same way next time
 
-		int obj_group = NANOTUBE_GROUP;
+		if(new_scale != 1){
+			int obj_group = NANOTUBE_GROUP;
 
-		if(group_of_obs[obj_group] != NULL){
-			float x, y, z;
-			x = group_of_obs[obj_group][0]->pos.x + 
-				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.x - group_of_obs[obj_group][0]->pos.x) / 2;
-			y = group_of_obs[obj_group][0]->pos.y + 
-				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.y - group_of_obs[obj_group][0]->pos.y) / 2;
-			z = group_of_obs[obj_group][0]->pos.z + 
-				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.z - group_of_obs[obj_group][0]->pos.z) / 2;
+			if(group_of_obs[obj_group] != NULL){
+				/*
+				float x, y, z;
+				x = group_of_obs[obj_group][0]->pos.x + 
+					(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.x - group_of_obs[obj_group][0]->pos.x) / 2;
+				y = group_of_obs[obj_group][0]->pos.y + 
+					(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.y - group_of_obs[obj_group][0]->pos.y) / 2;
+				z = group_of_obs[obj_group][0]->pos.z + 
+					(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.z - group_of_obs[obj_group][0]->pos.z) / 2;
+				*/
+
+				//find the group center
+				Vec3d group_center;
+				for(int j = 0; j < number_in_group[obj_group];j++){
+					OB * this_obj = group_of_obs[obj_group][j];
+					group_center += this_obj->pos;
+				}
+				group_center /= number_in_group[obj_group];
+				//cout << "group center: " << group_center << endl;
 
 
-			for(int i = 0; i < number_in_group[obj_group];i++){
-				
-				OB * this_obj = group_of_obs[obj_group][i];
-				
-				// need to reflect the fact that scaling now occurs at tube centers in nano
-				this_obj->scale(new_scale);
-				this_obj->setPos(Vec3d((this_obj->pos.x - x)*new_scale + x,
-										(this_obj->pos.y - y)*new_scale + y,
-										(this_obj->pos.z - z)*new_scale + z));
+				for(int i = 0; i < number_in_group[obj_group];i++){
+					
+					OB * this_obj = group_of_obs[obj_group][i];
+					
+					// need to reflect the fact that scaling now occurs at tube centers in nano
+					this_obj->scale(new_scale);
+
+					Vec3d set_pos( (this_obj->pos - group_center)*new_scale + group_center );
+					this_obj->setPos(set_pos);
+					/*this_obj->setPos(Vec3d((this_obj->pos.x - group_center.x)*new_scale + group_center.x,
+											(this_obj->pos.y - group_center.y)*new_scale + group_center.y,
+											(this_obj->pos.z - group_center.z)*new_scale + group_center.z));*/
+				}
 			}
 		}
+
 		SimMicroscopeServer.scaleRcv = false;
 
 	}
@@ -685,9 +714,11 @@ void displayFuncDepth( void ) {
 		cout << "sim.cpp: " << "x: " << x << "\ty: " << y << "\tz: " << z << endl;
 
 		//in radians
-		float new_x = x - current_rot_x;
-		float new_y = y - current_rot_y;
-		float new_z = z - current_rot_z;
+		float rel_x = x - current_rot_x;
+		float rel_y = y - current_rot_y;
+		float rel_z = z - current_rot_z;
+		cout << "sim.cpp: " << "rel x: " << rel_x << "\trel y: " << rel_y << "\trel z: " << rel_z << endl;
+
 
 		//in radians
 		current_rot_x = x;
@@ -699,7 +730,7 @@ void displayFuncDepth( void ) {
 		//start added code
 
 		//X stuff
-		if(new_x != 0){			
+		if(rel_x != 0){			
 
 			//find the group center
 			Vec3d group_center;
@@ -708,15 +739,15 @@ void displayFuncDepth( void ) {
 				group_center += this_obj->pos;
 			}
 			group_center /= number_in_group[obj_group];
-			cout << "group center: " << group_center << endl;
+			//cout << "group center: " << group_center << endl;
 
 			//rotate around x
 
-			//translate objects to position new_x rad. rel. to group_center
+			//translate objects to position rel_x rad. rel. to group_center
 			for(i = 0; i < number_in_group[obj_group];i++){
 				OB * this_obj = group_of_obs[obj_group][i];
 				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),new_x) + group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),rel_x) + group_center;
 				this_obj->setPos(new_pos);
 			}
 			
@@ -730,14 +761,14 @@ void displayFuncDepth( void ) {
 				right += n->pos;
 				right += n->axis*n->leng/2;
 
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),new_x);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),new_x);
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),rel_x);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),rel_x);
 				n->set(left,right,n->diam);
 			}
 		}
 
 		//Y stuff
-		if(new_y != 0){		
+		if(rel_y != 0){		
 
 			//find the group center
 			Vec3d group_center;
@@ -746,15 +777,15 @@ void displayFuncDepth( void ) {
 				group_center += this_obj->pos;
 			}
 			group_center /= number_in_group[obj_group];
-			cout << "group center: " << group_center << endl;
+			//cout << "group center: " << group_center << endl;
 			
 			//rotate around y
 
-			//translate objects to position new_y rad. rel. to group_center
+			//translate objects to position rel_y rad. rel. to group_center
 			for(i = 0; i < number_in_group[obj_group];i++){
 				OB * this_obj = group_of_obs[obj_group][i];
 				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),new_y) + group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),rel_y) + group_center;
 				this_obj->setPos(new_pos);
 			}
 
@@ -767,14 +798,14 @@ void displayFuncDepth( void ) {
 				right += n->pos;
 				right += n->axis*n->leng/2;
 
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),new_y);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),new_y);
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),rel_y);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),rel_y);
 				n->set(left,right,n->diam);
 			}
 		}
 
 		//Z stuff
-		if(new_z != 0){	
+		if(rel_z != 0){	
 		
 			//find the group center
 			Vec3d group_center;
@@ -783,15 +814,15 @@ void displayFuncDepth( void ) {
 				group_center += this_obj->pos;
 			}
 			group_center /= number_in_group[obj_group];
-			cout << "group center: " << group_center << endl;
+			//cout << "group center: " << group_center << endl;
 
 			//rotate around z
 
-			//translate objects to position new_z rad. rel. to group_center
+			//translate objects to position rel_z rad. rel. to group_center
 			for(i = 0; i < number_in_group[obj_group];i++){
 				OB * this_obj = group_of_obs[obj_group][i];
 				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),new_z) + group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),rel_z) + group_center;
 				this_obj->setPos(new_pos);
 			}
 
@@ -804,8 +835,8 @@ void displayFuncDepth( void ) {
 				right += n->pos;
 				right += n->axis*n->leng/2;
 
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),new_z);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),new_z);
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),rel_z);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),rel_z);
 				n->set(left,right,n->diam);		
 			}
 		}

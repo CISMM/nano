@@ -1,3 +1,11 @@
+2002-05-09  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* sim.cpp : changed initial scale value for when cylinders 
+	received to 1 so that to mesh with changes on nano side
+	where scale sent after cylinders (so that translations of
+	objects from origin to proper position happen before 
+	objects scaled...
+
 2002-05-07  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : changed rotation procedure so that rotations are
