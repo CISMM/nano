@@ -1,3 +1,16 @@
+2002-04-05  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* sim.cpp : added code to handle translation change from import
+	object tcl window.  translates objects in simulator in x, y, and
+	z rel. to current translation so that translation in simulator
+	matches up with absolute translation value in tcl box.  also 
+	modified grouping so that you can add to a current group by
+	holding down 'shift' and first clicking on any object in the
+	group, then clicking on any additional objects to add in.
+
+	* 3dobject.cpp : modifications to changeGroup function for
+	new grouping functionality described above
+
 2002-04-04  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : added code to handle grouping of objects.  

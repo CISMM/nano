@@ -1362,22 +1362,20 @@ int changeGroup(OB* obj,int* new_group_number){
 		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
 
 		//remove from old group
-		for(int i = 0;i < numGroups; ++i){
-			for(int j = 0;j < number_in_group[i];j++){
-				if(group_of_obs[i][j] == obj){
-					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
-						group_of_obs[i][k] = group_of_obs[i][k+1];
-					}
-					group_of_obs[i][number_in_group[i]-1] = NULL;
-					number_in_group[i]--;
-					removed = true;
-					obj->obj_group = *new_group_number;
-					cout << "object removed from group number " << i << " and added to group number "
-						 << *new_group_number << endl;
-					break;
+		int i = obj->obj_group;
+		for(int j = 0;j < number_in_group[i];j++){
+			if(group_of_obs[i][j] == obj){
+				for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+					group_of_obs[i][k] = group_of_obs[i][k+1];
 				}
+				group_of_obs[i][number_in_group[i]-1] = NULL;
+				number_in_group[i]--;
+				removed = true;
+				obj->obj_group = *new_group_number;
+				cout << "object removed from group number " << i << " and added to group number "
+					 << *new_group_number << endl;
+				break;
 			}
-			if(removed)	break;
 		}
 
 		numGroups++;//one more group now
@@ -1389,22 +1387,20 @@ int changeGroup(OB* obj,int* new_group_number){
 		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
 
 		//remove from old group
-		for(int i = 0;i < numGroups; ++i){
-			for(int j = 0;j < number_in_group[i];j++){
-				if(group_of_obs[i][j] == obj){
-					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
-						group_of_obs[i][k] = group_of_obs[i][k+1];
-					}
-					group_of_obs[i][number_in_group[i]-1] = NULL;
-					number_in_group[i]--;
-					removed = true;
-					obj->obj_group = *new_group_number;
-					cout << "object removed from group number " << i << " and added to group number "
-						 << *new_group_number << endl;
-					break;
+		int i = obj->obj_group;
+		for(int j = 0;j < number_in_group[i];j++){
+			if(group_of_obs[i][j] == obj){
+				for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+					group_of_obs[i][k] = group_of_obs[i][k+1];
 				}
+				group_of_obs[i][number_in_group[i]-1] = NULL;
+				number_in_group[i]--;
+				removed = true;
+				obj->obj_group = *new_group_number;
+				cout << "object removed from group number " << i << " and added to group number "
+					 << *new_group_number << endl;
+				break;
 			}
-			if(removed)	break;
 		}
 
 		cout << "group number: " << *new_group_number << endl << "number in group: "
@@ -1414,22 +1410,20 @@ int changeGroup(OB* obj,int* new_group_number){
 		group_of_obs[*new_group_number][number_in_group[*new_group_number]++] = obj;
 
 		//remove from old group
-		for(int i = 0;i < numGroups; ++i){
-			for(int j = 0;j < number_in_group[i];j++){
-				if(group_of_obs[i][j] == obj){
-					for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
-						group_of_obs[i][k] = group_of_obs[i][k+1];
-					}
-					group_of_obs[i][number_in_group[i]-1] = NULL;
-					number_in_group[i]--;
-					removed = true;
-					obj->obj_group = *new_group_number;
-					cout << "object removed from group number " << i << " and added to group number "
-						 << *new_group_number << endl;
-					break;
+		int i = obj->obj_group;
+		for(int j = 0;j < number_in_group[i];j++){
+			if(group_of_obs[i][j] == obj){
+				for(int k = j;k+1 < number_in_group[i];k++){//shift everything back
+					group_of_obs[i][k] = group_of_obs[i][k+1];
 				}
+				group_of_obs[i][number_in_group[i]-1] = NULL;
+				number_in_group[i]--;
+				removed = true;
+				obj->obj_group = *new_group_number;
+				cout << "object removed from group number " << i << " and added to group number "
+					 << *new_group_number << endl;
+				break;
 			}
-			if(removed)	break;
 		}
 
 		cout << "group number: " << *new_group_number << endl << "number in group: "

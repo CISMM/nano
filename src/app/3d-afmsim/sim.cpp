@@ -168,6 +168,9 @@ int TriangleCounter = 0;
 bool once_thru = false;
 FILE *file;
 float current_scale;
+float current_trans_x = 0;
+float current_trans_y = 0;
+float current_trans_z = 0;
 bool grouping;
 int* group;
 bool first_in_group = true;
@@ -620,6 +623,30 @@ void displayFuncDepth( void ) {
 						  ob[i]->pos.z*new_scale));
 		}
 		SimMicroscopeServer.scaleRcv = false;
+
+	}
+
+	if(SimMicroscopeServer.transRcv){
+		float trans_x = SimMicroscopeServer.trans_x;
+		float trans_y = SimMicroscopeServer.trans_y;
+		float trans_z = SimMicroscopeServer.trans_z;
+
+		float new_trans_x = SimMicroscopeServer.trans_x - current_trans_x;
+		float new_trans_y = SimMicroscopeServer.trans_y - current_trans_y;
+		float new_trans_z = SimMicroscopeServer.trans_z - current_trans_z;
+
+		current_trans_x = trans_x;
+		current_trans_y = trans_y;
+		current_trans_z = trans_z;
+
+		double ratio = SimMicroscopeServer.Sim_to_World_x;
+
+		for(int i=0; i<numObs; i++ ) {
+			ob[i]->setPos(Vec3d(ob[i]->pos.x + new_trans_x*current_scale*ratio,
+								ob[i]->pos.y + new_trans_y*current_scale*ratio,
+								ob[i]->pos.z + new_trans_z*current_scale*ratio));
+		}
+		SimMicroscopeServer.transRcv = false;
 
 	}
 	
@@ -1261,22 +1288,22 @@ void mouseFuncMain( int button, int state, int x, int y ) {
   switch( button ) {
   case GLUT_LEFT_BUTTON: 
     if( state == GLUT_DOWN ){
-		cout << "processing button press " << bcounter++ << endl;
+		//cout << "processing button press " << bcounter++ << endl;
 		buttonpress=LEFT_BUTTON;
-		int nState = GetKeyState(VK_SHIFT);
+		int nState = GetKeyState(VK_SHIFT);//check status of shift key
 	
 		if(nState < 0){//indicates shift button held down
 			selectedOb = findNearestObToMouse(xy_or_xz);
 			cout << "grouping" << endl;
-			if(nState != oldShift/*first_in_group*/){//new shift -> new group
+			if(nState != oldShift){//new shift -> new group
 				oldShift = nState;//oldShift gives last shift val, shift down val toggles
 							      //between -127 and -128, so we can tell if new shift down
 							      //or old one still going...
 
-				cout << "first in group" << endl;
+				cout << "first in group " << ob[selectedOb]->obj_group << endl;
 				if(group == NULL)	group = new int();
-				*group = changeGroup(ob[selectedOb],NULL);//change group
-				//first_in_group = false;
+				//*group = changeGroup(ob[selectedOb],NULL);//change group
+				*group = ob[selectedOb]->obj_group;
 			}
 			else{//old shift, process objects under that shift hold-down
 				if(inGroup(ob[selectedOb],group)){//still holding down shift but changed mind...
