@@ -551,7 +551,9 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   int newWinWidth = d_mainWinWidth, newWinHeight = d_mainWinHeight;
   double viewAspect = (maxX_nm - minX_nm)/(maxY_nm - minY_nm);
   newWinWidth = d_mainWinHeight*viewAspect;
-  d_viewer->setWindowSize(d_mainWinID, newWinWidth, newWinHeight);
+  if (newWinWidth != 0 && newWinHeight != 0) {
+	d_viewer->setWindowSize(d_mainWinID, newWinWidth, newWinHeight);
+  }
   d_viewer->dirtyWindow(d_mainWinID);
   d_viewer->dirtyWindow(d_navWinID);
   d_viewportSet = vrpn_TRUE;
@@ -741,7 +743,10 @@ int PatternEditor::handleMainWinEvent(
 							 (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
 							 (d_mainWinMaxY_nm - d_mainWinMinY_nm);
 			 if (desired_width != d_mainWinWidth) {
-			   d_viewer->setWindowSize(event.winID, desired_width, d_mainWinHeight);
+				 if (desired_width != 0 && d_mainWinHeight != 0) {
+					 d_viewer->setWindowSize(event.winID, 
+						 desired_width, d_mainWinHeight);
+				 }
 			 }
 		 }
          break;

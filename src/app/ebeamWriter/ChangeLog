@@ -1,3 +1,13 @@
+2003-02-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.C : changed default line, area exposures, and dot and 
+	line spacing to match what is used with the Nabity system
+	got rid of a harmless error message about not being able to find an
+	image when the program starts up
+	* patternEditor.C : changed so that glut errors about not being able
+	to set the window size won't be generated if the editor window is
+	minimized during alignment
+
 2003-02-10  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (setCanvasImage): added quick fix to help avoid user

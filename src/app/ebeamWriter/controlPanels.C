@@ -28,9 +28,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_bufferImageFormat("bufferImage_format", ""),
    d_lineWidth_nm("line_width_nm", 0),
    d_line_exposure_pCoulombs_per_cm(
-                 "line_exposure_pCoulombs_per_cm", 1000),
+                 "line_exposure_pCoulombs_per_cm", 1400),
    d_area_exposure_uCoulombs_per_square_cm(
-                 "area_exposure_uCoulombs_per_square_cm", 1000),
+                 "area_exposure_uCoulombs_per_square_cm", 500),
    d_drawingTool("drawing_tool", 1),
    d_clearPattern("clear_pattern", 0),
    d_undoShape("undo_shape", 0),
@@ -46,7 +46,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_imageMagnification("image_magnification", 1000),
    d_hideOtherImages("hide_other_images", 0),
    d_enableImageDisplay("enable_image_display", 0),
-   d_currentImage("current_image", "none"),
+   d_currentImage("current_image", ""),
 
    d_semWindowOpen("sem_window_open", 0),
    d_semAcquireImagePushed("sem_acquire_image", 0),
@@ -70,8 +70,8 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semBufferImageNames(new Tclvar_list_of_strings()),
 
    d_semExposureMagnification("sem_exposure_magnification", 1000),
-   d_semDotSpacing_nm("sem_dot_spacing_nm", 10),
-   d_semLineSpacing_nm("sem_line_spacing_nm", 10),
+   d_semDotSpacing_nm("sem_dot_spacing_nm", 20),
+   d_semLineSpacing_nm("sem_line_spacing_nm", 50),
    d_semBeamCurrent_picoAmps("sem_beam_current_picoAmps", 10),
    d_semBeamExposePushed("sem_beam_expose_now", 0),
    d_semBeamExposeEnabled("sem_beam_expose_enabled", 0),
@@ -669,6 +669,7 @@ void ControlPanels::updateCurrentImageControls()
   if (!d_imageList) return;
 
 //  printf("current image: %s\n", (const char *)d_currentImage);
+  if (strlen((const char *)d_currentImage) == 0) return;
   nmb_Image *im = d_imageList->getImageByName(
                   string((const char *)(d_currentImage)));
   if (!im) {
