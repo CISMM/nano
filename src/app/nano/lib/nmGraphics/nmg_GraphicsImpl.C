@@ -96,11 +96,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
         strcpy(g_maskPlaneName, data->maskPlaneName->string());
     }
-
-#ifdef FLOW
-    g_data_tex_size = max(grid_size_x, grid_size_y);
-    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
-#endif
     
     //Figure out what capabilities we have.
     determine_GL_capabilities();

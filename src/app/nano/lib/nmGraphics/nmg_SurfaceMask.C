@@ -3,6 +3,7 @@
 #include <nmb_Dataset.h>
 #include <stdio.h>
 #include <math.h>
+#include <quat.h> // For Q_DEG_TO_RAD
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::Constructor
@@ -244,6 +245,13 @@ deriveMask(float min_height, float max_height)
     add(d_oldDerivation);
 }
 
+static float xform_width(float x, float y, float angle) {
+    return fabs(cos(angle)*(x) + sin(angle)*(y));
+}
+static float xform_height(float x, float y, float angle) {
+    return fabs(cos(angle)*(y) - sin(angle)*(x));
+}
+
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::deriveMask
 //      Access: Public
@@ -259,59 +267,23 @@ deriveMask(float center_x, float center_y, float width,float height,
     subtract(d_oldDerivation);
     d_oldDerivation->clear();
 
-    double gCenter_x, gCenter_y;
-    dataset->inputGrid->worldToGrid(center_x, center_y, gCenter_x, gCenter_y);
+    double w_x, w_y;
 
-    float left = -width*0.25;
-    float right = width*0.25;
-    float top = height*0.25;
-    float bottom = -height*0.25;
 
-    float cosx = cosf(angle);
-    float sinx = sinf(angle);
-
-    float P1[2], P2[2], P3[2], P4[2];
-
-    P1[0] = left*cosx-bottom*sinx + gCenter_x;
-    P1[1] = left*sinx+bottom*cosx + gCenter_y;
-
-    P2[0] = left*cosx-top*sinx + gCenter_x;
-    P2[1] = left*sinx+top*cosx + gCenter_y;
-
-    P3[0] = right*cosx-bottom*sinx + gCenter_x;
-    P3[1] = right*sinx+bottom*cosx + gCenter_y;
-
-    P4[0] = right*cosx-top*sinx + gCenter_x;
-    P4[1] = right*sinx+top*cosx + gCenter_y  ;
-
-    int left_bottom_x = P1[0]; int left_bottom_y = P1[1];
-    int left_top_x = P2[0]; int left_top_y = P2[1];
-    int right_bottom_x = P3[0]; int right_bottom_y = P3[1];
-    int right_top_x = P4[0]; int right_top_y = P4[1];
-    
-    if (left_bottom_x < 0) left_bottom_x = 0;
-    if (left_bottom_y < 0) left_bottom_y = 0;
-    if (left_top_x < 0) left_top_x = 0;
-    if (left_top_y >= d_height) left_top_y = d_height-1;
-    if (right_bottom_x >= d_width) right_bottom_x = d_width - 1;
-    if (right_bottom_y < 0) right_bottom_y = 0;
-    if (right_top_x >= d_width) right_top_x =  d_width - 1;
-    if (right_top_y >= d_height) right_top_y = d_height-1;
-
-	for(int y = 0; y < dataset->inputGrid->numY(); y++) {
-        if (y >= left_bottom_y || y >= right_bottom_y) {
-            if (y <= left_top_y || y <= right_top_y) {
-                for(int x = 0; x < dataset->inputGrid->numX(); x++) {            
-                    if (x >= left_bottom_x || x >= left_top_y) {
-                        if (x <= right_bottom_x || x <= right_top_y) {
-                            d_oldDerivation->addValue(x,y,1);
-                        }
-                    }
-                }
-            }
+    for(int y = 0; y < dataset->inputGrid->numY(); y++) {
+        for(int x = 0; x < dataset->inputGrid->numX(); x++) {
+            //Transform row,col in grid into world coordinates
+            dataset->inputGrid->gridToWorld(x,y,w_x,w_y);
+            // Find out if that coord is within width/height of 
+            // region box. Helper functions handle rotation.
+            if ((xform_width(w_x-center_x, w_y-center_y, 
+                             Q_DEG_TO_RAD(angle)) < width)&&
+                (xform_height(w_x-center_x, w_y-center_y, 
+                              Q_DEG_TO_RAD(angle)) < height)){
+                d_oldDerivation->addValue(x,y,1);
+            }                    
         }
     }
-    
     add(d_oldDerivation);
 }
 
