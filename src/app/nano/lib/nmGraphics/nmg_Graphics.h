@@ -221,6 +221,7 @@ class nmg_Graphics {
     virtual void setHeightPlaneName (const char *) = 0;
     virtual void setMaskPlaneName (const char *) = 0;
     virtual void setTransparentPlaneName (const char *) = 0;
+	virtual void setVizPlaneName (const char *) = 0;
 
     virtual void setIconScale (float) = 0;
       // Scale the 3D icons.
@@ -378,6 +379,9 @@ class nmg_Graphics {
 
 	/*New visualization method.  Chooses which visualizaton to use */
 	virtual void chooseVisualization(int) = 0;
+	virtual void setVisualizationMinHeight(float) = 0;
+	virtual void setVisualizationMaxHeight(float) = 0;
+	virtual void setVisualizationAlpha(float) = 0;
 
     // ACCESSORS
 
@@ -434,9 +438,10 @@ class nmg_Graphics {
     vrpn_int32 d_setColorPlaneName_type;
     vrpn_int32 d_setContourPlaneName_type;
     vrpn_int32 d_setOpacityPlaneName_type;
+	vrpn_int32 d_setHeightPlaneName_type;
 	vrpn_int32 d_setMaskPlaneName_type;
-    vrpn_int32 d_setHeightPlaneName_type;
 	vrpn_int32 d_setTransparentPlaneName_type;
+	vrpn_int32 d_setVizPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setMinColor_type;
     vrpn_int32 d_setMaxColor_type;
@@ -503,6 +508,9 @@ class nmg_Graphics {
 
 	//Visualization
 	vrpn_int32 d_chooseVisualization_type;
+	vrpn_int32 d_setVisualizationMinHeight_type;
+	vrpn_int32 d_setVisualizationMaxHeight_type;
+	vrpn_int32 d_setVisualizationAlpha_type;
 
 
     // Each encode_ routine will allocate a new char [] to hold
@@ -725,6 +733,15 @@ class nmg_Graphics {
 
 	char *encode_chooseVisualization(int *len, int);
 	int decode_chooseVisualization(const char *buf, int *);
+
+	char *encode_setVisualizationMinHeight(int *len, float);
+	int decode_setVisualizationMinHeight(const char *buf, float *);
+
+	char *encode_setVisualizationMaxHeight(int *len, float);
+	int decode_setVisualizationMaxHeight(const char *buf, float *);
+
+	char *encode_setVisualizationAlpha(int *len, float);
+	int decode_setVisualizationAlpha(const char *buf, float *);
 };
 
 #endif  // NMG_GRAPHICS_H

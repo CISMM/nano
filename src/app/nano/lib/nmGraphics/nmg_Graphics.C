@@ -104,12 +104,14 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setContourPlaneName");
   d_setOpacityPlaneName_type =
     c->register_message_type("nmg Graphics setOpacityPlaneName");
-  d_setMaskPlaneName_type =
-    c->register_message_type("nmg Graphics setMaskPlaneName");
   d_setHeightPlaneName_type =
     c->register_message_type("nmg Graphics setHeightPlaneName");
+  d_setMaskPlaneName_type =
+    c->register_message_type("nmg Graphics setMaskPlaneName");
   d_setTransparentPlaneName_type =
     c->register_message_type("nmg Graphics setTransparentPlaneName");
+  d_setVizPlaneName_type =
+    c->register_message_type("nmg Graphics setVizPlaneName");
   d_setMinColor_type =
     c->register_message_type("nmg Graphics setMinColor");
   d_setMaxColor_type =
@@ -229,6 +231,12 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
   //For visualization
   d_chooseVisualization_type =
     c->register_message_type("nmg Graphics chooseVisualization");
+  d_setVisualizationMinHeight_type =
+    c->register_message_type("nmg Graphics setVisualizationMinHeight");
+  d_setVisualizationMaxHeight_type =
+    c->register_message_type("nmg Graphics setVisualizationMaxHeight");
+  d_setVisualizationAlpha_type =
+    c->register_message_type("nmg Graphics setVisualizationAlpha");
 }
 
 nmg_Graphics::~nmg_Graphics (void) {
@@ -875,6 +883,14 @@ char * nmg_Graphics::encode_setHeightPlaneName (int * len, const char * n) {
 }
 
 int nmg_Graphics::decode_setHeightPlaneName (const char * buf, const char * n) {
+
+}
+
+char * nmg_Graphics::encode_setVizPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setVizPlaneName (const char * buf, const char * n) {
 
 }
 #endif
@@ -2715,6 +2731,7 @@ int nmg_Graphics::decode_createScreenImage
    *type = (ImageType)(temp);
    return 0;
 }
+// End screen capture network code
 
 char *nmg_Graphics::encode_chooseVisualization(int *len, int viz_type)
 {
@@ -2728,7 +2745,7 @@ char *nmg_Graphics::encode_chooseVisualization(int *len, int viz_type)
    msgbuf = new char[*len];
    if (!msgbuf)
    {
-      fprintf(stderr,"nmg_Graphics::encode_createScreenImage: Out of memory!\n");
+      fprintf(stderr,"nmg_Graphics::encode_chooseVisualization: Out of memory!\n");
       *len = 0;
    }
    else
@@ -2741,8 +2758,7 @@ char *nmg_Graphics::encode_chooseVisualization(int *len, int viz_type)
    return msgbuf;
 }
 
-int nmg_Graphics::decode_chooseVisualization(const char  *buf, int *viz_type
-)
+int nmg_Graphics::decode_chooseVisualization(const char  *buf, int *viz_type)
 {
    const char *bptr = buf;
    int temp;
@@ -2755,5 +2771,116 @@ int nmg_Graphics::decode_chooseVisualization(const char  *buf, int *viz_type
    return 0;
 }
 
+char *nmg_Graphics::encode_setVisualizationMinHeight(int *len, float viz_min)
+{
+   char *msgbuf = NULL;
+   char *mptr;
+   int mlen;
 
-// End screen capture network code
+   if (!len) return NULL;
+
+   *len = sizeof(float);
+   msgbuf = new char[*len];
+   if (!msgbuf)
+   {
+      fprintf(stderr,"nmg_Graphics::encode_setVisualizationMinHeight: Out of memory!\n");
+      *len = 0;
+   }
+   else
+   {
+      mptr = msgbuf;
+      mlen = *len;
+      vrpn_buffer(&mptr, &mlen, viz_min);
+   }
+
+   return msgbuf;
+}
+
+int nmg_Graphics::decode_setVisualizationMinHeight(const char  *buf, float *viz_min)
+{
+   const char *bptr = buf;
+   int temp;
+   
+   if (!buf || !viz_min) return -1;
+
+   CHECK(vrpn_unbuffer(&bptr, &temp));
+
+   *viz_min = (float)(temp);
+   return 0;
+}
+
+char *nmg_Graphics::encode_setVisualizationMaxHeight(int *len, float viz_max)
+{
+   char *msgbuf = NULL;
+   char *mptr;
+   int mlen;
+
+   if (!len) return NULL;
+
+   *len = sizeof(float);
+   msgbuf = new char[*len];
+   if (!msgbuf)
+   {
+      fprintf(stderr,"nmg_Graphics::encode_setVisualizationMaxHeight: Out of memory!\n");
+      *len = 0;
+   }
+   else
+   {
+      mptr = msgbuf;
+      mlen = *len;
+      vrpn_buffer(&mptr, &mlen, viz_max);
+   }
+
+   return msgbuf;
+}
+
+int nmg_Graphics::decode_setVisualizationMaxHeight(const char  *buf, float *viz_max)
+{
+   const char *bptr = buf;
+   int temp;
+   
+   if (!buf || !viz_max) return -1;
+
+   CHECK(vrpn_unbuffer(&bptr, &temp));
+
+   *viz_max = (float)(temp);
+   return 0;
+}
+
+char *nmg_Graphics::encode_setVisualizationAlpha(int *len, float viz_alpha)
+{
+   char *msgbuf = NULL;
+   char *mptr;
+   int mlen;
+
+   if (!len) return NULL;
+
+   *len = sizeof(float);
+   msgbuf = new char[*len];
+   if (!msgbuf)
+   {
+      fprintf(stderr,"nmg_Graphics::encode_setVisualizationAlpha: Out of memory!\n");
+      *len = 0;
+   }
+   else
+   {
+      mptr = msgbuf;
+      mlen = *len;
+      vrpn_buffer(&mptr, &mlen, viz_alpha);
+   }
+
+   return msgbuf;
+}
+
+int nmg_Graphics::decode_setVisualizationAlpha(const char  *buf, float *viz_alpha)
+{
+   const char *bptr = buf;
+   int temp;
+   
+   if (!buf || !viz_alpha) return -1;
+
+   CHECK(vrpn_unbuffer(&bptr, &temp));
+
+   *viz_alpha = (float)(temp);
+   return 0;
+}

@@ -218,6 +218,7 @@ char g_heightPlaneName [128];
 char g_opacityPlaneName [128];
 char g_maskPlaneName [128];
 char g_transparentPlaneName [128];
+char g_vizPlaneName [128];
 
 int g_mask = DISABLE_MASK;
 int g_transparent = 0;

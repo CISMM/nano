@@ -22,12 +22,32 @@
   #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
 #endif
 
-//Since some of the graphics code relies on having access to an
-//array of the vertex arrays (surface), each class should set this variable
-//to the "base" surface.  Typically this will be whatever surface is
-//the "opaque" surface.   This should be set in the initVertexArrays
-//call.
-//Vertex_Struct ** vertexptr = NULL;
+
+nmg_Visualization* create_new_visualization(int choice, nmb_Dataset *dataset)
+{
+	nmg_Visualization *viz;
+	switch(choice) {
+	case 0:
+		viz = new nmg_Viz_Opaque(dataset);
+		break;
+	case 1:
+		viz = new nmg_Viz_Transparent(dataset);
+		break;
+	case 2:
+		viz = new nmg_Viz_WireFrame(dataset);
+		break;
+	case 3:
+		viz = new nmg_Viz_OpaqueTexture(dataset);
+		break;
+	default:
+		printf("Request to make unknown visualization!\n");
+		printf("Defaulting to Opaque visualization.\n");
+		viz = new nmg_Viz_Opaque(dataset);
+		break;
+	}
+
+	return viz;
+}
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::Constructor
@@ -36,36 +56,12 @@
 ////////////////////////////////////////////////////////////
 nmg_Visualization::
 nmg_Visualization(nmb_Dataset *dataset)
-  : d_dataset(dataset), d_maxHeight(0.5), d_minHeight(0.5), 
-    d_alpha(0.6), d_smooth(false), d_vertexPtr(NULL),
-	d_texture(NULL), d_tex_width(0), d_tex_height(0)
+  : d_maxHeight(0.5), d_minHeight(0.5), 
+    d_alpha(0.5), d_vertexPtr(NULL),
+	d_texture(NULL), d_tex_width(0), d_tex_height(0),
+	d_control(NULL), d_VertexArrayDim(0)
 {
-    nmb_PlaneSelection planes;
-    
-    planes.lookup(d_dataset);
-
-    //Set the default control of visualization to the
-    //height field
-    d_control = planes.height;
-    
-    if (planes.mask == (BCPlane*)NULL) {
-        BCPlane *plane = d_dataset->inputGrid->addNewPlane("Mask-Plane", "", NOT_TIMED);		
-        d_dataset->maskPlaneName->Set(plane->name()->Characters());
-        strcpy(g_maskPlaneName, plane->name()->Characters());
-    }
-    
-    if (planes.transparent == (BCPlane*)NULL) {
-        BCPlane *plane = d_dataset->inputGrid->addNewPlane("Transparent-Plane", "", NOT_TIMED);		
-        d_dataset->transparentPlaneName->Set(plane->name()->Characters());
-        strcpy(g_transparentPlaneName, plane->name()->Characters());
-    }
-    /*
-      if (build_grid_display_lists(planes, 1, &d_list_base[0], &d_num_lists[0],
-      d_num_lists[0], g_minColor, g_maxColor)) {
-      fprintf(stderr,"ERROR: Could not build grid display lists\n");
-      d_dataset->done = 1;
-      }
-    */
+    changeDataset(dataset);
 }
 
 ////////////////////////////////////////////////////////////
@@ -81,10 +77,6 @@ nmg_Visualization::
     delete [] last_marked;
     delete [] update;
     delete [] todo;
-    
-    if (d_vertexPtr) {
-        free(d_vertexPtr);
-    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -99,18 +91,6 @@ getBaseSurface()
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Visualization::setSmooth
-//      Access: Public
-// Description: Determines if the transparency will be a
-//              smooth transition or a cuttof
-////////////////////////////////////////////////////////////
-void nmg_Visualization::
-setSmooth(bool smooth)
-{
-    d_smooth = smooth;
-}
-
-////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::setMinHeight
 //      Access: Public
 // Description: Set the bottom level height to use the 
@@ -122,6 +102,16 @@ setMinHeight(float min_height) {
 }
 
 ////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::getMinHeight
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+float nmg_Visualization::
+getMinHeight() {
+    return d_minHeight;
+}
+
+////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::setMaxHeight
 //      Access: Public
 // Description: Set the top level height to use the 
@@ -130,6 +120,16 @@ setMinHeight(float min_height) {
 void nmg_Visualization::
 setMaxHeight(float max_height) {
     d_maxHeight = max_height;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::getMaxHeight
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+float nmg_Visualization::
+getMaxHeight() {
+    return d_maxHeight;
 }
 
 ////////////////////////////////////////////////////////////
@@ -145,6 +145,31 @@ setControlPlane(BCPlane *control) {
 }
 
 ////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::changeDataset
+//      Access: Public
+// Description: Change the current dataset to a new one
+////////////////////////////////////////////////////////////
+void nmg_Visualization::
+changeDataset(nmb_Dataset *dataset) {
+	d_dataset = dataset;
+    nmb_PlaneSelection planes;
+    
+    planes.lookup(d_dataset);
+
+    if (planes.mask == (BCPlane*)NULL) {
+        BCPlane *plane = d_dataset->inputGrid->addNewPlane("Mask-Plane", "", NOT_TIMED);		
+        d_dataset->maskPlaneName->Set(plane->name()->Characters());
+        strcpy(g_maskPlaneName, plane->name()->Characters());
+    }
+    
+    if (planes.transparent == (BCPlane*)NULL) {
+        BCPlane *plane = d_dataset->inputGrid->addNewPlane("Transparent-Plane", "", NOT_TIMED);		
+        d_dataset->transparentPlaneName->Set(plane->name()->Characters());
+        strcpy(g_transparentPlaneName, plane->name()->Characters());
+    }
+}
+
+////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::setAlpha
 //      Access: Public
 // Description: Set the alpha value to use at the mask areas
@@ -152,6 +177,43 @@ setControlPlane(BCPlane *control) {
 void nmg_Visualization::
 setAlpha(float alpha) {
     d_alpha = alpha;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::getAlpha
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+float nmg_Visualization::
+getAlpha() {
+    return d_alpha;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::determineVertexDim
+//      Access: Protected, Virtual
+// Description: 
+////////////////////////////////////////////////////////////
+int nmg_Visualization::
+determineVertexDim(int x, int y)
+{
+	int dim;
+    
+    if(x<=y) {
+        dim=y;
+    }
+    else {
+        dim=x;
+    }       
+    
+	if (dim == d_VertexArrayDim) {
+		return 0;
+	}
+	else {
+		d_VertexArrayDim = dim;
+	}
+
+	return 1;
 }
 
 ////////////////////////////////////////////////////////////
@@ -455,26 +517,26 @@ drawLists(int base, int num)
 ////////////////////////////////////////////////////////////
 void nmg_Visualization::
 buildMaskPlane() {
-    float min, max;
     nmb_PlaneSelection planes;
     
     planes.lookup(d_dataset);
-    
-    float deltaZ = d_control->maxValue() - d_control->minValue();
-    min = d_control->minValue() + deltaZ * d_minHeight;
-    max = d_control->minValue() + deltaZ * d_maxHeight;
-    
+
+	if (d_control == (BCPlane*)NULL) {
+		//If there is no control plane, then just fill the
+		//mask plane with 1's.
+		for(int y = 0; y < planes.mask->numY(); y++) {
+			for(int x = 0; x < planes.mask->numX(); x++) {
+				planes.mask->setValue(x, y, 1);
+			}
+		}
+		return;
+	}
+
     float maskVal, z;
-    for(int y = 0; y < d_control->numY(); y++) {
+	for(int y = 0; y < d_control->numY(); y++) {
         for(int x = 0; x < d_control->numX(); x++) {
             z = d_control->value(x,y);
-            if (min == max) {
-                maskVal = (z< min);
-            }
-            else {
-                maskVal = (z < min || z > max);
-            }
-            
+            maskVal = ((z < d_minHeight) || (z > d_maxHeight));
             planes.mask->setValue(x, y, maskVal);
         }
     }
@@ -489,45 +551,29 @@ buildMaskPlane() {
 ////////////////////////////////////////////////////////////
 void nmg_Visualization::
 buildTransparentPlane() {
-    float min, max;
     nmb_PlaneSelection planes;
     
-    planes.lookup(d_dataset);
-    
-    float deltaZ = d_control->maxValue() - d_control->minValue();
-    min = d_control->minValue() + deltaZ * d_minHeight;
-    max = d_control->minValue() + deltaZ * d_maxHeight;
+	planes.lookup(d_dataset);
+	if (d_control == (BCPlane*)NULL) {
+		//If there is no control plane, then just fill the
+		//transparency plane with 1's.
+		for(int y = 0; y < planes.transparent->numY(); y++) {
+			for(int x = 0; x < planes.transparent->numX(); x++) {
+				planes.transparent->setValue(x, y, 1);
+			}
+		}
+		return;
+	}
     
     float alphaVal, z;
     for(int y = 0; y < d_control->numY(); y++) {
         for(int x = 0; x < d_control->numX(); x++) {
             z = d_control->value(x,y);
             alphaVal = g_surface_alpha;
-            if (d_smooth) {
-                if (min == max) {
-                    if (z >= min) {
-                        alphaVal = ((z - min) / max) * g_surface_alpha;
-                    }
-                }
-                else {
-                    if (z >= min && z <= max) {
-                        alphaVal = ((z - min) / max) * g_surface_alpha;
-                    }
-                }
-            }
-            else {
-                if (min == max) {
-                    if (z >= min) {
-                        alphaVal = d_alpha;
-                    }
-                }
-                else {
-                    if (z >= min && z <= max)
-                    {
-                        alphaVal = d_alpha;
-                    }
-                }
-            }
+
+			if ((z >= d_minHeight) && (z <= d_maxHeight)) {
+				alphaVal = d_alpha;
+			}
             
             planes.transparent->setValue(x, y, alphaVal);
         }
@@ -598,6 +644,14 @@ nmg_Viz_Opaque(nmb_Dataset *dataset)
 nmg_Viz_Opaque::
 ~nmg_Viz_Opaque()
 {
+	if (d_vertexPtr) {
+		for(int i=0;i < d_VertexArrayDim; i++) {
+			delete [] d_vertexPtr[0][i];
+		}
+
+		delete [] d_vertexPtr[0];
+		delete [] d_vertexPtr;
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -671,30 +725,28 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
 int nmg_Viz_Opaque::
 initVertexArrays(int x, int y)
 {
-    int dim;
-    
-    if(x<=y) {
-        dim=y;
-    }
-    else {
-        dim=x;
-    }       
-    
+    if (!determineVertexDim(x,y)) {
+		return 1;
+	}
+
     if (d_vertexPtr) {
         free(d_vertexPtr);
     }
     
-    d_vertexPtr = (Vertex_Struct ***)malloc(sizeof(Vertex_Struct **));
+    //d_vertexPtr = (Vertex_Struct ***)malloc(sizeof(Vertex_Struct **));
+	d_vertexPtr = (Vertex_Struct***)new Vertex_Struct[1];
     
-    d_vertexPtr[0] = (Vertex_Struct **)malloc(
-        sizeof(Vertex_Struct *) * dim);
-    
+    //d_vertexPtr[0] = (Vertex_Struct **)malloc(
+    //    sizeof(Vertex_Struct *) * d_VertexArrayDim);
+    d_vertexPtr[0] = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
+
     if (d_vertexPtr[0] == NULL) {
         return 0;
     }
     
-    for(int i=0;i < dim; i++) {
-        d_vertexPtr[0][i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
+    for(int i=0;i < d_VertexArrayDim; i++) {
+        //d_vertexPtr[0][i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* d_VertexArrayDim * 2);
+		d_vertexPtr[0][i] = new Vertex_Struct[d_VertexArrayDim * 2];
         
         if(d_vertexPtr[0][i] == NULL )
             return 0;
@@ -730,8 +782,18 @@ nmg_Viz_Transparent(nmb_Dataset *dataset)
 nmg_Viz_Transparent::
 ~nmg_Viz_Transparent()
 {
-}
+	if (d_vertexPtr) {
+		for(int i = 0; i < 2; i++) {
+			for(int j=0;j < d_VertexArrayDim; j++) {
+				delete [] d_vertexPtr[i][j];
+			}
+		}
 
+		delete [] d_vertexPtr[0];
+		delete [] d_vertexPtr[1];
+		delete [] d_vertexPtr;
+	}
+}
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Viz_Transparent::rebuildGrid
 //      Access: Public
@@ -777,8 +839,8 @@ rebuildGrid()
 void nmg_Viz_Transparent::
 renderSurface()
 {
-  drawLists(d_list_base[0], d_num_lists[0]);
-  drawLists(d_list_base[1], d_num_lists[1]);
+	drawLists(d_list_base[0], d_num_lists[0]);
+	drawLists(d_list_base[1], d_num_lists[1]);
 }
 
 ////////////////////////////////////////////////////////////
@@ -844,29 +906,19 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
 int nmg_Viz_Transparent::
 initVertexArrays(int x, int y)
 {
-    int dim;
+    if (!determineVertexDim(x,y)) {
+		return 1;
+	}
     
-    if(x<=y) {
-        dim=y;
-    }
-    else {
-        dim=x;
-    }       
-    
-    if (d_vertexPtr) {
-        free(d_vertexPtr);
-    }
-    
-    d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
+    d_vertexPtr = (Vertex_Struct***)new Vertex_Struct[2];
     
     for(int i = 0; i < 2; i++) {
-        d_vertexPtr[i] = (Vertex_Struct **)malloc(
-            sizeof(Vertex_Struct *) * dim);
+        d_vertexPtr[i] = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
         
         if (d_vertexPtr[i] == NULL)
             return 0;
-        for(int j=0;j < dim; j++) {
-            d_vertexPtr[i][j]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
+        for(int j=0;j < d_VertexArrayDim; j++) {
+            d_vertexPtr[i][j] = new Vertex_Struct[d_VertexArrayDim * 2];
             
             if(d_vertexPtr[i][j] == NULL )
                 return 0;
@@ -885,9 +937,6 @@ nmg_Viz_WireFrame::
 nmg_Viz_WireFrame(nmb_Dataset *dataset)
 	: nmg_Visualization(dataset)
 {
-    //Override the default value of d_alpha
-    d_alpha = 0;
-    
     d_list_base = new unsigned int[2];
     d_num_lists = new int[2];
     last_marked = new nmb_Interval[2];
@@ -906,6 +955,17 @@ nmg_Viz_WireFrame(nmb_Dataset *dataset)
 nmg_Viz_WireFrame::
 ~nmg_Viz_WireFrame()
 {
+	if (d_vertexPtr) {
+		for(int i = 0; i < 2; i++) {
+			for(int j=0;j < d_VertexArrayDim; j++) {
+				delete [] d_vertexPtr[i][j];
+			}
+		}
+
+		delete [] d_vertexPtr[0];
+		delete [] d_vertexPtr[1];
+		delete [] d_vertexPtr;
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -1032,29 +1092,19 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
 int nmg_Viz_WireFrame::
 initVertexArrays(int x, int y)
 {
-    int dim;
+    if (!determineVertexDim(x,y)) {
+		return 1;
+	}
     
-    if(x<=y) {
-        dim=y;
-    }
-    else {
-        dim=x;
-    }       
-    
-    if (d_vertexPtr) {
-        free(d_vertexPtr);
-    }
-    
-    d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
+    d_vertexPtr = (Vertex_Struct***)new Vertex_Struct[2];
     
     for(int i = 0; i < 2; i++) {
-        d_vertexPtr[i] = (Vertex_Struct **)malloc(
-            sizeof(Vertex_Struct *) * dim);
+        d_vertexPtr[i] = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
         
         if (d_vertexPtr[i] == NULL)
             return 0;
-        for(int j=0;j < dim; j++) {
-            d_vertexPtr[i][j]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
+        for(int j=0;j < d_VertexArrayDim; j++) {
+            d_vertexPtr[i][j] = new Vertex_Struct[d_VertexArrayDim * 2];
             
             if(d_vertexPtr[i][j] == NULL )
                 return 0;
@@ -1127,7 +1177,17 @@ nmg_Viz_OpaqueTexture(nmb_Dataset *dataset)
 nmg_Viz_OpaqueTexture::
 ~nmg_Viz_OpaqueTexture()
 {
-	delete [] d_texture;
+	if (d_vertexPtr) {
+		for(int i = 0; i < 2; i++) {
+			for(int j=0;j < d_VertexArrayDim; j++) {
+				delete [] d_vertexPtr[i][j];
+			}
+		}
+
+		delete [] d_vertexPtr[0];
+		delete [] d_vertexPtr[1];
+		delete [] d_vertexPtr;
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -1251,29 +1311,19 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
 int nmg_Viz_OpaqueTexture::
 initVertexArrays(int x, int y)
 {
-    int dim;
+    if (!determineVertexDim(x,y)) {
+		return 1;
+	}
     
-    if(x<=y) {
-        dim=y;
-    }
-    else {
-        dim=x;
-    }       
-    
-    if (d_vertexPtr) {
-        free(d_vertexPtr);
-    }
-    
-    d_vertexPtr = (Vertex_Struct ***)malloc(2 * sizeof(Vertex_Struct **));
+    d_vertexPtr = (Vertex_Struct***)new Vertex_Struct[2];
     
     for(int i = 0; i < 2; i++) {
-        d_vertexPtr[i] = (Vertex_Struct **)malloc(
-            sizeof(Vertex_Struct *) * dim);
+        d_vertexPtr[i] = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
         
         if (d_vertexPtr[i] == NULL)
             return 0;
-        for(int j=0;j < dim; j++) {
-            d_vertexPtr[i][j]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
+        for(int j=0;j < d_VertexArrayDim; j++) {
+            d_vertexPtr[i][j] = new Vertex_Struct[d_VertexArrayDim * 2];
             
             if(d_vertexPtr[i][j] == NULL )
                 return 0;

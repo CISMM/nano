@@ -255,6 +255,10 @@ void nmg_Graphics_Timer::setHeightPlaneName (const char * n) {
   d_imp->setHeightPlaneName(n);
 }
 
+void nmg_Graphics_Timer::setVizPlaneName (const char * n) {
+  activateTimer();
+  d_imp->setVizPlaneName(n);
+}
 
 void nmg_Graphics_Timer::setContourWidth (float x) {
   activateTimer();
@@ -566,6 +570,24 @@ void nmg_Graphics_Timer::chooseVisualization(int viz_type)
 {
   activateTimer();
   d_imp->chooseVisualization(viz_type);
+}
+
+void nmg_Graphics_Timer::setVisualizationMaxHeight(float viz_max)
+{
+  activateTimer();
+  d_imp->setVisualizationMaxHeight(viz_max);
+}
+
+void nmg_Graphics_Timer::setVisualizationAlpha(float viz_alpha)
+{
+  activateTimer();
+  d_imp->setVisualizationAlpha(viz_alpha);
+}
+
+void nmg_Graphics_Timer::setVisualizationMinHeight(float viz_min)
+{
+  activateTimer();
+  d_imp->setVisualizationMinHeight(viz_min);
 }
 
 void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {

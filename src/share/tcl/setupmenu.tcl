@@ -145,6 +145,94 @@ pack $nmInfo(z_mapping).scale -anchor nw -padx 3 -pady 3
 
 #
 #################################    
+# Controls for the various visualizations
+
+set nmInfo(visualizations) [create_closing_toplevel visualizations "Visualizations Setup"]
+#show.visualizations
+
+set viz_choice 0
+set viz_min 0
+set viz_max 1
+set viz_min_limit 0
+set viz_max_limit 1
+set viz_alpha 0.5
+
+#Viz choices plane
+iwidgets::Labeledframe $nmInfo(visualizations).viz \
+	-labeltext "Choose visualization to use" \
+	-labelpos nw
+set nmInfo(viz_choices) [$nmInfo(visualizations).viz childsite]
+
+pack $nmInfo(visualizations).viz -side top -fill x
+
+frame $nmInfo(viz_choices).r1
+frame $nmInfo(viz_choices).r2
+radiobutton $nmInfo(viz_choices).r1.opaque -text "Opaque" \
+    -variable viz_choice -value 0  -padx 0 -pady 0
+radiobutton $nmInfo(viz_choices).r1.transparent -text "Transparent" \
+    -variable viz_choice -value 1  -padx 0 -pady 0
+radiobutton $nmInfo(viz_choices).r2.wire_frame -text "Wire Frame" \
+	-variable viz_choice -value 2  -padx 0 -pady 0
+radiobutton $nmInfo(viz_choices).r2.opaque_tex -text "Opacity Texture" \
+	-variable viz_choice -value 3  -padx 0 -pady 0
+
+pack $nmInfo(viz_choices).r1 $nmInfo(viz_choices).r2 -side left -fill x
+pack $nmInfo(viz_choices).r1.opaque $nmInfo(viz_choices).r1.transparent -anchor nw
+pack $nmInfo(viz_choices).r2.wire_frame $nmInfo(viz_choices).r2.opaque_tex -anchor nw
+
+#Viz choices plane
+iwidgets::Labeledframe $nmInfo(visualizations).control \
+	-labeltext "Visualization Controls" \
+	-labelpos nw
+set nmInfo(viz_controls) [$nmInfo(visualizations).control childsite]
+
+pack $nmInfo(visualizations).control -side top -fill x
+
+generic_optionmenu $nmInfo(viz_controls).viz_dataset \
+        viz_comes_from "Visualization plane" inputPlaneNames
+
+label $nmInfo(viz_controls).slidelabel -justify left -text \
+	"Set the values below to determine the area that\nthe alternate visualization method is used for:"
+
+label $nmInfo(viz_controls).planemin -justify left -text \
+	"Visualization plane min height $viz_min_limit"
+
+generic_entry $nmInfo(viz_controls).viz_min viz_min "Min height:" real
+
+label $nmInfo(viz_controls).planemax -justify left -text \
+	"Visualization plane max height $viz_max_limit"
+
+generic_entry $nmInfo(viz_controls).viz_max viz_max "Max height:" real
+
+label $nmInfo(viz_controls).alphalabel -justify left -text \
+	"Alpha value to use for visualization"
+
+generic_entry $nmInfo(viz_controls).viz_alpha viz_alpha "Alpha:" real
+
+pack $nmInfo(viz_controls).viz_dataset -side top -anchor w
+pack $nmInfo(viz_controls).slidelabel -side top -anchor w
+pack $nmInfo(viz_controls).planemin -side top -anchor w
+pack $nmInfo(viz_controls).viz_min -side top -anchor w -padx 1m
+pack $nmInfo(viz_controls).planemax -side top -anchor w
+pack $nmInfo(viz_controls).viz_max -side top -anchor w
+pack $nmInfo(viz_controls).alphalabel -side top -anchor w
+pack $nmInfo(viz_controls).viz_alpha -side top -anchor w -padx 9m
+trace variable viz_min_limit w update_minmax_label
+trace variable viz_max_limit w update_minmax_label
+
+proc update_minmax_label {name el op} {
+	global viz_min_limit viz_max_limit
+    global nmInfo
+
+	$nmInfo(viz_controls).planemin configure -text \
+	"Visualization plane min height $viz_min_limit"
+
+	$nmInfo(viz_controls).planemax configure -text \
+	"Visualization plane max height $viz_max_limit"
+}
+
+#
+#################################    
 # Controls for the colormap are in a separate file (colormap.tcl)
 # sourced from mainwin.tcl.
 

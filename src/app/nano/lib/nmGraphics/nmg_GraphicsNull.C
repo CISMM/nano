@@ -211,6 +211,18 @@ void nmg_Graphics_Null::chooseVisualization(int viz_type)
 {
 }
 
+void nmg_Graphics_Null::setVisualizationMinHeight(float viz_min)
+{
+}
+
+void nmg_Graphics_Null::setVisualizationMaxHeight(float viz_max)
+{
+}
+
+void nmg_Graphics_Null::setVisualizationAlpha(float viz_alpha)
+{
+}
+
 void nmg_Graphics_Null::getLightDirection (q_vec_type *) const {}
 
 int nmg_Graphics_Null::getHandColor (void) const {

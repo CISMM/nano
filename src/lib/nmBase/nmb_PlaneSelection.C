@@ -16,6 +16,7 @@ nmb_PlaneSelection::nmb_PlaneSelection (void) :
   alpha (NULL),
   mask (NULL),
   transparent (NULL),
+  viz (NULL),
   red (NULL),
   green (NULL),
   blue (NULL) {
@@ -34,7 +35,8 @@ void nmb_PlaneSelection::lookup (nmb_Dataset * data) {
 		 data->opacityPlaneName->string(),
 		 data->alphaPlaneName->string(),
          data->maskPlaneName->string(),
-		 data->transparentPlaneName->string());
+		 data->transparentPlaneName->string(),
+		 data->vizPlaneName->string());
 }
 
 void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
@@ -44,7 +46,8 @@ void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
 								 const char * opacityName,
                                  const char * alphaName,
 								 const char * maskName,
-								 const char * transparentName) {
+								 const char * transparentName,
+								 const char * vizName) {
   height = inputGrid->getPlaneByName (heightName);
   color = inputGrid->getPlaneByName (colorName);
   contour = inputGrid->getPlaneByName (contourName);
@@ -52,6 +55,7 @@ void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
   alpha = inputGrid->getPlaneByName (alphaName);
   mask = inputGrid->getPlaneByName (maskName);
   transparent = inputGrid->getPlaneByName (transparentName);
+  viz = inputGrid->getPlaneByName (vizName);
 }
 
 void nmb_PlaneSelection::lookupPrerenderedColors (BCGrid * grid) {

@@ -76,6 +76,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 	virtual void setTransparentPlaneName (const char *);
 	virtual void setMaskPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
+	virtual void setVizPlaneName (const char *);
     virtual void setIconScale (float);
     virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos(double [3], double [4]);
@@ -147,6 +148,9 @@ class nmg_Graphics_Timer : public nmg_Graphics {
                                     const ImageType type);
     virtual void setViewTransform (v_xform_type);
 	virtual void chooseVisualization(int);
+	virtual void setVisualizationMinHeight(float);
+	virtual void setVisualizationMaxHeight(float);
+	virtual void setVisualizationAlpha(float);
 
 
     virtual void getLightDirection (q_vec_type *) const;

@@ -75,13 +75,7 @@ class nmb_Dataset {
     nmb_Subgrid range_of_change;
         ///< portion of inputGrid that changed since the last render
 
-	nmb_String * transparentPlaneName;
-      ///< plane that defines the alpha values for all
-	  ///< the points on the surface
-	nmb_String * maskPlaneName;
-      ///< name of the plane whose data should control
-      ///< what to draw for the various visualizations
-    nmb_String * alphaPlaneName;
+	nmb_String * alphaPlaneName;
       ///< name of the plane whose data should control
       ///< alphablending of a texture
     nmb_String * colorPlaneName;
@@ -94,6 +88,14 @@ class nmb_Dataset {
       ///< name of the plane to render opacity for
     nmb_String * heightPlaneName;
       ///< name of the plane to render as height (Z)
+	nmb_String * transparentPlaneName;
+      ///< plane that defines the alpha values for all
+	  ///< the points on the surface
+	nmb_String * maskPlaneName;
+      ///< name of the plane whose data should control
+      ///< what to draw for the various visualizations
+	nmb_String * vizPlaneName;
+      ///< name of the plane to control display of visualizations
 
     vrpn_bool done;
       ///< 1 if a subroutine has failed and directs us to exit

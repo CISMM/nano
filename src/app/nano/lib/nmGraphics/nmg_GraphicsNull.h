@@ -132,6 +132,9 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual void createScreenImage(const char *filename, const ImageType type);
 
 	virtual void chooseVisualization(int);
+	virtual void setVisualizationMinHeight(float);
+	virtual void setVisualizationMaxHeight(float);
+	virtual void setVisualizationAlpha(float);
     // ACCESSORS
 
 

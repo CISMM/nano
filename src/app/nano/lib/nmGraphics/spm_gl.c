@@ -770,12 +770,13 @@ int spm_x_strip( nmb_PlaneSelection planes,
     
     x = 0;
     y = which + g_stride;
-    bool quad_totally_opaque = (planes.mask->value(x,y) <= 0 ||
-                                planes.mask->value(x,y - g_stride) <= 0 ||
-                                planes.mask->value(x+g_stride,y) <= 0 ||
-                                planes.mask->value(x+g_stride,y - g_stride) <= 0);
-    if ((g_mask == ENABLE_MASK && quad_totally_opaque) ||
-        (g_mask == INVERT_MASK && !quad_totally_opaque))
+	//Is the current quad is partially masked?
+    bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
+                              planes.mask->value(x,y - g_stride) <= 0 ||
+                              planes.mask->value(x+g_stride,y) <= 0 ||
+                              planes.mask->value(x+g_stride,y - g_stride) <= 0);
+    if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
+        (g_mask == INVERT_MASK && !quad_partial_mask))
     {
         skipping = true;
     }
@@ -785,16 +786,16 @@ int spm_x_strip( nmb_PlaneSelection planes,
         i+=2;
     }
     for (x = g_stride; x < planes.height->numX() - g_stride; x += g_stride) {   // Left->right
-        quad_totally_opaque = (planes.mask->value(x,y) <= 0 ||
-                               planes.mask->value(x,y - g_stride) <= 0 ||
-                               planes.mask->value(x+g_stride,y) <= 0 ||
-                               planes.mask->value(x+g_stride,y - g_stride) <= 0);
+        quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
+                             planes.mask->value(x,y - g_stride) <= 0 ||
+                             planes.mask->value(x+g_stride,y) <= 0 ||
+                             planes.mask->value(x+g_stride,y - g_stride) <= 0);
         if (!skipping) {
             x_array[i] = x; x_array[i+1] = x;
             y_array[i] = y; y_array[i+1] = y - g_stride;
             i+=2;
-            if ((g_mask == ENABLE_MASK && quad_totally_opaque) ||
-                (g_mask == INVERT_MASK && !quad_totally_opaque))
+            if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
+                (g_mask == INVERT_MASK && !quad_partial_mask))
             {
                 skipping = true;
                 x_array[i] = -1;
@@ -804,8 +805,8 @@ int spm_x_strip( nmb_PlaneSelection planes,
             }
         }
         else if (skipping) {
-            if ((g_mask == INVERT_MASK && quad_totally_opaque) ||
-                (g_mask == ENABLE_MASK && !quad_totally_opaque))
+            if ((g_mask == INVERT_MASK && quad_partial_mask) ||
+                (g_mask == ENABLE_MASK && !quad_partial_mask))
             {
                 skipping = false;
                 x_array[i] = x; x_array[i+1] = x;

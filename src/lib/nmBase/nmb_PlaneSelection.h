@@ -32,7 +32,7 @@ class nmb_PlaneSelection {
                  const char * heightName, const char * colorName,
                  const char * contourName, const char * opacityName,
 				 const char * alphaName, const char * maskName,
-				 const char * transparentName);
+				 const char * transparentName, const char * vizName);
 
     void lookupPrerenderedColors (BCGrid *);
     void lookupPrerenderedDepth (BCGrid *);
@@ -42,8 +42,11 @@ class nmb_PlaneSelection {
     BCPlane * contour;
     BCPlane * opacity;
     BCPlane * alpha;
+
+	//Visualization related planes
 	BCPlane * mask;
 	BCPlane * transparent;
+	BCPlane * viz;
 
     /// Support for prerendered surfaces
     BCPlane * red;

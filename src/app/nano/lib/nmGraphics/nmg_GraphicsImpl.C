@@ -50,7 +50,7 @@
 //and deleting the object every time the user switches which viz to use,
 //create an array of all possible visualization methods and merely point
 //the global visualization object at the right one
-nmg_Visualization *(viz_set[NUMBER_OF_VISUALIZATIONS]);
+//nmg_Visualization *(viz_set[NUMBER_OF_VISUALIZATIONS]);
 
 nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     nmb_Dataset * data,
@@ -90,6 +90,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_opacityPlaneName, "none");
         strcpy(g_maskPlaneName, "none");
         strcpy(g_transparentPlaneName, "none");
+		strcpy(g_vizPlaneName, "none");
     } else {
         g_inputGrid = data->inputGrid;
         strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
@@ -99,6 +100,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
         strcpy(g_maskPlaneName, data->maskPlaneName->string());
         strcpy(g_transparentPlaneName, data->transparentPlaneName->string());
+		strcpy(g_vizPlaneName, data->vizPlaneName->string());
     }
 
 #ifdef FLOW
@@ -148,12 +150,15 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     // Initialize the various visualizations, then point the global at  //
     // the default							//
     //////////////////////////////////////////////////////////////////////
-    viz_set[0] = new nmg_Viz_Opaque(dataset);
+    /*
+	viz_set[0] = new nmg_Viz_Opaque(dataset);
     viz_set[1] = new nmg_Viz_Transparent(dataset);
     viz_set[2] = new nmg_Viz_WireFrame(dataset);
     viz_set[3] = new nmg_Viz_OpaqueTexture(dataset);
-    
+	    
     visualization = viz_set[0];
+	*/
+	visualization = create_new_visualization(0, dataset);
     
     //////////////////////////////////////////////////////////////////////
     // Build the display lists we'll need to draw the data, etc		//
@@ -372,6 +377,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setTransparentPlaneName_type,
 							   handle_setTransparentPlaneName,
 							   this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setVizPlaneName_type,
+							   handle_setVizPlaneName,
+							   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMinColor_type,
                                handle_setMinColor,
                                this, vrpn_ANY_SENDER);
@@ -549,6 +557,15 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_chooseVisualization_type,
 				handle_chooseVisualization,
 				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setVisualizationMinHeight_type,
+				handle_setVisualizationMinHeight,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setVisualizationMaxHeight_type,
+				handle_setVisualizationMaxHeight,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setVisualizationAlpha_type,
+				handle_setVisualizationAlpha,
+				this, vrpn_ANY_SENDER);
 
 }
 
@@ -559,6 +576,7 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
   for (i = 0; i < NUM_USERS; i++)
     v_close_display(d_displayIndexList[i]);
 
+  delete visualization;
 /*
   if (sem_data) {
     delete [] sem_data;
@@ -632,8 +650,12 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   strcpy(g_contourPlaneName, data->contourPlaneName->string());
   strcpy(g_heightPlaneName, data->heightPlaneName->string());
 
-    causeGridRebuild();
- 
+  strcpy(g_maskPlaneName, data->vizPlaneName->string());
+  strcpy(g_transparentPlaneName, data->transparentPlaneName->string());
+  strcpy(g_vizPlaneName, data->vizPlaneName->string());
+
+  visualization->changeDataset(data);
+  causeGridRebuild(); 
 }
 
 // functions to replace code in microscape.c - AAS
@@ -1240,9 +1262,6 @@ void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   strcpy(g_heightPlaneName, n);
-  //Temporary hack until TCL interface for Visualizations is created
-  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
-  visualization->setControlPlane(planes.height);
 }
 
 // virtual
@@ -1257,6 +1276,13 @@ void nmg_Graphics_Implementation::setTransparentPlaneName (const char * n) {
 
 void nmg_Graphics_Implementation::setMaskPlaneName (const char * n) {
   strcpy(g_maskPlaneName, n);
+}
+
+void nmg_Graphics_Implementation::setVizPlaneName (const char * n) {
+  strcpy(g_vizPlaneName, n);
+
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+  visualization->setControlPlane(planes.viz);
 }
 
 void nmg_Graphics_Implementation::setContourWidth (float x) {
@@ -2697,7 +2723,38 @@ void nmg_Graphics_Implementation::createScreenImage
 
 void nmg_Graphics_Implementation::chooseVisualization(int viz_type) 
 {
-	visualization = viz_set[viz_type];
+	float min = visualization->getMinHeight();
+	float max = visualization->getMaxHeight();
+	float alpha = visualization->getAlpha();
+	delete visualization;
+	visualization = create_new_visualization(viz_type, d_dataset);
+
+	nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+	visualization->initVertexArrays(d_dataset->inputGrid->numX(),
+									d_dataset->inputGrid->numY());
+	visualization->setControlPlane(planes.viz);
+	visualization->setMinHeight(min);
+	visualization->setMaxHeight(max);
+	visualization->setAlpha(alpha);
+	causeGridRebuild();
+}
+
+void nmg_Graphics_Implementation::setVisualizationMinHeight(float viz_min) 
+{
+	visualization->setMinHeight(viz_min);
+	causeGridRebuild();
+}
+
+void nmg_Graphics_Implementation::setVisualizationMaxHeight(float viz_max) 
+{
+	visualization->setMaxHeight(viz_max);
+	causeGridRebuild();
+}
+
+void nmg_Graphics_Implementation::setVisualizationAlpha(float viz_alpha) 
+{
+	visualization->setAlpha(viz_alpha);
+	causeGridRebuild();
 }
 
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
@@ -3228,6 +3285,13 @@ int nmg_Graphics_Implementation::handle_setMaskPlaneName (void * userdata,
 							     vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   it->setMaskPlaneName(p.buffer);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setVizPlaneName (void * userdata,
+							     vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  it->setVizPlaneName(p.buffer);
   return 0;
 }
 
@@ -4007,6 +4071,51 @@ int nmg_Graphics_Implementation::handle_chooseVisualization
    nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
    it->decode_chooseVisualization(p.buffer, &viz_type);
    it->chooseVisualization(viz_type);
+
+   return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setVisualizationMinHeight
+(
+   void              *userdata,
+   vrpn_HANDLERPARAM  p
+)
+{
+   float viz_min;
+
+   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+   it->decode_setVisualizationMinHeight(p.buffer, &viz_min);
+   it->setVisualizationMinHeight(viz_min);
+
+   return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setVisualizationMaxHeight
+(
+   void              *userdata,
+   vrpn_HANDLERPARAM  p
+)
+{
+   float viz_max;
+
+   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+   it->decode_setVisualizationMaxHeight(p.buffer, &viz_max);
+   it->setVisualizationMaxHeight(viz_max);
+
+   return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setVisualizationAlpha
+(
+   void              *userdata,
+   vrpn_HANDLERPARAM  p
+)
+{
+   float viz_alpha;
+
+   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+   it->decode_setVisualizationAlpha(p.buffer, &viz_alpha);
+   it->setVisualizationMaxHeight(viz_alpha);
 
    return 0;
 }

@@ -671,7 +671,8 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
     plane->setScale(microscope->state.stm_z_scale);
     decoration->setScrapeHeightScale(microscope->state.stm_z_scale);
     //cause_grid_redraw(_value, _mptr);
-    graphics->causeGridRedraw();
+    //graphics->causeGridRedraw();
+    graphics->causeGridRebuild();
   }
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
@@ -912,7 +913,7 @@ void    handle_export_dataset_change(const char *new_value, void * )
         fclose(f);
 }
 
-void    handle_z_dataset_change(const char *, void * _mptr)
+void handle_z_dataset_change(const char *, void * _mptr)
 {
   BCPlane * plane = dataset->inputGrid->getPlaneByName
     (dataset->heightPlaneName->string());
@@ -941,9 +942,7 @@ void    handle_z_dataset_change(const char *, void * _mptr)
   graphics->causeGridRedraw();
 }
 
-
-
-void    handle_color_dataset_change(const char *, void * /*_mptr*/)
+void handle_color_dataset_change(const char *, void * /*_mptr*/)
 {
   //changed from using *NonZeroValue to *Value to match settings for
   //haptics parameters

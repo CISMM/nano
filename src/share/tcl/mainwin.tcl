@@ -252,6 +252,8 @@ $setupmenu add command -label "Data Sets..." -underline 0 \
 }
 $setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
+$setupmenu add command -label "Visualization Settings..." -underline 0 -command \
+	"show.visualizations"
 $setupmenu add command -label "Color Map..." -underline 0 -command \
 	"show.colorscale"
 $setupmenu add command -label "Contour Lines..." -underline 8 -command \

@@ -323,7 +323,14 @@ static void handle_recordAdaptations_change (int, void *);
 static void handle_msTimestampsName_change (const char *, void *);
 
 //Shape Analysis callback functions
-static void handle_analyze_shape(vrpn_int32 new_value, void *userdata);
+static void handle_analyze_shape(vrpn_int32 , void *);
+
+//Visualization callback functions
+static void handle_viz_change(vrpn_int32 , void *);
+static void handle_viz_dataset_change(const char *, void *);
+static void handle_viz_max_change(vrpn_float64 , void *);
+static void handle_viz_min_change(vrpn_float64 , void *);
+static void handle_viz_alpha_change(vrpn_float64 , void *);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -743,6 +750,16 @@ Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 Tclvar_string    screenImageFileType("screenImage_format", "");
 Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
+//-----------------------------------------------------------------
+/// These variables are for controlling visualizations
+Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
+Tclvar_float	viz_max_limit("viz_max_limit",1);
+Tclvar_float	viz_min_limit("viz_min_limit",0);
+Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
+Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
+Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
+
+//-----------------------------------------------------------------
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -1262,7 +1279,6 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   heightplane[0] = '\0';
     magellanName[0]= '\0';
 }
-
 
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
@@ -4028,6 +4044,48 @@ static void handle_analyze_shape(vrpn_int32, void *)
     analyze_shape = 0;
 }
 
+static void handle_viz_change(vrpn_int32, void *)
+{
+	graphics->chooseVisualization(viz_choice);
+}
+
+static void handle_viz_min_change(vrpn_float64, void *)
+{
+	graphics->setVisualizationMinHeight(viz_min);
+}
+
+static void handle_viz_max_change(vrpn_float64, void *)
+{
+	graphics->setVisualizationMaxHeight(viz_max);
+}
+
+static void handle_viz_alpha_change(vrpn_float64, void *)
+{
+	graphics->setVisualizationAlpha(viz_alpha);
+}
+
+static void handle_viz_dataset_change(const char *, void *)
+{
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+    (dataset->vizPlaneName->string());
+  
+  if (plane != (BCPlane*)NULL) {
+	viz_min_limit = plane->minValue();
+	viz_max_limit = plane->maxValue();
+	viz_min = plane->minValue();
+	viz_max = plane->maxValue();
+  }
+  else {
+	viz_min_limit = 0;
+	viz_max_limit = 1;
+	viz_min = 0;
+	viz_max = 1;
+  }
+
+  graphics->setVizPlaneName(dataset->vizPlaneName->string());
+  graphics->causeGridRebuild();
+  graphics->causeGridRedraw();
+}
 
 // This is an ImageMode handler. Makes sure the next time we enter
 // directZ mode we don't get surprised by wierd forces.
@@ -4225,6 +4283,12 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
   ((Tclvar_string *) d->heightPlaneName)->addCallback
             (handle_z_dataset_change, m);
 
+  ((Tclvar_string *) d->vizPlaneName)->
+        initializeTcl("viz_comes_from");
+
+  ((Tclvar_string *) d->vizPlaneName)->addCallback
+            (handle_viz_dataset_change, m);
+
 }
 
 void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
@@ -4233,6 +4297,9 @@ void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
    ((Tclvar_string *) d->heightPlaneName)->removeCallback
              (handle_z_dataset_change, m);
+
+   ((Tclvar_string *) d->vizPlaneName)->removeCallback
+             (handle_viz_dataset_change, m);
 }
 
 void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
@@ -6642,8 +6709,6 @@ int main (int argc, char* argv[])
     microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     createGraphics(istate);
-    //Temporary hack until a Tcl interface is created
-    graphics->chooseVisualization(istate.viz_mode);
 
     setupCallbacks(decoration);
 

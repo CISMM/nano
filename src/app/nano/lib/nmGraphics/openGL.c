@@ -537,7 +537,8 @@ int draw_world (int) {
   
   planes.lookup(g_inputGrid, g_heightPlaneName, g_colorPlaneName,
                 g_contourPlaneName, g_opacityPlaneName,
-				g_alphaPlaneName, g_maskPlaneName, g_transparentPlaneName);
+                g_alphaPlaneName, g_maskPlaneName, g_transparentPlaneName,
+                g_vizPlaneName);
 
   if (g_PRERENDERED_COLORS) {
     planes.lookupPrerenderedColors(g_prerendered_grid);

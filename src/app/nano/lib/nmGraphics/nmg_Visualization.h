@@ -28,10 +28,14 @@ public:
 	virtual int initVertexArrays(int x, int y) = 0;
 
 	void setMinHeight(float min_height);
-	void setMaxHeight(float max_height);
+	void setMaxHeight(float max_height);	
 	void setControlPlane(BCPlane *control);
 	void setAlpha(float alpha);
-	void setSmooth(bool smooth);
+	void changeDataset(nmb_Dataset *dataset);
+
+	float getMinHeight();
+	float getMaxHeight();
+	float getAlpha();
 
 	Vertex_Struct ** getBaseSurface();
 
@@ -39,10 +43,10 @@ protected:
 	float d_maxHeight, d_minHeight;  //Height's specified in percentage of
 	                                 //max height
 	float d_alpha;
-	bool d_smooth;
 	BCPlane *d_control;
 	unsigned char *d_texture;
 	int d_tex_width, d_tex_height;
+	int d_VertexArrayDim;
 
 	nmb_Dataset *d_dataset;
 	
@@ -60,10 +64,10 @@ protected:
 	void setUpdateAndTodo(int low_row, int high_row, int stride, 
 						  int num, nmb_Interval &last_marked,
 						  nmb_Interval &update, nmb_Interval &todo);
-	void setTextures();
 	void buildMaskPlane();
 	void buildTransparentPlane();
 
+	int determineVertexDim(int x, int y);
 	void setTexture();
 	virtual void cleanUp();
 	void drawLists(int base, int num);
@@ -140,5 +144,7 @@ public:
 private:
 	void build_spots_at_vertices();
 };
+
+nmg_Visualization* create_new_visualization(int choice, nmb_Dataset *dataset);
 
 #endif

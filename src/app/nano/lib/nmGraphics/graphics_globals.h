@@ -251,6 +251,7 @@ extern char g_heightPlaneName [128];
 extern char g_opacityPlaneName [128];
 extern char g_maskPlaneName [128];
 extern char g_transparentPlaneName [128];
+extern char g_vizPlaneName[128];
 
 extern BCGrid * g_inputGrid;
 //struct Vertex_Struct;

@@ -80,6 +80,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setHeightPlaneName (const char *);
     virtual void setMaskPlaneName (const char *);
     virtual void setTransparentPlaneName (const char *);
+	virtual void setVizPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -177,6 +178,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
 	/*New visualization method.  Chooses which visualizaton to use */
 	virtual void chooseVisualization(int);
+	virtual void setVisualizationMinHeight(float);
+	virtual void setVisualizationMaxHeight(float);
+	virtual void setVisualizationAlpha(float);
 
     // ACCESSORS
 
@@ -262,6 +266,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
 	static int handle_setMaskPlaneName (void *, vrpn_HANDLERPARAM);
 	static int handle_setTransparentPlaneName (void *, vrpn_HANDLERPARAM);
+	static int handle_setVizPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
     static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);
     static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
@@ -321,6 +326,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_setViewTransform (void *, vrpn_HANDLERPARAM);
   static int handle_createScreenImage(void *, vrpn_HANDLERPARAM);
   static int handle_chooseVisualization(void *, vrpn_HANDLERPARAM);
+  static int handle_setVisualizationMinHeight(void *, vrpn_HANDLERPARAM);
+  static int handle_setVisualizationMaxHeight(void *, vrpn_HANDLERPARAM);
+  static int handle_setVisualizationAlpha(void *, vrpn_HANDLERPARAM);
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

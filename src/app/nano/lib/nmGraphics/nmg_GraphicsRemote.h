@@ -74,6 +74,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setHeightPlaneName (const char *);
 	virtual void setMaskPlaneName (const char *);
 	virtual void setTransparentPlaneName (const char *);
+	virtual void setVizPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -166,6 +167,9 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void createScreenImage(const char *filename, const ImageType type);
 
 	virtual void chooseVisualization(int);
+	virtual void setVisualizationMinHeight(float);
+	virtual void setVisualizationMaxHeight(float);
+	virtual void setVisualizationAlpha(float);
     // ACCESSORS
 
 
