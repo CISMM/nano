@@ -978,21 +978,21 @@ RcvQStdDevParams( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetScanStyle( void *, vrpn_HANDLERPARAM  )
 {
    // Sent by microscape, but we do nothing.
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetContactForce( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
 	// XXX haven't implemented yet
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvQContactForce( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
 	// XXX haven't implemented yet
@@ -1000,7 +1000,7 @@ RcvQContactForce( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetRegionNM( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 
@@ -1021,7 +1021,7 @@ RcvSetRegionNM( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 /**************************************************************************
@@ -1043,14 +1043,14 @@ RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSampleApproachNM( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1065,7 +1065,7 @@ RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1080,7 +1080,7 @@ RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
         // Tiger        HACK HACK HACK  handling new message type for echo Modify Mode.
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1095,7 +1095,7 @@ RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
         // Tiger        HACK HACK HACK  handling new message type for echo Image Mode.
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1110,7 +1110,7 @@ RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1125,7 +1125,7 @@ RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1139,7 +1139,7 @@ RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
+int VRPN_CALLBACK nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
                                          vrpn_HANDLERPARAM p) {
   nmm_Microscope_Simulator * tmn = (nmm_Microscope_Simulator *) userdata;
   const char * bufptr = p.buffer;
@@ -1163,7 +1163,7 @@ int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1177,14 +1177,14 @@ RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetStdDelay( void *, vrpn_HANDLERPARAM )
 {
    // Sent by microscape, but we do nothing.
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetStPtDelay( void *, vrpn_HANDLERPARAM  )
 {
    // Sent by microscape, but we do nothing.
@@ -1193,7 +1193,7 @@ RcvSetStPtDelay( void *, vrpn_HANDLERPARAM  )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1207,25 +1207,25 @@ RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvMeasureResist( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvZigPointNM( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSnapShot( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSnapCancel( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
@@ -1233,7 +1233,7 @@ RcvSnapCancel( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 
 // This message handled by real Topo AFM
 // Not really. This is obsolete, so it never gets called.
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvBluntPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1248,7 +1248,7 @@ RcvBluntPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvReqScanDataset( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1263,7 +1263,7 @@ RcvReqScanDataset( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetSlowScan( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1278,7 +1278,7 @@ RcvSetSlowScan( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvReqPotDataset( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1295,7 +1295,7 @@ RcvReqPotDataset( void *_userdata, vrpn_HANDLERPARAM _p )
 // This message handled by real Topo AFM
 // This is probably obsolete, since we change PID using
 // EnterContactMode or EnterTappingMode....
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetPID( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1310,7 +1310,7 @@ RcvSetPID( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetRatenMeters( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1326,7 +1326,7 @@ RcvSetRatenMeters( void *_userdata, vrpn_HANDLERPARAM _p )
 
 // This message handled by real Topo AFM
 // Realated to Ohmmeter. Should be obsolete
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvEnableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1342,7 +1342,7 @@ RcvEnableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p )
 
 // This message handled by real Topo AFM
 // Realated to Ohmmeter. Should be obsolete
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvDisableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1358,7 +1358,7 @@ RcvDisableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p )
 
 // This message handled by real Topo AFM
 // Realated to Ohmmeter. Should be obsolete
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvEnableAmp( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1374,7 +1374,7 @@ RcvEnableAmp( void *_userdata, vrpn_HANDLERPARAM _p )
 
 // This message handled by real Topo AFM
 // Realated to Ohmmeter. Should be obsolete
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvDisableAmp( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1391,7 +1391,7 @@ RcvDisableAmp( void *_userdata, vrpn_HANDLERPARAM _p )
 // This message handled by real Topo AFM
 // Well, not really. This is something we want to do with Microscape,
 // but we can't do it yet, so microscape never sends this message.
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSetRegAndAngle( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1415,14 +1415,14 @@ RcvSetRegAndAngle( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvClientPacketTimestamp( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSharpLine( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1437,7 +1437,7 @@ RcvSharpLine( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSweepLine( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1452,7 +1452,7 @@ RcvSweepLine( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSweepArc( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1466,14 +1466,14 @@ RcvSweepArc( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvClientHello( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvSewingMode( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1488,7 +1488,7 @@ RcvSewingMode( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvContactMode( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
@@ -1503,7 +1503,7 @@ RcvContactMode( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 // This message handled by real Topo AFM
-int nmm_Microscope_Simulator::
+int VRPN_CALLBACK nmm_Microscope_Simulator::
 RcvTappingMode( void *_userdata, vrpn_HANDLERPARAM _p )
 {
   nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;

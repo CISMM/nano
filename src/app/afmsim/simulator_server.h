@@ -4,11 +4,11 @@
 #include "vrpn_Connection.h"
 
 
-int handle_wuit (void* , vrpn_HANDLERPARAM);
+int VRPN_CALLBACK handle_quit (void* , vrpn_HANDLERPARAM);
 
-int handle_any_print (void* , vrpn_HANDLERPARAM);
+int VRPN_CALLBACK handle_any_print (void* , vrpn_HANDLERPARAM);
 
-int initJake (int num_x, int num_y, int port = 4500);
+int initJake (int num_x, int num_y, int port = vrpn_DEFAULT_LISTEN_PORT_NO);
 
 int jakeMain (float scan_time_diff = .1,
               vrpn_bool isWaiting = vrpn_FALSE,

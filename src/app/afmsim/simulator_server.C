@@ -39,7 +39,7 @@ long quitType;
 
 
 
-int handle_quit (void * userdata, vrpn_HANDLERPARAM) {
+int VRPN_CALLBACK handle_quit (void * userdata, vrpn_HANDLERPARAM) {
   int * quitNow = (int *) userdata;
   printf("Quitting now...\n");
   *quitNow = 1;
@@ -47,7 +47,7 @@ int handle_quit (void * userdata, vrpn_HANDLERPARAM) {
   return 0;  // non-error completion
 }
 
-int handle_any_print (void * userdata, vrpn_HANDLERPARAM) {
+int VRPN_CALLBACK handle_any_print (void * userdata, vrpn_HANDLERPARAM) {
   //vrpn_Connection * c = (vrpn_Connection *) userdata;
 
   //fprintf(stderr, "Got message \"%s\" from \"%s\".\n",

@@ -94,7 +94,7 @@ typedef struct {
 
 
 // Start and stop server and create the simulator object
-void StartServer (int x, int y, int port=4500);
+void StartServer (int x, int y, int port=vrpn_DEFAULT_LISTEN_PORT_NO);
 void StopServer (void);
 
 ///////////////////////////////////////////////////////////////////
@@ -512,58 +512,58 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
   private:
 
      // Receive callbacks
-     static int RcvShutdown( void *_userdata, vrpn_HANDLERPARAM _p );
-	 static int RcvGetConnection( void *_userdata, vrpn_HANDLERPARAM _p ); 
-     static int RcvSetRate( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetGridSize( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvScanWindow( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvScanPoint( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvIdle( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvResumeWindowScan( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetStdDevParams( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvQStdDevParams( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetScanStyle( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetContactForce( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvQContactForce( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetRegionNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSampleApproachNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p );
-	 static int RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetStdDelay( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetStPtDelay( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvMeasureResist( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvZigPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvFeelTo (void *, vrpn_HANDLERPARAM);
+     static int VRPN_CALLBACK RcvShutdown( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvGetConnection( void *_userdata, vrpn_HANDLERPARAM _p ); 
+     static int VRPN_CALLBACK RcvSetRate( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSetGridSize( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvScanWindow( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvScanPoint( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvIdle( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvResumeWindowScan( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSetStdDevParams( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvQStdDevParams( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSetScanStyle( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSetContactForce( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvQContactForce( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSetRegionNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvSampleApproachNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvQueryScanRange( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetStdDelay( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetStPtDelay( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvMeasureResist( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvZigPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvFeelTo (void *, vrpn_HANDLERPARAM);
 
-     static int RcvSnapShot( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSnapCancel( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvBluntPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvReqScanDataset( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetSlowScan( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvReqPotDataset( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetPID( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetRatenMeters( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvEnableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvDisableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvEnableAmp( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvDisableAmp( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSetRegAndAngle( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvClientPacketTimestamp(void *_userdata, vrpn_HANDLERPARAM _p);
-     static int RcvSharpLine( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSweepLine( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvSweepArc( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvClientHello( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSnapShot( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSnapCancel( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvBluntPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvReqScanDataset( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetSlowScan( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvReqPotDataset( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetPID( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetRatenMeters( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvEnableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvDisableVoltsource( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvEnableAmp( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvDisableAmp( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSetRegAndAngle( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvClientPacketTimestamp(void *_userdata, vrpn_HANDLERPARAM _p);
+     static int VRPN_CALLBACK  RcvSharpLine( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSweepLine( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSweepArc( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvClientHello( void *_userdata, vrpn_HANDLERPARAM _p );
 
-     static int RcvSewingMode( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvContactMode( void *_userdata, vrpn_HANDLERPARAM _p );
-     static int RcvTappingMode( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvSewingMode( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvContactMode( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int VRPN_CALLBACK  RcvTappingMode( void *_userdata, vrpn_HANDLERPARAM _p );
 	
 
 

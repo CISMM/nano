@@ -28,7 +28,7 @@ static BCPlane * g_myZPlane;
  ****************************************************************************/
 
 static short g_numX = 300, g_numY = 300;
-static int g_port = 4500;
+static int g_port = vrpn_DEFAULT_LISTEN_PORT_NO;
 static char * g_imageName;
 
 static int g_planeShape;

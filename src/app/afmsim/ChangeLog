@@ -1,3 +1,11 @@
+2004-11-10  Russell M. Taylor II <taylorr@cs.unc.edu>
+
+	* nmm_Microscope_Simulator.C : Adding VRPN_CALLBACK as needed.
+	* nmm_Microscope_Simulator.h : Adding VRPN_CALLBACK as needed.
+		Switching to default VRPN port.
+	* simulator_server.C : Adding VRPN_CALLBACK as needed.
+	* surface.C : Switching to default VRPN port number.
+
 2004-04-26  Russell M. Taylor II <taylorr@cs.unc.edu>
 
 	* afmsim.dsp : Making it compile with today's libraries.
