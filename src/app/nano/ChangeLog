@@ -1,3 +1,8 @@
+2004-07-08  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* imagerPlugin.h : Added code to display text in 3D.
+	* imagerPlugin.C : Same.
+
 2004-07-07  Russ Taylor  <taylorr@cs.unc.edu>
 
 	* microscape.c : Delete and re-create plug-in when opening

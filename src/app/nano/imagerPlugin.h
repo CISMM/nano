@@ -22,6 +22,12 @@
 // and incoming data can be handled and any changes can be sent to the imager
 // across the connection.
 
+// Warning -- If the order of <vector> and <URText.h> is interchanged with the VRPN
+// includes, compiler warnings result.  We're mixing SensAble and Windows standard
+// templates, I bet...
+#include <vector>
+#include <UTree.h>
+#include <URText.h>
 #include <vrpn_Connection.h>
 #include <vrpn_Tracker.h>
 #include <vrpn_Text.h>
@@ -84,6 +90,10 @@ protected:
   // message (filled in by the tracker callback handler).
 
   vrpn_float64	d_pos[3], d_quat[4];
+
+  //------------------------------------------------------------------------
+  // List of string objects that we've displayed.
+  vector<URText *>		d_textRenderers;
 
   //------------------------------------------------------------------------
   // Callback handlers to deal with messages coming across the VRPN connection,

@@ -7,6 +7,7 @@
   ===3rdtech===*/
 
 #include "imagerPlugin.h"
+using namespace std;
 
 /* XXX When the height plane is changed to the incoming image plane, we get all sorts of fast
 updates from the other side (infinite loop caused by not creating a new channel!  It is basically
@@ -120,6 +121,22 @@ imagerPlugin::imagerPlugin(nmb_Dataset *data_set) :
 
 void imagerPlugin::teardown()
 {
+  // Remove any text renders we have created from the world, then delete them,
+  // so they don't hang around and clutter the display.
+  unsigned i;
+  for (i = 0; i < d_textRenderers.size(); i++) {
+    char nodename[100];
+    sprintf(nodename, "text%d", i+1);
+    UTree *myNode = World.TGetNodeByName(nodename);
+    if (myNode == NULL) {
+      fprintf(stderr,"imagerPlugin::teardown(): Can't find text node %s to remove it\n", nodename);
+    } else {
+      World.TRemoveTreeNode(myNode);
+      delete d_textRenderers[i];
+    }
+  }
+  d_textRenderers.clear();
+
   if (d_source_plane) { d_source_plane->remove_callback( handle_height_plane_modified , this ); }
   if (d_linebuf != NULL) { delete [] d_linebuf; };
 
@@ -439,11 +456,27 @@ void  imagerPlugin::handle_text_message(void *userdata, const vrpn_TEXTCB info)
   // that has registered this callback handler.
   imagerPlugin	*me = (imagerPlugin *)userdata;
 
-  // Do the stuff
-  printf("XXX Got text message: %s\n", info.message);
-  printf("XXX  (would be at %f,%f,%f)\n", me->d_pos[0], me->d_pos[1], me->d_pos[2]);
-  //XXX
-
+  // Get a new text renderer, set its value to the string we have, set its
+  // location to the transform we have, and add it to the list of displayed
+  // objects.  Keep track of a pointer to it so we can delete it in the
+  // destructor.
+  URText  *newtext = new URText();
+  if (newtext == NULL) {
+    fprintf(stderr,"imagerPlugin::handle_text_message(): Cannot create new URText.\n");
+  } else {
+    newtext->SetText(info.message);
+    newtext->GetLocalXform().SetRotate(0,0,0, 1);
+    newtext->GetLocalXform().SetScale(1);
+    newtext->GetLocalXform().SetXOffset(me->d_pos[0]);
+    newtext->GetLocalXform().SetYOffset(me->d_pos[1]);
+    newtext->GetLocalXform().SetZOffset(me->d_pos[2]);
+    newtext->GetLocalXform().SetTranslate(0, 0, 0);
+    newtext->SetVisibility(true);
+    me->d_textRenderers.push_back(newtext);
+    char newname[100];
+    sprintf(newname, "text%d", me->d_textRenderers.size());
+    World.TAddNode(newtext, newname);
+  }
 }
 
 int  imagerPlugin::handle_new_connection(void *userdata, vrpn_HANDLERPARAM)
