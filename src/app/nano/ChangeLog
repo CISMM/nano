@@ -1,3 +1,11 @@
+2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (ParseArgs) : New argument -runfor.
+	(main) : Check runtimeLimit.
+	(MicroscapeInitializationState::runtimeLimit) : New data member.
+	(MicroscapeInitializationState constructor) : Initialize new
+	data member.
+
 2001-07-19  Tom Hudson  <hudson@cs.unc.edu>
 
         * error_display.C (disable_dialogs) : New global.

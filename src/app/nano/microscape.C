@@ -1295,6 +1295,7 @@ struct MicroscapeInitializationState {
   char phantomLog [256];
   vrpn_bool logSurface;
   char surfaceLog [256];
+  int runtimeLimit;
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1355,6 +1356,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   logPhantom (VRPN_FALSE),
   replayPhantom (VRPN_FALSE),
   logSurface (VRPN_FALSE),
+  runtimeLimit (0),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
@@ -5587,6 +5589,10 @@ void ParseArgs (int argc, char ** argv,
       } else if (!strcmp(argv[i], "-nowarnings")) {
         disable_dialogs = 1;
         fprintf(stderr, "Turning off warnings and dialogs.\n");
+      } else if (!strcmp(argv[i], "-runfor")) {
+        if (++i >= argc) Usage(argv[0]);
+        istate->runtimeLimit = atoi(argv[i]);
+        fprintf(stderr, "Running for %d seconds.\n", istate->runtimeLimit);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -7968,6 +7974,13 @@ VERBOSE(1, "Entering main loop");
     VERBOSE(4, "  Done with mainloop iteration");
     n++; 
 
+    // TCH Dissertation July 2001
+    // Allow this thing to run for a limited time only.
+
+    gettimeofday(&time2, NULL);
+    if (time2.tv_sec > time1.tv_sec + istate.runtimeLimit) {
+      dataset->done = VRPN_TRUE;
+    }
   }  // end of mainloop
 
   dataset->done = VRPN_TRUE; //XXXX
