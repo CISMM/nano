@@ -238,6 +238,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     /// Region ID for the region tool. 
     int d_last_region;
+    /// Region ID for ignoring null data. 
+    int d_nulldata_region;
 
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);
     static int handle_loadRulergridImage (void *, vrpn_HANDLERPARAM);

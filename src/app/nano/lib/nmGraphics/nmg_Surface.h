@@ -15,32 +15,40 @@ public:
     nmg_Surface();
     ~nmg_Surface();
 
+    /// Change width and height of surface, reallocate vertex arrays
     int init(unsigned int width, unsigned int height);
     void changeDataset(nmb_Dataset *dataset);
+    nmb_Dataset *getDataset();
 
+    /// Draw the surface, called once per frame. 
     void renderSurface(nmg_State * state);
+
     ///rebuild display lists for a single region
-    int rebuildRegion(nmg_State * state, int region);
-    ///rebuild display lists for whole surface, all subregions, optional force
-    int rebuildSurface(nmg_State * state, vrpn_bool force = VRPN_FALSE);
-    ///rebuild a few strips of the surface, based on d_dataset->range_of_change
+    //int rebuildRegion(nmg_State * state, int region);
+
+    ///rebuild display lists for whole surface, all subregions 
+    /// (calls rebuildInterval)
+    int rebuildSurface(nmg_State * state);
+    ///rebuild a few strips of the surface, based on dataset->range_of_change,
+    ///rebuilds whole surface if graphics->causeGridRedraw was called. 
     int rebuildInterval(nmg_State * state);
 
-    ///only recolor the surface, don't re-calc display lists or normals
+    ///only recolor the surface, don't re-calc vertices or normals
     int recolorSurface();
 
     //Region managing functions
+    /// Return index for new region used as parameter for other 
+    /// region managing functions. 
     int createNewRegion();
     void destroyRegion(int region);
     nmg_SurfaceRegion* getRegion(int region);
-    nmb_Dataset *getDataset();
 
     void setRegionControl(BCPlane *control, int region);
     void setMaskPlane(nmg_SurfaceMask* mask, int region);
     void deriveMaskPlane(float min_height, float max_height, int region);
     void deriveMaskPlane(float center_x, float center_y, float width,float height, 
                          float angle, int region);
-    void rederive(int region);
+    void deriveMaskPlane(int region);
 
     //Appearance mutator functions
     void setAlpha(float alpha, int region);
@@ -60,12 +68,18 @@ public:
 
 private:
     nmb_Dataset *d_dataset;
-    int d_numSubRegions;
-    int d_maxNumRegions;
+    int d_numSubRegions; ///< number of valid regions in d_subRegions
+    int d_maxNumRegions; ///< currently allocated length of d_subRegions
     nmg_SurfaceRegion **d_subRegions;
     nmg_SurfaceRegion *d_defaultRegion;
     unsigned int d_initHeight, d_initWidth;
     int d_display_lists_in_x;
+
+    ///Helper function
+    int updateDefaultMask();
+
+    /// Called whenever data might have changed, once each gfx loop.
+    //int updateMask(int low_row, int high_row, int region);
 
 };
 

@@ -10,6 +10,9 @@
 #include <nmb_Dataset.h>
 #include <BCPlane.h>
 
+// timing Debug
+#include <vrpn_Shared.h>
+
 #include "nmg_Surface.h"
 #include "nmg_SurfaceRegion.h"
 #include "nmg_SurfaceMask.h"
@@ -23,8 +26,8 @@ nmg_Surface::
 nmg_Surface()
 {
     d_numSubRegions = 0;
-    d_maxNumRegions = 1;
-    d_subRegions = (nmg_SurfaceRegion**)malloc(d_maxNumRegions * sizeof(nmg_SurfaceRegion**));
+    d_maxNumRegions = 2;
+    d_subRegions = new nmg_SurfaceRegion*[d_maxNumRegions];
     d_defaultRegion = new nmg_SurfaceRegion(this, 0);
     d_dataset = (nmb_Dataset*)NULL;
 
@@ -42,7 +45,7 @@ nmg_Surface::
     for(int i = 0; i < d_numSubRegions; i++) {
         delete d_subRegions[i];
     }
-    free(d_subRegions);
+    delete [] d_subRegions;
     delete d_defaultRegion;
 }
 
@@ -55,16 +58,16 @@ init(unsigned int width, unsigned int height)
 {
     d_initWidth = width;
     d_initHeight = height;
-    if (!d_defaultRegion->init(d_initWidth, d_initHeight)) {
-        return 0;
+    if (d_defaultRegion->init(d_initWidth, d_initHeight)) {
+        return -1;
     }
 
     for(int i = 0; i < d_numSubRegions; i++) {
-        if (!d_subRegions[i]->init(d_initWidth, d_initHeight)) {
-            return 0;
+        if (d_subRegions[i]->init(d_initWidth, d_initHeight)) {
+            return -1;
         }
     }
-    return 1;
+    return 0;
 }
 
 /**
@@ -81,6 +84,22 @@ changeDataset(nmb_Dataset *dataset)
         delete d_subRegions[i];
     }
     d_numSubRegions = 0;
+    // Make sure default mask doesn't refer to non-existant masks. 
+    d_defaultRegion->getMaskPlane()->deriveMask(NULL, d_numSubRegions);
+}
+
+/** Helper function to update default region mask */
+int nmg_Surface::updateDefaultMask() 
+{
+    // Update the default region mask. 
+    nmg_SurfaceMask ** maskPlanes = new nmg_SurfaceMask*[d_numSubRegions];
+    if (!maskPlanes) return -1;
+    for (int i = 0; i < d_numSubRegions; i++) {
+        maskPlanes[i] = d_subRegions[i]->getMaskPlane();
+    }
+    d_defaultRegion->getMaskPlane()->deriveMask(maskPlanes, d_numSubRegions);
+    delete [] maskPlanes;
+    return 0;
 }
 
 /**
@@ -93,7 +112,7 @@ createNewRegion()
     //I really wish we could use STL vectors....
     int region_id = d_numSubRegions+1;
     nmg_SurfaceRegion *new_region = new nmg_SurfaceRegion(this, region_id);
-    if (!new_region->init(d_initWidth, d_initHeight)) {
+    if (new_region->init(d_initWidth, d_initHeight)) {
         return -1;
     }
 
@@ -102,17 +121,19 @@ createNewRegion()
     if (d_numSubRegions >= d_maxNumRegions) {
         d_maxNumRegions *= 2;
         nmg_SurfaceRegion** new_regions = 
-            (nmg_SurfaceRegion**)malloc(d_maxNumRegions * sizeof(nmg_SurfaceRegion**));
+            new nmg_SurfaceRegion*[d_maxNumRegions];
         for(int i = 0; i < d_numSubRegions; i++) {
             new_regions[i] = d_subRegions[i];
         }
 
-        free(d_subRegions);
+        delete [] d_subRegions;
         d_subRegions = new_regions;
     }
 
     d_subRegions[d_numSubRegions] = new_region;
     d_numSubRegions++;
+
+    updateDefaultMask();
     return region_id;
 }
 
@@ -129,7 +150,8 @@ destroyRegion(int region)
         region--;
         nmg_SurfaceRegion *victim = d_subRegions[region];
         
-        d_defaultRegion->getMaskPlane()->invertSubtract(victim->getMaskPlane());
+        // Doesn't apply since default region mask is type INVERTMASKS
+        //d_defaultRegion->getMaskPlane()->invertSubtract(victim->getMaskPlane());
         for(int i = region; i < d_numSubRegions-1; i++) {
             d_subRegions[i] = d_subRegions[i+1];
         }
@@ -137,6 +159,7 @@ destroyRegion(int region)
         delete victim;
         d_numSubRegions = d_numSubRegions - 1;
         d_defaultRegion->forceRebuildCondition();
+        updateDefaultMask();
     }
 }
 
@@ -197,9 +220,12 @@ setMaskPlane(nmg_SurfaceMask *mask, int region)
         if (region != 0) {
             region--;            
             d_subRegions[region]->setMaskPlane(mask);
+            updateDefaultMask();
         }
         else {
-            d_defaultRegion->setMaskPlane(mask);
+            // I don't think we want to allow this....
+            fprintf(stderr, "nmg_Surface::setMaskPlane: can't set default region mask. \n");
+            //d_defaultRegion->setMaskPlane(mask);
         }
     }
 }
@@ -218,7 +244,9 @@ deriveMaskPlane(float min_height, float max_height, int region)
             d_subRegions[region]->deriveMaskPlane(min_height, max_height);
         }
         else {
-            d_defaultRegion->deriveMaskPlane(min_height, max_height);
+            // I don't think we want to allow this....
+            fprintf(stderr, "nmg_Surface::deriveMaskPlane: can't set default region mask. \n");
+            //d_defaultRegion->deriveMaskPlane(min_height, max_height);
         }
     }
 }
@@ -238,47 +266,73 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
                                                   height, angle);
         }
         else {
-            d_defaultRegion->deriveMaskPlane(center_x, center_y, width, 
-                                             height, angle);
+            // I don't think we want to allow this....
+            fprintf(stderr, "nmg_Surface::deriveMaskPlane: can't set default region mask. \n");
+            //d_defaultRegion->deriveMaskPlane(center_x, center_y, width, 
+            //                                 height, angle);
         }
     }
 }
 
 /**
- 
+ Create a masking plane, using invalid data range
     Access: Public
 */
 void nmg_Surface::
-rederive(int region) 
+deriveMaskPlane(int region)
 {
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
             region--;
-            if (d_subRegions[region]->needsDerivation()) {                
-                nmg_SurfaceMask *mask;
-
-                mask = d_subRegions[region]->getMaskPlane(); 
-                // Remove old area from default region
-                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            
-                d_subRegions[region]->rederiveMaskPlane(d_dataset);
-            
-                mask = d_subRegions[region]->getMaskPlane();
-                // Default region contains all space not in other regions. 
-                d_defaultRegion->getMaskPlane()->invertAdd(mask);
-                d_defaultRegion->forceRebuildCondition();
-            }
+            d_subRegions[region]->deriveMaskPlane();
         }
         else {
-            d_defaultRegion->rederiveMaskPlane(d_dataset);
+            // I don't think we want to allow this....
+            fprintf(stderr, "nmg_Surface::deriveMaskPlane: can't set default region mask. \n");
+            //d_defaultRegion->deriveMaskPlane();
         }
     }
 }
 
 /**
- 
+   Call before generating display lists for a region.
     Access: Public
+    @return 1 if entire region must be rebuilt, 0 if only the
+    strips between \a low_row and \a high_row need to be rebuilt
+    (and will be taken care of later by rebuildInterval)
+
+    @note Update default region first, because it has dependencies on other
+    masks. 
 */
+/*
+int nmg_Surface::
+updateMask(int low_row = -1, int high_row = -1, int region)
+{
+//      struct timeval then, now;
+//      gettimeofday(&then, NULL);
+
+
+    if (region >= 0 && region <= d_numSubRegions) {
+        if (region != 0) {
+            region--;
+        if (d_subRegions[region]->needsUpdate()) {                
+            d_subRegions[region]->updateMaskPlane(d_dataset, low_row, high_row);
+        } else {
+            d_defaultRegion->updateMaskPlane(d_dataset, low_row, high_row);
+
+        }
+    }
+//      gettimeofday(&now, NULL);
+//      now = vrpn_TimevalDiff(now, then);
+//      printf("updateMask took %ld %ld\n", now.tv_sec, now.tv_usec);
+    return 0;
+}
+*/
+/**
+   Too slow - shouldn't be triggered outside rebuildSurface and 
+   rebuildInterval below
+*/
+/*
 int nmg_Surface::
 rebuildRegion(nmg_State * state, int region)
 {
@@ -292,69 +346,34 @@ rebuildRegion(nmg_State * state, int region)
     }
     return 0;
 }
+*/
 
 /**
- Force the entire surface to rebuild.  This
-            SHOULD be mostly avoided, as in the general
-            case you will only be calling rebuildRegion 
-            on the particular region of the surface that
-            changed
+ Force the entire surface to reconstruct its display lists. 
+  Triggered by causeGridRebuild in nmg_GraphicsImpl.C
+  Don't call every frame - much too slow!
     Access: Public
+    @return -1 on error, 0 on success. 
 */
 int nmg_Surface::
-rebuildSurface(nmg_State * state, vrpn_bool force)
+rebuildSurface(nmg_State * state)
 {
-  if (d_dataset != (nmb_Dataset*)NULL) {
+  if (d_dataset != NULL) {
 
-    // If the scan direction is inefficiently using the display 
-    // lists, switch to using display lists in the other direction.
-    if (d_dataset->range_of_change.Changed()) {
-        float	ratio;
-        
-        /* See which way more changes occurred */
-        ratio = d_dataset->range_of_change.RatioOfChange();
-        
-        /* If the ratio is very skewed, make sure we are
-	 * scanning in the correct direction. */
-        if (ratio > 4) {		/* 4x as much in y */
-            if (d_display_lists_in_x) {	/* Going wrong way */
-                d_display_lists_in_x = 0;
-                force = VRPN_TRUE;
-            }
-        } else if (ratio < 0.25) {	/* 4x as much in x */
-            if (!d_display_lists_in_x) {	/* Going wrong way */
-                d_display_lists_in_x = 1;
-                force = VRPN_TRUE;
-            }
-        }
-    }
+    d_dataset->range_of_change.ChangeAll();
 
-    for(int i = 0; i < d_numSubRegions; i++) {
-        if (!d_subRegions[i]->rebuildRegion(d_dataset, state, 
-                                            d_display_lists_in_x , force)) {
-            return 0;
-        }
-    }
-    
-    if (!d_defaultRegion->rebuildRegion(d_dataset, state, 
-                                        d_display_lists_in_x , force)) {
-        return 0;
-    }
-
-    if (force) {
-        /* Clear the range of change */
-        d_dataset->range_of_change.Clear();
-    }
+    // Now that we've marked the whole surface changed...
+    return (rebuildInterval(state));
   }
 
-  return 1;
+  return 0;
 }
 
 /**
  rebuild the interval of the entire surface
             that changed
     Access: Public
-WARNING: uses some global variables!
+ @return -1 on error, 0 on success. 
 */
 int nmg_Surface::
 rebuildInterval(nmg_State * state)
@@ -374,10 +393,31 @@ rebuildInterval(nmg_State * state)
     // rescans the same line of the sample more often than the graphics
     // process runs, that new data will never be drawn.
     
+    // If the scan direction is inefficiently using the display 
+    // lists, switch to using display lists in the other direction.
+    if (d_dataset->range_of_change.Changed()) {
+        float	ratio;
+        
+        /* See which way more changes occurred */
+        ratio = d_dataset->range_of_change.RatioOfChange();
+        
+        /* If the ratio is very skewed, make sure we are
+	 * scanning in the correct direction. */
+        if (ratio > 4) {		/* 4x as much in y */
+            if (d_display_lists_in_x) {	/* Going wrong way */
+                d_display_lists_in_x = 0;
+            }
+        } else if (ratio < 0.25) {	/* 4x as much in x */
+            if (!d_display_lists_in_x) {	/* Going wrong way */
+                d_display_lists_in_x = 1;
+            }
+        }
+    }
+
     int low_row;
     int high_row;
     
-    // Get the data (low and high X, Y vales changed) atomically
+    // Get the data (low and high X, Y values changed) atomically
     // so we have bulletproof synchronization.
     
     d_dataset->range_of_change.GetBoundsAndClear
@@ -394,44 +434,47 @@ rebuildInterval(nmg_State * state)
         low_row = state->minChangedX;
         high_row = state->maxChangedX;
     }
-    
-    if (d_dataset != (nmb_Dataset*)NULL) {
-        for(int i = 0; i < d_numSubRegions; i++) {
-            if (!d_subRegions[i]->rebuildInterval(d_dataset, state, low_row, 
+
+    if (d_dataset != NULL) {
+        // Call default region first because it's mask depends on
+        // other masks, and whether they've been changed. 
+        if (d_defaultRegion->rebuildInterval(d_dataset, state, low_row, 
                                       high_row, d_display_lists_in_x)) {
-                return 0;
+            return -1;
+        }
+        for(int i = 0; i < d_numSubRegions; i++) {
+            if (d_subRegions[i]->rebuildInterval(d_dataset, state, low_row, 
+                                      high_row, d_display_lists_in_x)) {
+                return -1;
             }
         }
 
-        if (!d_defaultRegion->rebuildInterval(d_dataset, state, low_row, 
-                                      high_row, d_display_lists_in_x)) {
-            return 0;
-        }
     }
-    return 1;
+    return 0;
 }
 
 
 /**
  Recolor the entire surface, without redoing the display lists or normals.
     Access: Public
+@return -1 on error, 0 on success. 
 */
 int nmg_Surface::
 recolorSurface()
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
         for(int i = 0; i < d_numSubRegions; i++) {
-            if (!d_subRegions[i]->recolorRegion()) {
-                return 0;
+            if (d_subRegions[i]->recolorRegion()) {
+                return -1;
             }
         }
 
-        if (!d_defaultRegion->recolorRegion()) {
-            return 0;
+        if (d_defaultRegion->recolorRegion()) {
+            return -1;
         }
     }
 
-    return 1;
+    return 0;
 }
 
 /**
@@ -442,9 +485,9 @@ void nmg_Surface::
 renderSurface(nmg_State * state)
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
-        d_defaultRegion->renderRegion(state);
+        d_defaultRegion->renderRegion(state, d_dataset);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->renderRegion(state);
+            d_subRegions[i]->renderRegion(state, d_dataset);
         }
     }
 }

@@ -143,9 +143,9 @@ class nmg_Graphics {
     virtual void causeGridReColor (void) {};
       ///< Regenerates vertex colors, but not normals or vertex coords. 
     virtual void causeGridRedraw (void) {};
-      ///< Forces the entire set of display lists to be regenerated.
+      ///< Forces surface display lists to be regenerated.
     virtual void causeGridRebuild (void) {};
-      ///< Forces the entire set of display lists to be regenerated.
+      ///< Forces surface display lists to be allocated and then regenerated.
 
     virtual void enableChartjunk (int on) {};
       ///< Controls display of chartjunk (text in screenspace).

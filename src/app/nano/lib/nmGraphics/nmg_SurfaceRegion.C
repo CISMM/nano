@@ -17,7 +17,7 @@
 #include "globjects.h"
 #include "surface_strip_create.h"  
 #include "surface_util.h"  
-#include "openGL.h"  // for check_extension(), display_lists_in_x
+#include "openGL.h"  // for check_extension()
 #include "nmg_Graphics.h"
 
 #include "nmg_Surface.h"
@@ -29,7 +29,7 @@
 #define M_PI		3.14159265358979323846
 #endif
 
-#define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
+#define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors()
 
 #include "UTree.h"
 #include "URPolygon.h"
@@ -40,9 +40,9 @@ extern UTree World;
  * Access: Public
  */
 nmg_SurfaceRegion::
-nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
+nmg_SurfaceRegion(nmg_Surface * /*parent*/, int region_id)
 {
-    d_parent = parent;
+    //d_parent = parent;
     d_regionID = region_id;
     d_needsFullRebuild = VRPN_FALSE;
     d_regionalMask = new nmg_SurfaceMask;
@@ -90,6 +90,7 @@ nmg_SurfaceRegion::
 /**
  * Allocates memory for each "vertex" array that
  *              the class needs
+ * @return -1 on error, 0 on success. 
  * Access: Public
  */
 int nmg_SurfaceRegion::
@@ -105,10 +106,14 @@ init(int width, int height)
     }       
     
     if (dim == d_VertexArrayDim) {
-        return 1;
+        return 0;
     }
 
-    d_regionalMask->init(width, height);
+    if (d_regionalMask->init(width, height)) {
+        fprintf(stderr, 
+               "nmg_SurfaceRegion::init: Error, out of memory [0]\n");
+        return -1;
+    }
     
     unsigned int i;
     if (d_vertexPtr) {
@@ -125,8 +130,8 @@ init(int width, int height)
     
     if (d_vertexPtr == NULL) {
         fprintf(stderr, 
-               "nmg_SurfaceRegion::init: Error, out of memory [0]\n");
-        return 0;
+               "nmg_SurfaceRegion::init: Error, out of memory [1]\n");
+        return -1;
     }
     
     for (i=0; i < d_VertexArrayDim; i++) {
@@ -134,12 +139,12 @@ init(int width, int height)
         
         if (d_vertexPtr[i] == NULL ) {
             fprintf(stderr, 
-                 "nmg_SurfaceRegion::init: Error, out of memory [1]\n");
-            return 0;
+                 "nmg_SurfaceRegion::init: Error, out of memory [2]\n");
+            return -1;
         }
     }
     
-    return 1;
+    return 0;
 }
 
 /**
@@ -162,99 +167,21 @@ forceRebuildCondition()
     d_needsFullRebuild = VRPN_TRUE;
 }
 
-/**
- * Access: Protected, Virtual
- * 
- */
-void nmg_SurfaceRegion::
-setUpdateAndTodo(int low_row, int high_row) 
-{
-    int low_strip = MAX(0, low_row / d_currentState.stride);
-    int high_strip = MIN(d_num_lists, high_row / d_currentState.stride);
-    nmb_Interval mark;
-    
-    // Figure out what direction the scan has apparently progressed
-    // since the last time.  Heuristic, error-prone, but safe.  XXX
-    
-    int direction = 0;
-    if (low_strip >= last_marked.low()) direction++;
-    if (high_strip <= last_marked.high()) direction--;
-    
-    if (spm_graphics_verbosity >= 6)
-        fprintf(stderr, "  Drawing in direction %d (from %d to %d).\n",
-		direction, low_strip, high_strip);
-    VERBOSECHECK(6)
-        
-#ifdef EXPENSIVE_DISPLAY_LISTS
-        // Recompute as few display lists as necessary.  The rest will
-        // be recomputed on the next screen refresh, unless more data
-        // comes in from the scope.  Some vertical "tears" will be left
-        // in the rendered image.
-        switch (direction) {
-        case 1:
-            update = nmb_Interval (low_strip - 2, high_strip - 1);
-            mark = nmb_Interval (high_strip, high_strip + 2);
-            break;
-        case 0:
-            // leave update empty!
-            // XXX safer (but more work for the graphics pipe,
-            //     and probably unnecessary) might be
-            //     update = nmb_Interval (low_strip, high_strip);
-            mark = nmb_Interval (low_strip - 2, high_strip + 2);
-            break;
-        case -1:
-            update = nmb_Interval (low_strip - 1, high_strip + 2);
-            mark = nmb_Interval (low_strip - 2, low_strip - 2);
-            break;
-	}
-#else
-    // Recompute every display list that needs to be modified
-    // to reflect this change.  If we're in the middle of the
-    // scan many of these may have to be recomputed after the
-    // next set of data is received.
-    update = nmb_Interval (low_strip - 2, high_strip + 2);
-    // leave mark empty!
-#endif
-    
-    if (spm_graphics_verbosity >= 6)
-        fprintf(stderr, "   Update set is %d - %d, last_marked is %d - %d, "
-		"mark is %d - %d.\n",
-		update.low(), update.high(), last_marked.low(),
-		last_marked.high(), mark.low(), mark.high());
-    VERBOSECHECK(6)
-        
-        // Draw this time what we have to update due to the most recent
-        // changes, plus what we delayed updating last time expecting them
-        // to overlap with the most recent changes, minus what we're delaying
-        // another frame expecting it to overlap with the next set of changes.
-        // NOTE:  this is not a correct implementation of interval subtraction.
-        
-        todo = last_marked - mark;
-    
-    // If update and todo are contiguous, combine them and do them
-    // as a single interval;  otherwise, call Ablist_set() twice
-    
-    if (spm_graphics_verbosity >= 15)
-        fprintf(stderr, "  ");
-    
-    last_marked = mark;
-}
 
 /**
  * Access: Protected, Virtual
  * 
  */
 void nmg_SurfaceRegion::
-setTexture(nmg_State * state)
+setTexture(nmg_State * state, nmb_Dataset *data)
 {
     double surface_z_scale = 1.0;
-    nmb_Dataset *data = d_parent->getDataset();
     if (data) {
-      BCPlane *heightPlane =
-           data->inputGrid->getPlaneByName(state->heightPlaneName);
-      surface_z_scale = heightPlane->scale();
+        BCPlane *heightPlane =
+            data->inputGrid->getPlaneByName(state->heightPlaneName);
+        if (heightPlane) surface_z_scale = heightPlane->scale();
     }
-
+    
     switch (d_currentState.textureDisplayed) {
     case nmg_Graphics::NO_TEXTURES:
         // nothing to do here
@@ -350,15 +277,19 @@ setTexture(nmg_State * state)
         switch (d_currentState.textureTransformMode) {
         case nmg_Graphics::RULERGRID_COORD:
             // use values from the older rulergrid adjustment interface
-            glScalef(1.0/state->rulergrid_scale,1.0/state->rulergrid_scale,1.0); // 1.0/SCALE
+            glScalef(1.0/state->rulergrid_scale,1.0/state->rulergrid_scale,1.0);
+            // 1.0/SCALE
             theta = asin(state->rulergrid_sin);
             if (state->rulergrid_cos < 0)
                 theta = M_PI - theta;
-            glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
-            glTranslatef(-state->rulergrid_xoffset, -state->rulergrid_yoffset, 0.0);// -TRANS.
+            glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);
+              // -ROTATION
+            glTranslatef(-state->rulergrid_xoffset, -state->rulergrid_yoffset, 0.0);
+            // -TRANS.
             break;
         case nmg_Graphics::VIZTEX_COORD:
-            glScalef(1.0/state->viztex_scale,1.0/state->viztex_scale,1.0); // 1.0/SCALE
+            glScalef(1.0/state->viztex_scale,1.0/state->viztex_scale,1.0);
+            // 1.0/SCALE
             break;
         case nmg_Graphics::MANUAL_REALIGN_COORD:
             compute_texture_matrix(state->translate_tex_x, state->translate_tex_y,
@@ -372,9 +303,9 @@ setTexture(nmg_State * state)
             break;
         case nmg_Graphics::REGISTRATION_COORD:
             glLoadIdentity();
-            // scale by actual texture image given divided by texture image used
-            // (i.e. the one actually in texture memory is a power of 2 but the
-            // one we were given had some smaller size)
+            // scale by actual texture image given divided by texture image
+            // used (i.e. the one actually in texture memory is a power of 2
+            // but the one we were given had some smaller size)
             switch (state->texture_displayed) {
             case nmg_Graphics::NO_TEXTURES:
             case nmg_Graphics::BUMPMAP:
@@ -504,6 +435,7 @@ cleanUp()
 /**
  * Set the plane that controls the functions that
  *              automatically derive the masking plane
+@Note for default region should always be the height plane. 
  * Access: Public
  */
 void nmg_SurfaceRegion::
@@ -515,6 +447,7 @@ setRegionControl(BCPlane *control)
 /**
  * Manually set the mask plane
  * Access: Public
+ @alert Don't call this on the default region!!!
  */
 void nmg_SurfaceRegion::
 setMaskPlane(nmg_SurfaceMask *mask)
@@ -534,7 +467,9 @@ setMaskPlane(nmg_SurfaceMask *mask)
 int nmg_SurfaceRegion::
 deriveMaskPlane(float min_height, float max_height)
 {   
-    return d_regionalMask->deriveMask(min_height, max_height);
+    int ret = d_regionalMask->deriveMask(min_height, max_height);
+    if (ret) d_needsFullRebuild = true;
+    return ret;
             
 }
 
@@ -546,27 +481,42 @@ int nmg_SurfaceRegion::
 deriveMaskPlane(float center_x, float center_y, float width,float height, 
                 float angle)
 {
-    return d_regionalMask->deriveMask(center_x, center_y, width, height, angle);
+     int ret = d_regionalMask->deriveMask(center_x, center_y, width, height, angle);
+    if (ret) d_needsFullRebuild = true;
+    return ret;
+}
+
+/**
+ * Create a masking plane, using invalid data range
+ * Access: Public
+ */
+int nmg_SurfaceRegion::
+deriveMaskPlane()
+{   
+    int ret = d_regionalMask->deriveMask();
+    if (ret) d_needsFullRebuild = true;
+    return ret;
 }
 
 /**
  * Access: Public
+ * @return 1 if whole region needs rebuilt, 0 if only strips between
+ * low_row and high_row needs rebuilt. 
  */
-void nmg_SurfaceRegion::
-rederiveMaskPlane(nmb_Dataset *dataset) 
+int nmg_SurfaceRegion::
+updateMaskPlane(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x) 
 {
-    if (d_regionalMask->rederive(dataset)) {
-        d_needsFullRebuild = true;
-    }
+    return(d_regionalMask->update(dataset, d_currentState.stride,
+                                  low_row, high_row, strips_in_x));
 }
 
 /**
  * Access: Public
  */
 int nmg_SurfaceRegion::
-needsDerivation() 
+needsUpdate() 
 {
-    return d_regionalMask->needsDerivation();
+    return d_regionalMask->needsUpdate();
 }
 
 /**
@@ -597,7 +547,7 @@ enableFilledPolygons(int enable, vrpn_bool respect_unassociate)
 
 /**
  * Set the tesselation stride to use for this
- *				region
+ * region
  * Access: Public
  */
 void nmg_SurfaceRegion::
@@ -611,7 +561,7 @@ setStride(int stride, vrpn_bool respect_unassociate)
 
 /**
  * Set which texture is to be displayed in this
- *              region
+ * region
  * Access: Public
  */
 void nmg_SurfaceRegion::
@@ -652,7 +602,7 @@ setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
 
 /**
  * The registration code needs explicit access 
- *              to the data
+ * to this structure
  * Access: Public
  */
 Vertex_Struct ** nmg_SurfaceRegion::
@@ -660,6 +610,20 @@ getRegionData()
 {
     return d_vertexPtr;
 }
+
+/**
+ * Sets a flag that the next rebuild needs to color the whole surface, 
+ * but not necessarily change the vertices and normals. 
+ * Access: Public
+ * @return -1 on error, 0 on success. 
+ */
+int nmg_SurfaceRegion::
+recolorRegion()
+{  
+    d_currentState.justColor = VRPN_TRUE;
+    return 0;
+}
+
 
 /**
  * Saves the state of global variables
@@ -720,55 +684,116 @@ RestoreRenderState(nmg_State * state)
     state->texture_transform_mode = d_savedState.textureTransformMode;
 }
 
+
+// Define EXPENSIVE_DISPLAY_LISTS if recomputing display lists is very
+// expensive on the current architecture (but you still want to use them).
+// It recomputes only those lists which are not likely to have to be
+// recomputed in the near future as more data comes in from the scope.
+
+// This feature has not been used in any of our releases (since 2000?)
+// #define EXPENSIVE_DISPLAY_LISTS
+
 /**
- * Rebuilds the display lists that correspond
- *              to the region
  * Access: Public
+ * Determine what strips we are going to work on.
+ * @return true if there are any strips to work on, i.e.
+ * either todo or update is not empty. 
  */
 int nmg_SurfaceRegion::
-rebuildRegion(nmb_Dataset *dataset, nmg_State * state, 
-              int display_lists_in_x, vrpn_bool force)
-{  
-    //Make sure we have a valid mask before we rebuild the display lists
-    d_parent->rederive(d_regionID);
-    if (!d_needsFullRebuild && !force) {
-        return 1;
+determineInterval(nmb_Dataset *dataset, 
+                  int low_row, int high_row, int strips_in_x) 
+{
+    // Update our mask, and maybe rebuild entire region. 
+    if (updateMaskPlane(dataset, low_row, high_row, strips_in_x) ||
+        d_needsFullRebuild) {
+        // Yup, the whole region needs to be rebuilt. 
+        low_row = 0;
+        if (strips_in_x) {
+            high_row = dataset->inputGrid->numY() -1;
+        } else {
+            high_row = dataset->inputGrid->numX() -1;
+        }
+        // The whole region will now be rebuilt, so clear flag
+        d_needsFullRebuild = VRPN_FALSE;
+    } else {
+        // Check for empty range of change
+        if (low_row > high_row) {
+
+        }
     }
+    int low_strip =  low_row / d_currentState.stride;
+    int high_strip = high_row / d_currentState.stride;
 
-    nmb_PlaneSelection planes;  // Rebuilds the texture coordinate array:
-    planes.lookup(dataset);
+    // Let's make it a run-time decision, based on grid resolution.
+    //#ifdef EXPENSIVE_DISPLAY_LISTS
+    //if (dataset->inputGrid->numX() > 499) {
+    // Ah, well. I currently believe it doesn't work, but has the
+    // potential to work, valuable for large grids. (11 Mar 2002)
+    if (0) {
+    nmb_Interval mark;
+
+    // Figure out what direction the scan has apparently progressed
+    // since the last time.  Heuristic, error-prone, but safe.  
     
-    VERBOSE(6, "nmg_SurfaceRegion::rebuildRegion()");
-
-    SaveBuildState(state);
-
-    state->just_color = d_currentState.justColor;
-    state->stride = d_currentState.stride;
-    state->surface_alpha = d_currentState.alpha;
+    int direction = 0;
+    if (low_strip >= last_marked.low()) direction++;
+    if (high_strip <= last_marked.high()) direction--;
+    
+    if (spm_graphics_verbosity >= 6)
+        fprintf(stderr, "  Drawing in direction %d (from %d to %d).\n",
+		direction, low_strip, high_strip);
         
-    if (build_grid_display_lists(planes, d_regionalMask, state,
-                                 display_lists_in_x, 
-				 &d_list_base, &d_num_lists, d_num_lists, 
-				 state->surfaceColor, d_vertexPtr)) {
-        return 0;
+    // Recompute as few display lists as necessary.  The rest will
+    // be recomputed on the next screen refresh, unless more data
+    // comes in from the scope.  Some vertical "tears" will be left
+    // in the rendered image.
+    switch (direction) {
+        case 1:
+            update = nmb_Interval (low_strip - 2, high_strip - 1);
+            mark = nmb_Interval (high_strip, high_strip + 2);
+            break;
+        case 0:
+            // leave update empty!
+            update = nmb_Interval ();
+            // XXX safer (but more work for the graphics pipe,
+            //     and probably unnecessary) might be
+            //     update = nmb_Interval (low_strip, high_strip);
+            mark = nmb_Interval (low_strip - 2, high_strip + 2);
+            break;
+        case -1:
+            update = nmb_Interval (low_strip - 1, high_strip + 2);
+            mark = nmb_Interval (low_strip - 2, low_strip - 2);
+            break;
     }
-    RestoreBuildState(state);
-
-    d_currentState.justColor = VRPN_FALSE;
-    d_needsFullRebuild = VRPN_FALSE;
+    if (spm_graphics_verbosity >= 6)
+        fprintf(stderr, "   Update set is %d - %d, last_marked is %d - %d, "
+		"mark is %d - %d.\n",
+		update.low(), update.high(), last_marked.low(),
+		last_marked.high(), mark.low(), mark.high());
+    VERBOSECHECK(6);
+        
+    // Draw this time what we have to update due to the most recent
+    // changes, plus what we delayed updating last time expecting them
+    // to overlap with the most recent changes, minus what we're delaying
+    // another frame expecting it to overlap with the next set of changes.
+    // NOTE:  this is not a correct implementation of interval subtraction.
     
-    return 1;
-}
+    todo = last_marked - mark;
+    
+    last_marked = mark;
 
-/**
- * Sets a flag that the next rebuild should only color the surface. 
- * Access: Public
- */
-int nmg_SurfaceRegion::
-recolorRegion()
-{  
-    d_currentState.justColor = VRPN_TRUE;
-    return 1;
+  } else {
+    // Recompute every display list that needs to be modified
+    // to reflect this change.  If we're in the middle of the
+    // scan many of these may have to be recomputed after the
+    // next set of data is received.
+    update = nmb_Interval ( low_strip-2, high_strip+1);
+    // Yes, this can go outside the surface! Clamped later...
+
+    // leave mark empty!
+  }
+    
+    return (!update.empty() || !todo.empty());
 }
 
 /**
@@ -782,19 +807,31 @@ recolorRegion()
  * change is shown).  The normal of the two on-stride points
  * around the changed point is changed, requiring the redraw
  * of all strips that include these points.
+ *
+ * If the "changed" row is r, then the index of 
+ * "list" is r/stride (integer division)
  * @code
  *            norm   changed  norm                        
  * 	+ . . .	+ . . .	+ . . .	+ . . .	+ . . .	+
  * 	|_______|_______|_______|_______|_______|
- *     list-2  list-1  list    list+1
+ *       list-2  list-1  list    list+1
  * @endcode
+ * @return -1 on error, 0 on success. 
  * Access: Public
  */
 int nmg_SurfaceRegion::
 rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_row, int strips_in_x)
 {
-    setUpdateAndTodo(low_row, high_row);
-    
+    // First determine if we need rebuild anything. 
+    if (!determineInterval(dataset, low_row, high_row, strips_in_x) && !d_currentState.justColor) {
+        // Nothing to do. 
+        return 0;
+    }
+    // Debug
+//      printf("update %d %d\ttodo %d %d\t last mrk %d %d\n",
+//             update.low(), update.high(), todo.low(), todo.high(), 
+//             last_marked.low(), last_marked.high());
+
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
@@ -804,41 +841,46 @@ rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_r
     state->stride = d_currentState.stride;
     state->surface_alpha = d_currentState.alpha;
 
-    if (!update.empty() || !todo.empty()) {
-        //Make sure we have a valid mask before we rebuild the display lists
-        d_parent->rederive(d_regionID);
-    }
-    if (update.overlaps(todo) || update.adjacent(todo)) {
+    if (d_regionalMask->nullDataType()) {
+        // For a null data region, only render one polygon. 
+        if (build_nulldata_polygon(planes, d_regionalMask, state,
+                               strips_in_x, d_vertexPtr)) return -1;
+    
+    } else if (update.overlaps(todo) || update.adjacent(todo)) {
+        // If update and todo are contiguous, combine them and do them
+        // as a single interval...
         if (build_list_set(update + todo, planes, d_regionalMask, state,
-                           d_list_base, 
-                           d_num_lists, strips_in_x, d_vertexPtr)) return 0;
+                           strips_in_x, d_vertexPtr)) return -1;
     } 
     else {
-        if (build_list_set(update, planes, d_regionalMask, state, d_list_base, 
-                           d_num_lists, strips_in_x, d_vertexPtr)) return 0;
-        if (build_list_set(todo, planes, d_regionalMask, state, d_list_base, 
-                           d_num_lists, strips_in_x, d_vertexPtr)) return 0;
+        if (build_list_set(update, planes, d_regionalMask, state, 
+                           strips_in_x, d_vertexPtr)) return -1;
+        // Note: "todo" is only used with a seldom(never) used #define above.
+        if (!todo.empty()) {
+            if (build_list_set(todo, planes, d_regionalMask, state, 
+                               strips_in_x, d_vertexPtr)) return -1;
+        }
     }
     
     RestoreBuildState(state);
     d_currentState.justColor = VRPN_FALSE;
 
-    return 1;
+    return 0;
 }
 
 /**
- * Renders the region.
+ * Renders the region. Called once each frame. 
  * Access: Public
  */
 void nmg_SurfaceRegion::
-renderRegion(nmg_State * state)
+renderRegion(nmg_State * state, nmb_Dataset *dataset)
 {
     //	static bool set = false;
     int i;
     
     SaveRenderState(state);
 
-    setTexture(state); 
+    setTexture(state, dataset); 
 
 
     state->config_filled_polygons = d_currentState.filledPolygonsEnabled;
@@ -855,8 +897,8 @@ renderRegion(nmg_State * state)
 
 	// Drawing Objects...
 //	if (state->config_enableUber) {
-		int proj_text = (d_currentState.textureMode == GL_TEXTURE_2D) ? 1 : 0;
-		World.Do(&URender::Render, &proj_text);
+    int proj_text = (d_currentState.textureMode == GL_TEXTURE_2D) ? 1 : 0;
+    World.Do(&URender::Render, &proj_text);
 //	}
  
     cleanUp();
@@ -864,11 +906,85 @@ renderRegion(nmg_State * state)
 }
 
 /**
+* Called by rebuildInterval, calls the other build_list_set.
+* It's useful to not have to pass in the strip function to this
+* procedure.  It makes the Visualization classes simpler.
+* @return -1 on error, 0 on success. 
+*/
+int nmg_SurfaceRegion::build_list_set (
+    const nmb_Interval &insubset,
+    const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+    nmg_State * state,
+    int strips_in_x, Vertex_Struct **surface)
+{
+    
+    v_gl_set_context_to_vlib_window(); 
+    
+    int (* stripfn)
+      (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, 
+	 GLdouble [3], int, Vertex_Struct *);
+    
+    // If we have a very small grid size, make sure state->stride doesn't tell
+    // us to skip any.
+    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
+        state->stride = 1;
+    }
+
+    int new_num_lists; // used later
+    if (strips_in_x) {
+        new_num_lists = (planes.height->numY() - 1) / state->stride;
+        stripfn = spm_x_strip_masked;
+    } else {
+        new_num_lists = (planes.height->numX() - 1) / state->stride;
+        stripfn = spm_y_strip_masked;
+    }
+    
+    // Handle being called for the first time when there are no display lists,
+    // or when number of display lists change. 
+    if (d_num_lists != new_num_lists) {
+        if (d_num_lists != 0) {
+            glDeleteLists(d_list_base, d_num_lists);
+        }
+        // Generate a new set of display list indices
+        if ( (d_list_base = glGenLists(new_num_lists)) == 0) {
+            fprintf(stderr,
+                    "build_list_set(): Couldn't get indices\n");
+            return(-1);
+        }
+        if (spm_graphics_verbosity >= 6) {
+            fprintf(stderr, "    allocated display lists from %d for %d.\n",
+                    d_list_base, new_num_lists);
+        }
+#if defined(sgi) || defined(_WIN32)
+        // use vertex array extension
+        if (state->VERTEX_ARRAY) {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            // Color arrays are enabled/disabled dynamically depending
+            // on whether or not planes.color or state->PRERENDERED_COLORS are
+            // valid.
+            if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
+                glEnableClientState(GL_NORMAL_ARRAY);
+            }
+        }
+#endif
+        d_num_lists = new_num_lists;
+        
+    }
+    
+    nmb_Interval subset (MAX(0, insubset.low()),
+        MIN(d_num_lists - 1, insubset.high()));
+    
+    return build_list_set(subset, planes, mask, state, 
+                          d_list_base, d_num_lists,
+                          state->surfaceColor, stripfn, surface);
+}
+
+/**
 * This routine creates display lists for the grid.
 * It relies on an external routine to determine the set of lists to
 * make, the direction (whether x or y is faster), and other important
 * variables.
-* Returns -1 on failure, 0 on success.
+* @return -1 on error, 0 on success. 
 */
 
 int nmg_SurfaceRegion::build_list_set(
@@ -986,7 +1102,6 @@ int nmg_SurfaceRegion::build_list_set(
         just_color_was_on = 0;
     }
 
-    
     // turn state->just_color off so only geometry gets re-generated
     state->just_color = 0;
     for (i = subset.low(); i <= subset.high(); i++) {
@@ -995,6 +1110,9 @@ int nmg_SurfaceRegion::build_list_set(
             fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
         }
         
+        // Delete lists we are going to create. Frees memory for new lists. 
+        glDeleteLists(base + i, 1);
+        // Create or replace existing list with new strip. 
         glNewList(base + i, GL_COMPILE);
 
         
@@ -1023,6 +1141,8 @@ int nmg_SurfaceRegion::build_list_set(
         // Flag tells stripfn to only regenerate color, and use cached normals 
         // and vertices. 
         state->just_color = 1;
+        // Delete lists we are going to create. Frees memory for new lists. 
+        glDeleteLists(base, num_lists);
         // re-color the whole surface
         for (i = 0; i < num_lists; i++) {
             
@@ -1060,151 +1180,101 @@ int nmg_SurfaceRegion::build_list_set(
 }
 
 /**
-* Modified by Jason 11/19/00
-*
-* It's useful to not have to pass in the strip function to this
-* procedure.  It makes the Visualization classes simpler
-*
+* Called by rebuildInterval, 
+* creates a single polygon to represent null data region. 
+* @return -1 on error, 0 on success. 
 */
-int nmg_SurfaceRegion::build_list_set (
-    const nmb_Interval &insubset,
+int nmg_SurfaceRegion::build_nulldata_polygon (
     const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     nmg_State * state,
-    GLuint base, GLsizei num,
     int strips_in_x, Vertex_Struct **surface)
 {
-    
     v_gl_set_context_to_vlib_window(); 
     
-    int (* stripfn)
-      (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, 
-	 GLdouble [3], int, Vertex_Struct *);
-    
-    if (strips_in_x) {
-        stripfn = spm_x_strip_masked;
-    } else {
-        stripfn = spm_y_strip_masked;
-    }
-    
-    // If we have a very small grid size, make sure state->stride doesn't tell us
-    // to skip any.
-    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
-        state->stride = 1;
-    }
-
-    nmb_Interval subset (MAX(0, insubset.low()),
-        MIN(num - 1, insubset.high()));
-    
-    if (!subset.empty()) {      
-      if (spm_graphics_verbosity >= 8) {
-	fprintf(stderr, "Deleting display lists from %d for %d.\n",
-                base + subset.low(), subset.high() - subset.low() + 1);
-      }
-      glDeleteLists(base + subset.low(), subset.high() - subset.low() + 1);
-      VERBOSECHECK(8);
-    } 
-    
-    return build_list_set(subset, planes, mask, state, base, num,
-        state->surfaceColor, stripfn, surface);
-}
-
-
-/**
-*	This routine creates display lists for the grid.  It will make
-* the lists in either X or Y fastest, and will delete the old lists (if
-* this is not the first time around) before making the new ones.
-* 	It returns the base name of the display lists (which are
-* contiguous) and the number of lists that it generates.
-*	This routine returns -1 on failure and 0 on success.
-*
-*  Modified by JMC on 11/19/00
-*  build_grid_display_lists now assumes that old_num specifies the old
-*  number of lists allocated for the current base.  If old_num is less than
-*  1, then it assumes that it is being called for the first time for
-*  a particular base. 
-*/
-
-int nmg_SurfaceRegion::build_grid_display_lists(
-    const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
-    nmg_State * state,
-    int strips_in_x, GLuint *base, GLsizei *num, 
-    GLsizei old_num, GLdouble *surfaceColor, 
-    Vertex_Struct **surface)
-{
-    
-    int (* stripfn)
-        (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], 
-	 int, Vertex_Struct *);
-    
-    VERBOSE(4,"     build_grid_display_lists in openGL.c");
-    VERBOSECHECK(4);
-    
-    v_gl_set_context_to_vlib_window(); 
-    
-    /* If this is not the first time around, free the old display lists */
-    if (old_num > 0) {
-      glDeleteLists(*base, old_num);
-      if (spm_graphics_verbosity >= 6)
-	fprintf(stderr, "      deleted display lists "
-		"from %d for %d.\n", *base, old_num);
-    }
-    
-    VERBOSE(4,"     build_grid_display_lists in openGL.c");
-    TIMERVERBOSE(5, mytimer, "begin build_grid_display_lists");
-    
-    /* set material parameters */
-    //set_gl_surface_materials();
-    //if (report_gl_errors()) {
-    //    printf("set_gl_surface_materials: generated gl error\n");
-    //}
-    
-    // If we have a very small grid size, make sure state->stride doesn't tell us
-    // to skip any.
-    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
-        state->stride = 1;
-    }
-    // Figure out how many strips we will need.  Recall that we are
-    // skipping along by stride gridpoints each time.
-    if (strips_in_x) {
-        *num = (planes.height->numY() - 1) / state->stride;
-        stripfn = spm_x_strip_masked;
-    } else {
-        *num = (planes.height->numX() - 1) / state->stride;
-        stripfn = spm_y_strip_masked;
-    }
-    
-    // Generate a new set of display list indices
-    if ( (*base = glGenLists(*num)) == 0) {
-        fprintf(stderr,
-            "build_grid_display_lists(): Couldn't get indices\n");
-        return(-1);
-    }
-    if (spm_graphics_verbosity >= 6)
-        fprintf(stderr, "    allocated display lists from %d for %d.\n",
-        *base, *num);
-    
-#if defined(sgi) || defined(_WIN32)
-    // use vertex array extension
-    if (state->VERTEX_ARRAY) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        // Color arrays are enabled/disabled dynamically depending
-        // on whether or not planes.color or state->PRERENDERED_COLORS are
-        // valid.
-        if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
-            glEnableClientState(GL_NORMAL_ARRAY);
+    if (d_num_lists == 0) {
+        // Generate a new set of display list indices
+        if ( (d_list_base = glGenLists(1)) == 0) {
+            fprintf(stderr,
+                    "build_nulldata_polygon(): Couldn't get indices\n");
+            return(-1);
         }
+        d_num_lists = 1;
     }
-#endif
-    
-    build_list_set(nmb_Interval (0, *num - 1), planes, mask, state, 
-                   *base, *num,
-                   surfaceColor, stripfn, surface);
-    
-    VERBOSE(4,"     done build_grid_display_lists in openGL.c");
-    VERBOSECHECK(4);
-    
-    TIMERVERBOSE(5, mytimer, "end build_grid_display_lists");
-    
-    return(0);
+    short minValid, maxValid;
+    short width, height;
+    mask->getValidRange(&minValid, &maxValid);
+    if (minValid == -1) {
+        minValid = maxValid = 0;
+    }
+    if (strips_in_x) {
+        width = planes.height->numX() -1;
+        height = planes.height->numY() -1;
+    } else {
+        width = planes.height->numY() -1;
+        height = planes.height->numX() -1;
+    }
+    GLfloat Normal [3];
+    Normal[0] = 0;
+    Normal[1] = 0;
+    Normal[2] = 1;
+
+    GLfloat Vertex [3];
+    // Plane at 0 in Z coordinate, but put just below
+    // to avoid co-planar polygons during region mode.  
+    Vertex[2]= -1;
+
+    glNewList(d_list_base, GL_COMPILE);
+
+    if (minValid != 0) {
+        // Draw a quad from one edge to the minimum valid data row
+        glBegin(GL_TRIANGLE_STRIP);
+        
+        glNormal3fv(Normal);
+
+        Vertex[0]= (float) planes.height->xInWorld(0);
+        Vertex[1]= (float) planes.height->yInWorld(0);
+        glVertex3fv(Vertex);
+
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? 0:minValid);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? minValid:0);
+        glVertex3fv(Vertex);
+
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? width:0);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? 0:width);
+        glVertex3fv(Vertex);
+        
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? width:minValid);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? minValid:width);
+        glVertex3fv(Vertex);
+        
+        glEnd();
+    } 
+    if (maxValid != height) {
+        // Draw a quad from the opposite edge to the maximum valid data row
+        glBegin(GL_TRIANGLE_STRIP);
+        
+        glNormal3fv(Normal);
+
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? 0:maxValid);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? maxValid:0);
+        glVertex3fv(Vertex);
+
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? 0:height);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? height:0);
+        glVertex3fv(Vertex);
+
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? width:maxValid);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? maxValid:width);
+        glVertex3fv(Vertex);
+        
+        Vertex[0]= (float) planes.height->xInWorld(strips_in_x ? width:height);
+        Vertex[1]= (float) planes.height->yInWorld(strips_in_x ? height:width);
+        glVertex3fv(Vertex);
+        
+        glEnd();
+    }
+    glEndList();
+
+    return 0;
 }
 

@@ -239,8 +239,8 @@ void specify_vertexArray(nmg_State * state,Vertex_Struct * vertexArray, int *ver
 
 /**      This routine will describe the vertex from the grid specified
 * by the (x,y) coordinates.
-*      This routine returns 0 on success and -1 on failure. 
-* WARNING depends on many, many global variables. */
+*      @return 0 on success and -1 on failure. 
+*/
 static int
 describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
                    GLdouble surfaceColor[3],
@@ -651,7 +651,7 @@ describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
 *    Y    1       0       
 *     X-------->                                                              
 *	This routine returns 0 on success and -1 on failure. */
-
+/* Probably obsolete
 int spm_y_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
                 GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
@@ -700,7 +700,7 @@ int spm_y_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
     }
     return 0;
 }
-
+*/
 /**
  This version of spm_y_strip uses an assumed masking plane to decide
  what to draw and what not to draw.  Since there could be situations
@@ -788,8 +788,8 @@ int spm_y_strip_masked(nmg_State * state,
             if (quad_masked)
             {
                 //If we had some good values before, and we have decided
-                //that the current quad shouldn't be drawn, then set the
-                //skipping bool to true and throw some bogus values into
+                //that the current quad shouldn't be drawn, then start
+                //skipping and throw some bogus values into
                 //the x and y arrays, so that in the next stage we will
                 //know when 1 tristrip has ended and we need to start up
                 //a new one.
@@ -805,7 +805,7 @@ int spm_y_strip_masked(nmg_State * state,
             {
                 //We had some unknown amount of quads that we decided
                 //shouldn't be displayed and have found 1 that should.
-                //So set the skipping variable to true and store the
+                //So don't skip anymore and store the
                 //first two points.
                 skipping = false;
                 x_array[i] = x; x_array[i+1] = x - state->stride;
@@ -916,7 +916,7 @@ int spm_y_strip_masked(nmg_State * state,
  *     X-------->                           
  *                                                                         
  *	This routine returns 0 on success and -1 on failure. */
-
+/* Probably obsolete
 int spm_x_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
                 GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
@@ -965,7 +965,7 @@ int spm_x_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
     }
     return 0;
 }
-
+*/
 /**
  This version of spm_x_strip uses an assumed masking plane to decide
  what to draw and what not to draw.  Since there could be situations
@@ -1011,9 +1011,12 @@ int spm_x_strip_masked(nmg_State * state,
     
     int number_of_strips = 0;
     bool skipping = false;
-    int *x_array = new int[planes.height->numX() * 3];  //Multiplying by 3 is more space than needed
-    int *y_array = new int[planes.height->numX() * 3];  //but it's simple and we can need some
-    i = 0;                                              //unknown amount more than 2 if state->stride is 1
+    //Multiplying by 3 is more space than needed
+    //but it's simple and we can need some
+    //unknown amount more than 2 if state->stride is 1
+    int *x_array = new int[planes.height->numX() * 3];  
+    int *y_array = new int[planes.height->numX() * 3];  
+    i = 0;
     
     x = 0;
     y = which + state->stride;

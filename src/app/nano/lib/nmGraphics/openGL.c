@@ -65,13 +65,6 @@ static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
 #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
 
-// Define EXPENSIVE_DISPLAY_LISTS if recomputing display lists is very
-// expensive on the current architecture (but you still want to use them).
-// It recomputes only those lists which are not likely to have to be
-// recomputed in the near future as more data comes in from the scope.
-
-// #define EXPENSIVE_DISPLAY_LISTS
-
 int report_gl_errors(void)
 {
     v_gl_set_context_to_vlib_window(); 
@@ -168,25 +161,15 @@ int draw_world (int, void * data)
   nmg_State * state = (nmg_State *) data;
     
     v_gl_set_context_to_vlib_window(); 
-    /********************************************************************/
     // Draw Ubergraphics
-    /********************************************************************/
-      
-    //UGRAPHICS CALL TO DRAW THE WORLD  -- ASSUMING THAT VLIB HAS IT IN WORLD SPACE
-    //WHEN I HIT THIS POINT
 
-	// This is now called in renderSurface so that projective textures can be displayed
-	// on the imported objects
+    // This is now called in renderSurface so that projective textures can be
+    // displayed on the imported objects
 
 //    if (state->config_enableUber) {
 //        World.Do(&URender::Render);
 //    }
 
-    
-    /********************************************************************/
-    // End Ubergraphics
-    /********************************************************************/
-    
     TIMERVERBOSE(3, mytimer, "begin draw_world");
     
     // Look up the planes we're mapping to various data sets this time.
@@ -233,29 +216,26 @@ int draw_world (int, void * data)
         
         VERBOSECHECK(4);
         VERBOSE(4,"    Rebuilding display lists (for new selected region)");
-        if (!state->surface->rebuildSurface(state, VRPN_TRUE)) {
+        if (state->surface->rebuildSurface(state)) {
             fprintf(stderr,
                 "ERROR: Could not build grid display lists\n");
             dataset->done = V_TRUE;
         }
+        decoration->red.normalize(planes.height);
+        decoration->green.normalize(planes.height);
+        decoration->blue.normalize(planes.height);
+        decoration->aimLine.normalize(planes.height);
         
         decoration->selectedRegion_changed = 0;
     }
     
-    //See if there are any regions that need full rebuilding for
-    //some reason
-    if (!state->surface->rebuildSurface(state)) {
-        fprintf(stderr,
-            "ERROR: Could not build grid display lists\n");
-        dataset->done = V_TRUE;
-    }
-
     VERBOSECHECK(4);
     VERBOSE(4,"    Replacing changed display lists");
     TIMERVERBOSE(5, mytimer, "draw_world:Replacing changed display lists");
     
-    // Convert from rows to strips:  divide through by the tesselation stride 
-    if (!state->surface->rebuildInterval(state)) {
+    //See if there are any regions that need rebuilding for
+    //any reason
+    if (state->surface->rebuildInterval(state)) {
         return -1;
     }
 
@@ -280,7 +260,7 @@ int draw_world (int, void * data)
     
     // draw the microscope's current scanline as a visual indicator to the user
     // Not related to "scanline" mode, which controls the AFM tip. 
-    if (decoration->drawScanLine && state->config_chartjunk) {
+    if (decoration->drawScanLine && state->config_chartjunk && decoration->scanLineCount) {
         float oldColor[4];
         float oldLineWidth[1];
         glGetFloatv(GL_CURRENT_COLOR, oldColor);

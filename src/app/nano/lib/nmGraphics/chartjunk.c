@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000-2002 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 
 /* 
    code that implement the functionalities of microscape in openGL 
@@ -195,7 +202,8 @@ int height_at_hand_display (void * data) {
   char message[1000], msgpart[500];
 
   nmg_State * state = (nmg_State *) data;
-  if (state->user_mode == USER_PLANEL_MODE) {	// sharp tip mode
+  if (state->user_mode == USER_PLANEL_MODE && microscope) {
+      // sharp tip mode
 	// Print all of the values in the intputPoint list of values
 	Point_value *value = microscope->state.data.inputPoint->head();
 

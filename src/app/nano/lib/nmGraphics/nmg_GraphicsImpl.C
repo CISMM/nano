@@ -205,7 +205,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
-  if (!state->surface->init(grid_size_x, grid_size_y) ) {
+  if (state->surface->init(grid_size_x, grid_size_y) ) {
       fprintf(stderr," initialization of surface: out of memory [call 0].\n");
       exit(0);
   }
@@ -603,6 +603,20 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
       state->surface->destroyRegion(d_last_region);
       d_last_region = -1;
   }
+
+  if (d_nulldata_region != -1) {
+      state->surface->destroyRegion(d_nulldata_region);
+      d_nulldata_region = -1;
+  }
+
+  BCPlane * plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string());
+  if (plane) {
+      // EXPERIMENTAL. Mask out null data on default surface region
+      d_nulldata_region = state->surface->createNewRegion();
+      state->surface->setRegionControl(plane, d_nulldata_region);
+      state->surface->deriveMaskPlane(d_nulldata_region);
+  }
+
   causeGridRebuild(); 
 }
 
@@ -951,6 +965,11 @@ _______________________________********************/
   delete [] texture;
 }
 
+/**
+ * Next display loop, regenerate vertex colors for the surface. 
+ * Use cached normals and vertex coordinates. Provides moderate
+ * speed up over calling causeGridRedraw. 
+ */
 void nmg_Graphics_Implementation::causeGridReColor (void) {
   state->just_color = 1;
     state->surface->recolorSurface();
@@ -958,7 +977,10 @@ void nmg_Graphics_Implementation::causeGridReColor (void) {
   //causeGridRedraw();
 }
 
-
+/**
+ * Next display loop, regenerate all display lists for the surface. 
+ * Probably a bad name - "Rebuild" instead? 
+ */
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
   //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
   BCPlane * plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
@@ -972,12 +994,17 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
   }
 }
 
+/** 
+ * Re-allocate the vertex array that draws the surface. Call _ONLY_ 
+ * if the resolution of the surface changes. Bad name - should be
+ * called ReallocateGrid. 
+ */
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
   state->just_color = 0;
 
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
-  if (!state->surface->init(d_dataset->inputGrid->numX(),
+  if (state->surface->init(d_dataset->inputGrid->numX(),
                        d_dataset->inputGrid->numY()) )
   {
       fprintf(stderr," initialization of surface: out of memory [call 1].\n");
@@ -987,7 +1014,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numY();
 
-  if (!state->surface->rebuildSurface(state, VRPN_TRUE)) {
+  if (state->surface->rebuildSurface(state)) {
     fprintf(stderr,
             "nmg_Graphics_Implementation::causeGridRebuild():  "
             "Couldn't build grid display lists\n");
@@ -1181,21 +1208,36 @@ void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
       decoration->first_line_avg = 0;
       decoration->first_line_avg_prev = d_dataset->getFirstLineAvg(planes.color);
   }
+
+  causeGridReColor();
+
 }
 
 // virtual
 void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
   strcpy(state->contourPlaneName, n);
+  causeGridRedraw();
 }
 
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   strcpy(state->heightPlaneName, n);
+  BCPlane * plane = dataset->inputGrid->getPlaneByName(n);
+  if (!plane) return;
+  // EXPERIMENTAL. Mask out null data on default surface region
+  if (d_nulldata_region == -1) {
+      d_nulldata_region = state->surface->createNewRegion();
+  }
+  state->surface->setRegionControl(plane, d_nulldata_region);
+  state->surface->deriveMaskPlane(d_nulldata_region);
+   causeGridRedraw();
+ 
 }
 
 // virtual
 void nmg_Graphics_Implementation::setOpacityPlaneName (const char * n) {
   strcpy(state->opacityPlaneName, n);
+  causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setMaskPlaneName (const char * n) {
@@ -1503,7 +1545,7 @@ void nmg_Graphics_Implementation::translateTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRebuild();
+  causeGridRedraw();
 }
 
 //
@@ -1540,7 +1582,7 @@ void nmg_Graphics_Implementation::scaleTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRebuild();
+  causeGridRedraw();
 }
 
 //
@@ -1574,7 +1616,7 @@ void nmg_Graphics_Implementation::shearTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRebuild();
+  causeGridRedraw();
 }
 
 //
@@ -1590,7 +1632,7 @@ void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
   state->tex_theta_cumulative += state->rotate_tex_theta;
 
   // Rebuilds the texture coordinate array:
-  causeGridRebuild();
+  causeGridRedraw();
 }
 
 //
@@ -2130,20 +2172,20 @@ void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
 void nmg_Graphics_Implementation::setSpecularity (int s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSpecularity().\n");
   state->shiny = s;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setLocalViewer (vrpn_bool lv) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setLocalViewer().\n");
   state->local_viewer = lv;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 
 void nmg_Graphics_Implementation::setDiffusePercent (float d) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDiffusePercent().\n");
   state->diffuse = d;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSurfaceAlpha (float a, int region) {
@@ -2154,7 +2196,7 @@ void nmg_Graphics_Implementation::setSurfaceAlpha (float a, int region) {
 void nmg_Graphics_Implementation::setSpecularColor (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSpecularColor().\n");
   state->specular_color = s;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSphereScale (float s) {

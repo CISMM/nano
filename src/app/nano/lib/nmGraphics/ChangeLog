@@ -1,3 +1,34 @@
+2002-03-11  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_Surface.Ch: Huge rewrite, surface display list generation
+	now follows a single path, and complete rebuilds are
+	minimized. Several methods merged or removed. Added support for
+	"nulldata" and "inverse" mask
+
+	* nmg_SurfaceRegion.Ch: same. Found error in strip rebuild code
+	(determineInterval), where if 1 row of data changed, we rebuilt 5
+	strips, when we only need to rebuild 4. 20% speedup, maybe!
+
+	* nmg_SurfaceMask.Ch: Rewrite so all mask types except height
+	calculate whether they are masked "live", rather than caching in a
+	mask array. Provides huge speedup for large surfaces, 400x400 and
+	above. New "nulldata" mask includes the invalid data region of
+	plane, and "inverse" mask is not masked only if pixel is masked in
+	all other masks. 
+	
+	* chartjunk.c (height_at_hand_display): check for non-null
+	microscope 
+	* nmg_GraphicsImpl.Ch: Handle changes to nmg_Surface, especially
+	change of error return from 0 to -1. 
+	Change many instances of causeGridRebuild to causeGridRedraw,
+	should be faster in many cases, with same visible effect. 
+	(changeDataset): new region, marks plane regions which have never
+	received data, rendered with a single quad. 
+	(setHeightPlaneName): same
+	* openGL.C (draw_world): handle changes to nmg_Surface*. 
+	* surface_strip_create.c (spm_y_strip): removed, obsolete.
+	(spm_x_strip): same. 
+
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* chartjunk.c (height_at_hand_display): Incorrect handling of null
