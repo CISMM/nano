@@ -1,3 +1,8 @@
+2003-02-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C: changed default pixel integration time from
+	10000 nsec to 40000 nsec
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_EDAX.C: changed the response to the requestScan

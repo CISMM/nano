@@ -434,7 +434,8 @@ if (!d_virtualAcquisition) {
     nmm_EDAX::indexToResolution(d_resolution_index, d_resolution_x,
                             d_resolution_y);
     d_interpixel_delay_nsec = 0;
-    d_pix_integrate_nsec = 10000;
+    d_pix_integrate_nsec = 40000; 
+	// 10000nsec --> about 1 uCoul/cm^2 at 10pA, mag=1000, res=1024x800
 //  }
 
     if (d_virtualAcquisition) {
