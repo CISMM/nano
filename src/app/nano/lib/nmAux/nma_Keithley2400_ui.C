@@ -260,50 +260,6 @@ handle_startstop_change(vrpn_float64 /*_newvalue*/, void *_userdata) {
   me->keithley2400->send_AllSettings();
 }
 
-// This shouldn't be needed anymore, now that the voltage data
-// is being transmitted back along with the current data. 
-int nma_Keithley2400_ui::set_voltage_vector()
-{
-  Blt_Vector *vecPtr = NULL;
-  char vec_name[] = "vi_volt_vec";
-  
-  int volt_vec_len = keithley2400->d_sweep_numpoints;
-  double * tcl_data = (double *)Tcl_Alloc(sizeof(double) *volt_vec_len);
-  if (tcl_data == NULL) {
-    fprintf(stderr, "Out of memory for %s\n", vec_name);
-    return -1;
-  }
-  // Set the voltage vector to contain the voltages used in the sweep.
-  // Recalculate the stepsize based on values from the Keithley
-  // and not those in Tcl.
-  float step_size = ((keithley2400->d_sweep_stop - 
-    keithley2400->d_sweep_start)/
-    (keithley2400->d_sweep_numpoints -1));
-  for (int i = 0; i< volt_vec_len; i++) {
-    tcl_data[i] = keithley2400->d_sweep_start + i*step_size;
-  }
-  // First, create a vector (of zero length), or get the existing vector
-  if (Blt_VectorExists(tcl_interp, vec_name)) {
-    if (Blt_GetVector (tcl_interp, vec_name, &vecPtr)!= TCL_OK) {
-      fprintf(stderr, "Can't get vector %s\n", vec_name);
-      return -1;
-    }
-  } else {
-    if (Blt_CreateVector (tcl_interp, vec_name, 0, &vecPtr)!= TCL_OK) {
-      fprintf(stderr, "Can't create vector %s\n", vec_name);
-      return -1;
-    }
-  }
-  // Now set the contents of the vector
-  // By setting the last parameter to TCL_DYNAMIC, we tell
-  // Tcl to free the storage later, when needed. 
-  if (Blt_ResetVector (vecPtr, tcl_data,
-    volt_vec_len,volt_vec_len,TCL_DYNAMIC)!= TCL_OK) {
-    fprintf(stderr,"Can't assign values to vector %s\n", vec_name);
-    return -1;
-  }
-  return 0;
-}
 
 void nma_Keithley2400_ui::
 handle_take_iv_curves(vrpn_int32 /*_newvalue*/, void *_userdata) {

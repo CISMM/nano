@@ -1,7 +1,10 @@
 2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
 
+	* nma_Keithley2400_ui.C (set_voltage_vector):  removed, unused.
+
 	* nma_Keithley2400.h:  new data members, d_inital_delay and
 	d_zero-after_meas.  new method, SendImmediately.
+
 	* nma_Keithley2400.C (send_AcquireData):  before measuring, sets the 
 	output to the start value and waits for a bit.  sets the output to 
 	zero after a measurement.
