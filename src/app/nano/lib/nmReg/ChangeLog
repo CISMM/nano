@@ -1,3 +1,7 @@
+2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.h (setTopographyImage): new function
+
 2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.C : fixed tcl var. name for d_textureAlpha

@@ -96,6 +96,10 @@ class nmr_RegistrationUI {
        d_registrationImageName2D = imageName;
        handle_registrationImage2D_change(imageName, (void *)this);
     }
+	void setTopographyImage(const char *imageName) {
+		d_registrationImageName3D = imageName;
+		handle_registrationImage3D_change(imageName, (void *)this);
+	}
     void displayTexture(int enable) {d_textureDisplayEnabled = enable;};
     void autoAlignImages();
     // set a function to be called whenever the worldToImage transformation
