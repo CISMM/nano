@@ -2240,9 +2240,10 @@ int doFeelLive(int whichUser, int userEvent)
 	   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
 	      // Constrained freehand only allows motion along a line
 	       nmui_Util::getHandInWorld(whichUser, clipPos);
-	       nmui_Util::clipPositionLineConstraint((BCPlane *)plane, 
-                         (q_vec_type &)clipPos, 
-			 (Position_list &)microscope->state.modify.stored_points);
+	       nmui_Util::clipPositionLineConstraint(
+                   (BCPlane *)plane, 
+                   clipPos, 
+                   (Position_list &)microscope->state.modify.stored_points);
 	   } else {
 	       nmui_Util::getHandInWorld(whichUser, clipPos);
 	       nmui_Util::clipPosition(plane, clipPos);
