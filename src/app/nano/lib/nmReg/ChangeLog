@@ -1,3 +1,8 @@
+2002-06-06  David Borland <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.C : code to automatically create a 
+	ProjTextObj when switching to MODEL_REGISTRATION_COORD mode
+
 2002-06-05  David Borland <borland@cs.unc.edu>
 
         * nmr_RegistrationUI.C : fixed a little kink in the user interface

@@ -14,8 +14,11 @@
 #include <nmb_Transform_TScShR.h>
 
 #include <nmg_Graphics.h>
+#include <UTree.h>
 
 extern nmg_Graphics* graphics;
+
+extern UTree World;
 
 /*
 this is annoying because it takes too long to calculate the image pyramid
@@ -570,6 +573,16 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
 	  else {
 			graphics->setTextureMode(nmg_Graphics::COLORMAP,
 									 nmg_Graphics::MODEL_REGISTRATION_COORD);
+
+			// set tcl callbacks to create an object for the texture
+
+			if (World.TGetNodeByName("projtextobj.ptx") == NULL) {
+				extern Tclvar_string modelFile;
+				modelFile = "/projtextobj.ptx";
+
+				extern Tclvar_string current_object_new;
+				current_object_new = "projtextobj.ptx";
+			}
 	  }
     } 
     else {
@@ -595,6 +608,16 @@ void nmr_RegistrationUI::handle_textureImageMode_change(
 	else {
 		graphics->setTextureMode(nmg_Graphics::COLORMAP,
 								 nmg_Graphics::MODEL_REGISTRATION_COORD);
+
+		// set tcl callbacks to create an object for the texture
+
+		if (World.TGetNodeByName("projtextobj.ptx") == NULL) {
+			extern Tclvar_string modelFile;
+			modelFile = "/projtextobj.ptx";
+
+			extern Tclvar_string current_object_new;
+			current_object_new = "projtextobj.ptx";
+		}
 	}
 }
 
