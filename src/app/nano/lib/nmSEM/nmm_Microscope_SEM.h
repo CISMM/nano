@@ -31,7 +31,14 @@ class nmm_Microscope_SEM {
                 REPORT_PIXEL_INTEGRATION_TIME,
                 REPORT_INTERPIXEL_DELAY_TIME,
                 WINDOW_LINE_DATA,
-				SCANLINE_DATA} msg_t;
+		SCANLINE_DATA,
+                POINT_DWELL_TIME,
+                BEAM_BLANK_ENABLE,
+                MAX_SCAN_SPAN,
+                BEAM_LOCATION,
+                RETRACE_DELAYS,
+                DAC_PARAMS,
+                EXTERNAL_SCAN_CONTROL_ENABLE} msg_t;
   protected:
 //    vrpn_Connection * d_connection;
 //    vrpn_File_Controller * d_fileController;
@@ -43,6 +50,12 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_SetPixelIntegrationTime_type;
     vrpn_int32 d_SetInterPixelDelayTime_type;
     vrpn_int32 d_RequestScan_type;
+    vrpn_int32 d_SetPointDwellTime_type;
+    vrpn_int32 d_SetBeamBlankEnable_type;
+    vrpn_int32 d_GoToPoint_type;
+    vrpn_int32 d_SetRetraceDelays_type;
+    vrpn_int32 d_SetDACParams_type;
+    vrpn_int32 d_SetExternalScanControlEnable_type;
 
     // (server-->client) messages
 
@@ -51,6 +64,13 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_ReportInterPixelDelayTime_type;
     vrpn_int32 d_WindowLineData_type;
     vrpn_int32 d_ScanlineData_type;
+    vrpn_int32 d_ReportPointDwellTime_type;
+    vrpn_int32 d_ReportBeamBlankEnable_type;
+    vrpn_int32 d_ReportMaxScanSpan_type;
+    vrpn_int32 d_ReportBeamLocation_type;
+    vrpn_int32 d_ReportRetraceDelays_type;
+    vrpn_int32 d_ReportDACParams_type;
+    vrpn_int32 d_ReportExternalScanControlEnable_type;
 
     // message encode, decode functions
     // (client-->server)
@@ -71,7 +91,41 @@ class nmm_Microscope_SEM {
 
     static char * encode_RequestScan (vrpn_int32 *len,
 					vrpn_int32 nscans);
-    static vrpn_int32 decode_RequestScan (const char **buf, vrpn_int32 *nscans); 
+    static vrpn_int32 decode_RequestScan (const char **buf, vrpn_int32 *nscans);
+
+    static char * encode_SetPointDwellTime (vrpn_int32 *len, 
+                                            vrpn_int32 time_nsec);
+    static vrpn_int32 decode_SetPointDwellTime (const char **buf,
+                                            vrpn_int32 *time_nsec);
+
+    static char * encode_SetBeamBlankEnable (vrpn_int32 *len,
+                                             vrpn_int32 enable);
+    static vrpn_int32 decode_SetBeamBlankEnable (const char **buf,
+                                            vrpn_int32 *enable);
+
+    static char * encode_GoToPoint (vrpn_int32 *len,
+                              vrpn_int32 x, vrpn_int32 y);
+    static vrpn_int32 decode_GoToPoint (const char **buf,
+                                 vrpn_int32 *x, vrpn_int32 *y);
+
+    static char * encode_SetRetraceDelays (vrpn_int32 *len,
+                           vrpn_int32 h_time_nsec, vrpn_int32 v_time_nsec);
+    static vrpn_int32 decode_SetRetraceDelays (const char **buf,
+                           vrpn_int32 *h_time_nsec, vrpn_int32 *v_time_nsec);
+
+    static char * encode_SetDACParams (vrpn_int32 *len,
+                 vrpn_int32 x_gain, vrpn_int32 x_offset,
+                 vrpn_int32 y_gain, vrpn_int32 y_offset,
+                 vrpn_int32 z_gain, vrpn_int32 z_offset);
+    static vrpn_int32 decode_SetDACParams (const char **buf,
+                 vrpn_int32 *x_gain, vrpn_int32 *x_offset,
+                 vrpn_int32 *y_gain, vrpn_int32 *y_offset,
+                 vrpn_int32 *z_gain, vrpn_int32 *z_offset);
+
+    static char * encode_SetExternalScanControlEnable (vrpn_int32 *len,
+                                             vrpn_int32 enable);
+    static vrpn_int32 decode_SetExternalScanControlEnable (const char **buf,
+                                            vrpn_int32 *enable);
 
     // (server-->client)
     static char * encode_ReportResolution (vrpn_int32 *len, 
@@ -118,7 +172,46 @@ class nmm_Microscope_SEM {
         vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 numLines,
         vrpn_int32 pixelType, void *data);
 
-    // packs the message reliably and then deletes [] buf
+    static char * encode_ReportPointDwellTime (vrpn_int32 *len,
+                                            vrpn_int32 time_nsec);
+    static vrpn_int32 decode_ReportPointDwellTime (const char **buf,
+                                            vrpn_int32 *time_nsec);
+
+    static char * encode_ReportBeamBlankEnable (vrpn_int32 *len,
+                                            vrpn_int32 enable);
+    static vrpn_int32 decode_ReportBeamBlankEnable (const char **buf,
+                                            vrpn_int32 *enable);
+
+    static char * encode_ReportMaxScanSpan (vrpn_int32 *len,
+                              vrpn_int32 x, vrpn_int32 y);
+    static vrpn_int32 decode_ReportMaxScanSpan (const char **buf,
+                              vrpn_int32 *x, vrpn_int32 *y);
+
+    static char * encode_ReportBeamLocation (vrpn_int32 *len,
+                              vrpn_int32 x, vrpn_int32 y);
+    static vrpn_int32 decode_ReportBeamLocation (const char **buf,
+                              vrpn_int32 *x, vrpn_int32 *y);
+
+    static char * encode_ReportRetraceDelays (vrpn_int32 *len,
+                           vrpn_int32 h_time_nsec, vrpn_int32 v_time_nsec);
+    static vrpn_int32 decode_ReportRetraceDelays (const char **buf,
+                           vrpn_int32 *h_time_nsec, vrpn_int32 *v_time_nsec);
+
+    static char * encode_ReportDACParams (vrpn_int32 *len,
+                 vrpn_int32 x_gain, vrpn_int32 x_offset,
+                 vrpn_int32 y_gain, vrpn_int32 y_offset,
+                 vrpn_int32 z_gain, vrpn_int32 z_offset);
+    static vrpn_int32 decode_ReportDACParams (const char **buf,
+                 vrpn_int32 *x_gain, vrpn_int32 *x_offset,
+                 vrpn_int32 *y_gain, vrpn_int32 *y_offset,
+                 vrpn_int32 *z_gain, vrpn_int32 *z_offset);
+
+    static char * encode_ReportExternalScanControlEnable (vrpn_int32 *len,
+                                            vrpn_int32 enable);
+    static vrpn_int32 decode_ReportExternalScanControlEnable (const char **buf,
+                                            vrpn_int32 *enable);
+
+//    packs the message reliably and then deletes [] buf
 //    int dispatchMessage (vrpn_int32 len, const char *buf, 
 //                     vrpn_int32 type);
 };

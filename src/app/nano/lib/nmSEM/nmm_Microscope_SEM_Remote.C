@@ -11,6 +11,15 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     d_lineLength(0), d_numFields(0), d_numLines(0), d_pixelType(NMB_UINT8),
     d_dataBuffer(NULL),
     d_dataBufferSize(0),
+    d_pointDwellTime_nsec(0),
+    d_beamBlankEnabled(0),
+    d_maxScanX(0), d_maxScanY(0),
+    d_pointScanX(0), d_pointScanY(0),
+    d_hRetraceDelay_nsec(0), d_vRetraceDelay_nsec(0),
+    d_xGain(0), d_xOffset(0), 
+    d_yGain(0), d_yOffset(0), 
+    d_zGain(0), d_zOffset(0),
+    d_externalScanControlEnabled(0),
     d_messageHandlerList(NULL)
 {
   if (d_connection == NULL){
@@ -39,6 +48,48 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
                 RcvScanlineData, this)) {
     fprintf(stderr,
            "nmm_Microscope_SEM_Remote: can't register scanline data handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportPointDwellTime_type,
+                RcvReportPointDwellTime, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register point dwell handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportBeamBlankEnable_type,
+                RcvReportBeamBlankEnable, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register beam blank handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportMaxScanSpan_type,
+                RcvReportMaxScanSpan, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register max scan handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportBeamLocation_type,
+                RcvReportBeamLocation, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register beam location handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportRetraceDelays_type,
+                RcvReportRetraceDelays, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register retrace delay handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportDACParams_type,
+                RcvReportDACParams, this)) {
+    fprintf(stderr,
+           "nmm_Microscope_SEM_Remote: can't register DAC param handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_ReportExternalScanControlEnable_type,
+                RcvReportExternalScanControlEnable, this)) {
+    fprintf(stderr,
+       "nmm_Microscope_SEM_Remote: can't register external control handler\n");
     return;
   }
 
@@ -118,6 +169,89 @@ int nmm_Microscope_SEM_Remote::requestScan(vrpn_int32 nscans)
   }
 
   return dispatchMessage(len, msgbuf, d_RequestScan_type);
+}
+
+int nmm_Microscope_SEM_Remote::setPointDwellTime(vrpn_int32 time_nsec)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetPointDwellTime(&len, time_nsec);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetPointDwellTime_type);
+}
+
+int nmm_Microscope_SEM_Remote::setBeamBlankEnable(vrpn_int32 enable)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetBeamBlankEnable(&len, enable);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetBeamBlankEnable_type);
+}
+
+int nmm_Microscope_SEM_Remote::goToPoint(vrpn_int32 x, vrpn_int32 y)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_GoToPoint(&len, x, y);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_GoToPoint_type);
+}
+
+int nmm_Microscope_SEM_Remote::setRetraceDelays(
+               vrpn_int32 h_time_nsec, vrpn_int32 v_time_nsec)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetRetraceDelays(&len, h_time_nsec, v_time_nsec);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetRetraceDelays_type);
+}
+
+int nmm_Microscope_SEM_Remote::setDACParams(
+                     vrpn_int32 x_gain, vrpn_int32 x_offset,
+                     vrpn_int32 y_gain, vrpn_int32 y_offset,
+                     vrpn_int32 z_gain, vrpn_int32 z_offset)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetDACParams(&len, x_gain, x_offset, y_gain, y_offset,
+                                     z_gain, z_offset);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetDACParams_type);
+}
+
+int nmm_Microscope_SEM_Remote::setExternalScanControlEnable(vrpn_int32 enable)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetExternalScanControlEnable(&len, enable);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetExternalScanControlEnable_type);
 }
 
 int nmm_Microscope_SEM_Remote::registerChangeHandler(void *userdata,
@@ -202,6 +336,54 @@ void nmm_Microscope_SEM_Remote::getScanlineData
   num_lines = d_numLines;
   pix_type = d_pixelType;
   *data = d_dataBuffer;
+}
+
+void nmm_Microscope_SEM_Remote::getPointDwellTime(vrpn_int32 &time_nsec)
+{
+  time_nsec = d_pointDwellTime_nsec;
+}
+
+void nmm_Microscope_SEM_Remote::getBeamBlankEnabled(vrpn_int32 &enabled)
+{
+  enabled = d_beamBlankEnabled;
+}
+
+void nmm_Microscope_SEM_Remote::getMaxScan(vrpn_int32 &x, vrpn_int32 &y)
+{
+  x = d_maxScanX;
+  y = d_maxScanY;
+}
+
+void nmm_Microscope_SEM_Remote::getBeamLocation(vrpn_int32 &x, vrpn_int32 &y)
+{
+  x = d_pointScanX;
+  y = d_pointScanY;
+}
+
+void nmm_Microscope_SEM_Remote::getRetraceDelays
+               (vrpn_int32 &h_time_nsec, vrpn_int32 &v_time_nsec)
+{
+  h_time_nsec = d_hRetraceDelay_nsec;
+  v_time_nsec = d_vRetraceDelay_nsec;
+}
+
+void nmm_Microscope_SEM_Remote::getDACParams
+               (vrpn_int32 &x_gain, vrpn_int32 &x_offset,
+                      vrpn_int32 &y_gain, vrpn_int32 &y_offset,
+                      vrpn_int32 &z_gain, vrpn_int32 &z_offset)
+{
+  x_gain = d_xGain;
+  x_offset = d_xOffset;
+  y_gain = d_yGain;
+  y_offset = d_yOffset;
+  z_gain = d_zGain;
+  z_offset = d_zOffset;
+}
+
+void nmm_Microscope_SEM_Remote::getExternalScanControlEnable(
+                                vrpn_int32 &enabled)
+{
+  enabled = d_externalScanControlEnabled;
 }
 
 //static
@@ -325,6 +507,140 @@ int nmm_Microscope_SEM_Remote::RcvScanlineData(void *_userdata,
   return me->notifyMessageHandlers(SCANLINE_DATA, _p.msg_time);
 }
 
+//static
+int nmm_Microscope_SEM_Remote::RcvReportPointDwellTime
+    (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 time_nsec;
+
+  if (decode_ReportPointDwellTime(&bufptr, &time_nsec) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvPointDwellTime: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_pointDwellTime_nsec = time_nsec;
+  return me->notifyMessageHandlers(POINT_DWELL_TIME, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportBeamBlankEnable
+     (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_ReportBeamBlankEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvBeamBlankEnable: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_beamBlankEnabled = enable;
+  return me->notifyMessageHandlers(BEAM_BLANK_ENABLE, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportMaxScanSpan
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 x, y;
+
+  if (decode_ReportMaxScanSpan(&bufptr, &x, &y) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvMaxScanSpan: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_maxScanX = x;
+  me->d_maxScanY = y;
+  return me->notifyMessageHandlers(MAX_SCAN_SPAN, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportBeamLocation
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 x, y;
+
+  if (decode_ReportBeamLocation(&bufptr, &x, &y) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvBeamLocation: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_pointScanX = x;
+  me->d_pointScanY = y;
+  return me->notifyMessageHandlers(BEAM_LOCATION, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportRetraceDelays
+               (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 h_delay, v_delay;
+
+  if (decode_ReportRetraceDelays(&bufptr, &h_delay, &v_delay) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportRetraceDelays: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_hRetraceDelay_nsec = h_delay;
+  me->d_vRetraceDelay_nsec = v_delay;
+  return me->notifyMessageHandlers(RETRACE_DELAYS, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportDACParams
+               (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 xg, xo, yg, yo, zg, zo;
+
+  if (decode_ReportDACParams(&bufptr, &xg, &xo, &yg, &yo, &zg, &zo) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportDACParams: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_xGain = xg;
+  me->d_xOffset = xo;
+  me->d_yGain = yg;
+  me->d_yOffset = yo;
+  me->d_zGain = zg;
+  me->d_zOffset = zo;
+  return me->notifyMessageHandlers(DAC_PARAMS, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportExternalScanControlEnable
+     (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_ReportExternalScanControlEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvBeamBlankEnable: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_externalScanControlEnabled = enable;
+  return me->notifyMessageHandlers(EXTERNAL_SCAN_CONTROL_ENABLE, _p.msg_time);
+}
+
 int nmm_Microscope_SEM_Remote::notifyMessageHandlers(
         nmm_Microscope_SEM::msg_t type, const struct timeval &msg_time)
 {
@@ -340,5 +656,3 @@ int nmm_Microscope_SEM_Remote::notifyMessageHandlers(
   }
   return 0;
 }
-
-

@@ -7,10 +7,12 @@
 extern nmb_Dataset * dataset;
 extern nmg_Graphics * graphics;
 
+/*
 vrpn_int32 nms_SEM_ui::d_matrixSizeX[EDAX_NUM_SCAN_MATRICES] =
                                           EDAX_SCAN_MATRIX_X;
 vrpn_int32 nms_SEM_ui::d_matrixSizeY[EDAX_NUM_SCAN_MATRICES] =
                                           EDAX_SCAN_MATRIX_Y;
+*/
 
 SEMInitializationState::SEMInitializationState():
     readingLogFile (VRPN_FALSE),
@@ -133,16 +135,18 @@ void nms_SEM_ui::handle_resolution_change(vrpn_int32 _newval, void *_ud)
        return;
     }
     vrpn_int32 res_x, res_y;
+    vrpn_int32 res_x2, res_y2;
+    nmm_EDAX::indexToResolution(_newval, res_x2, res_y2);
     // only send a message if the last message we received indicated
     // a different value
     me->sem->getResolution(res_x, res_y);
     printf("resolution was (%d, %d), changed to (%d, %d)\n",
 	res_x, res_y, 
-	me->d_matrixSizeX[_newval], me->d_matrixSizeY[_newval]);
-    if (res_x != me->d_matrixSizeX[_newval] ||
-        res_y != me->d_matrixSizeY[_newval]){
-         me->sem->setResolution(me->d_matrixSizeX[_newval],
-                           me->d_matrixSizeY[_newval]);
+	res_x2, res_y2);
+    if (res_x != res_x2 ||
+        res_y != res_y2){
+         me->sem->setResolution(res_x2,
+                                res_y2);
     }
     return;
 }
@@ -201,20 +205,6 @@ void nms_SEM_ui::handle_window_visibility_change(vrpn_int32 _newval, void *_ud)
 }
 
 // static
-int nms_SEM_ui::computeResolutionIndex(vrpn_int32 res_x, vrpn_int32 res_y)
-{
-    int i;
-    for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
-        if (d_matrixSizeX[i] == res_x &&
-            d_matrixSizeY[i] == res_y) {
-            return i;
-        }
-    }
-    fprintf(stderr, "nms_SEM_ui: Error, couldn't find resolution\n");
-    return -1;
-}
-
-// static
 void nms_SEM_ui::handle_device_change(void *ud,
            const nmm_Microscope_SEM_ChangeHandlerData &info)
 {
@@ -248,7 +238,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
         info.sem->getResolution(res_x, res_y);
         fprintf(stderr, "SEM Resolution change: %d, %d\n", res_x, res_y);
         me->image_viewer->setWindowImageSize(me->image_window_id, res_x, res_y);
-        i = me->computeResolutionIndex(res_x, res_y);
+        i = nmm_EDAX::resolutionToIndex(res_x, res_y);
         if (i < 0) {
 	   fprintf(stderr, "Error, resolution unexpected\n");
 // this will possibly cause an infinite loop so I won't do it but we might
@@ -381,7 +371,7 @@ int nms_SEM_ui::updateSurfaceTexture(
   vrpn_int32 res_x, res_y;
   int res_index;
   sem->getResolution(res_x, res_y);
-  res_index = computeResolutionIndex(res_x, res_y);
+  res_index = nmm_EDAX::resolutionToIndex(res_x, res_y);
   if (res_index < 0) {
      fprintf(stderr, "Error, resolution not found (%d,%d)\n", res_x, res_y);
   }

@@ -29,10 +29,34 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     virtual vrpn_int32 mainloop(void);
 
     // message-sending functions
+
+    // sets the resolution of images
     int setResolution (vrpn_int32 res_x, vrpn_int32 res_y);
+    // for image acquisition sets the duration for integrating the signal
+    // at each pixel
     int setPixelIntegrationTime (vrpn_int32 time_nsec);
+    // for image acquisition, sets how frequently the beam is moved 
+    // from one pixel to the next
     int setInterPixelDelayTime (vrpn_int32 time_nsec);
+    // tells the server to acquire a given number of images so they don't
+    // have to be requested separately; sending 0 stops acquisition after
+    // the current scan is complete
     int requestScan (vrpn_int32 nscans);
+    // for e-beam lithography, sets the dwell time
+    int setPointDwellTime(vrpn_int32 time_nsec);
+    // enables/disables beam blanking between points
+    int setBeamBlankEnable(vrpn_int32 enable);
+    // put beam at a particular point for the set dwell time
+    int goToPoint(vrpn_int32 x, vrpn_int32 y);
+    // set retrace delays for image scanning
+    int setRetraceDelays(vrpn_int32 h_time_nsec, vrpn_int32 v_time_nsec);
+    // set gain and offset for scan voltages and the input channel
+    int setDACParams(vrpn_int32 x_gain, vrpn_int32 x_offset,
+                     vrpn_int32 y_gain, vrpn_int32 y_offset,
+                     vrpn_int32 z_gain, vrpn_int32 z_offset);
+    // enable/disable our control of the beam location - should disable
+    // when not in use so other scan hardware can be used if needed
+    int setExternalScanControlEnable(vrpn_int32 enable);
 
     // message callback registration
     int registerChangeHandler(void *userdata,
@@ -49,6 +73,16 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
 		vrpn_int32 &num_fields, vrpn_int32 &num_lines, 
                 nmb_PixelType &pix_type,
                 void **data);
+    void getPointDwellTime(vrpn_int32 &time_nsec);
+    void getBeamBlankEnabled(vrpn_int32 &enabled);
+    void getMaxScan(vrpn_int32 &x, vrpn_int32 &y);
+    void getBeamLocation(vrpn_int32 &x, vrpn_int32 &y);
+    void getRetraceDelays(vrpn_int32 &h_time_nsec, vrpn_int32 &v_time_nsec);
+    void getDACParams(vrpn_int32 &x_gain, vrpn_int32 &x_offset,
+                      vrpn_int32 &y_gain, vrpn_int32 &y_offset,
+                      vrpn_int32 &z_gain, vrpn_int32 &z_offset);
+    void getExternalScanControlEnable(vrpn_int32 &enabled);
+
     // other
     int connected() {return d_connection->connected();}
 
@@ -60,6 +94,15 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
                 (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvScanlineData
 		(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportPointDwellTime(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportBeamBlankEnable(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportMaxScanSpan
+                (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportBeamLocation(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportRetraceDelays(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportDACParams(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvReportExternalScanControlEnable(void *_userdata,
+                                                  vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type,
         const struct timeval &msg_time);
@@ -79,6 +122,13 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     nmb_PixelType d_pixelType;
     char *d_dataBuffer;
     int d_dataBufferSize;
+    vrpn_int32 d_pointDwellTime_nsec;
+    vrpn_int32 d_beamBlankEnabled;
+    vrpn_int32 d_maxScanX, d_maxScanY;
+    vrpn_int32 d_pointScanX, d_pointScanY;
+    vrpn_int32 d_hRetraceDelay_nsec, d_vRetraceDelay_nsec;
+    vrpn_int32 d_xGain, d_xOffset, d_yGain, d_yOffset, d_zGain, d_zOffset;
+    vrpn_int32 d_externalScanControlEnabled;
 
     /* ---------------------------------------------------------------
        message callback management

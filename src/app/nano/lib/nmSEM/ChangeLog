@@ -1,3 +1,24 @@
+2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_EDAX.h : added a new class called nmm_EDAX as a utility class
+	for setting parameters of an EDAX-based SEM controller - takes care of
+	things like specifying what resolutions are allowed
+	Also, this file contains a bunch of constants to make code easier 
+	to read
+	* nmm_Microscope_SEM.[Ch] (nmm_Microscope_SEM) : added various
+	initialization and functions to handle new message types:
+        (client->server):
+        SetPointDwellTime, SetBeamBlankEnable, GoToPoint, SetRetraceDelays,
+	SetDACParams, SetExternalScanControlEnable 
+        (server->client):
+        Acknowledge messages for above plus ReportMaxScanSpan to describe
+	the allowed coordinates for GoToPoint
+	* nmm_Microscope_SEM_Remote.[Ch] (nmm_Microscope_SEM_Remote) : stuff
+	to handle the new message types
+        * nmui_SEM.C : replaced a bunch of code for reconciling freedom in
+	user interface variables with constraints in the microscope - this is
+	now handled by the nmm_EDAX class
+
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM.C (encode_ScanlineData) : fixed incorrect message

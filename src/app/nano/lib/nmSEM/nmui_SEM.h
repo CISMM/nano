@@ -70,12 +70,6 @@ class nms_SEM_ui {
      int line_length, int num_fields, int num_lines, nmb_PixelType pix_type,
      void *data);
 
-    // EDAX-specific information
-    static vrpn_int32 d_matrixSizeX[EDAX_NUM_SCAN_MATRICES];
-    static vrpn_int32 d_matrixSizeY[EDAX_NUM_SCAN_MATRICES];
-
-    static int computeResolutionIndex(vrpn_int32 res_x, vrpn_int32 res_y);
-
     // callbacks for user interface variables
     //   for acquire_image:
     static void handle_acquire_image(vrpn_int32 _newval, void *_userdata);
