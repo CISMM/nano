@@ -84,7 +84,8 @@ int URPolygon::ScaleAll(void* userdata) {
 
 	// if a tube file, send scale
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendScale(scale);
 	}
 
@@ -100,7 +101,8 @@ int URPolygon::SetTransxAll(void* userdata) {
 
 	// if a tube file, send trans
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
 													this->GetLocalXform().GetTrans()[1],
 													this->GetLocalXform().GetTrans()[2]);
@@ -117,7 +119,8 @@ int URPolygon::SetTransyAll(void* userdata) {
 
 	// if a tube file, send trans
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
 													this->GetLocalXform().GetTrans()[1],
 													this->GetLocalXform().GetTrans()[2]);
@@ -134,7 +137,8 @@ int URPolygon::SetTranszAll(void* userdata) {
 
 	// if a tube file, send trans
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
 													this->GetLocalXform().GetTrans()[1],
 													this->GetLocalXform().GetTrans()[2]);
@@ -151,7 +155,8 @@ int URPolygon::SetRotxAll(void* userdata) {
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
 												this->GetLocalXform().GetRot()[1],
 												this->GetLocalXform().GetRot()[2],
@@ -169,7 +174,8 @@ int URPolygon::SetRotyAll(void* userdata) {
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
 												this->GetLocalXform().GetRot()[1],
 												this->GetLocalXform().GetRot()[2],
@@ -187,7 +193,8 @@ int URPolygon::SetRotzAll(void* userdata) {
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL)) {
+		(SimulatedMicroscope != NULL) &&
+		this->GetUpdateAFM()) {
 		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
 												this->GetLocalXform().GetRot()[1],
 												this->GetLocalXform().GetRot()[2],

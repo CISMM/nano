@@ -78,6 +78,8 @@ protected:
 	int tess;			// controls the number of faces along the nano-tube
 	int axis_step;		// controls the number of nano-tube sections 
 	int clamp;			// controls whether or not to clamp projected textures
+	int update_AFM;		// controls whether position, orientation, and scale are sent to the
+						// AFM simulator, when a connection is present
 
 	//bounding box
 	BBOX bounds;	
@@ -127,6 +129,7 @@ public:
 	void SetTess(int t) { tess = t; }
 	void SetAxisStep(int s) { axis_step = s; }
 	void SetClamp(int c) { clamp = c; }
+	void SetUpdateAFM(int u) { update_AFM = u; }
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
@@ -136,6 +139,7 @@ public:
 	int GetTess() { return tess; }
 	int GetAxisStep() { return axis_step; }
 	int GetClamp() { return clamp; }
+	int GetUpdateAFM() { return update_AFM; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}

@@ -80,12 +80,17 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	int i;
 	float radius, x, y, z, az, alt;
 	double theta;
+	double minX, maxX, minY, maxY, z_value;
 	int imageX, imageY;
 	int cur_step = 0;
 	double scale_factor;
+	bool skip_first;		// skips first point--sometimes the azimuth is off...
+
+	// pointer to the current plane
+	BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
 
 //	tubes t;				// gives a bunch of warnings because the name is too big...
-	verts t[10];			// go with static number for now...  10 tubes allowed
+	verts t[10];			// go with static number for now...  10 tubes allowed per file
 	verts vs;
 	vertex v;
 
@@ -110,6 +115,37 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 	q_from_euler(coord_fix, -PI / 2, 0, 0);		// coordinate systems are different
 												// this fixes it
+
+	// set up min and max values for the current plane
+	minX = height->minX();
+	maxX = height->maxX();
+	minY = height->minY();
+	maxY = height->maxY();
+
+	// set up z offset
+	z_value = height->scale() * 0.5 * (height->maxNonZeroValue() + height->minNonZeroValue());
+//	z_value = height->minNonZeroValue();
+//	z_value = height->maxNonZeroValue();
+
+/*
+printf("minX = %f\n", minX);
+printf("maxX = %f\n", maxX);
+printf("minY = %f\n", minY);
+printf("maxY = %f\n", maxY);
+printf("z_value = %f\n", z_value);
+printf("scale = %f\n", height->scale());
+printf("minnzv = %f\n", height->minNonZeroValue());
+printf("maxnzv = %f\n", height->maxNonZeroValue());
+printf("maxav = %f\n", height->maxAttainableValue());
+printf("%f\n", height->maxNonZeroValueComputedLast());
+printf("%f\n", height->maxValue());
+printf("%f\n", height->scaledMaxValue());
+*/
+
+
+	// set up translation to correct place in height plane
+	q_vec_set(trans, minX, maxY, z_value);
+
 	readfile.open(filename);
     assert(readfile);
 
@@ -137,11 +173,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				token = strtok(NULL, " \t\n");
 				imageY = atoi(token);
 
-				scale_factor = dataset->inputGrid->getPlaneByName
-							(dataset->heightPlaneName->string())->maxX() / imageX;
-
-				// set up the translation to correct for the 90 degree rotation
-				q_vec_set(trans, 0, imageX * scale_factor, 0);
+				scale_factor = (maxX - minX) / imageX;
 			}
 			else if (strcmp(token, "radius") == 0) {
 				// if not first tube, add to tubes
@@ -161,118 +193,151 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				token = strtok(NULL, " =\t\n");
 				radius = atof(token);
 
+				// sometimes shape analysis gives a radius of zero--quick hack to fix this
+				if (radius == 0.0) radius = 5.0;
+
 				// scale to correct size
 				radius *= scale_factor;
 
+				// set skip_first
+				skip_first = true;
+
 			}
 			else {			// should contain numerical data
-				if (cur_step++ % Pobject->GetAxisStep() == 0) {
-					cur_step = 1;
+				if (skip_first) {	// skip the first point--sometimes gives bogus azimuth
+					skip_first = false;
+				}
+				else {
+					if (cur_step++ % Pobject->GetAxisStep() == 0) {
+						cur_step = 1;
 
-					/* 
-					// THIS CODE IS FOR USING X3D, Y3D, Z3d
+						/* 
+						// THIS CODE IS FOR USING X3D, Y3D, Z3d
 
-					token = strtok(NULL, " \t\n");		// skip X and Y
+						token = strtok(NULL, " \t\n");		// skip X and Y
 
-					token = strtok(NULL, " \t\n");
-					x = atof(token);
-					token = strtok(NULL, " \t\n");
-					y = atof(token);
-					token = strtok(NULL, " \t\n");
-					z = atof(token);
-					token = strtok(NULL, " \t\n");
-					az = atof(token);
-					token = strtok(NULL, " \t\n");
-					alt = atof(token);
+						token = strtok(NULL, " \t\n");
+						x = atof(token);
+						token = strtok(NULL, " \t\n");
+						y = atof(token);
+						token = strtok(NULL, " \t\n");
+						z = atof(token);
+						token = strtok(NULL, " \t\n");
+						az = atof(token);
+						token = strtok(NULL, " \t\n");
+						alt = atof(token);
 
-					*/
+						*/
 
-					// THIS CODE IS FOR USING X and Y (constant Z)
-
-
-					x = atof(token);
-					// scale to correct size
-					x *= scale_factor;
-
-					token = strtok(NULL, " \t\n");
-					y = atof(token);
-					// scale to correct size
-					y *= scale_factor;
-
-					z = radius;
-
-					// skip X3D, Y3D, Z3D
-					token = strtok(NULL, " \t\n");
-					token = strtok(NULL, " \t\n");
-					token = strtok(NULL, " \t\n");
+						// THIS CODE IS FOR USING X and Y (constant Z)
 
 
-					token = strtok(NULL, " \t\n");
-					az = atof(token);
-					token = strtok(NULL, " \t\n");
-					// buggy alt output from shape analysis...just set to zero for now
-//					alt = atof(token);
-					alt = 0.0;
+						x = atof(token);
+						// scale to correct size
+						x *= scale_factor;
 
-					// set up medial axis point
-					q_vec_set(p1, x, y, z);
+						token = strtok(NULL, " \t\n");
+						y = atof(token);
+						// scale to correct size
+						y *= scale_factor;
 
-					// coordinate systems are different
-					// this fixes it
-					q_xform(p1, coord_fix, p1);
-					q_vec_add(p1, p1, trans);		// hack translation for goodone.tif
+						z = radius;
+//						z = 0.0;
 
-					// set up rotation quat
-					q_from_euler(q, az, 0, alt);
 
-					// get vertices
-					theta = 0.0;
-					for (i = 0; i < tess; i++) {
-						v.clear();
+						// skip X3D, Y3D, Z3D
+						token = strtok(NULL, " \t\n");
+						token = strtok(NULL, " \t\n");
+						token = strtok(NULL, " \t\n");
 
-						// set point
-						q_vec_set(p2,	p1[0] + radius * cos(theta),
-										p1[1],
-										p1[2] + radius * sin(theta));
 
-						// translate point to origin
-						q_vec_subtract(p2, p2, p1);
-					
-						// rotate
-						q_xform(p2, q, p2);
+						token = strtok(NULL, " \t\n");
+						az = atof(token);
+						token = strtok(NULL, " \t\n");
+						// buggy alt output from shape analysis...just set to zero for now
+	//					alt = atof(token);
+						alt = 0.0;
 
-						// translate back
-						q_vec_add(p2, p2, p1);
+						// set up medial axis point
+						q_vec_set(p1, x, y, z);
 
-						v.push_back(p2[0]);
-						v.push_back(p2[1]);
-						v.push_back(p2[2]);
+						// coordinate systems are different
+						// this fixes it
+						q_xform(p1, coord_fix, p1);
+						q_vec_add(p1, p1, trans);	
+						
+						// set up rotation quat
+						q_from_euler(q, az, 0, alt);
 
-						vs.push_back(v);
-						theta += 2 * PI / tess;
+						// get vertices
+						theta = 0.0;
+						for (i = 0; i < tess; i++) {
+							v.clear();
 
-						Pobject->num_triangles += 2;	// two triangles per vertex
+							// set point
+							q_vec_set(p2,	p1[0] + radius * cos(theta),
+											p1[1],
+											p1[2] + radius * sin(theta));
+
+							// translate point to origin
+							q_vec_subtract(p2, p2, p1);
+						
+							// rotate
+							q_xform(p2, q, p2);
+
+							// translate back
+							q_vec_add(p2, p2, p1);
+
+							v.push_back(p2[0]);
+							v.push_back(p2[1]);
+							v.push_back(p2[2]);
+
+							vs.push_back(v);
+							theta += 2 * PI / tess;
+
+							Pobject->num_triangles += 2;	// two triangles per vertex
+						}
+						// do cylinder stuff
+						// translates back to origin from correct place in height plane
+
+/*
+						c.x1 = p1[0] - minX;
+						c.y1 = p1[1] - minY;
+						c.z1 = p1[2] - z_value;
+*/
+
+
+/*
+						c.x1 = p1[0];
+						c.y1 = p1[1];
+						c.z1 = p1[2];
+*/
+						c.x1 = p1[0];
+						c.y1 = p1[1];
+						c.z1 = p1[2] - z_value;
+
+/*
+	printf("%f\n", c.x1);
+	printf("%f\n", c.y1);
+	printf("%f\n\n", c.z1);
+*/
+						if (!newtube) {	
+							// fill in last guys second point
+							cs.back().x2 = p1[0];
+							cs.back().y2 = p1[1];
+							cs.back().z2 = p1[2];
+							// fill in length
+							cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
+													(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
+													(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
+																						
+						}
+						c.radius = radius;
+						c.az = az + PI / 2;
+						c.alt = alt;
+						cs.push_back(c);
+						newtube = false;
 					}
-					// do cylinder stuff
-					c.x1 = p1[0];
-					c.y1 = p1[1];
-					c.z1 = p1[2];
-					if (!newtube) {	
-						// fill in last guys second point
-						cs.back().x2 = p1[0];
-						cs.back().y2 = p1[1];
-						cs.back().z2 = p1[2];
-						// fill in length
-						cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
-												(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
-												(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
-																					
-					}
-					c.radius = radius;
-					c.az = az + PI / 2;
-					c.alt = alt;
-					cs.push_back(c);
-					newtube = false;
 				}
 			}
 		}
@@ -373,7 +438,7 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 				v4[k] = vs[i + 1][k];
 			}
 		}
-		v1[k] = v2[k] = v3[k] = v4[k] = 1.0; // dtm
+		v1[k] = v2[k] = v3[k] = v4[k] = 1.0;
 
 
 		// Compute the normal...only flat shading for now...should be good enough???

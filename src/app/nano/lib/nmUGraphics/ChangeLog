@@ -1,3 +1,17 @@
+2002-04-11  David Borland <borland@cs.unc.edu>
+
+        * TubeFileGenerator.C:  added code for skipping the first point in
+        a tube, as the azimuth given is often not right.  added code for 
+        automatically correctly orienting a tube with its corresponding static
+        file.  previously only worked for files whose origin corresponded with
+        the "world" origin (i.e. image files)
+
+        * URPolygon.C:  added check for user-controlled variable before
+        sending orientation and scale update to AFM simulator
+
+        * URender.h:  added variable for user-control of sending orientation
+        and scale to AFM simulator
+
 2002-04-03  David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C:  loaded tubes are now automatically scaled,
