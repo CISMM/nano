@@ -375,6 +375,166 @@ static void handle_trigger_change( vrpn_int32 val, void * )
     }
 }
 
+
+/**
+ * Step from the previous point to the current point.
+ */
+
+static void drawLineStep (Position * prevPt, Position * currPt) {
+  double x, y;
+
+  x = prevPt->x();
+  y = prevPt->y();
+
+  // If we are in sweep mode, set the angle "yaw" correctly
+  // so the sweep is perpendicular to the line we draw.
+  // Also draw an arc from the previous line to the current line. 
+  if (microscope->state.modify.style == SWEEP) {
+      float oldyaw = microscope->state.modify.yaw;
+      microscope->state.modify.yaw = atan2((currPt->y() - y),
+  		                           (currPt->x() - x)) - M_PI_2;
+      if ( microscope->state.modify.yaw < 0 ) {
+        microscope->state.modify.yaw += (2*M_PI);
+      }
+      if ( oldyaw < 0 ) {
+        oldyaw += (2*M_PI);
+      }
+      if ( (oldyaw - microscope->state.modify.yaw) > M_PI) {
+        microscope->DrawArc(x,y, oldyaw - (2*M_PI),
+  			  microscope->state.modify.yaw);
+      } else if ( (microscope->state.modify.yaw - oldyaw) > M_PI) {
+        microscope->DrawArc(x,y, oldyaw,
+  			  microscope->state.modify.yaw - (2*M_PI));
+      } else {
+        microscope->DrawArc(x,y, oldyaw,
+  			  microscope->state.modify.yaw);
+      }
+  }
+
+  // Draw a line between prevPt and currPt
+  // Used to wait until we got the report before we sent the next line.
+  //printf("drawLineStep: line %f %f to %f %f\n", 
+  //	   x, y, currPt->x(), currPt->y());
+  microscope->DrawLine(x, y, currPt->x(), currPt->y());
+}
+
+static void drawLine (void) {
+
+    // set up a reference for convenience
+    Position_list & p = 
+      microscope->state.modify.stored_points;
+    // Find out if the list of points has at least two points in it
+    p.start();
+    if (p.curr() == NULL) {
+	// no stored points - leave
+	tcl_commit_pressed = 0;	
+	old_commit_pressed = 0;
+	// Treat it as a canceled operation.
+	tcl_commit_canceled =1;
+	return;
+    } else if (p.peekNext() == NULL) {
+	// less than 2 points - clean up and leave
+	tcl_commit_pressed = 0;	
+	old_commit_pressed = 0;
+	// Treat it as a canceled operation.
+	tcl_commit_canceled =1;
+	return;
+    }
+
+    microscope->EnableUpdatableQueue(VRPN_FALSE);
+
+    /* Do a poly-line modification!!! */
+    // Wait for tip to get to starting position
+   if ( (microscope->state.modify.tool == LINE) ||
+	 (microscope->state.modify.tool == SLOW_LINE) ) {
+      Point_value *value =
+	microscope->state.data.inputPoint->getValueByPlaneName
+	(dataset->heightPlaneName->string());
+      if (value == NULL) {
+	fprintf(stderr, "handle_commit_change():  "
+		"could not get input point!\n");
+	return;
+      }
+      printf("handle_commit_change: points in list, doing modify.\n");
+      microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
+    } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
+      microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
+    }
+    double x, y;
+    Position * currPt;
+    Position * prevPt;
+
+    // sleep to allow piezo relaxation
+    sleep(2);
+
+    // XXX - might want to move everything below up to init_slow_line
+    // into init_slow_line
+        
+    if ((microscope->state.modify.tool == SLOW_LINE)||
+	(microscope->state.modify.tool == SLOW_LINE_3D)) {
+      microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
+    }
+
+    //printf("handle_commit_change: peizo relax done\n");
+    // start modification force!
+    // We're already in modifcation mode using slow_line_3d
+    if (microscope->state.modify.tool != SLOW_LINE_3D) {
+      microscope->ModifyMode();
+    }
+          
+    // Wait for the mode to finish (XXX should wait for response)
+    sleep(1);
+    //printf("handle_commit_change: in modify mode.\n");
+
+    // Slow line tool doesn't do the modification now, it
+    // waits for the user to press Play or Step controls.
+    if ((microscope->state.modify.tool == SLOW_LINE)||
+	(microscope->state.modify.tool == SLOW_LINE_3D)) {
+      microscope->state.modify.slow_line_committed = VRPN_TRUE;
+      // Call this function to initialize the slow_line tool
+      init_slow_line(microscope);
+      return;
+    }
+    p.next();
+    // Draw the first line 
+    currPt = p.curr();
+    prevPt = p.peekPrev();
+    x = prevPt->x();
+    y = prevPt->y();
+    // If we are in sweep mode, set the angle "yaw" correctly
+    // so the sweep is perpendicular to the line we draw.
+    microscope->state.modify.yaw = atan2((currPt->y() - y),
+					 (currPt->x() - x)) - M_PI_2;
+
+    // Draw a line between prevPt and currPt
+    //printf("handle_commit_change: line %f %f to %f %f\n", 
+    //       x, y, currPt->x(), currPt->y());
+    microscope->DrawLine(x, y, currPt->x(), currPt->y());
+
+
+    //start with the second point, so previous point is valid.
+    for (p.next(); p.notDone(); p.next()) {
+      drawLineStep(p.peekPrev(), p.curr());
+    }
+    // Delete these points so they are not used again. 
+    p.start();
+    while(p.notDone()) {
+      //printf("commit - remove func: %d\n", (p.curr())->iconID());
+      p.del();
+    }
+
+    // resume normal scanning operation of AFM
+    printf("handle_commit_change: done modifying, resuming scan.\n");
+
+    microscope->EnableUpdatableQueue(VRPN_TRUE);
+
+    microscope->ResumeScan();
+    // All done - turn off commit button
+    tcl_commit_pressed = 0;	
+    old_commit_pressed = 0;
+
+}
+
 /**
  * callback function for Commit button in tcl interface.
  * It must prevent commit from being pressed at the wrong time, 
@@ -402,148 +562,8 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	if ((microscope->state.modify.tool == LINE)||
 	    (microscope->state.modify.tool == SLOW_LINE)||
 	    (microscope->state.modify.tool == SLOW_LINE_3D)) {
-	    // set up a reference for convenience
-	    Position_list & p = 
-	      microscope->state.modify.stored_points;
-	    // Find out if the list of points has at least two points in it
-	    p.start();
-	    if (p.curr() == NULL) {
-		// no stored points - leave
-		tcl_commit_pressed = 0;	
-		old_commit_pressed = 0;
-		// Treat it as a canceled operation.
-		tcl_commit_canceled =1;
-		return;
-	    } else if (p.peekNext() == NULL) {
-		// less than 2 points - clean up and leave
-		tcl_commit_pressed = 0;	
-		old_commit_pressed = 0;
-		// Treat it as a canceled operation.
-		tcl_commit_canceled =1;
-		return;
-	    }
 
-	    /* Do a poly-line modification!!! */
-	    // Wait for tip to get to starting position
-            if ( (microscope->state.modify.tool == LINE) ||
-		 (microscope->state.modify.tool == SLOW_LINE) ) {
-	      Point_value *value =
-		microscope->state.data.inputPoint->getValueByPlaneName
-		(dataset->heightPlaneName->string());
-	      if (value == NULL) {
-		fprintf(stderr, "handle_commit_change():  "
-			"could not get input point!\n");
-		return;
-	      }
-	      printf("handle_commit_change: points in list, doing modify.\n");
-	      microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
-            } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
-	      microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
-	    }
-	    double x, y;
-	    Position * currPt;
-	    Position * prevPt;
-	
-	    // sleep to allow piezo relaxation
-	    sleep(2);
-
-            // XXX - might want to move everything below up to init_slow_line
-            // into init_slow_line
-         
-            if ((microscope->state.modify.tool == SLOW_LINE)||
-		(microscope->state.modify.tool == SLOW_LINE_3D)) {
-                microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
-            }
-
-	    //printf("handle_commit_change: peizo relax done\n");
-	    // start modification force!
-	    // We're already in modifcation mode using slow_line_3d
-	    if (microscope->state.modify.tool != SLOW_LINE_3D) {
-	      microscope->ModifyMode();
-	    }
-           
-	    // Wait for the mode to finish (XXX should wait for response)
-	    sleep(1);
-	    //printf("handle_commit_change: in modify mode.\n");
-
-	    // Slow line tool doesn't do the modification now, it
-	    // waits for the user to press Play or Step controls.
-	    if ((microscope->state.modify.tool == SLOW_LINE)||
-		(microscope->state.modify.tool == SLOW_LINE_3D)) {
-	      microscope->state.modify.slow_line_committed = VRPN_TRUE;
-	      // Call this function to initialize the slow_line tool
-	      init_slow_line(microscope);
-	      return;
-	    }
-
-	    p.next();
-	    // Draw the first line 
-	    currPt = p.curr();
-	    prevPt = p.peekPrev();
-	    x = prevPt->x();
-	    y = prevPt->y();
-	    // If we are in sweep mode, set the angle "yaw" correctly
-	    // so the sweep is perpendicular to the line we draw.
-	    microscope->state.modify.yaw = atan2((currPt->y() - y),
-						 (currPt->x() - x)) - M_PI_2;
-	
-	    // Draw a line between prevPt and currPt
-	    //printf("handle_commit_change: line %f %f to %f %f\n", 
-	    //       x, y, currPt->x(), currPt->y());
-	    microscope->DrawLine(x, y, currPt->x(), currPt->y());
-	
-
-	    //start with the second point, so previous point is valid.
-	    for (p.next(); p.notDone(); p.next()) {
-		// step from the previous point to the current point.
-		currPt = p.curr();
-		prevPt = p.peekPrev();
-		x = prevPt->x();
-		y = prevPt->y();
-		// If we are in sweep mode, set the angle "yaw" correctly
-		// so the sweep is perpendicular to the line we draw.
-		// Also draw an arc from the previous line to the current line. 
-		if (microscope->state.modify.style == SWEEP) {
-		    float oldyaw = microscope->state.modify.yaw;
-		    microscope->state.modify.yaw =
-                           atan2((currPt->y() - y),
-				 (currPt->x() - x)) - M_PI_2;
-		    if ( microscope->state.modify.yaw < 0 )
-		      microscope->state.modify.yaw += (2*M_PI);
-		    if ( oldyaw < 0 )
-		      oldyaw += (2*M_PI);
-		    if ( (oldyaw - microscope->state.modify.yaw) > M_PI) {
-		      microscope->DrawArc(x,y, oldyaw - (2*M_PI),
-					  microscope->state.modify.yaw);
-		    }
-		    else if ( (microscope->state.modify.yaw - oldyaw) > M_PI) {
-		      microscope->DrawArc(x,y, oldyaw,
-					  microscope->state.modify.yaw - (2*M_PI));
-		    }
-		    else {
-		      microscope->DrawArc(x,y, oldyaw,
-					  microscope->state.modify.yaw);
-		    }
-		}
-		// Draw a line between prevPt and currPt
-		// Wait until we get the report before we send the next line
-		//printf("handle_commit_change: line %f %f to %f %f\n", 
-		//	   x, y, currPt->x(), currPt->y());
-		microscope->DrawLine(x, y, currPt->x(), currPt->y());
-	    }
-	    // Delete these points so they are not used again. 
-	    p.start();
-	    while(p.notDone()) {
-	      //printf("commit - remove func: %d\n", (p.curr())->iconID());
-	      p.del();
-	    }
-	
-	    // resume normal scanning operation of AFM
-	    printf("handle_commit_change: done modifying, resuming scan.\n");
-	    microscope->ResumeScan();
-	    // All done - turn off commit button
-	    tcl_commit_pressed = 0;	
-	    old_commit_pressed = 0;
+          drawLine();
 	}
 	//if we aren't using line tool, don't change commit button's value,
 	// because it's handled below in doFeelLive()

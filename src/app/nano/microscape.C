@@ -6156,6 +6156,8 @@ int main(int argc, char* argv[])
       vrpnLogFile->limit_messages_played_back(istate.packetlimit);
     }
 
+    microscope->EnableUpdatableQueue(VRPN_TRUE);
+
 #else
 
     fprintf(stderr, "About to init microscope\n");
@@ -6182,7 +6184,6 @@ int main(int argc, char* argv[])
 	my_hostname = hnbuf;
 	delete [] hnbuf;
     }
-
 
     createGraphics(istate);
 

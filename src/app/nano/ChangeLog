@@ -1,3 +1,13 @@
+2000-08-16  Tom Hudson  <hudson@cs.unc.edu>
+
+        * microscape.c (main):  added call to
+        microscope->EnableUpdatableQueue(VRPN_TRUE).
+        * interaction.c (drawLine):  new function.  Added calls to
+        microscope->EnableUpdatableQueue().
+        (drawLineStep):  same.
+        (handle_commit_change):  factored out large case and loop into
+        drawLine() and drawLineStep().
+
 2000-08-15  Jeffrey Juliano  <juliano@cs.unc.edu>
 
 	* Makefile.additional-targets: New file.
