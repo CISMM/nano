@@ -693,6 +693,9 @@ double nmb_ImageGrid::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
 
 void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
 {
+    if (!d_imagePositionSet) {
+      getBounds(d_imagePosition);
+    }
     d_imagePositionSet = vrpn_TRUE;
     d_imagePosition.setX(ibp, x);
     // maintain some kind of backward consistency
@@ -702,6 +705,9 @@ void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
 
 void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
 {
+    if (!d_imagePositionSet) {
+      getBounds(d_imagePosition);
+    }
     d_imagePositionSet = vrpn_TRUE;
     d_imagePosition.setY(ibp, y);
     // maintain some kind of backward consistency
