@@ -1,3 +1,8 @@
+2004-02-18  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Point.C (Point_list::clear):  correctly delete the entries
+	in the list of points.
+
 2004-01-14  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Point.h,C:  removed MAX_POINT_LIST and _num_entries members. 

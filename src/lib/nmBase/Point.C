@@ -305,9 +305,13 @@ int Point_list::addEntry(const Point_results &p)
 
 void Point_list::clear(void)
 {
+	if( _entries.empty( ) ) return;
 	for( int i = 0; i <= _entries.size() - 1; i++ )
 	{
-		delete _entries[i];
+		if( _entries[i] != NULL ) 
+		{
+			delete _entries[i];
+		}
 	}
 	_entries.clear( );
 }
