@@ -8,7 +8,7 @@
 #include <math.h>
 #include "cnt_ia.h"
 #include "cnt_ps.h"
-#include "ppm.h"
+#include "nma_ppm.h"
 
 #include <BCPlane.h>
 

@@ -1,3 +1,8 @@
+2001-10-16  Adam Seeger  <seeger@cs.unc.edu>
+
+        * ppm.hC - renamed to nma_ppm.hC to avoid link conflicts with a file
+        that has the same name in nmBase
+
 2001-09-25  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nma_ShapeAnalyze.h:  commented out the names of some function

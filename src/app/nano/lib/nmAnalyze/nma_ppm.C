@@ -43,3 +43,4 @@ void WritePPM(char *FileName, unsigned char* Color, int Width, int Height)
   fwrite(Color,1,(long)Width*Height*3,fp);
   fclose(fp);
 }
+
