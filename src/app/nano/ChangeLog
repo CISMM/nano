@@ -1,3 +1,11 @@
+2000-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main) : added copy of file name out of the
+        istate.afm.deviceName into the istate.afm.inputStreamName when
+        the deviceName refers to a file - this was causing a bunch of stuff
+	to be overwritten by a strcpy of the uninitialized 
+        istate.afm.inputStreamName into a variable in AFMState
+
 2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.C (setPeerName) :  add diagnostics
