@@ -751,8 +751,8 @@ int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
 
 // insert scale here?
     v_get_world_from_head(0, &headxform);
-    invscale = 1.0f / headxform.scale;
-//    glScalef(invscale, invscale, invscale);
+    invscale = (float)headxform.scale / 26000;
+    glScalef(invscale, invscale, invscale);
 
     make_cone();
     //printf("XXX Making the collaborative hand icon for %s\n",MODE_NAMES[mode]);
