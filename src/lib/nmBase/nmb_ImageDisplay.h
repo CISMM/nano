@@ -47,17 +47,26 @@ class nmb_ImageDisplay {
   /// image into the colors seen by the user
   virtual void setDisplayColorMap(nmb_Image *image,
                            const char *map, const char *mapdir) = 0;
+  virtual void setVideoColorMap(nmb_Image *image,
+                           const char *map, const char *mapdir) = 0;
 
   /// change the scale and offset for the colormap
   virtual void setDisplayColorMapRange(nmb_Image *image,
                         float data_min, float data_max,
                         float color_min, float color_max) = 0;
+    /// change the scale and offset for the colormap
+  virtual void setVideoColorMapRange(nmb_Image *image,
+                        float data_min, float data_max,
+                        float color_min, float color_max) = 0;
+
+  
+  /// change the alpha of the projective texture for the given texture
+  virtual void updateColorMapTextureAlpha(float alpha) = 0;
+  /// change the alpha of the projective texture for the given texture
+  virtual void updateVideoTextureAlpha(float alpha) = 0;
 
   /// display the image with all current colormap settings updated
   virtual void updateImage(nmb_Image *image) = 0;
-
-  /// change the alpha of the projective texture for the colormap texture
-  virtual void updateAlpha(float alpha) = 0;
 };
 
 #endif
