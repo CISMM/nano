@@ -17,21 +17,23 @@
 set nmInfo(calc_planes) [create_closing_toplevel calc_planes \
         "Calculate Data Planes"]
 
+
 #Simulated Scan plane
 iwidgets::Labeledframe $nmInfo(calc_planes).simscan \
-	-labeltext "Create a plane from the simulated AFM scan" \
+	-labeltext "Create plane from simulated AFM scan" \
 	-labelpos nw
 set nmInfo(simscanplane) [$nmInfo(calc_planes).simscan childsite]
 
-pack $nmInfo(calc_planes).flat -side top -fill x
+pack $nmInfo(calc_planes).simscan -side top -fill x
 
 # Allow the user to create a sim. scan plane:
 label $nmInfo(simscanplane).simscanlabel -justify left -text \
-	"Position measure lines then\nenter a plane name:"
+	"Enter a plane name:"
 generic_entry $nmInfo(simscanplane).simscanplane simscanplane_name \
 	"Simulated AFM Scan Plane" ""
 pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
 	-side top -anchor nw
+
 
 #Flat plane
 iwidgets::Labeledframe $nmInfo(calc_planes).flat \
