@@ -156,6 +156,57 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
   }
 }
 
+// static
+void nmr_Util::createResampledImageWithImageSpaceTransformation(
+                        const nmb_Image &targetImage,
+                        const nmr_ImageTransform &xform,
+                        nmb_Image &resampleImage)
+{
+  int i,j;
+  int w,h;
+  double i_targ_min, i_targ_max, j_targ_min, j_targ_max;
+  w = resampleImage.width();
+  h = resampleImage.height();
+  double i_center, j_center;
+  double i_target, j_target; // pixel coordinates
+  double value_target;
+  double p_source_norm[4] = {0,0,0,1}; // normalized pixel coordinates
+  double p_target_norm[4];
+  double x_incr, y_incr;
+
+  x_incr = 1.0/(double)w;
+  y_incr = 1.0/(double)h;
+
+  for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
+    for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
+      p_source_norm[0] = i_center;
+      p_source_norm[1] = j_center;
+      xform.transform(p_source_norm, p_target_norm);
+      i_target = p_target_norm[0]*targetImage.width();
+      j_target = p_target_norm[1]*targetImage.height();
+      if (i == 0 && j== 0) {
+         i_targ_min = i_targ_max = i_target;
+         j_targ_min = j_targ_max = j_target;
+      } else {
+         if (i_target > i_targ_max) i_targ_max = i_target;
+         if (i_target < i_targ_min) i_targ_min = i_target;
+         if (j_target > j_targ_max) j_targ_max = j_target;
+         if (j_target < j_targ_min) j_targ_min = j_target;
+      }
+      if (i_target >= 0 && j_target >= 0 &&
+          i_target < targetImage.width() &&
+          j_target < targetImage.height()) {
+          value_target = targetImage.getValueInterpolated(i_target, j_target);
+      } else {
+          value_target = 0.0;
+      }
+      resampleImage.setValue(i,j, value_target);
+    }
+  }
+  printf("(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
+}
+
+
 /** this function treats xform as a transformation from 3D to 2D
     3D points are constructed for each point in the resampleImage by
     looking up the z value in the source image for that point

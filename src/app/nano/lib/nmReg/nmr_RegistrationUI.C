@@ -19,6 +19,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_registrationEnabled("reg_window_open", 0),
    d_registrationRequested("registration_needed", 0),
    d_constrainToTopography("reg_constrain_to_topography", 0),
+   d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
@@ -27,7 +28,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_graphicsDisplay(g),
    d_imageList(im),
    d_aligner(aligner),
-   d_imageTransform(4,4)
+   d_imageTransformWorldSpace(4,4),
+   d_imageTransformImageSpace(4,4),
+   d_imageTransformImageSpaceInv(4,4)
 {
     d_newResampleImageName = "";
     d_resampleResolutionX = 100;
@@ -120,12 +123,17 @@ void nmr_RegistrationUI::handleRegistrationChange
         d_aligner->getTransformationOptions(xform_type);
         break;
       case NMR_REG_RESULT:
-        d_imageTransform.print();
-        printf("got transformation\n");
+        d_imageTransformWorldSpace.print();
         vrpn_float64 transform_matrix[16];
-        d_aligner->getRegistrationResult(transform_matrix);
-        // convert it into the proper units
         double worldToImage_matrix[16];
+
+        printf("got transformation\n");
+        d_aligner->getRegistrationResult(transform_matrix);
+        d_imageTransformImageSpace.setMatrix(transform_matrix);
+        d_imageTransformImageSpaceInv.setMatrix(transform_matrix);
+        d_imageTransformImageSpaceInv.invert();
+
+        // convert it into the proper units
         nmb_Image *im = d_imageList->getImageByName
                           (d_registrationImageName3D.string());
         if (!im) {
@@ -133,17 +141,32 @@ void nmr_RegistrationUI::handleRegistrationChange
              return;
         }
         im->getWorldToImageTransform(worldToImage_matrix);
-        nmr_ImageTransformAffine worldToImage(4,4);
-        worldToImage.setMatrix(transform_matrix);
-        printf("worldToImage transform:\n");
-        worldToImage.print();
+
         // save it for future reference when resampling
-        d_imageTransform.setMatrix(worldToImage_matrix);
-        d_imageTransform.print();
-        d_imageTransform.compose(worldToImage);
-        d_imageTransform.print();
+
+        d_imageTransformWorldSpace.setMatrix(worldToImage_matrix);
+        d_imageTransformWorldSpace.print();
+        d_imageTransformWorldSpace.compose(d_imageTransformImageSpace);
+        d_imageTransformWorldSpace.print();
+
+        // we need to do the following to make
+        // d_imageTransformWorldSpace correct in general
+        im = d_imageList->getImageByName(d_registrationImageName2D.string());
+        if (!im) {
+             fprintf(stderr, "handleRegistrationChange: can't find image\n");
+             return;
+        }
+        nmr_ImageTransformAffine imageToWorld(4,4);
+        im->getWorldToImageTransform(worldToImage_matrix);
+        imageToWorld.setMatrix(worldToImage_matrix);
+        imageToWorld.invert();
+        printf("this should be the identity for afm->sem\n");
+        imageToWorld.print();
+        d_imageTransformWorldSpace.compose(imageToWorld);
+
+
         // and send it off to graphics
-        d_imageTransform.getMatrix(transform_matrix);
+        d_imageTransformWorldSpace.getMatrix(transform_matrix);
         d_registrationValid = vrpn_TRUE;
         d_graphicsDisplay->setTextureTransform(transform_matrix);
         break;
@@ -248,7 +271,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
     nmb_Image *im_2D = d_imageList->getImageByName
                           (d_registrationImageName2D.string());
 
-    // d_imageTransform is the transformation that takes points from
+    // d_imageTransformWorldSpace is the transformation that takes points from
     // height image to points in the texture image
 
     // Make sure we have all the information we need and
@@ -262,7 +285,20 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
     } else if (!im_3D || !im_2D ||
                (strlen(d_newResampleImageName.string()) == 0)){
         return;
-    } else if (d_constrainToTopography){
+
+    } else if (d_invertWarp) {    // warp the AFM image to the SEM image
+        new_image = new nmb_ImageGrid(
+                (const char *)(d_newResampleImageName.string()),
+                (const char *)(im_3D->unitsValue()),
+                d_resampleResolutionX, d_resampleResolutionY);
+        d_newResampleImageName = (const char *) "";
+        nmr_Util::createResampledImageWithImageSpaceTransformation((*im_3D), 
+                 d_imageTransformImageSpaceInv, (*new_image));
+        
+
+    } else {                      // warp the SEM image to the AFM image
+      if (d_constrainToTopography){
+      // resample the SEM data onto the AFM grid only
         // it is possible to change resolution or select a subregion
         // of the height field at this point by just changing what
         // resolution we give to the constructor and what image
@@ -279,14 +315,15 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         new_image->setTopoFileInfo(tf);
         d_newResampleImageName = (const char *) "";
         nmr_Util::createResampledImage((*im_2D), (*im_3D),
-                                       d_imageTransform, (*new_image));
-    } else {
+                      d_imageTransformWorldSpace, (*new_image));
+      } else {
      
         // here we figure out what resolution is required to preserve
         // the entire 2D projection image while keeping the resolution of
         // height field constant
         int min_i, min_j, max_i, max_j;
-        nmr_Util::computeResampleExtents((*im_3D), (*im_2D), d_imageTransform,
+        nmr_Util::computeResampleExtents((*im_3D), (*im_2D), 
+                                         d_imageTransformWorldSpace,
                                          min_i, min_j, max_i, max_j);
         int res_x = max_i - min_i;
         int res_y = max_j - min_j;
@@ -303,7 +340,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);
-        nmr_Util::createResampledImage((*im_2D), d_imageTransform,
+        nmr_Util::createResampledImage((*im_2D), d_imageTransformWorldSpace,
                  (*new_image));
 
         // HACK:
@@ -313,8 +350,9 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         nmr_Util::addImage((*im_3D), (*new_image), (double)d_resampleRatio,
                   1.0-(double)d_resampleRatio);
 
-        printf("resampled image\n");
+      }
     }
+    printf("finished resampling image\n");
     // now make it available elsewhere:
     d_imageList->addImage(new_image);
 }

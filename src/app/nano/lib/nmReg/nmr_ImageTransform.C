@@ -125,6 +125,25 @@ void nmr_ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
     }
 }
 
+void nmr_ImageTransformAffine::invert() {
+    assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
+    if (!hasInverse()) {
+        fprintf(stderr, "nmr_ImageTransformAffine::invert: Warning,"
+               " failed use of invert (non-invertible transform)\n");
+        return;
+    }
+    double swap;
+    int i,j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            swap = xform[i][j];
+            xform[i][j] = inverse_xform[i][j];
+            inverse_xform[i][j] = swap;
+        }
+    }
+
+}
+
 nmr_ImageTransform *nmr_ImageTransformAffine::duplicate() const {
     nmr_ImageTransformAffine *ita = new nmr_ImageTransformAffine(dim_src, dim_dest);
     for (int i = 0; i < 4; i++){

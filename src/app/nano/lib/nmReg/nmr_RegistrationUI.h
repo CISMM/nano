@@ -55,6 +55,7 @@ class nmr_RegistrationUI {
     Tclvar_int d_registrationEnabled;
     Tclvar_int d_registrationRequested;
     Tclvar_int d_constrainToTopography;
+    Tclvar_int d_invertWarp;
     Tclvar_int d_textureDisplayEnabled;
     Tclvar_int d_resampleResolutionX;
     Tclvar_int d_resampleResolutionY;
@@ -65,7 +66,9 @@ class nmr_RegistrationUI {
     nmb_ImageList *d_imageList;
     nmr_Registration_Proxy *d_aligner;
 
-    nmr_ImageTransformAffine d_imageTransform;  
+    nmr_ImageTransformAffine d_imageTransformWorldSpace;
+    nmr_ImageTransformAffine d_imageTransformImageSpace;
+    nmr_ImageTransformAffine d_imageTransformImageSpaceInv;
 };
 
 #endif

@@ -1,4 +1,29 @@
-2000-08-17  Adam Seeger <seeger@cs.unc.edu>
+2000-09-23  Adam Seeger  <seeger@cs.unc.edu>
+	* nmr_ImageTransform.hC (invert): new function to invert the 
+	transformation matrix used in nmr_ImageTransformAffine
+	* nmr_RegistrationUI.Ch : new variables d_invertWarp,
+	d_imageTransformWorldSpace, d_imageTransformImageSpace, 
+        d_imageTransformImageSpaceInv, which replace d_imageTransform
+	* nmr_RegistrationUI.Ch (handleRegistrationChange) : now computes
+	these new transformations (also adds missing transformation from
+	world to image space for projection image which
+	hadn't caused problems for SEM data because we were assuming that they
+	were the identity before (by default they were set the same and
+	the SEM data doesn't have any region information that would cause
+	this to change) - this caused problems when we tried to register
+	two AFM images.
+	* nmr_RegistrationUI.Ch (createResampleImage) : 
+	added the code here to hande the new option of resampling the
+	Topography image onto the Projection image
+	(calls a new function with a long name: 
+	createResampledImageWithImageSpaceTransformation)
+	* nmr_Util.Ch (createResampledImageWithImageSpaceTransformation) :
+	new function that is more efficient than older createResampleImage 
+	functions but assumes a 2D->2D transformation that maps directly from
+	pixels in one image to pixels in other image instead of a
+	3D-2D projection from world space to pixels in an image
+
+2000-08-17  Adam Seeger  <seeger@cs.unc.edu>
 	* correspondence.C (Correspondence): switched malloc to new
 	* correspondence.C (init): switched malloc to new
 	* correspondenceEditor.C (eventHandler): handles errors from getPoint

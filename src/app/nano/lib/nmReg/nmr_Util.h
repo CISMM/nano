@@ -38,10 +38,25 @@ class nmr_Util {
     /// according to the given transformation using bilinear interpolation
     /// xform is used to transform pixels in resampleImage into their
     /// locations in the target image in order to determine pixel values
+    /// The nmr_ImageTransform argument is actually a transformation from
+    /// world coordinates to world coordinates for the two images
     static void createResampledImage(const nmb_Image &target,
                         const nmr_ImageTransform &xform, 
                         nmb_Image &resampleImage);
     
+
+    /// for 2D->2D transformations
+    /// this function resamples the target image into the resampleImage
+    /// according to the given transformation using bilinear interpolation
+    /// xform is used to transform pixels in resampleImage into their
+    /// locations in the target image in order to determine pixel values
+    /// The nmr_ImageTransform argument is a transformation from
+    /// normalized image coordinates to normalized image coordinates
+    /// for the two images (normalized image coordinates means that 
+    /// pixel coordinates always span the unit square)
+    static void createResampledImageWithImageSpaceTransformation(
+          const nmb_Image &target, const nmr_ImageTransform &xform,
+          nmb_Image &resampleImage);
 
     /// for 3D->2D transformations
     /// computes interpolated height for points in the resampleImage by

@@ -17,6 +17,7 @@ class nmr_ImageTransform {
     nmr_ImageTransform(int d_src, int d_dest):dim_src(d_src), dim_dest(d_dest){}
     virtual void transform(double *p_src, double *p_dest) const = 0;
     virtual void invTransform(double *p_src, double *p_dest) = 0;
+    virtual void invert() = 0;
     virtual nmr_ImageTransform *duplicate() const = 0;
     virtual int dimSrc() const {return dim_src;}
     virtual int dimDest() const {return dim_dest;}
@@ -39,6 +40,7 @@ class nmr_ImageTransformAffine : public nmr_ImageTransform {
     void compose(nmr_ImageTransformAffine &m);
     virtual void transform(double *p_src, double *p_dest) const;
     virtual void invTransform(double *p_src, double *p_dest);
+    virtual void invert();
     virtual nmr_ImageTransform *duplicate() const;
     virtual vrpn_bool hasInverse();
     virtual void print();
