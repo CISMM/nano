@@ -1,3 +1,8 @@
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmr_ObjectiveMI_EMMA.C (buildSampleHelper):  added an explicit 
+	cast to disambiguate instances of sqrt.
+
 2002-01-31  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmReg.dsp:  builds with non-static run-time libraries.

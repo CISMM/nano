@@ -471,7 +471,7 @@ int nmr_ObjectiveMI_EMMA::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
 
   // find the smallest grid with dimensions nxn or nx(n-1) that contains
   // more points than the number of points we want to sample
-  int gridWidth = (int)ceil(sqrt(numPoints));
+  int gridWidth = (int)ceil(sqrt( (float) numPoints) );
   // we know gridWidth*gridWidth >= numPoints but its possible that
   // gridWidth*(gridWidth-1) >= numPoints so assume this is the case and
   // if it turns out that it isn't then switch to use the square grid
