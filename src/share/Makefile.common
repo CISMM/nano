@@ -187,7 +187,7 @@ endif
 #TCL_INC_DIR := /net/nano/nano3/tcltk.sgi_irix/include
 #TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib
 TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include
-TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk-2/$(HW_OS)/lib
+TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib
 
 ###############################################################################
 #
