@@ -711,13 +711,13 @@ void displayFuncDepth( void ) {
 		float x = SimMicroscopeServer.rot_x;
 		float y = SimMicroscopeServer.rot_y;
 		float z = SimMicroscopeServer.rot_z;
-		cout << "sim.cpp: " << "x: " << x << "\ty: " << y << "\tz: " << z << endl;
+		cout << "rot rcv: \t" << "x: " << x << "\ty: " << y << "\tz: " << z << endl;
 
 		//in radians
 		float rel_x = x - current_rot_x;
 		float rel_y = y - current_rot_y;
 		float rel_z = z - current_rot_z;
-		cout << "sim.cpp: " << "rel x: " << rel_x << "\trel y: " << rel_y << "\trel z: " << rel_z << endl;
+		cout << "rel: \t\t" << "x: " << rel_x << "\ty: " << rel_y << "\tz: " << rel_z << endl;
 
 
 		//in radians
@@ -729,9 +729,9 @@ void displayFuncDepth( void ) {
 
 		//start added code
 
-		//X stuff
-		if(rel_x != 0){			
-
+		//Z stuff
+		if(rel_z != 0){	
+		
 			//find the group center
 			Vec3d group_center;
 			for(int i = 0; i < number_in_group[obj_group];i++){
@@ -741,17 +741,16 @@ void displayFuncDepth( void ) {
 			group_center /= number_in_group[obj_group];
 			//cout << "group center: " << group_center << endl;
 
-			//rotate around x
+			//rotate around z
 
-			//translate objects to position rel_x rad. rel. to group_center
+			//translate objects to position rel_z rad. rel. to group_center
 			for(i = 0; i < number_in_group[obj_group];i++){
 				OB * this_obj = group_of_obs[obj_group][i];
 				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),rel_x) + group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),rel_z) + group_center;
 				this_obj->setPos(new_pos);
 			}
-			
-			//rotate objects about themselves in x
+
 			for(i = 0; i < number_in_group[obj_group];i++){
 				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
 				Vec3d left;
@@ -761,9 +760,9 @@ void displayFuncDepth( void ) {
 				right += n->pos;
 				right += n->axis*n->leng/2;
 
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),rel_x);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),rel_x);
-				n->set(left,right,n->diam);
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),rel_z);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),rel_z);
+				n->set(left,right,n->diam);		
 			}
 		}
 
@@ -804,9 +803,9 @@ void displayFuncDepth( void ) {
 			}
 		}
 
-		//Z stuff
-		if(rel_z != 0){	
-		
+		//X stuff
+		if(rel_x != 0){			
+
 			//find the group center
 			Vec3d group_center;
 			for(int i = 0; i < number_in_group[obj_group];i++){
@@ -816,16 +815,17 @@ void displayFuncDepth( void ) {
 			group_center /= number_in_group[obj_group];
 			//cout << "group center: " << group_center << endl;
 
-			//rotate around z
+			//rotate around x
 
-			//translate objects to position rel_z rad. rel. to group_center
+			//translate objects to position rel_x rad. rel. to group_center
 			for(i = 0; i < number_in_group[obj_group];i++){
 				OB * this_obj = group_of_obs[obj_group][i];
 				Vec3d rel_pos = this_obj->pos - group_center;
-				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),rel_z) + group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),rel_x) + group_center;
 				this_obj->setPos(new_pos);
 			}
-
+			
+			//rotate objects about themselves in x
 			for(i = 0; i < number_in_group[obj_group];i++){
 				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
 				Vec3d left;
@@ -835,11 +835,12 @@ void displayFuncDepth( void ) {
 				right += n->pos;
 				right += n->axis*n->leng/2;
 
-				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),rel_z);
-				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),rel_z);
-				n->set(left,right,n->diam);		
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),rel_x);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),rel_x);
+				n->set(left,right,n->diam);
 			}
 		}
+
    
 		//end added code
 
