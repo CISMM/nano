@@ -9,6 +9,7 @@
 #include <MSIFileGenerator.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
 											// sending tubes when we open a tube file 
@@ -39,6 +40,7 @@ static	void handle_import_CCW (vrpn_int32, void *);
 static	void handle_import_update_AFM (vrpn_int32, void *);
 static	void handle_import_grab_object (vrpn_int32, void *);
 
+static	void handle_spider_current_leg(const char*, void*);
 static	void handle_spider_length_change(vrpn_float64, void*);
 static	void handle_spider_width_change(vrpn_float64, void*);
 static	void handle_spider_thick_change(vrpn_float64, void*);
@@ -85,12 +87,18 @@ Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
 Tclvar_int      import_b("import_b", 192);
 Tclvar_float    import_alpha("import_alpha", 1, handle_import_alpha);
+
+Tclvar_list_of_strings spider_which_leg("spider_which_leg");
+Tclvar_string	spider_current_leg("spider_current_leg", "", handle_spider_current_leg);
 Tclvar_float    spider_length("spider_length", 5, handle_spider_length_change);
 Tclvar_float    spider_width("spider_width", 2, handle_spider_width_change);
 Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
 Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
 Tclvar_float    spider_curve("spider_curve", 0, handle_spider_curve_change);
 Tclvar_int		spider_legs("spider_legs", 8, handle_spider_legs_change);
+
+int				current_leg = -1;		// integer value of the current leg
+										// set when the tcl string value is changed
 
 //-----------------------------------------------------------------
 ///SimulatedMicroscope object
@@ -166,11 +174,31 @@ static void handle_current_object(const char*, void*) {
 
 			import_grab_object = obj.GetGrabObject();
 
-			spider_length = obj.GetSpiderLength();
-			spider_width = obj.GetSpiderWidth();
-			spider_thick = obj.GetSpiderThick();
-			spider_tess = obj.GetSpiderTess();
-			spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve());
+			// if spider...
+			if (strcmp(*World.current_object, "spider.spi") == 0) {
+				char buf[2];
+				spider_which_leg.addEntry("all");
+				for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+					sprintf(buf, "%d", i + 1);
+					spider_which_leg.addEntry(buf);
+				}
+
+				if (current_leg = -1) {
+					// set to the first leg's value
+					spider_length = obj.GetSpiderLength(0);
+					spider_width = obj.GetSpiderWidth(0);
+					spider_thick = obj.GetSpiderThick(0);
+					spider_tess = obj.GetSpiderTess(0);
+					spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(0));
+				}
+				else {
+					spider_length = obj.GetSpiderLength(current_leg);
+					spider_width = obj.GetSpiderWidth(current_leg);
+					spider_thick = obj.GetSpiderThick(current_leg);
+					spider_tess = obj.GetSpiderTess(current_leg);
+					spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(current_leg));
+				}
+			}
 		}
 	}
 	else {
@@ -191,11 +219,13 @@ static void handle_import_file_change (const char *, void *) {
 			obj->SetCCW(import_CCW);
 			obj->SetTess(import_tess);
 			obj->SetAxisStep(import_axis_step);
-			obj->SetSpiderLength(spider_length);
-			obj->SetSpiderWidth(spider_width);
-			obj->SetSpiderThick(spider_thick);
-			obj->SetSpiderTess(spider_tess);
-			obj->SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
+			for (int i = 0; i < spider_legs; i++) {
+				obj->SetSpiderLength(i, spider_length);
+				obj->SetSpiderWidth(i, spider_width);
+				obj->SetSpiderThick(i, spider_thick);
+				obj->SetSpiderTess(i, spider_tess);
+				obj->SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
+			}
 			obj->SetSpiderLegs(spider_legs);
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
@@ -706,13 +736,43 @@ static  void handle_import_alpha (vrpn_float64, void *)
 
 
 // Spider stuff
+
+static void handle_spider_current_leg(const char*, void*) 
+{
+	if (strcmp(spider_current_leg.string(), "all") == 0) {
+		// set to -1
+		current_leg = -1;
+	}
+	else {
+		current_leg = atoi(spider_current_leg.string()) - 1;
+
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			spider_length = obj.GetSpiderLength(current_leg);
+			spider_width = obj.GetSpiderWidth(current_leg);
+			spider_thick = obj.GetSpiderThick(current_leg);
+			spider_tess = obj.GetSpiderTess(current_leg);
+			spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(current_leg));
+		}
+	}
+}
+
 static  void handle_spider_length_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
-		
-		obj.SetSpiderLength(spider_length);
+	
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderLength(i, spider_length);
+			}
+		}
+		else {
+			obj.SetSpiderLength(current_leg, spider_length);
+		}
 		obj.ReloadGeometry();
 	}
 }
@@ -723,7 +783,15 @@ static  void handle_spider_width_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
 		
-		obj.SetSpiderWidth(spider_width);
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderWidth(i, spider_width);
+			}
+		}
+		else {
+			obj.SetSpiderWidth(current_leg, spider_width);
+		}
 		obj.ReloadGeometry();
 	}
 }
@@ -734,7 +802,15 @@ static  void handle_spider_thick_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
 		
-		obj.SetSpiderThick(spider_thick);
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderThick(i, spider_thick);
+			}
+		}
+		else {
+			obj.SetSpiderThick(current_leg, spider_thick);
+		}
 		obj.ReloadGeometry();
 	}
 }
@@ -745,7 +821,15 @@ static  void handle_spider_tess_change (vrpn_int32, void *)
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
 		
-		obj.SetSpiderTess(spider_tess);
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderTess(i, spider_tess);
+			}
+		}
+		else {
+			obj.SetSpiderTess(current_leg, spider_tess);
+		}
 		obj.ReloadGeometry();
 	}
 }
@@ -756,7 +840,15 @@ static  void handle_spider_curve_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
 		
-		obj.SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
+			}
+		}
+		else {
+			obj.SetSpiderCurve(current_leg, Q_DEG_TO_RAD(spider_curve));
+		}
 		obj.ReloadGeometry();
 	}
 }
@@ -766,8 +858,25 @@ static  void handle_spider_legs_change (vrpn_int32, void *)
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
 		URender &obj = node->TGetContents();
-		
+
+		// update the list of strings
+		int i;
+		char buf[2];
+		if (obj.GetSpiderLegs() < spider_legs) {
+			for (i = obj.GetSpiderLegs() + 1; i <= spider_legs; i++) {
+				sprintf(buf, "%d", i);
+				spider_which_leg.addEntry(buf);
+			}
+		}
+		else {
+			for (i = spider_legs + 1; i <= obj.GetSpiderLegs(); i++) {
+				sprintf(buf, "%d", i);
+				spider_which_leg.deleteEntry(buf);
+			}
+		}
+
 		obj.SetSpiderLegs(spider_legs);
+
 		obj.ReloadGeometry();
 	}
 }

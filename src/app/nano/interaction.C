@@ -3864,10 +3864,6 @@ doWorldGrab(int whichUser, int userEvent)
 		if (obj.GetGrabObject() == 1) {
 			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
 			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
-
-			printf("old rotation:\n");
-			q_print(oldObject.rotate);
-			printf("\n");
 		}
 	}
 	break;

@@ -3118,12 +3118,15 @@ static void openDefaultMicroscope()
 
 	// reset objects  --  doesn't work correctly yet, but better than nothing.
 //	if (state->config_enableUber) {
-	change_static_file csf;
-    csf.scale = 1.0;
-	csf.xoffset = 0.0;
-	csf.yoffset = 0.0;
-	csf.zoffset = 0.0;
-	World.Do(&URender::ChangeStaticFile, &csf);
+
+	if (&World.TGetContents() != NULL) {
+		change_static_file csf;
+		csf.scale = 1.0;
+		csf.xoffset = 0.0;
+		csf.yoffset = 0.0;
+		csf.zoffset = 0.0;
+		World.Do(&URender::ChangeStaticFile, &csf);
+	}
 //}
 
     // Make sure "working" dialog is gone. 
