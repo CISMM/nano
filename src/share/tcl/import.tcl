@@ -18,7 +18,7 @@ set import_CCW 1
 set import_tess 10
 set import_axis_step 10
 set import_clamp 0
-set import_update_AFM 1
+set import_update_AFM 0
 
 set import_color gray
 set import_r 192

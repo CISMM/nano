@@ -1,3 +1,8 @@
+2002-04-15  David Borland <borland@cs.unc.edu>
+
+        * import.tcl:  changed default value for sending position and
+        orientation to AFM
+
 2002-04-11  David Borland <borland@cs.unc.edu>  
 
         * import.tcl:  Did some reorganization of the UI.  Added user
