@@ -561,8 +561,6 @@ int nma_Keithley2400::rcv_Error(char * my_buf)
 
 int nma_Keithley2400::rcv_Shutdown()
 {
-	printf("Lost connection, exiting...\n");
-	exit(0);
 	return 0;
 }
 
