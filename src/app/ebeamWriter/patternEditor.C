@@ -102,7 +102,7 @@ void PatternEditor::addImage(nmb_Image *im, double opacity,
   } else {
     list<ImageElement>::iterator testElt = d_images.begin();
     while (testElt != d_images.end()) {
-      if ((*testElt).d_image->areaInWorld() > newArea) break;
+      if ((*testElt).d_image->areaInWorld() < newArea) break;
       testElt++;
     }
     insertPnt = testElt;
@@ -775,7 +775,7 @@ void PatternEditor::drawImage(const ImageElement &ie)
               GL_LUMINANCE,
               pixType, texture);
 */
-       glTexImage2D(GL_PROXY_TEXTURE_2D, ...
+       //glTexImage2D(GL_PROXY_TEXTURE_2D, ...
        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                 texwidth, texheight, 0, GL_LUMINANCE,
                 pixType, texture);
@@ -809,6 +809,7 @@ void PatternEditor::drawImage(const ImageElement &ie)
        // compensation for the border:
        glTranslatef(bordSizeX, bordSizeY, 0.0);
        glScalef(scaleFactorX, scaleFactorY, 1.0);
+
        // now we can use the xform defined for the actual image part of the
        // texture
        glMultMatrixd(worldToImage);

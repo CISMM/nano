@@ -1,7 +1,7 @@
 #include "controlPanels.h"
 #include "imageViewer.h"
 #include "nmm_EDAX.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 
 static int expose_point_count = 0;
 
@@ -126,8 +126,8 @@ void ControlPanels::setImageList(nmb_ImageList *data)
      return;
   }
   // send the images off to the proxy
-  d_aligner->setImage(NMR_SOURCE, src_im, vrpn_FALSE);
-  d_aligner->setImage(NMR_TARGET, tgt_im, vrpn_FALSE);
+  d_aligner->setImage(NMR_SOURCE, src_im);
+  d_aligner->setImage(NMR_TARGET, tgt_im);
   updateCurrentImageControls();
 }
 
@@ -226,9 +226,9 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
                                               void *ud)
 {
   double default_matrix[16] = {0.001, 0.0, 0.0, 0.0,
-                                 0.0, 0.001, 0.0, 0.0,
-                                 0.0, 0.0, 1.0, 0.0,
-                                 0.0, 0.0, 0.0, 1.0};
+                               0.0, 0.001, 0.0, 0.0,
+                               0.0, 0.0, 1.0, 0.0,
+                               0.0, 0.0, 0.0, 1.0};
   ControlPanels *me = (ControlPanels *)ud;
   printf("open file %s\n", (const char *)me->d_openImageFileName);
   if (strlen((const char *)me->d_openImageFileName) <= 0) return;
@@ -241,7 +241,7 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
     // add im to the list
     im->normalize();
     im->setWorldToImageTransform(default_matrix);
-	
+
     me->d_patternEditor->addImage(im);
     me->d_imageList->addImage(im);
 	
@@ -322,7 +322,8 @@ void ControlPanels::handle_saveImageFileName_change(const char * /*new_value*/,
           return;
       }
 
-      if (im->exportToFile(file_ptr, me->d_saveImageFileType.string())) {
+      if (im->exportToFile(file_ptr, me->d_saveImageFileType.string(),
+                              me->d_saveImageFileName.string())) {
           fprintf(stderr, "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 me->d_saveImageFileName.string());
@@ -534,8 +535,9 @@ void ControlPanels::handleRegistrationChange
     case NMR_IMAGE_PARAM:
       nmr_ImageType which_image;
       vrpn_int32 res_x, res_y;
+      vrpn_float32 sizeX, sizeY;
       vrpn_bool height_field;
-      d_aligner->getImageParameters(which_image, res_x, res_y, height_field);
+      d_aligner->getImageParameters(which_image, res_x, res_y, sizeX, sizeY);
       // this is just a confirmation of settings so we probably don't need 
       // to do anything
       break;
@@ -546,15 +548,8 @@ void ControlPanels::handleRegistrationChange
       // to do anything
       break;
     case NMR_REG_RESULT:
-      //printf("got transformation\n");
-
-      /* *******************************************************************
-         Store the raw result from the registration code and compute inverse
-       * *******************************************************************/
-      double targetImFromSourceIm_matrix[16];
-      nmb_ImageTransformAffine targetImFromSource(4,4);
-      d_aligner->getRegistrationResult(targetImFromSourceIm_matrix);
-      targetImFromSource.setMatrix(targetImFromSourceIm_matrix);
+      nmb_TransformMatrix44 targetImFromSourceIm;
+      d_aligner->getRegistrationResult(targetImFromSourceIm);
 
       if (d_imageList == NULL) {
          fprintf(stderr, "handleRegistrationChange: Error, image list null\n");
@@ -570,15 +565,33 @@ void ControlPanels::handleRegistrationChange
            return;
       }
 
-      double sourceImFromWorld_matrix[16];
-      sourceImage->getWorldToImageTransform(sourceImFromWorld_matrix);
-      nmb_ImageTransformAffine targetImFromWorld(4,4);
-      targetImFromWorld.setMatrix(sourceImFromWorld_matrix);
-      targetImFromWorld.compose(targetImFromSource);
+      double srcAcqDistX, srcAcqDistY, tgtAcqDistX, tgtAcqDistY;
+      sourceImage->getAcquisitionDimensions(srcAcqDistX, srcAcqDistY);
+      targetImage->getAcquisitionDimensions(tgtAcqDistX, tgtAcqDistY);
 
-      double targetImFromWorld_matrix[16];
-      targetImFromWorld.getMatrix(targetImFromWorld_matrix);
-      targetImage->setWorldToImageTransform(targetImFromWorld_matrix);
+      // adjust for scaling of images
+      double xform_matrix[16];
+      targetImFromSourceIm.getMatrix(xform_matrix);
+      int i;
+      for (i = 0; i < 4; i++) {
+        xform_matrix[i] *= srcAcqDistX;
+        xform_matrix[i+4] *= srcAcqDistY;
+        xform_matrix[4*i] /= tgtAcqDistX;
+        xform_matrix[4*i+1] /= tgtAcqDistY;
+      }
+      targetImFromSourceIm.setMatrix(xform_matrix);
+
+      nmb_TransformMatrix44 sourceImFromWorld;
+      sourceImage->getWorldToImageTransform(sourceImFromWorld);
+      nmb_TransformMatrix44 targetImFromWorld;
+
+      /* ********************************************************* 
+       targetImFromWorld = targetImFromSourceIm * sourceIm
+       * ********************************************************* */
+      targetImFromWorld = targetImFromSourceIm;
+      targetImFromWorld.compose(sourceImFromWorld);
+
+      targetImage->setWorldToImageTransform(targetImFromWorld);
       // now tell pattern editor that the transform for this image changed
       d_patternEditor->newPosition(targetImage);
       break;
@@ -630,12 +643,10 @@ void ControlPanels::handleSEMChange(
 
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
-  double transformMatrix[16] = {1.0, 0.0, 0.0, 0.0,
-                                0.0, 1.0, 0.0, 0.0,
-                                0.0, 0.0, 1.0, 0.0,
-                                0.0, 0.0, 0.0, 1.0};
   double imageRegionWidth = 1000;
   double imageRegionHeight = 1000;
+
+  nmb_ImageBounds ib;
 
   switch(info.msg_type) {
     case nmm_Microscope_SEM::REPORT_RESOLUTION:
@@ -692,10 +703,10 @@ void ControlPanels::handleSEMChange(
 	    updateCurrentImageControls();
         }
         info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
-        transformMatrix[0] = 1.0/imageRegionWidth;
-        transformMatrix[5] = 1.0/imageRegionHeight;
-
-        currentImage->setWorldToImageTransform(transformMatrix);
+        currentImage->setAcquisitionDimensions(imageRegionWidth, 
+                                               imageRegionHeight);
+        ib = nmb_ImageBounds(0.0, 0.0, imageRegionWidth, imageRegionHeight);
+        currentImage->setBounds(ib);
         d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
@@ -857,7 +868,7 @@ void ControlPanels::handle_sourceImageName_change(
      return;
   }
   // send the image off to the proxy
-  me->d_aligner->setImage(NMR_SOURCE, im, vrpn_FALSE);
+  me->d_aligner->setImage(NMR_SOURCE, im);
 }
 
 // static
@@ -874,7 +885,7 @@ void ControlPanels::handle_targetImageName_change(const char *new_value, void *u
      return;
   }
   // send image off to the proxy
-  me->d_aligner->setImage(NMR_TARGET, im, vrpn_FALSE);
+  me->d_aligner->setImage(NMR_TARGET, im);
 }
 
 // static

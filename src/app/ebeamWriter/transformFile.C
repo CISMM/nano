@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "transformFile.h"
 
 const int TransformFileEntry::maxFileName = 256;
@@ -5,7 +6,8 @@ const int TransformFileEntry::maxFileName = 256;
 TransformFile::TransformFile() {}
 
 vrpn_bool TransformFile::lookupImageTransformByName(const char *imageName, 
-                                              double *matrix)
+                              double *matrix,
+                              double &acqDistX, double &acqDistY)
 {
     list<TransformFileEntry>::iterator currTransformEntry;
     for (currTransformEntry = data.begin();
@@ -14,6 +16,8 @@ vrpn_bool TransformFile::lookupImageTransformByName(const char *imageName,
        if (strcmp((*currTransformEntry).fileName,
                   imageName) == 0) {
            (*currTransformEntry).transform.getMatrix(matrix);
+           acqDistX = (*currTransformEntry).acqDistX;
+           acqDistY = (*currTransformEntry).acqDistY;
            return VRPN_TRUE;
        }
     }

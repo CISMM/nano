@@ -15,7 +15,7 @@
 #include "GL/glut_UNC.h"
 
 #include "patternEditor.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 #include "transformFile.h"
 #include "nmr_Util.h"
 
@@ -192,6 +192,7 @@ int main(int argc, char **argv)
                                  0.0, 0.001, 0.0, 0.0,
                                  0.0, 0.0, 1.0, 0.0,
                                  0.0, 0.0, 0.0, 1.0};
+    double acqDistX, acqDistY;
     nmb_Image *currImage;
 
     for (i = 0; i < imageData->numImages(); i++){
@@ -201,8 +202,9 @@ int main(int argc, char **argv)
         // search for this image in the list of transformations we loaded
         if (transformFile.lookupImageTransformByName(
                           currImage->name()->Characters(),
-                          matrix)) {
+                          matrix, acqDistX, acqDistY)) {
             currImage->setWorldToImageTransform(matrix);
+            currImage->setAcquisitionDimensions(acqDistX, acqDistY);
             printf("setting world to image transform for %s\n",
                    currImage->name()->Characters());
         }

@@ -2,7 +2,7 @@
 #define TRANSFORMFILE_H
 
 #include "vrpn_Types.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 #include "list.h"
 
 /*
@@ -28,12 +28,14 @@ t30 t31 t32 t33
 
 class TransformFileEntry {
   public:
-    TransformFileEntry():transform(4,4)
+    TransformFileEntry()
     { fileName[0] = '\0'; }
 
     char fileName[256];
     static const int maxFileName;
-    nmb_ImageTransformAffine transform;
+    nmb_TransformMatrix44 transform;
+    double acqDistX;
+    double acqDistY;
 };
 
 /// This class represents a collection of 2D image coordinate systems for
@@ -49,7 +51,8 @@ class TransformFile {
     TransformFile();
     int load(char *filename);
     int save(char *filename);
-    vrpn_bool lookupImageTransformByName(const char *name, double *matrix);
+    vrpn_bool lookupImageTransformByName(const char *name, double *matrix,
+                                     double &acqDistX, double &acqDistY);
 
     /// sets the world->image transformation for an image with the name
     /// name_dst given an image->image
@@ -70,7 +73,8 @@ class TransformFile {
     /// other image transformations may also be initialized to the 
     /// identity using this function because if the name doesn't exist in the
     /// list then it will be added
-    int setImageTransform(const char *name, const double *matrix);
+    int setImageTransform(const char *name, const double *matrix,
+                          double acqDistX, double acqDistY);
 
     /// lets you specify the width and height of an image in nm
     /// and adjusts the world->image transformation matrix by applying

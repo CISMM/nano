@@ -1,3 +1,11 @@
+2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	Most changes here are to get this code to work with the latest 
+	code in nano/src/lib/nmBase, nano/src/app/nano/lib/nmReg
+	exception:
+	* patternEditor.C (addImage): fixed this to insert the image in the
+	right order (so smaller images are drawn last)
+
 2001-05-31  Aron Helser  <helser@cs.unc.edu>
 
 	* main.C (main): Tell tcl script value of tcl_script_dir
