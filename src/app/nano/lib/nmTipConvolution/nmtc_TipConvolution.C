@@ -22,6 +22,9 @@ nmtc_TipConvolution::nmtc_TipConvolution(nmg_Graphics *g, nmb_ImageList *im):
 
 nmtc_TipConvolution::~nmtc_TipConvolution()
 {
+  d_convolutionImageData.bindConnection(NULL);
+  d_convolutionTipName.bindConnection(NULL);
+  d_resultImageName.bindConnection(NULL);
 }
 
 void nmtc_TipConvolution::changeDataset(nmb_ImageList *im)
@@ -182,4 +185,20 @@ void nmtc_TipConvolution::CreateConvolutionImage(const char *imageName)
  
 } 
 
+// used to setup synchronization on protected
+// TclNet member variables
+void nmtc_TipConvolution::nmtc_SetupSync(nmui_Component * container)
+{
+  container->add(&d_convolutionImageData);
+  container->add(&d_convolutionTipName);
+  container->add(&d_resultImageName);
+}
 
+// used to teardown synchronization on protected
+// TclNet member variables
+void nmtc_TipConvolution::nmtc_TeardownSync(nmui_Component * container)
+{
+  container->remove(&d_convolutionImageData);
+  container->remove(&d_convolutionTipName);
+  container->remove(&d_resultImageName);
+}

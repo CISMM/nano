@@ -1,3 +1,11 @@
+2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
+
+	* nmtc_TipConvolution.c:  Changed some Tclvars to TclNets.
+	                          Added functions:
+	                            nmtc_SetupSync()
+				    nmtc_TeardownSync()
+	* nmtc_TipConvolution.h:  same
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
         * Makefile : added glut as external lib

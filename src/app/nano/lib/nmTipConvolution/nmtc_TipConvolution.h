@@ -6,6 +6,7 @@
 #include "nmr_Registration_Proxy.h"
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
+#include <nmui_Component.h>
 
 class nmtc_TipConvolution {
  public:
@@ -18,13 +19,20 @@ class nmtc_TipConvolution {
 
   void CreateConvolutionImage(const char *imageName);
   
+  // used to setup synchronization on protected
+  // TclNet member variables
+  void nmtc_SetupSync(nmui_Component * container);
+
+  // used to teardown synchronization on protected
+  // TclNet member variables
+  void nmtc_TeardownSync(nmui_Component * container);
 
  protected:
 
-  Tclvar_string d_convolutionImageData;
-  Tclvar_string d_convolutionTipName;
+  TclNet_string d_convolutionImageData;
+  TclNet_string d_convolutionTipName;
   // Tclvar_string d_convolutionEnabled;
-  Tclvar_string d_resultImageName;
+  TclNet_string d_resultImageName;
 
   nmg_Graphics *d_graphicsDisplay;
   nmb_ImageList *d_imageList;
