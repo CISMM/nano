@@ -1,5 +1,10 @@
 2002-06-06 David Borland <borland@cs.unc.edu>
 
+        * import.C : fixed a bug that was causing the wrong spider values to
+	be set when switching between objects
+
+2002-06-06 David Borland <borland@cs.unc.edu>
+
         * interaction.c : don't think the right version got in last time...
 
 2002-06-06 David Borland <borland@cs.unc.edu>

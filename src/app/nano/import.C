@@ -201,13 +201,16 @@ static void handle_current_object(const char*, void*) {
 					spider_which_leg.addEntry(buf);
 				}
 
-				if (current_leg = -1) {
-					// set to the first leg's value
+				if (current_leg == -1) {	// all
+
+					// don't do anything--we don't want all legs set to the same value inadvertently
+					/*
 					spider_length = obj.GetSpiderLength(0);
 					spider_width = obj.GetSpiderWidth(0);
 					spider_thick = obj.GetSpiderThick(0);
 					spider_tess = obj.GetSpiderTess(0);
 					spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(0));
+					*/
 				}
 				else {
 					spider_length = obj.GetSpiderLength(current_leg);
