@@ -1,3 +1,7 @@
+2001-12-19  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmUI.dsp:  added nmui_CrossSection.C, .h
+
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmui_PlaneSync.C: remove compiler warnings

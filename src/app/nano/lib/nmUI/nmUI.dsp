@@ -101,6 +101,10 @@ SOURCE=.\nmui_Component.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmui_CrossSection.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmui_Haptics.C
 # End Source File
 # Begin Source File
@@ -138,6 +142,10 @@ SOURCE=.\nmui_ColorMap.h
 # Begin Source File
 
 SOURCE=.\nmui_Component.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmui_CrossSection.h
 # End Source File
 # Begin Source File
 
