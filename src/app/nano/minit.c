@@ -361,7 +361,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                // Save the old world_from_room transform as a basis for puck
                // action. Move to activate section above if we aren't doing
                // incremental xforms.
-               v_get_world_from_head(0, &old_world_from_room);
+               v_get_world_from_room(0, &old_world_from_room);
 
                // We are active, and changing the surface position
                v_init_xform(&new_world_from_room);
@@ -386,7 +386,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                          offsetz);
 
                // Plane center is in world coords, we need it in room coords
-               v_get_world_from_head(0, &curr_world_from_room);
+               v_get_world_from_room(0, &curr_world_from_room);
                v_x_invert(&curr_room_from_world, &curr_world_from_room);
                
                // xform plane_center vector into room coords. 

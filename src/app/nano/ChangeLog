@@ -1,3 +1,8 @@
+2002-06-21 Charles Mason <mason@cs.unc.edu>
+	
+	* minit.c (handle_magellan_puck_change): fixed bug when
+	translations room != head. No more "flying magellan."
+
 2002-06-19 Jameson Miller <millerj@cs.unc.edu>
 	* microscape.c - added autoscan into params
 	for collaboration. cleaned up help printout
