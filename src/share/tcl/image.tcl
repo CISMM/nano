@@ -186,11 +186,18 @@ pack $nmInfo(imagefull).mode $nmInfo(imagefull).modeparam $nmInfo(imagefull).sty
 #setup Image mode box
 label $nmInfo(imagefull).mode.label -text "Image Mode" 
 pack $nmInfo(imagefull).mode.label -side top -anchor nw
-radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
-radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1
-radiobutton $nmInfo(imagefull).mode.guardedscan -text "Guarded Scan" -variable newimagep_mode -value 2 
-button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars imageplist" -highlightthickness 0
-button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars imageplist" -highlightthickness 0
+radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" \
+        -variable newimagep_mode -value 0 
+radiobutton $nmInfo(imagefull).mode.contact -text "Contact" \
+        -variable newimagep_mode -value 1
+if { !$thirdtech_ui } {    
+    radiobutton $nmInfo(imagefull).mode.guardedscan -text "Guarded Scan" \
+            -variable newimagep_mode -value 2 
+}
+button $nmInfo(imagefull).mode.accept -text "Accept" \
+        -command "acceptImageVars imageplist" -highlightthickness 0
+button $nmInfo(imagefull).mode.cancel -text "Revert" \
+        -command "cancelImageVars imageplist" -highlightthickness 0
 
 set grid_resolution_list { 2 5 10 25 50 100 200 300 400 500 1000 }
 generic_optionmenu $nmInfo(imagefull).mode.grid_resolution \
@@ -201,8 +208,11 @@ generic_entry $nmInfo(imagefull).mode.scan_angle \
         newimagep_scan_angle \
 	"Scan Angle (deg)" real
 
-pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact $nmInfo(imagefull).mode.guardedscan -side top -anchor nw -fill x
-
+pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact \
+        -side top -anchor nw -fill x
+if { !$thirdtech_ui } {    
+    pack $nmInfo(imagefull).mode.guardedscan -side top -anchor nw -fill x
+}
 pack $nmInfo(imagefull).mode.grid_resolution \
         $nmInfo(imagefull).mode.scan_angle -side top -fill x -pady 20
 
@@ -217,10 +227,14 @@ bind $nmInfo(imagefull).mode.accept <Enter> "focus $nmInfo(imagefull).mode.accep
 set save_bg [$nmInfo(imagefull).mode.accept cget -background]
 
 lappend device_only_controls \
-        $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact $nmInfo(imagefull).mode.guardedscan \
+        $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact \
         $nmInfo(imagefull).mode.accept $nmInfo(imagefull).mode.cancel \
         $nmInfo(imagefull).mode.grid_resolution \
         $nmInfo(imagefull).mode.scan_angle 
+
+if { !$thirdtech_ui } {    
+    lappend device_only_controls $nmInfo(imagefull).mode.guardedscan 
+}
 
 #setup Image modeparam box
 label $nmInfo(imagefull).modeparam.label -text "Mode parameters" 
@@ -242,12 +256,15 @@ generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
 generic_entry $nmInfo(imagefull).modeparam.frequency newimagep_frequency \
 	"Frequency (10,200 kHz)" real
+# Allow this to be created, but not packed, in thirdtech_ui, 
+# to help with align labels below. 
 generic_entry $nmInfo(imagefull).modeparam.guarddepth newimagep_guarddepth \
-	"Guard Depth (0,1000 nm)" real
-button $nmInfo(imagefull).modeparam.acquireplane -text "Acquire Guard Plane" -command {
+            "Guard Depth (0,1000 nm)" real
+if { !$thirdtech_ui } {    
+    button $nmInfo(imagefull).modeparam.acquireplane -text "Acquire Guard Plane" -command {
 	set guardedscan_plane_acquire 1;
+    }
 }
-
 # This gain list is taken from the thermo code, noncont.c
 set input_gain_list ""
 for { set i 0; set n 1} { $i < 4 } { incr i; set n [expr $n*10] } {
@@ -261,6 +278,7 @@ generic_optionmenu $nmInfo(imagefull).modeparam.input_gain \
 generic_radiobox $nmInfo(imagefull).modeparam.ampl_or_phase \
         newimagep_ampl_or_phase \
 	"" { "Phase" "Amplitude" }
+$nmInfo(imagefull).modeparam.ampl_or_phase configure -labelpos e
 set drive_attenuation_list { 1 10 100 }
 generic_optionmenu $nmInfo(imagefull).modeparam.drive_attenuation \
         newimagep_drive_attenuation \
@@ -310,9 +328,10 @@ set im_oscillating_list [list $nmInfo(imagefull).modeparam.amplitude \
     $nmInfo(imagefull).modeparam.ampl_or_phase \
     $nmInfo(imagefull).modeparam.phase ]
 
+if { !$thirdtech_ui } {    
 set im_guardedscan_list [list $nmInfo(imagefull).modeparam.guarddepth \
         $nmInfo(imagefull).modeparam.acquireplane ]
-
+}
 lappend device_only_controls \
     $nmInfo(imagefull).modeparam.setpoint_nA \
     $nmInfo(imagefull).modeparam.setpoint_pcnt \
@@ -384,12 +403,14 @@ proc flip_im_mode {im_mode element op} {
 	set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
     } elseif {$k == 2} {
-		# Selected GuardedScan
-		# ???magic number 6 again????
-		set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end]
-		foreach widg $plist {pack forget $widg}
-		foreach widg $im_guardedscan_list {pack $widg -side top -fill x -pady $fspady}
-	}
+        if { !$thirdtech_ui } {
+            # Selected GuardedScan
+            # 6 is magic number - number of widgets to leave alone + 1
+            set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end]
+            foreach widg $plist {pack forget $widg}
+            foreach widg $im_guardedscan_list {pack $widg -side top -fill x -pady $fspady}
+        }
+    }
 }
 
 # This procedure causes the dreaded WIDGET CREEP (oh no!)

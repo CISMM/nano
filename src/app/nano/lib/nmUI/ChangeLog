@@ -1,3 +1,8 @@
+2002-01-11  Aron Helser  <helser@cs.unc.edu>
+
+	* nmui_CrossSection.Ch: made cross-sections variable length, to
+	match resolution of surface.  
+
 2002-01-04  Aron Helser  <helser@cs.unc.edu>
 
 	* nmui_CrossSection.Ch: changed to handle full width,

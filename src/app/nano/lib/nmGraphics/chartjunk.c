@@ -426,6 +426,8 @@ int mode_display (void *data) {
 			      message = (char *)"Center Texture Mode"; break;
   case USER_SCANLINE_MODE:    message = (char *)"LineScan Mode"; break;
   case USER_REGION_MODE:      message = (char *)"Region Select Mode"; break;
+  case USER_CROSS_SECTION_MODE:
+                              message = (char *)"Cross Section Mode"; break;
   default:                    message = (char *)"Unknown Mode"; break;
   }
 

@@ -24,8 +24,10 @@ proc get_lines {fid out_fid targets} {
         lappend line_strings $line_string_pre$targ$line_string_post
     }
     while {[gets $fid line] >= 0} {
+        # ignore leading spaces/tabs. 
+        set line1 [string trimleft $line]
         foreach line_string $line_strings {
-            if {[string compare -length [string length $line_string] $line_string $line] == 0 } {
+            if {[string compare -length [string length $line_string] $line_string $line1] == 0 } {
                 set found 1
             }
         }

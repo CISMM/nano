@@ -77,6 +77,7 @@ pack $nmInfo(sumplane).sumlabel $nmInfo(sumplane).sumplane1 \
         $nmInfo(sumplane).sumplane \
 	-side top -anchor nw
 
+if { !$thirdtech_ui } {    
 #Simulated Scan plane
 iwidgets::Labeledframe $nmInfo(calc_planes).simscan \
 	-labeltext "Create plane from simulated AFM scan" \
@@ -97,7 +98,7 @@ pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
 		$nmInfo(simscanplane).simIPaddress \
 	-side top -anchor nw
 
-
+}
 
 
 #

@@ -296,9 +296,12 @@ proc init_full {} {
 			 punchdist speed watchdog step_size z_start \
 			 z_end z_pullback force_limit fcdist num_layers \
 			 num_hcycles sample_speed pullback_speed start_speed feedback_speed \
-			 avg_num optimize_now max_z_step max_xy_step min_z_setpoint \
-			 max_z_setpoint max_lat_setpoint direct_step]
+			 avg_num optimize_now direct_step]
 
+    if { !$thirdtech_ui } {    
+        lappend modifyplist max_z_step max_xy_step min_z_setpoint \
+			 max_z_setpoint max_lat_setpoint 
+    }
     # Get globals for modifyp_* and newmodifyp_*.
     # newmodifyp_* gets updated as the user changes
     # selections, but only when Accept is pressed
@@ -561,28 +564,32 @@ proc init_full {} {
     radiobutton $nmInfo(modifyfull).tool.slow_line -text "Slow Line" \
 	-variable newmodifyp_tool -value 4 -anchor nw
     # 5 was Slow Line 3D  --  This is now Slow Line w/ DirectZ
-    radiobutton $nmInfo(modifyfull).tool.feelahead -text "FeelAhead" \
-         -variable newmodifyp_tool -value 6 -anchor nw
-    radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
-	-variable newmodifyp_tool -value 7 -anchor nw
-    radiobutton $nmInfo(modifyfull).tool.direct_step -text "Direct Step" \
-	-variable newmodifyp_tool -value 8 -anchor nw
-
+    if { !$thirdtech_ui } {    
+        radiobutton $nmInfo(modifyfull).tool.feelahead -text "FeelAhead" \
+                -variable newmodifyp_tool -value 6 -anchor nw
+        radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
+                -variable newmodifyp_tool -value 7 -anchor nw
+        radiobutton $nmInfo(modifyfull).tool.direct_step -text "Direct Step" \
+                -variable newmodifyp_tool -value 8 -anchor nw
+    }
     eval lappend changing_widgets "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
-	$nmInfo(modifyfull).tool.slow_line \
-	$nmInfo(modifyfull).tool.feelahead \
+	$nmInfo(modifyfull).tool.slow_line"
+    if { !$thirdtech_ui } {    
+	eval lappend changing_widgets "$nmInfo(modifyfull).tool.feelahead \
 	$nmInfo(modifyfull).tool.optimize_now \
 	$nmInfo(modifyfull).tool.direct_step "
-
+    }
     eval lappend device_only_controls "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
-	$nmInfo(modifyfull).tool.slow_line \
-	$nmInfo(modifyfull).tool.feelahead \
+	$nmInfo(modifyfull).tool.slow_line"
+    if { !$thirdtech_ui } {    
+	eval lappend device_only_controls "$nmInfo(modifyfull).tool.feelahead \
 	$nmInfo(modifyfull).tool.optimize_now \
 	$nmInfo(modifyfull).tool.direct_step "
+    }
 
     ### TOOL PARAMETERS ###
     set modifyp_step_size 1
@@ -594,31 +601,34 @@ proc init_full {} {
 
     generic_entry $nmInfo(modifyfull).toolparam.step-size newmodifyp_step_size \
 	"Step Size (0,5 nm)" real 
-
-    #setup Optimize Now params box
-       radiobutton $nmInfo(modifyfull).toolparam.optimize_line -text "Optimize Line" \
+    if { !$thirdtech_ui } {    
+        #setup Optimize Now params box
+        radiobutton $nmInfo(modifyfull).toolparam.optimize_line -text "Optimize Line" \
 	   -variable newmodifyp_optimize_now -value 0 -anchor nw
-       radiobutton $nmInfo(modifyfull).toolparam.optimize_area -text "Optimize Area" \
+        radiobutton $nmInfo(modifyfull).toolparam.optimize_area -text "Optimize Area" \
 	   -variable newmodifyp_optimize_now -value 1 -anchor nw
-
+    }
     global mod_line_list
     set mod_line_list  "$nmInfo(modifyfull).toolparam.step-size"
 
     global mod_slow_line_list
     set mod_slow_line_list "$nmInfo(modifyfull).toolparam.step-size"
 
-    global optimize_now_param_list
-    set optimize_now_param_list "$nmInfo(modifyfull).toolparam.optimize_line \
+    if { !$thirdtech_ui } {    
+        global optimize_now_param_list
+        set optimize_now_param_list "$nmInfo(modifyfull).toolparam.optimize_line \
 	$nmInfo(modifyfull).toolparam.optimize_area"
-
+    }
     # eval command expands the lists so we get one list of single elements. 
     eval lappend device_only_controls "$mod_line_list \
-	$mod_slow_line_list \
-	$optimize_now_param_list "
-
+	$mod_slow_line_list"
     if { !$thirdtech_ui } {    
-	### CONTROL ###
-	set modifyp_control 0
+        eval lappend device_only_controls "$optimize_now_param_list "
+    }
+
+    ### CONTROL ###
+    set modifyp_control 0
+    if { !$thirdtech_ui } {    
 
 	frame $nmInfo(modifyfull).control
 	label $nmInfo(modifyfull).control.label -text "Control" 
@@ -978,12 +988,13 @@ proc pack_full {} {
     pack $nmInfo(modifyfull).tool.freehand \
 	 $nmInfo(modifyfull).tool.line \
          $nmInfo(modifyfull).tool.constrfree \
-	 $nmInfo(modifyfull).tool.slow_line \
-	 $nmInfo(modifyfull).tool.feelahead \
+	 $nmInfo(modifyfull).tool.slow_line -side top -fill x
+    if { !$thirdtech_ui } {    
+	 pack $nmInfo(modifyfull).tool.feelahead \
 	 $nmInfo(modifyfull).tool.optimize_now \
 	 $nmInfo(modifyfull).tool.direct_step \
 	 -side top -fill x
-
+    }
     ### TOOL PARAMETERS ###
     global newmodifyp_tool
     # Only pack when tool is Line, Slow Line, or Optimize Now
@@ -1147,7 +1158,7 @@ proc change_made {nm el op} {
 #     $tool == 12  ||                                                                     #
 ###########################################################################################
 proc set_enabling {} {
-    global nmInfo changing_widgets
+    global nmInfo changing_widgets thirdtech_ui
 
     upvar #0 newmodifyp_mode mode
     upvar #0 newmodifyp_style style
@@ -1240,31 +1251,33 @@ proc set_enabling {} {
 	$nmInfo(modifyfull).tool.slow_line configure -state disabled
     }
 
-    # disable optimize now
-    if { $style != 0                                   || \
-	 ($style == 0 && $mode == 1 && $control == 1)  } {
-
-	$nmInfo(modifyfull).tool.optimize_now configure -state disabled
-    }
+    if { !$thirdtech_ui } {    
+        # disable optimize now
+        if { $style != 0                                   || \
+                ($style == 0 && $mode == 1 && $control == 1)  } {
+            
+            $nmInfo(modifyfull).tool.optimize_now configure -state disabled
+        }
 	
 	# disable direct step
 	if {$style != 0} {
-	$nmInfo(modifyfull).tool.direct_step configure -state disabled
-}
-
-    # disable feedback
-    if { ($style != 0 && $tool == 7)                                   || \
-	 (($mode == 0 || $tool == 4) && ($style == 3 || $style == 4))  } {
-	 
-	$nmInfo(modifyfull).control.feedback configure -state disabled
-    }
-
-    # disable directz
-    if { $style != 0                || \
-	 $tool == 1                 || \
-	 ($mode == 1 && $tool == 7) } {
-
-	$nmInfo(modifyfull).control.directz configure -state disabled
+            $nmInfo(modifyfull).tool.direct_step configure -state disabled
+        }
+        
+        # disable feedback
+        if { ($style != 0 && $tool == 7)                                   || \
+                (($mode == 0 || $tool == 4) && ($style == 3 || $style == 4))  } {
+            
+            $nmInfo(modifyfull).control.feedback configure -state disabled
+        }
+        
+        # disable directz
+        if { $style != 0                || \
+                $tool == 1                 || \
+                ($mode == 1 && $tool == 7) } {
+            
+            $nmInfo(modifyfull).control.directz configure -state disabled
+        }
     }
 }
 

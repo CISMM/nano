@@ -26,6 +26,7 @@ nmui_CrossSection::nmui_CrossSection (void) :
     d_clear_zero("xs_clear_0",0),
     d_clear_one("xs_clear_1", 0),
     d_data_update("xs_data_update", 0),
+    d_length(0),
     d_numDataVectors(0)
 {
     d_hide[0] = 1;
@@ -36,6 +37,15 @@ nmui_CrossSection::nmui_CrossSection (void) :
     d_max_points.addCallback(handle_MaxPointsChange, this);
     d_clear_zero.addCallback(handle_ClearZero, this);
     d_clear_one.addCallback(handle_ClearOne, this);
+
+    path[0] = NULL;
+    path[1] = NULL;
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < nmb_ListOfStrings::NUM_ENTRIES; i++ ) {
+            data[j][i] = NULL;
+        }
+    }
+
 }
 
 nmui_CrossSection::~nmui_CrossSection (void) {
@@ -84,11 +94,28 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
               return -1;
           }
       }
-      double step = (width1 + width2)/(300-1);
-      for ( j=0; j<300; j++) {
+      int length = max(grid->numX(), grid->numY());
+      if (d_length != length)  {
+          if (path[id] != NULL) {
+              delete [] path[id];
+              path[id] = NULL;
+          }
+          for (i = 0; i < nmb_ListOfStrings::NUM_ENTRIES; i++ ) {
+              if (data[id][i] != NULL) {
+                  delete [] data[id][i];
+                  data[id][i] = NULL;
+              }
+          }
+          d_length = length;
+      }
+      if (path[id] == NULL) {
+          path[id] = new double[d_length];
+      }
+      double step = (width1 + width2)/(d_length-1);
+      for ( j=0; j<d_length; j++) {
           path[id][j] = j*step;
       }
-      if (Blt_ResetVector(pathVecPtr, path[id], 300, 300,
+      if (Blt_ResetVector(pathVecPtr, path[id], d_length, d_length,
                           TCL_STATIC) != TCL_OK) {
           fprintf(stderr, "Tcl_Eval(BLT_ResetVector) failed: %s\n",
                   Tcl_Interpreter::getInterpreter()->result);
@@ -130,17 +157,21 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
 //              fprintf(stderr, "Stripchart Error: out of space (>32 data vectors)\n");
 //  	    break;
 //           }
-         double stepx = ((width1 + width2)*cos(angle))/(300-1);
-         double stepy = ((width1 + width2)*sin(angle))/(300-1);
+         double stepx = ((width1 + width2)*cos(angle))/(d_length-1);
+         double stepy = ((width1 + width2)*sin(angle))/(d_length-1);
          double startx = center_x - width1*cos(angle);
          double starty = center_y - width1*sin(angle);
+         
+         if (data[id][i] == NULL) {
+             data[id][i] = new double [d_length];
+         }
          // Read data values from along the cross section. 
-         for (int j=0; j<300; j++) {
+         for (int j=0; j<d_length; j++) {
              data[id][i][j] = plane->interpolatedValueAt(startx + j*stepx,
                                                          starty + j*stepy);
          }
          // Send data to tcl to be displayed. 
-         if (Blt_ResetVector(dataVecPtr, &(data[id][i][0]), 300, 300,
+         if (Blt_ResetVector(dataVecPtr, &(data[id][i][0]), d_length, d_length,
                              TCL_STATIC) != TCL_OK) {
 	       fprintf(stderr, "Tcl_Eval(BLT_ResetVector) failed: %s\n",
 		       Tcl_Interpreter::getInterpreter()->result);

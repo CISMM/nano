@@ -197,7 +197,7 @@ proc xs_get_sorted_names { index } {
     set vecname "xs$index"
     set vec_names [info globals "${vecname}_*"]
     set name_list ""
-    # Create the graphs of this cross-section
+    # Search the input plane names
     foreach name $inputPlaneNames {
         if { [string equal $name "none"] } { continue; }
         # Replace spaces and "-" (bad for variable names)
@@ -250,7 +250,7 @@ proc create_new_cross_section { index } {
         
         frame $win.line$gridrow -width 20 -height 3 \
                 -bg [xs_color $index $id2]
-        scan $datavec xs%d_%s bogus labelname
+         set labelname [string range $datavec 4 end]
         label $win.label$gridrow -text "$labelname"
         
         # When un-checked, stop graphing this data, stop displaying
@@ -330,48 +330,95 @@ proc create_new_cross_section { index } {
     set xsect(data${index}_init) 1
 }
 
+# clear graph and widgets for a single data vector
+proc xs_clear_single_vec { datavec gridrow index } {
+    global xsect xswidget
+    $xswidget(stripchart) element delete $datavec 
+    # for some reason, the limits don't go away when you delete
+    $xswidget(stripchart) axis configure $datavec -limitsformat ""
+    $xswidget(stripchart) axis delete $datavec 
+
+    set win $xswidget(point_frame$index)
+
+    # Clear controls for an element in the stripchart. 
+    destroy $win.line$gridrow $win.label$gridrow $win.active$gridrow \
+            $win.invert$gridrow \
+            $win.getaxis$gridrow \
+            $win.max$gridrow $win.min$gridrow 
+    # Get rid of traces on the generic_entry global variables. 
+    # prevents errors when xs is created again. 
+    unset xsect(${datavec}_min) 
+    unset xsect(${datavec}_max) 
+    
+    # Now clear some widgets that display data for this xs
+    destroy $xswidget(data$index).line$gridrow \
+            $xswidget(data$index).label$gridrow \
+            $xswidget(data$index).data_m1_$gridrow \
+            $xswidget(data$index).diff12_$gridrow \
+            $xswidget(data$index).data_m2_$gridrow \
+            $xswidget(data$index).diff23_$gridrow \
+            $xswidget(data$index).data_m3_$gridrow 
+
+    vector destroy $datavec
+}
+
 # Clear all graphing and controls for this cross section
 proc clear_cross_section { index } {
     global xsect xswidget
     set gridrow 1
-    set vecname "xs$index"
 
     #puts "clear_cross_section $vecname $index "
 
-    if { $xsect(data${index}_init) == 0 } { return; }
+    if { $xsect(data${index}_init) == 0 } { return 1; }
     set win $xswidget(point_frame$index)
 
     # Clear the graphs of this cross-section
     foreach datavec  [xs_get_sorted_names $index] {
-        $xswidget(stripchart) element delete $datavec 
-        # for some reason, the limits don't go away when you delete
-        $xswidget(stripchart) axis configure $datavec -limitsformat ""
-        $xswidget(stripchart) axis delete $datavec 
-        
-        # Clear controls for an element in the stripchart. 
-        
-        destroy $win.line$gridrow $win.label$gridrow $win.active$gridrow \
-                $win.invert$gridrow \
-                $win.getaxis$gridrow \
-                $win.max$gridrow $win.min$gridrow 
-        # Get rid of traces on the generic_entry global variables. 
-        # prevents errors when xs is created again. 
-        unset xsect(${datavec}_min) 
-        unset xsect(${datavec}_max) 
-        
-        # Now clear some widgets that display data for this xs
-        destroy $xswidget(data$index).line$gridrow \
-                $xswidget(data$index).label$gridrow \
-                $xswidget(data$index).data_m1_$gridrow \
-                $xswidget(data$index).diff12_$gridrow \
-                $xswidget(data$index).data_m2_$gridrow \
-                $xswidget(data$index).diff23_$gridrow \
-                $xswidget(data$index).data_m3_$gridrow 
+        xs_clear_single_vec $datavec $gridrow $index
         
         incr gridrow
         
     }    
     set xsect(data${index}_init) 0
+}
+
+proc xs_clear_vec { datavec } {
+    global xsect xswidget
+    set gridrow -1
+    set index [string range $datavec 2 2]
+
+    set win $xswidget(point_frame$index)
+    #puts "[grid size $win]"
+
+    #Find cross section controls by looking for it's label widget. 
+    foreach slave [grid slaves $win] { 
+        # First find a label widget
+        if { [scan [winfo name $slave] "label%d" i] > 0 } {
+            # see if this widget's text is the one we're looking for. 
+            if {[string equal [$win.label$i cget -text] \
+                    [string range $datavec 4 end] ] } {
+                # found it!
+                set gridrow $i
+                break
+            }
+        }
+    }
+    if { $gridrow == -1 } { 
+        puts "Can't find row to delete for $datavec!"
+        return
+    }
+
+    xs_clear_single_vec $datavec $gridrow $index
+
+    # If we've deleted all rows for this cross section, 
+    # prepare for re-initialization. 
+    if { [lindex [grid size $win] 1] == 1 } {
+        set xsect(data${index}_init) 0
+
+        global xs_clear_$index
+        set xs_clear_$index 1
+        #puts "prep for re-init, $index"
+    }
 }
 
 # Get data from xs vectors and put it in readable text format
@@ -432,11 +479,39 @@ proc save_xs_dialog { which } {
 
 # Change controls and data display when the input planes change. 
 proc xs_change_input_planes { nm el op } {
-    global inputPlaneNames
+    global xsect xswidget inputPlaneNames
     puts "xs Changed plane names $inputPlaneNames"
 
+    for { set index 0 } { $index < 2 } { incr index } {
+        if { $xsect(data${index}_init) == 0 } { continue; }
+        set vecname "xs$index"
+        set vec_names [info globals "${vecname}_*"]
+        puts "vecs $vec_names"
+        set name_list ""
+        # Search the input plane names
+        foreach name $inputPlaneNames {
+            if { [string equal $name "none"] } { continue; }
+            #if { [string equal $name "Empty-HeightPlane"] } { continue; }
+            # Replace spaces and "-" (bad for variable names)
+            set name [string map {" " _ "-" _ } $name]
+            lappend name_list $name
+        }
+        #puts "names $name_list"
+        foreach vname $vec_names {
+            if { [string equal $vname "${vecname}_Path"] } { continue; }
+            # cut off leading "xs0_" and trailing units
+            set name [string range $vname 4 \
+                    [expr [string last _ $vname] -1]]
+            set i [lsearch $name_list $name]
+            if { $i == -1 } { 
+                xs_clear_vec $vname
+                continue;
+            }
+        }
+    }
 }
-#trace variable inputPlaneNames w xs_change_input_planes
+
+trace variable inputPlaneNames w xs_change_input_planes
 
 # return one of several unique colors, based on an integer index or two. 
 # OK, I know it's not unique, but it's close...
@@ -544,11 +619,11 @@ proc xs_color {index index2} {
 }
 
 
-#vector s1_Path s1_Topography s1_Z_Piezo 
-#s1_Path set { 0 1 2 3 }
-#s1_Topography set { 3 4 2 1 }
-#s1_Z_Piezo set { 9 4.5 5 3 }
-#create_new_cross_section s1 1
+#vector xs0_Path xs0_Topography xs0_Z_Piezo 
+#xs0_Path set { 0 1 2 3 }
+#xs0_Topography set { 3 4 2 1 }
+#xs0_Z_Piezo set { 9 4.5 5 3 }
+#create_new_cross_section 0
 
 #vector s2_Path s2_Topography s2_Z_Piezo 
 #s2_Path set { 0 1.2 2.8 4.5 }

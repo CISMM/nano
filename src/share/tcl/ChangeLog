@@ -1,3 +1,14 @@
+2002-01-11  Aron Helser  <helser@cs.unc.edu>
+
+	* cross_section.tcl: Clear cross section graphs and controls when
+	the input plane list gets deleted. Bug - can't handle new planes
+	yet. 
+	* image.tcl: put some controls in !$thirdtech_ui conditionals, so
+	they won't show up in commercial interface
+	* mainwin.tcl: same
+	* modify.tcl: same
+	* view.tcl: same
+
 2002-01-04  Aron Helser  <helser@cs.unc.edu>
 
 	* cross_section.tcl: Pass 2 - second cross section, ability to

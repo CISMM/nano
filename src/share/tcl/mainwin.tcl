@@ -61,7 +61,7 @@ catch { option add *Font {helvetica -12 } userDefault}
 #   There are several parts of the interface we don't expose in the
 #   commercial version. This flag turns them off.
 #
-set thirdtech_ui 0
+if {![info exists thirdtech_ui] } { set thirdtech_ui 0 }
 
 
 # We will also watch for "viewer_only" to be set, indicating this
@@ -472,7 +472,7 @@ proc scan_button_label { name el op } {
 }
 trace variable spm_scanning w scan_button_label
 
-checkbutton $w2.toolbar.autoscan -text "Rescan when\nStop Touch" \
+checkbutton $w2.toolbar.autoscan -text "Auto\nRescan" \
 	-variable autoscan -padx 0 -pady 0
 set autoscan 1
 
@@ -796,7 +796,7 @@ proc handle_texture_mode_change {mode name element op} {
 #  trace vdelete reg_display_texture w \
 #                "handle_texture_mode_change REGISTRATION"
 
-  puts "setting the texture mode"
+  #puts "setting the texture mode"
   if {$mode != "ALPHA"} {
     set alpha_comes_from "none"
   }

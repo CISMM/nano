@@ -55,8 +55,10 @@ class nmui_CrossSection {
     
     Tclvar_int d_data_update; ///< trigger data update. 
 
-    double data[2][nmb_ListOfStrings::NUM_ENTRIES][300];
-    double path[2][300];
+    int d_length; ///< number of data points per xs. 
+
+    double *data[2][nmb_ListOfStrings::NUM_ENTRIES];
+    double *path[2];
     // data vector names
     int d_numDataVectors;
     char d_dataVectorNames[MAX_DATA_VECTORS][128];

@@ -50,7 +50,7 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
 {
   ///////
   // set calculatedPlaneName
-#ifndef thirdtech
+#ifndef THIRDTECH
   if( strstr( planeName, " from " ) == NULL ) // not a plane from remote
   {
     // Add the host name to the plane name so we can distinguish
