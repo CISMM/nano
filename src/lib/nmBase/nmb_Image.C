@@ -1,7 +1,8 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
 #include "nmb_ImageTransform.h"
-
+#include "AbstractImage.h"
+#include "ImageMaker.h"
 
 #include <limits.h>
 #ifdef _WIN32
@@ -870,12 +871,13 @@ int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * )
     return 0;
 }
 
-const int nmb_ImageArray::num_export_formats = 0;
+const int nmb_ImageArray::num_export_formats = 1;
 
-const char *nmb_ImageArray::export_formats_list[] = {"none"};
+const char *nmb_ImageArray::export_formats_list[] = {"TIFF"};
 
 const nmb_ImageArray::FileExportingFunction
-        nmb_ImageArray::file_exporting_function[] = {NULL};
+        nmb_ImageArray::file_exporting_function[] = {
+               nmb_ImageArray::exportToTIFF};
 
 nmb_ImageArray::nmb_ImageArray(const char *name,
                                           const char * /*units*/,
@@ -1359,10 +1361,20 @@ BCString *nmb_ImageArray::unitsValue() {return &units;}
 BCString *nmb_ImageArray::unitsX() {return &units_x;}
 BCString *nmb_ImageArray::unitsY() {return &units_y;}
 
-int nmb_ImageArray::numExportFormats() {return 0;}
+int nmb_ImageArray::numExportFormats() 
+{
+  return num_export_formats;
+}
+
 nmb_ListOfStrings *nmb_ImageArray::exportFormatNames() 
-{return NULL;}
-const char *nmb_ImageArray::exportFormatType(int) {return NULL;}
+{
+  return &formatNames;
+}
+
+const char *nmb_ImageArray::exportFormatType(int type) 
+{
+  return (const char *)(export_formats_list[type]);
+}
 
 int nmb_ImageArray::exportToFile(FILE *f, const char *export_type, 
                                 const char * filename){
@@ -1387,6 +1399,39 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
         }
         return 0;
     }
+}
+
+// static
+int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im)
+{
+  if (im->pixelType() != NMB_UINT8) {
+    printf("error, can't write images that aren't 8 bits per pixel\n");
+    return 0;
+  }
+  int w = im->width();
+  int h = im->height();
+  // use color image because greyscale export is broken
+  unsigned char *pixels = new unsigned char [w*h*3];
+
+  int i, j;
+  for (i = 0; i < w; i++){
+    for (j = 0; j < h; j++) {
+       float val = im->getValue(i,j);
+       unsigned char byteval = (unsigned char)val;
+       pixels[(i+j*w)*3] = byteval;
+       pixels[(i+j*w)*3+1] = byteval;
+       pixels[(i+j*w)*3+2] = byteval;
+    }
+  }
+
+  AbstractImage *ai = ImageMaker(TIFFImageType, h, w, 3, pixels, true);
+  delete [] pixels;
+  if (ai) {
+    if (!ai->Write(file))
+       fprintf(stderr, "Failed to write image to file\n");
+    delete ai;
+  }
+  return 0;
 }
 
 nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist) :

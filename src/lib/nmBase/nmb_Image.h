@@ -374,6 +374,9 @@ class nmb_ImageArray : public nmb_Image {
 
     typedef int (*FileExportingFunction) (FILE *file, nmb_ImageArray *im, const char * filename);
   protected:
+    static int exportToTIFF(FILE *file, nmb_ImageArray *im);
+
+
     int arrIndex(int i, int j) const
       { return (i+d_borderXMin+(j+d_borderYMin)*
                                (num_x+d_borderXMin+d_borderXMax));}

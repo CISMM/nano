@@ -1,3 +1,9 @@
+2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.hC (nmb_ImageArray::exportToTIFF): new function plus
+	changes to num_export_formats and export_formats_list to let you
+	save SEM data as a TIFF file
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* BCGrid.hC (writeTIFFile): new
