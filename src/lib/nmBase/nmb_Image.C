@@ -1402,7 +1402,7 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
 }
 
 // static
-int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im)
+int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char *)
 {
   if (im->pixelType() != NMB_UINT8) {
     printf("error, can't write images that aren't 8 bits per pixel\n");

@@ -3,6 +3,9 @@
 	* nmb_Image.hC (nmb_ImageArray::exportToTIFF): new function plus
 	changes to num_export_formats and export_formats_list to let you
 	save SEM data as a TIFF file
+	- added const char * argument to exportToTIFF to match Aron's changes
+	two days ago but my commit to ImgFormat library makes this unnecessary
+	(I think)
 
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
