@@ -210,7 +210,7 @@ class TclNet_int : public Tclvar_int, public Tcl_Netvar {
 
     virtual void SetFromTcl (vrpn_int32);
 
-    static int propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
+    static int VRPN_CALLBACK propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
 
@@ -258,7 +258,7 @@ class TclNet_float : public Tclvar_float, public Tcl_Netvar {
 
     virtual void SetFromTcl (vrpn_float64);
 
-    static int propagateReceivedUpdate (void * userdata, vrpn_float64 newValue,
+    static int VRPN_CALLBACK propagateReceivedUpdate (void * userdata, vrpn_float64 newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
 
@@ -315,7 +315,7 @@ class TclNet_string : public Tclvar_string, public Tcl_Netvar {
 
     virtual void SetFromTcl (const char *);
 
-    static int propagateReceivedUpdate (void * userdata, const char * newValue,
+    static int VRPN_CALLBACK propagateReceivedUpdate (void * userdata, const char * newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.
 

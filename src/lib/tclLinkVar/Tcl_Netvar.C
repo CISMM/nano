@@ -105,7 +105,7 @@ static void activateTimer (void) {
   }
 }
 
-static int blockTimer (void *) {
+static int VRPN_CALLBACK blockTimer (void *) {
   vrpn_int32 sn;
 
   if (!tclnetTimer) {

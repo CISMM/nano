@@ -1,3 +1,8 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* Tcl_Netvar.C : Uses new VRPN_CALLBACK definition.
+	* Tcl_Netvar.h : Uses new VRPN_CALLBACK definition.
+
 2002-05-13  Aron Helser  <helser@cs.unc.edu>
 
 	* Tcl_Interpreter.C (getInterpreter): Prevent crash if interpreter
