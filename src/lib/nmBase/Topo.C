@@ -1412,11 +1412,12 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         for (col = 0; col < iRows; col++) {
             for (row = 0; row < iCols; row++) {
                 int y = (iRows - 1) - col;
+                // Add 0.5 so values get rounded correctly. 
                 griddata[(col)*iRows+ row] =
                   (vrpn_uint16)((
                          (I->getValue(row,y)/Zunits2nm)
                                  -Zoffset
-                                 )/Zscale
+                                 )/Zscale + 0.5
                                 );
             }
         }
@@ -1544,11 +1545,12 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *plane){
         for (col = 0; col < iRows; col++) {
             for (row = 0; row < iCols; row++) {
 	        int y = (iRows - 1) - col;
+                // Add 0.5 so values get rounded correctly. 
                 griddata[(col)*iRows+ row] = 
 		  (vrpn_uint16)((
-			 ((float)plane->value(row,y)/(float)Zunits2nm)
-				 -(float)Zoffset
-				 )/(float)Zscale
+			 (plane->value(row,y)/Zunits2nm)
+				 -Zoffset
+				 )/Zscale + 0.5
 				);
             }
         }
@@ -1610,38 +1612,39 @@ int TopoFile::gridToTopoData(BCGrid* G){
 	
         // Scale and offset must be consistent for whole grid, 
         // so read from Topo header. 
-                Zscale = fDACtoWorld;
-                Zoffset = fDACtoWorldZero;
+        Zscale = fDACtoWorld;
+        Zoffset = fDACtoWorldZero;
 
 
-		griddata=new vrpn_uint16[iLayers*iCols*iRows];
-		if(griddata == NULL){ fprintf(stderr,"Unable to allocate griddata\n"); return -1;}
-                iGridDataLength = iLayers*iCols*iRows;
-
-		// Data is stored in the Topo file in column-major order
-                // starting from the lower left corner.
-                // the factor layer*_num_x*_num_y gets you to the start
-                // of a layer.
-                // the factor col*_num_y + row gets you to the right
-                // element in that layer.
-                // The Y elements are stored backwards with respect to
-                // the Plane structure, so Y needs to be inverted.
+        griddata=new vrpn_uint16[iLayers*iCols*iRows];
+        if(griddata == NULL){ fprintf(stderr,"Unable to allocate griddata\n"); return -1;}
+        iGridDataLength = iLayers*iCols*iRows;
+        
+        // Data is stored in the Topo file in column-major order
+        // starting from the lower left corner.
+        // the factor layer*_num_x*_num_y gets you to the start
+        // of a layer.
+        // the factor col*_num_y + row gets you to the right
+        // element in that layer.
+        // The Y elements are stored backwards with respect to
+        // the Plane structure, so Y needs to be inverted.
 	
-		for(layer =0; layer < iLayers; layer++){
-       	         for (col = 0; col < iRows; col++) {
-                  for (row = 0; row < iCols; row++) {
-                        int y = (iRows - 1) - col;
-                        griddata[(layer*iCols+ col)*iRows+ row] = \
-				(vrpn_uint16)(
-					(
-						((float)plane->value(row,y)/(float)Zunits2nm)\
-						-(float)Zoffset\
-					)/(float)Zscale
-				);
-                  }
-                 }
-		 plane=plane->next();
-		}
+        for(layer =0; layer < iLayers; layer++){
+            for (col = 0; col < iRows; col++) {
+                for (row = 0; row < iCols; row++) {
+                    int y = (iRows - 1) - col;
+                    // Add 0.5 so values get rounded correctly. 
+                    griddata[(layer*iCols+ col)*iRows+ row] = \
+                        (vrpn_uint16)(
+                            (
+                                (plane->value(row,y)/Zunits2nm)\
+                                -Zoffset\
+                                )/Zscale + 0.5
+                            );
+                }
+            }
+            plane=plane->next();
+        }
 	valid_grid = 1;
 	return(0);
 }

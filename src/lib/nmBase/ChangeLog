@@ -1,5 +1,11 @@
 2002-02-13  Aron Helser  <helser@cs.unc.edu>
 
+	* Topo.C (imageToTopoData): Fixed rounding error. Written and read
+	data is now exactly the same. 
+	(gridToTopoData): same
+	(topoDataToGrid): same 
+
+2002-02-13  Aron Helser  <helser@cs.unc.edu>
 
 	* BCGrid.C (loadFile): Changed comparison so files with same
 	region size, but not necessarily position, will be loaded in same
