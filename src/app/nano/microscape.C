@@ -509,12 +509,12 @@ static const int colormap_width = 24, colormap_height = 128;
 
 /// Filename to get data from. Setting this variable in tcl triggers
 /// the open file process.
-Tclvar_string openStaticFilename("open_static_filename", "",
+TclNet_string openStaticFilename("open_static_filename", "",
                                  handle_openStaticFilename_change, NULL);
 
 /// Stream Filename. Setting this variable in tcl triggers
 /// the open stream process.
-Tclvar_string openStreamFilename("open_stream_filename", "");
+TclNet_string openStreamFilename("open_stream_filename", "");
 
 /// SPM Device name. Setting this variable triggers open device process
 Tclvar_string openSPMDeviceName("open_spm_device_name", "");
@@ -1343,6 +1343,8 @@ void shutdown_connections (void) {
   rewind_stream.bindConnection(NULL);
   set_stream_time.bindConnection(NULL);
   set_stream_time_now.bindConnection(NULL);
+  openStaticFilename.bindConnection(NULL);
+  openStreamFilename.bindConnection(NULL);
 
   if (microscope) microscope->state.stm_z_scale.bindConnection(NULL);
   if (dataset) ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
@@ -1994,6 +1996,7 @@ static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
 /// collaborator) so change the position onscreen.
 static void handle_collab_measure_change (nmb_Dataset * data,
                                           int whichLine) {
+    fprintf(stderr,"HANDLE_COLLAB_MEASURE_CHANGE\n");
     // Ignore some changes caused by tcl variables. 
     if (ignoreCollabMeasureChange) return;
 
@@ -2843,18 +2846,21 @@ static int forget_modification_data ()
  back to "". If there are any errors, report them and leave name alone.  */
 static	void	handle_openStaticFilename_change (const char *, void *)
 {
+    fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
+    fprintf(stderr,"Filename length: %d\n",strlen(openStaticFilename));
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
-    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	display_error_dialog("Error: Cannot change static file in collaborative session");
-	return;
-    }
+    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	//display_error_dialog("Error: Cannot change static file in collaborative session");
+	//return;
+    //}
 
 
     if (strlen(openStaticFilename) <= 0) return;
 
     const char	*files[1];
     files[0] = (const char *)openStaticFilename;
+    fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
     int ret = dataset->loadFiles(files, 1, microscope->d_topoFile);
     if (ret == -1) {
 	display_error_dialog("Couldn't open %s as a data file.\n"
@@ -2893,12 +2899,14 @@ static	void	handle_openStaticFilename_change (const char *, void *)
 */
 static void handle_openStreamFilename_change (const char *, void * userdata)
 {
+    fprintf(stderr,"HANDLE_OPENSTREAMFILE CHANGE\n");
+    fprintf(stderr,"Filename length: %d\n",strlen(openStreamFilename));
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
-    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	display_error_dialog("Error: Cannot change stream file in collaborative session");
-	return;
-    }
+    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	//display_error_dialog("Error: Cannot change stream file in collaborative session");
+	//return;
+    //}
 
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
 
@@ -3003,10 +3011,10 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
-    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	display_error_dialog("Error: Cannot change SPM Device in collaborative session");
-	return;
-    }
+    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	//display_error_dialog("Error: Cannot change SPM Device in collaborative session");
+	//return;
+    //}
 
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
@@ -3106,6 +3114,11 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
  */
 static void handle_closeMicroscope_change (vrpn_int32, void * )
 {
+  if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+     display_error_dialog("Error: Cannot close in collaborative session");
+     return;
+  }
+  fprintf(stderr,"HANDLE_CLOSE_MICROSCOPE\n");
     openDefaultMicroscope();
 }
 
@@ -4841,6 +4854,9 @@ void teardownSynchronization(CollaborationManager *cm,
     streamfileControls->remove(&replay_rate);
     streamfileControls->remove(&rewind_stream);
     streamfileControls->remove(&set_stream_time);
+    //openStreamFilename is now TclNet_string
+    streamfileControls->remove(&openStaticFilename);
+    streamfileControls->remove(&openStreamFilename);
   }
   nmui_Component * viewControls = ui_Root->find("View");
   if (viewControls) {
@@ -4882,6 +4898,11 @@ void setupSynchronization (CollaborationManager * cm,
   // need their mainloops called, just their connection's
   // (presumably that's collaboratingPeerServerConnection)
 
+  // Christmas sync
+
+  nmui_Component * rootUIControl;
+  rootUIControl = new nmui_Component ("ROOT");
+
   // Streamfile control
 
   nmui_Component * streamfileControls;
@@ -4896,10 +4917,15 @@ void setupSynchronization (CollaborationManager * cm,
   streamfileControls->add(&replay_rate);
   streamfileControls->add(&rewind_stream);
   streamfileControls->add(&set_stream_time);
+  // open{Static,Stream}Filename are now TclNet_string
+  streamfileControls->add(&openStaticFilename);
+  streamfileControls->add(&openStreamFilename);
   // Don't want to synchronize this;  TCL sets it when set_stream_time
   // sync occurs.
   //streamfileControls->add(&set_stream_time_now);
 
+  //adding streamfileControls to rootUIControl
+  rootUIControl->add(streamfileControls);
 
   //set_stream_time.d_permitIdempotentChanges = VRPN_TRUE;
 
@@ -5043,18 +5069,23 @@ void setupSynchronization (CollaborationManager * cm,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
 
+  //adding viewControls to rootUIControl
+  rootUIControl->add(viewControls);
+
   //nmui_Component * derivedPlaneControls;
   //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
 
   // Christmas sync
 
-  nmui_Component * rootUIControl;
-  rootUIControl = new nmui_Component ("ROOT");
+  //nmui_Component * rootUIControl;
+  //rootUIControl = new nmui_Component ("ROOT");
 
   //rootUIControl->add(derivedPlaneControls);
-  rootUIControl->add(viewControls);
-  rootUIControl->add(streamfileControls);
+  //rootUIControl->add(streamfileControls);
+  //rootUIControl->add(viewControls);
+
   rootUIControl->bindConnection(serverConnection);
+
 
   if (logConnection) {
     rootUIControl->bindLogConnection(logConnection);
