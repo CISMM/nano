@@ -192,6 +192,20 @@ char    *MODE_SOUNDS[] = {      (char *)"fly_mode",
 				(char *)"pick_mode",
 				(char *)"pick_mode"};
 
+// Enum for valid values is in nmg_Globals.h
+/// Select mode state
+static RegMode prep_select_drag_mode = REG_NULL;
+static RegMode select_drag_mode = REG_NULL;
+
+/// Region mode state
+static RegMode prep_region_drag_mode = REG_NULL;
+static RegMode region_drag_mode = REG_NULL;
+static float region_center_x = 0;
+static float region_center_y = 0;
+static float region_width = 0;
+static float region_height = 0;
+static float region_angle = 0;
+static float region_base_tracker_angle = 0;
 
 /** parameter locking the tip in sharp tip mode */
 static void handle_xyLock (vrpn_int32, void *);
@@ -282,6 +296,7 @@ int doLine(int, int);
 int doFeelFromGrid(int, int);
 int doFeelLive(int, int);
 int doSelect(int, int);
+int doRegion(int, int);
 int doServoConstRes(int, int);
 int doWorldGrab(int, int);
 int doMeasureGridGrab(int,  int);
@@ -935,7 +950,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 
 	}
 	//Clear the var so we know we made a change. 
-	microscope->state.select_region_rad = 0.0;
+	//microscope->state.select_region_rad = 0.0;
 	
 	// All done - turn off commit button
 	tcl_commit_pressed = 0;
@@ -957,6 +972,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
  */
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
+    BCPlane * plane;
     //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
@@ -1011,15 +1027,18 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	}
 	break;
     case USER_SERVO_MODE:
-	//Clear the var so we know we shouldn't use this region. 
-	microscope->state.select_region_rad = 0.0;
-	
-	// clear the icon for the region as well, by making it small.
-	// Then if the user drags again, it will re-appear.
-	graphics->positionRubberCorner(microscope->state.xMin,
-			   microscope->state.yMin,
-			   microscope->state.xMin,
-			   microscope->state.yMin);
+	//Set the region back to the old scan. 
+        plane = dataset->inputGrid->getPlaneByName
+            (dataset->heightPlaneName->string());
+        if (plane) {
+            microscope->state.select_region_rad = 0.5 * 
+                (plane->maxX() - plane->minX());
+            microscope->state.select_center_x = plane->minX() + 
+                microscope->state.select_region_rad;
+            microscope->state.select_center_y= plane->minY() + 
+                microscope->state.select_region_rad;
+        }
+	// Icon for the region will be displayed in doSelect. 
 	if (microscope->state.modify.tool == OPTIMIZE_NOW) {
 	  microscope->state.modify.tool = FREEHAND;
 	}
@@ -1167,6 +1186,9 @@ void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
 		break;
 	case USER_CENTER_TEXTURE_MODE:  // mouse control only!
 		break;
+        case USER_REGION_MODE:  // change size of a selected region
+            ret = doRegion(user,event);
+            break;
 	default:
 	    fprintf(stderr,"dispatch_event(): Event %d not implemented\n", mode);
 	    break;
@@ -2915,106 +2937,340 @@ int doFeelLive (int whichUser, int userEvent)  {
 int 
 doSelect(int whichUser, int userEvent)
 {
-	v_xform_type	worldFromHand;
-	float	        centerx,centery;
-	float		diffx,diffy, diffmax;
-	float		x_min,y_min;
-	float		x_max,y_max;
+    v_xform_type	worldFromHand;
+    float	        handx,handy;
+    float	        centerx,centery;
+    float		diffx,diffy, diffmax, select_rad;
 
-	/* if we are not running live, you should not be able
+    /* if we are not running live, you should not be able
 	   to do this, so put the user into grab mode */
-	if (dataset->inputGrid->readMode() != READ_DEVICE)
-	  {
-	    user_0_mode = USER_GRAB_MODE;
-	    printf("Select mode available only on live data!!!\n");
-	    return 0;
-	  }
+    if (dataset->inputGrid->readMode() != READ_DEVICE)
+    {
+        user_0_mode = USER_GRAB_MODE;
+        printf("Select mode available only on live data!!!\n");
+        return 0;
+    }
 
-  if (!microscope->haveMutex()) {
-    user_0_mode = USER_GRAB_MODE;
-    printf("Can't touch when we don't have access to the microscope.\n");
-    return 0;
-  }
+    if (!microscope->haveMutex()) {
+        user_0_mode = USER_GRAB_MODE;
+        printf("Can't select when we don't have access to the microscope.\n");
+        return 0;
+    }
 
-	BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-	if (plane == NULL)
-	{
-	    fprintf(stderr, "Error in doSelect: could not get plane!\n");
-	    return -1;
-	}  
+    BCPlane* plane = dataset->inputGrid->getPlaneByName
+        (dataset->heightPlaneName->string());
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doSelect: could not get plane!\n");
+        return -1;
+    }  
 
-	/* Move the tip to the hand x,y location */
-	/* Set its height based on data at this point */
-	v_get_world_from_hand(whichUser, &worldFromHand);
+    /* Move the tip to the hand x,y location */
+    /* Set its height based on data at this point */
+    v_get_world_from_hand(whichUser, &worldFromHand);
 
-        /* Move the aiming line to the user's hand location */
-        //nmui_Util::moveAimLine(worldFromHand.xlate);
-        decoration->aimLine.moveTo(worldFromHand.xlate[0],
-                                worldFromHand.xlate[1], plane);
+    // Move the aiming line to the user's hand location
+    // We don't want to clip it to the heightplane, so pass NULL
+    decoration->aimLine.moveTo(worldFromHand.xlate[0],
+                               worldFromHand.xlate[1], NULL);
+    handx = worldFromHand.xlate[0];
+    handy = worldFromHand.xlate[1];
+    centerx = microscope->state.select_center_x;
+    centery = microscope->state.select_center_y;
+    select_rad = microscope->state.select_region_rad;
+    // What are we going to change, center of region
+    // or size of region?
+    
+    // Is hand near center (20% of proposed scan region) ?
+    // This is exactly the same size as the handle drawn in 
+    // graphics code, globjects.c:make_rubber_corner
+    if ((fabs(handx-centerx) < 0.2*(select_rad))&&
+        (fabs(handy-centery) < 0.2*(select_rad))){
+        prep_select_drag_mode = REG_TRANSLATE;
+    } else if (((fabs(handx-centerx) < 1.03*select_rad) &&
+                (fabs(handy-centery) > 0.9*select_rad) &&
+                (fabs(handy-centery) < 1.1*select_rad)) ||
+               ((fabs(handy-centery) < 1.03*select_rad) &&
+                (fabs(handx-centerx) > 0.9*select_rad) &&
+                (fabs(handx-centerx) < 1.1*select_rad))){
+        // Are we near an edge?
+        prep_select_drag_mode = REG_SIZE;
+        
+    } else {
+        // Not near any features. 
+        prep_select_drag_mode = REG_NULL;
+   }
 
-	centerx = microscope->state.select_center_x;
-	centery = microscope->state.select_center_y;
+    switch ( userEvent ) {
 
-	// Figure out the differential in x and y from the center
-	diffx = fabs(worldFromHand.xlate[0] - centerx);
-	diffy = fabs(worldFromHand.xlate[1] - centery);
+    case PRESS_EVENT:	
+        if (prep_select_drag_mode == REG_NULL) {
+            // Weren't near any features, drag a new select area
+            select_drag_mode = REG_SIZE;
+            microscope->state.select_center_x = handx;
+            microscope->state.select_center_y = handy;
+            microscope->state.select_region_rad = 0;
+        } else {       
+            select_drag_mode = prep_select_drag_mode;
+        }
+        /*printf("doSelect, trans %d, range %f, %f -> %f %f\n"
+               "Hand %f %f, Center %f %f, rad %f\n",
+               select_drag_mode, plane->minX(), plane->minY(), 
+               plane->maxX(), plane->maxY(), 
+               handx,handy,  centerx, centery,
+               microscope->state.select_region_rad);*/
+        break;
 
-	// Find the larger of the two and use it for both, so it is square
-	diffmax = max(diffx, diffy);
+    case RELEASE_EVENT:	
+        // Do same stuff for hold or release
 
-	// Clip the differential to make sure we stay within the boundaries
-	// of the scan range.
-	diffmax = min(diffmax, centerx - microscope->state.xMin);  // Don't go past left
-	diffmax = min(diffmax, microscope->state.xMax - centerx);  // Don't go past right
-	diffmax = min(diffmax, centery - microscope->state.yMin);  // Don't go past bottom
-	diffmax = min(diffmax, microscope->state.yMax - centery);  // Don't go past top
+    case HOLD_EVENT:
+        if (select_drag_mode == REG_TRANSLATE) {
+            // Move the center of the select region
+            centerx = handx ;
+            centery = handy ;
+            // Keep region inside scanner range
+            if ((centerx - select_rad) < 
+                microscope->state.xMin) {
+                centerx = microscope->state.xMin + 
+                    select_rad;
+            }
+            if ((centerx + select_rad) > 
+                microscope->state.xMax) {
+                centerx = microscope->state.xMax - 
+                    select_rad;
+            }
+            if ((centery - select_rad) < 
+                microscope->state.yMin) {
+                centery = microscope->state.yMin + 
+                    select_rad;
+            }
+            if ((centery + select_rad) > 
+                microscope->state.yMax) {
+                centery = microscope->state.yMax - 
+                    select_rad;
+            }
+            microscope->state.select_center_x = centerx ;
+            microscope->state.select_center_y = centery ;
+        } else {
+            // Move the edge of the select region
+            // Figure out the differential in x and y from the center
+            diffx = fabs(handx - centerx);
+            diffy = fabs(handy - centery);
 
-	switch ( userEvent ) {
+            // Find the larger of the two and use it for both, so it is square
+            diffmax = max(diffx, diffy);
 
-	    case PRESS_EVENT:	/* Store away hand location */
-		centerx = worldFromHand.xlate[0];
-		centery = worldFromHand.xlate[1];
+            // Clip the region to make sure we stay within the boundaries
+            // of the scan range.
+            diffmax = min(diffmax, centerx - microscope->state.xMin);  // left
+            diffmax = min(diffmax, microscope->state.xMax - centerx);  // right
+            diffmax = min(diffmax, centery - microscope->state.yMin);  // bottom
+            diffmax = min(diffmax, microscope->state.yMax - centery);  // top
+            microscope->state.select_region_rad = diffmax;
+        }
+        if (userEvent == RELEASE_EVENT) {
+            // Helps display highlight correctly, below
+            select_drag_mode = REG_NULL;
+        }
+        break;
 
-		// Make sure we are within the maximum range
-		centerx = max(centerx, microscope->state.xMin);
-		centerx = min(centerx, microscope->state.xMax);
-		centery = max(centery, microscope->state.yMin);
-		centery = min(centery, microscope->state.yMax);
+    default:
+        break;
+    }
 
-		microscope->state.select_center_x = centerx ;
-		microscope->state.select_center_y = centery ;
+    // Display the scan region extent as the user plans to change it. 
+    decoration->selectedRegionMaxX = microscope->state.select_center_x 
+        + microscope->state.select_region_rad;
+    decoration->selectedRegionMinX = microscope->state.select_center_x 
+        - microscope->state.select_region_rad;
+    decoration->selectedRegionMaxY = microscope->state.select_center_y 
+        + microscope->state.select_region_rad;
+    decoration->selectedRegionMinY = microscope->state.select_center_y 
+        - microscope->state.select_region_rad;
+    // Draw the new bounding box and center handle for the region. 
+    graphics->positionRubberCorner(
+        decoration->selectedRegionMinX, 
+        decoration->selectedRegionMinY, 
+        decoration->selectedRegionMaxX, 
+        decoration->selectedRegionMaxY, 
+        (select_drag_mode==REG_NULL)?prep_select_drag_mode:select_drag_mode); 
 
-		break;
+    return(0);
+}
 
-	    case RELEASE_EVENT:	/* Find hand location, request area */
-		x_min = centerx - diffmax;
-		x_max = centerx + diffmax;
-		y_min = centery - diffmax;
-		y_max = centery + diffmax;
+static float xform_width(float x, float y, float angle) {
+    return fabs(cos(angle)*(x) + sin(angle)*(y));
+}
+static float xform_height(float x, float y, float angle) {
+    return fabs(cos(angle)*(y) - sin(angle)*(x));
+}
+/**
+ *
+   Region mode
+   doRegion - Perform rubber-banding upon press, move, release
+ *
+ */
+int 
+doRegion(int whichUser, int userEvent)
+{
+    v_xform_type	worldFromHand;
+    q_matrix_type	hand_mat;
+    q_vec_type          angles;
+    float	        handx,handy, hand_angle;
 
-		/* save the region so when the Commit button is pressed, the
-		 * new region can be sent to the microscope */
-		microscope->state.select_center_x = centerx ;
-		microscope->state.select_center_y = centery ;
-		microscope->state.select_region_rad = diffmax ;
+    BCPlane* plane = dataset->inputGrid->getPlaneByName
+        (dataset->heightPlaneName->string());
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doregion: could not get plane!\n");
+        return -1;
+    }  
 
-		break;
+    /* Move the tip to the hand x,y location */
+    /* Set its height based on data at this point */
+    v_get_world_from_hand(whichUser, &worldFromHand);
 
-	    case HOLD_EVENT:
-		x_min = centerx - diffmax;
-		x_max = centerx + diffmax;
-		y_min = centery - diffmax;
-		y_max = centery + diffmax;
-		graphics->positionRubberCorner(x_min,y_min,x_max,y_max);
+    // Move the aiming line to the user's hand location
+    // We don't want to clip it to the heightplane, so pass NULL
+    decoration->aimLine.moveTo(worldFromHand.xlate[0],
+                               worldFromHand.xlate[1], NULL);
+    
+    q_to_col_matrix(hand_mat, worldFromHand.rotate);
+    q_col_matrix_to_euler( angles, hand_mat );
+    hand_angle = -angles[YAW];
+    handx = worldFromHand.xlate[0];
+    handy = worldFromHand.xlate[1];
 
-		break;
+    // What are we going to change, center of region
+    // or size of region?
+    
+    // Is hand near center (20% of proposed  region) ?
+    // This is exactly the same size as the handle drawn in 
+    // graphics code, globjects.c:make_region_box
+    if ((xform_width(handx-region_center_x, handy-region_center_y, 
+                     region_angle) < 0.2*(region_width))&&
+        (xform_height(handx-region_center_x, handy-region_center_y, 
+                      region_angle) < 0.2*(region_height))){
+        prep_region_drag_mode = REG_TRANSLATE;
+    } else if ((xform_height(handx - region_center_x, 
+                             handy - region_center_y, 
+                             region_angle) < 1.03*region_height) && 
+               ((xform_width(handx-region_center_x,
+                             handy-region_center_y, 
+                             region_angle) > 0.9*(region_width))&&
+                (xform_width(handx-region_center_x,
+                             handy-region_center_y, 
+                             region_angle) < 1.1*(region_width)))
+               ) {
+        // near width edge, so resize those edges. 
+        prep_region_drag_mode = REG_SIZE_WIDTH;
 
-	    default:
-		break;
-	}
+    } else if ((xform_width(handx - region_center_x, 
+                            handy - region_center_y, 
+                            region_angle) < 1.03*region_width) &&
+               ((xform_height(handx-region_center_x,
+                              handy-region_center_y, 
+                              region_angle) > 0.9*(region_height))&&
+                (xform_height(handx-region_center_x,
+                              handy-region_center_y, 
+                              region_angle) < 1.1*(region_height)))
+               ) {
+        // near height edge, so resize those edges. 
+        prep_region_drag_mode = REG_SIZE_HEIGHT;
+        
+    } else {
+        prep_region_drag_mode = REG_NULL;
+    }
+    
+    // Carefull! Nested switch statements!
+    switch ( userEvent ) {
 
-	return(0);
+    case PRESS_EVENT:	
+        region_drag_mode = prep_region_drag_mode;
+        switch(region_drag_mode) {
+        case REG_TRANSLATE:
+            region_center_x = handx;
+            region_center_y = handy;
+            region_base_tracker_angle = region_angle + hand_angle;
+            break;
+        case REG_NULL:
+            // If we're not near a feature when we click, switch
+            // to creating and sizing a new region. 
+            region_drag_mode = prep_region_drag_mode = REG_SIZE;
+            // reset region size for dragging. 
+            region_center_x = handx;
+            region_center_y = handy;
+            region_width = 0;
+            region_height = 0;
+            region_base_tracker_angle = hand_angle;
+            region_angle = 0;
+             break;
+        default:
+            break;
+        }
+        /*printf("doregion, trans %d, range %f, %f -> %f %f\n"
+               "Hand %f %f, Center %f %f, w h %f %f\n",
+               region_drag_mode, plane->minX(), plane->minY(), 
+               plane->maxX(), plane->maxY(), 
+               handx,handy,  region_center_x, region_center_y,
+               region_width, region_height);*/
+        break;
+       
+    case RELEASE_EVENT:	
+        // Do same stuff for hold or release
+
+    case HOLD_EVENT:
+        switch(region_drag_mode) {
+        case REG_TRANSLATE:
+            // Move the center of the region region
+            region_center_x = handx ;
+            region_center_y = handy ;
+            // Change the angle, too. 
+            region_angle = region_base_tracker_angle - hand_angle;
+            break;
+        case REG_SIZE_WIDTH:
+            region_width = xform_width(handx - region_center_x,
+                                       handy - region_center_y,
+                                       region_angle);
+            break;
+        case REG_SIZE_HEIGHT:
+            region_height = xform_height(handx - region_center_x,
+                                         handy - region_center_y,
+                                         region_angle);
+            break;
+        case REG_SIZE:
+            // Resize the region
+            //region_angle = region_base_tracker_angle - hand_angle;
+            region_width = xform_width(handx - region_center_x,
+                                       handy - region_center_y,
+                                       region_angle);
+            region_height = xform_height(handx - region_center_x,
+                                         handy - region_center_y,
+                                         region_angle);
+            // passed as param below, so we display highlight. 
+            prep_region_drag_mode = REG_SIZE;
+            break;
+        default:
+            break;
+        }
+        if (userEvent == RELEASE_EVENT) {
+            // Helps display highlight correctly, below
+            region_drag_mode = REG_NULL;
+        }
+        break;
+
+    default:
+        break;
+    }
+//printf("a %f w %f h %f\n", Q_RAD_TO_DEG(region_angle), region_width, region_height);
+    // Display the scan region extent as the user plans to change it. 
+    // Draw the new bounding box and center handle for the region. 
+    graphics->positionRegionBox(
+         region_center_x, region_center_y, 
+         region_width, region_height, Q_RAD_TO_DEG(region_angle), 
+         (region_drag_mode==REG_NULL)?prep_region_drag_mode:region_drag_mode);
+    return(0);
 }
 
 

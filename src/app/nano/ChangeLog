@@ -1,3 +1,19 @@
+2001-05-11  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (doSelect): Allow grab and translate of center of
+	region, dragging of edges.
+	(doRegion): new user mode, specify rectangular, rotatable
+	region. Useful for nmg_Visualization, region of interest. Doesn't
+	do anything yet. 
+	(dispatch_event): Incorporate new mode, USER_REGION_MODE. 
+	(handle_commit_change): Select icon changes
+	(handle_commit_cancel): Select icon reverts to whole scan region.
+	
+	* minit.c (handle_magellan_button_change): Add USER_REGION_MODE to
+	button 6.
+	(handle_magellan_puck_change): Allow surface movement in SELECT,
+	REGION modes. 
+
 2001-05-07  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscape.c: Put code back in that somehow got obliterated

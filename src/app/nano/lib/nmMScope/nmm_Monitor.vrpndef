@@ -1,0 +1,20 @@
+/* 
+ Message cut out of general SPM reports, 
+ for special handling.
+*/
+
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_Monitor
+
+MESSAGE_PREFIX "nmm Microscope "
+
+
+/* Handled by queue monitor object */
+VRPN_MESSAGE PointResultData {
+  float32 x
+  float32 y
+  int32 sec
+  int32 usec
+  int32 reports
+  float32 data [reports]
+}

@@ -32,7 +32,7 @@
 #include "chartjunk.h"
 
 #include "Timer.h"
-//#include "nmg_Globals.h"  // guess we need this for VERBOSE.  Yuck.
+#include "nmg_Globals.h"  // for RegMode enum
 
 
 #include "nmm_Types.h"  // for OPTIMIZE_NOW
@@ -82,6 +82,7 @@ static GLint vx_half_down;
 static GLint vx_quarter_up;
 static GLint vx_half_up;
 static GLint rubber_corner;
+static GLint region_box;
 static GLint region_marker;
 static GLint aim_struct;
 
@@ -103,6 +104,7 @@ static GLint sphere; /* dim */
 static int aim_struct_id;
 
 static int rubber_corner_id;
+static int region_box_id;
 static int sweep_struct_id;
 
 // ID for marker of user's hand position
@@ -163,7 +165,8 @@ int clear_world_modechange (int);
 int make_aim (const float a [], const float b []);
 int make_sweep (const float a [], const float b [],
 		const float c [], const float d [] );
-int make_rubber_corner (float, float, float, float);
+int make_rubber_corner (float, float, float, float, int);
+int make_region_box (float, float, float, float, float, int);
 
 static int selecthand (void *);
 static int mycube (void);
@@ -251,6 +254,11 @@ int clear_world_modechange(int mode, int style, int tool_param)
   case USER_CENTER_TEXTURE_MODE:
     removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
+  case USER_REGION_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,region_box_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    break;    
   default:
     break;
   }
@@ -355,6 +363,14 @@ int init_world_modechange(int mode, int style, int tool_param)
   case USER_CENTER_TEXTURE_MODE:
     sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL,"mysphere"); 
     fprintf( stderr, "Sphere added to functionlist\n" );
+    break;
+  case USER_REGION_MODE:
+    hand_id = addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
+    region_box_id = addFunctionToFunclist(&vir_world, draw_list,
+					     &region_box,
+                                             "draw_list(region_box)");
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+                                          "draw_list(aim_struct)");
     break;
   default:
     break;
@@ -472,6 +488,9 @@ void myobjects(void)
 		/*empty list?*/
   glEndList();
 
+  glNewList(region_box,GL_COMPILE);
+  glEndList();
+
   glNewList(sweep_struct,GL_COMPILE);
 		/*empty list?*/
   glEndList();
@@ -544,45 +563,45 @@ void myobjects(void)
 
 }
 
-int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
+int make_rubber_corner(float x_min,float y_min, float x_max,float y_max, 
+                       int highlight_mask)
 {
         VertexType Points[4];
+        float normal_color[4] = {1.0,0.0,0.0,0.5};
+        float highlight_color[4] = {1.0,0.0,0.0,0.15};
 	float z_min,z_max;
-	int i,j;
-
-	int num_x = g_inputGrid->numX() - 1;
-	int num_y = g_inputGrid->numY() - 1;
+        float x_offset, y_offset;
+	int i;
 
 	BCPlane* plane = g_inputGrid->getPlaneByName
                     (g_heightPlaneName);
 	if (plane == NULL)
 	{
-	    fprintf(stderr, "Error in Replace_Rubber_Corner: could not get plane!\n");
+	    fprintf(stderr, "Error in make_rubber_corner: could not get plane!\n");
 	    return -1;
 	}
 
-	i=0;
-	j=0;
-	z_min=z_max= plane->scaledValue(i,j);
-	i=0;
-	j=num_y;
-	if(z_min> plane->scaledValue(i,j)) z_min=plane->scaledValue(i,j);
-	if(z_max<plane->scaledValue(i,j)) z_max=plane->scaledValue(i,j);
-	i=num_x;
-	j=num_y;
-	if(z_min>plane->scaledValue(i, j)) z_min=plane->scaledValue(i, j);
-	if(z_max<plane->scaledValue(i, j)) z_max=plane->scaledValue(i, j);
-	i=num_x;
-	j=0;
-	if(z_min>plane->scaledValue(i, j)) z_min=plane->scaledValue(i, j);
-	if(z_max<plane->scaledValue(i, j)) z_max=plane->scaledValue(i, j);
+        // Init with reasonable value. 
+	z_min=z_max= plane->scaledValue(0,0);
+        // If min max inverted, plane has no real data.
+        if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
+            z_min=plane->minNonZeroValue()*plane->scale();
+            z_max=plane->maxNonZeroValue()*plane->scale();
+        }
+        // Add 10 nm to edges to make sure it's visible. 
+	z_min=z_min-10*plane->scale();
+	z_max=z_max+10*plane->scale();
 
-	z_min=z_min-10/plane->scale();
-	z_max=z_max+10/plane->scale();
+        x_offset = 0.4*fabs(x_max - x_min);
+        y_offset = 0.4*fabs(y_max - y_min);
 
 	v_gl_set_context_to_vlib_window(); 
 	glNewList(rubber_corner,GL_COMPILE);
-	glColor4f(1.0,0.0,0.0,0.6);
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
   	Points[0][Z] = z_min;
 	Points[0][X]=x_min;
 	Points[0][Y]=y_min;
@@ -593,7 +612,6 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 
   	Points[3][Z] = z_max;
 	Points[3][X]=x_min;
-
 	Points[3][Y]=y_min;
 
 	Points[2][Z] = z_max;
@@ -607,6 +625,36 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+	Points[0][X]+=x_offset;
+	Points[0][Y]+=y_offset;
+
+	Points[1][X]-=x_offset;
+	Points[1][Y]+=y_offset;
+
+	Points[3][X]+=x_offset;
+	Points[3][Y]+=y_offset;
+
+	Points[2][X]-=x_offset;
+	Points[2][Y]+=y_offset;
+
+	glBegin(GL_POLYGON);
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++)
+	  glVertex3fv(Points[i]);
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
   	Points[0][Z] = z_min;
 	Points[0][X]=x_max;
 	Points[0][Y]=y_min;
@@ -630,6 +678,36 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+	Points[0][X]-=x_offset;
+	Points[0][Y]+=y_offset;
+
+	Points[1][X]-=x_offset;
+	Points[1][Y]-=y_offset;
+
+	Points[3][X]-=x_offset;
+	Points[3][Y]+=y_offset;
+
+	Points[2][X]-=x_offset;
+	Points[2][Y]-=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
   	Points[0][Z] = z_min;
 	Points[0][X]=x_max;
 	Points[0][Y]=y_max;
@@ -653,6 +731,36 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+	Points[0][X]-=x_offset;
+	Points[0][Y]-=y_offset;
+
+	Points[1][X]+=x_offset;
+	Points[1][Y]-=y_offset;
+
+	Points[3][X]-=x_offset;
+	Points[3][Y]-=y_offset;
+
+	Points[2][X]+=x_offset;
+	Points[2][Y]-=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
   	Points[0][Z] = z_min;
 	Points[0][X]=x_min;
 	Points[0][Y]=y_max;
@@ -676,6 +784,289 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
         VERBOSE(20, "          glEnd()");
 	glEnd();
   
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+	Points[0][X]+=x_offset;
+	Points[0][Y]-=y_offset;
+
+	Points[1][X]+=x_offset;
+	Points[1][Y]+=y_offset;
+
+	Points[3][X]+=x_offset;
+	Points[3][Y]-=y_offset;
+
+	Points[2][X]+=x_offset;
+	Points[2][Y]+=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+	glEndList();
+	return(0);
+}
+
+int make_region_box(float center_x,float center_y, float width,float height, 
+                    float angle, int highlight_mask)
+{
+        VertexType Points[4];
+        float normal_color[4] = {0.6,0.0,0.6,0.5};
+        float highlight_color[4] = {0.8,0.0,0.8,0.15};
+	float z_min,z_max;
+        float x_offset, y_offset;
+	int i;
+
+	BCPlane* plane = g_inputGrid->getPlaneByName
+                    (g_heightPlaneName);
+	if (plane == NULL)
+	{
+	    fprintf(stderr, "Error in make_region_box: could not get plane!\n");
+	    return -1;
+	}
+        
+        // Init with reasonable value. 
+	z_min=z_max= plane->scaledValue(0,0);
+        // If min max inverted, plane has no real data.
+        if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
+            z_min=plane->minNonZeroValue()*plane->scale();
+            z_max=plane->maxNonZeroValue()*plane->scale();
+        }
+        // Add 10 nm to edges to make sure it's visible. 
+	z_min=z_min-10*plane->scale();
+	z_max=z_max+10*plane->scale();
+
+        x_offset = 0.8*fabs(width);
+        y_offset = 0.8*fabs(height);
+
+	v_gl_set_context_to_vlib_window(); 
+	glNewList(region_box,GL_COMPILE);
+        glTranslatef(center_x, center_y, 0);
+        glRotatef(angle, 0.0,0.0,1.0);
+        glTranslatef(-center_x, -center_y, 0);
+        
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+  	Points[0][Z] = z_min;
+	Points[0][X]=center_x - width;
+	Points[0][Y]=center_y - height;
+
+	Points[1][Z] = z_min;
+	Points[1][X]=center_x + width;
+	Points[1][Y]=center_y - height;
+
+  	Points[3][Z] = z_max;
+	Points[3][X]=center_x - width;
+	Points[3][Y]=center_y - height;
+
+	Points[2][Z] = z_max;
+	Points[2][X]=center_x + width;
+	Points[2][Y]=center_y - height;
+
+	glBegin(GL_POLYGON);
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++)
+	  glVertex3fv(Points[i]);
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+	Points[0][X]+=x_offset;
+	Points[0][Y]+=y_offset;
+
+	Points[1][X]-=x_offset;
+	Points[1][Y]+=y_offset;
+
+	Points[3][X]+=x_offset;
+	Points[3][Y]+=y_offset;
+
+	Points[2][X]-=x_offset;
+	Points[2][Y]+=y_offset;
+
+	glBegin(GL_POLYGON);
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++)
+	  glVertex3fv(Points[i]);
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+  	Points[0][Z] = z_min;
+	Points[0][X]=center_x + width;
+	Points[0][Y]=center_y - height;
+
+	Points[1][Z] = z_min;
+	Points[1][X]=center_x + width;
+	Points[1][Y]=center_y + height;
+
+  	Points[3][Z] = z_max;
+	Points[3][X]=center_x + width;
+	Points[3][Y]=center_y - height;
+
+	Points[2][Z] = z_max;
+	Points[2][X]=center_x + width;
+	Points[2][Y]=center_y + height;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+
+	Points[0][X]-=x_offset;
+	Points[0][Y]+=y_offset;
+
+	Points[1][X]-=x_offset;
+	Points[1][Y]-=y_offset;
+
+	Points[3][X]-=x_offset;
+	Points[3][Y]+=y_offset;
+
+	Points[2][X]-=x_offset;
+	Points[2][Y]-=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+  	Points[0][Z] = z_min;
+	Points[0][X]=center_x + width;
+	Points[0][Y]=center_y + height;
+
+	Points[1][Z] = z_min;
+	Points[1][X]=center_x - width;
+	Points[1][Y]=center_y + height;
+
+  	Points[3][Z] = z_max;
+	Points[3][X]=center_x + width;
+	Points[3][Y]=center_y + height;
+
+	Points[2][Z] = z_max;
+	Points[2][X]=center_x - width;
+	Points[2][Y]=center_y + height;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+
+	Points[0][X]-=x_offset;
+	Points[0][Y]-=y_offset;
+
+	Points[1][X]+=x_offset;
+	Points[1][Y]-=y_offset;
+
+	Points[3][X]-=x_offset;
+	Points[3][Y]-=y_offset;
+
+	Points[2][X]+=x_offset;
+	Points[2][Y]-=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
+        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+  	Points[0][Z] = z_min;
+	Points[0][X]=center_x - width;
+	Points[0][Y]=center_y + height;
+
+	Points[1][Z] = z_min;
+	Points[1][X]=center_x - width;
+	Points[1][Y]=center_y - height;
+
+  	Points[3][Z] = z_max;
+	Points[3][X]=center_x - width;
+	Points[3][Y]=center_y + height;
+
+	Points[2][Z] = z_max;
+	Points[2][X]=center_x - width;
+	Points[2][Y]=center_y - height;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+  
+        // Central target
+        if ((highlight_mask & REG_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+
+	Points[0][X]+=x_offset;
+	Points[0][Y]-=y_offset;
+
+	Points[1][X]+=x_offset;
+	Points[1][Y]+=y_offset;
+
+	Points[3][X]+=x_offset;
+	Points[3][Y]-=y_offset;
+
+	Points[2][X]+=x_offset;
+	Points[2][Y]+=y_offset;
+
+	glBegin(GL_POLYGON); 
+        VERBOSE(20, "          glBegin(GL_POLYGON)");
+	for(i=0;i<4;i++) 
+	  glVertex3fv(Points[i]); 
+        VERBOSE(20, "          glEnd()");
+	glEnd();
+
 	glEndList();
 	return(0);
 }
@@ -772,7 +1163,7 @@ int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
   glEndList();
   return (collab_hand_struct); 
 }
-
+/* OBSOLETE, never called. 
 int make_selected_region_marker (float x_min, float y_min, float x_max, float y_max)
 {       VertexType Points[5];
         int num_x,num_y;
@@ -838,7 +1229,7 @@ int make_selected_region_marker (float x_min, float y_min, float x_max, float y_
 
         return(marker_list->id);
 }
-
+*/
 
 int make_red_line (const float a[], const float b[])
 {  
@@ -1953,6 +2344,7 @@ int replaceDefaultObjects(void)
   vx_quarter_up = glGenLists(1);
   vx_half_up = glGenLists(1);
   rubber_corner = glGenLists(1);
+  region_box = glGenLists(1);
   region_marker = glGenLists(1);
   aim_struct = glGenLists(1);
   red_line_struct = glGenLists(1);

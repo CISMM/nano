@@ -264,7 +264,12 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        center();
        break;
    case 6: 		/* Touch Stored mode */
-       user_0_mode = USER_PLANE_MODE;
+       if (user_0_mode == USER_PLANE_MODE) {
+           user_0_mode = USER_REGION_MODE;
+       } else {
+           user_0_mode = USER_PLANE_MODE;
+       }
+
        break;
    case 7: 		/* XY lock */
        if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
@@ -309,6 +314,8 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
    case USER_MEASURE_MODE:
    case USER_SCALE_UP_MODE:
    case USER_SCALE_DOWN_MODE:
+   case USER_SERVO_MODE:
+   case USER_REGION_MODE:
    case USER_PLANE_MODE:
        if (puck_active) {
            if (!old_puck_active) {
@@ -405,11 +412,14 @@ collabVerbose(5, "handle_magellan_puck_change:  updateWorldFromRoom().\n");
                q_xyz_quat_invert( &old_puck_transform, &old_puck_transform);
            }
        }
+       old_puck_active = puck_active;
        break;
    default:
+       // Allows transforms to be re-initialized if you move in and out
+       // of an excluded mode, like Touch.
+       old_puck_active = vrpn_FALSE;
        break;
    }
-   old_puck_active = puck_active;
 }
 
 /** Handles text messages from the Magellan server.

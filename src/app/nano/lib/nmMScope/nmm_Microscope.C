@@ -5,6 +5,12 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+
+
+// Aron Helser, May 2001
+// nmm_Microscope is NO LONGER USED by nmMScope library
+// It will be used until "topo" tree is converted to use
+// vrpn/util/gen_rpc facility to automatically generate this code. 
 #include "nmm_Microscope.h"
 
 #include <vrpn_FileController.h>

@@ -520,9 +520,16 @@ void nmg_Graphics_Timer::positionAimLine (const PointType top,
 }
 
 void nmg_Graphics_Timer::positionRubberCorner
-    (float minx, float miny, float maxx, float maxy) {
+    (float minx, float miny, float maxx, float maxy, int highlight_mask) {
   activateTimer();
-  d_imp->positionRubberCorner(minx, miny, maxx, maxy);
+  d_imp->positionRubberCorner(minx, miny, maxx, maxy, highlight_mask);
+}
+
+void nmg_Graphics_Timer::positionRegionBox
+  (float center_x,float center_y, float width,float height, float angle, 
+   int highlight_mask) {
+  activateTimer();
+  d_imp->positionRegionBox(center_x, center_y, width, height, angle, highlight_mask);
 }
 
 void nmg_Graphics_Timer::positionSweepLine (const PointType topL,

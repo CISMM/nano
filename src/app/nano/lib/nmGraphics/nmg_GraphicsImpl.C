@@ -1949,7 +1949,7 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
-  int i,j, k;
+    int i;
   //fprintf(stderr, "initializing textures\n");
 
   for (i = 0; i < N_TEX; i++) {
@@ -2670,9 +2670,16 @@ void nmg_Graphics_Implementation::positionAimLine (const PointType top,
 }
 
 void nmg_Graphics_Implementation::positionRubberCorner
-    (float minx, float miny, float maxx, float maxy) {
+    (float minx, float miny, float maxx, float maxy, int highlight_mask) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionRubberCorner().\n");
-  make_rubber_corner(minx, miny, maxx, maxy);
+  make_rubber_corner(minx, miny, maxx, maxy, highlight_mask);
+}
+
+void nmg_Graphics_Implementation::positionRegionBox
+  (float center_x,float center_y, float width,float height, float angle, 
+   int highlight_mask) {
+//fprintf(stderr, "nmg_Graphics_Implementation::positionRegionBox().\n");
+    make_region_box(center_x, center_y, width, height, angle, highlight_mask);
 }
 
 void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,
@@ -3713,7 +3720,7 @@ int nmg_Graphics_Implementation::handle_positionRubberCorner
   float x0, y0, x1, y1;
 
   CHECKF(it->decode_positionRubberCorner(p.buffer, &x0, &y0, &x1, &y1), "handle_positionRubberCorner");
-  it->positionRubberCorner(x0, y0, x1, y1);
+  it->positionRubberCorner(x0, y0, x1, y1, 0);
   return 0;
 }
 

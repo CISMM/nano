@@ -1,3 +1,23 @@
+2001-05-11  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_GraphicsImpl.Ch (positionRubberCorner): Added parameter to
+	allow highlight when changing scan area. 
+	(positionRegionBox): new
+	* nmg_Graphics.Ch: same
+	* nmg_GraphicsRemote.Ch: same
+	* nmg_GraphicsTimer.Ch: same
+
+	* nmg_Globals.h: enum for highlight param to positionRubberCorner
+	and positionRegionBox
+	* globjects.c (make_rubber_corner): new central target, highlight
+	parameter. 
+	(make_region_box): new, similar to make_rubber_corner, adds
+	rotation. 
+	(make_selected_region_marker): removed, obsolete. 
+	* chartjunk.c (x_y_width_display): Display planned scan region
+	size. 
+	(mode_display): handle new mode, USER_REGION_MODE
+
 2001-04-30  Jason Clark  <jclark@cs.unc.edu>
 
 	* globjects.c: Interface text changing

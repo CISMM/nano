@@ -828,6 +828,7 @@ int draw_world (int) {
         make_blue_line(decoration->blue.top(), decoration->blue.bottom());
         decoration->blue.clearChanged();
     }
+    /* OBSOLETE, never called. 
     if (decoration->selectedRegion_changed) {
         //fprintf(stderr, "Making selected region marker.\n");
         make_selected_region_marker
@@ -838,6 +839,7 @@ int draw_world (int) {
         decoration->selectedRegion_changed = 0;
         // XXX won't this be cleared in draw_world()?
     }
+    */
     if (decoration->aimLine.changed()) {
         make_aim(decoration->aimLine.top(), decoration->aimLine.bottom());
         decoration->aimLine.clearChanged();

@@ -164,7 +164,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void displayScanlinePosition(const int);
 
     virtual void positionAimLine (const PointType, const PointType);
-    virtual void positionRubberCorner (float, float, float, float);
+    virtual void positionRubberCorner (float, float, float, float, int);
+    virtual void positionRegionBox (float, float, float, float, float, int);
     virtual void positionSweepLine (const PointType, const PointType,
 				    const PointType, const PointType);
     virtual int addPolySweepPoints (const PointType, const PointType,

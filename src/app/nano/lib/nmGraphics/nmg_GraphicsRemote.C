@@ -1870,12 +1870,12 @@ void nmg_Graphics_Remote::positionAimLine (const PointType lo,
 }
 
 void nmg_Graphics_Remote::positionRubberCorner (float x0, float y0,
-                                                float x1, float y1) {
+                                                float x1, float y1, int) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
-
+    fprintf(stderr,"Warning, nmg_Graphics_Remote::positionRubberCorner ignores last param.\n");
   msgbuf = encode_positionRubberCorner(&len, x0, y0, x1, y1);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
@@ -1888,6 +1888,9 @@ void nmg_Graphics_Remote::positionRubberCorner (float x0, float y0,
   }
   if (msgbuf)
     delete [] msgbuf;
+}
+void nmg_Graphics_Remote::positionRegionBox (float, float, float, float, float, int) {
+    fprintf(stderr,"Warning, nmg_Graphics_Remote::positionRegionBox not implemented.\n");
 }
 
 void nmg_Graphics_Remote::setRubberSweepLineStart (const PointType left,

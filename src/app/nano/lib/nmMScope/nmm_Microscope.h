@@ -22,6 +22,11 @@ class vrpn_Connection;
 //
 // Tom Hudson, May 1998
 
+// Aron Helser, May 2001
+// nmm_Microscope is NO LONGER USED by nmMScope library
+// It will be used until "topo" tree is converted to use
+// vrpn/util/gen_rpc facility to automatically generate this code. 
+
 // Base class for microscope controllers.
 // Speaks VRPN as the network protocol.
 // Declares and initializes network ID for objects of this class

@@ -85,6 +85,8 @@ radiobutton $nmInfo(viewb2).r1.measure -text "Measure" \
     -variable user_0_mode -value 9  -padx 0 -pady 0
 radiobutton $nmInfo(viewb6).demotouch -text "Touch Stored" \
 	-variable user_0_mode -value 11  -padx 0 -pady 0
+radiobutton $nmInfo(viewb6).region -text "Region" -variable user_0_mode \
+	-value 17  -padx 0 -pady 0
 
 radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale Up"   -variable user_0_mode \
 	-value 2  -padx 0 -pady 0
@@ -131,6 +133,7 @@ pack $nmInfo(viewb4).commit -side left
 }
 pack $nmInfo(viewb5).center -side left
 pack $nmInfo(viewb6).demotouch -side left
+pack $nmInfo(viewb6).region -side left 
 if { !$viewer_only } {
 pack $nmInfo(viewb7).xy_lock -side left
 pack $nmInfo(viewb8).cancel -side left

@@ -355,7 +355,8 @@ class nmg_Graphics {
       // positionAimLine() is OBSOLETE
 
     virtual void positionRubberCorner (float x0, float y0,
-                                       float x1, float y1) = 0;
+                                       float x1, float y1, int) = 0;
+    virtual void positionRegionBox (float, float, float, float, float, int) = 0;
     virtual void positionSweepLine (const PointType topL,
                                     const PointType bottomL,
 				    const PointType topR,

@@ -1,6 +1,11 @@
+2001-05-11  Aron Helser  <helser@cs.unc.edu>
+
+	* view.tcl: New USER_REGION_MODE button
+	* streamfile.tcl: Replay rate type should be numeric, not real. 
+	
 2001-05-02  Kwan Torrich Skinner  <skinner@cs.unc.edu>
-	* registration.tcl: fixed the 
-data-registration-window-closing-nano bug.
+	* registration.tcl: fixed the
+	data-registration-window-closing-nano bug.
 
 2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
         * shared_ptr.tcl: make focus change off of entry box in choose 

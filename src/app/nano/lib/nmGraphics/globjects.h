@@ -21,7 +21,8 @@ extern int clear_world_modechange (int mode, int style, int tool_param);
 extern int init_world_modechange (int mode, int style, int tool_param);
 extern int make_sweep (const float a [], const float b [],
 		const float c [], const float d [] );
-extern int make_rubber_corner ( float, float, float, float);
+extern int make_rubber_corner ( float, float, float, float, int);
+extern int make_region_box ( float, float, float, float, float, int);
 extern void position_sphere (float, float, float);
 extern int mysphere(void * data);
 extern void enableCollabHand (int);

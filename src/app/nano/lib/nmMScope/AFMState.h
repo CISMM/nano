@@ -478,12 +478,21 @@ struct AFMState {
   vrpn_bool writingStreamFile;     // was DO_OUTPUT_STREAM
   vrpn_bool writingNetworkStream;  // was DO_NETOUT_STREAM
   vrpn_bool readingStreamFile;     // Getting data from stream file?
-  vrpn_bool saveStream;            // BUG - should be state on IO (!)
+  vrpn_bool saveStream;            // 
   vrpn_bool allowdup;
   vrpn_bool useRecvTime;           // Michele Clark's experiments
 
   int rasterX,                     // used to be x, y in animate.c
       rasterY;
+
+    // Saved values from header of ForceCurveData message, so
+    // body can be interpreted correctly. 
+  vrpn_float32 fc_x;
+  vrpn_float32 fc_y;
+  vrpn_int32 fc_numSamples;
+  vrpn_int32 fc_numHalfcycles;
+  vrpn_int32 fc_sec;
+  vrpn_int32 fc_usec;
 
     //OBSOLETE
     //vrpn_bool dlistchange;

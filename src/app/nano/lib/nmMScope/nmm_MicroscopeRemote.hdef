@@ -1,3 +1,4 @@
+OUTPUT_FILENAME nmm_MicroscopeRemote.h
 /*===3rdtech===
   Copyright (c) 2000 by 3rdTech, Inc.
   All Rights Reserved.
@@ -8,7 +9,10 @@
 #ifndef NMM_MICROSCOPE_REMOTE_H
 #define NMM_MICROSCOPE_REMOTE_H
 
-#include "nmm_Microscope.h"
+#include "nmm_AFM_Report.h"
+#include "nmm_SPM_Report.h"
+#include "nmm_AFM_Control.h"
+#include "nmm_SPM_Control.h"
 
 #include <vrpn_Shared.h>  // for timeval/timezone
 #ifndef VRPN_CONNECTION_H
@@ -34,6 +38,12 @@ class BCPlane;  // from <BCPlane.h>
 
 struct nmm_Sample;  // from nmm_Sample.h
 
+USE_MSG_GROUP nmm_Monitor
+USE_MSG_GROUP nmm_SPM_Report
+USE_MSG_GROUP nmm_AFM_Report
+
+CLASSNAME nmm_MicroscopeRemote
+
 
 // nmm_Microscope
 //
@@ -54,7 +64,8 @@ struct nmm_Sample;  // from nmm_Sample.h
 #define RELAX_MSG "relaxation done"
 
 class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
-                              public nmm_Microscope {
+                              public nmm_AFM_Report, public nmm_SPM_Report,
+                              public nmm_AFM_Control, public nmm_SPM_Control  {
 
   friend class nmm_RelaxComp;
 
@@ -220,6 +231,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     // Ohmmeter control
 
+    /*
     long SetOhmmeterSampleRate (const long rate);
       ///<   Sets the sample rate on the #0 ohmmeter.
 
@@ -236,15 +248,15 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     long DisableVoltsource (long which);
       ///< Enables one of the voltage sources.
-
+    */
     long RecordResistance(long channel, timeval t, float r,
-			float voltage, float range, float filter); 
-	///< XXX - this function was used for the French Ohmmeter
-	///< because we wanted to put data into the microscope
- 	///< stream file but this should be replaced now that
-	///< we are using vrpn for logging - e.g. either
-	///< set both connections to log to the same file or
-	///< create two separate files
+                          float voltage, float range, float filter); 
+       ///< XXX - this function was used for the French Ohmmeter
+       ///< because we wanted to put data into the microscope
+       ///< stream file but this should be replaced now that
+       ///< we are using vrpn for logging - e.g. either
+       ///< set both connections to log to the same file or
+       ///< create two separate files
 
     int getTimeSinceConnected(void);
 
@@ -271,7 +283,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     void SetStreamToTime (timeval time);
 
-    // Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
+    /// Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
     int ReadMode();
     void ReadMode(int);
     
@@ -281,8 +293,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       ///< If FALSE, all ScanTo/ScanToZ/ZagTo requests are executed.
       ///< Should be turned off for line mode!
 
-    Blunt_result * getBluntResult (void)
-      { return &d_bluntResult; }
+//      Blunt_result * getBluntResult (void)
+//        { return &d_bluntResult; }
 
 
     // Register callbacks from the user interface so we can decouple some
@@ -407,204 +419,37 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long ZagTo (float x, float y, float yaw,
                float sweepWidth, float regionDiag);
     long GotConnection(void);
-    long SetMaxMove (float distance);
-    long SetStdDelay (long delay);
-    long SetStPtDelay (long delay);
     long SetRelax (long min, long sep);
     int SetModForce (float newforce, float min, float max);
 
 
-
+    MSG_TYPE_DECL nmm_Monitor;
+    ENDECODERS_DECL ;
+    HANDLERS_DECL;
+    RECEIVERS_DECL;
 
     // Receive callbacks 
     int RcvGotConnection2 (void);
-    void RcvInTappingMode (float, float, float, float, float);
-    void RcvInOscillatingMode (float _p, 
-                               float _i,
-                               float _d, float _setpoint,
-                               float _amp,
-                               float _frequency,
-                               vrpn_int32 _input_gain, 
-                               vrpn_bool _ampl_or_phase,
-                               vrpn_int32 _drive_attenuation, 
-                               float _phase);
-    void RcvInContactMode (float, float, float, float);
-    void RcvInDirectZControl (float, float, float,
-                           float, float, 
-                           float, float);
-    void RcvInSewingStyle (float, float, float, float,
-                          float, float, float);
-    void RcvInSpectroscopyMode (float,float,float,
-        float,float,float,float,int,int,
-        float,float,float,float,
-        int, float,float,float);
+    RECEIVERS_DECL nmm_SPM_Report;
+    HANDLERS_DECL ;
+    RECEIVERS_DECL nmm_AFM_Report;
+    HANDLERS_DECL ;
 
-    void RcvForceParameters (long, float);
-    void RcvBaseModParameters (float, float);
-    void RcvForceSettings (float, float, float);
-    void RcvVoltsourceEnabled (long, float);
-    void RcvVoltsourceDisabled (long);
-    void RcvAmpEnabled (long, float, float, long);
-    void RcvAmpDisabled (long);
-    void RcvSuspendCommands();
-    void RcvResumeCommands();
-    void RcvStartingToRelax (long, long);
-    void RcvInModModeT (long, long);
-    void RcvInModMode (void);
-    void RcvInImgModeT (long, long);
-    void RcvInImgMode (void);
-    void RcvModForceSet (float);
-    void RcvImgForceSet (float);
-    void RcvModSet (long, float, float, float);
-    void RcvImgSet (long, float, float, float);
-    void RcvRelaxSet (long, long);
-    void RcvForceSet (float);
-    void RcvForceSetFailure (float);
-    void RcvPulseParameters (long, float, float, float);
-    long RcvWindowLineData (long, long, long, long,
-                            long, const float *);
-    long RcvWindowLineData (long, long, long, long,
-			    long);
-    long RcvWindowLineData (void);
-    void RcvForceCurveData (float, float, long, long,
-                            long, long, const float *, const float **);
-    void RcvWindowScanNM (long, long, long, long,
-                          float, float);
-    void RcvWindowBackscanNM (long, long, long, long,
-                              float, float);
-    void RcvPointResultNM (float, float, long, long,
-                           float, float);
-    void RcvResultData (long, float, float,
-                        long, long, long, const float *);
-    void RcvResultNM (float, float, long, long,
-                      float, float, float, float);
-    void RcvPulseCompletedNM (float, float);
-    void RcvPulseFailureNM (float, float);
-    void RcvScanning (vrpn_int32);
-    void RcvScanRange (float, float, float, float,
-                       float, float);
-    void RcvReportScanAngle (float);
-    void RcvSetRegionC (long,
-                        float, float, float, float);
-    void RcvResistanceFailure (long);
-    void RcvResistance (long, long, long, float);
-    void RcvResistance2(long, long, long, float,
-			float, float, float);
-    void RcvReportSlowScan (long);
-    void RcvScanParameters (const char **);
-    void RcvHelloMessage (const char *, const char *, long, long);
-    void RcvClientHello (const char *, const char *, long, long);
-    void RcvClearScanChannels (void);
-    void RcvScanDataset (const char *, const char *, float, float);
-    void RcvClearPointChannels (void);
-    void RcvPointDataset (const char *, const char *, long,
-                         float, float);
-    void RcvPidParameters (float, float, float);
-    void RcvScanrateParameter (float);
-    int RcvReportGridSize (long, long);
+    
+//obs?   void RcvClientHello (const char *, const char *, long, long);
 
-    void RcvMaxSetpointExceeded(void);
-    void RcvServerPacketTimestamp (long, long);
-    void RcvTopoFileHeader (long, const char *);
+    void ClearScanChannels (void);
+    void ClearPointChannels (void);
 
-    void RcvInScanlineMode(long);
-    void RcvFeedbackSetForScanline(long, long,
-			float, float, float);
-    void RcvClearScanlineChannels(void);
+
+//?      void RcvFeedbackSetForScanline(long, long,
+//?  			float, float, float);
+    void ClearScanlineChannels(void);
     void RcvScanlineDataset(const char *, const char *, float, 
 	float);
-    void RcvScanlineDataHeader(float, float, float,
-	float, float, float, long, long, long, 
-	float, float, float, long, long,
-	long);
-    void RcvScanlineData(long, long, const float *);
-
-    // messages for Michele Clark's experiments
-    // Code is in MicroscopeRcv.C
-    void RcvRecvTimestamp (timeval);
-    void RcvFakeSendTimestamp (timeval);
-    void RcvUdpSeqNum (long);
-
-
-
 
     static int handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
     static int handle_DroppedConnection2 (void *, vrpn_HANDLERPARAM);
-    static int handle_InTappingMode (void *, vrpn_HANDLERPARAM);
-    static int handle_InOscillatingMode (void *, vrpn_HANDLERPARAM);
-    static int handle_InContactMode (void *, vrpn_HANDLERPARAM);
-    static int handle_InDirectZControl (void *, vrpn_HANDLERPARAM);
-    static int handle_InSewingStyle (void *, vrpn_HANDLERPARAM);
-    static int handle_InSpectroscopyMode (void *, vrpn_HANDLERPARAM);
-    static int handle_ForceParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_BaseModParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_ForceSettings (void *, vrpn_HANDLERPARAM);
-    static int handle_VoltsourceEnabled (void *, vrpn_HANDLERPARAM);
-    static int handle_VoltsourceDisabled (void *, vrpn_HANDLERPARAM);
-    static int handle_AmpEnabled (void *, vrpn_HANDLERPARAM);
-    static int handle_AmpDisabled (void *, vrpn_HANDLERPARAM);
-    static int handle_SuspendCommands (void *, vrpn_HANDLERPARAM);
-    static int handle_ResumeCommands (void *, vrpn_HANDLERPARAM);
-    static int handle_StartingToRelax (void *, vrpn_HANDLERPARAM);
-    static int handle_InModModeT (void *, vrpn_HANDLERPARAM);
-    static int handle_InModMode (void *, vrpn_HANDLERPARAM);
-    static int handle_InImgModeT (void *, vrpn_HANDLERPARAM);
-    static int handle_InImgMode (void *, vrpn_HANDLERPARAM);
-    static int handle_ModForceSet (void *, vrpn_HANDLERPARAM);
-    static int handle_ImgForceSet (void *, vrpn_HANDLERPARAM);
-    static int handle_ModSet (void *, vrpn_HANDLERPARAM);
-    static int handle_ImgSet (void *, vrpn_HANDLERPARAM);
-    static int handle_RelaxSet (void *, vrpn_HANDLERPARAM);
-    static int handle_ForceSet (void *, vrpn_HANDLERPARAM);
-    static int handle_ForceSetFailure (void *, vrpn_HANDLERPARAM);
-    static int handle_PulseParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_WindowLineData (void *, vrpn_HANDLERPARAM);
-    static int handle_WindowScanNM (void *, vrpn_HANDLERPARAM);
-    static int handle_WindowBackscanNM (void *, vrpn_HANDLERPARAM);
-    static int handle_PointResultNM (void *, vrpn_HANDLERPARAM);
-    static int handle_PointResultData (void *, vrpn_HANDLERPARAM);
-    static int handle_BottomPunchResultData (void *, vrpn_HANDLERPARAM);
-    static int handle_TopPunchResultData (void *, vrpn_HANDLERPARAM);
-    static int handle_ResultNM (void *, vrpn_HANDLERPARAM);
-    static int handle_ForceCurveData (void *, vrpn_HANDLERPARAM);
-    static int handle_PulseCompletedNM (void *, vrpn_HANDLERPARAM);
-    static int handle_PulseFailureNM (void *, vrpn_HANDLERPARAM);
-    static int handle_Scanning (void *, vrpn_HANDLERPARAM);
-    static int handle_ScanRange (void *, vrpn_HANDLERPARAM);
-    static int handle_ReportScanAngle (void *, vrpn_HANDLERPARAM);
-    static int handle_SetRegionCompleted (void *, vrpn_HANDLERPARAM);
-    static int handle_SetRegionClipped (void *, vrpn_HANDLERPARAM);
-    static int handle_ResistanceFailure (void *, vrpn_HANDLERPARAM);
-    static int handle_Resistance (void *, vrpn_HANDLERPARAM);
-    static int handle_Resistance2(void *, vrpn_HANDLERPARAM);
-    static int handle_ReportSlowScan (void *, vrpn_HANDLERPARAM);
-    static int handle_ScanParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_HelloMessage (void *, vrpn_HANDLERPARAM);
-    static int handle_ClientHello (void *, vrpn_HANDLERPARAM);
-    static int handle_ClearScanChannels (void *, vrpn_HANDLERPARAM);  // UNUSED
-    static int handle_ScanDataset (void *, vrpn_HANDLERPARAM);
-    static int handle_ClearPointChannels (void *, vrpn_HANDLERPARAM);  // UNUSED
-    static int handle_PointDataset (void *, vrpn_HANDLERPARAM);
-    static int handle_PidParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_ScanrateParameter (void *, vrpn_HANDLERPARAM);
-    static int handle_ReportGridSize (void *, vrpn_HANDLERPARAM);
-    static int handle_ServerPacketTimestamp (void *, vrpn_HANDLERPARAM);
-    static int handle_TopoFileHeader (void *, vrpn_HANDLERPARAM);
-    static int handle_BeginFeelTo (void *, vrpn_HANDLERPARAM);
-    static int handle_EndFeelTo (void *, vrpn_HANDLERPARAM);
-
-
-    static int handle_MaxSetpointExceeded (void *, vrpn_HANDLERPARAM);
-
-    // scanline mode
-    static int handle_InScanlineMode (void *, vrpn_HANDLERPARAM);
-    static int handle_ScanlineData (void *, vrpn_HANDLERPARAM);
-
-    // messages for Michele Clark's experiments
-    static int handle_RecvTimestamp (void *, vrpn_HANDLERPARAM);
-    static int handle_FakeSendTimestamp (void *, vrpn_HANDLERPARAM);
-    static int handle_UdpSeqNum (void *, vrpn_HANDLERPARAM);
-
 
 // TODO:  Document and explain these better!
 
@@ -625,9 +470,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     timeval d_next_time;
 
     int readMode;	// differentiate between Live and Replay
-
-    Blunt_result d_bluntResult;
-
 
     // callback structures
 
@@ -679,6 +521,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                                              nmb_SharedDevice_Remote * dev);
 
     vrpn_bool d_incr_save;
+    ///< Incrementally save the stream file, instead of saving on exit?
 
   public:
 

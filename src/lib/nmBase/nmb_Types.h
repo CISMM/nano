@@ -37,7 +37,8 @@ enum UserMode {
   USER_COMB_MODE = (14),
   USER_CENTER_TEXTURE_MODE = (15),
   USER_SCANLINE_MODE = (16),
-  NUM_USER_MODES = (17)
+  USER_REGION_MODE = (17),
+  NUM_USER_MODES = (18)
 };  // user_mode
   // values are fixed because they must correspond to literals in Tcl/Tk
 

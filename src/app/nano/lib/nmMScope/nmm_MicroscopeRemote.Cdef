@@ -1,0 +1,3359 @@
+OUTPUT_FILENAME nmm_MicroscopeRemote.C
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
+#include "nmm_MicroscopeRemote.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#if !defined(_WIN32)
+#include <sys/time.h> // for RecordResistance()
+#include <unistd.h>  // for sleep()
+#endif
+
+#include <vrpn_FileConnection.h>	// for vrpn_File_Connection class
+#include <vrpn_RedundantTransmission.h>
+
+#include <Topo.h>
+#include <Point.h>
+#include <BCPlane.h>
+#include <BCGrid.h>
+#include <nmb_Dataset.h>
+#include <nmb_Decoration.h>  // for addScrapeMark()
+#include <Tcl_Linkvar.h>
+#include <nmb_Time.h>
+#include <nmb_Debug.h>
+#include <nmb_Types.h>
+#include <nmb_Line.h>
+
+#include "stm_cmd.h"  // for SPM_POINT_RESULT_DATA and other types
+#include "drift.h"
+#include "splat.h"
+#include "nmm_RelaxComp.h"
+#include "nmm_Sample.h"
+
+#include <vrpn_Connection.h>
+#include <vrpn_FileConnection.h>	// for vrpn_File_Connection class
+
+#include "error_display.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#endif
+
+#define CHECK(a) if ((a) == -1) return -1
+
+#ifdef MAX
+  #undef MAX
+#endif
+#define MAX(a,b) ((a > b) ? (a) : (b))
+#ifdef MIN
+  #undef MIN
+#endif
+#define MIN(a,b) ((a < b) ? (a) : (b))
+#define      NMB_NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
+
+#if (!defined(X) || !defined(Y) || !defined(Z1))
+#define	X	(0)
+#define	Y	(1)
+#define	Z	(2)
+#endif
+
+#ifndef M_PI
+#define M_PI 3.141592653589793238
+#define M_PI_2		1.57079632679489661923
+#endif
+
+#define FC_MAX_HALFCYCLES (100)
+
+USE_MSG_GROUP nmm_Monitor
+USE_MSG_GROUP nmm_SPM_Report
+USE_MSG_GROUP nmm_AFM_Report
+
+CLASSNAME nmm_Microscope_Remote
+
+// Microscope_Remote
+//
+// Communicate with a ThermoMicroscopes SPM, sending control messages
+// and getting reponses. 
+// Tom Hudson, September 1997
+// Code mostly from microscape.c and animate.c
+
+nmm_Microscope_Remote::nmm_Microscope_Remote
+  (const AFMInitializationState & i,
+   vrpn_Connection * connection) :
+    nmb_SharedDevice_Remote (i.deviceName, connection),
+    nmm_AFM_Report(connection), nmm_SPM_Report(connection),
+    nmm_AFM_Control(connection), nmm_SPM_Control(connection),
+    state(i),
+    d_relax_comp(this),
+    d_dataset (NULL),
+    d_decoration (NULL),
+    d_tcl_script_dir (NULL),
+    d_mod_window_initialized (vrpn_FALSE),
+    d_mod_window_min_x (0),
+    d_mod_window_min_y (0),
+    d_mod_window_max_x (0),
+    d_mod_window_max_y (0),
+    d_mod_window_pad (10),
+    d_res_channel_added(vrpn_FALSE),
+    d_pointDataHandlers (NULL),
+    d_modifyModeHandlers (NULL),
+    d_imageModeHandlers (NULL),
+    d_scanlineModeHandlers (NULL),
+    d_scanlineDataHandlers (NULL),
+    d_feeltoHandlers (NULL),
+    d_sampleAlgorithm (NULL),
+    d_accumulatePointResults (vrpn_FALSE),
+    d_incr_save(i.incr_save),
+    d_redundancy (new vrpn_RedundantTransmission (connection)),
+    d_redReceiver (new vrpn_RedundantReceiver (connection)),
+    d_monitor (NULL),
+    d_tsList (new nmm_TimestampList ())
+{
+  gettimeofday(&d_nowtime, &d_nowzone);
+  d_next_time.tv_sec = 0L;
+  d_next_time.tv_usec = 0L;
+
+  // Turn on relaxation compensation, with k/t decay model. 
+/*
+  This is done when in RcvGotConnection2 so we shouldn't do it here
+  if (state.doRelaxComp) {
+      d_relax_comp.enable(nmm_RelaxComp::DECAY);
+  }
+
+  d_relax_comp.set_ignore_time_ms(state.stmRxTmin);
+  d_relax_comp.set_separation_time_ms(state.stmRxTsep);
+*/
+
+  if (!d_connection) {
+    return;
+  }
+
+  markTypeAsSafe(d_QueryScanRange_type);
+
+  REGISTER nmm_SPM_Report;
+  REGISTER nmm_AFM_Report;
+
+  MSG_TYPE nmm_Monitor;
+  // Must come after monitor message types are declared. 
+  d_monitor = new nmm_QueueMonitor (this, d_redReceiver);
+  //REGISTER nmm_Monitor;
+  // TCH network adaptations Nov 2000
+  // If we're doing queue monitoring, d_monitor catches it.
+  // Underneath that, if we're doing redudnant transmission,
+  // d_redReceiver catches it.
+  d_monitor->registerResultDataHandler
+                        (handle_PointResultData,
+                         this);
+
+  d_connection->register_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
+  registerSynchHandler(handle_barrierSynch, this);
+  registerGotMutexCallback(this, handle_GotMicroscopeControl);
+
+  // TCH network adaptations Nov 2000
+  // Set up the redundant transmission at the lowest level.
+  nmb_Device::d_redundancy = d_redundancy;
+}
+
+
+nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
+  // Shut the server down nicely
+  // Check to make sure we are talking to live microscope.
+
+  if (d_connection) {
+      //XXX Unregister handlers
+      unregisterSynchHandler(handle_barrierSynch, this);
+      unregisterGotMutexCallback(this, handle_GotMicroscopeControl);
+  }
+
+  if (d_tcl_script_dir) {
+    delete [] d_tcl_script_dir;
+  }
+
+  // TODO:  clean up callback lists on d_connection
+  if (!d_connection) {
+    return;
+  }
+  d_connection->unregister_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
+  if (d_redundancy) {
+    delete d_redundancy;
+  }
+  if (d_redReceiver) {
+    delete d_redReceiver;
+  }
+  if (d_monitor) {
+    delete d_monitor;
+  }
+  if (d_tsList) {
+    delete d_tsList;
+  }
+
+
+}
+
+
+
+
+// virtual
+int nmm_Microscope_Remote::mainloop (void) {
+
+  timeval skiptime;
+  timeval last_time;
+
+  //nmb_SharedDevice::mainloop();
+
+  // Read in the changes
+  VERBOSE(5, "   setup");
+  state.lost_changes = 0;
+  state.new_epoch = VRPN_FALSE;
+
+  last_time = d_nowtime;
+  gettimeofday(&d_nowtime, &d_nowzone);
+  time_subtract(d_nowtime, last_time, &skiptime);
+  time_multiply(skiptime, d_decoration->rateOfTime, &skiptime);
+  time_add(d_next_time, skiptime, &d_next_time);
+
+  if (d_redundancy) {
+    // Best to call this *before* connection::mainloop
+    // Wish we didn't have to worry about that...  How to rearchitect?
+    d_redundancy->mainloop();
+  }
+
+  if (d_connection) {
+    d_connection->mainloop();
+  }
+
+  if (d_monitor) {
+    // Best to call this *after* connection::mainloop
+    // Wish we didn't have to worry about that...  How to rearchitect?
+    d_monitor->mainloop();
+  }
+
+  if (d_connection && !d_connection->doing_okay()) {
+    fprintf(stderr, "nmm_Microscope_Remote::mainloop():  "
+                    "lost connection.\n");
+    //d_dataset->done = VRPN_TRUE;
+    return -1;
+  }
+
+  // Tiger  added to get time elapsed since connected,
+  //        used by Live and Replay mode
+  getTimeSinceConnected();
+
+  return 0;
+}
+
+
+ENDECODERS nmm_Monitor;
+
+char * nmm_Microscope_Remote::encode_GetNewPointDatasets
+                            (vrpn_int32 * len,
+                             const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[] , Tclvar_int* numsamples_list[] )
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
+  vrpn_int32 i;
+
+  //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): Entering...\n");
+
+  if (!len) return NULL;
+
+  for (i = 0; i < channel_list->numEntries(); i++)
+    if (1 == (*active_list[i])) numSets++;
+
+  *len = (vrpn_int32)(sizeof(vrpn_int32) + (STM_NAME_LENGTH + sizeof(vrpn_int32)) * numSets);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %d\n", numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
+    for (i = 0; i < channel_list->numEntries(); i++)
+      if (1 == (*active_list[i])) {
+          // This is safe because STM_NAME_LENGTH is 64 and nmb_STRING_LENGTH is 128
+        vrpn_buffer(&mptr, &mlen, channel_list->entry(i), STM_NAME_LENGTH);
+
+        // Also send the number of samples per dataset
+        vrpn_buffer(&mptr, &mlen, (vrpn_int32)*numsamples_list[i]);
+      }
+  }
+
+  return msgbuf;
+}
+
+char * nmm_Microscope_Remote::encode_GetNewScanDatasets
+                            (vrpn_int32 * len,
+                             const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[]) 
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
+  vrpn_int32 i;
+
+  if (!len) return NULL;
+
+  for (i = 0; i < channel_list->numEntries(); i++)
+    if (1 == (*active_list[i])) numSets++;
+
+  //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
+  *len = (vrpn_int32)(sizeof(vrpn_int32) + STM_NAME_LENGTH * numSets);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, numSets);
+    for (i = 0; i < channel_list->numEntries(); i++) {
+      if (1 == (*active_list[i])) {
+          // This is safe because STM_NAME_LENGTH is 64 and nmb_STRING_LENGTH is 128
+          vrpn_buffer(&mptr, &mlen, channel_list->entry(i), STM_NAME_LENGTH);
+	  //fprintf(stderr, "     name: %s\n",list->Checkbox_name(i));
+      }
+    }
+  }
+  
+  return msgbuf;
+}
+
+long nmm_Microscope_Remote::InitializeDataset (nmb_Dataset * ds) {
+  BCPlane * plane;
+
+  d_dataset = ds;
+
+  state.data.Initialize(ds);
+  plane = ds->ensureHeightPlane();
+  plane->setScale(state.stm_z_scale);
+  state.SetDefaultScanlineForRegion(ds);
+    // safest to SetDefaultScanlineForRegion after ensureHeightPlane(),
+    // since it assumes a height plane exists.
+
+  state.modify.region_diag =
+      sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
+            (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
+           ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
+            (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::InitializeDecoration (nmb_Decoration * dec) {
+  d_decoration = dec;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::InitializeTcl (const char * dir) {
+  if (!dir)
+    return -1;
+
+  d_tcl_script_dir = new char [1 + strlen(dir)];
+  if (!d_tcl_script_dir)
+    return -1;
+
+  strcpy(d_tcl_script_dir, dir);
+  return 0;
+}
+
+// Thirdtech Initialize Routine
+long nmm_Microscope_Remote::Initialize (void) {
+
+  if (ReadMode() == READ_DEVICE) {
+    // XXX Bug in VRPN. If we're already connected before we register the
+    // handle_GotConnection handlers, they never get executed. So we'll call
+    // them explicitly, if needed.
+    if (d_connection->connected()) {
+      vrpn_HANDLERPARAM p;
+      p.buffer=NULL;
+      handle_GotConnection2(this, p);
+    } 
+    // Register this callback here because it segfaults if I execute the handler
+    // in the constructor, and I need to register at the same place it is
+    // conditionally executed.
+    d_connection->register_handler(d_GotConnection_type,
+                                   handle_GotConnection2,
+                                   this);
+  } else if (ReadMode() == READ_STREAM) {
+    if (!d_connection->get_File_Connection()) {
+      fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
+              "could not open input log file %c\n", 0x08);
+      return -1;
+    }
+    
+  }  
+// Initialization code common to both live and canned data
+  // used for sweep mode
+  // Moved to InitializeDataset, because this is also initialized
+  // when we get the SetRegionC message
+//    state.modify.region_diag =
+//      sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
+//            (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
+//           ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
+//            (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
+
+  return 0;
+}
+
+
+
+
+// Tells the AFM to resume it's normal scan pattern in Image mode -
+// presumably we were feeling or modifying the surface.
+//   If 'value' is not NULL, we might do a scan of a small region before
+//   resuming. (NOTE: this only available with the older AFM, not the new AFM)
+
+long nmm_Microscope_Remote::ResumeScan (Point_value *,
+                            BCPlane *) {
+  CHECK(ImageMode());
+
+  return ResumeWindowScan();
+}
+
+
+
+
+long nmm_Microscope_Remote::NewEpoch (void) {
+  state.current_epoch++;
+  return 0;
+}
+
+
+void nmm_Microscope_Remote::SetSampleMode (nmm_Sample * s) {
+  //s->setMicroscope(this);
+  d_sampleAlgorithm = s;
+}
+
+
+long nmm_Microscope_Remote::ModifyMode (void) {
+
+  CHECK(SetRateNM(state.modify.scan_rate_microns * 1000.0));
+
+  CHECK(MarkModifyMode());  // Put this event in output log
+
+  if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE)) {
+     if (state.modify.control != DIRECTZ) {
+	switch (state.modify.mode) {
+	case TAPPING:
+	   return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
+                                state.modify.d_gain, state.modify.setpoint,
+                                       state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenuation,
+                                       state.modify.phase);
+	case CONTACT:
+	   return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
+                                state.modify.d_gain, state.modify.setpoint);
+	default:
+	   return 0;  // HACK HACK HACK
+	}	
+     } else { // Direct Z control
+	return EnterDirectZControl(state.modify.max_z_step, 
+				       state.modify.max_xy_step, 
+				       state.modify.min_z_setpoint,
+				       state.modify.max_z_setpoint, 
+				       state.modify.max_lat_setpoint);
+     }
+
+  } else if (state.modify.style == SEWING) {
+    if (state.modify.mode == TAPPING) {
+      fprintf(stderr, "Oscillating while sewing is an impossible setting.\n");
+      return 0;
+    } else if (state.modify.control == DIRECTZ){
+      fprintf(stderr, "DirectZ while sewing is an impossible setting.\n");
+      return 0;
+    } else {
+      return EnterSewingStyle(state.modify.setpoint,
+                              0.001 * state.modify.bot_delay,
+                              0.001 * state.modify.top_delay,
+                              state.modify.z_pull,
+                              state.modify.punch_dist,
+                              1000.0 * state.modify.speed,
+                              state.modify.watchdog);
+    }
+  }
+  else if (state.modify.style == FORCECURVE) {
+    if (state.modify.control == DIRECTZ){
+      fprintf(stderr, "DirectZ during forcecurve is an impossible setting.\n");
+      return 0;
+    } else {
+       long numpnts = (long)(double)(state.modify.fc_num_points);
+       long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+       long avgnum = (long)(double)(state.modify.fc_avg_num);
+       return EnterForceCurveStyle(state.modify.setpoint,
+                                state.modify.fc_start_delay,
+                                state.modify.fc_z_start,
+                                state.modify.fc_z_end,
+                                state.modify.fc_z_pullback,
+                                state.modify.fc_force_limit,
+                                state.modify.fc_movedist,
+                                numpnts,
+                                numcycles,
+                                state.modify.fc_sample_speed,
+                                state.modify.fc_pullback_speed,
+                                state.modify.fc_start_speed,
+                                state.modify.fc_feedback_speed,
+				avgnum,
+				state.modify.fc_sample_delay,
+				state.modify.fc_pullback_delay,
+				state.modify.fc_feedback_delay);
+    }
+  }
+  
+  return 0;	// HACK HACK HACK
+}
+
+long nmm_Microscope_Remote::ImageMode (void) {
+
+  CHECK(SetRateNM(state.image.scan_rate_microns * 1000.0));
+
+  CHECK(MarkImageMode());  // Put this event in output log
+
+  switch (state.image.mode) {
+    case TAPPING:
+      return EnterOscillatingMode(state.image.p_gain,
+                              state.image.i_gain,
+                              state.image.d_gain,
+                              state.image.setpoint,
+                                  state.image.amplitude,
+                                  state.image.frequency,
+                                  state.image.input_gain,
+                                  state.image.ampl_or_phase,
+                                  state.image.drive_attenuation,
+                                  state.image.phase);
+    case CONTACT:
+      return EnterContactMode(state.image.p_gain,
+                              state.image.i_gain,
+                              state.image.d_gain,
+                              state.image.setpoint);
+  }
+  return 0;
+}
+
+
+long nmm_Microscope_Remote::GetNewPointDatasets
+                           (const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[], Tclvar_int* numsamples_list[])  {
+  char * msgbuf = NULL;
+  vrpn_int32 len;
+
+  msgbuf = encode_GetNewPointDatasets(&len, channel_list, active_list, numsamples_list);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_GetNewPointDatasets_type);
+}
+
+long nmm_Microscope_Remote::GetNewScanDatasets
+                           (const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[])  {
+  char * msgbuf = NULL;
+  vrpn_int32 len;
+
+  msgbuf = encode_GetNewScanDatasets(&len, channel_list, active_list);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_GetNewScanDatasets_type);
+}
+
+long nmm_Microscope_Remote::ResumeFullScan (void) {
+  return SetScanWindow(0, 0,
+                       d_dataset->inputGrid->numX() - 1,
+                       d_dataset->inputGrid->numY() - 1);
+}
+
+
+
+
+long nmm_Microscope_Remote::ResumeWindowScan (void) {
+  return dispatchMessage(0, NULL, d_ResumeWindowScan_type);
+}
+
+long nmm_Microscope_Remote::PauseScan (void) {
+  return dispatchMessage(0, NULL, d_PauseScanning_type);
+}
+
+long nmm_Microscope_Remote::WithdrawTip (void) {
+  return dispatchMessage(0, NULL, d_WithdrawTip_type);
+}
+
+
+
+long nmm_Microscope_Remote::rotateScanCoords (double _x, double _y,
+					      double _scanAngle, 
+					      double * out_x, double * out_y) 
+{
+
+  // Rotate about the center of the scan region -- same as
+  // the Thermo software rotates it's scan when we send it a 
+  // particular scan angle. 
+    double sin_angle = sinf(Q_DEG_TO_RAD(-_scanAngle));
+    double cos_angle = cosf(Q_DEG_TO_RAD(-_scanAngle));
+
+    double centerx = d_dataset->inputGrid->minX() +
+    (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
+    double centery = d_dataset->inputGrid->minY() + 
+      (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())/2.0 ;
+
+    double x = _x - centerx; // translate points to center
+    double y = _y - centery;
+
+    *out_x = ( cos_angle * x ) + ( -sin_angle * y );  // rotate
+    *out_y = ( sin_angle * x ) + (  cos_angle * y );
+
+    *out_x += centerx;  // translate points back
+    *out_y += centery;  // translate points back
+    
+    return 0;
+}
+
+long nmm_Microscope_Remote::DrawLine (double _startx, double _starty,
+                          double _endx, double _endy,
+                          Point_value * _point, vrpn_bool _awaitResult) {
+  char * msgbuf = NULL;
+  vrpn_int32 len;
+  long type;
+  long retval;
+
+  double startx, starty;
+  rotateScanCoords(_startx, _starty, (double)(state.image.scan_angle), &startx, &starty);
+  double endx, endy;
+  rotateScanCoords(_endx, _endy, state.image.scan_angle, &endx, &endy);
+  double yaw = state.modify.yaw - Q_DEG_TO_RAD(state.image.scan_angle);
+  /*
+  printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
+	  state.image.scan_angle, 
+	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
+	  d_dataset->inputGrid->minY(), d_dataset->inputGrid->maxY() );
+  printf( "             startx = %f starty = %f rotated x = %f rotated y = %f\n",
+	  _startx, _starty, startx, starty);
+  printf( "             endx = %f endy = %f rotated x = %f rotated y = %f\n",
+	  _endx, _endy, endx, endy);
+  */
+  switch (state.modify.style) {
+    case SHARP:
+    case SEWING:
+    case FORCECURVE:
+      msgbuf = encode_DrawSharpLine
+                 (&len, startx, starty, endx, endy,
+                  state.modify.step_size);
+      type = d_DrawSharpLine_type;
+      break;
+    case SWEEP:
+      msgbuf = encode_DrawSweepLine
+	(&len, startx, starty,
+	 yaw, state.modify.sweep_width,
+	 endx, endy,
+	 yaw, state.modify.sweep_width,
+	 state.modify.step_size);
+      type = d_DrawSweepLineCenter_type;
+      break;
+    default:
+      return 0;
+  }
+
+  if (!msgbuf)
+    return -1;
+
+  retval = dispatchMessage(len, msgbuf, type);
+
+  if (retval)
+    return retval;
+
+  if (_awaitResult && _point) {
+    // Wait until the tip gets there.
+    // We do this by kicking off the read loop until _point (which is
+    //   an alias for the tip's current value) approaches <endx,endy>
+
+    do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+        fprintf(stderr, "nmm_Microscope_Remote::DrawLine():  "
+                        "can't read from microscope.\n");
+        return -1;
+      }
+      // Tiger	added to get time elapsed since connected,
+      //	used by Live and Replay mode
+      getTimeSinceConnected();
+      VERBOSE(5, "  Waiting for result in line mode");
+    } while (!NMB_NEAR(_endx, _point->results()->x()) ||
+             !NMB_NEAR(_endy, _point->results()->y()));
+  }
+
+  return retval;
+}
+
+
+
+
+
+long nmm_Microscope_Remote::DrawArc (double _x, double _y,
+                         double _startAngle, double _endAngle,
+                         Point_value * _point, vrpn_bool _awaitResult) {
+  char * msgbuf = NULL;
+  vrpn_int32 len;
+  long retval;
+
+  double x,y;
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  // Need to rotate start and end angle as well!
+  double startAngle = _startAngle - Q_DEG_TO_RAD(state.image.scan_angle);
+  double endAngle = _endAngle - Q_DEG_TO_RAD(state.image.scan_angle);
+
+  switch (state.modify.style) {
+    case SHARP:
+    case SEWING:
+    case FORCECURVE:
+      return 0;
+    case SWEEP:
+      msgbuf = encode_DrawSweepArc
+                 (&len, x, y, startAngle,
+                  state.modify.sweep_width,
+                  endAngle,
+                  state.modify.sweep_width,
+                  state.modify.step_size);
+      if (!msgbuf)
+        return -1;
+
+      retval = dispatchMessage(len, msgbuf, d_DrawSweepArcCenter_type);
+
+      break;
+    default:
+      return 0;
+  }
+
+  if (retval)
+    return -1;
+
+  if (_awaitResult && _point) {
+    // Wait until the tip gets there.
+    // We do this by kicking off the read loop until _point (which is
+    //   an alias for the tip's current value) approaches <endx,endy>
+
+    do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+
+        fprintf(stderr, "nmm_Microscope_Remote::DrawLine():  "
+                        "can't read from microscope.\n");
+        return -1;
+      }
+      // Tiger  added to get time elapsed since connected,
+      //        used by Live and Replay mode
+      getTimeSinceConnected();
+      VERBOSE(5, "  Waiting for result in line mode");
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
+  }
+
+  return retval;
+}
+
+
+
+
+long nmm_Microscope_Remote::ScanTo (float _x, float _y) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  double x,y;
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
+
+  msgbuf = encode_ScanTo(&len, x, y);
+  if (!msgbuf)
+    return -1;
+
+  // TCH network adaptations Nov 2000
+
+  // Note a message send for application-level loss tracking.
+  // Send the message off, UDP/redundantly if that's enabled,
+  // TCP otherwise.
+
+  if (d_tsList) {
+    d_tsList->markSend();
+  }
+
+  return dispatchRedundantMessage(len, msgbuf, d_ScanTo_type);
+}
+
+long nmm_Microscope_Remote::ScanTo (float _x, float _y, float _z) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  double x,y;
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
+
+  msgbuf = encode_ScanToZ(&len, x, y, _z);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_ScanToZ_type);
+}
+
+int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
+  char * msgbuf;
+  vrpn_int32 len;
+  double x, y;
+  int nx, ny;
+  double dx, dy;
+  double ori;
+
+  if (!d_sampleAlgorithm) {
+    fprintf(stderr, "nmm_Microscope_Remote::TakeSampleSet:  "
+            "unspecified sample algorithm, defaulting to 1x1.\n");
+    nx = 1;
+    ny = 1;
+    dx = 0.0;
+    dy = 0.0;
+    ori = 0.0;
+  } else {
+    nx = d_sampleAlgorithm->numx;
+    ny = d_sampleAlgorithm->numy;
+    dx = d_sampleAlgorithm->dx;
+    dy = d_sampleAlgorithm->dy;
+    ori = d_sampleAlgorithm->orientation;
+  }
+
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
+
+  msgbuf = encode_FeelTo(&len, x, y, nx, ny, dx, dy, ori);
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_FeelTo_type);
+}
+
+
+long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
+                              Point_value * _point,
+                              vrpn_bool _awaitResult) {
+
+  // Don't rotate coords, because ScanTo/ZagTo do it. 
+  CHECK(ScanTo(_x, _y));
+
+  if (_awaitResult && _point) {
+    // Wait until the tip moves.
+    // We do this by kicking off the read loop until _point (which is
+    //   an alias for the tip's current value) changes from the
+    //   bogus value <-1, -1>
+
+    _point->results()->setPosition(-1.0, -1.0);
+    do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+
+        fprintf(stderr, "nmm_Microscope_Remote::TakeFeelStep():  "
+                        "can't read from microscope.\n");
+        return -1;
+      }
+      // Tiger  added to get time elapsed since connected,
+      //        used by Live and Replay mode
+      getTimeSinceConnected();
+      VERBOSE(5, "  Waiting for result in line mode");
+    } while (NMB_NEAR(-1.0, _point->results()->x()) &&
+             NMB_NEAR(-1.0, _point->results()->y()));
+  }
+
+  return 0;
+}
+
+
+
+
+long nmm_Microscope_Remote::TakeModStep (float _x, float _y,
+                             Point_value * _point,
+                             vrpn_bool _awaitResult) {
+
+  // Don't rotate coords, because ScanTo/ZagTo do it. 
+  switch (state.modify.style) {
+    case SHARP:
+    case SEWING:
+    case FORCECURVE:
+      CHECK(ScanTo(_x, _y));
+      break;
+    case SWEEP:
+      CHECK(ZagTo(_x, _y, state.modify.yaw, state.modify.sweep_width,
+                  state.modify.region_diag));
+      break;
+    default:
+      return 0;
+  }
+
+  if (_awaitResult && _point) {
+    // Wait until the tip moves to the destination.
+    // We do this by kicking off the read loop until _point (which is
+    //   an alias for the tip's current value) changes to the
+    //   desired destination value
+
+    do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+
+        fprintf(stderr, "nmm_Microscope_Remote::TakeModStep():  "
+                        "can't read from microscope.\n");
+        return -1;
+      }
+      // Tiger  added to get time elapsed since connected,
+      //        used by Live and Replay mode
+      getTimeSinceConnected();
+      VERBOSE(5, "  Waiting for result in TakeModStep");
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
+  }
+
+  return 0;
+}
+
+int nmm_Microscope_Remote::TakeDirectZStep (float _x, float _y, float _z,
+                             Point_value * _point,
+                             vrpn_bool _awaitResult) {
+
+  // Don't rotate coords, because ScanTo rotates.
+   CHECK(ScanTo(_x, _y, _z));
+
+  if (_awaitResult && _point) {
+    // Wait until the tip moves to the destination.
+    // We do this by kicking off the read loop until _point (which is
+    //   an alias for the tip's current value) changes to the
+    //   desired destination value
+
+    do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+
+        fprintf(stderr, "nmm_Microscope_Remote::TakeDirectZStep():  "
+                        "can't read from microscope.\n");
+        return -1;
+      }
+      // Tiger  added to get time elapsed since connected,
+      //        used by Live and Replay mode
+      getTimeSinceConnected();
+      VERBOSE(5, "  Waiting for result in TakeDirectZStep()");
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()) ||
+             !NMB_NEAR(_z, _point->results()->z()));
+  }
+  return 0;
+}
+
+
+
+
+long nmm_Microscope_Remote::SetRegionNM (float _minx, float _miny,
+                             float _maxx, float _maxy) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+	// DEBUGGING	Tiger
+  fprintf(stderr, "nmm_Microscope_Remote::SetRegionNM(): "
+		   "minx = %g\t miny = %g\nmaxx = %g\t maxy = %g\n",
+		   _minx, _miny, _maxx, _maxy);
+
+  msgbuf = encode_SetRegionNM
+             (&len, _minx, _miny, _maxx, _maxy);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetRegionNM_type);
+}
+
+
+
+
+// Figure out the correct scan mode for the STM based on the current
+// desired features of the scan mode.
+// The modes used here are defined in stm_cmd.h
+
+long nmm_Microscope_Remote::SetScanStyle (void) {
+  char * msgbuf;
+  vrpn_int32 len;
+  long style;
+
+  if (state.do_raster)
+    if (state.do_y_fastest)
+      style = RASTER_Y_FASTEST_POS;
+    else
+      style = RASTER_X_FASTEST_POS;
+  else
+    if (state.do_y_fastest)
+      style = BOUST_Y_FASTEST;
+    else
+      style = BOUST_X_FASTEST;
+  
+  msgbuf = encode_SetScanStyle
+             (&len, style);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetScanStyle_type);
+}
+
+
+
+
+long nmm_Microscope_Remote::SetScanWindow (long _minx, long _miny,
+                               long _maxx, long _maxy) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetScanWindow
+             (&len, _minx, _miny, _maxx, _maxy);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetScanWindow_type);
+}
+
+long nmm_Microscope_Remote::SetRateNM (double rate) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetRateNM(&len, rate);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetRateNM_type);
+}
+
+long nmm_Microscope_Remote::MarkModifyMode (void) {
+  char * msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_MarkModify_type);
+}
+
+long nmm_Microscope_Remote::MarkImageMode (void) {
+  char * msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_MarkImage_type);
+}
+
+
+long nmm_Microscope_Remote::EnterOscillatingMode
+        (float p, float i, float d, float set, float amp,
+         vrpn_float32 frequency, vrpn_int32 input_gain,
+         vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
+         vrpn_float32 phase) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
+                                       frequency, input_gain, ampl_or_phase,
+                                       drive_attenuation, phase);
+  //  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);           
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
+  //return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
+}
+
+long nmm_Microscope_Remote::EnterContactMode (float p, 
+					      float i, float d, float set) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterContactMode(&len, p, i, d, set);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterContactMode_type);
+}
+
+long nmm_Microscope_Remote::EnterDirectZControl (float _max_z_step, 
+				       float _max_xy_step, 
+				       float _min_setpoint, 
+				       float _max_setpoint, 
+				       float _max_lateral_force) {
+  char * msgbuf;
+  vrpn_int32 len;	
+
+  if (!strncmp(d_dataset->heightPlaneName->string(), "Z Piezo", 7)) {
+      // We are not looking at Z Piezo as our height plane
+      // XXX Directz doesn't work with anything but Z Piezo, yet.
+      fprintf (stderr, "WARNING: EnterDirectZControl Height plane not Z Piezo, "
+	       "Direct Z control will probably not work!\n");
+  }
+  msgbuf = encode_EnterDirectZControl(&len, _max_z_step, 
+				      _max_xy_step, _min_setpoint, 
+				      _max_setpoint, 
+				      _max_lateral_force);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterDirectZControl_type);
+}
+
+long nmm_Microscope_Remote::EnterSewingStyle (float set, 
+	 float bot, float top, float zpull, float punch,
+         float speed, float watchdog) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterSewingStyle(&len, set, bot, top, zpull, punch,
+                                   speed, watchdog);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterSewingStyle_type);
+}
+
+long nmm_Microscope_Remote::EnterForceCurveStyle
+	(float setpnt, float startdelay, float zstart, float zend, 
+	float zpull, float forcelimit, float movedist, long numpnts,
+	long numhalfcycles, float samplespd, float pullspd, float startspd,
+	float fdbackspd, long avgnum, float sampledel, float pulldel,
+	float fdbackdel){
+
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterSpectroscopyMode(&len, setpnt, startdelay, zstart, 
+		zend, zpull, forcelimit, movedist, numpnts, numhalfcycles,
+		samplespd, pullspd, startspd, fdbackspd, avgnum,
+		sampledel, pulldel, fdbackdel);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterSpectroscopyMode_type);
+
+  // _start_delay = delay at z_start (usec)
+  // _z_start = distance at which to start acquiring (nm)
+  // _z_end = distance at which to stop acquiring (nm)
+  // _z_pullback = initial pull back distance (nm)
+  // _forcelimit = maximum force at which to stop descent (nA)
+  // _movedist = distance between force curves (nm)
+  // _num_points = number of different z values to sample at
+  // _num_halfcycles = number of down-up curves to acquire per pnt
+  // _sample_speed = speed while sampling (um)
+  // _pull_speed = speed while pulling back (um)
+  // _start_speed = speed going to start pnt (um)
+  // _fdback_speed = speed going to feedback pnt (um)
+  // _avg_num = # of samples to average
+  // _sample_delay = delay before sample (us)
+  // _pull_delay = delay after pullback (us)
+  // _fdback_delay = delay to establish feedback (us)
+}
+
+long nmm_Microscope_Remote::ZagTo
+        (float _x, float _y, float yaw, float sweepWidth, float regionDiag) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  double x,y;
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
+
+  // Need to rotate yaw as well! Subtract the scan angle.
+  msgbuf = encode_ZagTo(&len, x, y, yaw-Q_DEG_TO_RAD(state.image.scan_angle), sweepWidth, regionDiag);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_ZagToCenter_type);
+}
+
+long nmm_Microscope_Remote::SetRelax (long min, long sep) {
+  char * msgbuf;
+  vrpn_int32 len;
+  
+  printf("setRelax, %ld %ld\n", min, sep);
+  msgbuf = encode_SetRelax(&len, min, sep);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetRelax_type);
+}
+
+
+
+
+
+long nmm_Microscope_Remote::SetGridSize (long _x, long _y) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetGridSize(&len, _x, _y);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetGridSize_type);
+}
+
+long nmm_Microscope_Remote::SetScanAngle (float _angle) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  float angle = _angle;
+  while (angle >= 360.0) {
+      angle -= 360.0;
+  }
+  while (angle <= -360.0) {
+      angle += 360.0;
+  }
+  
+  float ang_radians = Q_DEG_TO_RAD(angle);
+
+  printf("Setting scan angle %g\n", angle);
+
+  msgbuf = encode_SetScanAngle(&len, ang_radians);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetScanAngle_type);
+}
+
+
+
+
+long nmm_Microscope_Remote::SetSlowScan (long _value) {
+  char * msgbuf;
+  vrpn_int32 len;
+  
+  // If state is identical, don't send message. 
+  // XXX I found that this was commented out and when it was
+  // commented out it was causing the function to get called when
+  // the microscope reported back which was bad because then it just
+  // kept on getting called resulting in the scan getting restarted
+  // repeatedly - AAS - 
+  // since this I have changed Tcl_Linkvar.C updateTcl() routines so they
+  // don't do idempotent updates
+  if (  state.slowScanEnabled == _value) {
+//       fprintf(stderr, "nmm_MicRemote::SetSlowScan: Warning, variable is already"
+//               " set to this value; you may experience infinite loop behavior\n");
+     return 0;
+  }
+
+  msgbuf = encode_SetSlowScan(&len, _value);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetSlowScan_type);
+}
+
+
+
+
+long nmm_Microscope_Remote::SetModForce () {
+
+  if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE)) {
+    switch (state.modify.mode) {
+      case TAPPING:
+	return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
+				state.modify.d_gain, state.modify.setpoint,
+                                    state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenuation,
+                                       state.modify.phase);
+
+      case CONTACT:
+        return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
+                                   state.modify.d_gain, state.modify.setpoint);
+      default:
+        return 0;  // HACK HACK HACK
+    }
+  } else if (state.modify.style == SEWING) {
+    if (state.modify.mode == TAPPING) {
+      fprintf(stderr, "Oscillating while sewing is an impossible setting.\n");
+      return 0;
+    } else {
+      return EnterSewingStyle(state.modify.setpoint,
+                              0.001 * state.modify.bot_delay,
+                              0.001 * state.modify.top_delay,
+                              state.modify.z_pull,
+                              state.modify.punch_dist,
+                              1000.0 * state.modify.speed,
+                              state.modify.watchdog);
+    }
+  }
+  else if (state.modify.style == FORCECURVE) {
+    switch (state.modify.mode) {
+      case TAPPING:
+        if (EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
+                                state.modify.d_gain, state.modify.setpoint,
+                                    state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenuation,
+                                       state.modify.phase)) {
+            fprintf(stderr, "Error, can't enter oscillating mode\n");
+            return -1;
+	}
+         
+        break;
+      case CONTACT:
+        if (EnterContactMode(state.modify.p_gain, state.modify.i_gain,
+                                   state.modify.d_gain, state.modify.setpoint)){
+	    fprintf(stderr, "Error, can't enter contact mode\n");
+            return -1;
+	}
+        break;
+      default:
+        fprintf(stderr, "Error, unknown modify mode"
+                           " (not contact or tapping)\n");
+        return 0;
+    }
+    long numpnts = (long)(double)(state.modify.fc_num_points);
+    long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+    long avgnum = (long)(double)(state.modify.fc_avg_num);
+    return EnterForceCurveStyle(state.modify.setpoint,
+                                state.modify.fc_start_delay,
+                                state.modify.fc_z_start,
+                                state.modify.fc_z_end,
+                                state.modify.fc_z_pullback,
+                                state.modify.fc_force_limit,
+                                state.modify.fc_movedist,
+                                numpnts,
+                                numcycles,
+                                state.modify.fc_sample_speed,
+                                state.modify.fc_pullback_speed,
+                                state.modify.fc_start_speed,
+                                state.modify.fc_feedback_speed,
+                                avgnum,
+                                state.modify.fc_sample_delay,
+                                state.modify.fc_pullback_delay,
+                                state.modify.fc_feedback_delay);
+  } else {
+    fprintf(stderr,"shouldn't be here\n");
+    return 0;
+  }
+}
+
+
+  
+// HACK to get ohmmeter data into point results
+static float lastResistanceReceived = -1;
+// END HACK
+
+long nmm_Microscope_Remote::RecordResistance
+        (long meter, timeval t, float res,
+         float v, float r, float f) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_RecordResistance(&len, meter, t, res, v, r, f);
+  if (!msgbuf)
+    return -1;
+
+  // HACK - this is a temporary fix to get resistance values into the modfile
+  lastResistanceReceived = res;
+
+  return dispatchMessage(len, msgbuf, d_RecordResistance_type);
+}
+
+int nmm_Microscope_Remote::getTimeSinceConnected(void) {
+
+  timeval elapsedTime;
+
+  switch (ReadMode()) {
+    case READ_DEVICE:
+      d_connection->time_since_connection_open(&elapsedTime);
+      d_decoration->elapsedTime = elapsedTime.tv_sec;
+      break;
+    case READ_STREAM:
+      vrpn_File_Connection * logFile;
+      logFile = (vrpn_File_Connection *)(d_connection->get_File_Connection());
+      logFile->time_since_connection_open(&elapsedTime);
+      d_decoration->elapsedTime = elapsedTime.tv_sec;
+      break;
+  }
+
+//fprintf(stderr, "nmm_Microscope_Remote::getTimeSinceConnected:  %d sec.\n",
+//d_decoration->elapsedTime);
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::EnterScanlineMode(){
+ 
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterScanlineMode(&len, 1);
+  if (!msgbuf)
+    return -1;
+  return dispatchMessage(len, msgbuf, d_EnterScanlineMode_type);
+}
+
+long nmm_Microscope_Remote::ExitScanlineMode(){
+ 
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterScanlineMode(&len, 0);
+  if (!msgbuf)
+    return -1;
+  return dispatchMessage(len, msgbuf, d_EnterScanlineMode_type);
+}
+
+long nmm_Microscope_Remote::AcquireScanline(){
+  printf("requesting scan line - fix this: function not atomic on server!\n");
+  BCPlane *p = d_dataset->inputGrid->getPlaneByName(
+		d_dataset->heightPlaneName->string());
+  if (!p) {
+	fprintf(stderr, "nmm_Microscope_Remote::AcquireScanline:"
+                 " Error, could not get height plane\n");
+	return -1;
+  }
+
+  float x, y, z, angle, slope = 0;
+
+  // get the starting location of the scan line in nm
+  state.scanline.getStartPoint(p, &x, &y, &z);
+  angle = state.scanline.angle*M_PI/180.0;
+  slope = state.scanline.slope_nm_per_micron;
+
+  if (state.acquisitionMode != SCANLINE)
+      if (EnterScanlineMode()) return -1;
+  
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_RequestScanLine(&len, x, y, z, angle, slope, 
+	state.scanline.width, state.scanline.resolution, 
+	state.scanline.feedback_enabled, state.scanline.forcelimit_enabled,
+	state.scanline.forcelimit, state.scanline.max_z_step,
+	state.scanline.max_xy_step);
+  if (!msgbuf)
+    return -1;
+  state.scanline.num_scanlines_to_receive++;
+  return dispatchMessage(len, msgbuf, d_RequestScanLine_type);
+}
+
+long nmm_Microscope_Remote::SetScanlineModeParameters(){
+ 
+  CHECK(SetRateNM(state.scanline.scan_rate_microns_per_sec * 1000.0));
+
+  switch(state.scanline.mode) {
+    case TAPPING:
+	return EnterOscillatingMode(state.scanline.p_gain, state.scanline.i_gain,
+			state.scanline.d_gain, state.scanline.setpoint,
+                                       state.scanline.amplitude,
+                                       state.scanline.frequency,
+                                       state.scanline.input_gain,
+                                       state.scanline.ampl_or_phase,
+                                       state.scanline.drive_attenuation,
+                                       state.scanline.phase);
+    case CONTACT:
+	return EnterContactMode(state.scanline.p_gain, state.scanline.i_gain,
+			state.scanline.d_gain, state.scanline.setpoint);
+    default:
+	return 0;
+  }
+}
+
+long nmm_Microscope_Remote::JumpToScanLine(long line)
+{
+  char * msgbuf;
+  vrpn_int32 len;
+ 
+  msgbuf = encode_JumpToScanLine(&len, line);
+
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_JumpToScanLine_type);
+}
+
+
+
+
+
+long nmm_Microscope_Remote::QueryScanRange (void) {
+  return dispatchMessage(0, NULL, d_QueryScanRange_type);
+}
+
+
+
+int nmm_Microscope_Remote::ReadMode()
+{
+    return state.read_mode;
+}
+
+void nmm_Microscope_Remote::ReadMode(int rm)
+{
+    if ((rm == READ_FILE) ||(rm == READ_DEVICE) ||(rm == READ_STREAM) ) {
+        state.read_mode = rm;
+        fprintf(stderr, "nmm_Microscope_Remote Read Mode %d.\n", rm);
+    } else {
+        fprintf(stderr, "nmm_Microscope_Remote Invalid Read Mode.\n");
+    }
+}
+
+
+
+
+
+
+
+void nmm_Microscope_Remote::ResetClock (void) {
+  gettimeofday(&d_nowtime, &d_nowzone);
+  d_next_time.tv_sec = 0L;
+  d_next_time.tv_usec = 0L;
+}
+
+long nmm_Microscope_Remote::EnableUpdatableQueue (vrpn_bool on) {
+  char * msgbuf;
+  vrpn_int32 len;
+ 
+  msgbuf = encode_EnableUpdatableQueue(&len, on);
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_EnableUpdatableQueue_type);
+}
+
+
+long nmm_Microscope_Remote::registerPointDataHandler
+                          (int (* handler) (void *, const Point_results *),
+                           void * userdata) {
+  pointDataHandlerEntry * newEntry;
+
+  newEntry = new pointDataHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerPointDataHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_pointDataHandlers;
+
+  d_pointDataHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterPointDataHandler
+                          (int (* handler) (void *, const Point_results *),
+                           void * userdata) {
+  pointDataHandlerEntry * victim, ** snitch;
+
+  snitch = &d_pointDataHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterPointDataHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::registerModifyModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * newEntry;
+
+  newEntry = new modeHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerModifyModeHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_modifyModeHandlers;
+
+  d_modifyModeHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterModifyModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * victim, ** snitch;
+
+  snitch = &d_modifyModeHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterModifyModeHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::registerImageModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * newEntry;
+
+  newEntry = new modeHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerImageModeHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_imageModeHandlers;
+
+  d_imageModeHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterImageModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * victim, ** snitch;
+
+  snitch = &d_imageModeHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterImageModeHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+
+long nmm_Microscope_Remote::registerScanlineModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * newEntry;
+
+  newEntry = new modeHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerScanlineModeHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_scanlineModeHandlers;
+
+  d_scanlineModeHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterScanlineModeHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * victim, ** snitch;
+
+  snitch = &d_scanlineModeHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterScanlineModeHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::registerScanlineDataHandler
+                          (int (* handler) (void *, const Scanline_results *),
+                           void * userdata) {
+  scanlineDataHandlerEntry * newEntry;
+
+  newEntry = new scanlineDataHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerScanlineDataHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_scanlineDataHandlers;
+
+  d_scanlineDataHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterScanlineDataHandler
+                          (int (* handler) (void *, const Scanline_results *),
+                           void * userdata) {
+  scanlineDataHandlerEntry * victim, ** snitch;
+
+  snitch = &d_scanlineDataHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterScanlineDataHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::registerFeeltoHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  feeltoHandlerEntry * newEntry;
+
+  newEntry = new feeltoHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerFeeltoHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_feeltoHandlers;
+
+  d_feeltoHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterFeeltoHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  feeltoHandlerEntry * victim, ** snitch;
+
+  snitch = &d_feeltoHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterFeeltoHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_Remote::pointResultType (void) const {
+  return d_PointResultData_type;
+}
+
+void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
+  d_accumulatePointResults = on;
+}
+
+
+
+// Common code from by RcvPointResultNM and RcvResultNM, and,
+// with a little stretching (_z and _checkZ), RcvResultData
+
+void nmm_Microscope_Remote::DisplayModResult (float _x, float _y,
+                                   float _height,
+                                   const Point_value * _z,
+                                   vrpn_bool _checkZ) {
+  PointType top, bottom;
+  //double frac_x, frac_y;
+  double fx, fy;
+  long x, y;
+  BCPlane * heightPlane;
+
+  double xr,yr;
+  rotateScanCoords(_x, _y, -(double)(state.image.scan_angle), &xr, &yr);
+
+  heightPlane = d_dataset->inputGrid->getPlaneByName
+            (d_dataset->heightPlaneName->string());
+
+  top[0] = bottom[0] = xr;
+  top[1] = bottom[1] = yr;
+
+  d_dataset->inputGrid->worldToGrid((double)xr, (double)yr, fx, fy);
+  x = (long)fx;
+  y = (long)fy;
+
+  // drives X output
+  state.rasterX = x;
+  state.rasterY = y;
+
+  //  printf("currentz: %d\n", state.modify.slow_line_currPt->z());
+
+  // modification markers
+  if (state.acquisitionMode == MODIFY) {
+    if (((unsigned) x < (unsigned) d_dataset->inputGrid->numX()) &&
+        ((unsigned) y < (unsigned) d_dataset->inputGrid->numY())) {
+      top[2] = heightPlane->value(x, y);
+      if (_checkZ) {
+        if (_z) {
+          // what if scale changes?
+          top[2] = _z->value();// * heightPlane->scale();
+        } else {
+          top[2] = top[2];
+        }
+      } else {
+        // what if scale changes?
+        top[2] = _height;// * heightPlane->scale();
+      }
+      bottom[2] = top[2];
+      //if (glenable)
+      //      d_decoration->addScrapeMark(top, bottom);
+      d_decoration->addScrapeMark(top, bottom, heightPlane->value(x, y));
+
+    }
+  }
+
+  // track hand for feel or mod (canned data)
+  if (state.cannedLineVisible) {
+    top[2] = heightPlane->maxAttainableValue() * heightPlane->scale();
+    bottom[2] = heightPlane->minAttainableValue() * heightPlane->scale();
+    state.cannedLineToggle = !state.cannedLineToggle;
+  }
+
+  // BUG BUG BUG
+  // nothing gets done with top and bottom?
+}
+
+
+
+void nmm_Microscope_Remote::GetRasterPosition (long _x, long _y) {
+  // drives X output
+  state.rasterX = _x;
+  state.rasterY = _y;
+}
+
+
+
+//static
+int nmm_Microscope_Remote::handle_GotConnection2 (void * userdata,
+                                      vrpn_HANDLERPARAM ) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  return (ms->RcvGotConnection2());
+}
+
+//static
+int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
+                                      vrpn_HANDLERPARAM ) {
+    nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+    // Only display warning if we aren't quitting the program, and
+    // if we are connected to a live AFM - no streamfiles!
+    if ((!ms->d_dataset->done) && (ms->ReadMode() == READ_DEVICE)) {
+      display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
+                             "No more data will be collected until ThermoMicroscopes\n"
+                             "software is re-started and communication is re-established.");
+    }
+    return 0;
+}
+
+
+ 
+HANDLERS nmm_Monitor;
+HANDLERS nmm_SPM_Report;
+HANDLERS nmm_AFM_Report;
+
+/////////////////////////////////////////////////////////////////////////
+
+/** 
+    Called when we first get a connection to the AFM. Send all initialization
+    messages needed.  
+*/
+int nmm_Microscope_Remote::RcvGotConnection2 (void) {
+
+/*
+  //printf("nmm_Microscope_Remote::RcvGotConnection2()\n");
+
+  Can't do this until we have the mutex
+  // Send off the relaxation parameters (if any)
+  if (d_relax_comp.is_enabled()) {
+      CHECK(SetRelax(state.stmRxTmin, state.stmRxTsep));
+  } else {
+      CHECK(SetRelax(0, 0));
+  }
+
+  Can't do this until we have the mutex
+  // Start scanning the surface
+  CHECK(ResumeFullScan());
+
+  Can't do this until we have the mutex
+  // Tell AFM to scan forward and backward, or just forward.
+  CHECK(SetScanStyle());
+*/
+
+  // Ask it for the scan range in x, y, and z.
+  // When this is read back, Z will be used to set min_z and max_z.
+  CHECK(QueryScanRange());
+
+  return 0;
+}
+
+// Obsolete, only occurs in old stream files, because it doesn't
+// include phase information.
+RECEIVE_MSG InTappingMode {
+    // Call newer rcv function, with default values for the parameters 
+    // not covered by this message. 
+    printf("WARNING: Old Tapping Mode message received, treating as Oscillating\n");
+    RcvInOscillatingMode ( P, I, D, setpoint, amplitude, 100, 1, 1, 1, 0.0);
+}
+
+RECEIVE_MSG InOscillatingMode {
+//    float32 P
+//    float32 I
+//    float32 D
+//    float32 setpoint
+//    float32 amplitude
+//    float32 frequency
+//    int32 input_gain 
+//    int32 drive_attenuation
+//    float32 phase
+//    bool ampl_or_phase
+
+  if (state.acquisitionMode == MODIFY) {
+    printf("Matching AFM modify parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
+           setpoint,P, I, D, amplitude, frequency, input_gain,
+           ampl_or_phase, drive_attenuation, phase);
+    if (state.modify.mode != TAPPING) state.modify.mode = TAPPING;
+    state.modify.p_gain = P;
+    state.modify.i_gain = I;
+    state.modify.d_gain = D;
+    state.modify.setpoint = setpoint;
+    d_decoration->modSetpoint = setpoint;
+    state.modify.amplitude = amplitude;
+    state.modify.frequency = frequency;
+    state.modify.input_gain = input_gain;
+    state.modify.ampl_or_phase = ampl_or_phase;
+    state.modify.drive_attenuation = drive_attenuation;
+    state.modify.phase = phase;
+  } else if (state.acquisitionMode == IMAGE){
+    printf("Matching AFM image parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
+           setpoint,P, I, D, amplitude, frequency, input_gain,
+           ampl_or_phase, drive_attenuation, phase);
+    if (state.image.mode != TAPPING) state.image.mode = TAPPING;
+    state.image.p_gain = P;
+    state.image.i_gain = I;
+    state.image.d_gain = D;
+    state.image.setpoint = setpoint;
+    d_decoration->imageSetpoint = setpoint;
+    state.image.amplitude = amplitude;
+    state.image.frequency = frequency;
+    state.image.input_gain = input_gain;
+    state.image.ampl_or_phase = ampl_or_phase;
+    state.image.drive_attenuation = drive_attenuation;
+    state.image.phase = phase;
+  } else if (state.acquisitionMode == SCANLINE){
+    printf("Matching AFM scanline parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
+           setpoint,P, I, D, amplitude, frequency, input_gain,
+           ampl_or_phase, drive_attenuation, phase);
+    if (state.scanline.mode != TAPPING) state.scanline.mode = TAPPING;
+    state.scanline.p_gain = P;
+    state.scanline.i_gain = I;
+    state.scanline.d_gain = D;
+    state.scanline.setpoint = setpoint;
+    d_decoration->scanlineSetpoint = setpoint;
+    state.scanline.amplitude = amplitude;
+    state.scanline.frequency = frequency;
+    state.scanline.input_gain = input_gain;
+    state.scanline.ampl_or_phase = ampl_or_phase;
+    state.scanline.drive_attenuation = drive_attenuation;
+    state.scanline.phase = phase;
+  }
+  else {
+   fprintf(stderr, "RcvInOscillatingMode: Error, in unknown mode\n");
+  }
+}
+
+RECEIVE_MSG InContactMode {
+//    float32 P
+//    float32 I
+//    float32 D
+//    float32 setpoint
+  if (state.acquisitionMode == MODIFY) {
+    printf("Matching AFM modify parameters (Contact).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint,P, I, D);
+    if (state.modify.mode != CONTACT)
+      state.modify.mode = CONTACT;
+    state.modify.p_gain = P;
+    state.modify.i_gain = I;
+    state.modify.d_gain = D;
+    state.modify.setpoint = setpoint;
+    d_decoration->modSetpoint = setpoint;
+  } else if (state.acquisitionMode == IMAGE) {
+    printf("Matching AFM image parameters (Contact).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint,P, I, D);
+    if (state.image.mode != CONTACT)
+      state.image.mode = CONTACT;
+    state.image.p_gain = P;
+    state.image.i_gain = I;
+    state.image.d_gain = D;
+    state.image.setpoint = setpoint;
+    d_decoration->imageSetpoint = setpoint;
+  } else if (state.acquisitionMode == SCANLINE){
+    printf("Matching AFM scanline parameters (Contact).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint,P, I, D);
+    if (state.scanline.mode != CONTACT)
+      state.scanline.mode = CONTACT;
+    state.scanline.p_gain = P;
+    state.scanline.i_gain = I;
+    state.scanline.d_gain = D;
+    state.scanline.setpoint = setpoint;
+    d_decoration->scanlineSetpoint = setpoint;
+  }
+  else {
+    fprintf(stderr, "RcvInContactMode: Error, in unknown mode\n");
+  }
+}
+
+RECEIVE_MSG InDirectZControl {
+//    float32 max_z_step
+//    float32 max_xy_step
+//    float32 min_setpoint
+//    float32 max_setpoint
+//    float32 max_lateral_force
+//    float32 freespace_normal_force
+//    float32 freespace_lat_force
+
+  if (state.acquisitionMode == MODIFY) {
+    printf("Matching AFM Direct Z Control parameters.\n");
+    printf("   max_xy=%g  max_z=%g, min_setpoint=%g, max_setpoint=%g, max_lat_force %g\n", 
+	   max_z_step, max_xy_step, min_setpoint, 
+	   max_setpoint, max_lateral_force);
+    printf("   free space normal force %g, free space lateral force %g\n",
+	   freespace_normal_force, freespace_lat_force);
+    if (state.modify.control != DIRECTZ)
+       state.modify.control = DIRECTZ;
+    state.modify.max_z_step = max_z_step;
+    state.modify.max_xy_step = max_xy_step;
+    state.modify.min_z_setpoint = min_setpoint;
+    state.modify.max_z_setpoint = max_setpoint;
+    state.modify.max_lat_setpoint = max_lateral_force;
+    state.modify.freespace_normal_force = freespace_normal_force;
+    state.modify.freespace_lat_force = freespace_lat_force;
+  } else {
+    fprintf(stderr, "Can't do Image/DirectZ control!!\n");
+  }
+}
+
+RECEIVE_MSG InSewingStyle {
+//    float32 setpoint
+//    float32 bottomDelay
+//    float32 topDelay
+//    float32 pullBackDistance
+//    float32 moveDistance
+//    float32 moveRate
+//    float32 maxDistanceToApproach
+  if (state.acquisitionMode == MODIFY) {
+    printf("Matching AFM modify parameters (Sewing).\n");
+    if ((state.modify.mode != CONTACT) ||
+        (state.modify.style != SEWING)) {
+      state.modify.mode = CONTACT;
+      state.modify.style = SEWING;
+    }
+    state.modify.setpoint = setpoint;
+    d_decoration->modSetpoint = setpoint;
+    // transmit in sec, store in ms
+    state.modify.bot_delay = 1000.0 * bottomDelay;
+    state.modify.top_delay = 1000.0 * topDelay;
+    state.modify.z_pull = pullBackDistance;
+    state.modify.punch_dist = moveDistance;
+    // convert oppositely
+    state.modify.speed = 0.001 * moveRate;
+    state.modify.watchdog = maxDistanceToApproach;
+  } else {
+    fprintf(stderr, "Can't do Image/Sewing mode!\n");
+  }
+}
+
+RECEIVE_MSG InSpectroscopyMode {
+//    float32 setpoint
+//    float32 startDelay
+//    float32 zStart
+//    float32 zEnd
+//    float32 zPullback
+//    float32 forceLimit
+//    float32 distBetweenFC
+//    int32 numPoints
+//    int32 numHalfcycles
+//    float32 sampleSpeed
+//    float32 pullbackSpeed
+//    float32 startSpeed
+//    float32 feedbackSpeed
+//    int32 averageNum
+//    float32 sampleDelay
+//    float32 pullbackDelay
+//    float32 feedbackDelay
+
+  if (state.acquisitionMode == MODIFY) {
+    printf("Matching AFM modify parameters (Spectroscopy).\n");
+    printf("stdel=%g, z_st=%g, z_end=%g, z_pull=%g, forcelim=%g, dist=%g\n",
+           startDelay, zStart, zEnd, 
+           zPullback, forceLimit, distBetweenFC);
+    printf("numpoints=%d, numhalfcycles=%d, samp_spd=%g, "
+           "pull_spd=%g, start_spd=%g\n",
+           numPoints, numHalfcycles, sampleSpeed, 
+           pullbackSpeed, startSpeed);
+    printf("fdback_spd=%g, avg_num=%d, samp_del=%g, "
+           "pull_del=%g, fdback_del=%g\n",
+           feedbackSpeed, averageNum, sampleDelay, 
+           pullbackDelay, feedbackDelay);
+    if (state.modify.style != FORCECURVE) {
+      state.modify.style = FORCECURVE;
+    }
+    state.modify.setpoint = setpoint;
+    d_decoration->modSetpoint = setpoint;
+    state.modify.fc_start_delay = startDelay;
+    state.modify.fc_z_start = zStart;
+    state.modify.fc_z_end = zEnd;
+    state.modify.fc_z_pullback = zPullback;
+    state.modify.fc_force_limit = forceLimit;
+    state.modify.fc_movedist = distBetweenFC;
+    state.modify.fc_num_points = numPoints;
+    state.modify.fc_num_halfcycles = numHalfcycles;
+    state.modify.fc_sample_speed = sampleSpeed;
+    state.modify.fc_pullback_speed = pullbackSpeed;
+    state.modify.fc_start_speed = startSpeed;
+    state.modify.fc_feedback_speed = feedbackSpeed;
+    state.modify.fc_avg_num = averageNum;
+    state.modify.fc_sample_delay = sampleDelay;
+    state.modify.fc_pullback_delay = pullbackDelay;
+    state.modify.fc_feedback_delay = feedbackDelay;
+  } else {
+    fprintf(stderr, "Can't do Image/SpectroscopyMode!\n");
+  }
+}
+
+RECEIVE_MSG InModMode {
+  state.acquisitionMode = MODIFY;
+  //printf("In modify mode\n");
+
+  d_mod_window_initialized = vrpn_FALSE;
+
+  // I think this should only be done if we get the startingToRelax message.
+  // Do relaxation compensation ( if it is enabled)
+  //d_relax_comp.start_fix(_sec, _usec, state.lastZ);
+  //printf("Compensating mod force %g\n", (float) state.modify.setpoint);
+
+  if (state.doDriftComp)
+    driftZDirty();
+
+  doModifyModeCallbacks();
+}
+
+RECEIVE_MSG InImgMode {
+  int previousAcquisitionMode = state.acquisitionMode;
+  state.acquisitionMode = IMAGE;
+  //printf("In image mode\n");
+
+  if (state.doDriftComp)
+    driftZDirty();
+
+  // If we're only relaxing down, turn off the relaxation code
+  d_relax_comp.stop_fix();
+  // XXX Took out the ability to compensate for transition
+  // into image mode from modify mode. 
+  //if (!state.doRelaxUp) { ... }
+
+  doImageModeCallbacks();
+
+  d_mod_window_pad = state.numLinesToJumpBack;
+
+  // did we just come out of modifying and did we receive at least one 
+  // point result?
+  if ((previousAcquisitionMode == MODIFY) && d_mod_window_initialized) {
+    // add padding to the region
+    d_mod_window_min_x -= d_mod_window_pad;
+    d_mod_window_min_y -= d_mod_window_pad;
+    d_mod_window_max_x += d_mod_window_pad;
+    d_mod_window_max_y += d_mod_window_pad;
+    // check to make sure we don't exceed the image boundaries
+    if (d_mod_window_min_x < 0) d_mod_window_min_x = 0;
+    if (d_mod_window_min_y < 0) d_mod_window_min_y = 0;
+    if (d_mod_window_max_x > d_dataset->inputGrid->numX() - 1)
+        d_mod_window_max_x = d_dataset->inputGrid->numX() - 1;
+    if (d_mod_window_max_y > d_dataset->inputGrid->numY() - 1)
+        d_mod_window_max_y = d_dataset->inputGrid->numY() - 1;
+
+    // this function would be nice but isn't implemented and probably
+    // would require someone to write new Topometrix dsp code
+    //SetScanWindow(d_mod_window_min_x, d_mod_window_min_y,
+    //              d_mod_window_max_x, d_mod_window_max_y);
+
+    // instead we do this:
+    // XXX - this should depend on the direction of the scanning
+    // (whether its up or down in the Y direction)
+    // this is hard-coded for what works with typical Thermomicroscope setup
+    int lineNumber = d_dataset->inputGrid->numY()-1 - d_mod_window_max_y;
+    //printf("jumping to line %d after modify\n", lineNumber);
+    JumpToScanLine(lineNumber);
+
+  }
+}
+
+/* Helps with Thermo Image Analysis mode. When in this mode, most of 
+ the widgets/dialogs that Nano needs to control the SPM aren't available
+ So we avoid issuing any commands to Thermo, by disabling all device 
+ controls. 
+*/
+RECEIVE_MSG SuspendCommands nmm_SPM_Report {
+    if (ReadMode() != READ_DEVICE) return;
+    state.commands_suspended = 1;
+}
+
+RECEIVE_MSG ResumeCommands {
+    if (ReadMode() != READ_DEVICE) return;
+    state.commands_suspended = 0;
+}
+
+RECEIVE_MSG StartingToRelax {
+//    int32 sec
+//    int32 usec
+  if (state.doRelaxComp) {
+    d_relax_comp.start_fix(sec, usec, state.lastZ);
+    //printf("Beginning relaxation compensation at %ld:%ld\n", sec, usec);
+  }
+
+  if (state.doDriftComp)
+    driftZDirty();
+}
+
+RECEIVE_MSG RelaxSet {
+//    int32 minTime
+//    int32 sepTime
+  
+  state.stmRxTmin = minTime;
+  state.stmRxTsep = sepTime;
+
+  if (minTime == 0 && sepTime == 0) {
+      d_relax_comp.disable();
+  } else {
+      d_relax_comp.set_ignore_time_ms(minTime);
+      d_relax_comp.set_separation_time_ms(sepTime);
+      d_relax_comp.enable(nmm_RelaxComp::DECAY);
+  }
+
+//  printf("Relax ignore time set at %ld\n", minTime);
+//  printf("Relax separation time set at %ld\n", sepTime);
+}
+
+RECEIVE_MSG WindowLineData {
+//    int32 x
+//    int32 y
+//    int32 dx
+//    int32 dy
+//    int32 reports
+//    int32 fields
+//    int32 sec
+//    int32 usec
+//    float32 data [reports][fields]
+
+  if (x < 0 || y < 0 || 
+     (x+(reports-1)*dx) > (d_dataset->inputGrid->numX()-1) ||
+     (y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1)) {
+     display_fatal_error_dialog( "Internal: grid size (%d,%d) doesn't match"
+           " reported data size (%dx%d). Exiting to avoid loss of data.", 
+           d_dataset->inputGrid->numX(),
+           d_dataset->inputGrid->numY(),
+           reports, reports);
+     return;
+  }
+  int i;
+  // Store the data in the BCGrid/BCPlanes structure using
+  // the scan_channel selector to put it in the right place. 
+  for (i = 0; i < reports; i++) {
+      if (state.data.scan_channels->Handle_report(x+ i*dx, y+ i*dy, sec, usec,
+                                         data[i], fields)) {
+          fprintf(stderr, "Error handling window line data\n");
+          d_dataset->done = VRPN_TRUE;
+          return;
+      }
+  }
+
+  // Change the background, since we are not touching or modifying
+  d_decoration->mode = nmb_Decoration::IMAGE;
+
+  // Incremental save of stream file
+  // when user is not touching or modifying the sample.
+  // XXX May cause slowdown on network drives. 
+  if (d_incr_save) {
+      d_connection->save_log_so_far();
+  }
+
+  double curr_x, curr_y, xf, yf;
+  nmb_Image *image;
+  
+  // need to convert from a nmb_string to a BCString
+  BCString o = BCString( (d_dataset->heightPlaneName->string()) );
+  image = d_dataset->dataImages->getImageByName( o );
+
+  // Draw the green "Scanline"
+  // we want to stick the x,y and z values of every pixel along the
+  // last received line to an array into the nmb_Decoration class so
+  // that we can grab it later and draw the microscope's "scanline"
+
+  if (d_decoration->scan_line) {
+    // if the decoration's lineCount isn't the same as the current linecount
+    // the microscope's surface size changed, so update the decoration's
+    // linecount field
+    if (d_decoration->scanLineCount != reports) {
+      delete [] d_decoration->scan_line;
+      d_decoration->initScanline(reports);
+    }
+  }
+  else {
+    d_decoration->initScanline(reports);
+  }
+  BCPlane *plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
+  if (plane == NULL) return;
+  for (i = 0; i < reports; i++) {
+    curr_x = x + i * dx;
+    curr_y = y + i * dy;
+    image->pixelToWorld( (double)curr_x, (double)curr_y, xf, yf);
+    d_decoration->scan_line[i][0] = xf;
+    d_decoration->scan_line[i][1] = yf;
+    d_decoration->scan_line[i][2] = plane->scaledValue( curr_x, curr_y );
+  }
+
+  BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
+  // Color map drift compensation. Keep track of the average data value of the
+  // first scan line
+  if (cp && (x == 0) && (y == cp->numY() -1)) {
+      d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+  }
+  return;
+}
+
+// point results for sharp, sweep, sewing (bottom and top) styles
+RECEIVE_MSG PointResultData nmm_Monitor {
+//    float32 x
+//    float32 y
+//    int32 sec
+//    int32 usec
+//    int32 reports
+//    float32 data [reports]
+
+  Point_value * z_value;
+  float height;
+  long i;
+
+  if (spm_verbosity >= 1) {
+    printf("nmm_Microscope_Remote::RcvResultData: Point result,"
+	   " at (%g, %g), time %ld:%ld\n",
+           x, y, sec, usec);
+    printf("  Raw values:");
+    for (i = 0; i < reports; i++) {
+      printf(" %g", data[i]);
+    }
+    printf("\n");
+  }
+
+  timeval now, then, diff;
+  if (d_tsList) {
+
+    // TCH network adaptations Nov 2000
+    // Add this to the application-level round-trip-timing record.
+
+    // Timestamp in <sec, usec> should be the same timestamp we sent it with.
+    gettimeofday(&now, NULL);
+    then.tv_sec = sec;
+    then.tv_usec = usec;
+    diff = vrpn_TimevalDiff(now, then);
+    d_tsList->add(now, diff);
+  }
+
+  // Make the report.  This has the side effect of updating
+  // the inputPoint values and, if d_accumulatePointResults,
+  // the incomingPointList.
+  // HACK HACK HACK
+  if (state.data.point_channels->Handle_report(x, y, sec, usec,
+                                          (float *) data, reports,
+                                          d_accumulatePointResults)) {
+    fprintf(stderr, "Error handling SPM point result data\n");
+    d_dataset->done = VRPN_TRUE;
+    return;
+  }
+
+  if (spm_verbosity >= 1) {
+    state.data.inputPoint->print("  Result:");
+  }
+
+  // Look up the value that corresponds to what is
+  // mapped to the heightGrid, if we are getting that
+  // data set.  This will make what we feel match what
+  // we are looking at.
+  z_value = state.data.inputPoint->getValueByPlaneName
+                   (d_dataset->heightPlaneName->string());
+
+  // Do relaxation compensation using the data set that is mapped to
+  // height.
+  if (z_value) {
+    height = z_value->value();
+
+    // If the height needs adjusting, do the adjustment, maybe using
+    // a stored value. 
+    // Otherwise fix_height will leave the height alone. 
+    height = d_relax_comp.fix_height(sec, usec, height);
+    z_value->setValue(height);
+
+    //Store this height 
+    state.lastZ = height;
+  }
+
+  //XXX Drift compensation taken out
+
+  // splat this point onto the grid
+  if (state.doSplat && !d_relax_comp.is_ignoring_points()) {
+    ptSplat(&state.lost_changes, d_dataset->inputGrid, state.data.inputPoint);
+  }
+
+  // set the background color
+  if (state.acquisitionMode == MODIFY) {
+    // red if modifying
+    d_decoration->mode = nmb_Decoration::MODIFY;
+  } else {
+    // yellow if just touching or moving to start position or relaxing
+    d_decoration->mode = nmb_Decoration::FEEL;
+  }
+
+  if (state.readingStreamFile && !state.cannedLineVisible) {
+    state.cannedLineVisible = VRPN_TRUE;
+  }
+
+  // if it's a modification result, display it
+  if ((state.acquisitionMode == MODIFY || state.cannedLineVisible) &&
+      (!d_relax_comp.is_ignoring_points())) {
+
+    // if we haven't committed then we don't know that
+    // state.modify.slow_line_prevPt and
+    // state.modify.slow_line_currPt have been initialized at this point
+    // (see code that gives us this assertion at interaction.c:drawLine(), 
+    //  line 495)
+    if (state.modify.tool == SLOW_LINE_3D &&
+        state.modify.slow_line_committed) {
+
+      if (state.modify.slow_line_prevPt != NULL &&
+          state.modify.slow_line_currPt != NULL) {
+          float z1 =  state.modify.slow_line_prevPt->z();
+          float z2 =  state.modify.slow_line_currPt->z();
+          if (z_value) {
+            z_value->setValue( z2*(state.modify.slow_line_position_param) +
+                z1*(1.0-state.modify.slow_line_position_param));
+          }
+      } else {
+          fprintf(stderr, "RcvResultData: expected init_slow_line to be done (programmer error)\n");
+      }
+    }
+// Causes the white tick marks/modify markers to show up.      
+    DisplayModResult(state.data.inputPoint->x(),
+                     state.data.inputPoint->y(),
+                     0.0f, z_value, VRPN_TRUE);
+  }
+  if (state.modify.style != FORCECURVE)	{
+      // XXX HACK - we need point results
+//      if (ohmmeter !=NULL) {
+        if (lastResistanceReceived >= 0) {
+          // HACK - to get ohmmeter data in point results
+          char *res_channel_name = "Resistance";
+          char *res_channel_unit = "Ohms";
+          if (!d_res_channel_added) {
+              state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
+              d_res_channel_added = vrpn_TRUE;
+          }
+
+          Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
+          if (!pv) {
+              fprintf(stderr, "nmm_Microscope_Remote::RcvResultData: "
+                      "Unable to get ohmmeter channel\n");
+          } else {
+              pv->setValue(lastResistanceReceived);
+          }
+          // END HACK
+      }
+     
+     doPointDataCallbacks(state.data.inputPoint); // to feel what we are
+						// doing but we don't
+						// want to store them
+						// in a modfile because
+						// its being used to
+						// store the force curve
+     
+  }
+
+  if (z_value) {
+    // Latency compensation
+    // !z_value iff we're replaying a stream file and using a derived
+    // plane for height.
+    d_decoration->trueTipLocation[0] = x;
+    d_decoration->trueTipLocation[1] = y;
+    d_decoration->trueTipLocation[2] = z_value->value();
+    d_decoration->trueTipLocation_changed = 1;
+  }
+
+  if (state.acquisitionMode == MODIFY) {
+     double grid_x, grid_y;
+     d_dataset->inputGrid->worldToGrid((double)x, (double)y, grid_x, grid_y);
+     if (!d_mod_window_initialized) {
+        d_mod_window_min_x = (vrpn_int32)grid_x;
+        d_mod_window_min_y = (vrpn_int32)grid_y;
+        d_mod_window_max_x = (vrpn_int32)grid_x;
+        d_mod_window_max_y = (vrpn_int32)grid_y;
+        d_mod_window_initialized = vrpn_TRUE;
+     } else {
+        if (grid_x < d_mod_window_min_x) 
+            d_mod_window_min_x = (vrpn_int32)grid_x;
+        else if (grid_x > d_mod_window_max_x) 
+            d_mod_window_max_x = (vrpn_int32)grid_x;
+        if (grid_y < d_mod_window_min_y) 
+            d_mod_window_min_y = (vrpn_int32)grid_y;
+        else if (grid_y > d_mod_window_max_y) 
+            d_mod_window_max_y = (vrpn_int32)grid_y;
+     }
+  }
+}
+
+// Is the microscope scanning (1), or is the scan paused (0)? 
+RECEIVE_MSG Scanning nmm_SPM_Report {
+//    int32 on_off
+    //printf("Scanning is %s\n", (on_off ? "on": "off"));
+  // hack to avoid infinite loops
+  if (state.scanning != on_off) {
+      state.scanning.d_ignoreChange = VRPN_TRUE;
+      state.scanning = on_off;
+      state.scanning.d_ignoreChange = VRPN_FALSE;
+  }
+}
+
+// XXX
+// "Think about what this means when the data sets can be changed"
+RECEIVE_MSG ScanRange {
+//    float32 xmin
+//    float32 ymin
+//    float32 zmin
+//    float32 xmax
+//    float32 ymax
+//    float32 zmax
+  BCPlane * heightPlane;
+
+  heightPlane = d_dataset->inputGrid->getPlaneByName
+                   (d_dataset->heightPlaneName->string());
+
+  printf("Max scan range (%g, %g) to (%g, %g)\n",
+         xmin, ymin, xmax, ymax);
+  printf("  Instrument Z range is %g to %g\n", zmin, zmax);
+
+  if (xmin < xmax) {
+      state.xMin = xmin;
+      state.xMax = xmax;
+  } else {
+      state.xMin = xmax;
+      state.xMax = xmin;
+  }
+  if (ymin < ymax) {
+      state.yMin = ymin;
+      state.yMax = ymax;
+  } else {
+      state.yMin = ymax;
+      state.yMax = ymin;
+  }
+  if (zmin < zmax) {
+      state.zMin = zmin;
+      state.zMax = zmax;
+      heightPlane->setMinAttainableValue(zmin);
+      heightPlane->setMaxAttainableValue(zmax);
+  } else {
+      state.zMin = zmax;
+      state.zMax = zmin;
+      heightPlane->setMinAttainableValue(zmax);
+      heightPlane->setMaxAttainableValue(zmin);
+  }
+  if (state.doDriftComp)
+    driftZDirty();
+}
+
+RECEIVE_MSG ReportScanAngle {
+//    float32 angle
+  float newangle;
+
+  // HACK to break loops
+  newangle = Q_RAD_TO_DEG(angle);
+  if (newangle != (float)(state.image.scan_angle)) {
+    state.image.scan_angle = newangle;
+    printf( "New scan angle = %g\n", (float)(state.image.scan_angle) );
+  }
+
+    //state.image.scan_angle = Q_RAD_TO_DEG(angle);
+}
+
+
+RECEIVE_MSG SetRegionClipped {
+//    float32 xmin
+//    float32 ymin
+//    float32 xmax
+//    float32 ymax
+
+  BCPlane * heightPlane;
+  BCPlane * p;
+  long x, y;
+
+  heightPlane = d_dataset->inputGrid->getPlaneByName
+                   (d_dataset->heightPlaneName->string());
+
+  if (state.regionFlag) {
+    d_decoration->selectedRegionMinX = d_dataset->inputGrid->minX();
+    d_decoration->selectedRegionMinY = d_dataset->inputGrid->minY();
+    d_decoration->selectedRegionMaxX = d_dataset->inputGrid->maxX();
+    d_decoration->selectedRegionMaxY = d_dataset->inputGrid->maxY();
+  } else {
+    state.regionFlag = VRPN_TRUE;
+  }
+  d_dataset->inputGrid->setMinX(xmin);
+  d_dataset->inputGrid->setMinY(ymin);
+  d_dataset->inputGrid->setMaxX(xmax);
+  d_dataset->inputGrid->setMaxY(ymax);
+//    printf( "            nmm_Microscope_Remote::RcvSetRegionC minX %g minY %g maxX %g maxY %g\n", 
+//            minX, minY, maxX, maxY );
+
+  state.modify.region_diag =
+     sqrt((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
+          (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) +
+          (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
+          (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()));
+
+  // Initialize select widget values, so we can change
+  // the region with Select mode.
+  state.select_region_rad = 0.5 * (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX());
+  state.select_center_x = d_dataset->inputGrid->minX() + state.select_region_rad;
+  state.select_center_y = d_dataset->inputGrid->minY() + state.select_region_rad;
+
+  // initialize splatting filter
+  mkSplat(d_dataset->inputGrid);
+  if (state.doDriftComp)
+    driftZDirty();
+
+  state.current_epoch++;
+
+  // fill in the grid with flat values
+  for (p = d_dataset->inputGrid->head(); p; p = p->next())
+    for (x = 0; x < p->numX(); x++)
+      for (y = 0; y < p->numY(); y++)
+        p->setValue(x, y, 0);
+
+  d_decoration->selectedRegion_changed = 1;
+
+  if (heightPlane) {
+      fprintf(stderr, "New region (%g, %g) to (%g, %g)\n",
+         heightPlane->minX(), heightPlane->minY(),
+         heightPlane->maxX(), heightPlane->maxY());
+
+      d_decoration->red.doCallbacks(heightPlane->minX(), heightPlane->minY(),
+                            heightPlane);
+      d_decoration->green.doCallbacks(heightPlane->maxX(), heightPlane->minY(),
+                            heightPlane);
+      d_decoration->blue.doCallbacks(heightPlane->maxX(), heightPlane->maxY(),
+                            heightPlane);
+      d_decoration->aimLine.moveTo(heightPlane->minX(), heightPlane->maxY(),
+                            heightPlane);
+  }
+  state.SetDefaultScanlineForRegion(d_dataset);
+
+//fprintf(stderr, "region set complete\n");
+}
+
+RECEIVE_MSG ReportSlowScan {
+//    int32 enabled
+  if (state.slowScanEnabled != enabled) {
+     state.slowScanEnabled = enabled;
+  }
+}
+
+RECEIVE_MSG HelloMessage {
+//    char nm [4]
+//    char scopeName [SPM_NAME_LENGTH]
+//    int32 majorVersion
+//    int32 minorVersion
+  if (strcmp(nm, "nM!")) {
+    fprintf(stderr, "Bad magic in microscope hello\n");
+    fprintf(stderr, "  (expected \"nM!\", got \"%s\"\n", nm);
+    d_dataset->done = VRPN_TRUE;
+    return;
+  }
+  printf("Hello from microscope %s, version %ld.%ld\n", scopeName, 
+         majorVersion, minorVersion);
+}
+
+/*
+void nmm_Microscope_Remote::RcvClientHello (const char * _magic, const char * _name,
+                                 long _majorVersion,
+                                 long _minorVersion) {
+  if (strcmp(_magic, "nM!")) {
+    fprintf(stderr, "Bad magic in client hello\n");
+    fprintf(stderr, "  (expected \"nM!\", got \"%s\"\n", _magic);
+    d_dataset->done = VRPN_TRUE;
+    return;
+  }
+  printf("Streamfile written by %s, version %ld.%ld\n", _name, _majorVersion,
+         _minorVersion);
+
+}
+*/
+
+void nmm_Microscope_Remote::ClearScanChannels (void) {
+  // we use the same messages for 2D and 1D scanning but there is the
+  // possibility that in SCANLINE mode we cannot provide all the requested
+  // channels so these are temporarily reduced
+  if (state.acquisitionMode == SCANLINE) {
+      ClearScanlineChannels();
+  } else {
+      if (state.data.scan_channels->Clear_channels()) {
+          fprintf(stderr, "nmm_Microscope_Remote::RcvClearScanChannels:"
+             " Can't clear scan datasets\n");
+          d_dataset->done = VRPN_TRUE;
+      }
+  }
+}
+
+RECEIVE_MSG_HEADER ScanDataset {
+//    int32 count
+    count = count;
+    ClearScanChannels();
+}
+
+RECEIVE_MSG_BODY ScanDataset {
+//      char name [64]
+//      char units [64]
+//      float32 offset
+//      float32 scale
+
+  // we use the same messages for 2D and 1D scanning but there is the
+  // possibility that in SCANLINE mode we cannot provide all the requested
+  // channels so these are temporarily reduced
+  if (state.acquisitionMode == SCANLINE) {
+      RcvScanlineDataset(name, units, offset, scale);
+  } else {
+      fprintf(stderr, "  %s (%s), offset:  %g, scale:  %g\n",
+              name, units, offset, scale);
+      // HACK HACK HACK
+      if (state.data.scan_channels->Add_channel( &(name[0]),
+                                 &(units[0]), offset, scale)) {
+          fprintf(stderr, "Can't add scan dataset\n");
+          d_dataset->done = VRPN_TRUE;
+      }
+      nmb_Image *new_image = d_dataset->dataImages->getImageByName(name);
+      new_image->setTopoFileInfo(d_topoFile);
+  }
+}
+
+void nmm_Microscope_Remote::ClearPointChannels (void) {
+  if (state.data.point_channels->Clear_channels()) {
+    fprintf(stderr, "nmm_Microscope_Remote::ClearPointChannels: Can't clear point datasets\n");
+    d_dataset->done = VRPN_TRUE;
+  } else {
+      printf("New Point Datasets:\n");
+  } 
+}
+
+RECEIVE_MSG_HEADER PointDataset {
+//    int32 count
+    count = count;
+    ClearPointChannels();
+}
+
+RECEIVE_MSG_BODY PointDataset {
+//      char name [64]
+//      char units [64]
+//      int32 numSamples
+//      float32 offset
+//      float32 scale
+
+  printf("  %s (%s), count:  %ld, offset:  %g, scale:  %g\n",
+         name, units, numSamples, offset, scale);
+
+  if (state.data.point_channels->Add_channel(&(name[0]), &(units[0]), 
+                                        offset, scale, numSamples)) {
+    fprintf(stderr, "Can't add point dataset\n");
+    d_dataset->done = VRPN_TRUE;
+  }
+}
+
+RECEIVE_MSG PidParameters {
+//    float32 P
+//    float32 I
+//    float32 D
+  printf("Feedback:  P=%g, I=%g, D=%g\n", P, I, D);
+  // We want the modify PID defaults to match the PID of image mode.
+  // This is the initialization message sent by the AFM to tell us
+  // what the PID are. So if this is the first time we get this
+  // message, we will set the modify PID as well.
+  static int first_message_received = 1;
+  if (state.acquisitionMode == MODIFY) {
+    state.modify.p_gain = P;
+    state.modify.i_gain = I;
+    state.modify.d_gain = D;
+    first_message_received = 0;
+  } else {
+    state.image.p_gain = P;
+    state.image.i_gain = I;
+    state.image.d_gain = D;
+    if (first_message_received ){
+	first_message_received = 0;
+	// Set defaults for modify mode...
+	state.modify.p_gain = P;
+	state.modify.i_gain = I;
+	state.modify.d_gain = D;
+    }
+  }
+}
+
+RECEIVE_MSG ScanrateParameter {
+//    float32 rate
+  if (state.acquisitionMode == MODIFY) {
+	printf("Warning! Rate changed on topo in modify mode (ignoring)\n");
+  } else {
+	state.image.scan_rate_microns = rate / 1000.0;
+	printf("New scan rate:  %g (nM/s)\n", rate);
+  }
+}
+
+RECEIVE_MSG ReportGridSize {
+//    int32 x
+//    int32 y
+  printf("Grid size from scanner:  %ldx%ld\n", x, y);
+  if ((x != d_dataset->inputGrid->numX()) ||
+      (y != d_dataset->inputGrid->numY())) {
+//      fprintf(stderr, "Reset grid size from %d %d!\n",
+//  	    d_dataset->inputGrid->numX(),
+//  	    d_dataset->inputGrid->numY());
+    if (d_dataset->setGridSize(x, y)) {
+	// Non-zero indicates error!
+	fprintf(stderr, "ERROR: unable to reset grid size\n");
+	// If we don't set exit flag here, we just get a bus error later.
+	d_dataset->done = VRPN_TRUE;
+	// New strategy, so don't abruptly exit...
+	//exit(-1); // we get a bus error before the next iteration, so exit now.
+    }
+    // update the user interface. 
+    state.image.grid_resolution = x;
+  }
+  return ;
+}
+
+RECEIVE_MSG TopoFileHeader {
+//    int32 length
+//    char header [length]
+    //printf("********** RCV'D TOPO FILE HEADER **********\n");
+  if(length < 1536){
+	printf("Unexpected Header length %ld need at least 1536\n", length);
+  }else{
+	d_topoFile.parseHeader(header, length);
+  	//printf("********** Got Topometrix file header, length %ld\n", length);
+
+        nmb_ImageList *images = d_dataset->dataImages;
+        int i;
+        for (i = 0; i < images->numImages(); i++) {
+             images->getImage(i)->setTopoFileInfo(d_topoFile);
+        }
+
+/*	handle=fopen("temp.tfr","w");
+	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}
+	fHdl=fileno(handle);
+	write(fHdl,header,_length*sizeof(char));	
+	fclose(handle);
+*/
+  }
+}
+
+
+RECEIVE_MSG_HEADER ForceCurveData {
+//    float32 x
+//    float32 y
+//    int32 numSamples
+//    int32 numHalfcycles
+//    int32 sec
+//    int32 usec
+
+  Point_results pnt;
+  if (spm_verbosity >= 1) {
+    printf("Force Curve result, at (%g, %g), time %ld:%ld\n", x, y, sec, usec);
+    //printf("  values:");
+  }
+
+  state.fc_x = x;
+  state.fc_y = y;
+  state.fc_numSamples = numSamples ;
+  state.fc_numHalfcycles = numHalfcycles;
+  state.fc_sec = sec;
+  state.fc_usec = usec;
+}
+
+RECEIVE_MSG_BODY ForceCurveData {
+//      float32 z
+//      float32 *d 
+//      int32 numHalfcycles
+
+  // Make the report. This has the side effect of updating
+  // the fc_inputPoint values.
+  // HACK HACK HACK
+  for (int i = 0; i < numHalfcycles; i++){
+      // Some weirdness here - we hard-code number of channels to 1
+      // that means we are only collecting one kind of data, but
+      // in a cycle. 
+      if (state.data.forcecurve_channels->Handle_report(state.fc_x, 
+                        state.fc_y, z, state.fc_sec, state.fc_usec, 
+                        (float *)&(d[i]), 1))
+	fprintf(stderr, "Error handling SPM force curve result data\n");
+      doPointDataCallbacks(state.data.fc_inputPoint);
+  }
+  // draw graphical representation
+  DisplayModResult(state.data.fc_inputPoint->x(),
+		   state.data.fc_inputPoint->y(),
+		   0.0f, NULL, VRPN_FALSE);
+
+}
+
+// updates user interface
+RECEIVE_MSG InScanlineMode {
+//    int32 enabled   
+
+  if (enabled){
+    printf("In scanline mode\n");
+    state.acquisitionMode = SCANLINE;
+    doScanlineModeCallbacks();
+    d_decoration->mode = nmb_Decoration::SCANLINE;
+  }
+  else {
+    printf("exited scanline mode (proper scan region should be restored)\n");
+    ImageMode();
+  }
+}
+
+// updates user interface and data object
+void nmm_Microscope_Remote::ClearScanlineChannels (void) {
+  // update user interface:
+  // update data storage
+  if (state.data.currentScanlineData.clearChannels()){
+    fprintf(stderr, "Can't clear scanline datasets\n");
+    d_dataset->done = VRPN_TRUE;
+  }
+}
+
+// updates user interface and data object
+// Not received directly, but called from receive ScanDataset
+void nmm_Microscope_Remote::RcvScanlineDataset(const char * _name, 
+	const char * _units, float /*_offset*/, float /*_scale*/) {
+//  printf("RcvScanlineDataset:  %s (%s), offset:  %g, scale:  %g\n",
+//         _name, _units, _offset, _scale);
+
+  if (state.data.currentScanlineData.addChannel(_name, _units)) {
+    fprintf(stderr, "Can't add scanline dataset\n");
+    d_dataset->done = VRPN_TRUE;
+  }
+}
+
+// updates data object
+RECEIVE_MSG ScanlineData {
+//    float32 x
+//    float32 y
+//    float32 z
+//    float32 angle
+//    float32 slope
+//    float32 width
+//    int32 resolution
+//    int32 feedback_enabled
+//    int32 checking_forcelimit
+//    float32 max_force_setting
+//    float32 max_z_step
+//    float32 max_xy_step
+//    int32 sec
+//    int32 usec
+//    int32 num_channels
+//    float32 data[resolution][num_channels]
+
+    if (state.scanline.continuous_rescan)
+        AcquireScanline();
+    else
+        ExitScanlineMode();
+
+    printf("got scanline data header\n");
+    state.scanline.num_scanlines_to_receive--;
+
+    if (state.scanline.num_scanlines_to_receive < 0) {
+        fprintf(stderr, "Warning: received more scanlines than expected\n");
+        state.scanline.num_scanlines_to_receive = 0;
+    }
+
+    if (state.data.currentScanlineData.num_values() != num_channels) {
+        fprintf(stderr, "Error: scanline header has wrong number of channels:");
+        fprintf(stderr, "  got %ld, expected %d\n",
+                num_channels, state.data.currentScanlineData.num_values());
+        return;
+    }
+    state.data.currentScanlineData.setLength(resolution);
+    state.data.currentScanlineData.setTime(sec, usec);
+    state.data.currentScanlineData.setEndpoints(x, y, z,
+        x + sin(angle)*width, y + cos(angle)*width, z);
+
+
+    if (state.scanline.feedback_enabled != feedback_enabled){
+        fprintf(stderr, "Warning:");
+        if (state.scanline.feedback_enabled) {
+            fprintf(stderr, "Scanline: Feedback enabled in user interface"
+                  "but disabled in currently received data\n");
+        }
+        else {
+            fprintf(stderr, "Scanline: Feedback disabled in user interface"
+                  "but enabled in currently received data\n");
+        }
+    }
+	//state.scanline.feedback_enabled = _enable_feedback;
+	state.scanline.forcelimit_enabled = checking_forcelimit;
+	state.scanline.forcelimit = max_force_setting;
+	state.scanline.max_z_step = max_z_step;
+	state.scanline.max_xy_step = max_xy_step;
+
+      // converts from DAC units to the appropriate units for each channel and
+    float value;
+    for (int i = 0; i < resolution; i++){
+      for (int j = 0; j < num_channels; j++){
+        value = state.data.scan_channels->DAC_to_units(j, data[i][j]);
+        state.data.currentScanlineData.setValue(i, j, value);
+      }
+    }
+      // calls callbacks to handle the new data
+    doScanlineDataCallbacks(&(state.data.currentScanlineData));
+    d_decoration->mode = nmb_Decoration::SCANLINE;
+}
+
+
+RECEIVE_MSG MaxSetpointExceeded {
+   //TODO: When max setpoint is exceeded, add a plane force
+   // so the user can feel, without looking for this printout:
+   fprintf(stderr, "### Max Setpoint Exceeded in Direct Z Control ###\n");
+}
+
+RECEIVE_MSG BeginFeelTo {
+  accumulatePointResults(VRPN_TRUE);
+}
+
+RECEIVE_MSG EndFeelTo {
+//    float32 x
+//    float32 y
+//    int32 numx
+//    int32 numy
+//    float32 dx
+//    float32 dy
+//    float32 orientation
+fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
+
+  state.data.receivedAlgorithm.numx = numx;
+  state.data.receivedAlgorithm.numy = numy;
+  state.data.receivedAlgorithm.dx = dx;
+  state.data.receivedAlgorithm.dy = dy;
+  state.data.receivedAlgorithm.orientation = orientation;
+
+  accumulatePointResults(VRPN_FALSE);
+  swapPointList();
+  doFeeltoCallbacks();
+}
+
+void nmm_Microscope_Remote::doImageModeCallbacks (void) {
+  modeHandlerEntry * l;
+
+  //fprintf(stderr, "nmm_Microscope_Remote::doImageModeCallbacks\n");  // Tiger
+
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_imageModeHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "nmm_Microscope_Remote::doImageModeCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+
+}
+
+void nmm_Microscope_Remote::doModifyModeCallbacks (void) {
+  modeHandlerEntry * l;
+
+  //fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks\n");
+
+  // Force decoration->elapsedTime to be updated, so ModFile callback
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_modifyModeHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+
+
+}
+
+void nmm_Microscope_Remote::doPointDataCallbacks (const Point_results * p) {
+  pointDataHandlerEntry * l;
+
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_pointDataHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata, p)) {
+      fprintf(stderr, "nmm_Microscope_Remote::doPointDataCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+
+
+}
+
+void nmm_Microscope_Remote::doScanlineModeCallbacks (void) {
+  modeHandlerEntry * l;
+
+  //fprintf(stderr, "Microscope::doScanlineModeCallbacks\n");
+
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_scanlineModeHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "Microscope::doScanlineModeCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+}
+
+void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
+{
+  scanlineDataHandlerEntry * l;
+
+  // Force decoration->elapsedTime to be updated, so ModFile callback
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_scanlineDataHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata, s)) {
+      fprintf(stderr, "Microscope::doScanlineDataCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+}
+
+void nmm_Microscope_Remote::doFeeltoCallbacks (void) {
+  feeltoHandlerEntry * l;
+
+  //fprintf(stderr, "Microscope::doFeeltoCallbacks\n");
+
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_feeltoHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "Microscope::doFeeltoCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+}
+
+void nmm_Microscope_Remote::swapPointList (void) {
+
+  int i;
+
+  // Awkward, but it's the interface that's there today.
+
+  state.data.receivedPointList.clear();
+  for (i = 0; i < state.data.incomingPointList.numEntries(); i++) {
+    state.data.receivedPointList.addEntry
+           (*state.data.incomingPointList.entry(i));
+  }
+  state.data.incomingPointList.clear();
+
+}
+
+
+// static 
+int nmm_Microscope_Remote::handle_barrierSynch (void *ud, 
+                                  const nmb_SynchMessage *msg)
+{
+   nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
+//   printf("got barrier synch message for slow line(?)\n");
+
+   if (me->ReadMode() != READ_DEVICE) {
+       // we have nothing to do in this case (this message is only for
+       // control over a live microscope)
+       return 0;
+   }
+   if (strcmp(msg->comment, RELAX_MSG) == 0) {
+      if ((me->state.modify.tool != SLOW_LINE)&&
+	  (me->state.modify.tool != SLOW_LINE_3D)) {
+         fprintf(stderr, "nmm_Microscope::handle_barrierSynch: Error, not in"
+                         " slow line mode\n");
+         return 0;
+      }
+      float x1 =  me->state.modify.slow_line_prevPt->x();
+      float y1 =  me->state.modify.slow_line_prevPt->y();
+      float x2 =  me->state.modify.slow_line_currPt->x();
+      float y2 =  me->state.modify.slow_line_currPt->y();
+      float z1;
+      float z2;
+
+      float x = x2*(me->state.modify.slow_line_position_param) +
+              x1*(1.0-me->state.modify.slow_line_position_param);
+      float y = y2*(me->state.modify.slow_line_position_param) +
+              y1*(1.0-me->state.modify.slow_line_position_param);
+      float z = 0;
+      if (me->state.modify.tool == SLOW_LINE_3D) {
+	z1 =  me->state.modify.slow_line_prevPt->z();
+	z2 =  me->state.modify.slow_line_currPt->z();
+	z = z2*(me->state.modify.slow_line_position_param) +
+              z1*(1.0-me->state.modify.slow_line_position_param);	
+      }
+
+      // Set yaw so if we sweep it will be perpendicular to the slow-line path. 
+      me->state.modify.yaw = atan2((y2 - y1), (x2 - x1)) - M_PI_2;
+
+//      printf("sending first point request of slow line mode\n");
+      me->state.modify.slow_line_relax_done = VRPN_TRUE;
+      if (me->state.modify.tool == SLOW_LINE_3D) {
+	me->TakeDirectZStep(x,y,z);
+      }
+      else {
+	me->TakeModStep(x,y);
+      }
+   }
+   return 0;
+}
+
+// static
+void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
+    nmb_SharedDevice_Remote * /*dev*/)
+{
+  nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
+  
+  //printf("nmm_Microscope_Remote::Got control, sending initialization\n");
+  // Send off the relaxation parameters (if any)
+  if (me->state.doRelaxComp) {
+      me->SetRelax(me->state.stmRxTmin, me->state.stmRxTsep);
+  } else {
+      me->SetRelax(0, 0);
+  }
+
+  me->QueryScanRange();
+
+  // Tell AFM to scan forward and backward, or just forward.
+  me->SetScanStyle();
+
+  // Start scanning the surface
+  me->ResumeFullScan();
+
+  return;
+}

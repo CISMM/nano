@@ -44,7 +44,7 @@ if {[info exist stream_replay_rate]} {
 # This widget doesn't actually set the replay rate! See the 
 # trace procedure below: streamplay_replay_rate_update
 generic_entry $streamplay(sf).replay_rate new_replay_rate \
-	"Speed (1,30)" real
+	"Speed (1,30)" numeric
 
 # Jump to a new time in the stream file with this widget.
 set set_stream_time 0

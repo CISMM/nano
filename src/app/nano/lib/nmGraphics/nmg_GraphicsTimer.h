@@ -133,7 +133,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void positionAimLine (const PointType top,
                                   const PointType bottom);
     virtual void positionRubberCorner (float x0, float y0,
-                                       float x1, float y1);
+                                       float x1, float y1, int);
+    virtual void positionRegionBox (float, float, float, float, float, int);
     virtual void positionSweepLine (const PointType topL,
                                     const PointType bottomL,
 				    const PointType topR,

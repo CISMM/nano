@@ -169,8 +169,8 @@ int x_y_width_display (void *) {
 
   sprintf(message,"%dx%d grid, %g by %g nm",
           g_inputGrid->numX(), g_inputGrid->numY(), 
-        g_inputGrid->maxX() - g_inputGrid->minX(),
-        g_inputGrid->maxY() - g_inputGrid->minY());
+          decoration->selectedRegionMaxX - decoration->selectedRegionMinX,
+          decoration->selectedRegionMaxY - decoration->selectedRegionMinY);
 
   // Print the message at the appropriate location on the screen
   glPushAttrib(GL_CURRENT_BIT);
@@ -424,6 +424,7 @@ int mode_display (void *) {
   case USER_CENTER_TEXTURE_MODE:
 			      message = (char *)"Center Texture Mode"; break;
   case USER_SCANLINE_MODE:    message = (char *)"LineScan Mode"; break;
+  case USER_REGION_MODE:      message = (char *)"Region Select Mode"; break;
   default:                    message = (char *)"Unknown Mode"; break;
   }
 

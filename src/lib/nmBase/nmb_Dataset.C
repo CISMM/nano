@@ -608,7 +608,7 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
   // Add the host name to the plane name so we can distinguish
   // where the plane came from
   char new_outputPlane[256];
-#if 0
+#if 1
   if (d_hostname) {
       sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname);
   } else {
