@@ -452,11 +452,10 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 			temp = x_scale_factor / y_scale_factor;
 			x_scale_factor *= temp;
 
-//			glTranslated(x_translate, y_translate, 0.0);
+			glTranslated(x_translate, y_translate, 0.0);
 			glScaled(x_scale_factor, y_scale_factor, 1.0);
 
 			glMultMatrixd(state->texture_transform);
-
 		
             break;
             //case nmg_Graphics::REMOTE_COORD;

@@ -2303,6 +2303,9 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
     case SURFACE_REGISTRATION_COORD:
 //    fprintf(stderr, "nmg_Graphics_Implementation: SURFACE_REGISTRATION_COORD mode\n");
       break;
+	case MODEL_REGISTRATION_COORD:
+//    fprintf(stderr, "nmg_Graphics_Implementation: MODEL_REGISTRATION_COORD mode\n");
+      break;
     case MANUAL_REALIGN_COORD:
       //fprintf(stderr, 
 	//"nmg_Graphics_Implementation: MANUAL_REALIGN_COORD mode\n");
