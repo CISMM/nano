@@ -173,7 +173,7 @@ source ${tcl_script_dir}modfile.tcl
 source ${tcl_script_dir}streamfile.tcl
 
 # make a data registration control panel, which can be shown later when needed
-source ${tcl_script_dir}registration.tcl
+#source ${tcl_script_dir}registration.tcl
 
 # make a window for widgets associated with sharing a pointer
 source ${tcl_script_dir}shared_ptr.tcl

@@ -132,4 +132,52 @@ proc show_nav_win {} {
     raise $nav_win
 }
 # ----------------------------------------------------------------------
+# Create a toplevel window for the SEM controls
+# It is initially hidden, but can be shown by calling
+# the "show" procedure.
+# ----------------------------------------------------------------------
+set sem_win [toplevel .sem_win]
+
+wm withdraw $sem_win
+
+button $sem_win.close -text "Close" -command {
+    global sem_window_open
+    wm withdraw $sem_win
+    set sem_window_open 0 
+}
+wm protocol $sem_win WM_DELETE_WINDOW {$sem_win.close invoke}
+pack $sem_win.close -anchor nw
+
+proc show_sem_win {} {
+    global sem_win
+    global sem_window_open
+    wm deiconify $sem_win
+    raise $sem_win
+    set sem_window_open 1
+}
+
+# ----------------------------------------------------------------------
+# Create a toplevel window for the Registration controls
+# It is initially hidden, but can be shown by calling
+# the "show" procedure.
+# ----------------------------------------------------------------------
+set reg_win [toplevel .reg_win]
+
+wm withdraw $reg_win
+
+button $reg_win.close -text "Close" -command {
+    global reg_window_open
+    wm withdraw $reg_win
+    set reg_window_open 0
+}
+wm protocol $reg_win WM_DELETE_WINDOW {$reg_win.close invoke}
+pack $reg_win.close -anchor nw
+
+proc show_reg_win {} {
+    global reg_win
+    global reg_window_open
+    wm deiconify $reg_win
+    raise $reg_win
+    set reg_window_open 1
+}
 

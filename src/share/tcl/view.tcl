@@ -118,7 +118,10 @@ pack  $view.r4.sliders $view.r4.stripchart $view.r4.modfile \
 
 
 button $view.r5.registration -text "Data Registration" -bg $fc \
-    -command "show_data_registration_win"
+    -command "show_reg_win"
+
+button $view.r5.sem -text "SEM" -bg $fc \
+    -command "show_sem_win"
 
 button $view.r5.vicurve -text "VI Curve" -bg $fc \
     -command "show_vicurve_win"
@@ -131,7 +134,7 @@ button $view.r5.french_ohmmeter -text "Ohmmeter" -bg $fc \
 button $view.r5.shared_ptr -text "Synchronization" -bg $fc \
 	-command "show_shared_ptr_win"
 
-pack $view.r5.registration \
+pack $view.r5.registration $view.r5.sem \
     $view.r5.import_objects $view.r5.vicurve $view.r5.french_ohmmeter \
     $view.r5.shared_ptr \
     -side left -padx 4 -pady 2
