@@ -1,3 +1,8 @@
+2001-10-14  David Marshburn  <marshbur@cs.unc.edu>
+
+	* filemenu.tcl: added a text entry for SPM connections, and
+	the corresponding script to open_spm_connection.
+
 2001-10-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* shared_ptr.tcl: "Request microscope lock" and "Release
@@ -11,7 +16,6 @@
 2001-09-25 Jameson Miller <millerj@cs.unc.edu>
 	* modify.tcl - changed so that the correct tool gets displayed in the
 	quickparams window when in direct_step tool.
-
 
 2001-09-21  Aron Helser  <helser@cs.unc.edu>
 

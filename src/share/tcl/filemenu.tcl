@@ -63,14 +63,20 @@ set deviceNames {}
 set deviceConnections {} 
 
 if { !$thirdtech_ui } {
-# Maintain list of all UNC SPMs available here. Don't add UNC SPMs to spm_list_def.tcl
-set deviceNames       { "Explorer1" "Explorer2" "Discoverer" "Same-machine SPM (testing)" "Rhodium-cs (testing)" "Evans (testing)"}
-set deviceConnections { "nmm_Microscope@sodium-cs" \
-        "nmm_Microscope@phantom-cs" \
-        "nmm_Microscope@iron-cs" \
-        "nmm_Microscope@127.0.0.1" \
-	"nmm_Microscope@rhodium-cs.cs.unc.edu" \
-	"nmm_Microscope@evans.cs.unc.edu" }
+    # Maintain list of all UNC SPMs available here. 
+    # Don't add UNC SPMs to spm_list_def.tcl
+    set deviceNames       { "Explorer1" \
+				"Explorer2" \
+				"Discoverer" \
+				"Same-machine SPM (testing)" \
+				"Rhodium-cs (testing)" \
+				"Evans (testing)" }
+    set deviceConnections { "nmm_Microscope@sodium-cs" \
+				"nmm_Microscope@phantom-cs" \
+				"nmm_Microscope@iron-cs" \
+				"nmm_Microscope@127.0.0.1" \
+				"nmm_Microscope@rhodium-cs.cs.unc.edu" \
+				"nmm_Microscope@evans.cs.unc.edu" }
 }
 
 # Dialog which allows user to choose which device
@@ -86,8 +92,30 @@ iwidgets::dialog .open_device_dialog -title "Open SPM Connection" -modality appl
 
 set win [.open_device_dialog childsite]
 generic_optionmenu_with_index $win.device_name chosen_device_index \
-	"SPM to open:" deviceNames
+	"Select SPM to open:" deviceNames
 pack $win.device_name -anchor nw -side top
+
+# add text entry window so we can connect to scopes not in the list
+set new_scope ""
+if { !$thirdtech_ui } {
+    generic_entry $win.new_scope new_scope "or type computer name:" ""
+    $win.new_scope configure -width 20
+    pack $win.new_scope -anchor nw -side top
+
+    # add a horizontal divider after the spm stuff
+    pack [frame $win.divider -relief raised -height 4 -borderwidth 2] \
+	-fill x -side top -pady 4
+}
+
+# Allow the user to save 
+set open_spm_log_name ""
+generic_entry $win.open_logfile open_spm_log_name \
+	"Auto lab notebook:" ""
+$win.open_logfile configure -width 20
+button $win.get_logfile_name -text "Choose..." -command choose_logfile
+
+pack $win.open_logfile $win.get_logfile_name  -side left
+
 
 proc choose_logfile { } {
     global fileinfo open_spm_log_name
@@ -112,20 +140,13 @@ proc choose_logfile { } {
     # otherwise do nothing - user pressed cancel or didn't enter file name
 }
 
-set open_spm_log_name ""
-generic_entry $win.open_logfile open_spm_log_name \
-	"Auto lab notebook:" ""
-$win.open_logfile configure -width 20
-button $win.get_logfile_name -text "Choose..." -command choose_logfile
-
-pack $win.open_logfile $win.get_logfile_name  -side left
-
-# Allow the user to save 
 proc open_spm_connection {} {
     global deviceNames deviceConnections 
     global chosen_device_index open_spm_device_name open_spm_log_name
+    global new_scope
 
-    # variable used when no streamFile is selected.  MessageBox asks whether this is correct.
+    # variable used when no streamFile is selected.  
+    # MessageBox asks whether this is correct.
     set go_on 0
 
     if { [.open_device_dialog activate] } {
@@ -155,23 +176,27 @@ proc open_spm_connection {} {
                 return;
             }
 
-		set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
+	} else { # no spm_log name specified
+	    # Ask whether the user really wants to continue without saving
+	    # Set check_streamfile_save to 1
+	    # remove trace first
+	    global check_streamfile_save
+	    trace vdelete check_streamfile_save w popup_check_streamfile_dialog
+	    set check_streamfile_save 1
+	    # reset trace
+	    trace variable check_streamfile_save w popup_check_streamfile_dialog
 
-	   } else {
-	       # Ask whether the user really wants to continue without saving
-			# Set check_streamfile_save to 1
-			# remove trace first
-			global check_streamfile_save
-			trace vdelete check_streamfile_save w popup_check_streamfile_dialog
-			set check_streamfile_save 1
-			# reset trace
-			trace variable check_streamfile_save w popup_check_streamfile_dialog
-		if { [popup_check_streamfile_dialog] } {
-			set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
-			return; 
-		} else { return; }
-		}					
-
+	    if { ![popup_check_streamfile_dialog] } { return; }
+	} 
+	# end setting up a log file
+	
+	# set open_spm_connection_name
+	if { $new_scope != "" } { # if the user typed something into the text field
+	    set open_spm_device_name "nmm_Microscope@$new_scope"
+	} else { # get one from the list
+	    set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
+	}
+	
     } else {
         # user pressed "cancel" so do nothing
     }
