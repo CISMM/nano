@@ -734,6 +734,7 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
   corr_point_t srcPoint, tgtPoint;
   double centerX, centerY, centerZ;
   xform.getCenter(centerX, centerY, centerZ);
+  rotation.setCenter(centerX, centerY, centerZ);
   double srcPointArr[4] = {0, 0, 0, 1};
   double rotatedPnt[4] = {0, 0, 0, 1};
   for (pointIndex = 0; pointIndex < c.numPoints(); pointIndex++) {

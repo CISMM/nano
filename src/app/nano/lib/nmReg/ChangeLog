@@ -1,3 +1,9 @@
+2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_Registration_Impl.C (adjustTransformFromRotatedCorrespondence):
+	set center of rotation to match center for final transform to fix
+	the bug in alignment for rotated projection directions (one-line fix!)
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* nmr_RegistrationUI.C: remove printouts.
