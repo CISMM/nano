@@ -1,3 +1,7 @@
+2002-06-26  David Borland <borland@cs.unc.edu>
+
+        * import.tcl : added user control for saving spider
+
 2002-06-21  Aron Helser  <helser@cs.unc.edu>
 
 	* modify.tcl (enforce_directz_heightplane): Add dialogs so user

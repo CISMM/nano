@@ -37,6 +37,7 @@ set spider_thick 0.1
 set spider_tess 10
 set spider_curve 0
 set spider_legs 8
+set spider_filename ""
 
 set import_color gray
 set import_r 192
@@ -94,6 +95,9 @@ floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
 
 intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
 	spider_legs "Spider Legs"
+
+button $nmInfo(spider_control).spider_save_to_file -text "Save Spider" \
+        -command save_spider
 
 #
 
@@ -212,6 +216,7 @@ pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_save_to_file -padx 1m -pady 1m -anchor nw
 #
 pack $nmInfo(basic_options).file.buttons.import_tess -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).file.buttons.import_axis_step -anchor nw -padx 1m -pady 1m
@@ -267,7 +272,8 @@ proc open_import_file {} {
     global modelFile nmInfo import_dir import_file_label current_object current_object_new
     set types { {"Wave Front files" ".obj" } 
                 {"MSI files" ".msi" } 
-		    {"Text files" ".txt" }
+		{"Text files" ".txt" }
+	{"NAMS spider files" ".spi" }
                 {"All files" *} }
     set filename [tk_getOpenFile -filetypes $types \
             -initialdir $import_dir \
@@ -291,6 +297,11 @@ proc open_import_file {} {
 #    $nmInfo(basic_options).file.import_file_label configure -text \
 #	"Current Imported file: $import_file_label"
 
+    if { [string first $filename ".spi"] != 0 } {
+        "show.spider_control"
+    }
+
+
  	set current_object_new $import_file_label
 }
 
@@ -308,6 +319,25 @@ proc create_spider {} {
 	set current_object_new "spider.spi"
 }
 
+# Save spider data
+proc save_spider {} {
+        global fileinfo spider_filename reg_surface_cm color_comes_from
+        
+        set initfile [string range $reg_surface_cm(color_comes_from) 0 end-4]
+        set ext ".spi"
+        set types { {"TAMS spider" ".spi"} }
+
+        # Let the user choose a file to save the data in.
+        # Set the default name to the current registration image 
+	set filename [tk_getSaveFile -filetypes $types \
+		-initialfile "$initfile$ext"\
+                -initialdir $fileinfo(save_dir)\
+                -title "Save spider data"]
+	if {$filename != ""} { 
+	    set spider_filename $filename
+	    set fileinfo(save_dir) [file dirname $filename]
+        }
+}
 
 
 proc close_import_file {} {
