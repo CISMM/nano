@@ -7,15 +7,19 @@
 #include "Tcl_Linkvar.h"
 #include "ImageMaker.h"
 #include "exposurePattern.h"
+#include "nmb_ImageDisplay.h"
 
 class ImageElement {
   public:
    ImageElement():d_red(1.0), d_green(1.0), d_blue(1.0),
-                  d_opacity(1.0), d_enabled(vrpn_FALSE),d_image(NULL) {}
-   ImageElement(nmb_Image *im, double r=1.0, double g=1.0, double b=1.0, 
+                  d_opacity(1.0), d_enabled(vrpn_FALSE),
+                  d_image(NULL) {}
+   ImageElement(nmb_Image *im, 
+                double r=1.0, double g=1.0, double b=1.0, 
                 double o=1.0, vrpn_bool e=vrpn_FALSE):
             d_red(r), d_green(g), d_blue(b), d_opacity(o), 
             d_enabled(e), d_image(im) {}
+
    int operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
    int operator< (const ImageElement& ie) {
        return (d_image->areaInWorld() > ie.d_image->areaInWorld());
@@ -36,16 +40,17 @@ typedef enum {PE_THINPOLYLINE, PE_THICKPOLYLINE, PE_POLYGON, PE_DUMP_POINT,
 
 const int PE_SELECT_DIST = 10;
 
-class PatternEditor {
+class PatternEditor : public nmb_ImageDisplay {
   public:
    PatternEditor(int startX = 20, int startY = 100);
    ~PatternEditor();
    void setWindowStartPosition(int startX, int startY);
    void show();
-   void newPosition(nmb_Image *im);
-   void addImage(nmb_Image *im, double opacity = 1.0, 
-                 double r=1.0, double g=1.0, double b=1.0);
+   /// add image to the list of possibly displayed images but don't display it
+   void addImage(nmb_Image *im);
+   /// remove image along with any of its display settings
    void removeImage(nmb_Image *im);
+   /// enable the display of an image in the list
    void setImageEnable(nmb_Image *im, vrpn_bool displayEnable);
    vrpn_bool getImageEnable(nmb_Image *im);
    void setImageOpacity(nmb_Image *im, double opacity);
@@ -73,6 +78,21 @@ class PatternEditor {
    void setExposurePointDisplayEnable(vrpn_int32 enable);
    void addExposurePoint(double x_nm, double y_nm);
    void clearExposurePoints();
+
+   // more general ImageDisplay interface used by nmr_RegistrationUI:
+
+   /// if an image is already registered, enable it, otherwise, add it to the
+   /// list of registered images and then enable it
+   virtual void addImageToDisplay(nmb_Image *image);
+   /// disable display but don't remove display settings
+   virtual void removeImageFromDisplay(nmb_Image *image);
+   virtual void updateDisplayTransform(nmb_Image *image, double *transform);
+   virtual void setDisplayColorMap(nmb_Image *image, 
+                           const char *map, const char *mapdir);
+   virtual void setDisplayColorMapRange(nmb_Image *image,
+                        float data_min, float data_max,
+                        float color_min, float color_max);
+   virtual void updateImage(nmb_Image *image);
 
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 

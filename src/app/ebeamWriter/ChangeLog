@@ -1,3 +1,10 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	This version includes minimal changes needed to compile with the
+	new code in the nano source tree
+	* patternEditor.C: this now inherits from nmb_ImageDisplay so it
+	can get messages from the nmr_RegistrationUI code used in nano
+
 2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.C: added controls for testing automatic alignment

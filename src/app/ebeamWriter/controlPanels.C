@@ -59,6 +59,15 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_numResolutionLevels(0),
    d_resolutionLevelList("auto_align_resolution_list"),
 
+   d_scaleX("reg_scaleX", 1.0),
+   d_scaleY("reg_scaleY", 1.0),
+   d_translateX("reg_translateX", 0.0),
+   d_translateY("reg_translateY", 0.0),
+   d_rotateX("reg_rotateX", 0.0),
+   d_rotateY("reg_rotateX", 0.0),
+   d_rotateZ("reg_rotateX", 0.0),
+   d_shearZ("reg_shearZ", 0.0),
+
    d_semWindowOpen("sem_window_open", 0),
    d_semAcquireImagePushed("sem_acquire_image", 0),
    d_semAcquireContinuousChecked("sem_acquire_continuous", 0),
@@ -242,12 +251,23 @@ void ControlPanels::setupCallbacks()
   d_enableImageDisplay.addCallback(handle_enableImageDisplay_change, this);
   d_currentImage.addCallback(handle_currentImage_change, this);
 
+// startREG
   d_sourceImageName.addCallback(handle_sourceImageName_change, this);
   d_targetImageName.addCallback(handle_targetImageName_change, this);
   d_resampleImageName.addCallback(handle_resampleImageName_change, this);
   d_alignWindowOpen.addCallback(handle_alignWindowOpen_change, this);
   d_autoAlignRequested.addCallback
          (handle_autoAlignRequested_change, (void *)this);
+
+  d_scaleX.addCallback(handle_transformationParameter_change, this);
+  d_scaleY.addCallback(handle_transformationParameter_change, this);
+  d_translateX.addCallback(handle_transformationParameter_change, this);
+  d_translateY.addCallback(handle_transformationParameter_change, this);
+  d_rotateX.addCallback(handle_transformationParameter_change, this);
+  d_rotateY.addCallback(handle_transformationParameter_change, this);
+  d_rotateZ.addCallback(handle_transformationParameter_change, this);
+  d_shearZ.addCallback(handle_transformationParameter_change, this);
+// endREG
 
   d_semWindowOpen.addCallback(handle_semWindowOpen_change, this);
   d_semAcquireImagePushed.addCallback(handle_semAcquireImagePushed_change, 
@@ -694,6 +714,7 @@ void ControlPanels::handle_registration_change(void *ud,
   me->handleRegistrationChange(info);
 }
 
+
 void ControlPanels::handleRegistrationChange
                         (const nmr_ProxyChangeHandlerData &info)
 {
@@ -716,8 +737,8 @@ void ControlPanels::handleRegistrationChange
       break;
     case NMR_REG_RESULT:
       nmb_TransformMatrix44 targetImFromSourceIm;
-      d_aligner->getRegistrationResult(targetImFromSourceIm);
-
+      int whichTransform;
+      d_aligner->getRegistrationResult(whichTransform, targetImFromSourceIm);
       if (d_imageList == NULL) {
          fprintf(stderr, "handleRegistrationChange: Error, image list null\n");
          return;
@@ -752,18 +773,17 @@ void ControlPanels::handleRegistrationChange
       sourceImage->getWorldToImageTransform(sourceImFromWorld);
       nmb_TransformMatrix44 targetImFromWorld;
 
-      /* ********************************************************* 
-       targetImFromWorld = targetImFromSourceIm * sourceIm
-       * ********************************************************* */
+      //  targetImFromWorld = targetImFromSourceIm * sourceIm
       targetImFromWorld = targetImFromSourceIm;
       targetImFromWorld.compose(sourceImFromWorld);
 
       targetImage->setWorldToImageTransform(targetImFromWorld);
       // now tell pattern editor that the transform for this image changed
-      d_patternEditor->newPosition(targetImage);
+      d_patternEditor->updateDisplayTransform(targetImage, NULL);
       break;
   }
 }
+
 
 // static
 void ControlPanels::handle_sem_change(void *ud,
@@ -884,7 +904,7 @@ void ControlPanels::handleSEMChange(
                                                imageRegionHeight);
         ib = nmb_ImageBounds(0.0, 0.0, imageRegionWidth, imageRegionHeight);
         currentImage->setBounds(ib);
-        d_patternEditor->newPosition(currentImage);
+        d_patternEditor->updateDisplayTransform(currentImage, NULL);
         d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
@@ -1128,7 +1148,7 @@ void ControlPanels::autoAlignImages()
   d_aligner->setIterationLimit((vrpn_int32)d_numIterations);
   d_aligner->setStepSize((vrpn_float32)d_stepSize);
   d_aligner->setCurrentResolution(levelIndex);
-  d_aligner->autoAlignImages();
+  d_aligner->autoAlignImages(NMR_AUTOALIGN_FROM_MANUAL);
 }
 
 // static
@@ -1152,6 +1172,28 @@ void ControlPanels::handle_autoAlignRequested_change(
     }
 }
 
+// static
+void ControlPanels::handle_transformationParameter_change(
+      vrpn_float64 /*value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  vrpn_float32 *parameters = new vrpn_float32[nmb_numTransformParameters];
+  nmb_Transform_TScShR transform;
+  transform.setParameter(NMB_ROTATE_X, (double)me->d_rotateX);
+  transform.setParameter(NMB_ROTATE_Y, (double)me->d_rotateY);
+  transform.setParameter(NMB_ROTATE_Z, (double)me->d_rotateZ);
+  transform.setParameter(NMB_TRANSLATE_X, (double)me->d_translateX);
+  transform.setParameter(NMB_TRANSLATE_Y, (double)me->d_translateY);
+  transform.setParameter(NMB_SCALE_X, (double)me->d_scaleX);
+  transform.setParameter(NMB_SCALE_Y, (double)me->d_scaleY);
+  transform.setParameter(NMB_SHEAR_Z, (double)me->d_shearZ);
+  int i;
+  for (i = 0; i < nmb_numTransformParameters; i++) {
+    parameters[i] = (vrpn_float32)transform.getParameter(
+                                 nmb_transformParameterOrder[i]);
+  }
+  me->d_aligner->setTransformationParameters(parameters);
+}
 
 // static
 void ControlPanels::handle_semWindowOpen_change(int /*new_value */, void *ud)

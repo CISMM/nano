@@ -104,16 +104,15 @@ PatternEditor::~PatternEditor()
    d_viewer->destroyWindow(d_mainWinID);
 }
 
-void PatternEditor::addImage(nmb_Image *im, double opacity,
-      double r, double g, double b)
+void PatternEditor::addImage(nmb_Image *im)
 {
   nmb_ImageBounds ib;
   im->getBounds(ib);
-  nmb_ImageBounds::ImageBoundPoint points[4] = 
+  nmb_ImageBounds::ImageBoundPoint points[4] =
      {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
       nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
-   
-  ImageElement ie(im, r,g,b,opacity);
+
+  ImageElement ie(im);
   double newArea = im->areaInWorld();
 
   list<ImageElement>::iterator insertPnt;
@@ -142,6 +141,7 @@ void PatternEditor::addImage(nmb_Image *im, double opacity,
    d_mainWinMaxX_nm = d_worldMaxX_nm;
    d_mainWinMaxY_nm = d_worldMaxY_nm;
 */
+
 }
 
 void PatternEditor::removeImage(nmb_Image *im)
@@ -241,14 +241,6 @@ void PatternEditor::show()
 {
    d_viewer->showWindow(d_mainWinID);
    d_viewer->showWindow(d_navWinID);
-}
-
-void PatternEditor::newPosition(nmb_Image * im)
-{
-  
-  // really this is only necessary if the image is currently displayed
-  d_images.sort();
-  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 void PatternEditor::setDrawingParameters(double lineWidth_nm, 
@@ -514,6 +506,54 @@ void PatternEditor::clearExposurePoints()
   d_exposurePoints.clear();
   d_viewer->dirtyWindow(d_mainWinID);
   d_numExposurePointsRecorded = 0;
+}
+
+void PatternEditor::addImageToDisplay(nmb_Image *im)
+{
+  vrpn_bool foundImage = vrpn_FALSE;
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++) {
+     if ((*imIter).d_image == im) {
+          (*imIter).d_enabled = vrpn_TRUE;
+          foundImage = vrpn_TRUE;
+     }
+  }
+  if (!foundImage) {
+    addImage(im);
+    setImageEnable(im, vrpn_TRUE);
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::removeImageFromDisplay(nmb_Image *image)
+{
+  setImageEnable(image, vrpn_FALSE);
+}
+
+void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform)
+{
+  // really this is only necessary if the image is currently displayed
+  d_images.sort();
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::setDisplayColorMap(nmb_Image *image,
+                const char *map, const char *mapdir)
+{
+  printf("Sorry, setDisplayColorMap is not implemented\n");
+}
+
+void PatternEditor::setDisplayColorMapRange(nmb_Image *image,
+             float data_min, float data_max,
+             float color_min, float color_max)
+{
+  printf("Sorry, setDisplayColorMapRange is not implemented\n");
+}
+
+void PatternEditor::updateImage(nmb_Image *image)
+{
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
 int PatternEditor::mainWinEventHandler(

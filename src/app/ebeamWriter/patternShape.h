@@ -111,12 +111,12 @@ class PatternShape {
 
     /// send individual point dwell commands to the SEM
     virtual void drawToSEM(nmm_Microscope_SEM_EDAX * /*sem*/,
-           double current, double dotSpacing, double lineSpacing,
-           int &numPoints, double &expTime) {};
+           double /*current*/, double /*dotSpacing*/, double /*lineSpacing*/,
+           int &/*numPoints*/, double &/*expTime*/) {};
 
     /// count total number of dwell points and total nominal exposure time
     virtual void computeExposureStatistics(int &numPoints, double &expTime,
-           double current, double dotSpacing, double lineSpacing)
+           double /*current*/, double /*dotSpacing*/, double /*lineSpacing*/)
       {numPoints = 0; expTime = 0;}
 
     /// extents of this shape in the world
@@ -130,19 +130,20 @@ class PatternShape {
 
     /// get minimum required linear exposure and return false if
     /// no linear exposure is required
-    virtual vrpn_bool minLinearExposure(double &exposure_pCoul_per_cm)
+    virtual vrpn_bool minLinearExposure(double &/*exposure_pCoul_per_cm*/)
       { return vrpn_FALSE;}
 
     /// get minimum required area exposure and return false if
     /// no area exposure is required
-    virtual vrpn_bool minAreaExposure(double &exposure_uCoul_per_sq_cm) 
+    virtual vrpn_bool minAreaExposure(double &/*exposure_uCoul_per_sq_cm*/) 
       { return vrpn_FALSE;}
 
-    virtual void setExposure(double linearExposure, double areaExposure) {}
+    virtual void setExposure(double /*linearExposure*/, 
+                             double /*areaExposure*/) {}
 
     /// get all exposure levels in the shape
-    virtual void getExposureLevels(list<double> &linearLevels,
-                                   list<double> &areaLevels) {}
+    virtual void getExposureLevels(list<double> &/*linearLevels*/,
+                                   list<double> &/*areaLevels*/) {}
 
 
   protected:
@@ -466,15 +467,16 @@ class DumpPointPatternShape : public PatternShape {
 
     /// get minimum required linear exposure and return false if
     /// no linear exposure is required
-    virtual vrpn_bool minLinearExposure(double &exposure_pCoul_per_cm)
+    virtual vrpn_bool minLinearExposure(double &/*exposure_pCoul_per_cm*/)
             { return vrpn_FALSE;}
 
     /// get minimum required area exposure and return false if
     /// no area exposure is required
-    virtual vrpn_bool minAreaExposure(double &exposure_uCoul_per_sq_cm)
+    virtual vrpn_bool minAreaExposure(double &/*exposure_uCoul_per_sq_cm*/)
             { return vrpn_FALSE;}
 
-    virtual void setExposure(double linearExposure, double areaExposure) {}
+    virtual void setExposure(double /*linearExposure*/, 
+                             double /*areaExposure*/) {}
 
     /// get all exposure levels in the shape
     virtual void getExposureLevels(list<double> &linearLevels,

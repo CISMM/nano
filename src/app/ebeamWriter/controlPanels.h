@@ -6,6 +6,7 @@
 #include "nmm_Microscope_SEM_Remote.h"
 #include "nmb_Image.h"
 #include "nmr_Registration_Proxy.h"
+#include "nmr_Registration_Impl.h"
 #include "nmm_EDAX.h"
 #include "patternFile.h"
 
@@ -56,6 +57,8 @@ class ControlPanels {
    static void handle_targetImageName_change(const char *new_value, void *ud);
    static void handle_resampleImageName_change(const char *new_value,
                                                   void *ud);
+
+   static void handle_transformationParameter_change(vrpn_float64, void *ud);
 
    static void handle_alignWindowOpen_change(int new_value, void *ud);
    static void handle_semWindowOpen_change(int new_value, void *ud);
@@ -145,6 +148,11 @@ class ControlPanels {
    static vrpn_int32 s_defaultNumResolutionLevels;
    static vrpn_float32 s_defaultStdDev[];
    Tclvar_list_of_strings d_resolutionLevelList;
+
+   Tclvar_float d_scaleX, d_scaleY;
+   Tclvar_float d_translateX, d_translateY;
+   Tclvar_float d_rotateX, d_rotateY, d_rotateZ;
+   Tclvar_float d_shearZ;
 
    // SEM
    Tclvar_int d_semWindowOpen;
