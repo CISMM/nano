@@ -1,3 +1,8 @@
+2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Added -lglui before -lglut to allow multiScope to compile.
+        (Can't use LATE_LIBRARIES because they must come before X11)
+
 2000-09-15  Chris Weigle  <weigle@cs.unc.edu>
         * Makefile.common: removed '-f' from ln options, stops recursion
         * Makefile.app_common: Removed $(OBECT_DIR) target; Split test

@@ -485,7 +485,7 @@ endif
 
 # Hacks by TCH 1 May 00 to get afmcntsim (and multiscope) to compile -
 # added glut to EVERYBODY
-LIBS := $(EXTERNAL_LIBS) -lglut $(GRAPHICS_LIBS) \
+LIBS := $(EXTERNAL_LIBS) -lglui -lglut $(GRAPHICS_LIBS) \
         $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
 
 ifeq ($(HW_OS), hp700_hpux10)
