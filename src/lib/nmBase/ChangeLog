@@ -1,3 +1,16 @@
+2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Dataset.C (nmb_Dataset::nmb_Dataset): moved initialization of
+	the list of images in dataImages to later in this function in 
+	accordance with the latest change to the nmb_ImageList constructor
+	* nmb_Device.C (fixed some buffer synchronization problems here that
+	caused a race condition in the seegerizer)
+        * nmb_Image.hC (nmb_ImageList::nmb_ImageList): separated out the
+	part of the constructor that initializes the list of images
+	from a list of file names
+	(nmb_ImageList::addFileImages): new function to handle what was
+	previously done in the constructor
+
 2001-10-19  Aron Helser  <helser@cs.unc.edu>
 
 	* BCPlane.Ch (valueAt): overloaded to take float * arg. 

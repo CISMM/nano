@@ -414,13 +414,14 @@ long nmb_Device::dispatchMessage (long len, const char * buf,
   long retval = 0;
 
   if (!d_useBuffer) {
-    return dispatchMessageNoBuffer(len, buf, type);
+    retval = dispatchMessageNoBuffer(len, buf, type);
   } else {
+    d_bufferSemaphore.p();
     retval = bufferMessage(len, buf, type);
-    if (retval) {
-      return retval;
+    if (!retval) {
+      d_messageBufferTail->isRedundant = VRPN_FALSE;
     }
-    d_messageBufferTail->isRedundant = VRPN_FALSE;
+    d_bufferSemaphore.v();
   }
   return retval;
 }
@@ -431,13 +432,14 @@ long nmb_Device::dispatchRedundantMessage (long len, const char * buf,
   long retval = 0;
 
   if (!d_useBuffer) {
-    return dispatchRedundantMessageNoBuffer(len, buf, type);
+    retval = dispatchRedundantMessageNoBuffer(len, buf, type);
   } else {
+    d_bufferSemaphore.p();
     retval = bufferMessage(len, buf, type);
-    if (retval) {
-      return retval;
+    if (!retval) {
+      d_messageBufferTail->isRedundant = VRPN_TRUE;
     }
-    d_messageBufferTail->isRedundant = VRPN_TRUE;
+    d_bufferSemaphore.v();
   }
   return retval;
 }
@@ -475,7 +477,6 @@ int nmb_Device_Client::handle_Synchronization(void *userdata,
 
 int nmb_Device::bufferMessage (long len, const char * buf,
                                        vrpn_int32 type) {
-  d_bufferSemaphore.p();
   if (!d_messageBufferHead) {
     d_messageBufferHead = new messageBufferEntry;
     d_messageBufferTail = d_messageBufferHead;
@@ -485,7 +486,6 @@ int nmb_Device::bufferMessage (long len, const char * buf,
     if (!(d_messageBufferTail->next)) {
         fprintf(stderr, "nmb_Device::dispatchMessage: Error, "
           "out of memory\n");
-        d_bufferSemaphore.v();
         return -1;
     }
     d_messageBufferTail = d_messageBufferTail->next;
@@ -495,7 +495,6 @@ int nmb_Device::bufferMessage (long len, const char * buf,
   d_messageBufferTail->type = type;
   d_messageBufferTail->next = NULL;
   d_numBufferedMessages++;
-  d_bufferSemaphore.v();
 
   return 0;
 }

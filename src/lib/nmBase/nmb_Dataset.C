@@ -42,9 +42,7 @@ nmb_Dataset::nmb_Dataset
                          readMode)),
   inputPlaneNames (list_of_strings_allocator()),
   imageNames(list_of_strings_allocator()),
-  dataImages (new nmb_ImageList(imageNames,
-				imageFileNames, numImageFiles,
-                                topoFile)),
+  dataImages (new nmb_ImageList(imageNames)),
   range_of_change (inputGrid),   // reference to pointer!
 
   alphaPlaneName (string_allocator("none")),
@@ -133,6 +131,9 @@ nmb_Dataset::nmb_Dataset
   // After name list is initialized, so we set heightplane widget
   // to a useful name. 
   ensureHeightPlane();
+
+  // add static images to dataImages list
+  dataImages->addFileImages(imageFileNames, numImageFiles, topoFile);
 
   // in addition to static images, 
   // dataImages should include data from all microscopes so here we

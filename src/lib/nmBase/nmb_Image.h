@@ -473,9 +473,8 @@ class nmb_ImageList {
   public:
 	nmb_ImageList(nmb_ListOfStrings *namelist);
         ~nmb_ImageList();
-	nmb_ImageList(nmb_ListOfStrings *namelist,
-                      const char **file_names, int num_files,
-                      TopoFile &topoFile);
+        void addFileImages(const char **file_names, int num_files,
+                             TopoFile &topoFile);
 	int addImage(nmb_Image *im);
 	nmb_ListOfStrings *imageNameList() {return imageNames;}
 	nmb_Image *getImageByName(BCString name) {

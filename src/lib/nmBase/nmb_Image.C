@@ -1700,39 +1700,36 @@ nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist) :
 
 }
 
-nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
-                             const char **file_names, int num_files,
-                             TopoFile &topoFile) :
-       num_images(0),
-       imageNames(namelist)
-{
-    //printf("nmb_ImageList::nmb_ImageList building list\n");
-
-    for (int i = 0; i < num_files; i++) {
-//          printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
-//  		file_names[i]);
-	BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
-                               READ_FILE);
-        g->loadFile( file_names[i], topoFile);
-	nmb_Image *im;
-	BCPlane *p;
-//          printf("file contained: \n");
-	for (p = g->head(); p != NULL; p = p->next()){
-	    im = new nmb_ImageGrid(p);
-            im->setTopoFileInfo(topoFile);
-	    addImage(im);
-//              printf("  %s\n", (const char *)(*(im->name())));
-//  	    printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());
-	}
-    }
-}
-
 nmb_ImageList::~nmb_ImageList()
 {
     for (int i = 0; i < num_images; i++) {
         images[i]->num_referencing_lists--;
         if (images[i]->num_referencing_lists == 0) {
 	    delete images[i];
+        }
+    }
+}
+
+void nmb_ImageList::addFileImages(const char **file_names, int num_files,
+                             TopoFile &topoFile)
+{
+    //printf("nmb_ImageList::nmb_ImageList building list\n");
+
+    for (int i = 0; i < num_files; i++) {
+//          printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
+//              file_names[i]);
+        BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
+                               READ_FILE);
+        g->loadFile( file_names[i], topoFile);
+        nmb_Image *im;
+        BCPlane *p;
+//          printf("file contained: \n");
+        for (p = g->head(); p != NULL; p = p->next()){
+            im = new nmb_ImageGrid(p);
+            im->setTopoFileInfo(topoFile);
+            addImage(im);
+//              printf("  %s\n", (const char *)(*(im->name())));
+//          printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());
         }
     }
 }
