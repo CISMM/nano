@@ -1,11 +1,10 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
+#include <limits.h> // for FLT_MAX
 
 nmb_ImageBounds::nmb_ImageBounds() 
 {
-    for (int i = 0; i < 4; i++){
-        x[i] = 0.0; y[i] = 0.0;
-    }
+    nmb_ImageBounds(0.0, 0.0, 0.0, 0.0);
 }
 
 nmb_ImageBounds::nmb_ImageBounds(double x0,double y0,double x1,double y1){
@@ -47,10 +46,53 @@ float nmb_Image::getValueInterpolated(double i, double j) const {
 		j_fp = (j - 0.5) - (double)j_ip;
 	}
 
-    double val = (1-i_fp)*(1-j_fp)*getValue(i_ip, j_ip);
+    double val;
+    val = (1-i_fp)*(1-j_fp)*getValue(i_ip, j_ip);
     val += (1-i_fp)*j_fp*getValue(i_ip, j_ip+1);
     val += i_fp*(1-j_fp)*getValue(i_ip+1,j_ip);
     val += i_fp*j_fp*getValue(i_ip+1,j_ip+1);
+    return val;
+}
+
+float nmb_Image::getValueInterpolatedNZ(double i, double j) const {
+        int i_ip, j_ip;
+        double i_fp, j_fp;
+
+        if (i <= 0.5) {
+                i_ip = 0;
+                i_fp = 0.0;
+        } else if (i >= (double)width()-0.5) {
+                i_ip = width() - 2;
+                i_fp = 1.0;
+        } else {
+                i_ip = (int)floor(i-0.5);
+                i_fp = (i - 0.5) - (double)i_ip;
+        }
+
+        if (j <= 0.5) {
+                j_ip = 0;
+                j_fp = 0.0;
+        } else if (j >= (double)height()-0.5) {
+                j_ip = height() - 2;
+                j_fp = 1.0;
+        } else {
+        j_ip = (int)floor(j-0.5);
+                j_fp = (j - 0.5) - (double)j_ip;
+        }
+
+    double val, v00, v01, v10, v11;
+    v00 = getValue(i_ip, j_ip);
+    v01 = getValue(i_ip, j_ip+1);
+    v10 = getValue(i_ip+1,j_ip);
+    v11 = getValue(i_ip+1,j_ip+1);
+    if (v00 == 0 || v01 == 0 || v10 == 0 || v11 == 0) {
+        val = 0;
+    } else {
+        val = (1-i_fp)*(1-j_fp)*getValue(i_ip, j_ip);
+        val += (1-i_fp)*j_fp*getValue(i_ip, j_ip+1);
+        val += i_fp*(1-j_fp)*getValue(i_ip+1,j_ip);
+        val += i_fp*j_fp*getValue(i_ip+1,j_ip+1);
+    }
     return val;
 }
 
@@ -307,9 +349,9 @@ int nmb_ImageGrid::height() const {return plane->numY();}
 float nmb_ImageGrid::getValue(int i, int j) const
              {return plane->value(i,j);}
 
-float nmb_ImageGrid::maxValue() const {return plane->maxValue();}
+float nmb_ImageGrid::maxValue() {return plane->maxValue();}
 
-float nmb_ImageGrid::minValue() const {return plane->minValue();}
+float nmb_ImageGrid::minValue() {return plane->minValue();}
 
 float nmb_ImageGrid::maxValidValue() {
     short top, left, bottom, right;
@@ -320,6 +362,9 @@ float nmb_ImageGrid::maxValidValue() {
         (right == width()-1) && (left == 0)) {
         return maxValue();
     }
+
+    fprintf(stderr, "nmb_ImageGrid::maxValidValue:: Warning, "
+           "this function should be implemented more efficiently\n");
 
     int i,j;
     float result = getValue(left, bottom);
@@ -343,6 +388,9 @@ float nmb_ImageGrid::minValidValue() {
         return minValue();
     }
 
+    fprintf(stderr, "nmb_ImageGrid::minValidValue:: Warning, "
+           "this function should be implemented more efficiently\n");
+
     int i,j;
     float result = getValue(left, bottom);
     float val;
@@ -360,17 +408,7 @@ float nmb_ImageGrid::maxNonZeroValue() {
 }
 
 float nmb_ImageGrid::minNonZeroValue() {
-    int i,j;
-    float val = 0, result = 0;
-    for (i = 0; i < width(); i++) {
-        for (j = 0; j < height(); j++) {
-            val = getValue(i,j);
-            if (result == 0 || (val != 0 && val < result)) {
-                result = val;
-            }
-        }
-    }
-    return result;
+    return plane->minNonZeroValue();
 }
 
 void nmb_ImageGrid::setValue(int i, int j, float val)
@@ -495,7 +533,9 @@ void nmb_ImageGrid::getTopoFileInfo(TopoFile &tf)
 }
 
 
-vrpn_uint8 *nmb_ImageGrid::rawDataUnsignedByte() { return NULL;}
+void *nmb_ImageGrid::pixelData() { return (void *)(plane->flatValueArray());}
+
+nmb_PixelType nmb_ImageGrid::pixelType() {return NMB_FLOAT32;}
 
 int nmb_ImageGrid::numExportFormats() {return num_export_formats;}
 
@@ -578,24 +618,40 @@ int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im)
     return 0;
 }
 
+template <class PixelType>
+const int nmb_ImageArray<PixelType>::num_export_formats = 0;
 
-const int nmb_Image8bit::num_export_formats = 0;
-const char *nmb_Image8bit::export_formats_list[] = {"none"};
-const nmb_Image8bit::FileExportingFunction
-        nmb_Image8bit::file_exporting_function[] = {NULL};
+template <class PixelType>
+const char *nmb_ImageArray<PixelType>::export_formats_list[] = {"none"};
 
+template <class PixelType>
+const nmb_ImageArray<PixelType>::FileExportingFunction
+        nmb_ImageArray<PixelType>::file_exporting_function[] = {NULL};
 
-nmb_Image8bit::nmb_Image8bit(const char *name, const char * /*units*/, 
-	short x, short y):
+nmb_ImageArray<vrpn_uint8>::nmb_ImageArray(const char *name,
+                                          const char * /*units*/,
+                                          short x, short y):
         nmb_Image(), num_x(x), num_y(y),
         units_x("none"), units_y("none"), units("ADC"),
-        my_name(name)
+        my_name(name),
+        d_minNonZeroValueComputed(VRPN_FALSE),
+        d_minNonZeroValue(0),
+        d_minValueComputed(VRPN_FALSE),
+        d_minValue(0),
+        d_maxValueComputed(VRPN_FALSE),
+        d_maxValue(0),
+        d_minValidValueComputed(VRPN_FALSE),
+        d_minValidValue(0),
+        d_maxValidValueComputed(VRPN_FALSE),
+        d_maxValidValue(0),
+        d_imagePosition(0.0, 0.0, 1.0, 1.0)
 {
     min_x_set = MAXSHORT; min_y_set = MAXSHORT;
     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
     data = new vrpn_uint8[x*y];
     if (!data) {
-	fprintf(stderr, "nmb_Image8bit::nmb_Image8bit: Error, out of memory\n");
+        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
+                        " Error, out of memory\n");
     }
     for (int i = 0; i < numExportFormats(); i++){
         BCString name = exportFormatType(i);
@@ -603,9 +659,72 @@ nmb_Image8bit::nmb_Image8bit(const char *name, const char * /*units*/,
     }
 }
 
-nmb_Image8bit::nmb_Image8bit(nmb_Image *im)
+nmb_ImageArray<vrpn_uint16>::nmb_ImageArray(const char *name,
+                                          const char * /*units*/,
+                                          short x, short y):
+        nmb_Image(), num_x(x), num_y(y),
+        units_x("none"), units_y("none"), units("ADC"),
+        my_name(name),
+        d_minNonZeroValueComputed(VRPN_FALSE),
+        d_minNonZeroValue(0),
+        d_minValueComputed(VRPN_FALSE),
+        d_minValue(0),
+        d_maxValueComputed(VRPN_FALSE),
+        d_maxValue(0),
+        d_minValidValueComputed(VRPN_FALSE),
+        d_minValidValue(0),
+        d_maxValidValueComputed(VRPN_FALSE),
+        d_maxValidValue(0),
+        d_imagePosition(0.0, 0.0, 1.0, 1.0)
 {
-  nmb_Image8bit(im->name()->Characters(),
+    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    data = new vrpn_uint16[x*y];
+    if (!data) {
+        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
+                        " Error, out of memory\n");
+    }
+    for (int i = 0; i < numExportFormats(); i++){
+        BCString name = exportFormatType(i);
+        formatNames.addEntry(name);
+    }
+}
+
+nmb_ImageArray<vrpn_float32>::nmb_ImageArray(const char *name,
+                                          const char * /*units*/,
+                                          short x, short y):
+        nmb_Image(), num_x(x), num_y(y),
+        units_x("none"), units_y("none"), units("ADC"),
+        my_name(name),
+        d_minNonZeroValueComputed(VRPN_FALSE),
+        d_minNonZeroValue(0),
+        d_minValueComputed(VRPN_FALSE),
+        d_minValue(0),
+        d_maxValueComputed(VRPN_FALSE),
+        d_maxValue(0),
+        d_minValidValueComputed(VRPN_FALSE),
+        d_minValidValue(0),
+        d_maxValidValueComputed(VRPN_FALSE),
+        d_maxValidValue(0),
+        d_imagePosition(0.0, 0.0, 1.0, 1.0)
+{
+    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    data = new vrpn_float32[x*y];
+    if (!data) {
+        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
+                        " Error, out of memory\n");
+    }
+    for (int i = 0; i < numExportFormats(); i++){
+        BCString name = exportFormatType(i);
+        formatNames.addEntry(name);
+    }
+}
+
+template <class PixelType>
+nmb_ImageArray<PixelType>::nmb_ImageArray(nmb_Image *im)
+{
+  nmb_ImageArray<PixelType>(im->name()->Characters(),
                   im->unitsValue()->Characters(),
                   im->width(), im->height());
   units_x = *(im->unitsX());
@@ -619,37 +738,72 @@ nmb_Image8bit::nmb_Image8bit(nmb_Image *im)
   im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
 }
 
+template <class PixelType>
+nmb_ImageArray<PixelType>::~nmb_ImageArray() {if (data) delete [] data;}
 
-nmb_Image8bit::~nmb_Image8bit() {if (data) delete [] data;}
+template <class PixelType>
+int nmb_ImageArray<PixelType>::width() const {return num_x;}
 
-int nmb_Image8bit::width() const {return num_x;}
+template <class PixelType>
+int nmb_ImageArray<PixelType>::height() const {return num_y;}
 
-int nmb_Image8bit::height() const {return num_y;}
+// I don't think its possible to write a default function to return the
+// right type for pixelType() so I disabled this feature by default and
+// made some special ones for the types we will use
+template <class PixelType>
+void *nmb_ImageArray<PixelType>::pixelData() {return NULL;}
 
-vrpn_uint8 *nmb_Image8bit::rawDataUnsignedByte() {return data;}
+template <class PixelType>
+nmb_PixelType nmb_ImageArray<PixelType>::pixelType() {return NMB_NONE;}
 
-float nmb_Image8bit::getValue(int i, int j) const
-        {return (float)data[i+j*num_x];}
+void *nmb_ImageArray<vrpn_uint8>::pixelData() {return data;}
 
-void nmb_Image8bit::setValue(int i, int j, float val)
+nmb_PixelType nmb_ImageArray<vrpn_uint8>::pixelType() 
+	{return NMB_UINT8;}
+
+void *nmb_ImageArray<vrpn_uint16>::pixelData() {return data;}
+
+nmb_PixelType nmb_ImageArray<vrpn_uint16>::pixelType() 
+        {return NMB_UINT16;}
+
+void *nmb_ImageArray<vrpn_float32>::pixelData() {return data;}
+
+nmb_PixelType nmb_ImageArray<vrpn_float32>::pixelType() 
+        {return NMB_FLOAT32;}
+
+template <class PixelType>
+float nmb_ImageArray<PixelType>::getValue(int i, int j) const
+        {return (float)(data[i+j*num_x]);}
+
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setValue(int i, int j, float val)
 {
-    if (val > 255)
-        data[i+j*num_x] = 255;
-    else if (val < 0)
-        data[i+j*num_x] = 0;
-    else
-        data[i+j*num_x] = (vrpn_uint8)val;
+    if (val > maxAttainableValue()) {
+        data[i+j*num_x] = maxAttainableValue();
+    } else if (val < minAttainableValue()) {
+        data[i+j*num_x] = minAttainableValue();
+    } else {
+        data[i+j*num_x] = (PixelType)val;
+    }
+    d_minValueComputed = VRPN_FALSE;
+    d_maxValueComputed = VRPN_FALSE;
+    d_minNonZeroValueComputed = VRPN_FALSE;
+    d_minValidValueComputed = VRPN_FALSE;
+    d_maxValidValueComputed = VRPN_FALSE;
+} 
+
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setLine(int line, void *line_data) {
+    memcpy(&(data[line*num_x]), line_data, num_x*sizeof(PixelType));
 }
 
-void nmb_Image8bit::setLine(int line, vrpn_uint8 *line_data) {
-    memcpy(&(data[line*num_x]), line_data, num_x);
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setImage(void *newdata) {
+    memcpy(data, newdata, num_x*num_y*sizeof(PixelType));
 }
 
-void nmb_Image8bit::setImage(vrpn_uint8 *newdata) {
-    memcpy(data, newdata, num_x*num_y);
-}
-
-int nmb_Image8bit::validDataRange(short* o_top, short* o_left,
+template <class PixelType>
+int nmb_ImageArray<PixelType>::validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right){
      // if no valid data:
      if (min_y_set > max_y_set || min_x_set > max_x_set)
@@ -660,11 +814,53 @@ int nmb_Image8bit::validDataRange(short* o_top, short* o_left,
      return 0;
 }
 
-float nmb_Image8bit::maxValue() const {return 255.0;}
+template <class PixelType>
+float nmb_ImageArray<PixelType>::maxAttainableValue() const {return 0.0;}
+template <class PixelType>
+float nmb_ImageArray<PixelType>::minAttainableValue() const {return 0.0;}
 
-float nmb_Image8bit::minValue() const {return 0.0;}
+float nmb_ImageArray<vrpn_uint8>::maxAttainableValue() const {return 255.0f;}
+float nmb_ImageArray<vrpn_uint8>::minAttainableValue() const {return 0.0f;}
 
-float nmb_Image8bit::maxValidValue() {
+float nmb_ImageArray<vrpn_uint16>::maxAttainableValue() const {return 65535.0f;}
+float nmb_ImageArray<vrpn_uint16>::minAttainableValue() const {return 0.0f;}
+
+float nmb_ImageArray<vrpn_float32>::maxAttainableValue() const {return FLT_MAX;}
+float nmb_ImageArray<vrpn_float32>::minAttainableValue() const {return -FLT_MAX;}
+
+template <class PixelType>
+float nmb_ImageArray<PixelType>::maxValue()
+{
+    int i;
+    if (!d_maxValueCalculated) {
+        d_maxValue = (float)data[0];
+        for (int i = 1; i < num_x*num_y; i++){
+            if (data[i] > d_maxValue) {
+		d_maxValue = data[i];
+            }
+        }
+        d_maxValueCalculated = VRPN_TRUE;
+    }
+    return d_maxValue;
+}
+
+template <class PixelType>
+float nmb_ImageArray<PixelType>::minValue() 
+{
+    if (!d_minValueCalculated) {
+        d_minValue = (float)data[0];
+        for (int i = 1; i < num_x*num_y; i++){
+            if (data[i] < d_maxValue) {
+                d_minValue = data[i];
+            }
+        }
+        d_minValueCalculated = VRPN_TRUE;
+    }
+    return d_minValue;
+}
+
+template <class PixelType>
+float nmb_ImageArray<PixelType>::maxValidValue() {
     short top, left, bottom, right;
     if (validDataRange(&top, &left, &bottom, &right)) {
         return 0;
@@ -672,21 +868,23 @@ float nmb_Image8bit::maxValidValue() {
     if ((top == height()-1) && (bottom == 0) && 
         (right == width()-1) && (left == 0)) {
         return maxValue();
-    }
-
-    int i,j;
-    float result = getValue(left, bottom);
-    float val;
-    for (i = left; i <= right; i++) {
-        for (j = bottom; j <= top; j++) {
-            val = getValue(i,j);
-            if (val > result) result = val;
+    } else if (!d_maxValidValueComputed) {
+        int i,j;
+        d_maxValidValue = getValue(left, bottom);
+        float val;
+        for (i = left; i <= right; i++) {
+            for (j = bottom; j <= top; j++) {
+                val = getValue(i,j);
+                if (val > d_maxValidValue) d_maxValidValue = val;
+            }
         }
+        d_maxValidValueComputed = VRPN_TRUE;
     }
-    return result;
+    return d_maxValidValue;
 }
 
-float nmb_Image8bit::minValidValue() {
+template <class PixelType>
+float nmb_ImageArray<PixelType>::minValidValue() {
     short top, left, bottom, right;
     if (validDataRange(&top, &left, &bottom, &right)) {
         return 0;
@@ -694,43 +892,47 @@ float nmb_Image8bit::minValidValue() {
     if ((top == height()-1) && (bottom == 0) &&
         (right == width()-1) && (left == 0)) {
         return minValue();
-    }
-
-    int i,j;
-    float result = getValue(left, bottom);
-    float val;
-    for (i = left; i <= right; i++) {
-        for (j = bottom; j <= top; j++) {
-            val = getValue(i,j);
-            if (val < result) result = val;
+    } else if (!d_maxValidValueComputed) {
+        int i,j;
+        d_minValidValue = getValue(left, bottom);
+        float val;
+        for (i = left; i <= right; i++) {
+            for (j = bottom; j <= top; j++) {
+                val = getValue(i,j);
+                if (val < d_minValidValue) d_minValidValue = val;
+            }
         }
+        d_minValidValueComputed = VRPN_TRUE;
     }
-    return result;
+    return d_minValidValue;
 }
 
-float nmb_Image8bit::maxNonZeroValue() {
+template <class PixelType>
+float nmb_ImageArray<PixelType>::maxNonZeroValue() {
     return maxValidValue();
 }
 
-float nmb_Image8bit::minNonZeroValue() {
-    int i,j;
-    float val = 0, result = 0;
-    for (i = 0; i < width(); i++) {
+template <class PixelType>
+float nmb_ImageArray<PixelType>::minNonZeroValue() {
+    if (!d_minNonZeroValueComputed) {
+      int i,j;
+      float val = 0, d_minNonZeroValue = 0;
+      for (i = 0; i < width(); i++) {
         for (j = 0; j < height(); j++) {
-            val = getValue(i,j);
-            if (result == 0 || (val != 0 && val < result)) {
-                result = val;
-            }
+          val = getValue(i,j);
+          if (val != 0 && val < d_minNonZeroValue) {
+            d_minNonZeroValue = val;
+          }
         }
+      }
+      d_minNonZeroValueComputed = VRPN_TRUE;
     }
-    return result;
+    return d_minNonZeroValue;
 }
 
-float nmb_Image8bit::maxAttainableValue() const {return 255.0;}
-
-float nmb_Image8bit::minAttainableValue() const {return 0.0;}
-
-double nmb_Image8bit::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
+template <class PixelType>
+double nmb_ImageArray<PixelType>::boundX(
+                    nmb_ImageBounds::ImageBoundPoint ibp) const
 {
     if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
         ibp == nmb_ImageBounds::MIN_X_MAX_Y){
@@ -740,7 +942,9 @@ double nmb_Image8bit::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
     }
 }
 
-double nmb_Image8bit::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
+template <class PixelType>
+double nmb_ImageArray<PixelType>::boundY(
+                   nmb_ImageBounds::ImageBoundPoint ibp) const
 {
     if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
         ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
@@ -750,34 +954,60 @@ double nmb_Image8bit::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
     }
 }
 
-void nmb_Image8bit::setBoundX(
-    nmb_ImageBounds::ImageBoundPoint /*ibp*/,
-    double /*x*/)
-{}
-
-void nmb_Image8bit::setBoundY(
-    nmb_ImageBounds::ImageBoundPoint /*ibp*/,
-    double /*y*/)
-{}
-
-void nmb_Image8bit::setBounds(const nmb_ImageBounds & /*ib*/) {}
-
-void nmb_Image8bit::getBounds(nmb_ImageBounds &ib)  const
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setBoundX(
+    nmb_ImageBounds::ImageBoundPoint ibp,
+    double x)
 {
-    ib = nmb_ImageBounds(0.0, 0.0, (double)num_x, (double)num_y);
+    d_imagePosition.setX(ibp, x);
 }
 
-BCString *nmb_Image8bit::name() {return &my_name;}
-BCString *nmb_Image8bit::unitsValue() {return &units;}
-BCString *nmb_Image8bit::unitsX() {return &units_x;}
-BCString *nmb_Image8bit::unitsY() {return &units_y;}
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setBoundY(
+    nmb_ImageBounds::ImageBoundPoint ibp,
+    double y)
+{
+    d_imagePosition.setY(ibp, y);
+}
 
-int nmb_Image8bit::numExportFormats() {return 0;}
-nmb_ListOfStrings *nmb_Image8bit::exportFormatNames() {return NULL;}
-const char *nmb_Image8bit::exportFormatType(int /*type*/)
-         {return NULL;}
+template <class PixelType>
+void nmb_ImageArray<PixelType>::setBounds(const nmb_ImageBounds & ib) 
+{
+    d_imagePosition = ib;
+}
 
-int nmb_Image8bit::exportToFile(FILE *f, const char *export_type){
+template <class PixelType>
+void nmb_ImageArray<PixelType>::getBounds(nmb_ImageBounds &ib)  const
+{
+    ib = d_imagePosition;
+}
+
+template <class PixelType>
+BCString *nmb_ImageArray<PixelType>::name() {return &my_name;}
+template <class PixelType>
+BCString *nmb_ImageArray<PixelType>::unitsValue() {return &units;}
+template <class PixelType>
+BCString *nmb_ImageArray<PixelType>::unitsX() {return &units_x;}
+template <class PixelType>
+BCString *nmb_ImageArray<PixelType>::unitsY() {return &units_y;}
+
+int nmb_ImageArray<vrpn_uint8>::numExportFormats() {return 0;}
+nmb_ListOfStrings *nmb_ImageArray<vrpn_uint8>::exportFormatNames() 
+{return NULL;}
+const char *nmb_ImageArray<vrpn_uint8>::exportFormatType(int) {return NULL;}
+
+int nmb_ImageArray<vrpn_uint16>::numExportFormats() {return 0;}
+nmb_ListOfStrings *nmb_ImageArray<vrpn_uint16>::exportFormatNames() 
+{return NULL;}
+const char *nmb_ImageArray<vrpn_uint16>::exportFormatType(int) {return NULL;}
+
+int nmb_ImageArray<vrpn_float32>::numExportFormats() {return 0;}
+nmb_ListOfStrings *nmb_ImageArray<vrpn_float32>::exportFormatNames() 
+{return NULL;}
+const char *nmb_ImageArray<vrpn_float32>::exportFormatType(int) {return NULL;}
+
+template <class PixelType>
+int nmb_ImageArray<PixelType>::exportToFile(FILE *f, const char *export_type){
 
     int my_export_type;
     for (my_export_type = 0; my_export_type < numExportFormats();
@@ -787,13 +1017,13 @@ int nmb_Image8bit::exportToFile(FILE *f, const char *export_type){
     }
     // if didn't find a match to export_type
     if (my_export_type == numExportFormats()) {
-        fprintf(stderr, "nmb_Image8bit::Error, unknown file type: %s\n",
+        fprintf(stderr, "nmb_ImageArray::Error, unknown file type: %s\n",
             export_type);
         return -1;
     }
     else {  // we have a function for exporting this type
         if (file_exporting_function[my_export_type](f, this)) {
-            fprintf(stderr, "nmb_Image8bit::Error writing file of type %s\n",
+            fprintf(stderr, "nmb_ImageArray::Error writing file of type %s\n",
                 export_type);
             return -1;
         }

@@ -1,3 +1,27 @@
+2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.C (general change) : changed indexing of _value to
+	be row-major instead of column-major - this change should be
+	completely transparent except to those who use the function
+	flatValueArray() - I looked for any use of this function and
+	didn't see any but I have added a call in nmb_Image.C - this change is 
+	useful because it lets us dump the pixel data directly into
+	texture memory 
+	* BCPlane.C (writePPMFile) : changed this so it would map valid values
+	to 1-255 and invalid values to 0 so that output is a little nicer
+	when you don't have a full grid of data
+        * nmb_Image.C (getValueInterpolatedNZ) : new function that is
+	just like getValueInterpolated but will return 0 if any of the
+	neigboring pixels that would come into the computation of the
+	interplated value is 0 (in other parts of the program 
+	we use this to tell us where there is no data)
+	* nmb_Image.C (nmb_ImageGrid::minNonZeroValue) -  changed to use
+	the corresponding function in BCPlane
+	* nmb_Image.C (class nmb_Image8bit) - replaced this class with
+	a template class nmb_ImageArray which also derives from nmb_Image
+        * nmb_Image.C (nmb_ImageGrid::pixelData) - returns something now
+	instead of just NULL by returning plane->flatValueArray()
+
 2000-10-02  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmb_Debug.C (collabVerbose): Added missing ;

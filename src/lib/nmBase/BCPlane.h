@@ -44,7 +44,7 @@ class BCPlane
     inline double maxY() const { return _grid->maxY(); }
 
     inline int convertToColor(int x, int y) {
-	return (int) (254 * (_value[x * _num_y + y] - minAttainableValue()) /
+	return (int) (254 * (_value[x + y * _num_x] - minAttainableValue()) /
 		      (maxAttainableValue() - minAttainableValue()));
     }
       ///< Only valid for files, not streams or live devices
@@ -88,14 +88,14 @@ class BCPlane
 
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
-    inline float value(int x, int y) const { return _value[x * _num_y + y]; }
+    inline float value(int x, int y) const { return _value[x + y * _num_x]; }
     int valueAt (double * result, double x, double y);
     
     float interpolatedValue(double x, double y);
     float interpolatedValueAt(double x, double y);
 
     inline double scaledValue(int x, int y) const {
-	return _value[x * _num_y + y] * (double) _scale;
+	return _value[x + y * _num_x] * (double) _scale;
     }
 
     virtual void setValue(int x, int y, float value);
@@ -139,7 +139,8 @@ class BCPlane
 	
 
     /// We need to expose this to an IBR object.  Shouldn't be needed for
-    /// any dissimilar purpose.
+    /// any dissimilar purpose. Order of pixels is row-major order:
+    /// row0, row1, row2 ... row<_num_y-1>
     const float * flatValueArray (void) const
       { return _value; }
 

@@ -40,7 +40,7 @@ setValue
 void
 BCPlane::setValue(int x, int y, float value)
 {
-    _value[x * _num_y + y] = value;
+    _value[x + y * _num_x] = value;
     _modified = 1;
     _modified_nz = 1;
 
@@ -304,7 +304,7 @@ int BCPlane::valueAt (double * result, double x, double y) {
       //fprintf(stderr, "BCPlane::valueAt %d %d:  Out of bounds!.\n", ix, iy);
     return -1;
   }
-  *result = _value [ix * _num_y + iy];
+  *result = _value [ix + iy * _num_x];
   return 0;
 }
 
@@ -1056,7 +1056,8 @@ BCPlane::readPPMorPGMFile(FILE *file, double scale)
 /**
 writePPMFile
     Writes a greyscale ppm file (just data, no header). Data is 
-                scaled from range minValue() - maxValue() to range 0 - 255
+                scaled from range minNonZeroValue() - maxValue() to range 1 - 255
+                values less than minNonZeroValue are output with value 0
         @author ?
  @date modified 8/13/98 Aron Helser
 */
@@ -1065,7 +1066,9 @@ BCPlane::writePPMFile(int file_descriptor)
 {  
     char *value = (char *) calloc(numX(), 3 * sizeof(char));
 
-    double scale = 255.0 / (maxValue() - minValue());
+    double scale = 254.0 / (maxValue() - minNonZeroValue());
+
+    unsigned int val;
 
     int x, y;
 
@@ -1074,10 +1077,17 @@ BCPlane::writePPMFile(int file_descriptor)
     {
 	for(x = 0; x < numX(); x++ ) 
 	{
+            if (this->value(x,y) < minNonZeroValue()) {
+               val = 0;
+            } else {
+               val = 1 + 
+                     (unsigned)((this->value(x, y) - minNonZeroValue()) * scale);
+            }
+
 	    value[x*3] = 
 		value[x*3+1] = 
 		    value[x*3+2] = 
-			(unsigned)((this->value(x, y) - minValue()) * scale);
+			val;
 	    //printf("%d ", value[x*3]);
 	}
 	//printf("*****\n");
@@ -1580,7 +1590,7 @@ CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
 
     for (x = 0; x < _num_x; x++) 
 	for (y = 0; y < _num_y; y++)
-	    _value[x * _num_y + y] = 0.0;
+	    _value[x + y * _num_x] = 0.0;
 }
 
 
@@ -1601,11 +1611,11 @@ CPlane::CPlane(CPlane* plane) : BCPlane(plane)
     
     for (x = 0; x < _num_x; x++) 
 	for (y = 0; y < _num_y; y++)
-	    _value[x * _num_y + y] = 0.0;
+	    _value[x + y * _num_x] = 0.0;
 
     for (x = 0; x < plane->numX(); x++) 
 	for (y = 0; y < plane->numY(); y++) 
-	    _value[x * _num_y + y] =  plane->value(x, y);
+	    _value[x + y * _num_x] =  plane->value(x, y);
 }
 
 CPlane::CPlane (CPlane * plane, int newX, int newY) :
@@ -1703,7 +1713,7 @@ CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 
 	for (y = 0; y < _num_y; y++) 
 	{
-	    _value[x * _num_y + y] =  0.0;
+	    _value[x + y * _num_x] =  0.0;
 	    _sec[x][y] = 0;
 	    _usec[x][y] = 0;
 	}
@@ -1733,7 +1743,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 
 	for (y = 0; y < _num_y; y++)
 	{
-	    _value[x * _num_y + y] =  0.0;
+	    _value[x + y * _num_x] =  0.0;
 	    _sec[x][y] = 0;
 	    _usec[x][y] = 0; 
 	}
@@ -1743,7 +1753,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
     {
 	for (y = 0; y < plane->numY(); y++) 
 	{
-	    _value[x * _num_y + y] = plane->value(x, y);
+	    _value[x + y * _num_x] = plane->value(x, y);
 	    _sec[x][y] = plane->_sec[x][y];
 	    _usec[x][y] = plane->_usec[x][y];
 	}

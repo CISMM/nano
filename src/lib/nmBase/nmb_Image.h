@@ -36,6 +36,8 @@
 #endif
 #define MIN(x,y)        (((x)<=(y))?(x):(y))
 
+typedef enum {NMB_FLOAT32, NMB_UINT8, NMB_UINT16, NMB_NONE}  nmb_PixelType;
+
 class nmb_ImageBounds {
   public:
 	nmb_ImageBounds();
@@ -75,8 +77,8 @@ class nmb_Image {
 	virtual float getValue(int i, int j) const = 0;
 	virtual void setValue(int i, int j, float val) = 0;
         /// min and max of values actually in the image:
-	virtual float maxValue() const = 0;
-	virtual float minValue() const = 0;
+	virtual float maxValue() = 0;
+	virtual float minValue() = 0;
         // min and max of values that have been set
         virtual float maxValidValue() = 0;
         virtual float minValidValue() = 0;
@@ -89,6 +91,7 @@ class nmb_Image {
                                    short* o_bottom, short*o_right) = 0;
 
 	float getValueInterpolated(double i, double j) const;
+	float getValueInterpolatedNZ(double i, double j) const;
 
 	/// bounds of image in whatever units the image is in 
 	/// (note: this is more general than the current BCGrid interface since
@@ -128,8 +131,12 @@ class nmb_Image {
 	vrpn_bool isHeightField() const {return is_height_field;}
 	void setHeightField(vrpn_bool flag) {is_height_field = flag;}
 
-	/// gives address of an array of unsigned chars
-	virtual vrpn_uint8 *rawDataUnsignedByte() = 0;
+	/// gives address of an array of pixels in the order
+        /// row0, row1, row2, ... row<height-1>
+	virtual void *pixelData() = 0;
+
+        /// tells you what type of data is returned by pixelData
+        virtual nmb_PixelType pixelType() = 0;
 
 	virtual int numExportFormats() = 0;
 	virtual const char *exportFormatType(int type) = 0;
@@ -154,8 +161,8 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual void setValue(int i, int j, float val);
         virtual int validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right);
-	virtual float maxValue() const;
-	virtual float minValue() const;
+	virtual float maxValue();
+	virtual float minValue();
         virtual float maxValidValue();
         virtual float minValidValue();
         virtual float maxNonZeroValue();
@@ -174,8 +181,8 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual BCString *unitsY();
         virtual void setTopoFileInfo(TopoFile &tf);
         virtual void getTopoFileInfo(TopoFile &tf);
-	virtual vrpn_uint8 *rawDataUnsignedByte();
-
+        virtual void *pixelData();
+	virtual nmb_PixelType pixelType();
         virtual int numExportFormats();
 	virtual nmb_ListOfStrings *exportFormatNames();
         virtual const char *exportFormatType(int type); 
@@ -203,22 +210,24 @@ class nmb_ImageGrid : public nmb_Image{
         static TopoFile s_topoFileDefaults;
 };
 
-class nmb_Image8bit : public nmb_Image {
+template <class PixelType>
+class nmb_ImageArray : public nmb_Image {
   public:
-    nmb_Image8bit(const char *name, const char *units, short x, short y);
-    nmb_Image8bit(nmb_Image *);
-    virtual ~nmb_Image8bit();
+    nmb_ImageArray(const char *name, const char *units, short x, short y);
+    nmb_ImageArray(nmb_Image *);
+    virtual ~nmb_ImageArray();
     virtual int width() const;
     virtual int height() const;
-    virtual vrpn_uint8 *rawDataUnsignedByte();
+    virtual void *pixelData(); 
+    virtual nmb_PixelType pixelType();
     virtual float getValue(int i, int j) const;
     virtual void setValue(int i, int j, float val);
-    virtual void setLine(int line, vrpn_uint8 *line_data);
-    virtual void setImage(vrpn_uint8 *newdata);
+    virtual void setLine(int line, void *line_data);
+    virtual void setImage(void *newdata);
     virtual int validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right);
-    virtual float maxValue() const;
-    virtual float minValue() const;
+    virtual float maxValue();
+    virtual float minValue();
     virtual float maxValidValue();
     virtual float minValidValue();
     virtual float maxNonZeroValue();
@@ -238,20 +247,21 @@ class nmb_Image8bit : public nmb_Image {
  
     virtual void setTopoFileInfo(TopoFile &) {
       fprintf(stderr, 
-          "Warning: nmb_Image8bit::setTopoFileInfo not implemented\n");
+          "Warning: nmb_ImageArray::setTopoFileInfo not implemented\n");
     }
     virtual void getTopoFileInfo(TopoFile &) {
       fprintf(stderr, 
-          "Warning: nmb_Image8bit::getTopoFileInfo not implemented\n");
+          "Warning: nmb_ImageArray::getTopoFileInfo not implemented\n");
     }
     virtual int numExportFormats();
     virtual nmb_ListOfStrings *exportFormatNames();
     virtual const char *exportFormatType(int type);
     virtual int exportToFile(FILE *f, const char *export_type);
 
-    typedef int (*FileExportingFunction) (FILE *file, nmb_Image8bit *im);
+    typedef int (*FileExportingFunction) 
+            (FILE *file, nmb_ImageArray<PixelType> *im);
   protected:
-    vrpn_uint8 *data;
+    PixelType *data;
     short num_x, num_y;
     BCString units_x, units_y, units, my_name;
     short min_x_set, min_y_set, max_x_set, max_y_set;
@@ -260,6 +270,20 @@ class nmb_Image8bit : public nmb_Image {
         static const char    *export_formats_list[];
         nmb_ListOfStrings formatNames;
         static const FileExportingFunction file_exporting_function[];
+
+    vrpn_bool d_minNonZeroValueComputed;
+    float d_minNonZeroValue;
+    vrpn_bool d_minValueComputed;
+    float d_minValue;
+    vrpn_bool d_maxValueComputed;
+    float d_maxValue;
+    vrpn_bool d_maxValidValueComputed;
+    float d_maxValidValue;
+    vrpn_bool d_minValidValueComputed;
+    float d_minValidValue;
+
+    nmb_ImageBounds d_imagePosition; // position in the world
+
 };
 
 #define NMB_MAX_IMAGELIST_LENGTH 100
