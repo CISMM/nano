@@ -5351,6 +5351,16 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
 	paramControls->remove(&(m->state.modify.new_blunt_size));
     paramControls->remove(&(m->state.modify.new_blunt_speed));
     paramControls->remove(&(m->state.numLinesToJumpBack));
+
+	//direct step controls
+	paramControls->remove(&(m->state.modify.step_x_pos));
+	paramControls->remove(&(m->state.modify.step_y_pos));
+	paramControls->remove(&(m->state.modify.step_z_pos));
+
+	paramControls->remove(&(m->state.modify.step_x_size));
+	paramControls->remove(&(m->state.modify.step_y_size));
+	paramControls->remove(&(m->state.modify.step_z_size));
+
   }
 
   // Image parameter controls
@@ -5762,6 +5772,14 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.new_blunt_speed));
   paramControls->add(&(m->state.numLinesToJumpBack));
 
+  //Direct step controls
+  paramControls->add(&(m->state.modify.step_x_pos));
+  paramControls->add(&(m->state.modify.step_y_pos));
+  paramControls->add(&(m->state.modify.step_z_pos));
+
+  paramControls->add(&(m->state.modify.step_x_size));
+  paramControls->add(&(m->state.modify.step_y_size));
+  paramControls->add(&(m->state.modify.step_z_size));
 
   // Image parameter controls
   nmui_Component* imageParamControls;
