@@ -5970,6 +5970,7 @@ void ParseArgs (int argc, char ** argv,
         istate->afm.writingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->afm.outputStreamName, argv[i]);
+        openSPMLogName.Set( argv[i] );
 	istate->ohm.writingLogFile = 1;
 	sprintf(istate->ohm.outputLogName, "%s%s", argv[i],
 		OHM_FILE_SUFFIX);

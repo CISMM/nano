@@ -5,7 +5,10 @@
 	(main):  before opening a keithley device, make sure the user
 	has specified a stream file.  This is in two places, where the
 	microscope is initialized, and where the vi client is initialized.
-
+	(ParseArgs):  if a log file is specified by -o on the command line,
+	this now sets the tcl variable openSPMLogName so that a user isn't
+	challenged again to name a log file.
+	
 2002-04-26  David Borland  <borland@cs.unc.edu>
 
         * microscape.C : made changes to change static file code for 
