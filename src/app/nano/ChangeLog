@@ -1,3 +1,8 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main): took out parameter in call to 
+	colormap constructor
+
 2001-11-26  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (disableOtherTextures): removed this function - a tcl

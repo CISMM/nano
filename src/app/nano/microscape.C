@@ -4267,7 +4267,6 @@ void setupCallbacks (nmui_ColorMap *cm, nmb_Dataset * d, nmg_Graphics * g) {
   if (!cm || !d || !g) return;
     // Heightfield colormap controls.
     cm->swapTclStrings((TclNet_string *) d->colorPlaneName, 
-                       (Tclvar_list_of_strings *) d->inputPlaneNames,
                        (TclNet_string *) d->colorMapName);
   ((TclNet_string *) d->colorMapName)->
         initializeTcl("cm_heightfield(color_map)");
@@ -7155,7 +7154,6 @@ int main (int argc, char* argv[])
   VERBOSE(1, "Loading color maps");
   colorMapUI = new nmui_ColorMap("cm_heightfield", 
                           (TclNet_string *) dataset->colorPlaneName, 
-                          (Tclvar_list_of_strings *) dataset->inputPlaneNames,
                           (TclNet_string *) dataset->colorMapName);
   colorMapUI->loadColorMapNames(colorMapDir);
   // Match Color w/default in TCL
