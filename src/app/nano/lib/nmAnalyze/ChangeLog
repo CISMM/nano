@@ -1,3 +1,17 @@
+2002-02-18 Andrea Hilchey <hilchey@cs.unc.edu> David Borland <borland@cs.unc.edu>
+	* nma_ShapeAnalyze.Ch : changed nma_ShapeIdentifiedPlane object
+	shapePlane from being a local variable to data member of class
+	(ptr) which fixed plane display for Shape Analysis option under
+	Analysis menu heading (previously went out of scope before plane 
+	could be viewed)
+
+	* cnt_ia : changed output of text files mask.details.txt and
+	mask.summary.txt to display more useful information, uncommented
+	some commented out code (cnt_image_select and cnt_image_order)
+	and fixed bugs within it; also able to add back in calls to
+	these functions in nma_ShapeAnalyze to allow plane display
+
+
 2002-02-11 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nma_ShapeAnalyze.hC : rewrote interpolation algorithm to correctly
