@@ -510,8 +510,9 @@ void nmr_RegistrationUI::handle_registrationColorMap2D_change(const char *name,
     if (me->d_imageDisplay) {
       me->d_imageDisplay->setDisplayColorMap(im, 
           me->d_2DImageCMap->getColorMapName(), "");
-      me->d_imageDisplay->updateImage(im);
+      if(im) me->d_imageDisplay->updateImage(im);
     }
+
 }
 
 //static 
@@ -521,6 +522,7 @@ void nmr_RegistrationUI::handle_registrationMinMax3D_change(vrpn_float64, void *
     me->d_3DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
     // send changes off to the proxy
     me->d_aligner->setColorMinMax(NMR_SOURCE, dmin, dmax, cmin, cmax);
+
 }
 
 //static 
@@ -530,15 +532,17 @@ void nmr_RegistrationUI::handle_registrationMinMax2D_change(vrpn_float64, void *
      me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
     // send changes off to the proxy
     me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
+
     if (!me->d_dataset) return;
     nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
                                 me->d_registrationImageName2D.string());
+
     if (me->d_imageDisplay) {
       // set up texture in graphics
       // me->d_imageDisplay->setRealignTexturesConversionMap(
       // me->d_2DImageCMap->getColorMapName(), "");
       me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax, cmin, cmax);
-      me->d_imageDisplay->updateImage(im);
+	  if(im) me->d_imageDisplay->updateImage(im);
     }
 }
 
