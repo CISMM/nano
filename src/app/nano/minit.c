@@ -40,7 +40,7 @@
 #include <vrpn_Text.h>
 #endif
 // Make the mouse behave like the Phantom. 
-#include <vrpn_MousePhantom.h>
+#include <nm_MouseInteractor.h>
 
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
@@ -669,7 +669,7 @@ reset_phantom()
   return 0;
 }
 
-int teardown_phantom (vrpn_MousePhantom ** mousePhantomServer,
+int teardown_phantom (nm_MouseInteractor ** mousePhantomServer,
               vrpn_ForceDevice_Remote ** forceDevice,
               vrpn_Button_Remote ** phantButton,
               vrpn_Tracker_Remote ** vrpnHandTracker) {
@@ -708,7 +708,7 @@ int teardown_phantom (vrpn_MousePhantom ** mousePhantomServer,
 int
 phantom_init (vrpn_Connection * local_device_connection,
               const char * handTrackerName /*,
-              vrpn_MousePhantom ** mousePhantomServer,
+              nm_MouseInteractor ** mousePhantomServer,
               vrpn_ForceDevice_Remote ** forceDevice,
               vrpn_Button_Remote ** phantButton,
               vrpn_Tracker_Remote ** vrpnHandTracker*/)
@@ -748,7 +748,7 @@ phantom_init (vrpn_Connection * local_device_connection,
     
         // Make a mouse phantom server - the mouse acts like a phantom
         // Only if there is no real phantom - they conflict. 
-        mousePhantomServer = vrpn_MousePhantom::createMousePhantom(
+        mousePhantomServer = nm_MouseInteractor::createMouseInteractor(
                                               (char *) handTrackerName, 
                                               local_device_connection, 60);
         if (mousePhantomServer==NULL) {

@@ -37,7 +37,7 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #include <vrpn_Text.h>
 #endif
-#include <vrpn_MousePhantom.h>
+#include <nm_MouseInteractor.h>
 
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
@@ -1160,7 +1160,7 @@ static char local_ModeName [256];
 /// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
 #endif
-vrpn_MousePhantom * mousePhantomServer = NULL;
+nm_MouseInteractor * mousePhantomServer = NULL;
 
 /// Phantom force device, used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
@@ -2287,8 +2287,9 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   if (set_stream_time_now == 0) return;
 
   struct timeval newStreamTime, currentTime;
-  newStreamTime.tv_sec = (long) ((double) set_stream_time);
-  newStreamTime.tv_usec = 999999L;
+//    newStreamTime.tv_sec = (long) ((double) set_stream_time);
+//    newStreamTime.tv_usec = 999999L;
+  newStreamTime = vrpn_MsecsTimeval( set_stream_time*1000.0);
   if (vrpnLogFile) {
     vrpnLogFile->time_since_connection_open( &currentTime );
     if( newStreamTime.tv_sec < currentTime.tv_sec ||
@@ -7328,12 +7329,12 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
     // Check for NANO_ROOT env var. If other things aren't set, 
     // they can be set relative to NANO_ROOT by default. 
     char * nano_root = NULL;
-    if (getenv("NANO_ROOT")) {
+/*    if (getenv("NANO_ROOT")) {
         // Do it this way so we know we can delete [] below, 
         // and avoid memory leaks. 
         nano_root = new char [strlen(getenv("NANO_ROOT")) + 1];
         strcpy(nano_root, getenv("NANO_ROOT"));
-    }
+    }*/
     tcl_script_dir=getenv("NM_TCL_DIR");
     colorMapDir=getenv("NM_COLORMAP_DIR");
     char *env_string = NULL; 
@@ -7554,6 +7555,11 @@ int main (int argc, char* argv[])
     // the Tk widgits
     if(init_Tk_control_panels(tcl_script_dir, istate.collabMode,
                               &collaborationTimer)) {
+#if defined (_WIN32) && !defined (__CYGWIN__)
+        HWND hwnd;
+        hwnd = GetForegroundWindow();  // GetFocus or GetForegroundWindow 
+        ShowWindow(hwnd, SW_RESTORE); // Show window, it was minimized.
+#endif
         fprintf(stderr, 
                 "NanoManipulator Control Panels failed to initialize.\n"
                 "This indicates the program is not installed properly, \n"

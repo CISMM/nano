@@ -1,9 +1,25 @@
+2002-06-14  Aron Helser  <helser@cs.unc.edu>
+
+	* nm_MouseInteractor.Ch: new, replaces
+	vrpn_mousePhantom. mouseInteractor is now aware of what state the
+	user is in, so it can perform context dependent actions with the
+	mouse. 
+
+	* microscape.Ch: Changes to support nm_MouseInteractor. Also allow
+	fractional times when jumping in stream files, allows smaller time
+	steps when making snapshots for movies. 
+	* minit.ch: Changes to support nm_MouseInteractor
+	* nano.dsp: same
+	* vrpn_MousePhantom.Ch: removed
+
+	* interaction.h: Includes for mouse interactor
+
 2002-06-12 Jameson Miller <millerj@cs.unc.edu>
-	* microscope.c : "working" message is now turned off
+	* microscope.c: "working" message is now turned off
 			when we load the same streamfile twice.
 
 2002-06-06 Jameson Miller <millerj@cs.unc.edu>
-	* interaction.c - added code to go into modify mode when in
+	* interaction.c: added code to go into modify mode when in
 		direct step (and commit button is pressed).
 		modified functions :
 			handle_commit_change
@@ -15,42 +31,42 @@
 
 2002-06-06 David Borland <borland@cs.unc.edu>
 
-        * import.C : fixed a bug that was causing the wrong spider values to
+	* import.C: fixed a bug that was causing the wrong spider values to
 	be set when switching between objects
 
 2002-06-06 David Borland <borland@cs.unc.edu>
 
-        * interaction.c : don't think the right version got in last time...
+	* interaction.c: don't think the right version got in last time...
 
 2002-06-06 David Borland <borland@cs.unc.edu>
 
-        * import.C : just added and removed some debugging info
+	* import.C: just added and removed some debugging info
 
-	* interaction.c : removed code for handling projective texture
+	* interaction.c: removed code for handling projective texture
 	transformation.  It is handled by creating an UberGraphics object
 	for the texture, and using the objects transform now.
 
 2002-06-06 Woojin Seok <seok@cs.unc.edu>
-        *microscape.C <teardownMicroscopeSynchronization> 
-        : added m->state.doRelaxComp to share the state of button of
-        "Offset Comp on" in modify parameter.
+	* microscape.C (teardownMicroscopeSynchronization): added
+	m->state.doRelaxComp to share the state of button of "Offset Comp
+	on" in modify parameter.
 
-        <setupMicroscopeSynchronization> : added m->state.doRelaxComp
-         as same above.
-        
+	(setupMicroscopeSynchronization) : added m->state.doRelaxComp
+	 as same above.
+	
 
 2002-06-04 Jameson Miller <millerj@cs.unc.edu>
-	*microscape.c : added direct step controls to collaboration.
+	* microscape.c: added direct step controls to collaboration.
 
 
 2002-06-03 David Borland <borland@cs.unc.edu>
 
-        * interaction.C : fixed a couple of minor bugs with UI for 
-        controlling projective textures with the phantom.
+	* interaction.C: fixed a couple of minor bugs with UI for 
+	controlling projective textures with the phantom.
 
 2002-06-03 David Borland <borland@cs.unc.edu>
 
-        * interaction.C (doWorldGrab) : code for controlling projective 
+	* interaction.C (doWorldGrab): code for controlling projective 
 	textures with the phantom.  There are still some problems (they 
 	can only be transformed in object space), but it works okay for 
 	the time being.
@@ -63,22 +79,22 @@
 
 2002-05-28 David Borland <borland@cs.unc.edu>
 
-        * interaction.C (doWorldGrab) : preliminary code for controlling
+	* interaction.C (doWorldGrab) : preliminary code for controlling
 	projective texture transformations with the phantom.  Still needs 
 	some work.
 
 2002-05-28 David Borland <borland@cs.unc.edu>
 
-        * import.C : a couple of the new tcl widgets weren't getting updated
-        when switching between objects.  Fixed this.
+	* import.C : a couple of the new tcl widgets weren't getting updated
+	when switching between objects.  Fixed this.
 
 2002-05-28 David Borland <borland@cs.unc.edu>
 
-        * import.C : took out code for locking translations from here, and
-        moved to interaction.C.  Locks for translations now only apply when
-        "grabbing" an object.
+	* import.C : took out code for locking translations from here, and
+	moved to interaction.C.  Locks for translations now only apply when
+	"grabbing" an object.
 
-        * interaction.C : same
+	* interaction.C : same
 
 2002-05-27 Jameson Miller <millerj@cs.unc.edu>
 	*interaction.c : new code for detecting and dealing with case when
@@ -89,13 +105,13 @@
 
 2002-05-24 David Borland <borland@cs.unc.edu>
 
-        * import.C : added code for locking the current projective texture 
+	* import.C : added code for locking the current projective texture 
 	transform.  The projective texture can now be transformed while 
 	keeping its old transform with respect to the object.
 
 2002-05-23 David Borland <borland@cs.unc.edu>
 
-        * import.C : added code for "fine-tuning" translations and rotations
+	* import.C : added code for "fine-tuning" translations and rotations
 	with the phantom.  When selected, translations and/or rotations are
 	divided by ten.  Useful for fine-tuning object/projective texture 
 	alignment.
@@ -104,47 +120,47 @@
 
 2002-05-23 David Borland <borland@cs.unc.edu>
 
-        * microscape.C : added a check for the existence of Ubergraphics Tree
-        contents in openDefaultMicroscope
+	* microscape.C : added a check for the existence of Ubergraphics Tree
+	contents in openDefaultMicroscope
 
-        * import.C : code for individual leg manipulation of spiders
+	* import.C : code for individual leg manipulation of spiders
 
-        * interaction.C : took out a debugging print statement
+	* interaction.C : took out a debugging print statement
 
 2002-05-22 Jameson Miller <millerj@cs.unc.edu>
-	*microscape.c: added in step_size to microscopesynchonization set up
+	* microscape.c: added in step_size to microscopesynchonization set up
 		and tear down list.
 
 2002-05-21 David Borland <borland@cs.unc.edu>
 
-        * import.C : took out code for locking rotations from here
+	* import.C : took out code for locking rotations from here
 
-        * interaction.C : moved code for locking rotations here.  When 
-        there are no locks, rotations are performed in world space.  When
-        there are locks, rotations are performed in object space.  Hopefully
-        this will help for aligning objects with projective textures.  Need
-        to try it with a real phantom though.
-
-2002-05-20 David Borland <borland@cs.unc.edu>
-
-        * import.C : added user interface for controlling the number of
-        spider legs
+	* interaction.C : moved code for locking rotations here.  When 
+	there are no locks, rotations are performed in world space.  When
+	there are locks, rotations are performed in object space.  Hopefully
+	this will help for aligning objects with projective textures.  Need
+	to try it with a real phantom though.
 
 2002-05-20 David Borland <borland@cs.unc.edu>
 
-        * import.C : added user interface for locking translations and 
-        rotations
+	* import.C : added user interface for controlling the number of
+	spider legs
 
 2002-05-20 David Borland <borland@cs.unc.edu>
 
-        * import.C : previous changes to the object rotation code had the
-        objects rotating around the incorrect axes.  Fixed this.
+	* import.C : added user interface for locking translations and 
+	rotations
+
+2002-05-20 David Borland <borland@cs.unc.edu>
+
+	* import.C : previous changes to the object rotation code had the
+	objects rotating around the incorrect axes.  Fixed this.
 
 2002-05-16 Jameson Miller <millerj@cs.unc.edu>
-	* MicroscopeHandlers.c (.h) - Slow line mode can now collect data
+	* MicroscopeHandlers.c (.h): Slow line mode can now collect data
 	even when paused or can not collect data. This can be set by a toggle
 	in the slow line live controls.
-	*Microscape.c - added new tclNet var into setup for collaboration.
+	* Microscape.c: added new tclNet var into setup for collaboration.
 
 
 2002-05-13  David Marshburn  <marshbur@evans.cs.unc.edu>
@@ -189,21 +205,21 @@
 	function calls
 
 2002-05-07  David Borland  <borland@cs.unc.edu>
-        * microscape.C:
-        (handle_openStaticFilename_change):  added code for automatically
-        translating and scaling objects when a new static file is opened.
-        This code had been previously committed, but it seems to have
-        disappeared from the repository...
+	* microscape.C:
+	(handle_openStaticFilename_change):  added code for automatically
+	translating and scaling objects when a new static file is opened.
+	This code had been previously committed, but it seems to have
+	disappeared from the repository...
 
-        (handle_z_dataset_change):  added code for automatically translating
-        objects in z when switching between height planes.  Once again, this
-        code was previously committed, but has disappeared...
+	(handle_z_dataset_change):  added code for automatically translating
+	objects in z when switching between height planes.  Once again, this
+	code was previously committed, but has disappeared...
 
 2002-05-06  David Borland  <borland@cs.unc.edu>
-        * import.C:  added callbacks for spider objects
+	* import.C:  added callbacks for spider objects
 
-        * interaction.C:  added code to doWorldGrab so that objects can
-        be rotated and translated with the mouse phantom
+	* interaction.C:  added code to doWorldGrab so that objects can
+	be rotated and translated with the mouse phantom
 
 2002-05-02  David Marshburn  <marshbur@cs.unc.edu>
 
@@ -224,11 +240,11 @@
 	
 2002-04-26  David Borland  <borland@cs.unc.edu>
 
-        * microscape.C : made changes to change static file code for 
-        loaded object.  Added change height plane code for objects
+	* microscape.C : made changes to change static file code for 
+	loaded object.  Added change height plane code for objects
 
-        * import.C : took out setting default translation of loaded 
-        objects because this is done elsewhere now
+	* import.C : took out setting default translation of loaded 
+	objects because this is done elsewhere now
 
 2002-04-23  David Marshburn  <marshbur@cs.unc.edu>
 
@@ -238,15 +254,15 @@
 	a microscope object has already been created.
 
 2002-04-15  David Borland  <borland@cs.unc.edu>
-        * import.C:  Fixed a couple of bugs introduced by my previous
-        commit
+	* import.C:  Fixed a couple of bugs introduced by my previous
+	commit
 
 2002-04-11  David Borland  <borland@cs.unc.edu>
-        * import.C:  Changed default axis step value for loaded tubes.  
-        Modified handling of opening and closing objects in the list of
-        objects so that it is more intuitive.  Added functionality for 
-        user control of sending orientation and scale updates to the AFM
-        simulator
+	* import.C:  Changed default axis step value for loaded tubes.  
+	Modified handling of opening and closing objects in the list of
+	objects so that it is more intuitive.  Added functionality for 
+	user control of sending orientation and scale updates to the AFM
+	simulator
 
 2002-04-04  Aron Helser  <helser@cs.unc.edu>
 
@@ -343,11 +359,11 @@
 
 2002-03-06  David Borland <borland@cs.unc.edu>
 
-        * import.C : Added a callback for user controll of the amount
-        of tesselation of loaded tubes
+	* import.C : Added a callback for user controll of the amount
+	of tesselation of loaded tubes
 
-        * microscape.C : Changed name of function that automatically scales
-        objects when new static files are loaded
+	* microscape.C : Changed name of function that automatically scales
+	objects when new static files are loaded
 
 2002-02-27  David Marshburn  <marshbur@cs.unc.edu>
 
@@ -372,13 +388,13 @@
 
 2002-02-18  David Borland <borland@cs.unc.edu>
 
-        * microscape.c : Added code so that objects are scaled accordingly
-        when new static files are loaded
+	* microscape.c : Added code so that objects are scaled accordingly
+	when new static files are loaded
 
-        * import.C : TCL stuff for projective textures onto loaded objects
+	* import.C : TCL stuff for projective textures onto loaded objects
 
-        * imported_obj.C : same
-        
+	* imported_obj.C : same
+	
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c (createNewDatasetOrMicroscope): Changed so it
@@ -538,10 +554,10 @@
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* CollaborationManager.C : replaced get_the_interpreter() with
-                                   Tcl_Interpreter::getInterpreter()
+				   Tcl_Interpreter::getInterpreter()
 	* error_display.c : same
 	* microscape.c : same
-        * tcl_tk.c : moved generic code out of this into Tcl_Interpreter.C
+	* tcl_tk.c : moved generic code out of this into Tcl_Interpreter.C
 
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -828,7 +844,7 @@
 2001-07-09  Shayne O'Neill  <soneill@mindspring.com>
 
 	* microscape.c:  Added calls to Graphmod's setup and teardown
-	                 synchronization in SetupSynchronization()
+			 synchronization in SetupSynchronization()
 			 and TeardownSynchronization().  Also changed
 			 the creatioin of a graphmod in CreateNewMicroscope()
 			 to accurately reflect the change to MicroscopeRemote.
@@ -861,7 +877,7 @@
 2001-06-25  Shayne O'Neill  <oneill@mindspring.com>
 
 	* microscape.c:  Changed a bunch of Tclvars to TclNets.
-	                 Changed variables related to:
+			 Changed variables related to:
 			    Display Settings (Bug 2.7.4)
 			    Haptics (Bug 2.7.2)
 			    External Filters (Bug 2.7.3) 
@@ -869,7 +885,7 @@
 			 Added these variables to setupSynchronization(),
 			 teardownSynchronization(), and shutdown_connections().
 	* microscape.h:  Changed some Tclvars to TclNets.
-	                 Made some TclNets external.
+			 Made some TclNets external.
 	* interaction.c: Changed some Tclvars to TclNets.
 	* interaction.h: Changed some Tclvars to TclNets.
 
@@ -909,7 +925,7 @@
 	Make InitializationState::index_mode vrpn_bool instead of bool
 	for consistency.
 	(main) : change parameters to peripheral_init(), use vrpn_bool
-        instead of bool.
+	instead of bool.
 	(ParseArgs) : change index_mode to vrpn_bool instead of bool.
 	Add accidentally-lost line for -renderclient.
 	* microscape.h : Remove bdboxName, headTrackerName, handTrackerName.
@@ -932,7 +948,7 @@
 	variables.
 	(ParseArgs) : parse new command-line arguments.
 	(Usage) : document new command-line arguments, remove documentation
-        of obsolete arguments.
+	of obsolete arguments.
 	(main) : respond to new command-line arguments.
 
 	* microscape.c (createForwarders) : remove old code.
@@ -1101,28 +1117,28 @@
 
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
 
-        * microscape.c: changed usage of vrpn_get_connection_by_name so it
-        is by default compatible with vrpn 6 and if VRPN_5 is #defined then
-        it should be compatible with vrpn 5 
+	* microscape.c: changed usage of vrpn_get_connection_by_name so it
+	is by default compatible with vrpn 6 and if VRPN_5 is #defined then
+	it should be compatible with vrpn 5 
 
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (shutdown_connections) : added delete of sem_connection
-        made logFile manipulations (reset, set time...) mostly uniform among
-        afm, ohmmeter, vicurve, and sem
-        changed usage of vrpn_get_connection_by_name so it correctly sets
+	made logFile manipulations (reset, set time...) mostly uniform among
+	afm, ohmmeter, vicurve, and sem
+	changed usage of vrpn_get_connection_by_name so it correctly sets
 	the logging mode 
 
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
-        
+	
 	* microscape.c (register_vrpn_callbacks) : added hard-coded 
 	room from head tracker transform for workbench (Phillips 101 setup) only
 
 2001-04-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (handle_openSPMDeviceName_change) : turn off
-        vrpn_System_TextPrinter error messages for
-        microscopeRedundancyController.
+	vrpn_System_TextPrinter error messages for
+	microscopeRedundancyController.
 	(main) : same.
 
 2001-03-23  Jason Clark  <jclark@cs.unc.edu>
@@ -1182,7 +1198,7 @@
 2001-03-09  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.h (d_peerName, d_gotPeerServer,
-        d_gotPeerRemote) : new data members.
+	d_gotPeerRemote) : new data members.
 	(handle_gotPeerServerConnection) : new function.
 	(handle_gotPeerRemoteConnection) : same.
 	(fullyConnected) : same.
@@ -1245,12 +1261,12 @@
 
 2001-01-14  Tom Hudson  <hudson@cs.unc.edu>
 
-        * microscape.c (MicroscapeInitializationState) : add members
-        logPhantom, phantomLogPath
-        (MicroscapeInitializationState constructor) : initialize new members
-        (ParseArgs) : read new command line argument -logphantom
-        (Usage) : document -logphantom, fix a few line breaks
-        (main) : handle logging Phantom
+	* microscape.c (MicroscapeInitializationState) : add members
+	logPhantom, phantomLogPath
+	(MicroscapeInitializationState constructor) : initialize new members
+	(ParseArgs) : read new command line argument -logphantom
+	(Usage) : document -logphantom, fix a few line breaks
+	(main) : handle logging Phantom
 
 2000-01-08  Tom Hudson  <hudson@cs.unc.edu>
 
@@ -1293,12 +1309,12 @@
 2000-12-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (createNewMicroscope) : 
-        added call to TipConv->changeDataset
+	added call to TipConv->changeDataset
 
 2000-12-14  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (shutdown_connections) : delete
-        microscopeRedundancyController before deleting microscope_connection
+	microscopeRedundancyController before deleting microscope_connection
 	(handle_openStreamFilename_change) : same
 	(handle_openSPMDeviceName_change) : same
 	(openDefaultMicroscope) : same
@@ -1340,7 +1356,7 @@
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (Usage) : add documentation of -daligner argument
-        (main) : add printouts of what colorplane, colormap and heightplane
+	(main) : add printouts of what colorplane, colormap and heightplane
 	were getting set to because there seems to be some problem with
 	them getting set to what the user says they should be
 
@@ -1348,7 +1364,7 @@
 
 	* minit.h : new file
 	* interaction.c : #include minit.h
-        (doSelect) : add test of microscope->haveMutex()
+	(doSelect) : add test of microscope->haveMutex()
 	* interaction.h : add #defines for knob box
 	* microscape.c : move around #includes, #include minit.h
 	(createNewMicroscope) : add call of microscope->requestMutex()
@@ -1379,16 +1395,16 @@
 2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c : remove includes of stm_file.h, stm_cmd.h,
-        references to USE_VRPN_MICROSCOPE
-        * microscopeHandlers.h : same
-        * minit.c : same
-        * normal.c : same
-        * x_util.c : same
+	references to USE_VRPN_MICROSCOPE
+	* microscopeHandlers.h : same
+	* minit.c : same
+	* normal.c : same
+	* x_util.c : same
 
 2000-10-26  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c : 
-        disables microscopeRedundancyController by not creating it
+	disables microscopeRedundancyController by not creating it
 	(just commented out the call to new so this pointer is always NULL now)
 	this is just temporary for the release
 
@@ -1415,10 +1431,10 @@
 
 2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
 
-        * microscape.c (handle_openStreamFilename_change) : The log file was
+	* microscape.c (handle_openStreamFilename_change) : The log file was
 	not getting reset if you reopened the same one. I thought this
 	problem had been fixed before by making vrpn_get_connection_by_name 
-        reset the log file if we tell it that we want to open a log file
+	reset the log file if we tell it that we want to open a log file
 	which is already open but perhaps this got changed back. Now we
 	explicitly call reset() on the log file - this was discovered 
 	because we weren't getting the grid size message and then we got
@@ -1427,16 +1443,16 @@
 2000-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main) : added copy of file name out of the
-        istate.afm.deviceName into the istate.afm.inputStreamName when
-        the deviceName refers to a file - this was causing a bunch of stuff
+	istate.afm.deviceName into the istate.afm.inputStreamName when
+	the deviceName refers to a file - this was causing a bunch of stuff
 	to be overwritten by a strcpy of the uninitialized 
-        istate.afm.inputStreamName into a variable in AFMState
+	istate.afm.inputStreamName into a variable in AFMState
 
 2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.C (setPeerName) :  add diagnostics
 	* collaboration.C :  delete entire file contents and replace with
-        comment about intended unfufilled purpose of file
+	comment about intended unfufilled purpose of file
 	* microscopeHandlers.C (cause_grid_redraw) :  delete dead code
 
 2000-10-02  Kwan Torrich Skinner  <skinner@cs.unc.edu>
@@ -1455,10 +1471,10 @@
 
 	* microscape.c : add timeGraphics to initialization state
 	(ParseArgs) : add handler for timeGraphics
-        (Usage) : add documentation for timeGraphics
-        (createGraphics) : check timeGraphics before creating a
-        nmg_Graphics_Timer object, pass timeGraphics to RenderClient
-        objects
+	(Usage) : add documentation for timeGraphics
+	(createGraphics) : check timeGraphics before creating a
+	nmg_Graphics_Timer object, pass timeGraphics to RenderClient
+	objects
 
 2000-10-01  Jason Clark  <jclark@cs.unc.edu>
 
@@ -1473,7 +1489,7 @@
 2000-09-28  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (createNewMicroscope) : call doCallbacks() on measure
-        lines after they're initialized to propagate those values into Tcl
+	lines after they're initialized to propagate those values into Tcl
 
 
 2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
@@ -1484,7 +1500,7 @@
 2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (setupSynchronization) : add long comment about
-        the bugs we've had recently
+	the bugs we've had recently
 	* tcl_tk.c (handle_surface_change) : remove dead code
 	(init_Tk_control_panels) : same
 
@@ -1507,15 +1523,15 @@
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.C : include nmb_Debug.h
-        (getPeer) : replace fprintf() with collabVerbose()
-        (getPeerReplay) : same
-        (getServer) : same
-        (setLogging) : same
-        (setPeerName) : same
-        (sendOurTimer) : same
-        (respondToPeerTimer) : same
-        (handle_peerTimer) : same
-        (handle_timerResponse) : same
+	(getPeer) : replace fprintf() with collabVerbose()
+	(getPeerReplay) : same
+	(getServer) : same
+	(setLogging) : same
+	(setPeerName) : same
+	(sendOurTimer) : same
+	(respondToPeerTimer) : same
+	(handle_peerTimer) : same
+	(handle_timerResponse) : same
 	* microscape.c : handle -cverbosity command line argument
 
 	* interaction.c : add fprintf() during feelAhead
@@ -1524,40 +1540,40 @@
 
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
-        * microscape.c (local_time_sync) : must return a value
+	* microscape.c (local_time_sync) : must return a value
 
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
-        * tcl_tk.c (init_Tk_control_panels) : take collaborationTimer as
-        argument and pass to Tclnet_init()
+	* tcl_tk.c (init_Tk_control_panels) : take collaborationTimer as
+	argument and pass to Tclnet_init()
 
-        * microscape.c (local_time_sync) : new function
-        (handle_synchronize_timed_change) : call local_time_sync() (sometimes)
-        (handle_copy_to_private) : call local_time_sync()
-        (createNewMicroscope) : call linkMicroscopeToInterface()
-        (main) : same;  handle & display timings
+	* microscape.c (local_time_sync) : new function
+	(handle_synchronize_timed_change) : call local_time_sync() (sometimes)
+	(handle_copy_to_private) : call local_time_sync()
+	(createNewMicroscope) : call linkMicroscopeToInterface()
+	(main) : same;  handle & display timings
 
-        * CollaborationManager.C : d_timer, d_myId_svr,
-        d_myId_rem, d_timerSN_type, d_timerSNreply_type : new data members
-        (mainloop) : call sendOurTimer() and respondToPeerTimer()
-        (initialize) : set up VRPN ids, handlers
-        (setPeerName) : same
-        (setTimer) : new function
-        (sendOurTimer) : same
-        (respondToPeerTimer) : same
-        (handle_peerTimer) : same
-        (handle_timerResponse) : same
+	* CollaborationManager.C : d_timer, d_myId_svr,
+	d_myId_rem, d_timerSN_type, d_timerSNreply_type : new data members
+	(mainloop) : call sendOurTimer() and respondToPeerTimer()
+	(initialize) : set up VRPN ids, handlers
+	(setPeerName) : same
+	(setTimer) : new function
+	(sendOurTimer) : same
+	(respondToPeerTimer) : same
+	(handle_peerTimer) : same
+	(handle_timerResponse) : same
 
-        * interaction.c : clean up old code & comments
-        (FDOnOffMonitor) : new class
-        (setupHaptics) : use objects on haptic_manager instead of
-        local static objects;  handle feelahead.
-        (doLine) : use FDOnOffMonitor
-        (doFeelLive) : same
-        (doFeelFromGrid) : same;  call setupHaptics()
-        (setupSweepIcon) : new function
-        (linkMicroscopeToInterface) : same
-        (initializeInteraction) : create objects on haptic_manager
+	* interaction.c : clean up old code & comments
+	(FDOnOffMonitor) : new class
+	(setupHaptics) : use objects on haptic_manager instead of
+	local static objects;  handle feelahead.
+	(doLine) : use FDOnOffMonitor
+	(doFeelLive) : same
+	(doFeelFromGrid) : same;  call setupHaptics()
+	(setupSweepIcon) : new function
+	(linkMicroscopeToInterface) : same
+	(initializeInteraction) : create objects on haptic_manager
 
 2000-09-14  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
@@ -1588,18 +1604,18 @@
 	references to the old microscope)
 
 2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
-        
-        * microscape.c (handle_openStreamFilename_change) : added delete
+	
+	* microscape.c (handle_openStreamFilename_change) : added delete
 	of microscope connection before getting a new one - this somehow
 	fixes a crash on the pc when opening the same file more than once
-        * microscopeHandlers.C (handle_z_scale_change): this now updates
-        nmb_Decoration so it can scale the modify markers to match the plane
-        * interaction.c (handle_commit_cancel): allows cancelling of 
-        planned line modification in USER_GRAB_MODE, USER_SCALE_UP_MODE,
-        USER_SCALE_DOWN_MODE, USER_LIGHT_MODE, and USER_MEASURE_MODE since
-        I think it would make things more convenient and I don't see any harm
-        in it (an alternative could be to disable the cancel button if
-        you aren't in touch before modify or select mode)
+	* microscopeHandlers.C (handle_z_scale_change): this now updates
+	nmb_Decoration so it can scale the modify markers to match the plane
+	* interaction.c (handle_commit_cancel): allows cancelling of 
+	planned line modification in USER_GRAB_MODE, USER_SCALE_UP_MODE,
+	USER_SCALE_DOWN_MODE, USER_LIGHT_MODE, and USER_MEASURE_MODE since
+	I think it would make things more convenient and I don't see any harm
+	in it (an alternative could be to disable the cancel button if
+	you aren't in touch before modify or select mode)
 
 2000-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -1614,35 +1630,35 @@
 
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
-        * all : merged merge-2000-summer-thirdtech code with trunk.
+	* all : merged merge-2000-summer-thirdtech code with trunk.
 
 2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
 
-        * Makefile: took out RhinoIO for VC compile
-        * microscape.c (MicroscapeInitializationState constructor): adds
-        initialization for NIC_IP and logTimestamp
-        * microscape.[ch], minit.c: fixed confusion over name of 
-        function get_Plane_Extents changing to get_Plane_Centers
+	* Makefile: took out RhinoIO for VC compile
+	* microscape.c (MicroscapeInitializationState constructor): adds
+	initialization for NIC_IP and logTimestamp
+	* microscape.[ch], minit.c: fixed confusion over name of 
+	function get_Plane_Extents changing to get_Plane_Centers
 
 2000-08-27  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
-        * microscape.c : converted procProgNames from nmb_ListOfStrings to 
+	* microscape.c : converted procProgNames from nmb_ListOfStrings to 
 	Tclvar_list_of_strings.
 
 2000-08-17  Adam Seeger  <seeger@cs.unc.edu>
 
-        * microscape.c (handle_texture_dataset_change): sets slider limits
+	* microscape.c (handle_texture_dataset_change): sets slider limits
 		a little differently (using minNonZeroValue instead of minValue)
 
 2000-08-16  Tom Hudson  <hudson@cs.unc.edu>
 
-        * microscape.c (main):  added call to
-        microscope->EnableUpdatableQueue(VRPN_TRUE).
-        * interaction.c (drawLine):  new function.  Added calls to
-        microscope->EnableUpdatableQueue().
-        (drawLineStep):  same.
-        (handle_commit_change):  factored out large case and loop into
-        drawLine() and drawLineStep().
+	* microscape.c (main):  added call to
+	microscope->EnableUpdatableQueue(VRPN_TRUE).
+	* interaction.c (drawLine):  new function.  Added calls to
+	microscope->EnableUpdatableQueue().
+	(drawLineStep):  same.
+	(handle_commit_change):  factored out large case and loop into
+	drawLine() and drawLineStep().
 
 2000-08-15  Jeffrey Juliano  <juliano@cs.unc.edu>
 

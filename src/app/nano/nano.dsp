@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_LIB" /D "_DEBUG" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "_MBCS" /D "VRPN_NO_STREAMS" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_DEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "VRPN_NO_STREAMS" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -68,9 +68,9 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_LIB" /D "NDEBUG" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "VRPN_NO_STREAMS" /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "NDEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "VRPN_NO_STREAMS" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409
+# ADD RSC /l 0x409 /d "THIRDTECH"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -139,6 +139,10 @@ SOURCE=.\nM_coord_change.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nm_MouseInteractor.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\normal.c
 # End Source File
 # Begin Source File
@@ -204,6 +208,10 @@ SOURCE=.\minit.h
 # Begin Source File
 
 SOURCE=.\nM_coord_change.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nm_MouseInteractor.h
 # End Source File
 # Begin Source File
 

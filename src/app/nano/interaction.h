@@ -4,6 +4,8 @@
 #include <v.h>
 //struct v_xform_type;  // from <v.h>
 
+class nmb_TimerList;
+class nmm_Microscope_Remote;
 // defined in interaction.c
 
 int interaction (int bdbox_buttons [], double bdbox_dials [],

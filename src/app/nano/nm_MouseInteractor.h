@@ -1,5 +1,5 @@
-#ifndef VRPN_MOUSEPHANTOM_H
-#define VRPN_MOUSEPHANTOM_H
+#ifndef NM_MOUSEINTERACTOR_H
+#define NM_MOUSEINTERACTOR_H
 /*===3rdtech===
   Copyright (c) 2000 by 3rdTech, Inc.
   All Rights Reserved.
@@ -12,20 +12,20 @@
 #include "vrpn_Tracker.h"
 #include "vrpn_ForceDevice.h"
 
-class vrpn_MousePhantom: public vrpn_Tracker,
+class nm_MouseInteractor: public vrpn_Tracker,
 					public vrpn_Button_Filter {
 protected:
-    static int d_press_x, d_press_y;
+    static int d_last_move_x, d_last_move_y;
     static int d_move_x, d_move_y;
     static int d_ctrl_on, d_shift_on;
     static vrpn_float64 d_press_pos[3], d_press_quat[4]; 
     ///< Pose when button pressed
     
     /// Static GLUT callbacks need object pointer
-    static vrpn_MousePhantom * d_instance;
+    static nm_MouseInteractor * d_instance;
 
     /// Protected constructor helps with singleton pattern.
-    vrpn_MousePhantom(char *name, vrpn_Connection *c, float hz=1.0);
+    nm_MouseInteractor(char *name, vrpn_Connection *c, float hz=1.0);
     float update_rate;
     struct timeval timestamp;
     
@@ -38,9 +38,9 @@ protected:
                                                  vrpn_HANDLERPARAM p);
 
 public:
-    static vrpn_MousePhantom * createMousePhantom(char *name, 
+    static nm_MouseInteractor * createMouseInteractor(char *name, 
                                           vrpn_Connection *c, float hz);
-    ~vrpn_MousePhantom();
+    ~nm_MouseInteractor();
     virtual void mainloop(void);
     virtual void reset();
     void getPosition(double *vec, double *quat);
@@ -52,7 +52,7 @@ public:
                                 int x, int y);
     static void my_glutMotionFunc(int x, int y);
     static void my_glutKeyboardFunc(unsigned char key, int x, int y);
-    static void handle_mp_enabled_change(int, void *);
+    static void handle_mi_enabled_change(int, void *);
 
 };
 

@@ -17,7 +17,7 @@ int phantom_init (vrpn_Connection *, const char * handTrackerName);
   ///< Sets up phantom.  Exposed so that the phantom connection can be
   ///< torn down and reestablished if we're replaying user input.
 int teardown_phantom
-             (vrpn_MousePhantom ** mousePhantomServer,
+             (nm_MouseInteractor ** mousePhantomServer,
               vrpn_ForceDevice_Remote ** forceDevice,
               vrpn_Button_Remote ** phantButton,
               vrpn_Tracker_Remote ** vrpnHandTracker);
