@@ -162,6 +162,8 @@ class ImageViewer {
     int destroyWindow(int winID);
     /// resize a window
     int setWindowSize(int winID, int w, int h); 
+    /// position a window
+    int setWindowPosition(int winID, int x, int y);
     /// resize the image associated with a window
     int setWindowImageSize(int winID, int im_w, int im_h);
     /// get width of image associated with a window

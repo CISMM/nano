@@ -319,6 +319,20 @@ int ImageViewer::setWindowSize(int winID, int w, int h)
     return 0;
 }
 
+int ImageViewer::setWindowPosition(int winID, int x, int y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+#ifdef V_GLUT
+    glutSetWindow(window[win_index].win_id);
+    glutPositionWindow(x, y);
+#else
+    fprintf(stderr, "setWindowPosition: not implemented for plain X-windows\n");
+#endif
+    return 0;
+}
+
 #ifdef V_GLUT
 int ImageViewer::get_window_index_from_glut_id(int glut_id) {
 
