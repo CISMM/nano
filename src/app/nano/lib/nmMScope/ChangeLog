@@ -1,3 +1,9 @@
+2000-09-22  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmm_MicroscopeTranslator.C (translate_packet) : 
+        disables translation of SPM_SERVER_PACKET_TIMESTAMP but still uses
+	this to update the stream time
+
 2000-09-21  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeTranslator.hC: new files

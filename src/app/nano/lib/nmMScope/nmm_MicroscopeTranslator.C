@@ -119,6 +119,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
   char *vrpnbuffer = NULL;
   long vbuflen;
 
+
   //printf ("\n** msg #%u:\n", ++seqNum);
   /* Read a block from the input file, if there is one */
   bufsize = stm_read_block_from_stream(instream, buffer);
@@ -253,7 +254,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_PointResultNM(&vbuflen, fx, fy, sec, usec, value, std_dev);
+      vrpnbuffer = encode_PointResultNM(&vbuflen, fx, fy, sec, usec, 
+                                        value, std_dev);
       vrpn_type = d_PointResultNM_type;
       needToSend = VRPN_TRUE;
 
@@ -311,7 +313,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       stm_unbuffer_float (&bufptr, &ymax);
       stm_unbuffer_float (&bufptr, &zmin);
       stm_unbuffer_float (&bufptr, &zmax);
-      vrpnbuffer = encode_ScanRange(&vbuflen, xmin, xmax, ymin, ymax, zmin, zmax);
+      vrpnbuffer = encode_ScanRange(&vbuflen, xmin, xmax, ymin, ymax, 
+                                    zmin, zmax);
       vrpn_type = d_ScanRange_type;
       needToSend = VRPN_TRUE;
 
@@ -479,7 +482,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultNM(&vbuflen, fx, fy, sec, usec, fscrap0, fscrap1, fscrap2, fscrap3);
+      vrpnbuffer = encode_ResultNM(&vbuflen, fx, fy, sec, usec, 
+              fscrap0, fscrap1, fscrap2, fscrap3);
       vrpn_type = d_ZigResultNM_type;
       needToSend = VRPN_TRUE;
 
@@ -516,7 +520,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultNM(&vbuflen, fx, fy, sec, usec, fscrap0, fscrap1, fscrap2, fscrap3);
+      vrpnbuffer = encode_ResultNM(&vbuflen, fx, fy, sec, usec, 
+             fscrap0, fscrap1, fscrap2, fscrap3);
       vrpn_type = d_BluntResultNM_type;
       needToSend = VRPN_TRUE;
 
@@ -550,7 +555,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_WindowLineData(&vbuflen, x, y, dx, dy, reports, fields, sec, usec, data_arr);
+      vrpnbuffer = encode_WindowLineData(&vbuflen, x, y, dx, dy, 
+                reports, fields, sec, usec, data_arr);
       vrpn_type = d_WindowLineData_type;
       needToSend = VRPN_TRUE;
 
@@ -565,7 +571,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       stm_unbuffer_int (&bufptr, &iscrap0);
       stm_unbuffer_int (&bufptr, &iscrap1);
 
-      vrpnbuffer = encode_HelloMessage(&vbuflen, string0, string1, iscrap0, iscrap1); 
+      vrpnbuffer = encode_HelloMessage(&vbuflen, string0, string1, 
+             iscrap0, iscrap1); 
       vrpn_type = d_HelloMessage_type;
       needToSend = VRPN_TRUE;
 
@@ -576,7 +583,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       // encode_ScanDataset is implemented in nmm_Microscope_Topometrix.C
 
       stm_unbuffer_int (&bufptr, &iscrap);
-      vbuflen = sizeof(vrpn_int32) + ( 2*64*sizeof(char) + 2*sizeof(float) ) * iscrap;
+      vbuflen = sizeof(vrpn_int32) + 
+                ( 2*64*sizeof(char) + 2*sizeof(float) ) * iscrap;
       vrpnbuffer = new char[vbuflen];
       mlen = vbuflen;
       mptr = vrpnbuffer;
@@ -613,7 +621,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       stm_unbuffer_int (&bufptr, &iscrap0);
       stm_unbuffer_int (&bufptr, &iscrap1);
 
-      vrpnbuffer = encode_HelloMessage(&vbuflen, string0, string1, iscrap0, iscrap1);
+      vrpnbuffer = encode_HelloMessage(&vbuflen, string0, 
+               string1, iscrap0, iscrap1);
       vrpn_type = d_HelloMessage_type;
       needToSend = VRPN_TRUE;
 
@@ -624,7 +633,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       // encode_ScanDataset is implemented in nmm_Microscope_Topometrix.C
 
       stm_unbuffer_int (&bufptr, &reports);
-      vbuflen = sizeof(vrpn_int32) + ( 2*64*sizeof(char) + sizeof(vrpn_int32) + 2*sizeof(float) ) * reports;
+      vbuflen = sizeof(vrpn_int32) + 
+         ( 2*64*sizeof(char) + sizeof(vrpn_int32) + 2*sizeof(float) ) * reports;
       vrpnbuffer = new char[vbuflen];
       mlen = vbuflen;
       mptr = vrpnbuffer;
@@ -665,7 +675,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, reports, data);
+      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, 
+               reports, data);
       vrpn_type = d_PointResultData_type;
       needToSend = VRPN_TRUE;
 
@@ -709,7 +720,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       stm_unbuffer_float (&bufptr, &fscrap4);
       stm_unbuffer_float (&bufptr, &fscrap5);
       stm_unbuffer_float (&bufptr, &fscrap6);
-      vrpnbuffer = encode_InSewingStyle(&vbuflen, fscrap0, fscrap1, fscrap2, fscrap3, fscrap4, fscrap5, fscrap6);
+      vrpnbuffer = encode_InSewingStyle(&vbuflen, fscrap0, fscrap1, fscrap2, 
+            fscrap3, fscrap4, fscrap5, fscrap6);
       vrpn_type = d_InSewingStyle_type;
       needToSend = VRPN_TRUE;
 
@@ -786,7 +798,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, reports, data);
+      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, 
+           reports, data);
       vrpn_type = d_TopPunchResultData_type;
       needToSend = VRPN_TRUE;
 
@@ -817,7 +830,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       printf ("SPM_AMP_ENABLED (%d, %g, ", iscrap0, fscrap0);
       stm_unbuffer_float (&bufptr, &fscrap1);
       stm_unbuffer_int (&bufptr, &iscrap1);
-      vrpnbuffer = encode_EnableAmp(&vbuflen,iscrap0, fscrap0, fscrap1, iscrap1); 
+      vrpnbuffer = encode_EnableAmp(&vbuflen,iscrap0, fscrap0, 
+            fscrap1, iscrap1); 
       vrpn_type = d_EnableAmp_type;
       needToSend = VRPN_TRUE;
 
@@ -890,9 +904,11 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
+/*
       vrpnbuffer = encode_ServerPacketTimestamp(&vbuflen, sec, usec);
       vrpn_type = d_ServerPacketTimestamp_type;
       needToSend = VRPN_TRUE;
+*/
 
       break;
 
@@ -909,7 +925,8 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
 
       // record the uncorrected time in case we want it later
-      vrpnbuffer = encode_RecordResistance(&vbuflen, iscrap, now, resist, voltage, range, filter);
+      vrpnbuffer = encode_RecordResistance(&vbuflen, iscrap, now, resist, 
+	voltage, range, filter);
 
       doTimeCorrection(now);
 
