@@ -135,6 +135,13 @@
 #define MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
+#ifndef max
+#define max(a,b) ((a)<(b)?(b):(a))
+#endif
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
 //------------------------------------------------------------------------
 /** Configure the force-display method. This is to allow us to turn off
 forces or else make the user feel from a flat plane rather than from the
@@ -3152,7 +3159,6 @@ doSelect(int whichUser, int userEvent)
 
             // Find the larger of the two and use it for both, so it is square
             diffmax = max(diffx, diffy);
-
             // Clip the region to make sure we stay within the boundaries
             // of the scan range.
             diffmax = min(diffmax, centerx - microscope->state.xMin);  // left

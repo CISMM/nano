@@ -1,3 +1,8 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* interaction.c : added max and min macros so this will compile on PC
+	* Makefile: added nmMP dependency through nmb_Device
+
 2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
 
 	* interaction.c : Check to see if the "autoscan" feature is turned
