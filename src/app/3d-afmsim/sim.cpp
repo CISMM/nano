@@ -161,6 +161,7 @@ double Sim_y_ratio;
 bool undone = true;
 double x_to_y = 1.0;
 int TriangleCounter = 0;
+bool once_thru = false;
 
 Tclvar_string cname("tclname","");
 
@@ -509,30 +510,36 @@ void displayFuncDepth( void ) {
             //just sent
         }
     }
+	
 	if(SimMicroscopeServer.triangleRcv){
+		float tri_scale = 10;//SimMicroscopeServer.tri_scale;
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
 		double x_offset = SimMicroscopeServer.get_x_offset();
 		double y_offset = SimMicroscopeServer.get_y_offset();
-		while(SimMicroscopeServer.head != NULL){//add a bunch of triangles
-			cout << TriangleCounter++ << flush << " ";
+		float total_scaling = ratio*tri_scale;
+		while(SimMicroscopeServer.head != NULL){//add a bunch of triangles	
+			
 			addTriangle(//draw triangle with vertices v1_*,v2_*, and v3_*, where * is {x,y,z} 
 				        //coords of v*
-			Vec3d(SimMicroscopeServer.head->v1_1*ratio + x_offset,
-				  SimMicroscopeServer.head->v1_2*ratio + y_offset,
-				  SimMicroscopeServer.head->v1_3*ratio),
-			Vec3d(SimMicroscopeServer.head->v2_1*ratio + x_offset,
-				  SimMicroscopeServer.head->v2_2*ratio + y_offset,
-				  SimMicroscopeServer.head->v2_3*ratio),
-			Vec3d(SimMicroscopeServer.head->v3_1*ratio + x_offset,
-				  SimMicroscopeServer.head->v3_2*ratio + y_offset,
-				  SimMicroscopeServer.head->v3_3*ratio));
-
+			Vec3d(SimMicroscopeServer.head->v1_1*total_scaling /*+ x_offset*/,
+				  SimMicroscopeServer.head->v1_2*total_scaling /*+ y_offset*/,
+				  SimMicroscopeServer.head->v1_3*total_scaling),
+			Vec3d(SimMicroscopeServer.head->v2_1*total_scaling /*+ x_offset*/,
+				  SimMicroscopeServer.head->v2_2*total_scaling /*+ y_offset*/,
+				  SimMicroscopeServer.head->v2_3*total_scaling),
+			Vec3d(SimMicroscopeServer.head->v3_1*total_scaling /*+ x_offset*/,
+				  SimMicroscopeServer.head->v3_2*total_scaling /*+ y_offset*/,
+				  SimMicroscopeServer.head->v3_3*total_scaling));
+			
 			SimMicroscopeServer.holder = SimMicroscopeServer.head;
 			SimMicroscopeServer.head = SimMicroscopeServer.head->next;
-			delete SimMicroscopeServer.holder;
+			delete SimMicroscopeServer.holder;	
+			
 		}
 		SimMicroscopeServer.triangleRcv = false;
+		
 	}
+	
 
     // end of display frame, so flip buffers
     glutSwapBuffers();

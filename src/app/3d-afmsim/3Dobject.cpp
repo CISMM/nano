@@ -810,7 +810,12 @@ Triangle :: Triangle(void) {
 
 
 Triangle :: Triangle(Vec3d _a, Vec3d _b, Vec3d _c) {
-  set(_a, _b, _c);
+    /*glBegin(GL_TRIANGLES);
+		glVertex3f(_a.x,_a.y,_a.z);
+		glVertex3f(_b.x,_b.y,_b.z);
+		glVertex3f(_c.x,_c.y,_c.z);
+	glEnd();*/
+	set(_a, _b, _c);
 }
 
 void Triangle :: set(Vec3d _a, Vec3d _b, Vec3d _c) {
@@ -828,9 +833,9 @@ void Triangle :: set(Vec3d _a, Vec3d _b, Vec3d _c) {
   normal = normal.normalize();
 
   // set the ntubes, ab, bc and ca;
-  ab = Ntube(a, b, 0.);
-  bc = Ntube(b, c, 0.);
-  ca = Ntube(c, a, 0.);
+  //ab = Ntube(a, b, 0.);
+  //bc = Ntube(b, c, 0.);
+  //ca = Ntube(c, a, 0.);
 }
 
 void Triangle :: setPos(Vec3d _pos) {
