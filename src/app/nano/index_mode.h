@@ -39,8 +39,8 @@ class Index_mode
   static bool initialized;
   static const char* callback_username;
   static char* outputDir;
-  static int prev_time = -1;
-  static bool first_scan = true;
+  static int prev_time;
+  static bool first_scan;
 };
 
 #endif
