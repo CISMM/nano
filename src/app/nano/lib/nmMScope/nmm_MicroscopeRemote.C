@@ -807,7 +807,7 @@ long nmm_Microscope_Remote::DrawArc (double _x, double _y,
       // Tiger  added to get time elapsed since connected,
       //        used by Live and Replay mode
       getTimeSinceConnected();
-      VERBOSE(5, "  Waiting for result in arc mode");
+      VERBOSE(5, "  Waiting for result in line mode");
     } while (!NMB_NEAR(_x, _point->results()->x()) ||
              !NMB_NEAR(_y, _point->results()->y()));
   }
@@ -863,8 +863,6 @@ int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
     ori = d_sampleAlgorithm->orientation;
   }
   rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
-//fprintf(stderr, "Sending Feelto %.5f, %.5f;  %d x %d for %.2f x %.2f\n",
-//x, y, nx, ny, dx, dy);
   msgbuf = encode_FeelTo(&len, x, y, nx, ny, dx, dy, ori);
   if (!msgbuf) {
     return -1;
@@ -875,7 +873,6 @@ long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
                               Point_value * _point,
                               vrpn_bool _awaitResult) {
   // Don't rotate coords, because ScanTo/ZagTo do it. 
-  timeval now, then, diff;
   CHECK(ScanTo(_x, _y));
   if (_awaitResult && _point) {
     // Wait until the tip moves.
@@ -883,7 +880,6 @@ long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
     //   an alias for the tip's current value) changes from the
     //   bogus value <-1, -1>
     _point->results()->setPosition(-1.0, -1.0);
-    gettimeofday(&then, NULL);
     do {
       d_connection->mainloop();
       if (d_monitor) {
@@ -897,14 +893,7 @@ long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
       // Tiger  added to get time elapsed since connected,
       //        used by Live and Replay mode
       getTimeSinceConnected();
-      VERBOSE(5, "  Waiting for result in TakeFeelStep().");
-      gettimeofday(&now, NULL);
-      diff = vrpn_TimevalDiff(now, then);
-      if (diff.tv_sec > 60) {
-              fprintf(stderr, "nmm_Microscope_Remote::TakeFeelStep():  "
-                              "Microscope won't respond.\n");
-              return -1;
-      }
+      VERBOSE(5, "  Waiting for result in line mode");
     } while (NMB_NEAR(-1.0, _point->results()->x()) &&
              NMB_NEAR(-1.0, _point->results()->y()));
   }
@@ -913,7 +902,6 @@ long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
 long nmm_Microscope_Remote::TakeModStep (float _x, float _y,
                              Point_value * _point,
                              vrpn_bool _awaitResult) {
-  timeval now, then, diff;
   // Don't rotate coords, because ScanTo/ZagTo do it. 
   switch (state.modify.style) {
     case SHARP:
@@ -933,7 +921,6 @@ long nmm_Microscope_Remote::TakeModStep (float _x, float _y,
     // We do this by kicking off the read loop until _point (which is
     //   an alias for the tip's current value) changes to the
     //   desired destination value
-    gettimeofday(&then, NULL);
     do {
       d_connection->mainloop();
       if (d_monitor) {
@@ -948,13 +935,6 @@ long nmm_Microscope_Remote::TakeModStep (float _x, float _y,
       //        used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in TakeModStep");
-      gettimeofday(&now, NULL);
-      diff = vrpn_TimevalDiff(now, then);
-      if (diff.tv_sec > 60) {
-              fprintf(stderr, "nmm_Microscope_Remote::TakeFeelStep():  "
-                              "Microscope won't respond.\n");
-              return -1;
-      }
     } while (!NMB_NEAR(_x, _point->results()->x()) ||
              !NMB_NEAR(_y, _point->results()->y()));
   }
@@ -2860,10 +2840,10 @@ void nmm_Microscope_Remote::RcvPointResultData (
   float height;
   long i;
   if (spm_verbosity >= 1) {
-    printf("nmm_Microscope_Remote::RcvResultData: Point result,"
+    printf("    nmm_Microscope_Remote::RcvResultData: Point result,"
     " at (%g, %g), time %ld:%ld\n",
            x, y, sec, usec);
-    printf("  Raw values:");
+    printf("      Raw values:");
     for (i = 0; i < reports; i++) {
       printf(" %g", data[i]);
     }
@@ -3582,7 +3562,7 @@ void nmm_Microscope_Remote::RcvEndFeelTo (
 //    float32 dx
 //    float32 dy
 //    float32 orientation
-//fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
+fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
   state.data.receivedAlgorithm.numx = numx;
   state.data.receivedAlgorithm.numy = numy;
   state.data.receivedAlgorithm.dx = dx;
