@@ -1,5 +1,10 @@
 2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
 
+	* export_scene.C (compute_view_xform): Debug messages proving that
+	quat lib doesn't do what I thought it was advertising.
+
+2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
+
 	* export_scene.C (build_mesh): Add xform to arg list.  Use xform.
 	(build_viewport_from_nano): Remove incorrect q_normalize.
 	(compute_view_xform, get_view_xform, export_scene_to_openNURBS):

@@ -678,6 +678,37 @@ static void compute_view_xform (
     q_from_row_matrix (out_quat,
                        changeBasisMatrix_model_from_dataset);
     //q_normalize (out_quat, out_quat);
+
+    // DEBUG
+    q_vec_type vs;
+    q_vec_type qd;
+    
+    q_set_vec (vs, 0, 1, 0);
+    q_xform (qd, out_quat, vs);
+    cout << "(" << vs[0] << ", " << vs[1] << ", " << vs[2]
+         << ") xforms to ("
+         << qd[0] << ", " << qd[1] << ", " << qd[2] << ")" << endl;
+
+    q_set_vec (vs, 1, 0, 0);
+    q_xform (qd, out_quat, vs);
+    cout << "(" << vs[0] << ", " << vs[1] << ", " << vs[2]
+         << ") xforms to ("
+         << qd[0] << ", " << qd[1] << ", " << qd[2] << ")" << endl;
+
+    q_vec_type md;
+    q_matrix_type & m = changeBasisMatrix_model_from_dataset;
+    for (int i=0; i<3; ++i) {
+        double accum=0;
+        for (int j=0; j<3; ++j) {
+            accum += m[i][j] * vs[j];
+        }
+        md[i] = accum;
+    }
+    
+    cout << "matrix mult gives ("
+         << md[0] << ", " << md[1] << ", " << md[2] << ")" << endl;
+            
+
 }
 
 
