@@ -2818,7 +2818,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     
     //AFMState.c limits length of stream filenames to 255
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
-    sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
+    // Include the "//" to make it an official URL, and make sure
+    // VRPN doesn't strip a leading "//" from a path in WIN that is 
+    // on a networked computer. 
+    sprintf(istate->afm.deviceName, "file://%s", istate->afm.inputStreamName);
 
     vrpn_Connection * new_microscope_connection =
         vrpn_get_connection_by_name (istate->afm.deviceName);
@@ -6210,7 +6213,7 @@ int main(int argc, char* argv[])
 	    display_warning_dialog( "Both input stream and microscope "
                                     "device specified, using input stream");
 	}
-	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
+	sprintf(istate.afm.deviceName, "file://%s", istate.afm.inputStreamName);
 
     } else {
 #ifdef NO_MSCOPE_CONNECTION

@@ -540,10 +540,7 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 {
         VertexType Points[4];
 	float z_min,z_max;
-	int i,j;
-
-	int num_x = g_inputGrid->numX() - 1;
-	int num_y = g_inputGrid->numY() - 1;
+	int i;
 
 	BCPlane* plane = g_inputGrid->getPlaneByName
                     (g_heightPlaneName);
