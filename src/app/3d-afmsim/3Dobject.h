@@ -26,6 +26,7 @@
 #define SPHERE 2 
 #define TRIANGLE 3
 #define DNA 4
+#define CYLINDER 5
 
 // whether the object was grabbed (by the mouse) along XY or YZ
 #define XY_GRAB 0
@@ -37,6 +38,7 @@ public :
   int type;
   Vec3d pos;
   Vec3d vGrabOffset;
+  int obj_group;
 
   void setPos_z(double);
   virtual void setPos(Vec3d)=0; // pure virtual function
@@ -66,6 +68,8 @@ public :
   double norm_xy( Vec3d v );
   double norm_xz( Vec3d v );
 };
+
+int addToGroup(OB* obj,int* group_number);
 
 // subclass of OB
 class Ntube : public OB {
@@ -110,7 +114,8 @@ public:
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
 
-void addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam);
+void addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
+			  int *group_number = NULL);
 
 
 // subclass of OB
@@ -147,7 +152,7 @@ public:
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
 
-void addTriangle(Vec3d a, Vec3d b, Vec3d c);
+void addTriangle(Vec3d a, Vec3d b, Vec3d c,int *group_number = NULL);
 
 
 /* DNA :
@@ -268,7 +273,7 @@ public :
 
 extern Dna *dna;
 
-Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs);
+Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs,int *group_number = NULL);
 
 void init_dna(char *filename);
 

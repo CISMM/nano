@@ -95,10 +95,10 @@ Vec3d Vec3d::rotate3(Vec3d axis, double angle) {
   // first the rotation matrix
   R11 = n1*n1*ha+ca;
   R12 = n1*n2*ha - n3*sa;
-  R13 = n3*n1*ha + n2*sa;
-  R21 = n1*n2*ha + n3*sa;
+  R13 = n1*n3*ha + n2*sa;
+  R21 = n2*n1*ha + n3*sa;
   R22 = n2*n2*ha + ca;
-  R23 = n3*n2*ha - n1*sa;
+  R23 = n2*n3*ha - n1*sa;
   R31 = n3*n1*ha - n2*sa;
   R32 = n3*n2*ha + n1*sa;
   R33 = n3*n3*ha + ca;

@@ -570,12 +570,14 @@ void Dna :: moveGrabbedOb(Vec3d vMouseWorld) {
 }
   
 
-Dna* addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs) {
+Dna* addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs,int * group_number) {
   Dna *d = new Dna(P1, P2, dP1, dP2, length, numSegs);
   ob[numObs] = d;
   ob[numObs]->type = DNA;
   selectedOb = numObs;
+  addToGroup(ob[numObs],group_number);
   numObs++;
+  d->obj_group = *group_number;
   return d;
 }
 

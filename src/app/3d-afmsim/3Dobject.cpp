@@ -213,7 +213,7 @@ Vec3d Ntube :: getRightEndPt() { // the one in the direction of the axis
 float zBuffer2[ DEPTHSIZE*DEPTHSIZE ];//***			
 extern int mousepress;
 
-
+//ANDREA
 #if 1
 void Ntube :: draw() {
   glPushMatrix();
@@ -222,7 +222,37 @@ void Ntube :: draw() {
   if (type == SPHERE) {// optimize if a sphere
     drawSphere(diam);
   }
-  else {
+  /*else if (type == CYLINDER)
+  {
+    // set tube yaw angle (in-plane rotation angle)
+    glRotatef(yaw, 0.0, 0.0, 1.0 ); 
+    
+    // set roll angle around tube axis
+    glRotatef(pitch,  0.0, 1.0, 0.0 );
+    
+    // set roll angle around tube axis
+    glRotatef(roll,  1.0, 0.0, 0.0 );
+    
+    // draw cylinder with its axis parallel to X-axis
+    glPushMatrix();
+    //* we now have to align the cylinder with the Z-axis
+    //* if the tube did not have any translation and rotation
+    //* we want, the tube to be along the X-axis. GL on the other
+    //* hand draws a cylinder along the Z-axis by default. And so
+    //* we need to do the following rotate 
+    //*
+    glRotatef(90, 0.0, 1.0, 0.0 );
+    //* The position of the tube is given by its centre on the
+    //* axis. We want to draw the cylinder starting from its base
+    //* Get to its base
+    //*
+    glTranslatef( 0., 0., - leng/2. );  
+    drawCylinder( diam, leng );      // tube axis starts parallel to Z
+    glTranslatef( -leng/2., 0., 0 );  
+    glPopMatrix();
+    
+  }*/
+  else{
     // set tube yaw angle (in-plane rotation angle)
     glRotatef(yaw, 0.0, 0.0, 1.0 ); 
     
@@ -269,7 +299,7 @@ void Ntube :: draw() {
 }
 #endif
 
-
+//ANDREA
 void Ntube :: uncert_draw() {
   glPushMatrix();
   glTranslatef(pos.x, pos.y, pos.z );
@@ -277,6 +307,37 @@ void Ntube :: uncert_draw() {
   if (type == SPHERE) {// optimize if a sphere
     draw_uncert_sphere(diam);
   }
+  /*else if (type == CYLINDER){
+    // set tube yaw angle (in-plane rotation angle)
+    glRotatef(yaw, 0.0, 0.0, 1.0 ); 
+    
+    // set roll angle around tube axis
+    glRotatef(pitch,  0.0, 1.0, 0.0 );
+    
+    // ____No roll_____ when we draw the uncertainty map 
+
+    // set roll angle around tube axis
+    //    glRotatef(roll,  1.0, 0.0, 0.0 );
+    
+    // draw cylinder with its axis parallel to X-axis
+    glPushMatrix();
+    // we now have to align the cylinder with the Z-axis
+    //* if the tube did not have any translation and rotation
+    //* we want, the tube to be along the X-axis. GL on the other
+    //* hand draws a cylinder along the Z-axis by default. And so
+    //* we need to do the following rotate 
+    //*
+    glRotatef(90, 0.0, 1.0, 0.0 );
+    // The position of the tube is given by its centre on the
+    //* axis. We want to draw the cylinder starting from its base
+    //* Get to its base
+    //
+    glTranslatef( 0., 0., - leng/2. );  
+    draw_uncert_cylinder( diam, leng );      // tube axis starts parallel to Z
+    glTranslatef( -leng/2., 0., 0 );  
+    glPopMatrix();
+
+  }*/
   else {
     // set tube yaw angle (in-plane rotation angle)
     glRotatef(yaw, 0.0, 0.0, 1.0 ); 
@@ -323,6 +384,7 @@ void Ntube :: uncert_draw() {
   glPopMatrix();
 }
 
+//ANDREA
 void Ntube :: afm_sphere_tip(SphereTip sp) {
   glPushMatrix();
   if (type == SPHERE) {
@@ -340,6 +402,7 @@ void Ntube :: afm_sphere_tip(SphereTip sp) {
 }
 
 
+//ANDREA
 /* AFM with the uncertainty map on */
 void Ntube :: uncert_afm_sphere_tip(SphereTip sp) {
   glPushMatrix();
@@ -357,6 +420,7 @@ void Ntube :: uncert_afm_sphere_tip(SphereTip sp) {
   glPopMatrix();
 }
 
+//ANDREA
 void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 
   glPushMatrix();
@@ -413,6 +477,91 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     c.draw();
 #endif
   }
+  /*else if (type == CYLINDER){// for a general ntube
+#if 1
+    Vec3d A, B, C, D, P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
+    Vec3d A2, B2, C2, D2, A2xy, B2xy;
+    
+    double R = icsTip.r;
+    double theta = icsTip.theta;
+    
+    double r = diam/2.;
+
+    // first draw the two quads
+    N = Vec3d(axis.y,-axis.x,0);
+    temp = N.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N = N.rotate3(axis,-theta);
+    }
+    else
+      N=temp;
+    N = N.normalize();
+    Nxy = Vec3d(N.x,N.y,0);
+    Nxy = Nxy.normalize();
+    
+    // endpts of the tube
+    P = pos - axis*leng/2.;
+    Q = pos + axis*leng/2.;
+    
+    A = P + N*(r+R);
+    B = Q + N*(r+R);
+    
+    Axy = Vec3d(A.x,A.y,0);
+    Bxy = Vec3d(B.x,B.y,0);
+    D = Axy + Nxy*A.z*tan(theta);
+    C = Bxy + Nxy*B.z*tan(theta);
+    
+    // now let us calculate quad on the other side.
+    N2 = Vec3d(-axis.y,axis.x,0);
+    temp = N2.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N2 = N2.rotate3(axis,-theta);
+    }
+    else
+      N2=temp;
+    N2 = N2.normalize();
+    N2xy = Vec3d(N2.x,N2.y,0);
+    N2xy = N2xy.normalize();
+    
+    A2 = P + N2*(r+R);
+    B2 = Q + N2*(r+R);
+    
+    A2xy = Vec3d(A2.x,A2.y,0);
+    B2xy = Vec3d(B2.x,B2.y,0);
+    D2 = A2xy + N2xy*A2.z*tan(theta);
+    C2 = B2xy + N2xy*B2.z*tan(theta);
+
+#if 1
+    Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
+    xyz.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz.x, xyz.y, xyz.z );
+    glVertex3f( A.x, A.y, A.z );
+    glVertex3f( B.x, B.y, B.z );
+    glVertex3f( C.x, C.y, C.z );
+    glVertex3f( D.x, D.y, D.z );
+    glEnd();
+    
+    Vec3d xyz2 = Vec3d :: crossProd(A2-B2,A2-D2);
+    xyz2.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz2.x, xyz2.y, xyz2.z );
+    glVertex3f( A2.x, A2.y, A2.z );
+    glVertex3f( B2.x, B2.y, B2.z );
+    glVertex3f( C2.x, C2.y, C2.z );
+    glVertex3f( D2.x, D2.y, D2.z );
+    glEnd();
+#endif
+    
+#if 1
+    double newradius = diam/2. + R;
+    Ntube bigtube = *this;
+    bigtube.setDiam(2*newradius); 
+    bigtube.draw();
+#endif
+#else 
+#endif
+  }*/
   else {// for a general ntube
 #if 1
     Vec3d A, B, C, D, P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
@@ -524,6 +673,7 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
   glPopMatrix();
 }
 
+//ANDREA
 /* AFM with the uncertainty map on */
 void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 
@@ -539,6 +689,103 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     glTranslatef(pos.x,pos.y,pos.z);
     c.uncert_draw();
   }
+  /*else if (type == CYLINDER){
+#if 1
+    Vec3d A, B, C, D, P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
+    Vec3d A2, B2, C2, D2, A2xy, B2xy;
+    
+    double R = icsTip.r;
+    double theta = icsTip.theta;
+    
+    double r = diam/2.;
+
+    // first draw the two quads
+    N = Vec3d(axis.y,-axis.x,0);
+    temp = N.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N = N.rotate3(axis,-theta);
+    }
+    else
+      N=temp;
+    N = N.normalize();
+    Nxy = Vec3d(N.x,N.y,0);
+    Nxy = Nxy.normalize();
+    
+    // endpts of the tube
+    P = pos - axis*leng/2.;
+    Q = pos + axis*leng/2.;
+    
+    A = P + N*(r+R);
+    B = Q + N*(r+R);
+    
+    Axy = Vec3d(A.x,A.y,0);
+    Bxy = Vec3d(B.x,B.y,0);
+    D = Axy + Nxy*A.z*tan(theta);
+    C = Bxy + Nxy*B.z*tan(theta);
+    
+    // now let us calculate quad on the other side.
+    N2 = Vec3d(-axis.y,axis.x,0);
+    temp = N2.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N2 = N2.rotate3(axis,-theta);
+    }
+    else
+      N2=temp;
+    N2 = N2.normalize();
+    N2xy = Vec3d(N2.x,N2.y,0);
+    N2xy = N2xy.normalize();
+    
+    A2 = P + N2*(r+R);
+    B2 = Q + N2*(r+R);
+    
+    A2xy = Vec3d(A2.x,A2.y,0);
+    B2xy = Vec3d(B2.x,B2.y,0);
+    D2 = A2xy + N2xy*A2.z*tan(theta);
+    C2 = B2xy + N2xy*B2.z*tan(theta);
+
+
+#if 1
+    // get color for the quad
+    GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+
+    Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
+    xyz.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz.x, xyz.y, xyz.z );
+
+    glColor3f(gcol,gcol,gcol);
+    glVertex3f( A.x, A.y, A.z );
+    glVertex3f( B.x, B.y, B.z );
+
+    glVertex3f( C.x, C.y, C.z );
+    glVertex3f( D.x, D.y, D.z );
+    glEnd();
+    
+    Vec3d xyz2 = Vec3d :: crossProd(A2-B2,A2-D2);
+    xyz2.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz2.x, xyz2.y, xyz2.z );
+
+    glColor3f(gcol,gcol,gcol);
+    glVertex3f( A2.x, A2.y, A2.z );
+    glVertex3f( B2.x, B2.y, B2.z );
+
+    glVertex3f( C2.x, C2.y, C2.z );
+    glVertex3f( D2.x, D2.y, D2.z );
+    glEnd();
+
+#endif
+    
+#if 1
+    double newradius = diam/2. + R;
+    Ntube bigtube = *this;
+    bigtube.setDiam(2*newradius); 
+    //    bigtube.draw();
+    bigtube.uncert_draw();
+#endif
+#else 
+#endif
+  }*/
   else {// for a general ntube
 #if 1
     Vec3d A, B, C, D, P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
@@ -783,17 +1030,53 @@ void Ntube :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
 
 void Ntube :: moveGrabbedOb(Vec3d vMouseWorld) {
   // As vMouseWorld changes, move the object
-     setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z));
+	Vec3d new_pos(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z);
+    Vec3d diff(new_pos.x,new_pos.y,new_pos.z);
+	diff -= pos;
+	for(int i = 0; i < number_in_group[obj_group];i++){
+		OB * this_obj = group_of_obs[obj_group][i];
+		Vec3d this_pos;
+		this_pos += this_obj->pos;
+		this_pos += diff;
+		this_obj->setPos(this_pos);
+	}
 }
 
 /* We have a type field. Later, I plan to distingush spheres from ntubes */
 void
-addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam) {
-   Ntube *n = new Ntube(type,pos,yaw,roll,pitch,leng,diam);
-   ob[numObs] = n;
-  // select this ob
-  selectedOb = numObs;
-  numObs++;
+addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
+		 int *group_number) {
+
+	Ntube *n = new Ntube(type,pos,yaw,roll,pitch,leng,diam);
+	ob[numObs] = n;
+	// select this ob
+	selectedOb = numObs;
+	numObs++;
+	int num = addToGroup(n,group_number);
+	n->obj_group = num;
+}
+
+int addToGroup(OB* obj,int* group_number){
+	if(group_number == NULL){//no group specified, create one
+		group_of_obs[numGroups] = new OB*[MAXOBS];
+		group_number = new int();
+		*group_number = numGroups;
+		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
+		numGroups++;//one more group now
+		cout << "group number: " << *group_number << endl;
+	}
+	else if(group_of_obs[*group_number] == NULL){//group specified is empty, start it
+		group_of_obs[*group_number] = new OB*[MAXOBS];
+		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
+		cout << "group number: " << *group_number << endl << "number in group: "
+			 << number_in_group[*group_number] << endl;
+	}
+	else{//group specified is nonempty, add to existing group
+		group_of_obs[*group_number][number_in_group[*group_number]++] = obj;
+		cout << "group number: " << *group_number << endl << "number in group: "
+			 << number_in_group[*group_number] << endl;
+	}
+	return *group_number;
 }
 
 /* Class : Triangle  */
@@ -833,9 +1116,9 @@ void Triangle :: set(Vec3d _a, Vec3d _b, Vec3d _c) {
   normal = normal.normalize();
 
   // set the ntubes, ab, bc and ca;
-  //ab = Ntube(a, b, 0.);
-  //bc = Ntube(b, c, 0.);
-  //ca = Ntube(c, a, 0.);
+  ab = Ntube(a, b, 0.);
+  bc = Ntube(b, c, 0.);
+  ca = Ntube(c, a, 0.);
 }
 
 void Triangle :: setPos(Vec3d _pos) {
@@ -1060,9 +1343,11 @@ void Triangle :: moveGrabbedOb(Vec3d vMouseWorld) {
   setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, pos.z));
 }
 
-void addTriangle(Vec3d a, Vec3d b, Vec3d c) {
+void addTriangle(Vec3d a, Vec3d b, Vec3d c,int* group_number) {
   ob[numObs] = new Triangle(a,b,c);
-  selectedOb = numObs;
+  selectedOb = numObs;  
+  addToGroup(ob[numObs],group_number);
   numObs++;
+  ob[numObs]->obj_group = *group_number;
 }
 

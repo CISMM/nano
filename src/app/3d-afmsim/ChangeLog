@@ -1,3 +1,23 @@
+2002-03-29  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* 3dobject.h,.cpp : added capabilities to group objects
+	together, and then move the group as a whole, added function 
+	int addToGroup(OB* obj,int* group_number);
+	which adds object obj to group # group_number.  also
+	added default NULL parameter group_number to addDNA,
+	addTriangle, and addNtube functions, which now call addToGroup
+	function.  object is placed in its own group if not specified
+
+	* sim.h : added variables associated with groups
+
+	* sim.cpp : added ability to add little nanotubes to display
+	when sent over to SimulatedMicroscope to form big nanotube
+	object (model extraction results into simulator).  nanotubes
+	are scaled so that they fit the scaling of both the model
+	object in nano, and the scaling ratio between the nano file
+	and the simulator space.  objects are added to NANOTUBE_GROUP
+	for grouping.
+
 2002-03-13  Aron Helser  <helser@cs.unc.edu>
 
 	* Unca.h,cpp: Change to standard iostream/STL headers. 

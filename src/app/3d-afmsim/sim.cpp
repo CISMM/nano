@@ -67,6 +67,10 @@ Ntube nullntube;
 
 OB *ob[MAXOBS];
 int numObs;
+OB **group_of_obs[MAXGROUPS];
+int numGroups = 0;
+int number_in_group[MAXGROUPS];
+int NANOTUBE_GROUP;
 
 int selectedOb = NULLOB;
 int buttonpress=-1;
@@ -162,12 +166,20 @@ bool undone = true;
 double x_to_y = 1.0;
 int TriangleCounter = 0;
 bool once_thru = false;
+FILE *file;
 
 Tclvar_string cname("tclname","");
 
 int main(int argc, char *argv[])
 {
-    cname = "";
+	for(int j = 0;j < MAXGROUPS;j++){
+		number_in_group[j] = 0;
+	}
+	if ( (file = fopen("triangles.txt", "w")) == NULL) {
+		fprintf(stderr,"Could not open triangles.txt for write\n");
+		return -1;
+	}
+	cname = "";
     cname.addCallback(handle_cname_change, NULL);
 
     //opengl stuff
@@ -405,6 +417,7 @@ int main(int argc, char *argv[])
   // app's main loop, from which callbacks to above routines occur
   glutMainLoop();
 
+  if (file) {fclose(file); }
   return 0; /* ANSI C requires main to return int. */
 }
 
@@ -511,26 +524,44 @@ void displayFuncDepth( void ) {
         }
     }
 	
-	if(SimMicroscopeServer.triangleRcv){
+/*	if(SimMicroscopeServer.triangleRcv){
 		float tri_scale = 10;//SimMicroscopeServer.tri_scale;
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
 		double x_offset = SimMicroscopeServer.get_x_offset();
 		double y_offset = SimMicroscopeServer.get_y_offset();
 		float total_scaling = ratio*tri_scale;
+
+		float v1_1,v1_2,v1_3,v2_1,v2_2,v2_3,v3_1,v3_2,v3_3;
+		
 		while(SimMicroscopeServer.head != NULL){//add a bunch of triangles	
+			v1_1 = SimMicroscopeServer.head->v1_1;
+			v1_2 = SimMicroscopeServer.head->v1_2;
+			v1_3 = SimMicroscopeServer.head->v1_3;
+			v2_1 = SimMicroscopeServer.head->v2_1;
+			v2_2 = SimMicroscopeServer.head->v2_2;
+			v2_3 = SimMicroscopeServer.head->v2_3;
+			v3_1 = SimMicroscopeServer.head->v3_1;
+			v3_2 = SimMicroscopeServer.head->v3_2;
+			v3_3 = SimMicroscopeServer.head->v3_3;
 			
 			addTriangle(//draw triangle with vertices v1_*,v2_*, and v3_*, where * is {x,y,z} 
-				        //coords of v*
-			Vec3d(SimMicroscopeServer.head->v1_1*total_scaling /*+ x_offset*/,
-				  SimMicroscopeServer.head->v1_2*total_scaling /*+ y_offset*/,
-				  SimMicroscopeServer.head->v1_3*total_scaling),
-			Vec3d(SimMicroscopeServer.head->v2_1*total_scaling /*+ x_offset*/,
-				  SimMicroscopeServer.head->v2_2*total_scaling /*+ y_offset*/,
-				  SimMicroscopeServer.head->v2_3*total_scaling),
-			Vec3d(SimMicroscopeServer.head->v3_1*total_scaling /*+ x_offset*/,
-				  SimMicroscopeServer.head->v3_2*total_scaling /*+ y_offset*/,
-				  SimMicroscopeServer.head->v3_3*total_scaling));
-			
+				        //coords of v*			
+			Vec3d(v1_1*total_scaling //+ x_offset,
+				  v1_2*total_scaling //+ y_offset,
+				  v1_3*total_scaling),
+			Vec3d(v2_1*total_scaling //+ x_offset,
+				  v2_2*total_scaling //+ y_offset,
+				  v2_3*total_scaling),
+			Vec3d(v3_1*total_scaling //+ x_offset,
+				  v3_2*total_scaling //+ y_offset,
+				  v3_3*total_scaling));
+			fprintf(file,"%g,%g,%g\n%g,%g,%g\n%g,%g,%g\n\n",v1_1,v1_2,v1_3,v2_1,v2_2,v2_3,v3_1,v3_2,v3_3);
+			static int count = 0;
+			if (++count == 3) {
+				fprintf(stderr,"\n");
+				count = 0;
+			}
+
 			SimMicroscopeServer.holder = SimMicroscopeServer.head;
 			SimMicroscopeServer.head = SimMicroscopeServer.head->next;
 			delete SimMicroscopeServer.holder;	
@@ -538,6 +569,48 @@ void displayFuncDepth( void ) {
 		}
 		SimMicroscopeServer.triangleRcv = false;
 		
+	}
+*/
+	if(SimMicroscopeServer.cylRcv){
+		double ratio = SimMicroscopeServer.Sim_to_World_x;
+		double x_offset = SimMicroscopeServer.get_x_offset();
+		double y_offset = SimMicroscopeServer.get_y_offset();
+		float scale = ratio*SimMicroscopeServer._scale;
+
+		float x,y,z,altitude,azimuth,length,radius;
+		
+		while(SimMicroscopeServer.cylHead != NULL){//add a bunch of cylinders	
+			x = SimMicroscopeServer.cylHead->x;
+			y = SimMicroscopeServer.cylHead->y;
+			z = SimMicroscopeServer.cylHead->z;
+			altitude = SimMicroscopeServer.cylHead->altitude;
+			azimuth = SimMicroscopeServer.cylHead->azimuth;
+			length = SimMicroscopeServer.cylHead->length*scale;
+			radius = SimMicroscopeServer.cylHead->radius*scale;
+
+			NANOTUBE_GROUP = numGroups;
+			addNtube(NTUBE, Vec3d(x*scale + x_offset,y*scale + y_offset,z*scale), 
+				altitude*RAD_TO_DEG, 0*RAD_TO_DEG, azimuth*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);			
+
+			SimMicroscopeServer.cylHolder = SimMicroscopeServer.cylHead;
+			SimMicroscopeServer.cylHead = SimMicroscopeServer.cylHead->next;
+			delete SimMicroscopeServer.cylHolder;	
+			
+		}
+		SimMicroscopeServer.cylRcv = false;
+		
+	}
+	if(SimMicroscopeServer.scaleRcv){
+		float _scale = SimMicroscopeServer._scale;
+		
+		for(int i=0; i<numObs; i++ ) {
+			ob[i]->scale(_scale);
+			ob[i]->setPos(Vec3d(ob[i]->pos.x*_scale,
+						  ob[i]->pos.y*_scale,
+						  ob[i]->pos.z*_scale));
+		}
+		SimMicroscopeServer.scaleRcv = false;
+
 	}
 	
 
@@ -734,10 +807,15 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     fout2.open("sphere_output.txt", fstream::out | fstream::app);
     char c;
     float radius = 0.0;
+	float depth = 0.0;
 	float length = 0.0;
     float decimal = 0.0;
     bool done;
     double volume;
+	float _x,_y,_z;
+	//float altitude,azimuth;
+	int counter = 0;
+	//float val[5];
 
     switch (key) {
     case 'u' : /* want to see uncertainty map : 
@@ -840,7 +918,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	  }
       selectedOb = numObs-1;
       break;
-    case 'm' :
+    case 'm' ://add monomer
       radius = (float)21.139;
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
@@ -853,7 +931,134 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       selectedOb = numObs-1;
 
       break;
-    case 's' :
+	case '2' ://add dimer
+      radius = (float)51.58;
+	  depth = (float)-50.3914;
+	  if(SimMicroscopeServer.grid_size_rcv){
+		radius = radius * SimMicroscopeServer.Sim_to_World_x;
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
+			0., 0., 0., 0., radius*2.0);
+	  }
+	  else{
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth), 0., 0., 0., 0., radius*2.0);
+	  }
+      selectedOb = numObs-1;
+
+      break;
+	case 'c' ://add cylinder
+/*
+	  //radius
+      cout << "Enter a radius: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 10
+        if(c != '.'){//handle numbers to the left first
+            radius = radius*10 + int(c - '0');
+            //cout << int(c) << flush;
+        }
+        else{//numbers to the right of the dec. pt.
+            //cout << c << flush;
+            c = getchar();
+            while(int(c) != 10){
+                  //cout << int(c) << flush;
+                decimal = decimal/10 + int(c - '0')/10;
+                c = getchar();
+            } 
+            done = true;
+        }
+        if (done) break;
+        c = getchar();
+      }
+      radius = radius + decimal;
+
+	  //length
+	  cout << "Enter a length: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 10
+        if(c != '.'){//handle numbers to the left first
+            length = length*10 + int(c - '0');
+            //cout << int(c) << flush;
+        }
+        else{//numbers to the right of the dec. pt.
+            //cout << c << flush;
+            c = getchar();
+            while(int(c) != 10){
+                  //cout << int(c) << flush;
+                decimal = decimal/10 + int(c - '0')/10;
+                c = getchar();
+            } 
+            done = true;
+        }
+        if (done) break;
+        c = getchar();
+      }
+      length = length + decimal;
+
+	  //other parameters
+	  char* string[5];
+	  string[0] = new char[1];
+	  strcpy(string[0],"x");
+
+	  string[1] = new char[1];
+	  strcpy(string[1],"y");
+
+	  string[2] = new char[1];
+	  strcpy(string[2],"z");
+
+	  string[3] = new char[8];
+	  strcpy(string[3],"azimuth");
+
+	  string[4] = new char[9];
+	  strcpy(string[4],"altitude");
+
+	  counter = 0;
+	  while(counter <5){
+		cout << "Enter " << string[counter] << " value: " << flush;
+		done = false;
+		c = getchar();
+		while(int(c) != 10){//carriage return ascii value is 10
+			if(c != '.'){//handle numbers to the left first
+				val[counter] = val[counter]*10 + int(c - '0');
+				//cout << int(c) << flush;
+			}
+			
+			if (done) break;
+			c = getchar();
+		}
+		counter++;
+	  }//counter = 5 now
+
+	  //adjust if there is a connection
+	  if(SimMicroscopeServer.grid_size_rcv){
+		  for(int i = 0;i < counter; ++i){
+			val[i] = val[i]*SimMicroscopeServer.Sim_to_World_x;
+		  }
+		  radius = radius*SimMicroscopeServer.Sim_to_World_x;
+		  length = length*SimMicroscopeServer.Sim_to_World_x;
+	  }
+
+	  _x = val[0];
+	  _y = val[1];
+	  _z = val[2];
+	  azimuth = val[3];
+	  altitude = val[4];
+      
+	  //draw
+	  addNtube(CYLINDER, Vec3d(_x,_y,_z), azimuth, 0, altitude, length, radius*2.0);*/	
+
+	  _x = 60;
+	  _y = _x;
+	  _z = _x;
+	  radius = 5.0;
+	  length = 20.0;
+	  addNtube(CYLINDER, Vec3d(_x,_y,_z), 0, 0, 0, length, radius*2.0);
+
+
+      selectedOb = numObs-1;
+
+      break;
+    case 's' ://add sphere
       cout << "Enter a radius: " << flush;
       done = false;
       c = getchar();
