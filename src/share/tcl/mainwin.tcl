@@ -44,9 +44,12 @@ namespace import -force blt::tile::*
 #set up some options for all the widgets in microscape
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
-option add *menu*background grey75 startupFile
-option add *menu*disabledForeground grey55 startupFile
-
+if {$tcl_platform(platform) == "windows" } {
+    option add *menu*background SystemMenu startupFile
+} else {
+    option add *menu*background grey75 startupFile
+    option add *menu*disabledForeground grey55 startupFile
+}
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}
 catch { option add *Font {helvetica -15 } startupFile}
@@ -58,11 +61,6 @@ catch { option add *Font {helvetica -15 } startupFile}
 #
 set thirdtech_ui 0
 
-# Decide if we are running Windows
-set MSwin 0
-if {$tcl_platform(os) == "Windows 95" || $tcl_platform(os) == "Windows NT"} {
-    set MSwin 1
-}
 
 # We will also watch for "viewer_only" to be set, indicating this
 # version can't connect to live SPMs.
@@ -245,14 +243,14 @@ if { !$thirdtech_ui } {
         -command "show.visualizations"
     $setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
-    if ($MSwin) {
+    if {$tcl_platform(platform) == "windows" } {
 	$setupmenu entryconfigure "Texture Blend..." -state disabled
     }
     $setupmenu add command -label "Haptic..." -underline 2 -command \
 	"show.haptic"
     $setupmenu add command -label "External Filters..." -underline 0 -command \
 	"show.external_filters"
-    if {$MSwin} {
+    if {$tcl_platform(platform) == "windows" } {
         $setupmenu entryconfigure "External Filters..." -state disabled
     }
 }
