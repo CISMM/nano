@@ -68,6 +68,7 @@ int initJake (int x, int y, int port, const char * ipname) {
   int quitNow = 0;
   currentline = 0;
   StartServer((num_x), (num_y), port, ipname);
+fprintf(stderr, "Server connection is %ld.\n", connection);
   quitType = connection->register_message_type("Server Quit Type");
   connection->register_handler(quitType, handle_quit, &quitNow);
   connection->register_handler(vrpn_ANY_TYPE, handle_any_print, connection);

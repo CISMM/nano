@@ -1,3 +1,14 @@
+2002-2-16  Tom Hudson <hudsont@uncwil.edu>
+
+   * nmm_Microscope_Simulator.C (scan_point_nm) : Pass reqTime to
+   goto_point_and_report_it().
+   (spm_report_point_datasets) : Use reqTime on point data message
+   if it's passed in.
+
+   * surface.C (parse) : New "-v" argument for verbose vrpn debugging.
+   (main) : Same.
+   (usage) : Same.
+ 
 2001-12-14  Tom Hudson <hudsont@uncwil.edu>
 
    * Makefile : hardwire newer Tcl libs.

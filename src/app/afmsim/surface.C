@@ -51,10 +51,13 @@ static char * g_ipString = NULL;
 
 static int g_speed = 1;
 
+static int g_verbosity = 0;
+
 void usage (const char * argv0) {
   fprintf(stderr,
     "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
-    "        [-surface <n>] [-if <ip>] [-latency <msecs>]\n", argv0);
+    "        [-surface <n>] [-if <ip>] [-latency <msecs>]\n"
+    "        [-v <verbosity>]\n", argv0);
   fprintf(stderr,
     "    -image:  Use picture specified (otherwise use function).\n"
     "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
@@ -111,6 +114,9 @@ int parse (int argc, char ** argv) {
       if (++i >= argc) usage(argv[0]);
       g_isWaiting = vrpn_TRUE;
       g_waitTime = atof(argv[i]);
+    } else if (!strcmp(argv[i], "-v")) {
+      if (++i >= argc) usage(argv[0]);
+      g_verbosity = atoi(argv[i]);
 #if 0
     } else if (!strcmp(argv[i], "-rude")) {
       g_isRude = 1;
@@ -463,9 +469,13 @@ fprintf(stderr, "Initializing simulated network latency to %.5f ms.\n",
 g_waitTime);
     struct timeval delay;
     delay = vrpn_MsecsTimeval(g_waitTime);
+fprintf(stderr, "  ... thats %ld:%ld.\n", delay.tv_sec, delay.tv_usec);
     connection = new vrpn_DelayedConnection (delay, g_port,
-                    NULL, NULL, g_ipString);
+                    NULL, NULL, g_ipString,
+                    vrpn_DelayedConnection::allocateEndpoint,
+                    g_verbosity);
     ((vrpn_DelayedConnection *) connection)->delayAllTypes(VRPN_TRUE);
+    fprintf(stderr, "Delayed connection is %ld.\n", connection);
   }
 
   retval = initJake(g_numX, g_numY, g_port, g_ipString);
@@ -473,6 +483,12 @@ g_waitTime);
   // AFMSimulator isn't created until initJake()
   AFMSimulator->setScanRegion(mygrid->minX(), mygrid->minY(),
                               mygrid->maxX(), mygrid->maxY());
+
+  /*
+  if (g_isWaiting) {
+     ((vrpn_DelayedConnection *) connection)->setDelay(delay);
+  }
+  */
 
   while (!retval) {
     jakeMain(.1 / g_speed, g_isWaiting, g_waitTime);

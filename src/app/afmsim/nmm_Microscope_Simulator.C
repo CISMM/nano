@@ -1944,7 +1944,8 @@ stm_scan_point_nm (const char * bufptr, timeval * reqTime)
          }
   }
   else {
-        if ( goto_point_and_report_it( stm_desired_x, stm_desired_y ) ) {
+        if ( goto_point_and_report_it( stm_desired_x, stm_desired_y,
+                 reqTime) ) {
           ServerOutputAdd( 1, "***ERROR***: stm_scan_point_nm" );
           return -1;
         }
@@ -3427,8 +3428,14 @@ spm_report_point_datasets (long report_type, double x, double y,
     
 
 	// Give the report
-    msgbuf = encode_ResultData( &len, val_x, val_y, t.tv_sec, t.tv_usec,
+    if (reqTime) {
+      msgbuf = encode_ResultData( &len, val_x, val_y,
+                                  reqTime->tv_sec, reqTime->tv_usec,
+				  count, data );
+    } else {
+     msgbuf = encode_ResultData( &len, val_x, val_y, t.tv_sec, t.tv_usec,
 				count, data );
+    }
     if ( !msgbuf ) { 
       ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_report_point_datasets:  Buffer overflow!!" );
       return -1;
@@ -3530,8 +3537,10 @@ goto_point_and_report_it (float the_desired_x, float the_desired_y,
 {
    //  unsigned int  state;
 
-//ServerOutputAdd(3, "goto_and_report (%.2f %.2f)",
-//the_desired_x, the_desired_y);
+//ServerOutputAdd(3, "goto_and_report (%.2f %.2f) from %d.%6d",
+//the_desired_x, the_desired_y,
+//reqTime ? reqTime->tv_sec : 0,
+//reqTime ? reqTime->tv_usec : 0);
 
   //  stm_current_mode = STM_SEEK_MODE;
 	// Go to the point
