@@ -1,0 +1,29 @@
+2002-06-26  Andrea Hilchey hilchey@cs.unc.edu
+
+	* eroder.dsw,.dsp : adding new workspace and project for an AFM
+	eroder which erodes away an AFM scan in places where the AFM tip
+	had to have been to perform the scan.  the eroder can either
+	perform the erosion on a scan saved in a .er file by the AFM 
+	simulator, or can connect up to the nanomanipulator and
+	erode the current height plane.  in the latter case, data from
+	the height plane, the afm scan, is sent across a vrpn connection
+	to the eroder which then erodes the scan, displays the eroded
+	scan, and sends the height values of the eroded scan back to
+	nano.  In nano, the eroded scan can be viewed in the height
+	plane whose name is specified by the user when the erosion
+	was requested (from the Calculated Planes menu).  
+
+	* erode.cpp,.h : new file which performs the erosion process,
+	also can load and save files in format that is readable for 
+	erosion
+
+	* main.cpp,.h : new file with keyboard commands specific to
+	eroder, as well as various event handling, adapted from the
+	AFM simulator's sim.cpp,.h in ../3d-afmsim
+
+	* ConeSphere.cpp,.h draw.cpp,.h input.cpp,.h Tips.cpp,.h
+	Unca.cpp,.h uncert.cpp,.h Uncertw.cpp,.h Vec3d.cpp,.h :
+	all are unchanged at present from those files used by the AFM
+	simulator in ../3d-afmsim but are recopied here so that changes
+	can be made without affecting the simulator.  this could be
+	altered later
