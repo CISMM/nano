@@ -1,3 +1,11 @@
+2002-05-01  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c (handle_openSPMDeviceName_change):  catch attempts
+	to open a microscope while we're collaborating (again).
+	(main):  before opening a keithley device, make sure the user
+	has specified a stream file.  This is in two places, where the
+	microscope is initialized, and where the vi client is initialized.
+
 2002-04-26  David Borland  <borland@cs.unc.edu>
 
         * microscape.C : made changes to change static file code for 

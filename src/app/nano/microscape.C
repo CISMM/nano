@@ -2951,14 +2951,12 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     return;
 #endif
 
-    //if collaborative session don't allow
-    // changing staticfiles/streamfiles/SPM devices
-    //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	//display_error_dialog("Error: Cannot change SPM Device in collaborative session");
-	//return;
-    //}
-    //fprintf(stderr,"HANDLE_OPENSPMDEVICE\n");
-    //fprintf(stderr,"namelength: %d\n",strlen(openSPMDeviceName));
+    // if we're in a collaborative session, don't allow changing 
+    // staticfiles/streamfiles/SPM devices
+    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	display_error_dialog("Error: Cannot change SPM Device in collaborative session");
+	return;
+    }
 
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
@@ -7742,34 +7740,51 @@ int main (int argc, char* argv[])
 
         // Open a device connection, specified with -d option, probably. 
         if (strncmp(istate.afm.deviceName, "file:", 5) == 0) {
-            // someone specified a streamfile using device arg. 
-            openStreamFilename = &(istate.afm.inputStreamName[5]);
-            // Open the streamfile. 
-            handle_openStreamFilename_change(NULL, (void *)&istate);
+          // someone specified a streamfile using device arg. 
+          openStreamFilename = &(istate.afm.inputStreamName[5]);
+          // Open the streamfile. 
+          handle_openStreamFilename_change(NULL, (void *)&istate);
         } else {
-            openSPMDeviceName = istate.afm.deviceName;
-			if(istate.afm.writingStreamFile)
-			{
-				openSPMLogName = istate.afm.outputStreamName;
-			}
-			else
-			{
-				openSPMLogName = "";
-				// popup fileName chooser dialog (filemenu.tcl)
-				check_streamfile_save = 1;
-			}
-			// if file already exists, popup new fileName dialog (filemenu.tcl)
-			check_file_exists = 1;
-            handle_openSPMDeviceName_change(NULL, (void *)&istate);
+          openSPMDeviceName = istate.afm.deviceName;
+          if(istate.afm.writingStreamFile)
+          {
+            openSPMLogName = istate.afm.outputStreamName;
+          }
+          else
+          {
+            openSPMLogName = "";
+            // popup fileName chooser dialog (filemenu.tcl)
+            check_streamfile_save = 1;
+          }
+          // if file already exists, popup new fileName dialog (filemenu.tcl)
+          check_file_exists = 1;
+
+          handle_openSPMDeviceName_change(NULL, (void *)&istate);
+
+          // after all this, if we are saving a lab notebook/log file/stream file for
+          // the microscope, also do so for any additional devices
+          if( istate.afm.writingStreamFile )
+          {
+            istate.ohm.writingLogFile = 1;
+            sprintf(istate.ohm.outputLogName, "%s%s", istate.afm.outputStreamName,
+              OHM_FILE_SUFFIX);
+            istate.vicurve.writingLogFile = 1;
+            sprintf(istate.vicurve.outputLogName, "%s%s", istate.afm.outputStreamName,
+              VICURVE_FILE_SUFFIX);
+            istate.sem.writingLogFile = 1;
+            sprintf(istate.sem.outputLogName, "%s%s", istate.afm.outputStreamName,
+              SEM_FILE_SUFFIX);
+          }          
+          
         }
     } else {
-
-        // Handle other command line arguments which might have 
-        // been passed to the microscope, like -f or -fi
-        createNewDatasetOrMicroscope(istate, NULL);
-
+      
+      // Handle other command line arguments which might have 
+      // been passed to the microscope, like -f or -fi
+      createNewDatasetOrMicroscope(istate, NULL);
+      
     }
-
+    
 
 //      if (createNewDatasetOrMicroscope(istate, microscope_connection)) {
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
@@ -7887,6 +7902,21 @@ int main (int argc, char* argv[])
       if (vicurve_device != NULL) 
 	strcpy(istate.vicurve.deviceName, vicurve_device);
     }
+
+    if( istate.vicurve.writingLogFile == false )
+    {
+      // popup fileName chooser dialog (filemenu.tcl)
+      check_streamfile_save = 1;
+      // if file already exists, popup new fileName dialog (filemenu.tcl)
+      check_file_exists = 1;
+    }
+    if( strcmp( openSPMLogName, "" ) != 0 )
+    {
+      	istate.vicurve.writingLogFile = 1;
+	sprintf(istate.vicurve.outputLogName, "%s%s", openSPMLogName.string(),
+		VICURVE_FILE_SUFFIX);
+    }
+
     // Make a connection
     if (strcmp(istate.vicurve.deviceName, "null") != 0) {
       printf("main: attempting to connect to vicurve: %s\n",
