@@ -80,6 +80,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
   initDisplays();
 
+  // make sure everything is going into the right gl context
+  v_gl_set_context_to_vlib_window();
+
   /* Set up the viewing info */
   
   /* Set initial user mode */
@@ -491,6 +494,10 @@ void nmg_Graphics_Implementation::mainloop (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::mainloop().\n");
 
   // BUG:  do we have one frame of latency here?
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   switch (decoration->mode) {
     case nmb_Decoration::IMAGE:
       glClearColor(0.3, 0.3, 0.7, 0.0);  // blue
@@ -587,6 +594,9 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
   int x,y;
   int r,g,b;
   GLubyte texture[512*512*4];   // Maximum size for the image texture
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
 
 // Tell how to index a given element.  Parameters are y,x,color
 #define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
@@ -777,6 +787,9 @@ void nmg_Graphics_Implementation::setBumpMapName (const char * /*name*/)
   GLubyte c;
   int x, y;
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   if (plane) {
     setTextureMode(BUMPMAP, RULERGRID_COORD);
 
@@ -962,6 +975,9 @@ void nmg_Graphics_Implementation::setHatchMapName (const char * /*name*/)
   GLubyte c;
   int x, y;
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   if (plane) {
     setTextureMode(HATCHMAP, RULERGRID_COORD);
 
@@ -1078,6 +1094,9 @@ void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
   GLubyte c;
   double value;
   int x, y;
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
 
   if (plane) {
     setTextureMode(PATTERNMAP, RULERGRID_COORD);
@@ -1258,6 +1277,9 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   //
   // Create/Setup the Texture in GL:
   //
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
   
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
@@ -1663,6 +1685,9 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      g_tex_installed_height[l] = NMG_DEFAULT_IMAGE_HEIGHT;
   }
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   glGenTextures(N_TEX, tex_ids);
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -1809,6 +1834,10 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
 /*    printf("loadRawDataTexture: start=(%d,%d), size=(%d,%d)\n",
            start_x, start_y, im->width(), im->height());
 */
+
+    // make sure gl calls are directed to the right context
+    v_gl_set_context_to_vlib_window();
+
     glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
     if (im->width() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
 	im->height() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
@@ -2394,6 +2423,9 @@ void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
      return;
   }
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   if (captureBack) {
     glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
 //fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  BACK BUFFER.\n");
@@ -2436,6 +2468,9 @@ void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
                      "Insufficient memory to grab screen!\n");
      return;
   }
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
 
   if (captureBack) {
     glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
@@ -3181,6 +3216,9 @@ int nmg_Graphics_Implementation::handle_positionSphere
 int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
   nmg_Graphics_Implementation * it = (  nmg_Graphics_Implementation * )p;
   
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );

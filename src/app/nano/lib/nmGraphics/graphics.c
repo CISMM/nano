@@ -346,6 +346,9 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   GLenum errval;
 //fprintf(stderr, "Building remotely rendered texture.\n");
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -391,6 +394,9 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
 
 void buildContourTexture (void) {
 
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   makeTexture();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -430,6 +436,9 @@ _______________________________________*/
 
 
 void buildRulergridTexture (void) {
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
   printf("building rulergrid texture\n");
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
@@ -476,6 +485,9 @@ ___________________**********************/
 }
 
 void buildAlphaTexture (void) {
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef __CYGWIN__
@@ -531,6 +543,9 @@ void setupMaterials (void) {
     char filename[256];
 
     fprintf(stderr,"\n*** Setting up PxFl programmable shader...***\n\n");
+
+    // make sure gl calls are directed to the right context
+    v_gl_set_context_to_vlib_window();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -745,6 +760,9 @@ int setup_lighting (int)
 /*     GLfloat l0_specular[4] = { 0.4, 0.4, 0.4, 1.0 }; */
     GLfloat l0_specular[4] = { 0.2, 0.2, 0.2, 1.0 };
     // l0_position defined at the top of this file as a global variable
+
+    // make sure gl calls are directed to the right context
+    v_gl_set_context_to_vlib_window();
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, l0_diffuse);
