@@ -1266,7 +1266,8 @@ static char     *MODE_NAMES[] = {
                         "comb",
                         "center texture",
                         "line scan",
-			"region select" };
+			"region select",
+			"cross section" };
 
 int make_collab_hand_icon (double pos[], double rotate[], int mode) {
   v_xform_type headxform;
