@@ -1,3 +1,7 @@
+2002-03-06  David Borland  <borland@cs.unc.edu>
+
+        * import.tcl added : added control for tesselation of loaded nanotubes
+
 2002-02-25  David Borland  <borland@cs.unc.edu>
 
         * import.tcl: allows for loading of output file from ShapeAnalyze code
