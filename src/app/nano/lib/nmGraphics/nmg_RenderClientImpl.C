@@ -615,6 +615,9 @@ nmg_Graphics_RenderClient_Implementation
 
   setTextureMode(REMOTE_DATA, REGISTRATION_COORD);
 
+fprintf(stderr,
+"Set up %d x %d rendering grid for RenderClientImplementation\n",
+xsize, ysize);
 }
 
 

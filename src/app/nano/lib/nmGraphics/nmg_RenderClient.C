@@ -109,7 +109,7 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
   }
   d_timer->block(sn);
 
-fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer (%d)\n", sn);
+//fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer (%d)\n", sn);
 
   // Pack the message
   msglen = 24;
@@ -122,7 +122,7 @@ fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer (%d)\n", sn);
                              nmg_Graphics::d_myId, msgbuf,
                              vrpn_CONNECTION_RELIABLE);
 
-  fprintf(stderr, "Blocked timer %d.\n", sn);
+//fprintf(stderr, "Blocked timer %d.\n", sn);
 }
 
 // virtual

@@ -1,3 +1,16 @@
+2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmg_RenderServer.C : New members d_messagesSent, d_bytesSent.
+	(constructor) : Initialize new members to 0.
+	(messagesSent) : New function.
+	(bytesSent) : Same.
+	(sendPartialDepthData) : Maintain d_messagesSent and d_bytesSent.
+	(sendPartialPixelData) : Same.
+
+	* nmg_RenderServerStrategies.C
+	(nmg_RSViewS_Ortho::setViewingTransform) : Generalize the
+	currently used approximate viewing transform.
+
 2001-06-22  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmg_RenderClientImpl.C

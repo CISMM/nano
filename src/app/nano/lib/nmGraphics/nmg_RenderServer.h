@@ -83,6 +83,23 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
       ///< decide whether or not to accept a view transform from
       ///< the remote.
 
+
+  // Diagnostic functions
+
+    vrpn_int32 messagesSent (void) const;
+      ///< Reports how many VRPN messages of graphics information
+      ///< have been sent to a client.  Allows user to compute
+      ///< length of VRPN headers and *estimate* size of TCP/UDP
+      ///< headers to get a total value for the dataflow.
+      ///< Does NOT report VRPN system messages, timing messages,
+      ///< or other auxiliary data, just pixel and depth buffer fragments.
+    vrpn_int32 bytesSent (void) const;
+      ///< Reports how many bytes of graphics information (including
+      ///< application-level headers) have been sent to a client.
+      ///< Does NOT report VRPN system messages, timing messages,
+      ///< or other auxiliary data, just pixel and depth buffer fragments.
+
+
   protected:
 
     void computeScreenChange (int * minx, int * maxx, int * miny, int * maxy);
@@ -134,6 +151,10 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     //base strategy class, and have the children call those when necessary.
     //This scopes the internal access of RenderServer to one class
     friend class nmg_RenderServer_Strategy;
+
+    vrpn_int32 d_messagesSent;
+    vrpn_int32 d_bytesSent;
+    
 };
 
 #endif  // NMG_GRAPHICS_RENDER_SERVER_H

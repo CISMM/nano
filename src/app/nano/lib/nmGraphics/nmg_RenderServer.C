@@ -39,7 +39,9 @@ nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
     d_screenSizeY (ysize),
     d_outputConnection (outputConnection),
     d_sendEntireScreen (VRPN_FALSE),
-    d_strategy (NULL) {
+    d_strategy (NULL),
+    d_messagesSent (0),
+    d_bytesSent (0) {
 
   vrpn_int32 control_id;
   vrpn_int32 newConn_type;
@@ -166,10 +168,12 @@ void nmg_Graphics_RenderServer::mainloop (void) {
 
   // Output
 if (minx <= maxx) {
+  if (d_connection  && d_connection->connected()) {
 //fprintf(stderr, "Sending data for X [%d - %d] by Y [%d - %d].\n",
 //minx, maxx, miny, maxy);
-  if (d_strategy) {
-    d_strategy->sendData(minx, maxx, miny, maxy);
+    if (d_strategy) {
+      d_strategy->sendData(minx, maxx, miny, maxy);
+    }
   }
 }
 
@@ -264,6 +268,8 @@ void nmg_Graphics_RenderServer::sendPartialPixelData (int minx, int maxx,
 //}
 //fprintf(stderr, "\n");
 //}
+    d_messagesSent++;
+    d_bytesSent += (d_pixelOutputBufferSize - buflen);
   }
 }
 
@@ -310,6 +316,9 @@ void nmg_Graphics_RenderServer::sendPartialDepthData (int minx, int maxx,
 //}
 //fprintf(stderr, "\n");
 //}
+
+    d_messagesSent++;
+    d_bytesSent += (d_depthOutputBufferSize - buflen);
   }
 }
 
@@ -327,6 +336,13 @@ void nmg_Graphics_RenderServer::setViewTransform (v_xform_type t) {
 }
 
 
+vrpn_int32 nmg_Graphics_RenderServer::messagesSent (void) const {
+  return d_messagesSent;
+}
+
+vrpn_int32 nmg_Graphics_RenderServer::bytesSent (void) const {
+  return d_bytesSent;
+}
 
 
 
@@ -401,7 +417,7 @@ void nmg_Graphics_RenderServer::clearWaitingTimestamps (void) {
     d_outputConnection->pack_message(24 - msglen, now, d_timerSN_type_out,
                                      nmg_Graphics::d_myId, msgbuf,
                                      vrpn_CONNECTION_RELIABLE);
-fprintf(stderr, "Resent timer message for SN %d.\n", sN);
+//fprintf(stderr, "Resent timer message for SN %d.\n", sN);
   }
 }
 
@@ -432,7 +448,7 @@ int nmg_Graphics_RenderServer::handle_timerSN (void * userdata,
 
   gs->d_timerList.insert(sn);
 
-fprintf(stderr, "Got timer SN message for %d.\n", sn);
+//fprintf(stderr, "Got timer SN message for %d.\n", sn);
 
   return 0;
 }

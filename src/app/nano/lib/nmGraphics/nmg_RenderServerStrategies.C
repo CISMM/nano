@@ -98,11 +98,11 @@ vrpn_bool changed = VRPN_FALSE;
   // Almost the right scale, but it comes out off-center???  Or is that
   // just the non-square pixels?
   
-  // 512 x 512
-  //scaleTo *= 4.0;
-
-  // 100 x 100?
+  // 100 x 100
   scaleTo *= 0.78125;
+
+  // Scale up or down to correct size
+  scaleTo *= (d_server->screenSizeX() / 100.0);
 
   gridMidpointX = (g_inputGrid->minX() +
                    g_inputGrid->maxX()) * 0.5;
