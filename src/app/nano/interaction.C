@@ -1173,7 +1173,10 @@ void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
     if ( vrpnHandTracker == NULL )
         return;
 
-    graphics->showFeelGrid(VRPN_FALSE);
+    if (graphics) {
+      graphics->showFeelGrid(VRPN_FALSE);
+      graphics->showFeelPlane(VRPN_FALSE);
+    }
 
     switch(mode) {
 	case USER_LIGHT_MODE:
@@ -2842,7 +2845,14 @@ int doFeelLive (int whichUser, int userEvent)  {
 
   if ((microscope->state.modify.tool == FEELAHEAD) ||
       (microscope->state.modify.tool == PSEUDO_FEELAHEAD)) {
-     graphics->showFeelGrid(VRPN_TRUE);
+    if (graphics) {
+      graphics->showFeelGrid(VRPN_TRUE);
+    }
+  }
+  if (microscope->state.modify.tool == WARPED_PLANE) {
+    if (graphics) {
+      graphics->showFeelPlane(VRPN_TRUE);
+    }
   }
 
   // Find the x,y location of hand in grid space
@@ -3535,11 +3545,11 @@ collabVerbose(5, "initializeInteraction:  updateWorldFromRoom().\n");
 
   haptic_manager.d_canned = new nmui_HSCanned;
   haptic_manager.d_measurePlane = new nmui_HSMeasurePlane (decoration);
-  haptic_manager.d_livePlane = new nmui_HSLivePlane;
+  haptic_manager.d_livePlane = new nmui_HSLivePlane (graphics);
   haptic_manager.d_feelAhead = new nmui_HSFeelAhead (graphics);
   haptic_manager.d_pseudoFA = new nmui_HSPseudoFA (graphics);
   haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
-  haptic_manager.d_warpedPlane = new nmui_HSWarpedPlane;
+  haptic_manager.d_warpedPlane = new nmui_HSWarpedPlane (graphics);
 
   haptic_manager.d_gridFeatures = new nmui_GridFeatures
                                        (haptic_manager.d_canned);

@@ -1,3 +1,10 @@
+2002-2-14  Tom Hudson  <hudsont@uncwil.edu>
+
+	* interaction.c (initializeInteraction) : Pass graphics to
+	live plane, warped plane haptic strategies.
+	(dispatch_event) : Disable FeelPlane.
+	(doFeelLive) : If in warped plane mode, enable FeelPlane.
+
 2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
 
    * Makefile : change ghost30 to ghost31.
