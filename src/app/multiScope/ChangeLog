@@ -1,3 +1,8 @@
+2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Makefile : fixes to get glut, glui, and not fail because of tcl
+        (merely complain loudly about tcl)
+
 2000-09-20  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* multiscope.C (main) : Added needed parameters to constructor
