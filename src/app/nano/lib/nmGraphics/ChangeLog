@@ -1,3 +1,6 @@
+2003-08-05 Woojin Seok <seok@cs.unc.edu>
+        * globjects.c : added "cross section" into MODE_NAMES array.
+
 2002-07-25 David Borland <borland@cs.unc.edu>
 
         * nmg_SurfaceRegion.C : fixed the scaling of textures so that 

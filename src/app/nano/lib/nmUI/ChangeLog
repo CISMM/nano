@@ -1,3 +1,7 @@
+2002-08-05 Woojin Seok <seok@cs.unc.edu>
+        * nmui_CrossSection.H : changed Tclvar into TclNet to be shown 
+        in collabortion mode.
+
 2002-05-27 Jameson Miller <millerj@cs.unc.edu>
 	* nmui_HapticSurface.C (.h) new mode set up for feeling
 	plane when direct Z force exceeded. 
