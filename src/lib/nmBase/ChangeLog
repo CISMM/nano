@@ -1,3 +1,14 @@
+2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Dataset.C (constructor) : initializes colorMapName to 
+	"none" instead of "CUSTOM". This is in order to keep things
+	consistent between tcl and C but I don't understand why when
+	all the tcl files get sourced this doesn't fix itself since the
+	tcl code executes after the nmb_Dataset is created. (was causing
+	some problem when collaboration code went to copy stuff around since
+	CUSTOM is not the name of a colormap file and the code in nmg_Graphics
+	that checked for this may have been removed recently)
+
 2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Device.C (nmb_Device) : initialize vrpn_HANDLERPARAM passed 

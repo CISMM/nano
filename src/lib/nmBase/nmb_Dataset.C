@@ -75,7 +75,7 @@ nmb_Dataset::nmb_Dataset
 
   alphaPlaneName (string_allocator("none")),
   colorPlaneName (string_allocator("none")),
-  colorMapName (string_allocator("CUSTOM")),
+  colorMapName (string_allocator("none")),
   contourPlaneName (string_allocator("none")),
   opacityPlaneName (string_allocator("none")),
   heightPlaneName (string_allocator("Topography-Forward")),
