@@ -1,3 +1,8 @@
+2001-11-12    <marshbur@TUNGSTEN-CS>
+
+	* myUtil.h: changed #ifdef guards around timezone struct to be
+	_STRUCT_TIMEZONE instead of _STRUCT_TIMEVAL, to match vrpn changes
+
 2001-09-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* myUtil.h: removed #undef's of min/max (Windows only).  This

@@ -278,8 +278,8 @@ void glDebugOff();
 #include <winsock.h>   // timeval is defined here
   /* from HP-UX */
 //#if !defined(__CYGWIN__)
-#ifndef _STRUCT_TIMEVAL
-#define _STRUCT_TIMEVAL
+#ifndef _STRUCT_TIMEZONE
+#define _STRUCT_TIMEZONE
 struct timezone {
     int     tz_minuteswest; /* minutes west of Greenwich */
     int     tz_dsttime;     /* type of dst correction */
