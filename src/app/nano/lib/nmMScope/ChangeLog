@@ -1,3 +1,10 @@
+2000-09-05  Adam Seeger  <seeger@cs.unc.edu>
+	
+	* nmm_RelaxComp.[hC] (updateMicroscope) : added this new function
+	so we can send the relax setting message without having access to
+	private functions in nmm_Microscope_Remote 
+	(needed in microscopeHandlers.C)
+
 2000-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_RelaxComp.C (enable, disable) : These no longer send messages

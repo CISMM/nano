@@ -45,6 +45,7 @@ class nmm_RelaxComp
 public:
     enum RelaxType {DECAY, CONST_OFFSET};
     nmm_RelaxComp(nmm_Microscope_Remote*);
+    void updateMicroscope();
     void enable(RelaxType relax_type);
     void disable();
     int	set_ignore_time_ms (int);
