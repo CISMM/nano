@@ -186,6 +186,10 @@ pid_t getpid();
 UTree World;
 
 
+/********** Haptic graphics **************/
+#include <nmg_haptic_graphics.h>
+
+
 /*********** IMPORT OBJECTS **************/
 
 static const char * import_filename_string;
@@ -837,6 +841,27 @@ Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
 
 static char * vizPPMName = NULL;   ///< Name of image to use for viz tex.
 
+//-------------------------------------------------
+//JM 11/02 variables for haptic visualizations
+//
+
+static void handle_show_feel_plane (vrpn_int32, void * userdata);
+static void handle_show_feel_grid (vrpn_int32, void * userdata);
+
+
+TclNet_int show_feel_plane("show_feel_plane",0,handle_show_feel_plane);
+TclNet_int show_feel_grid("show_feel_grid",0,handle_show_feel_grid);
+
+static void handle_show_feel_plane (vrpn_int32, void * userdata) {
+  haptic_graphics->set_show_feel_plane(show_feel_plane);
+}
+
+static void handle_show_feel_grid (vrpn_int32, void * userdata) {
+    haptic_graphics->set_show_feel_grid(show_feel_grid);
+
+}
+
+
 //-----------------------------------------------------------------------
 // Guardedscan interface
 static void handle_guardedscan_planeacquire(vrpn_int32, void* a_pObject);
@@ -941,6 +966,9 @@ nmb_Decoration * decoration = NULL;
 nmm_Microscope_Remote * microscope = NULL;
 
 nmg_Graphics * graphics = NULL;
+
+//JM 11/02
+nmg_haptic_graphics * haptic_graphics = NULL;
 
 // XXX
 // Stuff for testing TEM stuff -- should be put into some sort of TEM object after testing
@@ -7339,6 +7367,7 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
 				   istate.num_image_files,
 				   allocate_TclNet_string,
 				   allocate_Tclvar_list_of_strings);
+
     
     if (!new_dataset) {
         //display_error_dialog( "Cannot initialize dataset.\n");
@@ -7831,6 +7860,9 @@ int main (int argc, char* argv[])
 	display_fatal_error_dialog( "Cannot initialize decorations.\n");
 	return -1;
     }	
+
+        //JM 11/02
+    haptic_graphics = new nmg_haptic_graphics();
 
     // get stuff and set stuff from environment
     // Before parseArgs so command line can over-ride.

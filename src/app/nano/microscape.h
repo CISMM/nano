@@ -68,6 +68,7 @@ class vrpn_DirectXFFJoystick;
 class vrpn_Tracker_AnalogFly;
 #endif
 class nm_MouseInteractor;
+class nmg_haptic_graphics;
 
 #define	MICROSCAPE_MAJOR_VERSION	(10)
 #define	MICROSCAPE_MINOR_VERSION	(0)
@@ -267,6 +268,11 @@ extern	Tclvar_float guarded_plane_depth;
 //-----------------------------------------------------------------------------
 // Setup -> Display Settings "fine-grained coupling"
 extern TclNet_int finegrained_coupling;
+
+
+//------------------------------------------------------
+// haptic_graphics object
+extern nmg_haptic_graphics * haptic_graphics;
 
 
 /*********

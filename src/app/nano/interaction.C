@@ -50,6 +50,8 @@
 
 #include <nmg_GraphicsImpl.h>
 #include <nmg_Globals.h>
+//JM
+#include <nmg_haptic_graphics.h>
 
 #include <nmui_Util.h>
 #include <nmui_Haptics.h>
@@ -71,6 +73,7 @@
 
 #include "UTree.h"	// for Ubergraphics
 #include "URender.h"
+
 
 /***************************
  * Local Defines
@@ -3084,11 +3087,11 @@ int doFeelFromGrid(int whichUser, int userEvent)
 
 	BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
-	if (plane == NULL)
-	{
-	    fprintf(stderr, "Error in doFeelFromGrid: could not get plane!\n");
-	    return -1;
-	}     
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doFeelFromGrid: could not get plane!\n");
+        return -1;
+    }
 
 	/* Find the x,y location of hand in grid space */
 	nmui_Util::getHandInWorld(whichUser, clipPos);
@@ -3099,34 +3102,45 @@ int doFeelFromGrid(int whichUser, int userEvent)
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
         nmui_Util::moveSphere(clipPos, graphics);
 
-    setupHaptics(USER_PLANE_MODE);
-
-	switch ( userEvent ) 
-	  {
-	  case PRESS_EVENT:
-	    /* stylus has just been pressed */
-	    /* if user is below the surface on the initial press, don't send
-	       the surface, because the user will get a strong upward force. */
-	    aboveSurf = touch_surface(whichUser, clipPos);
-	    if (aboveSurf > 0) {
-              monitor.startSurface();
-	    }
-	    break;
+        setupHaptics(USER_PLANE_MODE);
+        
+        switch ( userEvent ) 
+        {
+        case PRESS_EVENT:
+            /* stylus has just been pressed */
+            /* if user is below the surface on the initial press, don't send
+            the surface, because the user will get a strong upward force. */
+            aboveSurf = touch_surface(whichUser, clipPos);
+            if (aboveSurf > 0) {
+                monitor.startSurface();
+            }
+            
+            //JM always true for debugging
+            //TODO: put in toggle switch later on.
+            if (haptic_graphics->get_show_feel_plane()) {
+                
+                haptic_graphics->do_show_feel_plane(1);
+            }
+            break;
 
 	  case HOLD_EVENT:
 	    /* stylus continues to be pressed */
 	    /* Apply force to the user based on grid */
 	    aboveSurf = touch_surface(whichUser, clipPos);
 	    if (monitor.surfaceGoing || (aboveSurf > 0)) {
-              monitor.startSurface();
-	    }
-	    
-	    break;
-	  
-	  case RELEASE_EVENT:
-	    
-              // Stop applying forces. 
-            monitor.stopSurface();
+            monitor.startSurface();
+        }
+        
+        break;
+        
+      case RELEASE_EVENT:
+          
+          // Stop applying forces. 
+          monitor.stopSurface();
+          
+          haptic_graphics->do_show_feel_plane(0);
+
+
 	    
 	    break;
 	    
@@ -3215,9 +3229,9 @@ int doFeelLive (int whichUser, int userEvent)
   // microscope, we can't do this, so put the user into grab mode.
 
   if (!microscope->haveMutex()) {
-    user_0_mode = USER_GRAB_MODE;
-    printf("Can't touch when we don't have access to the microscope.\n");
-    return 0;
+      user_0_mode = USER_GRAB_MODE;
+      printf("Can't touch when we don't have access to the microscope.\n");
+      return 0;
   }
 
   // Get the input plane and point
@@ -4133,9 +4147,9 @@ void initializeInteraction (void) {
 
   updateWorldFromRoom();
 
-  haptic_manager.d_canned = new nmui_HSCanned;
+  haptic_manager.d_canned = new nmui_HSCanned();
   haptic_manager.d_measurePlane = new nmui_HSMeasurePlane (decoration);
-  haptic_manager.d_livePlane = new nmui_HSLivePlane;
+  haptic_manager.d_livePlane = new nmui_HSLivePlane();
   haptic_manager.d_feelAhead = new nmui_HSFeelAhead;
   haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
   haptic_manager.d_gridFeatures = new nmui_GridFeatures
