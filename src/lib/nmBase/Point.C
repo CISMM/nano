@@ -84,6 +84,23 @@ int	Point_value::remove_callback(Point_Valuecall cb, void *userdata)
 // Point_results methods
 //----------------------------------------------------------------------
 
+Point_results::Point_results (void) :
+    _num_values (0),
+    _head (NULL),
+    _x (-1.0),
+    _y (-1.0),
+    _z (-1.0),
+    _is3D (0) {
+
+  d_time.tv_sec = 0L;
+  d_time.tv_usec = 0L;
+  d_timeRequested.tv_sec = 0L;
+  d_timeRequested.tv_usec = 0L;
+  d_timeReceived.tv_sec = 0L;
+  d_timeReceived.tv_usec = 0L;
+}
+   
+
 /** Create a new point that is a copy of another point, including all of
  its value sets.
 */
@@ -96,8 +113,10 @@ Point_results::Point_results (const Point_results &p)
 
 	// Copy the information from the point record
 	_x = p._x; _y = p._y; _z = p._z;
-	_sec = p._sec; _usec = p._usec;
 	_is3D = p._is3D;
+	d_time = p.d_time;
+        d_timeRequested = p.d_timeRequested;
+        d_timeReceived = p.d_timeReceived;
 
 	// Create by copying the values from the other point
 	for (value = p._head; value != NULL; value = value->_next) {
@@ -119,6 +138,64 @@ Point_results::~Point_results (void)
 	delete(current);
 	current = next;
     } 
+}
+
+
+
+
+int Point_results::empty (void) const
+{
+    if (_head == NULL)
+	return 1;
+    else
+	return 0;
+}
+
+Point_value* Point_results::getValueByName (const BCString name) const
+{
+    Point_value * current = _head;
+
+    while (current != NULL) {
+	if (current->_dataset == name)
+	    return current;
+	current = current->_next;
+    }
+
+    return NULL;
+}
+
+
+Point_value* Point_results::getValueByPlaneName (const BCString planeName) const
+{
+    char	fullname[100];
+    BCString	name;
+    Point_value* current = _head;
+
+    // Find the part of the name that comes before -Forward or -Backward and
+    // use that to form the name we're searching for.
+    fullname[sizeof(fullname)-1] = '\0';
+    strncpy(fullname, planeName.Characters(), sizeof(fullname)-1);
+    if (strrchr(fullname,'-') == NULL) {
+	return NULL;
+    }
+    *strrchr(fullname,'-') = '\0';
+    name = fullname;
+
+    while (current != NULL) {
+	if (current->_dataset == name)
+	    return current;
+	current = current->_next;
+    }
+
+    return NULL;
+}
+
+timeval Point_results::timeRequested (void) const {
+  return d_timeRequested;
+}
+
+timeval Point_results::timeReceived (void) const {
+  return d_timeReceived;
 }
 
 void Point_results::findUniqueValueName(BCString base_name,
@@ -167,54 +244,43 @@ int Point_results::deleteHead (void)
 }
 
 
-int Point_results::empty (void) const
+
+void Point_results::print (const char *prelim) const
 {
-    if (_head == NULL)
-	return 1;
-    else
-	return 0;
+	Point_value	*next;
+
+	// Print out the preliminary string
+	printf("%s",prelim);
+
+	// Print out the information local to this structure
+	if (_is3D)
+	    printf("Point_result at (%g,%g,%g), time %ld:%ld, %d values:",
+		_x,_y,_z, d_time.tv_sec,d_time.tv_usec, _num_values);
+	else
+	    printf("Point_result at (%g,%g), time %ld:%ld, %d values:",
+		_x,_y, d_time.tv_sec,d_time.tv_usec, _num_values);
+
+	// Print out the values
+	next = _head;
+	while (next != NULL) {
+		printf(" %s:%g(%s)",
+			next->name()->Characters(),
+			next->value(),
+			next->units()->Characters() );
+		next = next->_next;
+	}
+
+	// Done with the message
+	printf("\n");
 }
 
-
-Point_value* Point_results::getValueByName (const BCString name) const
-{
-    Point_value * current = _head;
-
-    while (current != NULL) {
-	if (current->_dataset == name)
-	    return current;
-	current = current->_next;
-    }
-
-    return NULL;
+void Point_results::setTimeRequested (timeval t) {
+  d_timeRequested = t;
 }
 
-
-Point_value* Point_results::getValueByPlaneName (const BCString planeName) const
-{
-    char	fullname[100];
-    BCString	name;
-    Point_value* current = _head;
-
-    // Find the part of the name that comes before -Forward or -Backward and
-    // use that to form the name we're searching for.
-    fullname[sizeof(fullname)-1] = '\0';
-    strncpy(fullname, planeName.Characters(), sizeof(fullname)-1);
-    if (strrchr(fullname,'-') == NULL) {
-	return NULL;
-    }
-    *strrchr(fullname,'-') = '\0';
-    name = fullname;
-
-    while (current != NULL) {
-	if (current->_dataset == name)
-	    return current;
-	current = current->_next;
-    }
-
-    return NULL;
+void Point_results::setTimeReceived (timeval t) {
+  d_timeReceived = t;
 }
-
 
 void Point_results::addValue(Point_value* value)
 {
@@ -234,36 +300,6 @@ void Point_results::addValue(Point_value* value)
 	last->_next = value;
 
     value->_results = this;
-}
-
-
-void Point_results::print (const char *prelim) const
-{
-	Point_value	*next;
-
-	// Print out the preliminary string
-	printf("%s",prelim);
-
-	// Print out the information local to this structure
-	if (_is3D)
-	    printf("Point_result at (%g,%g,%g), time %ld:%ld, %d values:",
-		_x,_y,_z, _sec,_usec, _num_values);
-	else
-	    printf("Point_result at (%g,%g), time %ld:%ld, %d values:",
-		_x,_y, _sec,_usec, _num_values);
-
-	// Print out the values
-	next = _head;
-	while (next != NULL) {
-		printf(" %s:%g(%s)",
-			next->name()->Characters(),
-			next->value(),
-			next->units()->Characters() );
-		next = next->_next;
-	}
-
-	// Done with the message
-	printf("\n");
 }
 
 
@@ -339,13 +375,13 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
 	// Find out how many values are in the first point.  Used for
 	// comparison later.  Also find the starting location and time
 	// of the first point.
-	numValues = _entries[0]->_num_values;
+	numValues = _entries[0]->numValues();
 	last_x = _entries[0]->x();
 	last_y = _entries[0]->y();
 	//last_z = _entries[0]->z();
 	is3D = _entries[0]->is3D();
-	first_sec = _entries[0]->_sec;
-	first_usec = _entries[0]->_usec;
+	first_sec = _entries[0]->sec();
+	first_usec = _entries[0]->usec();
 	s = 0;	// No distance yet.
         
 	static  char    *command1;
@@ -375,7 +411,7 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
         }
         
 
-       for (value = _entries[0]->_head; value != NULL; value = value->next()) {
+       for (value = _entries[0]->head(); value != NULL; value = value->next()) {
 		sprintf(str, "\"\t%s(%s)\"",
 			value->name()->Characters(),
 			value->units()->Characters() );
@@ -403,7 +439,7 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
 
 	  // Verify that each Point has the same number of values.  If not,
 	  // put a warning into the file.
-	  if (p->_num_values != numValues) {
+	  if (p->numValues() != numValues) {
 		sprintf(str,"\"WARNING -- Different number of values!!!\n\"");
 	        sprintf(command2,".mod.text insert end %s",str);
 		if (Tcl_Eval(interpreter, command2) != TCL_OK) {
@@ -422,7 +458,7 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
 
 	  // Calculate time by difference from the start.  Time is in
 	  // seconds, but is stored in a double
-	  time = (p->_sec - first_sec) + (p->_usec - first_usec)*0.000001;
+	  time = (p->sec() - first_sec) + (p->usec() - first_usec)*0.000001;
 
 	  // Put s, time, x,y, then the data sets from the values.
 	  if (is3D)

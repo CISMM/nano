@@ -1,3 +1,18 @@
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Point.C (Point_results::d_time) : Glom together _sec and _usec.
+	(Point_results::d_timeRequested, d_timeReceived) : New data members.
+	(Point_results constructor) : New function.
+	(Point_results copy constructor) : Handle new and changed
+	time-related data members.
+	(Point_results::timeRequested) : New function.
+	(Point_results::timeReceived) : New function.
+	(Point_results::setTimeRequested) : New function.
+	(Point_results::setTimeReceived) : New function.
+	(Point_list::writeToTclWindow) : Use numValues(), sec(), usec(), head()
+	instead of grabbing data members directly.
+	* Point.h (Point_results constructor) : Take constructor out-of-line.
+
 2001-06-25 Jameson Miller <millerj@cs.unc.edu>
 	* BCPlane.c, .h - moved optimize_now code to its own file in nmMScope
 	directory

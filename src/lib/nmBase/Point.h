@@ -3,6 +3,12 @@
 
 #include <stdio.h>
 #include <tcl.h>
+
+#include <vrpn_Shared.h>
+  // Encapsulates portable includes for timeval.  Some day we may also 
+  // want to move to using vrpn_Types, since all of this data is being
+  // transmitted in those formats?
+
 #include "BCString.h"
 
 class	Point_value;
@@ -68,38 +74,49 @@ class	Point_value
 class	Point_results
 {
   public:
-    friend class Point_list;
+    //friend class Point_list;
 
-    Point_results (void) {
-	_num_values = 0; _head = NULL; _sec = _usec = 0; _x = _y = _z = -1.0;
-	_is3D = 0;
-    }
+    Point_results (void);
     Point_results (const Point_results & p);
     ~Point_results (void);
 
-    void findUniqueValueName (BCString base_name, BCString * result_name);
-    Point_value * addNewValue (BCString dataset, BCString units);
-    Point_value * addValueCopy (Point_value * value);
-
-    inline void setTime(long sec, long usec) { _sec = sec; _usec = usec; }
-    inline void setPosition(double x, double y) { _x = x; _y = y; }
-    inline void setPosition(double x, double y, double z) 
-		{_x = x; _y = y; _z = z; _is3D = 1;}
+    // ACCESSORS
 
     inline double x (void) const { return _x; }
     inline double y (void) const { return _y; }
     inline double z (void) const { return _z; }
     inline int is3D (void) const { return _is3D; }
-    inline long sec (void) const { return _sec; }
-    inline long usec (void) const { return _usec; }
+    inline long sec (void) const { return d_time.tv_sec; }
+    inline long usec (void) const { return d_time.tv_usec; }
 
-    int deleteHead (void);
     int empty (void) const;
-    Point_value * head (void) const { return _head; };
+    Point_value * head (void) const { return _head; }
     Point_value * getValueByName (const BCString name) const;
     Point_value * getValueByPlaneName (const BCString name) const;
 
+    timeval timeRequested (void) const;
+    timeval timeReceived (void) const;
+
+    inline int numValues (void) const { return _num_values; }
+
+    // MANIPULATORS
+
+    void findUniqueValueName (BCString base_name, BCString * result_name);
+    Point_value * addNewValue (BCString dataset, BCString units);
+    Point_value * addValueCopy (Point_value * value);
+
+    inline void setTime(long sec, long usec)
+      { d_time.tv_sec = sec; d_time.tv_usec = usec; }
+    inline void setPosition(double x, double y) { _x = x; _y = y; }
+    inline void setPosition(double x, double y, double z) 
+		{_x = x; _y = y; _z = z; _is3D = 1;}
+
+    int deleteHead (void);
+
     void print (const char * prelim = "") const;
+
+    void setTimeRequested (timeval);
+    void setTimeReceived (timeval);
 
   protected:
 
@@ -113,8 +130,14 @@ class	Point_results
     double _z;
     int _is3D;
 
-    long _sec;
-    long _usec;
+    timeval d_time;
+      ///< WHICH time?  Wish we knew.  TODO:  Figure this out from the
+      ///< source code some day...
+    timeval d_timeRequested;
+      ///< Time at which the nM application sent the message to the
+      ///< microscope requesting these results.
+    timeval d_timeReceived;
+      ///< Time at which the response from the microscope was received.
 };
 
 const	int	MAX_POINT_LIST = 10000;
