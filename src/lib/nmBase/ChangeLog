@@ -1,3 +1,8 @@
+2001-01-08  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmb_SharedDevice.h:  tweak comments
+	* nmb_Device.h:  same
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 
