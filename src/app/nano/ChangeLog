@@ -1,3 +1,9 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+        * microscape.c (main): moved call to setTipRenderer outside the
+        case for connecting to the SEM because it doesn't depend on there
+        being an SEM connection
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* interaction.c (doFeelLive): added call to microscope->finishFreehand()

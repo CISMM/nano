@@ -8422,11 +8422,12 @@ int main (int argc, char* argv[])
 				"SEM@dummyname.com",
 				sem_connection);
 	afm_sem_calibrationUI->setSEM(sem_ui->semClient());
-    afm_sem_calibrationUI->setTipRenderer(tipDisplayUI->getRenderer());
+    
       }
     }
   }
-  
+  afm_sem_calibrationUI->setTipRenderer(tipDisplayUI->getRenderer());
+
   // Set the startup replay rate on all devices, AFM, ohmmeter, vi_curve.
   // decoration->rateOfTime should be set correctly from the command line.
   handle_replay_rate_change (decoration->rateOfTime, NULL);
