@@ -1,3 +1,10 @@
+2002-09-07  Adam Seeger  <seeger@cs.unc.edu>
+
+	nmr_RegistrationUI.C (handle_registrationImage3D_change,
+                          handle_registrationImage2D_change): no longer
+	calls updateTextureTransform if the last transform sent was of type
+	NMR_DEFAULT
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	nmr_RegistrationUI.C : removing old commmented-out code

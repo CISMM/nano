@@ -94,7 +94,8 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_last3DImage(NULL),
    d_flipXreference(vrpn_FALSE), 
    d_flipYreference(vrpn_FALSE),
-   d_flipYadjustable(vrpn_FALSE)
+   d_flipYadjustable(vrpn_FALSE),
+   d_lastTransformTypeSent(NMR_DEFAULT)
 {
     d_scaledProjImFromScaledTopoIm = 
         new nmb_TransformMatrix44[s_numTransformationSources];
@@ -266,14 +267,17 @@ void nmr_RegistrationUI::handleRegistrationChange
       }
       switch (whichTransform) {
         case NMR_MANUAL:
+		  d_lastTransformTypeSent = NMR_MANUAL;
           setAutoAlignMode(NMR_AUTOALIGN_FROM_MANUAL);
           setTransformationSource(NMR_MANUAL);
           break;
         case NMR_DEFAULT:
+		  d_lastTransformTypeSent = NMR_DEFAULT;
           //setAutoAlignMode(NMR_AUTOALIGN_FROM_DEFAULT);
           //setTransformationSource(NMR_DEFAULT);
           break;
         case NMR_AUTOMATIC:
+		  d_lastTransformTypeSent = NMR_AUTOMATIC;
           setTransformationSource(NMR_AUTOMATIC);
           setAutoAlignMode(NMR_AUTOALIGN_FROM_AUTO);
           break;
@@ -409,7 +413,7 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
         // Or reset the colormap params to their default:
         //me->d_3DImageCMap->setColorMinMaxLimit(0,1);
         me->d_last3DImage = im;
-        if (me->d_last2DImage) {
+        if (me->d_last2DImage && me->d_lastTransformTypeSent != NMR_DEFAULT) {
           me->updateTextureTransform();
         }
     }
@@ -457,7 +461,7 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
             me->d_imageDisplay->updateImage(im);
           }
 
-          if (me->d_last3DImage) {
+          if (me->d_last3DImage && me->d_lastTransformTypeSent != NMR_DEFAULT) {
             me->updateTextureTransform();
           }
         }

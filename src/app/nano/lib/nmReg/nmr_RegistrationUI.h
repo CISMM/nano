@@ -172,6 +172,8 @@ class nmr_RegistrationUI {
     // the order of elements corresponds to that for s_transformationSources
     nmb_TransformMatrix44 *d_scaledProjImFromScaledTopoIm;
 
+	nmr_RegistrationType d_lastTransformTypeSent;
+
 };
 
 #endif
