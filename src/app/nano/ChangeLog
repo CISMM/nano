@@ -1,3 +1,8 @@
+2002-10-10  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nm_Tip.C : added control to make the tip appear at the hand position 
+	instead of the tip position
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
         * microscape.c (main): moved call to setTipRenderer outside the

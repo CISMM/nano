@@ -77,6 +77,7 @@ class nm_TipRenderer : public URender {
   virtual int Render(void *userdata);
 
   void setTextureEnable(bool enable);
+  void setGetLocationFromHand(bool enable);
   int SetProjTextureAll(void *userdata=NULL);
   int SetTextureTransformAll(void *userdata=NULL);
 
@@ -84,6 +85,7 @@ class nm_TipRenderer : public URender {
   bool d_drawConeSphere;
   bool d_drawSurface;
   bool d_drawTexture;
+  bool d_getLocationFromHand;
   nm_TipModel *d_tipModel;
 
   int d_lastInstallProjImCount;
@@ -105,6 +107,7 @@ class nm_TipDisplayControls {
   void setSPM(nmm_Microscope_Remote *scope);
   void setDisplayEnable(int enable);
   void setTextureEnable(int enable);
+  void setGetLocationFromHand(int enable);
   void sendFiducial();
   URender *getRenderer() {return &d_tipRenderer;};
 
@@ -114,6 +117,7 @@ class nm_TipDisplayControls {
 
   static void handleEnableDisplayChange(vrpn_int32 newval, void *ud);
   static void handleEnableTextureChange(vrpn_int32 newval, void *ud);
+  static void handleGetLocationFromHandChange(vrpn_int32 newval, void *ud);
   
   static void handleTipModelModeChange(vrpn_int32 newval, void *ud);
 
@@ -131,6 +135,7 @@ class nm_TipDisplayControls {
   Tclvar_int d_enableDisplay;
   Tclvar_int d_enableTexture;
   Tclvar_int d_tipModelMode;
+  Tclvar_int d_getLocationFromHand;
   
   Tclvar_string d_tipTopographyImage;
  

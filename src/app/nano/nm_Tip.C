@@ -17,6 +17,7 @@ nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *spm,
   d_tipModelModeImage("tip_model_mode_image"),
   d_tipModelModeConeSphere("tip_model_mode_conesphere"),
   d_aligner(aligner),
+  d_getLocationFromHand("tip_display_get_location_from_hand", 0),
   d_enableDisplay("tip_display_enable", 0),
   d_enableTexture("tip_display_texture_enable", 0),
   d_tipModelMode("tip_model_mode", 2),
@@ -31,6 +32,7 @@ nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *spm,
   World.TAddNode(&d_tipRenderer, s_renderName);
   d_enableDisplay.addCallback(handleEnableDisplayChange, this);
   d_enableTexture.addCallback(handleEnableTextureChange, this);
+  d_getLocationFromHand.addCallback(handleGetLocationFromHandChange, this);
 
   d_tipModelMode.addCallback(handleTipModelModeChange, this);
   d_tipTopographyImage.addCallback(handleTipTopographyImageChange, this);
@@ -61,6 +63,13 @@ void nm_TipDisplayControls::handleEnableDisplayChange (vrpn_int32 newval,
 {
   nm_TipDisplayControls *me = (nm_TipDisplayControls *)userdata;
   me->setDisplayEnable(newval);
+}
+
+void nm_TipDisplayControls::handleGetLocationFromHandChange (vrpn_int32 newval, 
+                                                       void *userdata)
+{
+  nm_TipDisplayControls *me = (nm_TipDisplayControls *)userdata;
+  me->setGetLocationFromHand(newval);
 }
 
 void nm_TipDisplayControls::handleEnableTextureChange (vrpn_int32 newval, 
@@ -151,6 +160,15 @@ void nm_TipDisplayControls::setTextureEnable(int enable)
   }
 }
 
+void nm_TipDisplayControls::setGetLocationFromHand(int enable)
+{
+  if (enable != 0){
+    d_tipRenderer.setGetLocationFromHand(true); 
+  } else {
+    d_tipRenderer.setGetLocationFromHand(false);
+  }
+}
+
 void nm_TipDisplayControls::sendFiducial()
 {
   double minX, maxX, minY, maxY;
@@ -209,6 +227,7 @@ void nm_TipModel::getPosition(double &x, double &y, double &z)
 nm_TipRenderer::nm_TipRenderer(nm_TipModel *tipModel):
   URender(), d_drawConeSphere(vrpn_TRUE), 
   d_drawSurface(vrpn_FALSE), d_drawTexture(vrpn_FALSE),
+  d_getLocationFromHand(vrpn_FALSE),
   d_tipModel(tipModel), d_lastInstallProjImCount(0), d_displayListID(0)
 {
   d_quadric = gluNewQuadric();
@@ -226,6 +245,11 @@ nm_TipRenderer::~nm_TipRenderer()
   if (d_displayListID != 0) {
     glDeleteLists(d_displayListID, 1);
   }
+}
+
+void nm_TipRenderer::setGetLocationFromHand(bool enable)
+{
+  d_getLocationFromHand = enable;
 }
 
 void nm_TipRenderer::setTextureEnable(bool enable)
@@ -315,7 +339,16 @@ int nm_TipRenderer::Render(void * /*userdata*/)
 {
   if (visible) {
     double tx, ty, tz;
-    d_tipModel->getPosition(tx, ty, tz);
+	if (d_getLocationFromHand) {
+		v_xform_type worldFromHandPtr;
+		v_get_world_from_hand(0, &worldFromHandPtr);
+
+		tx = worldFromHandPtr.xlate[Q_X];
+		ty = worldFromHandPtr.xlate[Q_Y];
+		tz = worldFromHandPtr.xlate[Q_Z];
+	} else {
+		d_tipModel->getPosition(tx, ty, tz);
+	}
     if (d_drawTexture && texture) {
 		double objectToWorld[16] = {1,0,0,0,0,1,0,0,0,0,1,0,tx,ty,tz,1};
 		texture->enable(textureTransform, objectToWorld, true);
