@@ -815,7 +815,7 @@ Tclvar_float	intensity_thresh("intensity_thresh",0.6);
 Tclvar_string	shape_mask_file("shape_mask_file", "mask");
 Tclvar_string	shape_order_file("shape_order_file", "order");
 
-nma_ShapeAnalyze shape_analysis;
+nma_ShapeAnalyze shape_analysis(dataset);
 //-----------------------------------------------------------------
 
 
@@ -6908,6 +6908,8 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // Start using the new structures!
     microscope = new_microscope;
     dataset = new_dataset;
+
+    shape_analysis.setDataset( dataset );
 
     // Connection switch cleanup!
     // All methods for switching stream/live/default call this

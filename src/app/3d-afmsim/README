@@ -28,7 +28,7 @@ Running the program
 
 unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
 
-Example : ./run -p lac.data 1
+Example : ./sim -p lac.data 1
 
 Read pdb/README on how to generate a '.data' file from a PDB file.
 
