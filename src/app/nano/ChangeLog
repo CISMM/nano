@@ -1,3 +1,8 @@
+2002-10-08 Jameson Miller <millerj@cs.unc.edu>
+	* microscape.c : the -d file:filename command line 
+	option was using wrong variable to get filename. Now
+	it uses the correct one.
+
 2002-10-02 David Borland <borland@cs.unc.edu>
 
         * microscape.c : added check around calls to World.Do to make

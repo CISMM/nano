@@ -8132,7 +8132,7 @@ int main (int argc, char* argv[])
         // Open a device connection, specified with -d option, probably. 
         if (strncmp(istate.afm.deviceName, "file:", 5) == 0) {
           // someone specified a streamfile using device arg. 
-          openStreamFilename = &(istate.afm.inputStreamName[5]);
+          openStreamFilename = &(istate.afm.deviceName[5]);
           // Open the streamfile. 
           handle_openStreamFilename_change(NULL, (void *)&istate);
         } else {
