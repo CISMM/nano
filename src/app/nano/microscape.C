@@ -6119,7 +6119,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
   }// end switch (istate.graphics_mode)
 
 }
-
+/*
 void createForwarders (MicroscapeInitializationState & istate) {
 
   if (istate.monitorPort != -1) {
@@ -6194,7 +6194,7 @@ void createForwarders (MicroscapeInitializationState & istate) {
     }
   }
 }
-
+*/
 
 void initialize_rtt (void) {
 
@@ -6692,7 +6692,7 @@ int main (int argc, char* argv[])
 
       // BEFORE we call mainloop on our connection to the microscope,
       // open up a forwarder and spin until it is connected to.
-      createForwarders(istate);
+      //createForwarders(istate);
 
     }
 
