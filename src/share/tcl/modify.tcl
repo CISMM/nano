@@ -830,14 +830,13 @@ proc flip_mod_tool {mod_tool element op} {
         # selected freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
+        foreach widg $mod_control_list {pack forget $widg}
+        foreach widg $mod_control_list {pack $widg -side top -fill x}
         # Hide the controls for slow_line tool
         hide.modify_live
         # enable styles that might have been disabled. 
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
-# ks
-#	foreach widg $mod_control_list {pack forget $widg}
-#	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 

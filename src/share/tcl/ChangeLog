@@ -1,3 +1,8 @@
+2000-09-07  Adam Seeger <seeger@cs.unc.edu>
+
+        * modify.tcl: uncommented code that was probably added 8-18 for fixing
+        the same thing
+
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* modify.tcl: added slowline 3d and constr. freehand xyz controls to device_only_controls list.
