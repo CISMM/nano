@@ -135,8 +135,10 @@ proc nano_error {msg } {
             -type ok -icon error 
 }
 proc nano_warning {msg } {
-    tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
-            -type ok -icon warning 
+	toplevel .warning 
+	label .warning.label -text "$msg"
+	button .warning.button -text "OK" -command {destroy .warning}
+	pack .warning.label .warning.button
 }
 # bgerror is a special name, provided by tcl/tk, called if there
 # is a background error in the script. Don't necessarily want

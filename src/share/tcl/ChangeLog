@@ -1,3 +1,7 @@
+2003-06-30  Woojin Seok  <seok@cs.unc.edu>
+        * mainwin.tcl <proc nano_warning>: replaced tk_messageBox by combination
+        of button and lable not to stall program to get user's click.
+
 2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* registration.tcl: added a checkbutton to flip the projection image
