@@ -166,20 +166,13 @@ void PatternEditor::updateWorldExtents()
 
   if (!d_images.empty()) {
 	  list<ImageElement>::iterator imElem;
-	  nmb_ImageBounds::ImageBoundPoint points[4] =
-			 {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
-			  nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
 	  nmb_ImageBounds ib;
-	  imElem = d_images.begin();
-	  (*imElem).d_image->getBounds(ib);
 	  for (imElem = d_images.begin(); imElem != d_images.end(); imElem++) {
 		(*imElem).d_image->getBounds(ib);
-		for (int i = 0; i < 4; i++) {
-		  d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
-		  d_worldMaxX_nm = max(d_worldMaxX_nm, ib.getX(points[i]));
-		  d_worldMinY_nm = min(d_worldMinY_nm, ib.getY(points[i]));
-		  d_worldMaxY_nm = max(d_worldMaxY_nm, ib.getY(points[i]));
-		}
+		d_worldMinX_nm = min(d_worldMinX_nm, ib.minX());
+		d_worldMaxX_nm = max(d_worldMaxX_nm, ib.maxX());
+		d_worldMinY_nm = min(d_worldMinY_nm, ib.minY());
+		d_worldMaxY_nm = max(d_worldMaxY_nm, ib.maxY());
 	  }
   }
 
