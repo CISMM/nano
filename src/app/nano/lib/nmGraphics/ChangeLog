@@ -1,3 +1,32 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* graphics.c (buildRemoteRenderedTexture) : added initialization of
+	the new variables g_tex_image_offsetx and g_tex_image_offsety 
+	(this has to do with displaying a texture that includes a border)
+	* graphics_globals.c,h : commented out sem_data and realign_data arrays
+	since we now display these textures directly from the original image
+	data instead of copying them into separate arrays
+ 	Added g_tex_image_offsetx,y variables
+	* nmg_GraphicsImpl.C (makeAndInstallRulerImage) : adds init. of 
+	g_tex_image_offsetx, g_tex_image_offsety for rulergrid
+	(createRealignTextures) : handles images with different pixel types now
+        	float, ubyte, ushort
+	(initializeTextures) : changed sem texture blend function from
+	modulate to blend and had to increase maximum sem texture size 
+	from 512 to 1024(!) to accomodate border so we are still limited to
+	displaying 400x512 sem images since the next size up is 800x1024
+        (unless we wanted to chop off the edges)
+	(loadRawDataTexture) : adds a nice blue tint to the texture - hard
+	coded at the moment but this could be hooked up to controls - one
+	would control opacity (overall luminance of the glPixelTransfer
+        color factor since we are using the GL_BLEND texture function) 
+	and another would be for the color (r:g:b ratios); this seems
+	to be a reasonable way to do something like a constant alpha value 
+	without using an alpha channel
+	* openGL.c (draw_world) : stuff to handle x,y offset of the real data 
+	in the texture image so we can have a border - adds a correction to
+	the texture transform to deal with this translation
+
 2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
 
 	* chartjunk.c : removed refernces to USE_VRPN_MICROSCOPE

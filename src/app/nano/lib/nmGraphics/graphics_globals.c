@@ -170,8 +170,8 @@ int g_texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
 //GLenum g_texture_mode = GL_TEXTURE_2D;
 GLenum g_texture_mode = GL_FALSE;
 GLuint tex_ids [N_TEX];
-GLubyte * sem_data = NULL;
-float *realign_data = NULL;
+//GLubyte * sem_data = NULL;
+//float *realign_data = NULL;
 GLubyte * remote_data = NULL;
 
 // image size refers to a sub region of the texture passed to openGL that
@@ -182,6 +182,10 @@ int g_tex_image_height[N_TEX];
 // installed size refers to size of texture passed to openGL
 int g_tex_installed_width[N_TEX];
 int g_tex_installed_height[N_TEX];
+
+// position in installed texture array of first pixel from image array
+int g_tex_image_offsetx[N_TEX];
+int g_tex_image_offsety[N_TEX];
 
 // e.g. GL_MODULATE, GL_DECAL...
 int g_tex_blend_func[N_TEX];

@@ -385,6 +385,8 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
            g_tex_installed_width[REMOTE_DATA_TEX_ID] = width;
   g_tex_image_height[REMOTE_DATA_TEX_ID] = 
            g_tex_installed_height[REMOTE_DATA_TEX_ID] = height;
+  g_tex_image_offsetx[REMOTE_DATA_TEX_ID] = 0;
+  g_tex_image_offsety[REMOTE_DATA_TEX_ID] = 0;
 }
 
 

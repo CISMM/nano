@@ -502,10 +502,11 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
     delete [] hatch_data;
   }
 #endif
+/*
   if (sem_data) {
     delete [] sem_data;
   }
-
+*/
   v_close();
 }
 
@@ -777,6 +778,8 @@ _______________________________********************/
   g_tex_installed_height[RULERGRID_TEX_ID] = texture_size;
   g_tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
   g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
+  g_tex_image_offsetx[RULERGRID_TEX_ID] = 0;
+  g_tex_image_offsety[RULERGRID_TEX_ID] = 0;
 
   delete [] texture;
 }
@@ -1301,11 +1304,79 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 	"nmg_Graphics_Impl::createRealignTextures: image not found\n");
     return;
   }
-//  printf("nmg_Graphics_Implementation: creating realign texture %s\n", name);
-
   
   int image_width = im->width();
   int image_height = im->height();
+
+        int pixelType;
+        if (im->pixelType() == NMB_UINT8){
+            pixelType = GL_UNSIGNED_BYTE;
+        } else if (im->pixelType() == NMB_UINT16){
+            pixelType = GL_UNSIGNED_SHORT;
+        } else if (im->pixelType() == NMB_FLOAT32){
+            pixelType = GL_FLOAT;
+        } else {
+            fprintf(stderr, "nmb_GraphicsImp::loadRawDataTexture:"
+                 "can't handle pixel type\n");
+            return;
+        }
+//  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+//                   im->width() + 2*im->border(),
+//                   im->height() + 2*im->border(),
+//                   GL_LUMINANCE, pixelType, im->pixelData()) != 0) {
+//    printf(" Error making mipmaps, using texture instead.\n");
+
+  v_gl_set_context_to_vlib_window();
+
+//  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+  glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+
+
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+  float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+/*
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
+                im->width() + 2*im->border(),
+                im->height() + 2*im->border(),
+                0, GL_LUMINANCE, pixelType, im->pixelData());
+*/
+  if (pixelType == GL_FLOAT) {
+    nmb_Image *im_copy = new nmb_ImageGrid(im);
+    im_copy->normalize();
+    if (glGetError()!=GL_NO_ERROR)
+      printf("error before gluBuild2DMipmaps for float\n");
+    else 
+      printf("all clear before gluBuild2DMipmaps for float\n");
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+                 im_copy->width() + 2*im_copy->border(),
+                 im_copy->height() + 2*im_copy->border(),
+                 GL_LUMINANCE, pixelType, im_copy->pixelData());
+    delete im_copy;
+  } else {
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+                   im->width() + 2*im->border(),
+                   im->height() + 2*im->border(),
+                   GL_LUMINANCE, pixelType, im->pixelData());
+  }
+    GLenum err = glGetError();
+    if (err!=GL_NO_ERROR) {
+      printf(" Error making realign texture: %s.\n", gluErrorString(err));
+    }
+//  }
+        g_tex_image_width[COLORMAP_TEX_ID] = im->width();
+        g_tex_image_height[COLORMAP_TEX_ID] = im->height();
+        g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+2*im->border();
+        g_tex_installed_height[COLORMAP_TEX_ID] = im->height()+2*im->border();
+        g_tex_image_offsetx[COLORMAP_TEX_ID] = im->border();
+        g_tex_image_offsety[COLORMAP_TEX_ID] = im->border();
+
+  return;
 
   /* values used by registration code - since non-graphics code assumes
 	that the texture coordinates go from 0..1 in the texture image and not
@@ -1314,6 +1385,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 	compute the right scaling factor to compensate when loading the texture
 	transformation
   */
+/*
   int stride_x = 1, stride_y = 1;
   if (image_width > g_tex_installed_width[COLORMAP_TEX_ID]){
 	stride_x = (int)floor((double)image_width/
@@ -1326,6 +1398,8 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
   g_tex_image_width[COLORMAP_TEX_ID] = image_width/stride_x;
   g_tex_image_height[COLORMAP_TEX_ID] = image_height/stride_y;
+  g_tex_image_offsetx[COLORMAP_TEX_ID] = 0;
+  g_tex_image_offsety[COLORMAP_TEX_ID] = 0;
 
   if (image_width > g_tex_installed_width[COLORMAP_TEX_ID] ||
 		image_height > g_tex_installed_height[COLORMAP_TEX_ID]) {
@@ -1465,13 +1539,13 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
 #if defined(_WIN32)
 
-/*
+
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
                    GL_RGBA, GL_FLOAT, realign_data) != 0) { 
     printf(" Error making mipmaps, using texture instead.\n");
-*/
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
@@ -1480,7 +1554,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
       printf(" Error making realign texture.\n");
     }
 
-//  }
+  }
 
 #else
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
@@ -1494,6 +1568,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
  #endif
 #endif
 #endif
+*/
 }
 
 //
@@ -1859,19 +1934,22 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      g_tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
      g_tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
      g_tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
+     g_tex_image_offsetx[i] = 0;
+     g_tex_image_offsety[i] = 0;
 #ifdef _WIN32
      g_tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
 #else
      g_tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_BLEND;
 
   g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
 
+  g_tex_blend_func[COLORMAP_TEX_ID] = GL_BLEND;
   g_tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
   g_tex_env_color[COLORMAP_TEX_ID][1] = 1.0;
   g_tex_env_color[COLORMAP_TEX_ID][2] = 1.0;
@@ -1958,24 +2036,46 @@ void nmg_Graphics_Implementation::initializeTextures(void)
       printf(" Error making ruler texture.\n");
   }
 
-  int sem_tex_size = g_tex_installed_width[SEM_DATA_TEX_ID] *
+
+  g_tex_installed_width[SEM_DATA_TEX_ID] = 1024;
+  g_tex_installed_height[SEM_DATA_TEX_ID] = 1024;
+
+  int sem_tex_size = 4*g_tex_installed_width[SEM_DATA_TEX_ID] *
                           g_tex_installed_height[SEM_DATA_TEX_ID];
-  sem_data = new GLubyte [sem_tex_size]; 
+  GLubyte *sem_data = new GLubyte [sem_tex_size]; 
   k = 0;
   
+  GLubyte value, alpha;
   for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
     for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      sem_data[k] = 255;//20*((i/30+j/30)%2);
+      if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
+         value = 0;//20*((i/30+j/30)%2);
+         alpha = 255;
+      } else {
+         value = 235 + 20*((i/30+j/30)%2);
+ 	 alpha = 40;
+      }
+      sem_data[4*k] = value;
+      sem_data[4*k+1] = value;
+      sem_data[4*k+2] = value;
+      sem_data[4*k+3] = alpha;
       k++;
     }
   }
+
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 
-                g_tex_installed_width[SEM_DATA_TEX_ID],
-		g_tex_installed_height[SEM_DATA_TEX_ID], 
-                0, GL_LUMINANCE, GL_UNSIGNED_BYTE, sem_data);
-
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+        g_tex_installed_width[SEM_DATA_TEX_ID],
+        g_tex_installed_height[SEM_DATA_TEX_ID],
+        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
+/*
+  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
+	g_tex_installed_width[SEM_DATA_TEX_ID],
+	g_tex_installed_height[SEM_DATA_TEX_ID],
+	GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
+*/
+  delete [] sem_data;
+  
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing sem texture\n");
   }
@@ -1986,8 +2086,9 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 
   int realign_tex_size = 4*g_tex_installed_width[COLORMAP_TEX_ID] *
                              g_tex_installed_height[COLORMAP_TEX_ID];
-  realign_data = new float [realign_tex_size];
+  float *realign_data = new float [realign_tex_size];
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+
   int ri,gi,bi,ai;
   if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
     for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
@@ -2018,18 +2119,42 @@ void nmg_Graphics_Implementation::initializeTextures(void)
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
   }
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
+/*
 #ifdef _WIN32
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-       g_tex_installed_width[COLORMAP_TEX_ID],
-       g_tex_installed_height[COLORMAP_TEX_ID],
-       0, GL_RGBA, GL_FLOAT, realign_data);
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
+    printf(" Error making mipmaps, using texture instead.\n");
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                0, GL_RGBA, GL_FLOAT, realign_data);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making realign texture.\n");
+    }
+
+  }
 #else
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-       g_tex_installed_width[COLORMAP_TEX_ID],
-       g_tex_installed_height[COLORMAP_TEX_ID],
-       0, GL_RGBA, GL_FLOAT, realign_data);
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
+    printf(" Error making mipmaps, using texture instead.\n");
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                0, GL_RGBA, GL_FLOAT, realign_data);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making realign texture.\n");
+    }
+
+  }
 #endif
+*/
+  delete [] realign_data;
 
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing realign texture\n");
@@ -2073,8 +2198,8 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
     // make sure gl calls are directed to the right context
     v_gl_set_context_to_vlib_window();
 
-    if (im->width() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
-	im->height() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
+    if (im->width() + im->border() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
+	im->height() + im->border() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
         int pixelType;
         if (im->pixelType() == NMB_UINT8){
             pixelType = GL_UNSIGNED_BYTE;
@@ -2088,11 +2213,20 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
             return;      
         }
         glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+        glPixelTransferf(GL_RED_SCALE, (float)0.5);
+	glPixelTransferf(GL_BLUE_SCALE, (float)0.6);
+	glPixelTransferf(GL_GREEN_SCALE, (float)0.6);
         glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
-               im->width(), im->height(), GL_LUMINANCE, pixelType, 
+               im->width()+2*im->border(), im->height()+2*im->border(), 
+               GL_LUMINANCE, pixelType, 
 	       data);
+        glPixelTransferf(GL_RED_SCALE, (float)1.0);
+	glPixelTransferf(GL_BLUE_SCALE, (float)1.0);
+	glPixelTransferf(GL_GREEN_SCALE, (float)1.0);
         g_tex_image_width[SEM_DATA_TEX_ID] = im->width();
         g_tex_image_height[SEM_DATA_TEX_ID] = im->height();
+        g_tex_image_offsetx[SEM_DATA_TEX_ID] = im->border();
+        g_tex_image_offsety[SEM_DATA_TEX_ID] = im->border();
 	if (report_gl_errors()) {
 	  printf(" Error loading sem texture.\n");
 	}

@@ -225,9 +225,9 @@ extern Position_list * g_positionListR;  // for the right side of the sweep mark
 #define NMG_DEFAULT_IMAGE_HEIGHT (512)
 
 extern GLuint tex_ids [N_TEX];
-extern GLubyte * sem_data;
+//extern GLubyte * sem_data;
 extern GLubyte * remote_data;
-extern float * realign_data;
+//extern float * realign_data;
 
 // These values are only used for
 // the 2D textures but we use the ID values above to index them
@@ -237,6 +237,8 @@ extern int g_tex_image_width[N_TEX];
 extern int g_tex_image_height[N_TEX];
 extern int g_tex_installed_width[N_TEX];
 extern int g_tex_installed_height[N_TEX];
+extern int g_tex_image_offsetx[N_TEX];
+extern int g_tex_image_offsety[N_TEX];
 
 // e.g. GL_MODULATE, GL_DECAL...
 extern int g_tex_blend_func[N_TEX];

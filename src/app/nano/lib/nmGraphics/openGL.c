@@ -837,6 +837,7 @@ int draw_world (int) {
     double theta = 0.0;
     GLdouble texture_matrix[16];
     double x_scale_factor = 1.0, y_scale_factor = 1.0;
+    double x_offset = 0.0, y_offset = 0.0;
 
     switch (g_texture_transform_mode) {
       case nmg_Graphics::RULERGRID_COORD:
@@ -873,6 +874,10 @@ int draw_world (int) {
                              (double)g_tex_installed_width[RULERGRID_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
                              (double)g_tex_installed_height[RULERGRID_TEX_ID];
+            x_offset = (double)g_tex_image_offsetx[RULERGRID_TEX_ID]/
+                       (double)g_tex_installed_width[RULERGRID_TEX_ID];
+            y_offset = (double)g_tex_image_offsety[RULERGRID_TEX_ID]/
+                       (double)g_tex_installed_height[RULERGRID_TEX_ID];
             break;
 	    /*
           case nmg_Graphics::GENETIC:
@@ -887,23 +892,38 @@ int draw_world (int) {
                              (double)g_tex_installed_width[COLORMAP_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[COLORMAP_TEX_ID]/
                              (double)g_tex_installed_height[COLORMAP_TEX_ID];
+            x_offset = (double)g_tex_image_offsetx[COLORMAP_TEX_ID]/
+                       (double)g_tex_installed_width[COLORMAP_TEX_ID];
+            y_offset = (double)g_tex_image_offsety[COLORMAP_TEX_ID]/
+                       (double)g_tex_installed_height[COLORMAP_TEX_ID];
             break;
           case nmg_Graphics::SEM_DATA:
             x_scale_factor = (double)g_tex_image_width[SEM_DATA_TEX_ID]/
                              (double)g_tex_installed_width[SEM_DATA_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[SEM_DATA_TEX_ID]/
                              (double)g_tex_installed_height[SEM_DATA_TEX_ID];
+            x_offset = (double)g_tex_image_offsetx[SEM_DATA_TEX_ID]/
+                       (double)g_tex_installed_width[SEM_DATA_TEX_ID];
+            y_offset = (double)g_tex_image_offsety[SEM_DATA_TEX_ID]/
+                       (double)g_tex_installed_height[SEM_DATA_TEX_ID];
             break;
           case nmg_Graphics::REMOTE_DATA:
             x_scale_factor = (double)g_tex_image_width[REMOTE_DATA_TEX_ID]/
                              (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[REMOTE_DATA_TEX_ID]/
                              (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
+            x_offset = (double)g_tex_image_offsetx[REMOTE_DATA_TEX_ID]/
+                       (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
+            y_offset = (double)g_tex_image_offsety[REMOTE_DATA_TEX_ID]/
+                       (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
             break;
           default:
             fprintf(stderr, "Error, unknown texture set for display\n");
             break;
         }
+        // first we translate in texture coordinates
+        glTranslated(x_offset, y_offset, 0.0);
+        // then we scale from image coordinates to texture coordinates
         glScaled(x_scale_factor, y_scale_factor, 1.0);
         glMultMatrixd(g_texture_transform);
 	break;
