@@ -27,6 +27,7 @@ set import_clamp 0
 set import_update_AFM 0
 set import_grab_object 0
 
+set spider_which_leg {none }
 set spider_length 5
 set spider_width 2
 set spider_thick 0.1
@@ -137,6 +138,9 @@ button $nmInfo(basic_options).f3.spider_create_button -text "Create Spider" \
 
 set nmInfo(spider_control) [create_closing_toplevel spider_control "Spider Control" ]
 
+generic_optionmenu $nmInfo(spider_control).spider_which_leg_menu spider_current_leg \
+	"Current Leg" spider_which_leg
+
 floatscale $nmInfo(spider_control).spider_length_slide 0 20 1000 1 1 \
 	spider_length "Spider Length"
 
@@ -226,6 +230,7 @@ pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
 # Spider Stuff
 pack $nmInfo(basic_options).f3.spider_create_button -padx 1m -pady 5m -anchor nw
 
+pack $nmInfo(spider_control).spider_which_leg_menu -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_length_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw

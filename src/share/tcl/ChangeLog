@@ -1,3 +1,8 @@
+2002-05-23 David Borland <borland@cs.unc.edu>
+
+        * import.tcl : added user control for individual manipulation of
+        spider legs
+
 2002-05-22 David Borland <borland@cs.unc.edu>
         * import.tcl : added buttons to lock all translationa and all rotations
 
