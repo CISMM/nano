@@ -97,6 +97,10 @@ SOURCE=.\MSIFileGenerator.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\TubeFileGenerator.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\TubeGenerator.C
 # End Source File
 # Begin Source File
@@ -146,6 +150,10 @@ SOURCE=.\GeomGenerator.h
 # Begin Source File
 
 SOURCE=.\MSIFileGenerator.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TubeFileGenerator.h
 # End Source File
 # Begin Source File
 

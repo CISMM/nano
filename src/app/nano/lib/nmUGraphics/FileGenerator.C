@@ -1,8 +1,10 @@
 #include "FileGenerator.h"
 #include "WaveFrontFileGenerator.h"
 #include "MSIFileGenerator.h"
+#include "TubeFileGenerator.h"
 #include <stdio.h>
 #include <string.h>
+
 
 FileGenerator::FileGenerator(const char *fname, const char * exten)
  : GeometryGenerator(), extension(exten), filename(NULL)
@@ -30,15 +32,21 @@ void FileGenerator::StoreFilename(const char* fname){
 FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
 {
     int index,i;
-    
+
     index=strlen(fname);		//save filename
     
     for(i=index-1; i>=0; i--){
         if(fname[i]=='.') break;
     }
+	// adding hack for loading yoni's tube-finding files...should probably
+	// create a new class for them?  or load on the fly (not from a file)
     if(strncmp(fname+i+1,"obj",3)==0){
         return new WaveFrontFileGenerator(fname);
     }
+	// added by David Borland for loading Shape Analysis tubes
+	else if (strstr(fname, "mask.detail.txt") != 0) {
+		return new TubeFileGenerator(fname);
+	}
     //added by Leila Plummer for loading objects from tube_foundry
     else if (strncmp(fname+i+1,"msi",3)==0){
         //It seemed best to create the structure for loading .msi files

@@ -5,6 +5,7 @@ class UTree;
 class URender;
 #include "URender.h"
 #include "Xform.h"
+#include "nmb_String.h"
 
 #define CHILDCHUNK 10			//# of slots to add if I overflow the child array
 #define MAX_TREE_DEPTH 200		//maximum levels of the tree
@@ -37,6 +38,9 @@ class UTree{
 		void TSaveTreeConfiguration(char *filename);
 		void TLoadTreeConfiguration(char *filename);
 		friend ostream& operator<< (ostream&,const UTree& t);
+
+		// current object
+		nmb_String * current_object;
 
 		//render functions
 		void TRender();

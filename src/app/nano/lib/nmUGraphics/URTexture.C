@@ -198,7 +198,7 @@ void URTexture::Compile2DTexture()
 	
 }
 
-int URTexture::Scale(void* userdata) {
+int URTexture::Scale(void* /*userdata*/) {
 	// do nothing
 	return 1;
 }

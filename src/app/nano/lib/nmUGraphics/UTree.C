@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "UTree.h"
 #include "microscape.h"
+#include "nmb_String.h"
 #include "v.h"		//vlib functions for get hand and head in world
 
 #include "URPolygon.h"
@@ -28,6 +29,9 @@ UTree::UTree(URender *r){
 	children=NULL;
 	num_children=size=0;
 	parent=this;
+
+	// initailize current object
+	current_object = allocate_nmb_String("");
 
 	return;	
 }

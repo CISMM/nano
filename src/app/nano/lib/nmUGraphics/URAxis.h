@@ -9,7 +9,7 @@ public:
   URAxis();
   ~URAxis();
   int Render(void *userdata=NULL);
-  int URAxis::Scale(void *userdate=NULL);
+  int Scale(void *userdate=NULL);
 };
 
 #endif

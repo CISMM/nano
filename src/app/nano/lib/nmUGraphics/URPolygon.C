@@ -26,10 +26,8 @@ GeometryGenerator* URPolygon::GetGenerator()
 
 
 int URPolygon::Scale(void* userdata) {
-		double scale = *(double*) userdata;
-cout << "current scale" << this->GetLocalXform().GetScale() << endl;
-cout << "surface scale" << *(double*) userdata << endl;
-cout << "new scale" << this->GetLocalXform().GetScale() * (* (double*) userdata) << endl;
+	double scale = *(double*) userdata;
+
 	this->GetLocalXform().SetScale(this->GetLocalXform().GetScale() * scale);
  
 	const q_vec_type & q1 = this->GetLocalXform().GetTrans();
@@ -101,7 +99,6 @@ int URPolygon::Render(void * userdata){
 */
 
 	if(visible){		//if visible draw things
-
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		this->GetLocalXform().Push_As_OGL();
@@ -109,6 +106,12 @@ int URPolygon::Render(void * userdata){
 		if (* (int*)userdata == 1 /* displaying projective textures */ ) {
 			glMatrixMode(GL_TEXTURE);
 			if (this->ShowProjText()) { 
+				glEnable(GL_TEXTURE_2D);
+				glEnable(GL_TEXTURE_GEN_S);
+				glEnable(GL_TEXTURE_GEN_T);
+				glEnable(GL_TEXTURE_GEN_R);
+				glEnable(GL_TEXTURE_GEN_Q);
+
 				glPushMatrix();
 				this->GetLocalXform().Push_As_OGL();
 			}

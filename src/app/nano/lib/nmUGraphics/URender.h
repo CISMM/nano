@@ -16,6 +16,12 @@
 #include <fstream.h>
 #include <quat.h>
 
+#ifdef sgi
+using std::vector
+#endif
+
+#include <vector>
+
 class UTree;
 extern UTree World;
 #include "Xform.h"
@@ -72,6 +78,7 @@ protected:
 
 	//xform made public for access
 	Xform lxform;
+
 	
 public:
 
@@ -137,6 +144,13 @@ public:
 	//configuration state -- prototype it like Render
 	//	virtual int ReadParam(void *userdata=NULL);
 	//	virtual int WriteParam(void *userdata=NULL);
+
+
+	
+	// holds geometry for sending to afm simulator
+	// make dynamic later, just allocate a bunch of memory for now...
+	float triangles[10000][4];
+
 
 };
 

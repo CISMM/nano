@@ -1,5 +1,30 @@
 2002-02-25 David Borland <borland@cs.unc.edu>
 
+        * TubeFileGenerator.C: new file for loading files output by
+        ShapeAnalye code
+
+        * TubeFileGenerator.h: See above
+
+        * UTree.C: added code for being able to send geometry loaded by 
+        TubeFileGenerator to AFM simulator
+
+        * UTee.h: See above
+
+        * URAxis.C: See above
+
+        * URPolygon.C: See above
+
+        * URTexture.C: See above
+
+        * URender.h: See above
+
+        * nmUGraphics.dsp: added TubeFileGenerator.C
+
+        * FileGenerator.C: See above
+
+
+2002-02-25 David Borland <borland@cs.unc.edu>
+
         * WaveFrontFileGenerator.C: fixed build problem on sgi
 
 2002-01-31 David Marshburn   <marshbur@cs.unc.edu>
