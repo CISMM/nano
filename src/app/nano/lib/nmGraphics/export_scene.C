@@ -365,17 +365,11 @@ void export_scene_to_openNURBS (
 
     // We store the viewports into CRhinoViewport objects
     // Let's find out how many viewports there are, among all users
-    int total_num_viewports = 0;
-    for (int i=0;  i < NUM_USERS;  ++i) {
+    // Also, we hardcode the display index to be zero.
+    const v_index display_index = 0;
+    const v_display_type & d = v_display_table[display_index];
+    const int total_num_viewports = d.numViewports;
 
-        v_index display_index = 0;
-        if (graphics->getDisplayIndexForUser (display_index, i)) {
-
-            // Valid user index
-            const v_display_type & d = v_display_table[display_index];
-            total_num_viewports += d.numViewports;
-        }
-    }
     
     // Now, build the viewport objects
     CRhinoViewport my_viewports [total_num_viewports];
