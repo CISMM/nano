@@ -508,6 +508,26 @@ void displayFuncDepth( void ) {
             //just sent
         }
     }
+	if(SimMicroscopeServer.triangleRcv){
+		while(SimMicroscopeServer.head != NULL){//add a bunch of triangles
+			addTriangle(//draw triangle with vertices v1_*,v2_*, and v3_*, where * is {x,y,z} 
+				        //coords of v*
+			Vec3d(SimMicroscopeServer.head->v1_1*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v1_2*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v1_3*SimMicroscopeServer.Sim_to_World_x),
+			Vec3d(SimMicroscopeServer.head->v3_1*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v3_2*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v3_3*SimMicroscopeServer.Sim_to_World_x),
+			Vec3d(SimMicroscopeServer.head->v2_1*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v1_2*SimMicroscopeServer.Sim_to_World_x,
+				SimMicroscopeServer.head->v2_3*SimMicroscopeServer.Sim_to_World_x));
+
+			SimMicroscopeServer.holder = SimMicroscopeServer.head;
+			SimMicroscopeServer.head = SimMicroscopeServer.head->next;
+			delete SimMicroscopeServer.holder;
+		}
+		SimMicroscopeServer.triangleRcv = false;
+	}
 
     // end of display frame, so flip buffers
     glutSwapBuffers();
