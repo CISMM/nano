@@ -1143,11 +1143,15 @@ void    spm_set_measure_materials(void)
 
 int spm_render_mark (const nmb_LocationInfo & p, void *) {
   GLfloat Bottom [3], Top [3];
+  GLfloat LowerThanBottom[3];
 
   Bottom[0] = Top[0] = p.x;
   Bottom[1] = Top[1] = p.y;
   Bottom[2] = p.bottom;
   Top[2] = p.top;
+  LowerThanBottom[0] = p.x; LowerThanBottom[1] = p.y;
+  LowerThanBottom[2] = Bottom[2] - (Top[2] - Bottom[2]);
+
 
   glLineWidth(1.0);
   glDisable(GL_LINE_STIPPLE);
@@ -1157,6 +1161,16 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
   glVertex3fv(Top);
   VERBOSE(20, "          glEnd()");
   glEnd();
+
+
+  GLfloat oldColor[4];
+  glGetFloatv(GL_CURRENT_COLOR, oldColor);
+  glBegin(GL_LINES);
+  glColor3f(1.0, 0.0, 0.5);
+  glVertex3fv(Bottom);
+  glVertex3fv(LowerThanBottom);
+  glEnd();
+  glColor3fv(oldColor);
 
   return 0;
 }

@@ -1,3 +1,13 @@
+2000-09-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* spm_gl.c (spm_render_mark) : In addition to drawing a line from
+	Top to Bottom this now draws a line with a different color 
+	which is the reflection about Bottom (the intersection tells you
+	where the tip was and the size may be extended in both directions so
+	that you can see where the intersection with the surface is even if
+	you aren't looking at the surface for the same channel used to 
+	set the height of the markers) (I think it looks better at least)
+
 2000-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (nmg_Graphics_Implementation),
