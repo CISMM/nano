@@ -307,7 +307,8 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
 void nma_ShapeIdentifiedPlane::
 blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
-        int i;
+    int i;
+	double old_data;
 	double * newdataline = new double[d_rowlength];
 	//holds "new" line of data consisting of old data with interpolated values inbetween
 	//now we have an incoming data line of the appropriate length
@@ -364,10 +365,16 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 			int y = d_columnheight - placeholder_y - 1;
 			for(i = 0; i < d_rowlength; ++i){
+
+				old_data = d_dataArray[i];
+
 				d_dataArray[i] = newdataline[i];
 				val = d_dataArray[i];
-				calculatedPlane->setValue(i,y,val);
-				d_dataset->range_of_change.AddPoint(i,y);
+				
+				if(old_data != val){//data has changed, redraw
+					calculatedPlane->setValue(i,y,val);
+					d_dataset->range_of_change.AddPoint(i,y);
+				}
 			}
 			for(i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
@@ -386,10 +393,16 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 				placeholder_val = percent_between*(newdataline[i] - storeddataline[i]) + storeddataline[i];	
 				//linear interpolation scheme based on percentage between l_sim_y and h_sim_y that placeholder_y falls
 				index = nano_y*datain_rowlen + i;
+
+				old_data = d_dataArray[index];
+
 				d_dataArray[index] = placeholder_val;
 				y_flipped = d_columnheight - nano_y - 1;
-				calculatedPlane->setValue(i,y_flipped,placeholder_val);
-				d_dataset->range_of_change.AddPoint(i,y_flipped);				
+							
+				if(old_data != placeholder_val){//data has changed, redraw
+					calculatedPlane->setValue(i,y_flipped,placeholder_val);
+					d_dataset->range_of_change.AddPoint(i,y_flipped);
+				}
 			}
 			placeholder_y = (placeholder_y + stepsize);
 			++nano_y;

@@ -1,3 +1,11 @@
+2002-04-05 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C : changed display code in blur_data_up
+	function so that data updated in calculatedPlane and point
+	included in range_of_change for the dataset ONLY if data
+	is different from last scan.  prevents rapid redraw problem
+	as data is sent continuously from simulator
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* nma_ShapeAnalyze.Ch: Handle replacement BCString ->
