@@ -1,3 +1,10 @@
+2002-01-15  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope_Remote.C and nmm_SimulatedMicroscope.C :
+	modified each side so that data is now both sent and received line by
+	line. also now connection is fully functional
+
+
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmm_Microscope.C:  remove compiler warnings
