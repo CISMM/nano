@@ -1,3 +1,8 @@
+2001-12-14  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile (%.depend): I forgot to add a inplicit build rule for 
+	depends. This caused make depend to fail.
+
 2001-12-13  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile: Rewrote most of the targets such that they directories

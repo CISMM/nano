@@ -48,7 +48,7 @@ clean_view:
 # Implicit rules for generating and cleaning
 #
 
-.PHONY: %.generate %.make %.depend %.clean
+.PHONY: %.generate %.make %.depend %.clean %.install
 
 %.make: %
 	$(MAKE) -wC $< 
@@ -62,7 +62,8 @@ clean_view:
 %.install: %
 	$(MAKE) -wC $< install
 
-
+%.depend: %
+	$(MAKE) -wC $< depend
 
 ### buid an emacs tags table.  The files will be in the table in the
 ### order they are given to etags.  We want .h files to come first.
