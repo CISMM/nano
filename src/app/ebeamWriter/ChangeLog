@@ -1,4 +1,10 @@
-2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>	
+
+	* patternShape.C : added some error checks for exposure subroutines
+	* controlPanels.C : sends some crucial parameters before doing the exposure
+	timing calculations and doing the actual exposure
+
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>	
 
 	Added a few changes to fix some problems encountered during 
 	testing - simple features needed and minor bugs

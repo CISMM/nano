@@ -1157,6 +1157,10 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
   me->d_patternEditor->clearExposurePoints();
 
   if (me->d_SEM) {
+    me->d_SEM->setDotSpacing((vrpn_float32)me->d_semDotSpacing_nm);
+    me->d_SEM->setLineSpacing((vrpn_float32)me->d_semLineSpacing_nm);
+    me->d_SEM->setBeamCurrent((vrpn_float32)me->d_semBeamCurrent_picoAmps);
+	me->d_SEM->setMagnification((vrpn_float32)me->d_semExposureMagnification);
     int externalControlSave = me->d_semExternalScanControlEnable;
     me->d_SEM->setExternalScanControlEnable(1);
     me->d_SEM->clearExposePattern();
@@ -1174,6 +1178,10 @@ void ControlPanels::handle_semDoTimingTest_change(int /*new_value*/, void *ud)
   printf("sem timing test: %d\n", (int)me->d_semDoTimingTest);
 
   if (me->d_SEM) {
+    me->d_SEM->setDotSpacing((vrpn_float32)me->d_semDotSpacing_nm);
+    me->d_SEM->setLineSpacing((vrpn_float32)me->d_semLineSpacing_nm);
+    me->d_SEM->setBeamCurrent((vrpn_float32)me->d_semBeamCurrent_picoAmps);
+	me->d_SEM->setMagnification((vrpn_float32)me->d_semExposureMagnification);
     int externalControlSave = me->d_semExternalScanControlEnable;
     me->d_SEM->setExternalScanControlEnable(0);
     me->d_SEM->clearExposePattern();

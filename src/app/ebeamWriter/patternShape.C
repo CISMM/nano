@@ -308,8 +308,28 @@ void PolylinePatternShape::generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
       computeSidePoints();
     }
 
+	if (dotSpacing == 0) {
+		fprintf(stderr, "Error: can't do dot spacing of 0\n");
+		numPoints = 0;
+		expTime = 0;
+		return;
+	}
+	if (lineSpacing == 0) {
+		fprintf(stderr, "Error: can't do line spacing of 0\n");
+		numPoints = 0;
+		expTime = 0;
+		return;
+	}
+	if (current == 0) {
+		fprintf(stderr, "Error: can't do exposure with 0 current\n");
+		numPoints = 0;
+		expTime = 0;
+		return;
+	}
+
     double invDotSpacing = 1.0/dotSpacing;
     double invLineSpacing = 1.0/lineSpacing;
+
     double exposure = d_exposure_uCoulombs_per_square_cm;
     int x_DAC, y_DAC;
     double dwellTime_nsec =
@@ -879,6 +899,18 @@ void PolylinePatternShape::generateExposurePointsZeroWidth(
   segmentEnd = segmentStart;
   segmentEnd++;
 
+  if (dotSpacing == 0) {
+		fprintf(stderr, "Error: can't do dot spacing of 0\n");
+		numPoints = 0;
+		expTime = 0;
+		return;
+  }
+  if (current == 0) {
+	fprintf(stderr, "Error: can't do exposure with 0 current\n");
+	numPoints = 0;
+	expTime = 0;
+	return;
+  }
   double invDotSpacing = 1.0/dotSpacing;
   double exposure = d_exposure_pCoulombs_per_cm;
   int x_DAC, y_DAC;
@@ -1146,6 +1178,25 @@ void PolygonPatternShape::generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
 {
   numPoints = 0;
   expTime = 0.0;
+
+  if (dotSpacing == 0) {
+	fprintf(stderr, "Error: can't do dot spacing of 0\n");
+	numPoints = 0;
+	expTime = 0;
+	return;
+  }
+  if (lineSpacing == 0) {
+	fprintf(stderr, "Error: can't do line spacing of 0\n");
+	numPoints = 0;
+	expTime = 0;
+	return;
+  }
+  if (current == 0) {
+	fprintf(stderr, "Error: can't do exposure with 0 current\n");
+	numPoints = 0;
+	expTime = 0;
+	return;
+  }
 
   double invDotSpacing = 1.0/dotSpacing;
   double invLineSpacing = 1.0/lineSpacing;
