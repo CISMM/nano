@@ -1,3 +1,10 @@
+2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
+
+        * BCPlane.C,.h : added function float * rowbeginning(int y)
+        which returns the address of the beginning of row number y.
+        aids in using plane data for time-sensitive purposes, such
+        as sending height/scan data to the eroder
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_ImgMagick.C (writeFileMagick): Comments about compression.

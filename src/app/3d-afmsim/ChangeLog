@@ -1,3 +1,11 @@
+2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* sim.cpp,.h : add keyboard and command line capability to
+	save sim. scan data to file for eroder
+
+	* scan.cpp,.h : function save_to_eroder() which saves data
+	to file of type .er for eroder
+
 2002-06-07  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : changed structure of keyboard commands to add a 
