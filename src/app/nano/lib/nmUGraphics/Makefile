@@ -1,4 +1,4 @@
-USES_LIBS := nmBase tclLinkVar vrpn quat vogl
+USES_LIBS := nmBase nmMP tclLinkVar nmAnalyze nmMScope vrpn quat vogl
 
 USES_EXTERNAL_LIBS := glut
 
