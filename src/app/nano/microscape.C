@@ -2943,9 +2943,9 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
 /** XXX this func decl should come from export_scene.h
  */
 #if !defined(_WIN32) || defined(__CYGWIN__)
-void export_scene_to_openNURBS (const char * filename,
-                                const nmg_Graphics *,
-                                const BCGrid *,
+void export_scene_to_openNURBS (const char * const filename,
+                                const nmg_Graphics * const,
+                                const BCGrid * const,
                                 const nmb_PlaneSelection &);
 #endif
 /** See if the user has given a name to the export plane other
