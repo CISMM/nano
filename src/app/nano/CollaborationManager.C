@@ -140,7 +140,8 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_timerSN_type (-1),
     d_timerSNreply_type (-1),
     d_gotPeerServer (VRPN_FALSE),
-    d_gotPeerRemote (VRPN_FALSE)
+    d_gotPeerRemote (VRPN_FALSE),
+    d_isCollaborationOn (VRPN_FALSE)
 {
 
 }
@@ -195,7 +196,8 @@ vrpn_bool CollaborationManager::isReplayingInterface (void) const {
 
 
 vrpn_bool CollaborationManager::isCollaborationOn (void) const {
-  return (d_peerRemote != NULL);
+  //return (d_peerRemote != NULL);
+  return d_isCollaborationOn;
 }
 
 
@@ -410,7 +412,8 @@ void CollaborationManager::setPeerName
 
   // TCH 6 March 2001
   // If the name is already set, it isn't safe to change!
-  if ((d_peerName)&&(d_peerName[0]!='\0')) {
+  //if ((d_peerName)&&(d_peerName[0]!='\0')) {
+  if(d_isCollaborationOn){
     display_warning_dialog
         ("Can't change which collaborator we're connected to.\n");
     return;
@@ -705,6 +708,8 @@ int CollaborationManager::fullyConnected (void) {
   int retval;
 
   display_warning_dialog("Now collaborating with %s.\n", d_peerName);
+
+  d_isCollaborationOn = VRPN_TRUE;
 
   sprintf(command, "collab_connection_good");
   retval = Tcl_Eval(tk_control_interp, command);
