@@ -1,3 +1,8 @@
+2002-06-03 David Borland <borland@cs.unc.edu>
+
+        * nmg_SurfaceRegion.C : fixed a couple of minor bugs related to the 
+        UI for controlling projective textures with the phantom.
+
 2002-05-30 David Borland <borland@cs.unc.edu>
 
         * nmg_SurfaceRegion.C (setTexture) : phantom control of projective
