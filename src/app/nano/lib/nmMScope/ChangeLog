@@ -1,3 +1,7 @@
+2001-11-03 Jameson Miller<millerj@cs.unc.edu>
+	*directstep.c: position of where the microscope was supposed to go was
+	being calculated wrong, fixed it
+	
 2001-10-23  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile (clean-gen): added a new rule "clean-gen" to
