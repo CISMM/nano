@@ -11,6 +11,10 @@
 // objects with polygons of an abritrary degree--
 // not just triangles.
 
+#ifdef sgi
+// isspace and isalnum are found in ctype.h on the sgi's
+#include <ctype.h>
+#endif
 
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99
