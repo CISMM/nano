@@ -1,3 +1,8 @@
+2000-10-11  Chris Weigle  <weigle@cs.unc.edu>
+
+        * Makefile.root_common: fixed OBJECT_DIR line to do right thing
+        with (sgi) ABI/ARCH.
+
 2000-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
         * Merged thirdtech_branch for Makefile.depend to fix
@@ -9,6 +14,7 @@
         (Can't use LATE_LIBRARIES because they must come before X11)
 
 2000-09-15  Chris Weigle  <weigle@cs.unc.edu>
+
         * Makefile.common: removed '-f' from ln options, stops recursion
         * Makefile.app_common: Removed $(OBECT_DIR) target; Split test
         and creation of dirs & symlinks into 3 stages. This did the
