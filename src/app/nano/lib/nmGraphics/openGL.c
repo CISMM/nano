@@ -533,7 +533,7 @@ int draw_world (int) {
     /********************************************************************/
     // Draw Ubergraphics
     /********************************************************************/
-    
+      
     //UGRAPHICS CALL TO DRAW THE WORLD  -- ASSUMING THAT VLIB HAS IT IN WORLD SPACE
     //WHEN I HIT THIS POINT
     if (g_config_enableUber) {
@@ -747,6 +747,7 @@ int draw_world (int) {
     if (!visualization->rebuildInterval(low_row, high_row, display_lists_in_x)) {
         return -1;
     }
+
     /*
     if (update.overlaps(todo) || update.adjacent(todo)) {
     if (build_list_set(update + todo, planes, stripfn, display_lists_in_x)) return -1;
@@ -764,8 +765,8 @@ int draw_world (int) {
         //last_marked = mark;
         
         
-        /* Draw grid using current viewing/modeling matrix */
-        VERBOSECHECK(4);
+    /* Draw grid using current viewing/modeling matrix */
+    VERBOSECHECK(4);
     VERBOSE(4,"    Drawing the grid");
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
     
@@ -776,6 +777,8 @@ int draw_world (int) {
     }
     */
     
+    /* Draw the light */
+    setup_lighting(0);
     
     /*******************************************************/
     // Draw the parts of the scene other than the surface.
@@ -857,8 +860,7 @@ int draw_world (int) {
         g_position_collab_hand = 0;
     }	
     
-    /* Draw the light */
-    setup_lighting(0);
+    
     
     // Set the lighting model for the measurement things
     VERBOSECHECK(4);

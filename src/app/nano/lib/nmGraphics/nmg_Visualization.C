@@ -533,7 +533,7 @@ setTexture()
             x_translate = (double)g_tex_image_offsetx[VISUALIZATION_TEX_ID]/
                           (double)g_tex_installed_width[VISUALIZATION_TEX_ID];
             y_translate = (double)g_tex_image_offsety[VISUALIZATION_TEX_ID]/
-                          (double)g_tex_installed_height[VISUALIZATION_TEX_ID];;
+                          (double)g_tex_installed_height[VISUALIZATION_TEX_ID];
             break;
           default:
             fprintf(stderr, "Error, unknown texture set for display\n");

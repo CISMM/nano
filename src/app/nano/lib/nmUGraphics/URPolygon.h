@@ -23,11 +23,8 @@ public:
     int Render(void *userdata=NULL);
     GeometryGenerator* GetGenerator();
     
-    //PARSERS
-    void LoadGeometry(GeometryGenerator *gen);	//generic function to scan file names and call
-    //the appropriate parser
-    
-    //Added by Leila Plummer for importing from tube_foundry
+    //Geometry functions
+    void LoadGeometry(GeometryGenerator *gen);	    
     void ReloadGeometry();
 };
 

@@ -68,9 +68,9 @@ protected:
     vrpn_bool d_just_color;
 
 	void setUpdateAndTodo(int low_row, int high_row, int stride, 
-                              int num, nmb_Interval &last_marked,
-                              nmb_Interval &update, nmb_Interval &todo,
-                              bool save_mark);
+						  int num, nmb_Interval &last_marked,
+						  nmb_Interval &update, nmb_Interval &todo,
+                          bool save_mark);
 
 	void ensureMaskPlane(nmb_PlaneSelection &planes);
 	void ensureTransparentPlane(nmb_PlaneSelection &planes);

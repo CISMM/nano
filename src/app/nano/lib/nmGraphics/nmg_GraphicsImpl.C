@@ -1341,7 +1341,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
         } else if (im->pixelType() == NMB_FLOAT32){
             pixelType = GL_FLOAT;
         } else {
-            fprintf(stderr, "nmb_GraphicsImp::createRealignTexturexs:"
+            fprintf(stderr, "nmb_GraphicsImp::createRealignTextures:"
                  "can't handle pixel type\n");
             return;
         }

@@ -11,6 +11,9 @@
 
 class URender;
 
+//Abstract class that defines the interface to any object that
+//can create the display lists needed by the URPolygon objects
+//in the Ubergraphics scene graph.
 class GeometryGenerator
 {
 public:
