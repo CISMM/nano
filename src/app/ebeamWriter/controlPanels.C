@@ -549,6 +549,11 @@ void ControlPanels::handle_canvasImage_change(const char * /*new_value*/,
 
   me->d_aligner->setProjectionImage((const char *)(me->d_canvasImage));
   me->d_patternEditor->setCanvasImage(im);
+  me->d_patternEditor->setImageEnable(im, vrpn_TRUE);
+  // update current image controls if the current image equals canvas image
+  me->d_disableDisplaySettingCallbacks = vrpn_TRUE;
+  me->updateCurrentImageControls();
+  me->d_disableDisplaySettingCallbacks = vrpn_FALSE;
 }
 
 // static
@@ -790,11 +795,14 @@ void ControlPanels::handleSEMChange(
         }
         currentImage = d_imageList->getImageByName(currentImageName);
         if (!currentImage) {
-            currentImage = new nmb_ImageArray(currentImageName, "SEM",
-                  (short)res_x, (short)res_y, pix_type);
+            //currentImage = new nmb_ImageArray(currentImageName, "SEM",
+            //      (short)res_x, (short)res_y, pix_type);
+			currentImage = new nmb_ImageGrid(currentImageName, "SEM", 
+					(short)res_x, (short)res_y);
+			d_patternEditor->addImage(currentImage);
+			d_patternEditor->setLiveImage(currentImage);
             d_imageList->addImage(currentImage);
-            d_patternEditor->addImage(currentImage);
-			d_patternEditor->setImageOpacity(currentImage, 0.1);
+			d_patternEditor->setImageOpacity(currentImage, 0.5);
 			info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
 			currentImage->setAcquisitionDimensions(imageRegionWidth, 
 												   imageRegionHeight);
@@ -802,12 +810,10 @@ void ControlPanels::handleSEMChange(
 			worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
 			currentImage->setWorldToImageTransform(worldToImage);
             d_semBufferImageNames->addEntry(currentImageName);
+			d_currentImage.Set(currentImageName);
+			handle_currentImage_change(currentImageName, this);
         }
 
-		if (info.sem->lastScanMessageCompletesImage()) {
-			d_patternEditor->updateDisplayTransform(currentImage, NULL, false);
-			d_aligner->setTopographyImage(currentImage->name()->c_str());
-		}
 		d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
@@ -816,24 +822,7 @@ void ControlPanels::handleSEMChange(
                                 res_x, res_y);
            break;
         }
-		// make sure the image is visible in the pattern editor window
-        if (!(d_patternEditor->getImageEnable(currentImage))) {
-          if (d_currentLiveSEMImageName) {
-			  nmb_Image *prevLiveSEMImage = 
-				   d_imageList->getImageByName(d_currentLiveSEMImageName);
-			  if (prevLiveSEMImage) {
-				d_patternEditor->setImageEnable(prevLiveSEMImage, vrpn_FALSE);
-			  } else {
-				fprintf(stderr, "live SEM image not found\n");
-			  }
-			  delete [] d_currentLiveSEMImageName;
-			  d_currentLiveSEMImageName = NULL;
-		  }
-          d_currentLiveSEMImageName = new char[strlen(currentImageName)+1];
-          strcpy(d_currentLiveSEMImageName, currentImageName);
-          d_patternEditor->setImageEnable(currentImage, vrpn_TRUE);
-		  d_currentImage.Set(currentImageName);
-        }
+
         x = start_x;
         y = start_y;
         uint8_data = (vrpn_uint8 *)scanlineData;
@@ -846,6 +835,7 @@ void ControlPanels::handleSEMChange(
               x = start_x;
               for (j = 0; j < line_length; j++) {
                  val = (double)(uint8_data[(i*line_length+j)*num_fields]);
+				 val /= 255.0;
                  currentImage->setValue(x, y, val);
                  x += dx;
               }
@@ -857,6 +847,7 @@ void ControlPanels::handleSEMChange(
               x = start_x;
               for (j = 0; j < line_length; j++) {
                  val = (double)(uint16_data[(i*line_length+j)*num_fields]);
+				 val /= 65535.0;
                  currentImage->setValue(x, y, val);
                  x += dx;
               }
@@ -875,21 +866,40 @@ void ControlPanels::handleSEMChange(
             }
             break;
         }
+		if (info.sem->lastScanMessageCompletesImage()) {
+			// rescale the image
+			currentImage->normalize();
 
-        // when we get the end of an image restart the scan
-        // and redraw the window
-        if (start_y+num_lines == res_y) {
-          image_viewer->dirtyWindow(d_patternEditor->mainWinID());
-        }
-
-        if (start_y+num_lines == res_y) {
-            if (d_semAcquireContinuousChecked){
+			// disable the previous live image
+			if (d_currentLiveSEMImageName) {
+				nmb_Image *prevLiveSEMImage = 
+					  d_imageList->getImageByName(d_currentLiveSEMImageName);
+				if (prevLiveSEMImage) {
+					d_patternEditor->setImageEnable(prevLiveSEMImage, vrpn_FALSE);
+				} else {
+					fprintf(stderr, "live SEM image not found\n");
+				}
+				delete [] d_currentLiveSEMImageName;
+				d_currentLiveSEMImageName = NULL;
+			}
+			// enable the new live image
+			if (!(d_patternEditor->getImageEnable(currentImage))) {
+			  d_currentLiveSEMImageName = new char[strlen(currentImageName)+1];
+			  strcpy(d_currentLiveSEMImageName, currentImageName);
+			  d_patternEditor->setImageEnable(currentImage, vrpn_TRUE);
+			}
+			handle_currentImage_change(currentImageName, this);
+			d_patternEditor->updateDisplayTransform(currentImage, NULL, false);
+			d_patternEditor->setLiveImage(currentImage);
+			d_aligner->setTopographyImage(currentImage->name()->c_str());
+            image_viewer->dirtyWindow(d_patternEditor->mainWinID());
+            
+			if (d_semAcquireContinuousChecked){
                 info.sem->requestScan(1);
             } else {
                 info.sem->requestScan(0);
                 info.sem->setExternalScanControlEnable(0);
             }
-		
         }
       break;
     case nmm_Microscope_SEM::POINT_DWELL_TIME:

@@ -1,5 +1,18 @@
 2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
 
+	* controlPanels.C (handle_canvasImage_change): 
+	enables display of canvas image here instead of inside patternEditor
+	added call to update current image controls
+	(handleSEMChange): stores SEM data in an nmb_ImageGrid since it doesn't
+	have a border by default and this keeps the texture smaller; also changes
+	the data so its stored as floats and maps min/max values to 0/1
+	* patternEditor.C : added texture objects for canvas image and
+	live SEM image since this is all we need most of the time
+	(drawImage): passes texture IDs to ImageViewer::drawImage so it
+	doesn't have to reload the texture every time - this makes it faster
+
+2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
+
 	* patternShape.C : commented out old code for setting color based on
 	exposure and added exposure display as number next to each shape
 	* patternEditor.[Ch] (updatePatternTransform): new function

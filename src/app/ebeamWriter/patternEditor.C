@@ -6,6 +6,11 @@
 #define M_PI           3.14159265358979323846
 #endif
 
+int PatternEditor::s_CANVAS_TEXTURE = 0;
+int PatternEditor::s_LIVE_TEXTURE = 1;
+int PatternEditor::s_SHARED_TEXTURE = 2;
+GLsizei PatternEditor::s_numTextures = 3;
+
 int ImageElement::operator< (const ImageElement& ie) {
 	bool result;
 	double myArea = d_image->areaInWorld();
@@ -23,6 +28,10 @@ PatternEditor::PatternEditor(int startX, int startY):
    d_segmentLength_nm("segment_length", "0 nm")
 {
    d_canvasImage = NULL;
+   d_liveImage = NULL;
+   d_allocatedTextures = vrpn_FALSE;
+   d_canvasTextureNeedsUpdate = vrpn_FALSE;
+   d_liveTextureNeedsUpdate = vrpn_FALSE;
 
    d_patternColorMap.setMinLineExposureColor(0.0, 1.0, 1.0);
    d_patternColorMap.setMaxLineExposureColor(1.0, 1.0, 0.0);
@@ -179,7 +188,7 @@ void PatternEditor::updateWorldExtents()
   if (!d_viewportSet) {
 	setViewport(d_worldMinX_nm, d_worldMinY_nm, 
 		d_worldMaxX_nm, d_worldMaxY_nm);
-	d_viewportSet = false;
+	d_viewportSet = vrpn_FALSE;
   }
 }
 
@@ -581,7 +590,7 @@ void PatternEditor::setScanRange(double minX_nm, double minY_nm,
   if (!d_viewportSet) {
     setViewport(d_worldMinX_nm, d_worldMinY_nm,
 	  d_worldMaxX_nm, d_worldMaxY_nm);
-	d_viewportSet = false;
+	d_viewportSet = vrpn_FALSE;
   } else {
 	double minX, minY, maxX, maxY;
 	getViewport(minX, minY, maxX, maxY);
@@ -633,12 +642,24 @@ void PatternEditor::clearExposurePoints()
 
 void PatternEditor::setCanvasImage(nmb_Image *image)
 {
-	if (d_canvasImage) {
+	if (d_canvasImage && 
+		d_canvasImage != d_liveImage && 
+		d_canvasImage != image) {
 		setImageEnable(d_canvasImage, vrpn_FALSE);
 	}
 	d_canvasImage = image;
-	setImageEnable(image, vrpn_TRUE);
 	updatePatternTransform();
+	d_canvasTextureNeedsUpdate = vrpn_TRUE;
+	d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::setLiveImage(nmb_Image *image)
+{
+	d_liveImage = image;
+	d_liveTextureNeedsUpdate = vrpn_TRUE;
+	if (d_canvasImage == image) {
+		d_canvasTextureNeedsUpdate = vrpn_TRUE;
+	}
 	d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -907,6 +928,23 @@ int PatternEditor::mainWinDisplayHandler(
                    const ImageViewerDisplayData &data, void *ud)
 {
   PatternEditor *me = (PatternEditor *)ud;
+  
+  if (!me->d_allocatedTextures) {
+	glGenTextures(s_numTextures, me->d_textureID);
+	GLfloat border_color[] = {0.0, 0.0, 0.0, 0.0};
+	int i;
+	for (i = 0; i < s_numTextures; i++) {
+	  glBindTexture(GL_TEXTURE_2D, me->d_textureID[i]);	
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+	}
+	me->d_allocatedTextures = vrpn_TRUE;
+  }
+
+  
 
   glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_VIEWPORT_BIT);
 
@@ -915,15 +953,8 @@ int PatternEditor::mainWinDisplayHandler(
 
   glPolygonMode(GL_FRONT, GL_FILL);
 
-  GLfloat border_color[] = {0.0, 0.0, 0.0, 0.0};
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+  
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   GLfloat textureColor[] = {0.5, 0.5, 0.5, 0.5};
   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, textureColor);
@@ -1052,8 +1083,36 @@ void PatternEditor::drawImage(const ImageElement &ie)
   ie.d_image->getWorldToImageTransform(W2I);
   l = d_mainWinMinX_nm; r = d_mainWinMaxX_nm;
   b = d_mainWinMinY_nm; t = d_mainWinMaxY_nm;
-  d_viewer->drawImage(d_mainWinID, ie.d_image,
-      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I);
+
+  if (ie.d_image == d_canvasImage) {
+/*
+	if (d_canvasTextureNeedsUpdate) {
+		printf("reloading canvas texture\n");
+	} else {
+		printf("drawing loaded canvas texture\n");
+	}
+*/
+	d_viewer->drawImage(d_mainWinID, ie.d_image,
+      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I,
+	  &(d_textureID[s_CANVAS_TEXTURE]), d_canvasTextureNeedsUpdate);
+	d_canvasTextureNeedsUpdate = false;
+  } else if (ie.d_image == d_liveImage) {
+/*
+	if (d_liveTextureNeedsUpdate) {
+		printf("reloading live texture\n");
+	} else {
+		printf("drawing loaded live texture\n");
+	}
+*/
+	d_viewer->drawImage(d_mainWinID, ie.d_image,
+      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I,
+	  &(d_textureID[s_LIVE_TEXTURE]), d_liveTextureNeedsUpdate);
+	d_liveTextureNeedsUpdate = false;
+  } else {
+	d_viewer->drawImage(d_mainWinID, ie.d_image,
+      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I,
+	  &(d_textureID[s_SHARED_TEXTURE]), vrpn_TRUE);
+  }
 
 }
 

@@ -93,6 +93,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void clearExposurePoints();
 
    void setCanvasImage(nmb_Image *image);
+   void setLiveImage(nmb_Image *image);
    void updatePatternTransform();
 
    // more general ImageDisplay interface used by nmr_RegistrationUI:
@@ -252,8 +253,21 @@ class PatternEditor : public nmb_ImageDisplay {
    PatternShapeColorMap d_patternColorMap;
 
    nmb_Image *d_canvasImage;
+   nmb_Image *d_liveImage;
 
    Tclvar_string d_segmentLength_nm;
+
+
+   // texture stuff
+   vrpn_bool d_canvasTextureNeedsUpdate;
+   vrpn_bool d_liveTextureNeedsUpdate;
+   GLuint d_textureID[16];
+   vrpn_bool d_allocatedTextures; // initially false
+   static int s_CANVAS_TEXTURE; // = 0
+   static int s_LIVE_TEXTURE; // = 1
+   static int s_SHARED_TEXTURE; // = 2
+   static GLsizei s_numTextures; // = 3
+
 };
 
 #endif
