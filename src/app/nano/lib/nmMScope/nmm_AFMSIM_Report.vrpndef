@@ -1,11 +1,11 @@
 // MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
-MESSAGE_GROUP nmm_SPM_Report
+MESSAGE_GROUP nmm_AFMSIM_Report
 
-MESSAGE_PREFIX "nmm Microscope "
+MESSAGE_PREFIX "nmm SimulatedMicroscope "
 
 DEFINE SPM_NAME_LENGTH 64
 
-//message is a line of data from the simulator
+//message is a line of data
 VRPN_MESSAGE WindowLineData {
   int32 x // should be 0
   int32 y //should be some value
@@ -17,7 +17,7 @@ VRPN_MESSAGE WindowLineData {
   int32 usec //for current time
   float32 data [reports][fields]
 }
-//reports is the number of opints in the row/column
+//reports is the number of points in the row/column
 //a field a layer of data, e.g. height or force
 //each point can have several values (fields), depending on what information is taken in a scan
 //in the case of the simulator, however, the only data is height

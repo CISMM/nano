@@ -1,0 +1,61 @@
+OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.h
+//
+#ifndef NMM_SIMULATEDMICROSCOPE_REMOTE_H
+#define NMM_SIMULATEDMICROSCOPE_REMOTE_H
+
+//
+#include "nmm_AFMSIM_Report.h"
+#include <nmb_SharedDevice.h>
+#include <nmb_Dataset.h>
+#include "nma_ShapeAnalyze.h"
+
+//
+class nmb_SharedDevice_Remote;
+class nmb_Dataset;
+
+
+//
+USE_MSG_GROUP nmm_AFMSIM_Report
+
+CLASSNAME nmm_SimulatedMicroscope_Remote
+//
+
+
+class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, public nmb_SharedDevice_Remote {
+
+public:
+	nmm_SimulatedMicroscope_Remote(const char * name, vrpn_Connection * connection, 
+		const char * planename, nmb_Dataset * dataset);
+
+	virtual ~nmm_SimulatedMicroscope_Remote();
+
+	int mainloop();
+//
+private:
+
+    RECEIVERS_DECL nmm_AFMSIM_Report;
+    HANDLERS_DECL ;
+
+	nmb_Dataset * d_dataset;	//dataset that real di data is in
+	BCString RealAFMPlaneName;	//name of plane with real di data
+	BCPlane * RealAFMPlane;		//plane with real di data
+	int Xdim;			//number of elements in the x dimention in the current
+					//grid, and therefore of RealAFMPlane
+	int Ydim;			//same for y
+	double * DataArray;		//data array passed to nma_ShapeIdentified class	
+	int DATA_ARRAY_SIZE;		//size of DataArray when it finally gets filled
+	nma_ShapeIdentifiedPlane * SimScanPlane;//new plane formed/filled in when
+						//full array of data has been sent
+	bool UnitsOK;			//so only load information if units check out,
+					//match real afm scan plane
+	
+
+};
+//
+
+#endif // NMM_SIMULATEDMICROSCOPE_REMOTE_H
+
+
+
+
+

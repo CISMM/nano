@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\tclLinkVar" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\..\quat" /I "..\nmUI" /I "..\.." /I "..\..\..\..\..\..\vogl" /I "..\nmAux" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\tclLinkVar" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\..\quat" /I "..\nmUI" /I "..\.." /I "..\..\..\..\..\..\vogl" /I "..\nmAux" /I "..\nmAnalyze" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\tclLinkVar" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\..\quat" /I "..\nmUI" /I "..\.." /I "..\..\..\..\..\..\vogl" /I "..\nmAux" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\tclLinkVar" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\..\quat" /I "..\nmUI" /I "..\.." /I "..\..\..\..\..\..\vogl" /I "..\nmAux" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\tclLinkVar" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\..\quat" /I "..\nmUI" /I "..\.." /I "..\..\..\..\..\..\vogl" /I "..\nmAux" /I "..\nmAnalyze" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -106,6 +106,10 @@ SOURCE=.\nmm_AFM_Control.C
 # Begin Source File
 
 SOURCE=.\nmm_AFM_Report.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_AFMSIM_Report.C
 # End Source File
 # Begin Source File
 
@@ -179,8 +183,11 @@ SOURCE=.\nmm_Sample.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmm_SimulatedMicroscopeRemote.C
-# PROP Exclude_From_Build 1
+SOURCE=.\nmm_SimulatedMicroscope.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope_Remote.C
 # End Source File
 # Begin Source File
 
@@ -233,6 +240,10 @@ SOURCE=.\nmm_AFM_Control.h
 # Begin Source File
 
 SOURCE=.\nmm_AFM_Report.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_AFMSIM_Report.h
 # End Source File
 # Begin Source File
 
@@ -298,6 +309,14 @@ SOURCE=.\nmm_RelaxComp.h
 # Begin Source File
 
 SOURCE=.\nmm_Sample.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_SimulatedMicroscope_Remote.h
 # End Source File
 # Begin Source File
 

@@ -1,0 +1,175 @@
+OUTPUT_FILENAME nmm_SimulatedMicroscope.C
+//
+#include "nmm_SimulatedMicroscope.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+//#include <unistd.h>
+#include <sys/types.h>
+#include <vrpn_Connection.h>
+
+//ANDREA:  make sure the following is all correct
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#include <sys/time.h>
+#else
+#include <vrpn_Shared.h>  // get timeval some other way
+#endif
+//
+
+USE_MSG_GROUP nmm_AFMSIM_Report
+
+CLASSNAME nmm_SimulatedMicroscope
+
+
+//the following are notes to myself (ANDREA)
+
+
+// Utility routines to parse host specifiers FROM service locations
+//   <hostname>
+//   <hostname>:<port number>
+//   x-vrpn://<hostname>
+//   x-vrpn://<hostname>:<port number>
+//   x-vrsh://<hostname>/<server program>,<comma-separated server arguments>
+
+
+//////////////////////
+//
+//name is the name of this device
+nmm_SimulatedMicroscope::
+nmm_SimulatedMicroscope(char *name, vrpn_Connection *c, int port) : nmb_SharedDevice_Server(name,c), 
+						nmm_AFMSIM_Report(c)/*, d_name(name)*/, d_connection(c) {
+	d_name = new char[100];
+	strcpy(d_name,name);
+  
+	simulator_id = d_connection->register_sender("AFMSimulator");
+
+}
+
+
+//
+nmm_SimulatedMicroscope::
+~nmm_SimulatedMicroscope(){
+//
+}
+//
+void nmm_SimulatedMicroscope::
+change_machineName(char * newName){
+	delete d_name;
+	d_name = new char[100];
+	strcpy(d_name,newName);
+}
+//
+/*
+char * nmm_AFMSIM_Report::encode_WindowLineData (
+      int * len,
+      vrpn_int32 x,
+      vrpn_int32 y,
+      vrpn_int32 dx,
+      vrpn_int32 dy,
+      vrpn_int32 reports,
+      vrpn_int32 fields,
+      vrpn_int32 sec,
+      vrpn_int32 usec,
+      vrpn_float32 **data)
+
+  //message is a line of data
+VRPN_MESSAGE WindowLineData {
+  int32 x // should be 0
+  int32 y //should be some value
+  int32 dx //should be 1, increment by 1 (pixel, step) across row
+  int32 dy //should be 0, do not increment in y
+  int32 reports
+  int32 fields
+  int32 sec //for current time
+  int32 usec //for current time
+  float32 data [reports][fields]
+}
+*/
+
+
+void nmm_SimulatedMicroscope::
+encode_and_sendData(double ** Data, const int rowlen){
+	cout << "nmm_SimulatedMicroscope::encode_and_sendData entered" << endl;
+	int num_rows = rowlen;
+	for(int linenumber = 0; linenumber < num_rows; linenumber++){
+	//process each line separately
+
+		/*double dbl_array[rowlen][2];
+		for(int i = 0; i < rowlen; ++i){
+			dbl_array[i][0] = Data[i][linenumber];
+		}
+		double ** line = dbl_array;
+		*/
+		
+		double ** line = new double*[rowlen];
+		for(int i = 0; i < rowlen; ++i){
+			line[i] = new double[1];
+			line[i][0] = Data[i][linenumber];
+			//ANDREA:  note that this was Data[linenumber][i] before
+			//not sure why this works but that didn't
+			//check that things fill in correctly in nano
+		}
+
+		timeval time;
+		gettimeofday(&time,NULL);
+		int * len = NULL;
+		char * msgbuf = encode_WindowLineData(len, 0, linenumber, 1, 0, rowlen,
+						1, time.tv_sec, time.tv_usec, (float**)line);
+
+		//clean up before next iteration
+		for(i = 0; i < rowlen; ++i){
+			delete line[i];
+		}
+		delete line;
+
+		int retval = -1;
+		cout << "nmm_SimulatedMicroscope::encode_and_sendData:" << endl
+			 << "\tmessage (line of data) should be go to Send on next line" << endl;
+		retval = Send( (long)len, d_WindowLineData_type, msgbuf );
+		if(retval==-1){
+			cout << "Data not sent.  Check setup." << endl;
+		}
+   		//
+		//ANDREA:  check to see if mainloop should be called here
+		d_connection->mainloop();
+	}
+
+}
+
+//
+int nmm_SimulatedMicroscope::
+Send( long len, vrpn_int32 msg_type, char * buf )
+{
+	cout << "nmm_SimulatedMicroscope::Send entered" << endl;
+	struct timeval now;
+	int retval = -1;
+	//
+	gettimeofday(&now, NULL);
+	//
+	cout << "nmm_SimulatedMicroscope::Send entered:" << endl
+		 << "\tmessage should be sent via vrpn_Connection::pack_message on next line" 
+		 << endl;
+	retval = d_connection->pack_message(len, now, msg_type, simulator_id,
+				      buf, vrpn_CONNECTION_RELIABLE);
+	if(retval == -1){
+		cout << "nmm_SimulatedMicroscope::Send:" << endl
+			 << "message NOT successfully sent" << endl;
+	}
+	else{
+		cout << "nmm_SimulatedMicroscope::Send:" << endl
+			 << "message successfully sent" << endl;
+	}
+
+	//
+	if ( buf ) {
+		delete [] buf;
+	}
+	return retval;
+}
+//
+
+
+//HANDLERS nmm_AFMSIM_Report;
+
+
+//

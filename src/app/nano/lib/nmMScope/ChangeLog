@@ -1,3 +1,11 @@
+2001-12-04 Andrea Hilchey <hilchey@cs.unc.edu>
+	* nmm_SimulatedMicroscope_Remote.Cdef : updated
+	* nmm_SimulatedMicroscope_Remote.hdef : updated
+	* nmm_SimulatedMicroscope.Cdef : updated
+	* nmm_SimulatedMicroscope.hdef : updated
+	* nmm_AFMSIM_Report : updated
+	
+
 2001-11-27 Jameson Miller <millerj@cs.unc.edu>
 	*directstep.C - cleaned up code so that compiler won't complain when
 	compiling
