@@ -1,3 +1,8 @@
+2001-03-09  Tom Hudson  <hudson@cs.unc.edu>
+
+	* shared_ptr.tcl (collab_connection_good) : new procedure actually
+	enables collaboration once all the connections are made.
+
 2001-03-06  Tom Hudson  <hudson@cs.unc.edu>
 
 	* shared_ptr.tcl:  added a less-error-prone interface to choose

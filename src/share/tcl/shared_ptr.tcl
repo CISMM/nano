@@ -109,6 +109,7 @@ pack $sharedptr(sp).choose_collaborator -side top -fill x
 
 
 
+
 # NANOX
 
 # Load some images of arrows, pointing up and down, to use with
@@ -162,6 +163,17 @@ pack $sharedptr(sp).state.copy.copy_to_shared_button \
      $sharedptr(sp).state.copy.copy_to_private_button -side left -padx 5 
 
 pack $sharedptr(sp).state
+
+# T. Hudson 6 Mar 2001
+# Enable buttons once we've got a good collaborative connection
+proc collab_connection_good {} {
+  global sharedptr
+
+  $sharedptr(sp).state.copy.copy_to_shared_button configure -state normal
+  $sharedptr(sp).state.copy.copy_to_private_button configure -state normal
+  $sharedptr(sp).state.share_public_button configure -state normal
+
+}
 
 # Mutex
 # T. Hudson 2 May 2000
