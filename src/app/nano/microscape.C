@@ -2142,7 +2142,11 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
     if (semLogFile)
         semLogFile->reset();
     rewind_stream = 0;  // necessary
-}
+    
+    // force time to zero
+    set_stream_time = 0;
+    set_stream_time_now = 1;
+} // end handle_rewind_stream_change
 
 
 
