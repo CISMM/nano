@@ -2217,8 +2217,11 @@ int doFeelLive(int whichUser, int userEvent)
 	v_xform_type	worldFromHand;
 	// static to allow xy_lock to work properly
         static q_vec_type clipPos;
+        static q_vec_type clipPosNM;
 	static		int	SurfaceGoing = 0;
 	static		int	ForceFieldGoing = 0;
+
+        vrpn_bool nmOK;
 
 	/* if we are not running live, you should not be able
 	   to do this, so put the user into grab mode */
@@ -2289,6 +2292,13 @@ int doFeelLive(int whichUser, int userEvent)
 	       nmui_Util::clipPosition(plane, clipPos);
 	   }
 	}
+
+        // Used only for direct Z control - we need to have the Z converted
+        // into NM (divided by plane scale).  If plane scale approaches
+        // zero, nmOK becomes false
+        q_vec_copy(clipPosNM, clipPos);
+        nmOK = nmui_Util::convertPositionToNM(plane, clipPosNM);
+
 	/* Move the aiming line to the user's hand location */
         //nmui_Util::moveAimLine(clipPos);
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
@@ -2388,12 +2398,13 @@ int doFeelLive(int whichUser, int userEvent)
 
 	    /* Request a reading from the current location, 
 	     * using the current modification style */
-		 if ( microscope->state.modify.control == DIRECTZ) {
-		  // direct Z control requires different parameters.
-		  microscope->TakeDirectZStep(clipPos[0], clipPos[1], 
-					      clipPos[2]);
+               if ( microscope->state.modify.control == DIRECTZ) {
+                 if (nmOK) {
+                   microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
+                                               clipPosNM[2]);
+                 }
 	       } else {
-		  microscope->TakeModStep(clipPos[0], clipPos[1]);
+                 microscope->TakeModStep(clipPos[0], clipPos[1]);
 	       }
 	}
 	    

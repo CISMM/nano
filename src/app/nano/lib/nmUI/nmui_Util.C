@@ -20,11 +20,29 @@ int nmui_Util::getHandInWorld (int user, q_vec_type & position) {
 }
 
 // static
+vrpn_bool nmui_Util::convertPositionToNM (BCPlane * plane,
+                                          q_vec_type & position) {
+
+  // We want the position we return to be in real-world units (nanometers),
+  // not the world coords of vlib, so we must take into account
+  // the arbitrary scale applied to the Z coord by the plane.
+
+  if (plane->scale() > 1e-10) {
+    position[2] = position[2] / plane->scale();
+    return vrpn_true;
+  } else {
+    // signal error
+    return vrpn_false;
+  }
+}
+
 /** Takes a position in world space, and makes sure it is inside
  the edges of the plane passed in. This works because the boundaries
-of the plane are defined in world space. Also scales the z component
-of the hand position into plane coordinates. */
+of the plane are defined in world space. */
+
+// static
 int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
+
   if (!plane) {
     fprintf(stderr, "Error in nmui_Util::clipPosition:  "
                     "No input plane.\n");
@@ -35,15 +53,6 @@ int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
   if (position[0] > plane->maxX()) position[0] = plane->maxX();
   if (position[1] < plane->minY()) position[1] = plane->minY();
   if (position[1] > plane->maxY()) position[1] = plane->maxY();
-
-  //We want the position we return to be in real-world units (nanometers),
-  // not the world coords of vlib. So we must take into account
-  // the arbitrary scale applied to the Z coord by the plane.
-  if (plane->scale() > 1e-10) {
-    position[2] = position[2] / plane->scale();
-  } else {
-    // do nothing?
-  }
 
   return 0;
 }
