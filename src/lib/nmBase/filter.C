@@ -15,10 +15,13 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifndef __CYGWIN__
 #include <sys/types.h>	// pipe()
 #include <signal.h>	// kill()
+#endif
 
-#if (!defined(_WIN32) || defined(__CYGWIN__))
+#if (!defined(_WIN32) && !defined(__CYGWIN__))
 #include <unistd.h>	// fork()
 #include <sys/wait.h>	// wait()
 #endif
