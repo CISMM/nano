@@ -209,7 +209,7 @@ int ImageViewer::createWindow(char *display_name,
     window[num_windows].win_id = wid;
 
     glutReshapeWindow(w, h);
-
+    glutPositionWindow(x,y);
     //glutIdleFunc(ImageViewer::idleCallbackForGLUT); 
     glutDisplayFunc(ImageViewer::displayCallbackForGLUT);
 

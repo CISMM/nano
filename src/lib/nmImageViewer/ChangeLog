@@ -1,7 +1,7 @@
 2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* imageViewer.C (createWindow): set image buffer size to 0 to save
-	space for users that don't need this
+	space for users that don't need this; added glutPositionWindow()
 	(showWindow): took out setting of window size variables - this
 	should only happen when we get a reshape event
 
