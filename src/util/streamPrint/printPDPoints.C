@@ -35,6 +35,9 @@ static char * device_name = NULL;
 static vrpn_bool g_offsetInitialized = 0;
 static timeval g_offset;
 
+static int g_elapsed = 0;
+static int g_normalize = 0;
+
 //--------------------------------------------------------------------------
 // Handles VRPN messages
 
@@ -52,15 +55,6 @@ int handle_point (void *, vrpn_HANDLERPARAM p) {
   // the first user data.  So we hack here uglyly to display the
   // elapsed time since the first data we output.
 
-  connection->time_since_connection_open(&elapsed);
-
-  if (!g_offsetInitialized) {
-    g_offsetInitialized = 1;
-    g_offset = elapsed;
-  }
-
-  elapsed = vrpn_TimevalDiff(elapsed, g_offset);
-
   buf = &p.buffer;
   vrpn_unbuffer(buf, &x);
   vrpn_unbuffer(buf, &y);
@@ -69,8 +63,24 @@ int handle_point (void *, vrpn_HANDLERPARAM p) {
   vrpn_unbuffer(buf, &fields);
   vrpn_unbuffer(buf, &z);
 
-  printf("%d.%06d %.6f %.6f %.6f\n",
-         elapsed.tv_sec, elapsed.tv_usec, x, y, z);
+  if (g_elapsed) {
+    connection->time_since_connection_open(&elapsed);
+
+    if (g_normalize) {
+      if (!g_offsetInitialized) {
+        g_offsetInitialized = 1;
+        g_offset = elapsed;
+      }
+
+      elapsed = vrpn_TimevalDiff(elapsed, g_offset);
+    }
+
+    printf("%d.%06d %.6f %.6f %.6f\n",
+           elapsed.tv_sec, elapsed.tv_usec, x, y, z);
+  } else {
+    printf("%d.%06d %.6f %.6f %.6f\n",
+           p.msg_time.tv_sec, p.msg_time.tv_usec, x, y, z);
+  }
 
   return 0;
 }
@@ -79,7 +89,7 @@ int handle_point (void *, vrpn_HANDLERPARAM p) {
 // Argument handling
 void usage (char * program_name) {
   fprintf(stderr, "Usage: %s [-i streamfile]", program_name);
-  fprintf(stderr, " [-d device]\n");
+  fprintf(stderr, " [-d device] [-elapsed] [-normalize]\n");
   exit(-1);
 }
 
@@ -94,6 +104,10 @@ void parseArguments(int argc, char ** argv) {
       isReadingStreamFile = 1;
       device_name = new char [5 + strlen(argv[i]) + 1];
       sprintf(device_name,"file:%s", argv[i]);
+    } else if (!strcmp(argv[i], "-elapsed")){
+      g_elapsed = 1;
+    } else if (!strcmp(argv[i], "-normalize")){
+      g_normalize = 1;
     } else {
       usage(argv[0]);
     }

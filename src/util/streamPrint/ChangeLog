@@ -1,3 +1,16 @@
+2001-07-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Makefile : Fix errors.
+
+	* printFDPlanes.C (g_elapsed, g_normalize) : New globals.
+	(handle_planes) : Check new globals.
+	(usage) : Document -elapsed, -normalize.
+	(parseArguments) : Handle -elapsed, -normalize.
+	* printPDPoints.C (g_elapsed, g_normalize) : New globals.
+	(handle_points) : Check new globals.
+	(usage) : Document -elapsed, -normalize.
+	(parseArguments) : Handle -elapsed, -normalize.
+	
 2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* printFDPlanes.C : New utility to take data from a ForceDevice

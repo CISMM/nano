@@ -33,6 +33,9 @@ static   vrpn_File_Connection * fcon = NULL;
 static int isReadingStreamFile = 0;
 static char * device_name = NULL;
 
+static int g_elapsed = 0;
+static int g_normalize = 0;
+
 //--------------------------------------------------------------------------
 // Handles VRPN messages
 
@@ -60,12 +63,15 @@ int handle_plane (void * userdata, vrpn_HANDLERPARAM p) {
   //vrpn_unbuffer(&mptr, &index);
   //vrpn_unbuffer(&mptr, &cycles);
 
-  connection->time_since_connection_open(&elapsed);
+  if (g_elapsed) {
+    connection->time_since_connection_open(&elapsed);
 
-  printf("%d.%06d %.6f %.6f %.6f %.6f\n",
-         elapsed.tv_sec, elapsed.tv_usec, a, b, c, d);
-  //printf("%d.%06d %.6f %.6f %.6f %.6f\n",
-         //p.msg_time.tv_sec, p.msg_time.tv_usec, a, b, c, d);
+    printf("%d.%06d %.6f %.6f %.6f %.6f\n",
+           elapsed.tv_sec, elapsed.tv_usec, a, b, c, d);
+  } else {
+    printf("%d.%06d %.6f %.6f %.6f %.6f\n",
+           p.msg_time.tv_sec, p.msg_time.tv_usec, a, b, c, d);
+  }
 
   return 0;
 }
@@ -76,7 +82,7 @@ int handle_plane (void * userdata, vrpn_HANDLERPARAM p) {
 // Argument handling
 void usage (char * program_name) {
   fprintf(stderr, "Usage: %s [-i streamfile]", program_name);
-  fprintf(stderr, " [-d device]\n");
+  fprintf(stderr, " [-d device] [-elapsed] [-normalize]\n");
   exit(-1);
 }
 
@@ -91,6 +97,10 @@ void parseArguments(int argc, char ** argv) {
       isReadingStreamFile = 1;
       device_name = new char [5 + strlen(argv[i]) + 1];
       sprintf(device_name,"file:%s", argv[i]);
+    } else if (!strcmp(argv[i], "-elapsed")) {
+      g_elapsed = 1;
+    } else if (!strcmp(argv[i], "-normalize")) {
+      g_normalize = 1;
     } else {
       usage(argv[0]);
     }

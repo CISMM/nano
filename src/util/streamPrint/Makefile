@@ -10,7 +10,7 @@ include ../Makefile.share
 tchdissn:  printFDPlanes printTPoints printPDPoints
 
 .PHONY: printPDPoints
-printPDoints:
+printPDPoints:
 	$(MAKE) APP_NAME=printPDPoints \
 	GENERATED_SRC= \
 	EXCLUDE_SRC="nmsPrint.C streamEdit.c streamPrint.c streamToNewVrpn.C streamToVrpn.C vrpn_streamTimeFix.C vrpn_uiHeaderPrint.C vrpnsp.C vrpn_streamPrint.C vrpn_headerPrint.C printFDPlanes.C printTPoints.C" \
