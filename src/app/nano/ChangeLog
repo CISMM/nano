@@ -1,3 +1,12 @@
+2001-01-14  Tom Hudson  <hudson@cs.unc.edu>
+
+        * microscape.c (MicroscapeInitializationState) : add members
+        logPhantom, phantomLogPath
+        (MicroscapeInitializationState constructor) : initialize new members
+        (ParseArgs) : read new command line argument -logphantom
+        (Usage) : document -logphantom, fix a few line breaks
+        (main) : handle logging Phantom
+
 2000-01-08  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.h:  add autodoc comments

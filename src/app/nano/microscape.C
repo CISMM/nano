@@ -1169,6 +1169,8 @@ struct MicroscapeInitializationState {
   char peerName [256];
   vrpn_bool logInterface;
   char logPath [256];
+  vrpn_bool logPhantom;
+  char phantomLogPath [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1212,6 +1214,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   writingRemoteStream (0),
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
+  logPhantom (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
@@ -1224,6 +1227,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   remoteOutputStreamName[0] = '\0';
   peerName[0] = '\0';
   logPath[0] = '\0';
+  phantomLogPath[0] = '\0';
   logTimestamp.tv_sec = 0;
   logTimestamp.tv_usec = 0;
   colorplane[0] = '\0';
@@ -5127,6 +5131,10 @@ void ParseArgs (int argc, char ** argv,
         istate->logInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->logPath, argv[i]);
+      } else if (!strcmp(argv[i], "-logphantom")) {
+        istate->logPhantom = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->phantomLogPath, argv[i]);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -5384,8 +5392,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-collaborator port] [-peer name]\n");
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
-  fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n");
-  fprintf(stderr, "       [-logif path] [-replayif path] [-packetlimit n]\n");
+  fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n"
+"       [-logif path] [-logphantom path] [-replayif path] [-packetlimit n]\n");
   fprintf(stderr, "       [-optimistic] [-pessimistic] [-phantomrate rate]\n");
   fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
   fprintf(stderr, "       [-gverbosity n] [-cverbosity n]\n");
@@ -5472,9 +5480,12 @@ void Usage(char* s)
                           "remote rendering,\n");
   fprintf(stderr, "       connected to the named host.\n");
 
-  fprintf(stderr, "       -logif path:  open up stream files in specified "
-                          "directory to log all use of\n"
-                  "       (collaborative) interface.\n");
+  fprintf(stderr,
+"       -logif path:  open up stream files in specified directory to log all\n"
+"       use of (collaborative) interface.\n");
+  fprintf(stderr,
+"       -logphantom path:  open up stream file in specified directory to\n"
+"       log all use of phantom.\n");
   fprintf(stderr, "       -replayif path:  replay the interface (\"movie "
                           "mode\") from stream files in the\n"
                   "       specified directory.\n");
@@ -6644,8 +6655,17 @@ int main (int argc, char* argv[])
     // otherwise there is no place to store the tracker reports
     // (this space is allocated in v_create_world())
     // Initialize force, tracker, a/d device, sound
+
     VERBOSE(1,"Before tracker enable");
-    internal_device_connection = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
+
+    char phantomlog [256];
+    sprintf(phantomlog, "%s/phantom-%d.log", istate.phantomLogPath,
+            istate.logTimestamp.tv_sec);
+
+    internal_device_connection = new vrpn_Synchronized_Connection 
+           (wellKnownPorts->localDevice,
+            istate.logPhantom ? phantomlog : NULL,
+            istate.logPhantom ? vrpn_LOG_INCOMING : vrpn_LOG_NONE);
     if (peripheral_init(internal_device_connection, istate.magellanName)){
         display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
         return(-1);
