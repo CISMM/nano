@@ -49,6 +49,11 @@ BCPlane::setValue(int x, int y, float value)
     _modified = 1;
     _modified_nz = 1;
 
+    if (x < _validXMin) _validXMin = x;
+    if (x > _validXMax) _validXMax = x;
+    if (y < _validYMin) _validYMin = y;
+    if (y > _validYMax) _validYMax = y;
+
     for (int i = 0; i < _numcallbacks; i++)
 	_callbacks[i].callback(this, x,y, _callbacks[i].userdata);
 }
@@ -251,6 +256,11 @@ double BCPlane::maxAttainableValue (void) const {
 int
 BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short* o_right)
 {
+/*
+AAS - commented this out and reimplemented by maintaining a rectangular 
+region that changes whenever you set a value
+This was too innefficient.
+
     // top edge is y= numY -1, left is x = 0, etc. 
     short top = -1, left = -1, bottom =-1, right =-1;
     short x, y;
@@ -281,11 +291,25 @@ BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short*
 	    // We didn't find any valid data in this grid. 
 	    return -1;
 	}
+        _validYMax = top;
+        _validXMin = left;
+        _validXMax = right;
+        _validYMin = bottom;
+
 	*o_top = top;
 	*o_left = left;
 	*o_right = right;
 	*o_bottom = bottom;
-	return 0;
+*/
+    if (_validYMax < _validYMin || _validXMax < _validXMin) {
+      // no valid data in the grid
+      return -1;
+    }
+    *o_top = _validYMax;
+    *o_left = _validXMin;
+    *o_right = _validXMax;
+    *o_bottom = _validYMin;
+    return 0;
 } // findValidDataRange
 
 /**
@@ -529,6 +553,10 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny):
       exit(-1);
     }
 
+    _validXMin = _num_x;
+    _validXMax = -1;
+    _validYMin = _num_y;
+    _validYMax = -1;
 }
 
 
@@ -572,6 +600,10 @@ BCPlane::BCPlane(BCPlane* plane):
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
     }
+    _validXMin = _num_x;
+    _validXMax = -1;
+    _validYMin = _num_y;
+    _validYMax = -1;
 }
 
 BCPlane::BCPlane(BCPlane* plane, int newX, int newY):
@@ -608,6 +640,10 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY):
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
     }
+    _validXMin = _num_x;
+    _validXMax = -1;
+    _validYMin = _num_y;
+    _validYMax = -1;
 }
    
 

@@ -41,6 +41,8 @@ class nmb_Dataset;
 
 typedef enum {NMB_FLOAT32, NMB_UINT8, NMB_UINT16}  nmb_PixelType;
 
+#define NMB_HEIGHT_UNITS_STR "nm"
+
 class nmb_ImageBounds {
   public:
 	nmb_ImageBounds();
@@ -87,11 +89,12 @@ class nmb_ImageList;
 class nmb_Image {
         friend class nmb_ImageList;
   public:
-	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0),
+	nmb_Image():num_referencing_lists(0),
                 d_worldToImageMatrixSet(VRPN_FALSE),
                 d_imagePosition(0.0, 0.0, 1.0, 1.0),
                 d_units_scale(1.0), d_units_offset(0.0),
-                tm_scale(1), tm_offset(0)
+                d_DAC_scale(1.0), d_DAC_offset(0),
+                d_dimensionUnknown(VRPN_TRUE)
         {
            for (int i = 0; i < 4; i++){
               for (int j = 0; j < 4; j++) {
@@ -100,7 +103,7 @@ class nmb_Image {
            }
         };
         nmb_Image(nmb_Image *) {};
-	virtual ~nmb_Image (void);
+        static int deleteImage(nmb_Image *im);
 	virtual int width() const = 0;
 	virtual int height() const = 0;
 	virtual float getValue(int i, int j) const = 0;
@@ -123,6 +126,9 @@ class nmb_Image {
 	float getValueInterpolated(double i, double j) const;
 	float getValueInterpolatedNZ(double i, double j) const;
 
+        void getGradient(int i, int j, double &grad_x, double &grad_y);
+        void getGradient(double i, double j, double &grad_x, double &grad_y);
+
 	/// bounds of image in whatever units the image is in 
 	/// (note: this is more general than the current BCGrid interface since
 	///  it allows for rotation of the image coordinate system (in which we
@@ -139,6 +145,9 @@ class nmb_Image {
 
 	double widthWorld() const;
 	double heightWorld() const;
+
+        void setWidthWorld(double width);
+        void setHeightWorld(double height);
 
 	/// convert a position in an image given as a pixel location into a
 	/// position in the world coordinate system for the image
@@ -161,10 +170,16 @@ class nmb_Image {
 	virtual BCString *unitsX() = 0;
 	virtual BCString *unitsY() = 0;
 	virtual BCString *unitsValue() = 0;
+
+        /// tells you how to convert values returned by getValue() into
+        /// the units returned by unitsValue()
         virtual double valueOffset() {return d_units_offset;}
         virtual double valueScale() {return d_units_scale;}
-	vrpn_bool isHeightField() const {return is_height_field;}
-	void setHeightField(vrpn_bool flag) {is_height_field = flag;}
+
+        /// tells you how to convert the values returned by getValue() into
+        /// DAC units
+        virtual double valueOffsetDAC() {return d_DAC_offset;}
+        virtual double valueScaleDAC() {return d_DAC_scale;}
 
 	/// gives address of an array of pixels in the order
         /// row0, row1, row2, ... row<height-1>
@@ -188,10 +203,12 @@ class nmb_Image {
 	virtual int exportToFile(FILE *f, const char *export_type,
                                  const char * filename) = 0;
 
-    float tm_scale;     ///< Scale used by ThermoMicroscopes to acquire data
-    float tm_offset;    ///< Offset used by ThermoMicroscopes to acquire data
+        /// this is to give us some clue about whether or not we know anything
+        /// about the dimensions of the image in the world
+        virtual vrpn_bool dimensionUnknown();
+
   protected:
-	vrpn_bool is_height_field;
+        virtual ~nmb_Image (void);
         int num_referencing_lists;
 
         /// has d_worldToImageMatrix been set?
@@ -205,6 +222,14 @@ class nmb_Image {
         ///               (array value)*d_units_scale+d_units_offset
         double d_units_scale;
         double d_units_offset;
+
+        /// (value in DAC units) = (array value)/d_DAC_scale - d_DAC_offset
+        double d_DAC_scale;  // should have same meaning as BCPlane::tm_scale
+        double d_DAC_offset; // should have same meaning as BCPlane::tm_offset 
+        
+        /// this is to give us some clue about whether or not we know anything
+        /// about the dimensions of the image in the world
+        vrpn_bool d_dimensionUnknown;
 };
 
 /// container class for BCGrid/BCPlane-based images
@@ -219,7 +244,6 @@ class nmb_ImageGrid : public nmb_Image{
         // plane or grid
 	nmb_ImageGrid(BCPlane *p);
         nmb_ImageGrid(nmb_Image *);
-	virtual ~nmb_ImageGrid();
 	virtual int width() const;
 	virtual int height() const;
 	virtual float getValue(int i, int j) const;
@@ -269,6 +293,7 @@ class nmb_ImageGrid : public nmb_Image{
         static nmb_ImageGrid *getNextImage();
 
   protected:
+        virtual ~nmb_ImageGrid();
 	static const int     num_export_formats;
         static const char    *export_formats_list[];
 	nmb_ListOfStrings formatNames;
@@ -308,7 +333,6 @@ class nmb_ImageArray : public nmb_Image {
     nmb_ImageArray(const char *name, const char *units, short x, short y,
         nmb_PixelType pixType = NMB_FLOAT32);
     nmb_ImageArray(nmb_Image *);
-    virtual ~nmb_ImageArray();
     virtual int width() const;
     virtual int height() const;
 
@@ -377,6 +401,7 @@ class nmb_ImageArray : public nmb_Image {
 
     typedef int (*FileExportingFunction) (FILE *file, nmb_ImageArray *im, const char * filename);
   protected:
+    virtual ~nmb_ImageArray();
     static int exportToTIFF(FILE *file, nmb_ImageArray *im, const char *);
 
 

@@ -1385,8 +1385,8 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         }
 
         // Get scale and offset from the plane, not from Topo header
-        Zscale = I->tm_scale;
-        Zoffset = I->tm_offset;
+        Zscale = I->valueScaleDAC();
+        Zoffset = I->valueOffsetDAC();
 //          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
 //                  (long)iXYUnitType);
 //          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,

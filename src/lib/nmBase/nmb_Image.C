@@ -1,6 +1,6 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 #include "AbstractImage.h"
 #include "ImageMaker.h"
 
@@ -23,6 +23,18 @@ nmb_ImageBounds::nmb_ImageBounds(double x0,double y0,double x1,double y1){
     y[MIN_X_MAX_Y] = y1; y[MAX_X_MAX_Y] = y1;
 }
 
+
+//static 
+int nmb_Image::deleteImage(nmb_Image *im)
+{
+  if (im->num_referencing_lists > 0) {
+    return -1;
+  }
+  else {
+    delete im;
+    return 0;
+  }
+}
 
 // virtual
 nmb_Image::~nmb_Image (void) {
@@ -105,6 +117,48 @@ float nmb_Image::getValueInterpolatedNZ(double i, double j) const {
     return val;
 }
 
+void nmb_Image::getGradient(int i, int j, double &grad_x, double &grad_y)
+{
+  if (i < 1 || j < 1 || i > width()-2 || j > height()-2) {
+    grad_x = 0;
+    grad_y = 0;
+  } else {
+    grad_x = (0.166666)*
+           (getValue(i+1,j+1) - getValue(i-1,j+1) +
+            getValue(i+1,j)   - getValue(i-1,j) +
+            getValue(i+1,j-1) - getValue(i-1,j-1));
+    grad_y = (0.166666)*
+           (getValue(i+1,j+1) - getValue(i+1,j-1) +
+            getValue(i,j+1)   - getValue(i,j-1) +
+            getValue(i-1,j+1) - getValue(i-1,j-1));
+  }
+}
+
+void nmb_Image::getGradient(double i, double j, double &grad_x, double &grad_y)
+{
+  if (i < 1 || j < 1 || i > width()-2 || j > height()-2) {
+    grad_x = 0;
+    grad_y = 0;
+  } else {
+    double v[8];
+    v[0] = getValueInterpolated(i-1, j-1);
+    v[1] = getValueInterpolated(i-1, j);
+    v[2] = getValueInterpolated(i-1, j+1);
+    v[3] = getValueInterpolated(i, j-1);
+    v[4] = getValueInterpolated(i, j+1);
+    v[5] = getValueInterpolated(i+1, j-1);
+    v[6] = getValueInterpolated(i+1, j);
+    v[7] = getValueInterpolated(i+1, j+1);
+    grad_x = (0.166666)*
+           (v[7] - v[2] +
+            v[6] - v[1] +
+            v[5] - v[0]);
+    grad_y = (0.166666)*
+           (v[7] + v[4] + v[2] 
+          - v[5] - v[3] - v[0]);
+  }
+}
+
 double nmb_Image::widthWorld() const {
     double dx,dy;
     dx = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
@@ -121,6 +175,66 @@ double nmb_Image::heightWorld() const {
     dy = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
                 boundY(nmb_ImageBounds::MIN_X_MIN_Y);
     return sqrt(dx*dx + dy*dy);
+}
+
+void nmb_Image::setWidthWorld(double width)
+{
+    d_dimensionUnknown = vrpn_FALSE;
+    double dx, dy;
+    dx = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
+                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
+    dy = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
+                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    double currWidth = sqrt(dx*dx + dy*dy);
+    double expansion = 0.5*(width - currWidth);
+    dx /= currWidth;
+    dy /= currWidth;
+    setBoundX(nmb_ImageBounds::MAX_X_MAX_Y,
+              boundX(nmb_ImageBounds::MAX_X_MAX_Y) + expansion*dx);
+    setBoundY(nmb_ImageBounds::MAX_X_MAX_Y,
+              boundY(nmb_ImageBounds::MAX_X_MAX_Y) + expansion*dy);
+    setBoundX(nmb_ImageBounds::MAX_X_MIN_Y,
+              boundX(nmb_ImageBounds::MAX_X_MIN_Y) + expansion*dx);
+    setBoundY(nmb_ImageBounds::MAX_X_MIN_Y,
+              boundY(nmb_ImageBounds::MAX_X_MIN_Y) + expansion*dy);
+    setBoundX(nmb_ImageBounds::MIN_X_MAX_Y,
+              boundX(nmb_ImageBounds::MIN_X_MAX_Y) - expansion*dx);
+    setBoundY(nmb_ImageBounds::MIN_X_MAX_Y,
+              boundY(nmb_ImageBounds::MIN_X_MAX_Y) - expansion*dy);
+    setBoundX(nmb_ImageBounds::MIN_X_MIN_Y,
+              boundX(nmb_ImageBounds::MIN_X_MIN_Y) - expansion*dx);
+    setBoundY(nmb_ImageBounds::MIN_X_MIN_Y,
+              boundY(nmb_ImageBounds::MIN_X_MIN_Y) - expansion*dy);
+}
+
+void nmb_Image::setHeightWorld(double height)
+{
+    d_dimensionUnknown = vrpn_FALSE;
+    double dx, dy;
+    dx = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
+                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
+    dy = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
+                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    double currHeight = sqrt(dx*dx + dy*dy);
+    double expansion = 0.5*(height - currHeight);
+    dx /= currHeight;
+    dy /= currHeight;
+    setBoundX(nmb_ImageBounds::MAX_X_MAX_Y,
+              boundX(nmb_ImageBounds::MAX_X_MAX_Y) + expansion*dx);
+    setBoundY(nmb_ImageBounds::MAX_X_MAX_Y,
+              boundY(nmb_ImageBounds::MAX_X_MAX_Y) + expansion*dy);
+    setBoundX(nmb_ImageBounds::MIN_X_MAX_Y,
+              boundX(nmb_ImageBounds::MIN_X_MAX_Y) + expansion*dx);
+    setBoundY(nmb_ImageBounds::MIN_X_MAX_Y,
+              boundY(nmb_ImageBounds::MIN_X_MAX_Y) + expansion*dy);
+    setBoundX(nmb_ImageBounds::MAX_X_MIN_Y,
+              boundX(nmb_ImageBounds::MAX_X_MIN_Y) - expansion*dx);
+    setBoundY(nmb_ImageBounds::MAX_X_MIN_Y,
+              boundY(nmb_ImageBounds::MAX_X_MIN_Y) - expansion*dy);
+    setBoundX(nmb_ImageBounds::MIN_X_MIN_Y,
+              boundX(nmb_ImageBounds::MIN_X_MIN_Y) - expansion*dx);
+    setBoundY(nmb_ImageBounds::MIN_X_MIN_Y,
+              boundY(nmb_ImageBounds::MIN_X_MIN_Y) - expansion*dy);
 }
 
 /** This function assumes that (i,j) are coordinates for the basis vectors (u,v)
@@ -176,8 +290,9 @@ void nmb_Image::worldToPixel(const double x, const double y,
 }
 
 /**
- returns transformation matrix that takes points in world to points in
- normalized image coordinates with x and y in range 0..1
+ returns transformation matrix that takes points in the world which lie in the
+ image into points in
+ image coordinates with (x, y, z) in the range [0..widthWorld(),0..heightWorld]
 
  The matrix is in column major order so one may use this for the texture matrix
  in openGL
@@ -222,16 +337,19 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
     y10 = boundY(nmb_ImageBounds::MAX_X_MIN_Y);
     x01 = boundX(nmb_ImageBounds::MIN_X_MAX_Y);
     y01 = boundY(nmb_ImageBounds::MIN_X_MAX_Y);
+    
+    double imWidth = sqrt((x10-x00)*(x10-x00) + (y10-y00)*(y10-y00));
+    double imHeight = sqrt((x01-x00)*(x01-x00) + (y01-y00)*(y01-y00));
 
-    double det;
-    det = (x10-x00)*(y01-y00) - (y10-y00)*(x01-x00);
+    double det_inv;
+    det_inv = 1.0/((x10-x00)*(y01-y00) - (y10-y00)*(x01-x00));
 
-    a = (y01-y00)/det;
-    b = (x00-x01)/det;
+    a = (y01-y00)*det_inv;
+    b = (x00-x01)*det_inv;
     c = -a*x00 - b*y00;
 
-    d = (y00 - y10)/det;
-    e = (x10 - x00)/det;   
+    d = (y00 - y10)*det_inv;
+    e = (x10 - x00)*det_inv;
     f = -d*x00 - e*y00;
 
     // first row:
@@ -247,6 +365,14 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
 
     matrix44[2] = 0.0;
     matrix44[6] = 0.0;
+
+    matrix44[0] *= imWidth;
+    matrix44[4] *= imWidth;
+    matrix44[12] *= imWidth;
+    matrix44[1] *= imHeight;
+    matrix44[5] *= imHeight;
+    matrix44[13] *= imHeight;
+
     matrix44[10] = 1.0;
     matrix44[14] = 0.0;
 
@@ -260,6 +386,7 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
 void nmb_Image::setWorldToImageTransform(double *matrix44)
 {
     d_worldToImageMatrixSet = VRPN_TRUE;
+    d_dimensionUnknown = vrpn_FALSE;
     int i;
     for (i = 0; i < 16; i++){
         d_worldToImageMatrix[i] = matrix44[i];
@@ -268,7 +395,7 @@ void nmb_Image::setWorldToImageTransform(double *matrix44)
     // now we need to set the boundary of the image to keep any
     // boundary state consistent with the worldToImage transformation
 
-    nmb_ImageTransformAffine worldToImage(4,4);
+    nmb_TransformMatrix44 worldToImage;
     worldToImage.setMatrix(matrix44);
 
     if (worldToImage.hasInverse()) {
@@ -303,6 +430,11 @@ double nmb_Image::areaInWorld()
 {
   getBounds(d_imagePosition);
   return d_imagePosition.area();
+}
+
+vrpn_bool nmb_Image::dimensionUnknown()
+{
+  return d_dimensionUnknown;
 }
 
 const int nmb_ImageGrid::num_export_formats = 5;
@@ -399,13 +531,6 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
-  
-    if (strcmp(units, "nm") == 0) {
-        is_height_field = vrpn_TRUE;
-    } else {
-        is_height_field = vrpn_FALSE;
-    }
-
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
@@ -435,11 +560,7 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
-    if (strcmp(unitsValue()->Characters(), "nm") == 0) {
-        is_height_field = vrpn_TRUE;
-    } else {
-        is_height_field = vrpn_FALSE;
-    }
+
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MAX_Y, plane->minX());
     d_imagePosition.setX(nmb_ImageBounds::MAX_X_MIN_Y, plane->maxX());
@@ -448,8 +569,9 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
     d_imagePosition.setY(nmb_ImageBounds::MIN_X_MAX_Y, plane->maxY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MIN_Y, plane->minY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxY());
-    tm_scale = p->tm_scale;
-    tm_offset = p->tm_offset;
+    d_dimensionUnknown = vrpn_FALSE;
+    d_DAC_scale = p->tm_scale;
+    d_DAC_offset = p->tm_offset;
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
@@ -479,11 +601,7 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
-    if (strcmp(unitsValue()->Characters(), "nm") == 0) {
-        is_height_field = vrpn_TRUE;
-    } else {
-        is_height_field = vrpn_FALSE;
-    }
+
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MAX_Y, plane->minX());
     d_imagePosition.setX(nmb_ImageBounds::MAX_X_MIN_Y, plane->maxX());
@@ -492,6 +610,9 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
     d_imagePosition.setY(nmb_ImageBounds::MIN_X_MAX_Y, plane->maxY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MIN_Y, plane->minY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxY());
+    d_dimensionUnknown = vrpn_FALSE;
+    d_DAC_scale = plane->tm_scale;
+    d_DAC_offset = plane->tm_offset;
 }
 
 
@@ -506,11 +627,6 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
   for (i = 0; i < numExportFormats(); i++){
       BCString name = exportFormatType(i);
       formatNames.addEntry(name);
-  }
-  if (strcmp(im->unitsValue()->Characters(), "nm") == 0) {
-      is_height_field = vrpn_TRUE;
-  } else {
-      is_height_field = vrpn_FALSE;
   }
 
   units_x = *(im->unitsX());
@@ -527,10 +643,18 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
   im->getTopoFileInfo(d_topoFileDefaults);
   im->getBounds(d_imagePosition);
   d_imagePositionSet = vrpn_TRUE;
+  d_DAC_scale = im->valueScaleDAC();
+  d_DAC_offset = im->valueOffsetDAC();
+  d_dimensionUnknown = im->dimensionUnknown();
 }
 
 nmb_ImageGrid::~nmb_ImageGrid()
 {   
+    if (num_referencing_lists != 0) {
+      fprintf(stderr, "nmb_ImageGrid::~nmb_ImageGrid: Programmer Error: "
+                      " creating a dangling pointer\n");
+      exit(-1);
+    }
     if (grid) {
         delete grid;
     }
@@ -604,26 +728,31 @@ float nmb_ImageGrid::maxValidValue() {
 
 float nmb_ImageGrid::minValidValue() {
     short top, left, bottom, right;
+    float result;
     if (validDataRange(&top, &left, &bottom, &right)) {
         return 0;
     }
+
+
     if ((top == height()-1) && (bottom == 0) && 
         (right == width()-1) && (left == 0)) {
-        return minValue();
+        result = minValue();
+    } else {
+
+      fprintf(stderr, "nmb_ImageGrid::minValidValue:: Warning, "
+              "this function should be implemented more efficiently\n");
+
+      int i,j;
+      result = getValue(left, bottom);
+      float val;
+      for (i = left; i <= right; i++) {
+          for (j = bottom; j <= top; j++) {
+              val = getValue(i,j);
+              if (val < result) result = val;
+          }
+      }  
     }
 
-    fprintf(stderr, "nmb_ImageGrid::minValidValue:: Warning, "
-           "this function should be implemented more efficiently\n");
-
-    int i,j;
-    float result = getValue(left, bottom);
-    float val;
-    for (i = left; i <= right; i++) {
-        for (j = bottom; j <= top; j++) {
-            val = getValue(i,j);
-            if (val < result) result = val;
-        }
-    }
     return result;
 }
 
@@ -646,19 +775,22 @@ void nmb_ImageGrid::setValue(int i, int j, float val)
 
 int nmb_ImageGrid::validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right){
+     int result = 0;
      // if we are not the allocator then assume someone else is setting
      // values directly in the plane object without going through us and
      // so take the valid region from what the plane says
      if (!grid) {
-         return plane->findValidDataRange(o_top, o_left, o_bottom, o_right);
+         result = plane->findValidDataRange(o_top, o_left, o_bottom, o_right);
      }
      // if no valid data:
-     if (min_y_set > max_y_set || min_x_set > max_x_set)
-        return -1;
-     // otherwise at least one valid data point:
-     *o_bottom = min_y_set; *o_top = max_y_set;
-     *o_left = min_x_set; *o_right = max_x_set;
-     return 0;
+     else if (min_y_set > max_y_set || min_x_set > max_x_set) {
+         result = -1;
+     } else {
+         // otherwise at least one valid data point:
+         *o_bottom = min_y_set; *o_top = max_y_set;
+         *o_left = min_x_set; *o_right = max_x_set;
+     }
+     return result;
 }
 
 float nmb_ImageGrid::minAttainableValue() const {
@@ -703,6 +835,7 @@ void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
     // maintain some kind of backward consistency
     plane->_grid->setMinX(min(plane->minX(), x));
     plane->_grid->setMaxX(max(plane->maxX(), x));
+    d_dimensionUnknown = vrpn_FALSE;
 }
 
 void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
@@ -715,6 +848,7 @@ void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
     // maintain some kind of backward consistency
     plane->_grid->setMinY(min(plane->minY(), y));
     plane->_grid->setMaxY(max(plane->maxY(), y));
+    d_dimensionUnknown = vrpn_FALSE;
 }
 
 void nmb_ImageGrid::getBounds(nmb_ImageBounds &ib)  const
@@ -746,6 +880,7 @@ void nmb_ImageGrid::setBounds(const nmb_ImageBounds &ib)
     plane->_grid->setMinY(ib.minY());
     plane->_grid->setMaxX(ib.maxX());
     plane->_grid->setMaxY(ib.maxY());
+    d_dimensionUnknown = vrpn_FALSE;
 }
 
 BCString *nmb_ImageGrid::name() {return plane->name();}

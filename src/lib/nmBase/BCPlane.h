@@ -215,6 +215,7 @@ class BCPlane
     int _num_x, _num_y; ///< The size of the 2D _value array
     int _max_value_x_coord, _max_value_y_coord;
     int _borderXMin, _borderXMax, _borderYMin, _borderYMax;
+    int _validXMin, _validXMax, _validYMin, _validYMax;
 
     long** _sec;        ///< Times for each data point
     long** _usec;

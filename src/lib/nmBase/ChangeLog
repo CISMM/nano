@@ -1,3 +1,30 @@
+2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
+	* nmb_ImageTransform.hC: removed
+	* nmb_TransformMatrix44.hC: new class to replace nmb_ImageTransform
+	* nmb_Transform_TScShR.hC: new file that implements a specific order
+	of linear transformations followed by a translation - provides 
+	easy access to translation, scale, shear, and rotation parameters
+	and the derivatives of the transformation matrix with respect to those
+	parameters
+	* BCPlane.C (findValidDataRange): got rid of the part that scans the
+	whole image to find the valid data range - made this get computed
+	as values get set in the image so things run a lot more quickly - 
+	added _validXMin/Max, _validYMin/Max data members
+	* nmb_Image.hC (deleteImage): added this function to replace the
+	destructor to make sure that images that are still part of a list
+	don't get deleted by accident
+	(getGradient): computes x,y components of the gradient of an image
+	at a point (separate integer and float coordinate versions)
+	(setWidthWorld): convenience function that scales the image region
+	to match the specified width (x span in world)
+	(setHeightWorld): convenience function that scales the image region
+        to match the specified height (y span in world)
+	(getWorldToImageTransform): changed the concept of what image
+	coordinates are (the axes are still aligned with the image axes but
+	the units are world units instead of being normalized to the image
+	dimension) - this is in accordance with changes to the registration
+	module 
+
 2001-06-25 Jameson Miller <millerj@cs.unc.edu>
 	* BCPlane.c, .h - moved optimize_now code to its own file in nmMScope
 	directory

@@ -71,12 +71,6 @@ nmb_Dataset::nmb_Dataset
 
 
 
-	int i;
-
-  // files not loaded as grid files should not be height fields by default
-  for (i = 0; i < dataImages->numImages(); i++) {
-      dataImages->getImage(i)->setHeightField(vrpn_FALSE);
-  }
   ensureHeightPlane();
 
   // Make a friction grid from deflection data (if it exists),
