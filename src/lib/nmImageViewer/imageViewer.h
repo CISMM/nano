@@ -179,7 +179,8 @@ class ImageViewer {
     /// coordinates should be displayed in the window
     /// worldToImage specifies
     int drawImage(int winID, nmb_Image *image, 
-              double red, double green, double blue, double alpha,
+              double red = 1.0, double green = 1.0, 
+              double blue = 1.0, double alpha = 1.0,
               double *left = NULL, double *right = NULL, 
               double *bottom = NULL, double *top = NULL,
               nmb_TransformMatrix44 *worldToImage = NULL);

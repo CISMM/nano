@@ -1,3 +1,10 @@
+2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* imageViewer.C (createWindow): set image buffer size to 0 to save
+	space for users that don't need this
+	(showWindow): took out setting of window size variables - this
+	should only happen when we get a reshape event
+
 2001-07-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* imageViewer.C (drawImage): added an overloaded version of this

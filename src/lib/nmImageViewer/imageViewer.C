@@ -226,8 +226,8 @@ int ImageViewer::createWindow(char *display_name,
     window[num_windows].id = num_windows+1;
     window[num_windows].win_width = w;
     window[num_windows].win_height = h;
-    window[num_windows].im_width = window[num_windows].win_width;
-    window[num_windows].im_height = window[num_windows].win_height;
+    window[num_windows].im_width = 0;
+    window[num_windows].im_height = 0;
     window[num_windows].im_x_per_pixel = (float)window[num_windows].im_width /
                                (float)window[num_windows].win_width;
     window[num_windows].im_y_per_pixel = (float)window[num_windows].im_height /
@@ -235,26 +235,29 @@ int ImageViewer::createWindow(char *display_name,
     window[num_windows].image = NULL;
 
     int i;
-    if (pixelType == GL_FLOAT) {
-      window[num_windows].image = 
+    if ((window[num_windows].im_width > 0) && 
+        (window[num_windows].im_height > 0)) {
+      if (pixelType == GL_FLOAT) {
+        window[num_windows].image = 
                              new float[window[num_windows].im_width*
 					window[num_windows].im_height];
-      for (i = 0; i < window[num_windows].im_width*
+        for (i = 0; i < window[num_windows].im_width*
 			window[num_windows].im_height; i++){
           ((float *)(window[num_windows].image))[i] = 0.0;
-      }
-    } else if (pixelType == GL_UNSIGNED_BYTE){
-      window[num_windows].image =   
+        }
+      } else if (pixelType == GL_UNSIGNED_BYTE){
+        window[num_windows].image =   
                    new vrpn_uint8[window[num_windows].im_width*
                                   window[num_windows].im_height];
-      for (i = 0; i < window[num_windows].im_width*
+        for (i = 0; i < window[num_windows].im_width*
                         window[num_windows].im_height; i++){
           ((vrpn_uint8 *)(window[num_windows].image))[i] = 0;
-      }
-    } else {
-      fprintf(stderr,
+        }
+      } else {
+        fprintf(stderr,
              "ImageViewer::createWindow: Error, unknown pixel type\n");
-      return 0;
+        return 0;
+      }
     }
 
     num_windows++;
@@ -333,6 +336,13 @@ int ImageViewer::showWindow(int winID){
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
+    //window[win_index].win_width = window[win_index].im_width;
+    //window[win_index].win_height = window[win_index].im_height;
+    window[win_index].im_x_per_pixel = (float)window[win_index].im_width /
+                               (float)window[win_index].win_width;
+    window[win_index].im_y_per_pixel = (float)window[win_index].im_height /
+                               (float)window[win_index].win_height;
+
     int x_loc, y_loc;
 
     if (window[win_index].visible) {
@@ -378,24 +388,22 @@ int ImageViewer::showWindow(int winID){
 	}
     }
 
-    window[win_index].win_width = window[win_index].im_width;
-    window[win_index].win_height = window[win_index].im_height;
-    window[win_index].im_x_per_pixel = (float)window[win_index].im_width /
-                               (float)window[win_index].win_width;
-    window[win_index].im_y_per_pixel = (float)window[win_index].im_height /
-                               (float)window[win_index].win_height;
 
 #ifdef V_GLUT
     // this caused problems in non-cygwin winNT
 //#if (!defined(_WIN32) || defined(__CYGWIN__))
+/*
     glutPositionWindow(x_loc,y_loc);
     glutReshapeWindow(window[win_index].im_width, window[win_index].im_height);
+*/
 //#endif
 #else
+/*
     XMoveResizeWindow(dpy[window[win_index].display_index].x_dpy,
                 (*(window[win_index].win)), x_loc, y_loc,
             window[win_index].im_width,
             window[win_index].im_height);
+*/
 #endif
 
     window[win_index].visible = VRPN_TRUE;
@@ -651,7 +659,7 @@ void ImageViewer::displayCallbackForGLUT() {
     ivdd.imWidth = v->window[i].im_width;
     ivdd.imHeight = v->window[i].im_height;
 
-            // HERE'S WHERE THE IMAGE IS DRAWN
+    // HERE'S WHERE THE IMAGE IS DRAWN
     if (v->window[i].display_handler)
          v->window[i].display_handler(ivdd, 
 		v->window[i].display_handler_ud);
@@ -1131,6 +1139,7 @@ int ImageViewer::drawImageAsTexture(nmb_Image *image,
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
+    glLoadIdentity();
     glOrtho(l, r, b, t, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1223,6 +1232,7 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
   if (textureOkay) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
+    glLoadIdentity();
     glOrtho(l, r, b, t, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1241,18 +1251,18 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
     int imageWidth = image->width();
     int imageHeight = image->height();
 
-    double nmPerWindowPixelX = fabs(r - l)/(double)winWidth;
-    double nmPerWindowPixelY = fabs(t - b)/(double)winHeight;
-    double nmPerImagePixelX = 1.0/(fabs(scx)*imageWidth);
-    double nmPerImagePixelY = 1.0/(fabs(scy)*imageHeight);
+    double wuPerWindowPixelX = fabs(r - l)/(double)winWidth;
+    double wuPerWindowPixelY = fabs(t - b)/(double)winHeight;
+    double wuPerImagePixelX = 1.0/(fabs(scx)*imageWidth);
+    double wuPerImagePixelY = 1.0/(fabs(scy)*imageHeight);
 
-    double windowPixelPerImagePixelX = nmPerImagePixelX/nmPerWindowPixelX;
-    double windowPixelPerImagePixelY = nmPerImagePixelY/nmPerWindowPixelY;
+    double windowPixelPerImagePixelX = wuPerImagePixelX/wuPerWindowPixelX;
+    double windowPixelPerImagePixelY = wuPerImagePixelY/wuPerWindowPixelY;
 
     int skipRows = bordSizeYPixels;
     int skipPixels = bordSizeXPixels;
-    GLfloat transX_nm = -tx/scx; // convert from image units to world units
-    GLfloat transY_nm = -ty/scy;
+    GLfloat transX_wu = -tx/scx; // convert from image units to world units
+    GLfloat transY_wu = -ty/scy;
     
     /* XXX - the following two conditional statements are a bit nasty 
 	but it seems to work - if one follows the signs carefully I think
@@ -1266,12 +1276,12 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
       } else {
         minX = l;
       }
-      if (transX_nm < minX) {
-        skipIncX = (int)ceil((minX - transX_nm)/nmPerImagePixelX);
+      if (transX_wu <= minX) {
+        skipIncX = (int)ceil((minX - transX_wu)/wuPerImagePixelX);
         skipPixels += skipIncX;
         // add a little extra to make sure that roundoff error doesn't lead to
         // a negative and invalid raster position
-        transX_nm += skipIncX*nmPerImagePixelX + 0.01;
+        transX_wu += skipIncX*wuPerImagePixelX + 0.001;
       }
     } else {
       double maxX;
@@ -1280,12 +1290,12 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
       } else {
         maxX = r;
       }
-      if (transX_nm > maxX) {
-        skipIncX = (int)ceil((transX_nm - maxX)/nmPerImagePixelX);
+      if (transX_wu >= maxX) {
+        skipIncX = (int)ceil((transX_wu - maxX)/wuPerImagePixelX);
         skipPixels += skipIncX;
         // add a little extra to make sure that roundoff error doesn't lead to
         // a negative and invalid raster position
-        transX_nm -= skipIncX*nmPerImagePixelX + 0.01;
+        transX_wu -= skipIncX*wuPerImagePixelX + 0.001;
       }
     }
     if (scy > 0) {
@@ -1295,12 +1305,12 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
       } else {
         minY = b;
       }
-      if (transY_nm < minY) {
-        skipIncY = (int)ceil((minY - transY_nm)/nmPerImagePixelY);
+      if (transY_wu <= minY) {
+        skipIncY = (int)ceil((minY - transY_wu)/wuPerImagePixelY);
         skipRows += skipIncY;
         // add a little extra to make sure that roundoff error doesn't lead to
         // a negative and invalid raster position
-        transY_nm += skipIncY*nmPerImagePixelY + 0.01;
+        transY_wu += skipIncY*wuPerImagePixelY + 0.001;
       }
     } else {
       double maxY;
@@ -1309,12 +1319,12 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
       } else {
         maxY = b;
       }
-      if (transY_nm > maxY) {
-        skipIncY = (int)ceil((transY_nm - maxY)/nmPerImagePixelY);
+      if (transY_wu >= maxY) {
+        skipIncY = (int)ceil((transY_wu - maxY)/wuPerImagePixelY);
         skipPixels += skipIncY;
         // add a little extra to make sure that roundoff error doesn't lead to
         // a negative and invalid raster position
-        transY_nm -= skipIncY*nmPerImagePixelY + 0.01;
+        transY_wu -= skipIncY*wuPerImagePixelY + 0.001;
       }
     }
 
@@ -1323,13 +1333,14 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
     int totalColBorder = image->borderYMax() + skipRows;
     int colHeight = texheight - totalColBorder;
 
-    glRasterPos2f(transX_nm, transY_nm);
+    glRasterPos2f(transX_wu, transY_wu);
     GLfloat pos[4];
     glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
     GLboolean valid[1];
     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, valid);
     if (valid[0] != GL_TRUE) {
       printf("raster pos not valid\n");
+      return -1;
     }
     glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
