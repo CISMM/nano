@@ -876,7 +876,7 @@ determineInterval(nmb_Dataset *dataset,
 		d_todo.high(), mark.low(), mark.high());
 
     // Look for parts of the surface to recolor. 
-    int color_update_size = 5; // Must be less than max res/max stride.
+    int color_update_size = 5; // Must be less than (min res)/(max stride).
     if (d_currentState.justColor) {
         // Recolor from the top. 
         if (d_scanDirection > 0) {
@@ -920,6 +920,7 @@ determineInterval(nmb_Dataset *dataset,
         // Fixes a bug: infinite loop caused by call from build_list_set
         // when stride is 5 on a 12x12 surface. 
         d_update.clear();
+        d_color_update.clear();
     }
     // Clamp now.
 
