@@ -1,3 +1,14 @@
+2001-03-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.Ch : replaced the _border variable with _borderMinX,
+        _borderMaxX, _borderMinY, _borderMaxY and added a #define
+        PAD_IMAGE_TO_POWER_OF_TWO so that array dimensions are all padded
+        to powers of two - this makes it possible to load images as textures
+        without copying them or using gluBuild2DMipmaps
+        * nmb_Image.Ch : replaced the border() function with borderMinX(),
+        borderMaxX(), borderMinY(), borderMaxY() and made a change to
+        nmb_ImageArray analogous to that made in BCPlane
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* BCGrid.C (readPPMorPGMFile): creates a NOT_TIMED plane instead

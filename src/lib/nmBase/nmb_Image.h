@@ -167,8 +167,11 @@ class nmb_Image {
         /// row0, row1, row2, ... row<height-1>
 	virtual void *pixelData() = 0;
 
-        /// gives the border width for data returned by pixelData
-        virtual int border() = 0;
+        /// gives the border widths for data returned by pixelData
+        virtual int borderXMin() = 0;
+        virtual int borderXMax() = 0;
+        virtual int borderYMin() = 0;
+        virtual int borderYMax() = 0;
 
         /// tells you the size of the array returned by pixelData()
         virtual int arrayLength() = 0;
@@ -238,7 +241,10 @@ class nmb_ImageGrid : public nmb_Image{
         virtual void setTopoFileInfo(TopoFile &tf);
         virtual void getTopoFileInfo(TopoFile &tf);
         virtual void *pixelData();
-        virtual int border();
+        virtual int borderXMin();
+        virtual int borderXMax();
+        virtual int borderYMin();
+        virtual int borderYMax();
         virtual int arrayLength();
 	virtual nmb_PixelType pixelType();
         virtual int numExportFormats();
@@ -338,7 +344,10 @@ class nmb_ImageArray : public nmb_Image {
     virtual void *pixelData();
 
     /// gives the border width for data returned by pixelData
-    virtual int border();
+    virtual int borderXMin();
+    virtual int borderXMax();
+    virtual int borderYMin();
+    virtual int borderYMax();
 
     /// tells you the size of the array returned by pixelData()
     virtual int arrayLength();
@@ -359,8 +368,9 @@ class nmb_ImageArray : public nmb_Image {
             (FILE *file, nmb_ImageArray *im);
   protected:
     int arrIndex(int i, int j) const
-      { return (i+d_border+(j+d_border)*(num_x+2*d_border));}
-    int pixelSize() 
+      { return (i+d_borderXMin+(j+d_borderYMin)*
+                               (num_x+d_borderXMin+d_borderXMax));}
+    int pixelSize()
     {
       switch(d_pixelType) {
         case NMB_FLOAT32:
@@ -380,7 +390,7 @@ class nmb_ImageArray : public nmb_Image {
 
     void *data;
     short num_x, num_y;
-    short d_border;
+    short d_borderXMin, d_borderXMax, d_borderYMin, d_borderYMax;
     BCString units_x, units_y, units, my_name;
     short min_x_set, min_y_set, max_x_set, max_y_set;
 

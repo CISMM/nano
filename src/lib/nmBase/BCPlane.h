@@ -95,7 +95,8 @@ class BCPlane
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
     inline float value(int x, int y) const 
-       { return _value[x + _border + (y + _border)* (_num_x+2*_border)]; }
+       { return _value[x + _borderXMin + (y + _borderYMin)*
+                                         (_borderXMin+_num_x+_borderXMax)]; }
     int valueAt (double * result, double x, double y);
     
     float interpolatedValue(double x, double y);
@@ -210,7 +211,7 @@ class BCPlane
     float * _value;
     int _num_x, _num_y;    
     int _max_value_x_coord, _max_value_y_coord;
-    int _border;
+    int _borderXMin, _borderXMax, _borderYMin, _borderYMax;
 
     long** _sec;
     long** _usec;

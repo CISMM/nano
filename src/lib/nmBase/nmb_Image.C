@@ -8,6 +8,8 @@
 #include <float.h> // for FLT_MAX
 #endif
 
+#define PAD_IMAGE_TO_POWER_OF_TWO
+
 nmb_ImageBounds::nmb_ImageBounds() 
 {
     nmb_ImageBounds(0.0, 0.0, 0.0, 0.0);
@@ -712,12 +714,15 @@ void nmb_ImageGrid::getTopoFileInfo(TopoFile &tf)
 
 void *nmb_ImageGrid::pixelData() { return (void *)(plane->flatValueArray());}
 
-int nmb_ImageGrid::border() { return plane->_border;}
-
+int nmb_ImageGrid::borderXMin() { return plane->_borderXMin;}
+int nmb_ImageGrid::borderXMax() { return plane->_borderXMax;}
+int nmb_ImageGrid::borderYMin() { return plane->_borderYMin;}
+int nmb_ImageGrid::borderYMax() { return plane->_borderYMax;}
 
 int nmb_ImageGrid::arrayLength() 
 { 
-   return ((2*border()+width())*(2*border()+height()));
+   return ((borderXMin()+width()+borderXMax())*
+           (borderYMin()+height()+borderYMax()));
 }
 
 
@@ -817,7 +822,8 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
                                           nmb_PixelType pixType):
         nmb_Image(), 
         fData(NULL),ucData(NULL), usData(NULL), data(NULL),
-        num_x(x), num_y(y), d_border(1),
+        num_x(x), num_y(y), d_borderXMin(1), d_borderXMax(1),
+        d_borderYMin(1), d_borderYMax(1),
         units_x("none"), units_y("none"), units("ADC"),
         my_name(name),
         d_minNonZeroValueComputed(VRPN_FALSE),
@@ -836,19 +842,51 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
     int array_size = 0;
     // pick a border that preserves 32-bit-alignment of rows
+    // and pads the size up to a power of 2
+
+#ifdef PAD_IMAGE_TO_POWER_OF_TWO
+    // figure out how much to add to nx and ny to get to the next power of two
+    int nx_test = num_x;
+    int ny_test = num_y;
+    int nx_round = 1;
+    int ny_round = 1;
+    while (nx_test > 1) {
+       nx_test /= 2;
+       nx_round *= 2;
+    }
+    if (nx_round < num_x) {
+       nx_round *= 2;
+    }
+    while (ny_test > 1) {
+       ny_test /= 2;
+       ny_round *= 2;
+    }
+    if (ny_round < num_y) {
+       ny_round *= 2;
+    }
+    d_borderXMin = (nx_round-num_x)/2;
+    d_borderXMax = (nx_round - num_x - d_borderXMin);
+    d_borderYMin = (ny_round-num_y)/2;
+    d_borderYMax = (ny_round - num_y - d_borderYMin);
+#else
+    if (d_pixelType == NMB_UINT8) {
+       d_borderXMin = 2;
+       d_borderXMax = 2;
+       d_borderYMin = 2;
+       d_borderYMax = 2;
+    }
+#endif
+
     switch (d_pixelType) {
       case NMB_FLOAT32:
-        d_border = 1;
         array_size = arrayLength();
         data = new vrpn_float32[array_size];
         break;
       case NMB_UINT8:
-        d_border = 2;
         array_size = arrayLength();
         data = new vrpn_uint8[array_size];
         break;
       case NMB_UINT16:
-        d_border = 1;
         array_size = arrayLength();
         data = new vrpn_uint16[array_size];
         break;
@@ -928,11 +966,14 @@ int nmb_ImageArray::width() const {return num_x;}
 
 int nmb_ImageArray::height() const {return num_y;}
 
-int nmb_ImageArray::border() {return d_border;}
+int nmb_ImageArray::borderXMin() {return d_borderXMin;}
+int nmb_ImageArray::borderXMax() {return d_borderXMax;}
+int nmb_ImageArray::borderYMin() {return d_borderYMin;}
+int nmb_ImageArray::borderYMax() {return d_borderYMax;}
 
 int nmb_ImageArray::arrayLength() 
 {
-   return ((2*d_border+num_x)*(2*d_border+num_y));
+   return ((d_borderXMin+num_x+d_borderXMax)*(d_borderYMin+num_y+d_borderYMax));
 }
 
 nmb_PixelType nmb_ImageArray::pixelType() {return d_pixelType;}
@@ -992,17 +1033,19 @@ void nmb_ImageArray::setValue(int i, int j, float val)
 } 
 
 void nmb_ImageArray::setLine(int line, void *line_data) {
+  int index = (line+d_borderYMin)*
+              (num_x+d_borderXMin+d_borderXMax)+d_borderXMin;
   switch(d_pixelType) {
     case NMB_FLOAT32:
-      memcpy(&(fData[(line+d_border)*(num_x+2*d_border)+d_border]),
+      memcpy(&(fData[index]),
                line_data, num_x*sizeof(vrpn_float32));
       break;
     case NMB_UINT8:
-      memcpy(&(ucData[(line+d_border)*(num_x+2*d_border)+d_border]),
+      memcpy(&(ucData[index]),
                line_data, num_x*sizeof(vrpn_uint8));
       break;
     case NMB_UINT16:
-      memcpy(&(usData[(line+d_border)*(num_x+2*d_border)+d_border]),
+      memcpy(&(usData[index]),
                line_data, num_x*sizeof(vrpn_uint16));
       break;
     default:
