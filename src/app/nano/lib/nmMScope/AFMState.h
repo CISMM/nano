@@ -185,8 +185,11 @@ struct AFMModifyState {
     ///< point results in favor of FC results. 
 
   // parameter for Poly-line tool
+  // step size not sent to microscope, and 
+  // we need both to be TclNet vars so 
+  // modify live step size is also shared
   TclNet_float step_size;
-//  TclNet_float new_step_size;
+  TclNet_float new_step_size;
 
    // parameters for Direct Z control
   Tclvar_float max_z_step;

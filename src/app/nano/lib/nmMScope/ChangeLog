@@ -1,3 +1,8 @@
+2002-05-22 Jameson Miller <millerj@cs.unc.edu>
+	*AFMState.h - both modifyp_step_size and newmodifyp_step_size
+		are TclNEt variables so collaborators can see changes
+		in the modify live window.
+
 2002-05-16 Jameson Miller <millerj@cs.unc.edu>
 	* AFMState.C (.h) : added new TCL variables to toggle  taking data
 	continuosly wor not when paused in slow line mode.
