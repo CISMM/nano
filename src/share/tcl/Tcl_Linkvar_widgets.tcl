@@ -367,6 +367,16 @@ proc setEntry {entry var } {
     $entry configure -textbackground $mybg
 }
 
+# Called when the user hits "Esc" in the entry widget
+proc revertEntry {entry var } {
+    upvar #0 $entry.textbg mybg
+    upvar #0 $var varval 
+#    puts "revertEntry $var $varval"
+    $entry delete 0 end 
+    $entry insert 0 $varval 
+    $entry configure -textbackground $mybg
+}
+
 #Called when the user types a new character in the entry widget
 # Warns them that their changes have not been finalized.
 proc setWarnBackground { entry name element op } {
@@ -401,6 +411,9 @@ proc generic_entry { name var label validation} {
     # Find out when the global variable connected with the entry
     # gets set by someone else.
     trace variable varval w "updateEntry $name $var "
+
+    # Allow the user to hit "Esc" to go back to the old value
+    bind [$name component entry] <Escape> "revertEntry $name $var"
 
     return $name
 }
