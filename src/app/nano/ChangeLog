@@ -1,3 +1,10 @@
+2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* CollaborationManager.C (setPeerName) :  add diagnostics
+	* collaboration.C :  delete entire file contents and replace with
+        comment about intended unfufilled purpose of file
+	* microscopeHandlers.C (cause_grid_redraw) :  delete dead code
+
 2000-10-02  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 	
 	* CollaborationManager.C (CollaborationManager::initialize) :

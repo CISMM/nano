@@ -393,6 +393,9 @@ void CollaborationManager::setPeerName
                            d_log, d_NIC_IP);
   }
 
+  collabVerbose(1, "CollaborationManager::setPeerName:  Remote is %ld.\n",
+                d_peerRemote);
+
   // Open peerHand and peerMode
 
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", d_logPath, d_logTime);
@@ -404,14 +407,21 @@ void CollaborationManager::setPeerName
     sprintf(peerModeName, "userModeServer0@%s:%d", newName, d_peerPort);
   }
 
+  collabVerbose(1, "CollaborationManager::setPeerName:  "
+                   "seeking %s and %s.\n", peerHandName, peerModeName);
+
   d_peerHand = new vrpn_Tracker_Remote (peerHandName);
   if (d_peerHand) {
     d_peerHand->register_change_handler (handChangeData, handChangeCB);
+    collabVerbose(1, "CollaborationManager::setPeerName:  "
+                     "Tracker is using %ld.\n", d_peerHand->connectionPtr());
   }
 
   d_peerMode = new vrpn_Analog_Remote (peerModeName);
   if (d_peerMode) {
     d_peerMode->register_change_handler (modeChangeData, modeChangeCB);
+    collabVerbose(1, "CollaborationManager::setPeerName:  "
+                     "Analog is using %ld.\n", d_peerMode->connectionPtr());
   }
 
   // Figure out who does the synchronizing

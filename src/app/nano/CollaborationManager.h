@@ -76,7 +76,8 @@ class CollaborationManager {
                       void * modeChangeData,
                       void (* modeChangeCB) (void *, const vrpn_ANALOGCB));
       ///< Connect to the named peer, calling the given callbacks in case
-      ///< of change of peer's hand position or interface mode.
+      ///< of change of peer's hand position or interface mode.  Naming
+      ///< must be by DNS name to guarantee correct collaboration.
 
 
     vrpn_Connection * peerServerConnection (void);

@@ -870,41 +870,7 @@ void handle_scanline_accept (vrpn_int32, void * _mptr) {
 */
 void cause_grid_redraw (vrpn_float64, void *) {
 
-#if 1
-
   graphics->causeGridRedraw();
-
-#else
-
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-                                (dataset->heightPlaneName->string());
-
-        // Force a redraw of the entire surface
-        dataset->range_of_change.ChangeAll();
-
-        // Move the measure lines to the correct new position
-        if (plane != NULL) {
-                //decoration->red_bot[X] = decoration->red_top[X];
-                //decoration->red_bot[Y] = decoration->red_top[Y];
-                //decoration->blue_bot[X] = decoration->blue_top[X];
-                //decoration->blue_bot[Y] = decoration->blue_top[Y];
-                //decoration->green_bot[X] = decoration->green_top[X];
-                //decoration->green_bot[Y] = decoration->green_top[Y];
-                //decoration->red_top[Z] = decoration->green_top[Z] =
-                     //decoration->blue_top[Z] =
-                            //plane->maxAttainableValue() * plane->scale();
-                //decoration->red_bot[Z] = decoration->green_bot[Z] =
-                     //decoration->blue_bot[Z] =
-                            //plane->minAttainableValue() * plane->scale();
-            //decoration->red_changed = 1;
-            //decoration->green_changed = 1;
-            //decoration->blue_changed = 1;
-            decoration->red.normalize(plane);
-            decoration->green.normalize(plane);
-            decoration->blue.normalize(plane);
-        }
-
-#endif
 
 }
 
