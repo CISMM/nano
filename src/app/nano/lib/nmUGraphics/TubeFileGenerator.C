@@ -10,6 +10,7 @@
 using std::vector;
 #endif
 
+#include <nmb_Dataset.h>
 
 #include "URender.h"
 #include "TubeFileGenerator.h"
@@ -41,12 +42,7 @@ pid_t getpid();
 const double PI = 3.1415926535;
 
 
-
-
-int step = 20;  // only do every "step"th point along axis
-int cur_step = 0;
-
-
+extern nmb_Dataset * dataset;
 
 
 
@@ -85,6 +81,8 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	float radius, x, y, z, az, alt;
 	double theta;
 	int imageX, imageY;
+	int cur_step = 0;
+	double scale_factor;
 
 //	tubes t;				// gives a bunch of warnings because the name is too big...
 	verts t[10];			// go with static number for now...  10 tubes allowed
@@ -112,8 +110,6 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 	q_from_euler(coord_fix, -PI / 2, 0, 0);		// coordinate systems are different
 												// this fixes it
-	q_vec_set(trans, 0, 400, 0);
-
 	readfile.open(filename);
     assert(readfile);
 
@@ -140,6 +136,12 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 				token = strtok(NULL, " \t\n");
 				imageY = atoi(token);
+
+				scale_factor = dataset->inputGrid->getPlaneByName
+							(dataset->heightPlaneName->string())->maxX() / imageX;
+
+				// set up the translation to correct for the 90 degree rotation
+				q_vec_set(trans, 0, imageX * scale_factor, 0);
 			}
 			else if (strcmp(token, "radius") == 0) {
 				// if not first tube, add to tubes
@@ -158,6 +160,10 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				// get the radius of the new tube
 				token = strtok(NULL, " =\t\n");
 				radius = atof(token);
+
+				// scale to correct size
+				radius *= scale_factor;
+
 			}
 			else {			// should contain numerical data
 				if (cur_step++ % Pobject->GetAxisStep() == 0) {
@@ -185,12 +191,16 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 					x = atof(token);
+					// scale to correct size
+					x *= scale_factor;
 
 					token = strtok(NULL, " \t\n");
 					y = atof(token);
+					// scale to correct size
+					y *= scale_factor;
 
 					z = radius;
-	
+
 					// skip X3D, Y3D, Z3D
 					token = strtok(NULL, " \t\n");
 					token = strtok(NULL, " \t\n");
@@ -198,7 +208,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 					token = strtok(NULL, " \t\n");
-					az = atof(token) + PI / 2;
+					az = atof(token);
 					token = strtok(NULL, " \t\n");
 					// buggy alt output from shape analysis...just set to zero for now
 //					alt = atof(token);
@@ -206,6 +216,11 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 					// set up medial axis point
 					q_vec_set(p1, x, y, z);
+
+					// coordinate systems are different
+					// this fixes it
+					q_xform(p1, coord_fix, p1);
+					q_vec_add(p1, p1, trans);		// hack translation for goodone.tif
 
 					// set up rotation quat
 					q_from_euler(q, az, 0, alt);
@@ -216,9 +231,9 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 						v.clear();
 
 						// set point
-						q_vec_set(p2,	x + radius * cos(theta),
-										y,
-										z + radius * sin(theta));
+						q_vec_set(p2,	p1[0] + radius * cos(theta),
+										p1[1],
+										p1[2] + radius * sin(theta));
 
 						// translate point to origin
 						q_vec_subtract(p2, p2, p1);
@@ -229,12 +244,6 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 						// translate back
 						q_vec_add(p2, p2, p1);
 
-						// coordinate systems are different
-						// this fixes it
-						q_xform(p2, coord_fix, p2);
-
-						q_vec_add(p2, p2, trans);
-	
 						v.push_back(p2[0]);
 						v.push_back(p2[1]);
 						v.push_back(p2[2]);
@@ -245,14 +254,14 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 						Pobject->num_triangles += 2;	// two triangles per vertex
 					}
 					// do cylinder stuff
-					c.x1 = p2[0];
-					c.y1 = p2[1];
-					c.z1 = p2[2];
+					c.x1 = p1[0];
+					c.y1 = p1[1];
+					c.z1 = p1[2];
 					if (!newtube) {	
 						// fill in last guys second point
-						cs.back().x2 = p2[0];
-						cs.back().y2 = p2[1];
-						cs.back().z2 = p2[2];
+						cs.back().x2 = p1[0];
+						cs.back().y2 = p1[1];
+						cs.back().z2 = p1[2];
 						// fill in length
 						cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
 												(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
@@ -260,7 +269,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 																					
 					}
 					c.radius = radius;
-					c.az = az;		// change in coordinate system
+					c.az = az + PI / 2;
 					c.alt = alt;
 					cs.push_back(c);
 					newtube = false;
@@ -289,6 +298,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		memcpy(&Pobject->cylinders[i], &cs[i], sizeof(c));
 	}
 
+/*
 	for (i = 0; i < Pobject->num_cylinders; i++) {
 		printf("x1 = %f\n", Pobject->cylinders[i].x1);
 		printf("y1 = %f\n", Pobject->cylinders[i].y1);
@@ -301,6 +311,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		printf("azimuth = %f\n", Pobject->cylinders[i].az);
 		printf("altitude = %f\n\n", Pobject->cylinders[i].alt);
 	}
+*/
 
 
 
