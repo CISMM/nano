@@ -696,3 +696,69 @@ void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
 
 }
 
+
+nmui_HSDirectZPlane::nmui_HSDirectZPlane (nmb_Dataset * dataset, nmb_Decoration * dec) :
+nmui_HapticSurface (),
+d_dataset (dataset),
+d_decoration(dec) {
+}
+
+nmui_HSDirectZPlane::~nmui_HSDirectZPlane(void) {
+	
+}
+
+//this mode is used when we have exceeded the force setpoint limit in direct Z
+void nmui_HSDirectZPlane::update(nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
+	
+	// set up force plane whose origin is at the last point set by directZ
+	// and whose normal is up
+	BCPlane * plane = dataset->inputGrid->getPlaneByName
+                     (dataset->heightPlaneName->string());
+  if (!plane) {
+      fprintf(stderr, "nmui_HSDirectZPlane::update:  could not get plane!\n");
+      return;
+  }
+
+  //force is up
+  q_vec_type		up = { 0.0, 0.0, 1.0 };
+  
+  if(offset > 0) { offset = offset - 5; }
+
+  d_planePosPH[0] = last_point[0];
+  d_planePosPH[1] = last_point[1];
+  d_planePosPH[2] = last_point[2] - offset;
+
+ //---------------------------------------------------------------------
+  // Rotate, Xlate and scale point from world space to ARM space.
+  // The normal direction just needs rotating. Compute the plane
+  // equation that corresponds to the given point and normal.
+
+  pointToTrackerFromWorld(d_planePosPH, d_planePosPH);
+  vectorToTrackerFromWorld(d_currentPlaneNormal, up);
+
+  VectorNormalize(d_currentPlaneNormal);
+
+  d_currentPlaneParameter = - q_vec_dot_product(d_currentPlaneNormal,
+                                                d_planePosPH);
+
+  computeDistanceFromPlane();
+  
+
+}
+
+void nmui_HSDirectZPlane::set_direct_z_plane(double x, double y, double z) {
+
+	BCPlane * plane = dataset->inputGrid->getPlaneByName
+		(dataset->heightPlaneName->string());
+	if (!plane) {
+		fprintf(stderr, "nmui_HSDirectZPlane::update:  could not get plane!\n");
+		return;
+	}
+	
+	last_point[0] = x;
+	last_point[1] = y;
+	last_point[2] = z;
+
+	offset = 50;
+	
+}

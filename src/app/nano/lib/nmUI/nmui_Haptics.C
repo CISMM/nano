@@ -8,6 +8,7 @@ nmui_HapticsManager::nmui_HapticsManager (void) :
     d_livePlane  (NULL),
     d_feelAhead  (NULL),
     d_directZ  (NULL),
+	d_directZPlane (NULL),
 
     d_gridFeatures  (NULL),
     d_pointFeatures  (NULL),

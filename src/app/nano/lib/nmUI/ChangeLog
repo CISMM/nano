@@ -1,3 +1,11 @@
+2002-05-27 Jameson Miller <millerj@cs.unc.edu>
+	* nmui_HapticSurface.C (.h) new mode set up for feeling
+	plane when direct Z force exceeded. 
+	new class : nmui_HSDirectZPlane and corresponding functions
+
+	* nmui_Haptics.C (.h) 
+	added in nmui_HSDirectZPlane into nmui_hapticsManager class/
+
 2002-04-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmui_ColorMap.C (setupSynchronization):  added surface color vars

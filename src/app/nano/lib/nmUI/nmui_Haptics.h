@@ -14,6 +14,7 @@ class nmui_HSMeasurePlane;
 class nmui_HSLivePlane;
 class nmui_HSFeelAhead;
 class nmui_HSDirectZ;
+class nmui_HSDirectZPlane;
 
 class nmui_GridFeatures;
 class nmui_PointFeatures;
@@ -45,6 +46,7 @@ class nmui_HapticsManager {
     nmui_HSLivePlane * d_livePlane;
     nmui_HSFeelAhead * d_feelAhead;
     nmui_HSDirectZ * d_directZ;
+	nmui_HSDirectZPlane * d_directZPlane;
 
     nmui_GridFeatures * d_gridFeatures;
     nmui_PointFeatures * d_pointFeatures;

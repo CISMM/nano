@@ -127,7 +127,26 @@ class nmui_HSCanned : public nmui_HapticSurface {
     int d_gridY;
 
 };
+/** \class nmui_HSDirectZPlane
+ * after user has hit setpoint in Direct Z, introduce a plane force
+ * plane is flat located at a the height right before we entered this mode
+ *
+*/
 
+class nmui_HSDirectZPlane : public nmui_HapticSurface {
+
+public:
+	nmui_HSDirectZPlane(nmb_Dataset *, nmb_Decoration *);
+	virtual ~nmui_HSDirectZPlane(void);
+	virtual void update(nmb_Dataset *, nmm_Microscope_Remote *);
+	void set_direct_z_plane(double, double, double);
+
+protected: 
+	    nmb_Dataset * d_dataset;
+		nmb_Decoration * d_decoration;
+		double last_point [3];
+		double offset;
+};
 
 /** \class nmui_HSMeasurePlane
  * Lets the user feel the plane defined by the contact points of the
