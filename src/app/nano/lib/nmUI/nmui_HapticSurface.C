@@ -534,7 +534,7 @@ void nmui_HSFeelAhead::updateModel (void) {
 
   // Send the vertices
 
-  l = d_microscope->state.data.receivedPointList;
+  l = &d_microscope->state.data.receivedPointList;
   for (i = 0; i < l->numEntries(); i++) {
     p = l->entry(i);
     d_device->setVertex(i, p->x(), p->y(), p->z());

@@ -1,3 +1,8 @@
+2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmui_HapticSurface.C (nmui_HSFeelAhead::updateModel) : change
+        pointer to instance from AFMDataset
+
 2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_Component.C : add d_numVars, d_vars data members
