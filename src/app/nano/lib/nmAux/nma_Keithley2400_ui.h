@@ -58,11 +58,13 @@ public:
   Tclvar_float sweep_stop;
   Tclvar_float sweep_stepsize;
   // If this variable is set, stepsize won't propagate changes to numpoints.
-  int stepsize_update_from_c    ;
+  int stepsize_update_from_c;
   
   Tclvar_int sweep_numpoints;
   Tclvar_float sweep_delay;
   Tclvar_int num_sweeps;
+  Tclvar_float initial_delay;
+  Tclvar_int zero_after_meas;
   
   Tclvar_int display_enable;
   
@@ -111,6 +113,9 @@ public:
   // one sets the other.  We _only_ send numpoints to the Keithley.
   static void handle_numpoints_change(vrpn_int32 /*_newvalue*/, void *_userdata);
   static void handle_startstop_change(vrpn_float64 /*_newvalue*/, void *_userdata);
+
+  static void handle_initial_delay_change( vrpn_float64 /*newvalue*/, void *userdata );
+  static void handle_zero_after_meas_change( vrpn_int32 /*newvalue*/, void *userdata );
   
   int set_voltage_vector();
   

@@ -56,6 +56,8 @@ nma_Keithley2400_ui::nma_Keithley2400_ui( Tcl_Interp *interp,
    sweep_numpoints("vi(sweep_numpoints)", 21),
    sweep_delay("vi(sweep_delay)", 0.01),
    num_sweeps("vi(num_sweeps)", 1),
+   initial_delay("vi(initial_delay)", 0 ),
+   zero_after_meas("vi(zero_after_meas)", 0 ),
    
    display_enable("vi(display_enable)", 1),
    
@@ -262,6 +264,26 @@ handle_startstop_change(vrpn_float64 /*_newvalue*/, void *_userdata) {
 
 
 void nma_Keithley2400_ui::
+handle_initial_delay_change( vrpn_float64 /*newvalue*/, void *userdata )
+{
+  nma_Keithley2400_ui * me = (nma_Keithley2400_ui *) userdata;
+  me->keithley2400->d_initial_delay = me->initial_delay;
+  // don't send all settings to the keithley, since this is used 
+  // internally in Keithley2400
+}
+
+
+void nma_Keithley2400_ui::
+handle_zero_after_meas_change( vrpn_int32 /*newvalue*/, void *userdata )
+{
+  nma_Keithley2400_ui * me = (nma_Keithley2400_ui *) userdata;
+  me->keithley2400->d_zero_after_meas = me->zero_after_meas;
+  // don't send all settings to the keithley, since this is used 
+  // internally in Keithley2400
+}
+
+  
+void nma_Keithley2400_ui::
 handle_take_iv_curves(vrpn_int32 /*_newvalue*/, void *_userdata) {
   nma_Keithley2400_ui * me = (nma_Keithley2400_ui *)_userdata;
   me->expected_num_data_vecs = me->num_data_vecs + me->num_sweeps;
@@ -314,6 +336,10 @@ int nma_Keithley2400_ui::set_tcl_callbacks()
   sweep_numpoints = keithley2400->d_sweep_numpoints;
   sweep_delay = keithley2400->d_sweep_delay;
   sweep_delay.addCallback(handle_float_param_change, this);
+  initial_delay = keithley2400->d_initial_delay;
+  initial_delay.addCallback( handle_initial_delay_change, this );
+  zero_after_meas = keithley2400->d_zero_after_meas;
+  zero_after_meas.addCallback( handle_zero_after_meas_change, this );
   num_sweeps = 1;
   display_enable = keithley2400->d_display_enable;
   display_enable.addCallback(handle_int_param_change, this);

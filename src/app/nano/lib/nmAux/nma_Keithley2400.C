@@ -462,7 +462,7 @@ int nma_Keithley2400::send_AcquireData()
 			" couldn't send message.\n");
 		return -1;
 	}
-	vrpn_SleepMsecs( 1000 );
+	vrpn_SleepMsecs( 1000 * d_initial_delay );
 	
 	// reset all the values to those we want for measurement
 	send_AllSettings();

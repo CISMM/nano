@@ -1,5 +1,11 @@
 2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
 
+	* nma_Keithley_ui.[h,C]:  new Tcl data members, initial_delay and 
+	zero_after_meas, and handlers for them, handle_*_change.
+	* nma_Keithley2400.C:  waits the correct initial delay
+
+2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
+
 	* nma_Keithley2400_ui.C (set_voltage_vector):  removed, unused.
 
 	* nma_Keithley2400.h:  new data members, d_inital_delay and
