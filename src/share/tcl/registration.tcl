@@ -170,14 +170,6 @@ pack $nmInfo(registration).texture.image_mode_model -anchor nw
 checkbutton $nmInfo(registration).texture.grab_texture \
     -text "Grab Texture" -variable reg_grab_texture -command grab_texture_proc
 
-pack $nmInfo(registration).texture.grab_texture -anchor nw
-
-proc grab_texture_proc {} {
-    global import_grab_object
- 
-    set import_grab_object 0
-}
-
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
 	-labelpos nw

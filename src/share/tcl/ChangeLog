@@ -1,3 +1,10 @@
+2002-06-06 David Borland <borland@cs.unc.edu>
+
+        * import.tcl : minor change because there is no longer a grab texture
+	button in registration.tcl
+
+	* registration.tcl : removed grab texture button
+
 2002-06-05 Jameson Miller <millerj@cs.unc.edu>
 	*directStep.tcl - add direct step controls into the device only list.
 

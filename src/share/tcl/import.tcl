@@ -144,13 +144,7 @@ button $nmInfo(basic_options).f1.import_lock_transall_button \
 checkbutton $nmInfo(basic_options).f1.import_update_AFM \
      -text "Update AFM" -variable import_update_AFM
 checkbutton $nmInfo(basic_options).f1.import_grab_object \
-     -text "Grab Object" -variable import_grab_object -command grab_object_proc
-
-proc grab_object_proc {} {
-    global reg_grab_texture
-
-    set reg_grab_texture 0
-}
+     -text "Grab Object" -variable import_grab_object
 
 
 #generic_entry $nmInfo(basic_options).f2.import_rotx import_rotx \
