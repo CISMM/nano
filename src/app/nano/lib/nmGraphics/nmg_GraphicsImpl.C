@@ -2064,16 +2064,20 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   }
 
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+
+#ifdef sgi
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
         g_tex_installed_width[SEM_DATA_TEX_ID],
         g_tex_installed_height[SEM_DATA_TEX_ID],
         0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-/*
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
-	g_tex_installed_width[SEM_DATA_TEX_ID],
-	g_tex_installed_height[SEM_DATA_TEX_ID],
-	GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-*/
+#else 
+  // WIN_32 openGL does funky stuff at the texture border if you try to use
+  // an RGBA texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+        g_tex_installed_width[SEM_DATA_TEX_ID],
+        g_tex_installed_height[SEM_DATA_TEX_ID],
+        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
+#endif
   delete [] sem_data;
   
   if (report_gl_errors()) {

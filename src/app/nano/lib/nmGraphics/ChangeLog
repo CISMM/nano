@@ -1,5 +1,13 @@
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
+        * nmg_GraphicsImpl.C (initializeTextures) : initializes the texture
+        matrix for SEM data to be RGB instead of RGBA (on PC only) in order 
+        to fix a weird problem at the texture border (this is probably
+        graphics-card-specific and it doesn't limit us at the moment because
+        we're not using the alpha channel)
+
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
 	* graphics.c (buildRemoteRenderedTexture) : added initialization of
 	the new variables g_tex_image_offsetx and g_tex_image_offsety 
 	(this has to do with displaying a texture that includes a border)
