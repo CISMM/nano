@@ -1,3 +1,7 @@
+2003-04-04    <marshbur@cs.unc.edu>
+
+	* nmReg.dsp:  fixed include directories for release build
+
 2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.C (printJointHistograms): changed format from
