@@ -47,7 +47,7 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope ZagToCenter");
 
     d_FeelTo_type = connection->register_message_type
-        ("nmm Microscope Feel To");
+        ("nmm Microscope FeelTo");
 
     d_SetScanStyle_type = connection->register_message_type
          ("nmm Microscope SetScanStyle");
@@ -151,9 +151,9 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope PointResultData");
 
     d_BeginFeelTo_type = connection->register_message_type
-         ("nmm Microscope Begin Feel To");
+         ("nmm Microscope BeginFeelTo");
     d_EndFeelTo_type = connection->register_message_type
-         ("nmm Microscope End Feel To");
+         ("nmm Microscope EndFeelTo");
 
     d_BottomPunchResultData_type = connection->register_message_type
          ("nmm Microscope BottomPunchResultData");
