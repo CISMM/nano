@@ -11,6 +11,7 @@
 #include "nmb_Image.h"
 
 #define SEM_TCL_FILE "sem.tcl"
+#define SEM_FILE_SUFFIX ".sem"
 
 struct SEMInitializationState {
     SEMInitializationState(void);
