@@ -364,11 +364,21 @@ int nms_SEM_ui::updateSurfaceTexture(
 		plane_name);
       return -1;
   }
-  int i, y;
+  int i, y, j;
   y = start_y;
   // update our image buffer
   for (i = 0; i < num_lines; i++) {
-      im->setLine(y, data);
+      // XXX - hack to make texture clamp to the right color at edges
+      if (y != 0 && y != res_y-1) {
+        im->setLine(y, data);
+      } else {
+         for (j = 0; j < res_x; j++) {
+            im->setValue(j, y, 255.0);
+         }
+      }
+      // XXX - hack to make texture clamp to the right color at edges
+      im->setValue(0, y, 255.0);
+      im->setValue(res_x-1, y, 255.0);
       y += dy;
   }
   // if we've just got the last scanline in the image then tell graphics
