@@ -1,3 +1,10 @@
+2002-04-02 David Borland <borland@cs.unc.edu>
+        * nmm_SimulatedMicroscope_Remote.Cdef : added 
+        encode_and_sendRot and encode_and_sendTrans stubs
+
+        * nmm_SimulatedMicroscope_Remote.hdef : added
+        encode_and_sendRot and encode_and_sendTrans definitions
+
 2002-03-29 Andrea HIlchey <hilchey@cs.unc.edu>
 
 	* nmm_AFMSIMSERVER_Report : added new message type: Cylinder
