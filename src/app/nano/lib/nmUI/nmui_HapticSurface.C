@@ -157,7 +157,7 @@ void nmui_HapticSurface::computeDistanceFromPlane (void) {
 
 
 
-nmui_HSCanned::nmui_HSCanned () :
+nmui_HSCanned::nmui_HSCanned (void) :
     nmui_HapticSurface () 
 {
 
@@ -366,7 +366,7 @@ void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
 
 
 
-nmui_HSLivePlane::nmui_HSLivePlane () :
+nmui_HSLivePlane::nmui_HSLivePlane (void) :
     nmui_HapticSurface ()
 {
 
@@ -374,7 +374,7 @@ nmui_HSLivePlane::nmui_HSLivePlane () :
   d_UP[0] = 0.0;
   d_UP[1] = 0.0;
   d_UP[2] = 1.0;
-  q_vec_copy(d_lastNormal, d_UP);
+  q_vec_copy(d_lastNormalMS, d_UP);
 
 }
 
@@ -388,10 +388,14 @@ nmui_HSLivePlane::~nmui_HSLivePlane (void) {
 // virtual
 void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
 
-  q_vec_type                 at;
+  getSamplePosMS(scope);
+  computeUpdate();
+}
 
-  d_planePosPH[0] = scope->state.data.inputPoint->x();
-  d_planePosPH[1] = scope->state.data.inputPoint->y();
+void nmui_HSLivePlane::getSamplePosMS (nmm_Microscope_Remote * scope) {
+
+  d_samplePosMS[0] = scope->state.data.inputPoint->x();
+  d_samplePosMS[1] = scope->state.data.inputPoint->y();
 
   // Scale the Z value by the scale factor of the currently-displayed
   // data set.  XXX This assumes that the one mapped to height display is
@@ -414,14 +418,19 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
       return;
   }
 
-  d_planePosPH[2] = value->value() * plane->scale();
+  d_samplePosMS[2] = value->value() * plane->scale();
+}
 
-  q_vec_copy(d_currentPlaneNormal, d_lastNormal);
+void nmui_HSLivePlane::computeUpdate (void) {
+
+  q_vec_type at;
+
+  q_vec_copy(d_currentPlaneNormalMS, d_lastNormalMS);
 
   if (!d_initialized) {
 
     // start off with the force normal assumed straight up
-    q_vec_copy(d_lastPoint, d_planePosPH);
+    q_vec_copy(d_lastPointMS, d_samplePosMS);
     d_initialized = VRPN_TRUE;
 
   } else {
@@ -431,31 +440,103 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
     // if we don't have a last point or haven't moved, leave the
     // normal direction alone.
 
-    q_vec_subtract(at, d_planePosPH, d_lastPoint);
+    q_vec_subtract(at, d_samplePosMS, d_lastPointMS);
     if (10.0 < (at[0] * at[0] + at[1] * at[1])) {
-        q_vec_cross_product(d_currentPlaneNormal, at, d_UP);
-        q_vec_cross_product(d_currentPlaneNormal, d_currentPlaneNormal, at);
-        q_vec_copy(d_lastPoint, d_planePosPH);
+        q_vec_cross_product(d_currentPlaneNormalMS, at, d_UP);
+        q_vec_cross_product(d_currentPlaneNormalMS,
+                            d_currentPlaneNormalMS, at);
+        q_vec_copy(d_lastPointMS, d_samplePosMS);
     }
   }
 
-  VectorNormalize(d_currentPlaneNormal);
+  VectorNormalize(d_currentPlaneNormalMS);
 
-  q_vec_copy(d_lastNormal, d_currentPlaneNormal);
+  q_vec_copy(d_lastNormalMS, d_currentPlaneNormalMS);
   d_initialized = VRPN_TRUE;
 
   // Got (x,y,z) and normal in microscope space;  XForm into ARM space.
 
-  pointToTrackerFromWorld(d_planePosPH, d_planePosPH);
-  vectorToTrackerFromWorld(d_currentPlaneNormal, d_currentPlaneNormal);
+  pointToTrackerFromWorld(d_samplePosPH, d_samplePosMS);
+  vectorToTrackerFromWorld(d_currentPlaneNormal, d_currentPlaneNormalMS);
 
   VectorNormalize(d_currentPlaneNormal);
 
   d_currentPlaneParameter = - q_vec_dot_product(d_currentPlaneNormal,
-                                                d_planePosPH);
+                                                d_samplePosPH);
 
   computeDistanceFromPlane();
 }
+
+
+
+
+
+
+nmui_HSWarpedPlane::nmui_HSWarpedPlane (void) :
+    nmui_HSLivePlane (),
+    d_rttEstimate (0.0) {
+
+}
+
+
+// virtual
+nmui_HSWarpedPlane::~nmui_HSWarpedPlane (void) {
+
+}
+
+
+
+// virtual
+void nmui_HSWarpedPlane::update (nmm_Microscope_Remote * scope) {
+
+  float totalTime;
+  float networkFraction;
+    ///< The (estimated) fraction of total system time to get this data that
+    ///< was consumed by the network.
+
+  q_vec_type phantomMovement;
+  q_vec_type trueSamplePoint;
+
+  getSamplePosMS(scope);
+
+  // Find the vector to the current PHANTOM position from the
+  // position where the sample was requested.
+
+  q_vec_subtract(phantomMovement, d_handPosMS, d_samplePosMS);
+
+  // Find the total time for this update.
+  totalTime = vrpn_TimevalMsecs
+     (vrpn_TimevalDiff(scope->state.data.inputPoint->timeReceived(),
+                       scope->state.data.inputPoint->timeRequested()));
+
+  // Estimated network round-trip time is d_rttEstimate.
+
+  // Scale the movement vector by the ratio of rtt to system time.
+
+  networkFraction = d_rttEstimate / totalTime;
+  q_vec_scale(d_currentWarpVector, networkFraction, phantomMovement);
+
+  // Add the scaled vector to the current (and last) point.
+
+  q_vec_copy(trueSamplePoint, d_samplePosMS);
+  q_vec_add(d_lastPointMS, d_lastPointMS, d_currentWarpVector);
+  q_vec_add(d_samplePosMS, d_samplePosMS, d_currentWarpVector);
+
+  // Compute the plane as if we were doing a standard LivePlane
+  // at that point.
+
+  computeUpdate();
+
+  // Restore an unwarped value for d_lastPoint.
+
+  q_vec_copy(d_lastPointMS, trueSamplePoint);
+}
+
+void nmui_HSWarpedPlane::setMicroscopeRTTEstimate (double t) {
+  d_rttEstimate = t;
+}
+
+
 
 
 

@@ -51,7 +51,8 @@ class nmui_HapticSurface {
       ///< in microscope coordinates (?!).
 
     virtual void update (nmm_Microscope_Remote *) =0;
-      ///< Recompute all output values based on current state.
+      ///< Recompute all output values (d_currentPlaneNormal and
+      ///< d_currentPlaneParameter) based on current state.
       ///< Necessary because we assume things are dynamic and volatile;
       ///< we can't assume that nothing's changed since the last call
       ///< to setLocation() if we've serviced any devices since then.
@@ -109,7 +110,7 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSCanned ();
+    nmui_HSCanned (void);
     virtual ~nmui_HSCanned (void);
 
     // ACCESSORS
@@ -164,23 +165,72 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSLivePlane ();
+    nmui_HSLivePlane (void);
 
     virtual ~nmui_HSLivePlane (void);
 
     // MANIPULATORS
 
     virtual void update (nmm_Microscope_Remote *);
+      ///< Calls getSamplePosMS(), then computeUpdate().
 
   protected:
+
+    void getSamplePosMS (nmm_Microscope_Remote *);
+      ///< Sets d_samplePosMS.
+    void computeUpdate (void);
+      ///< Sets d_initialized, d_lastPointMS, d_lastNormal,
+      ///< d_currentPlaneNormal, d_currentPlaneParameter,
+      ///< d_samplePosPH, and calls computeDistanceFromPlane().
 
     q_vec_type d_UP;  // would like to be const but can't initialize
 
     vrpn_bool d_initialized;
-    q_vec_type d_lastPoint;
-    q_vec_type d_lastNormal;
+    q_vec_type d_lastNormalMS;
+    q_vec_type d_currentPlaneNormalMS;
+
+    q_vec_type d_samplePosMS;
+      ///< Position of the sample point being used in microscope coordinates.
+    q_vec_type d_lastPointMS;
+      ///< Previous sample point used.
+    q_vec_type d_samplePosPH;
+      ///< Sample point used in Phantom coordinates.
 
 };
+
+
+/** \class nmui_HSWarpedPlane
+ * Feel the surface under the microscope tip, using an approximating plane
+ * defined by the current sample, the previous sample, and an assumed up
+ * vector.  Compensate for measured latency by shifting position at which
+ * the plane is displayed.
+ * Tom Hudson February 2001
+ */
+
+class nmui_HSWarpedPlane : public nmui_HSLivePlane {
+
+  public:
+
+    nmui_HSWarpedPlane (void);
+
+    virtual ~nmui_HSWarpedPlane (void);
+
+    // MANIPULATORS
+
+    virtual void update (nmm_Microscope_Remote *);
+      ///< Wraps extra behavior around getPlanePosPH() and computeUpdate().
+
+    void setMicroscopeRTTEstimate (double);
+
+  protected:
+
+    double d_rttEstimate;
+      ///< Current estimate of the network round-trip time we're
+      ///< compensating for.
+
+    q_vec_type d_currentWarpVector;
+};
+
 
 
 /** \class nmui_HSFeelAhead

@@ -1,3 +1,22 @@
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	Lots of changes from an old private copy of the source.
+
+	* nmui_HapticSurface.C (nmui_HSWarpedPlane) : New class.
+	(nmui_HSWarpedPlane constructor) : New function.
+	(nmui_HSWarpedPlane destructor) : New function.
+	(nmui_HSWarpedPlane:$kpdate) : New function.
+	(nmui_HSCanned constructor) : Fix definition.
+	(nmui_HSLivePlane constructor) : Fix definition.
+	(nmui_HSLivePlane::update) : Refactor.
+	(nmui_HSLivePlane::computeUpdate) : New function.
+	(nmui_HSLivePlane::getSamplePosMS) : New function.
+	(nmui_HSLivePlane::d_lastNormalMS, d_currentPlaneNormalMS,
+	d_samplePosMS, d_lastPointMS, d_samplePosPH) : New and renamed
+	data members.
+
+	* nmui_Haptics.C (d_warpedPlane) : New data member.
+
 2001-06-17  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmui_Component.C, .h:  
