@@ -314,7 +314,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32
+  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32 -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd
 endif
 
 ifeq ($(HW_OS),sgi_irix)

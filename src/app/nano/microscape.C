@@ -2810,10 +2810,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
     sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
 
-    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
-	   (char *) NULL,
-	   logmode,
-	   (char *) NULL);
+    vrpn_Connection * new_microscope_connection =
+        vrpn_get_connection_by_name (istate->afm.deviceName);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find file %s",
 		istate->afm.inputStreamName);
@@ -2904,10 +2902,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name(
           istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
-                                        : (char *) NULL,
-	  logmode,
-          (char *) NULL);
-    if (!new_microscope_connection) {
+                                        : (char *) NULL);
+     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find SPM device: %s.",
 		istate->afm.deviceName);
         openDefaultMicroscope();
@@ -6215,11 +6211,12 @@ int main(int argc, char* argv[])
 
       // otherwise, open the device specified. 
       //fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
+      // TCH 17 Feb 01 only logs incoming messages
       microscope_connection = vrpn_get_connection_by_name
 	  (istate.afm.deviceName,
 	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
                                         : (char *) NULL,
-	   logmode,
+	   NULL,
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
       if (!microscope_connection || !(microscope_connection->doing_okay())) {
@@ -6431,7 +6428,7 @@ int main(int argc, char* argv[])
 	  (istate.ohm.deviceName,
 	   istate.ohm.writingLogFile ? istate.ohm.outputLogName
 	   : (char *) NULL,
-	   vrpn_LOG_INCOMING);
+           NULL);
         if (!ohmmeter_connection) {
 	  display_error_dialog( "Couldn't open connection to %s.\n",
 		  istate.ohm.deviceName);
@@ -6488,7 +6485,7 @@ int main(int argc, char* argv[])
 		(istate.vicurve.deviceName,
 		 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
 		 : (char *) NULL,
-		 vrpn_LOG_INCOMING);
+		 NULL);
 	    if (!vicurve_connection) {
 		display_error_dialog( "Couldn't open connection to %s.\n",
 			istate.vicurve.deviceName);
@@ -6548,7 +6545,7 @@ int main(int argc, char* argv[])
                 (istate.sem.deviceName,
                  istate.sem.writingLogFile ? istate.sem.outputLogName
                  : (char *) NULL,
-                 vrpn_LOG_INCOMING);
+                 NULL);
             if (!sem_connection) {
                 display_error_dialog( "Couldn't open connection to %s.\n",
                         istate.sem.deviceName);

@@ -35,11 +35,10 @@ vrpn_Connection * getPeer (const char * hostname, int port,
 fprintf(stderr, "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
 buf, NIC_IP, sfbuf);
 
+  // TCH 17 Feb 01 only logs incoming messages
   return vrpn_get_connection_by_name (buf,
-             loggingInterface ? sfbuf : NULL,
-             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                                vrpn_LOG_NONE,
-             NULL, vrpn_LOG_NONE, 1.0, 3, NIC_IP);
+             loggingInterface ? sfbuf : NULL, NULL,
+             NULL, NULL, 1.0, 3, NIC_IP);
 }
 
 static
@@ -66,11 +65,10 @@ vrpn_Connection * getServer (int port,
 //  fprintf(stderr, "Opening peer server on port %d, NIC %s.\n",
 //  port, NIC_IP);
 
+  // TCH 17 Feb 01 only logs incoming messages
   return new vrpn_Synchronized_Connection
         (port,
-         loggingInterface ? sfbuf : NULL,
-         loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                            vrpn_LOG_NONE,
+         loggingInterface ? sfbuf : NULL, NULL,
          NIC_IP);
 }
 
