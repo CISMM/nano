@@ -1,3 +1,7 @@
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* util.C:  added an explicit cast to disambiguate set_new_handler
+
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* myUtil.h:  on the SGI, turn some compiler warnings off before

@@ -581,7 +581,7 @@ public:
 #if defined(_WIN32) && !defined(__CYGWIN__)
     _set_new_handler(my_new_handler);
 #else
-    set_new_handler(my_new_handler); 
+    std::set_new_handler((std::new_handler)my_new_handler); 
 #endif
   }
 };
@@ -760,6 +760,13 @@ int nonblockingGetch( char *, int ) {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.4  2002/03/15 17:41:01  helser
+  All files changed in this commit were updated to use the
+  standard iostream headers. This paves the way for using STL
+  in nano, since the standard iostream and STL are compatible.
+  Also includes a few changes to workspace/project files to help
+  with this change.
+
   Revision 1.3  2000/08/11 21:41:05  skinner
   This merges the code in the trunk with the code in thirdtech_branch.
 
