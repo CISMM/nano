@@ -971,7 +971,7 @@ int nmg_SurfaceRegion::build_list_set (
 
         
     }
-    if (d_VertexArrayDim < d_num_lists) {
+    if (d_VertexArrayDim < (unsigned)d_num_lists) {
         // I got this problem when the height plane changed resolutions
         // without calling graphics->causeGridRebuild. I fixed it there,
         // but this will catch anyplace else...

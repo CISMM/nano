@@ -1,3 +1,7 @@
+2003-08-07  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_SurfaceRegion.C (build_list_set): Fix compile warning.
+
 2003-07-03  David Jack  <jackd@cs.unc.edu>
 	* nmg_Graphics.h, nmg_GraphicsImpl.[Ch] (createStereoScreenImages): 
 	new function takes filename and type and saves the back left and back
