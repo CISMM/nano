@@ -1,3 +1,9 @@
+2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.C: added initialization of a new global variable called
+	tipDisplayUI of type nm_TipDisplayControls defined in nm_Tip.h
+	* nm_Tip.[hC]: new file to define stuff for visualizing the AFM tip
+
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* microscape.C : added variables and functions used in creating
@@ -46,7 +52,6 @@
 	* microscope.c: "working" message is now turned off
 			when we load the same streamfile twice.
 
->>>>>>> 1.228
 2002-06-06 Jameson Miller <millerj@cs.unc.edu>
 	* interaction.c: added code to go into modify mode when in
 		direct step (and commit button is pressed).

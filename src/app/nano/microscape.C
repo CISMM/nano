@@ -120,6 +120,9 @@ pid_t getpid();
 #include "nmg_ImageDisplayProjectiveTexture.h"
 #endif // PROJECTIVE_TEXTURE
 
+// AFM tip display ui
+#include "nm_Tip.h"
+
 #ifndef NO_XWINDOWS
 #include "x_util.h" /* qliu */
 #include "x_aux.h"
@@ -1071,6 +1074,9 @@ nmr_Registration_Proxy *aligner = NULL;
 
 /// User controls for the colormap applied to the heightfield/surface
 nmui_ColorMap * colorMapUI = NULL;
+
+/// User controls for the display of the actual AFM tip position
+nm_TipDisplayControls * tipDisplayUI = NULL;
 
 //---------------------------------------------------------------------------
 /// Scales how much normal force is felt when using Direct Z Control
@@ -7085,6 +7091,10 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
   if (alignerUI) {
     alignerUI->teardownCallbacks();
   }
+  if (tipDisplayUI) {
+    tipDisplayUI->setSPM(NULL);
+  }
+
   if (collaborationManager && dataset) {
     teardownSynchronization(collaborationManager, dataset);
     if( microscope ) 
@@ -7247,6 +7257,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
       alignerUI->setupCallbacks();
     }
 
+    if (new_microscope && tipDisplayUI) {
+      tipDisplayUI->setSPM(new_microscope);
+    }
 
   // There is no turning back. If any operations fail, the 
   // calling function will have to recover by calling again with a 
@@ -8060,7 +8073,9 @@ int main (int argc, char* argv[])
       if (microscope) the_french_ohmmeter_ui->setMicroscope(microscope);
     }
   }
-  
+ 
+  tipDisplayUI = new nm_TipDisplayControls(microscope);
+ 
   VERBOSE(1, "Before Keithley 2400/VI Curve initialization");
   if ( tkenable ) {
     // Specification of vi_curve device: first look at command line arg
