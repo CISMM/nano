@@ -322,19 +322,18 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   GLfloat Normal [3];
   GLfloat Vertex [3];
 
-  /* Put the vertex at the correct location */
-   
-  Vertex[0]= (float) planes.height->xInWorld(x);
-  Vertex[1]= (float) planes.height->yInWorld(y);
-  Vertex[2]= (float) planes.height->valueInWorld(x, y);
-  
   /* Make sure it is a legal vertex */
   if ( (x < 0) || (x > planes.height->numX() - 1) ||
        (y < 0) || (y > planes.height->numY() - 1) ) {
     fprintf(stderr, "describe_gl_vertex:  %d, %d outside grid.\n", x, y);
     return -1;
   }
-  
+
+  /* Put the vertex at the correct location */
+  Vertex[0]= (float) planes.height->xInWorld(x);
+  Vertex[1]= (float) planes.height->yInWorld(y);
+  Vertex[2]= (float) planes.height->valueInWorld(x, y);
+
   /* Find the normal for the vertex */
   // Using prerendered colors (and no lighting), we don't need normals
   if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
@@ -417,7 +416,18 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       }
     }
   }
-  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color) {
+  else if (g_null_data_alpha_toggle) {
+	// No color plane, but need to set the alpha for the color.
+	// So, set the color to the default that was set in the
+	// set_surface_materials() call, and adjust alpha per-vertex
+    /*	// to 0 if it is a zero (not filled in) height value.
+	Color[0] = XXX;
+	Color[1] = XXX;
+	Color[2] = XXX;
+	Color[3] = XXX;    */
+  }
+  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
+	g_null_data_alpha_toggle) {
     if (g_VERTEX_ARRAY) {
       vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
       vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 

@@ -5494,33 +5494,49 @@ int main(int argc, char* argv[])
     }
   }
 
-	/* Check to see if a tracker is being used for head tracking */
-	if (strcmp("null", headTrackerName) != 0)
-	  head_tracked = VRPN_TRUE;
-	envir = getenv("BDBOX");
-	if (envir == NULL)
-	{
-	  fprintf(stderr, "Microscape warning:  No sgi button/dial box set.\n");
-	  bdboxName = (char *)"null";
-	}
-	else
-	{
-	  bdboxName = strtok(envir, " ");
-	  printf("sgibdbox is %s\n", bdboxName);
-	  if (bdboxName == NULL)
-	    bdboxName = (char *)"null";
-	}
-	envir = getenv("HOST");
-	fprintf(stderr, "HOST: %s\n", envir);
-	sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
-	fprintf(stderr, "nM_coord_change_server_name: %s\n",
-		nM_coord_change_server_name);
-	sprintf(local_ModeName, "Cmode0@%s", envir);
-	fprintf(stderr, "local_ModeName: %s\n",
-		local_ModeName);
+  /* Check to see if a tracker is being used for head tracking */
+  if (strcmp("null", headTrackerName) != 0)
+    head_tracked = VRPN_TRUE;
+  envir = getenv("BDBOX");
+  if (envir == NULL)
+    {
+      fprintf(stderr, "Microscape warning:  No sgi button/dial box set.\n");
+      bdboxName = (char *)"null";
+    }
+  else
+    {
+      bdboxName = strtok(envir, " ");
+      printf("sgibdbox is %s\n", bdboxName);
+      if (bdboxName == NULL)
+	bdboxName = (char *)"null";
+    }
+  envir = getenv("HOST");
+  fprintf(stderr, "HOST: %s\n", envir);
+  sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
+  fprintf(stderr, "nM_coord_change_server_name: %s\n",
+	  nM_coord_change_server_name);
+  sprintf(local_ModeName, "Cmode0@%s", envir);
+  fprintf(stderr, "local_ModeName: %s\n",
+	  local_ModeName);
 
-    if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
-	tcl_script_dir=tcl_default_dir;
+  envir = getenv("NM_TCL_DIR");
+  if ( (tcl_script_dir = envir) == NULL)
+    {
+    tcl_script_dir=tcl_default_dir;
+    }
+
+  // if tcl_script_dir is not empty, copy to it
+  else 
+    {
+    tcl_script_dir = (char *) malloc ((strlen(envir)+2)* sizeof(char));
+    strcpy(tcl_script_dir, envir);
+    }
+  
+  // Make sure that the string ends in a slash character
+  int strEnd = strlen(tcl_script_dir)-1;
+  if (tcl_script_dir[strEnd] != '/') 
+    {
+      tcl_script_dir = strcat(tcl_script_dir, "/");
     }
 
     // Load the names of usable color maps

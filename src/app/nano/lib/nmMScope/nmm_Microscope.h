@@ -235,7 +235,7 @@ class nmm_Microscope {
     // after using it.
 
     // decode_ functions take a pointer to the buffer to unmarshall
-    // and variables to unmarshall longo.
+    // and variables to unmarshall into.
     // They advance this pointer past the end of the unmarshalled data.
     // Passing a NULL into these routines is an error.
     // They return 0 on success, -1 on error.
