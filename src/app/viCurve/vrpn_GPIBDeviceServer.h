@@ -3,7 +3,7 @@
 
 #include "vrpn_GPIBDevice.h"
 
-class vrpn_GPIBDeviceServer : public vrpn_GPIBDevice 
+class vrpn_GPIBDeviceServer : public nmb_Device_Server, public vrpn_GPIBDevice 
 {
 public:
     vrpn_GPIBDeviceServer(const char *name, vrpn_Connection *c = NULL);

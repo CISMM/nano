@@ -15,7 +15,8 @@
 //**************************************************************************
 
 vrpn_GPIBDeviceServer::vrpn_GPIBDeviceServer(const char *name, vrpn_Connection *c) :
-	vrpn_GPIBDevice(name, c)
+        nmb_Device_Server(name, c),
+	vrpn_GPIBDevice(name, d_connection)
 {
   if ( !d_connection ) {
     fprintf(stderr, "No live connection to %s.\n", name );
