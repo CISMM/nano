@@ -1636,18 +1636,19 @@ void shutdown_connections (void) {
     collaborationManager = NULL;
   }
 
-    if (internal_device_connection) {
-       fprintf(stderr, "Now deleting internal_device_connection.\n");
-        delete internal_device_connection;
-    }
-#if 0
+  // Now that we use atexit(), this function may get called twice,
+  // so since fdc may be an alias for idc we need to be a little
+  // more careful.
     if (force_device_connection &&
         (force_device_connection != internal_device_connection)) {
        fprintf(stderr, "Now deleting force_device_connection.\n");
         delete force_device_connection;
-        force_device_connection = NULL;
     }
-#endif
+    force_device_connection = NULL;
+    if (internal_device_connection) {
+       fprintf(stderr, "Now deleting internal_device_connection.\n");
+        delete internal_device_connection;
+    }
     internal_device_connection = NULL;
 }
 
@@ -5579,7 +5580,11 @@ void ParseArgs (int argc, char ** argv,
       } else if (!strcmp(argv[i], "-replayphantom")) {
         istate->replayPhantom = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
-        strcpy(istate->phantomLog, argv[i]);
+        if (strncmp(argv[i], "file:", 5)) {
+          sprintf(istate->phantomLog, "file:%s", argv[i]);
+        } else {
+          strcpy(istate->phantomLog, argv[i]);
+        }
         fprintf(stderr, "Replaying phantom from path %s.\n", argv[i]);
       } else if (!strcmp(argv[i], "-logsurface")) {
         istate->logSurface = VRPN_TRUE;
@@ -7027,18 +7032,14 @@ int main (int argc, char* argv[])
 
   VERBOSE(1,"Before tracker enable");
 
-  char surfacelog [256];
-
-  sprintf(surfacelog, "%s-surface.log", istate.surfaceLog);
-
   if (istate.replayPhantom) {
 
     fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
            istate.phantomLog);
 
     internal_device_connection =
-      new vrpn_File_Connection (istate.phantomLog, NULL,
-                      istate.logSurface ? surfacelog : NULL);
+      new vrpn_File_Connection (istate.phantomLog, NULL, NULL);
+                      //istate.logSurface ? istate.surfaceLog : NULL);
 
     // The elegant way to do this would be to use
     // vrpn_Connection::register_log_filter().  Unless we run into
@@ -7046,31 +7047,30 @@ int main (int argc, char* argv[])
 
     fprintf(stderr, "internal_device_connection opened as a file.\n");
 
-#if 0
+    // Serious mess because of how VRPN treats sending messages on a
+    // replay (as an error).
+    //
+//#if 0
     // Need to open fdc as a true connection in order to get proper
     // logging and all that.
 
     force_device_connection = new vrpn_Synchronized_Connection
             (wellKnownPorts->localDevice, NULL,
-             istate.logSurface ? surfacelog : NULL);
-#endif
+             istate.logSurface ? istate.surfaceLog : NULL);
+//#endif
 
   } else {
 
-    char phantomlog [256];
-
-    sprintf(phantomlog, "%s-phantom.log", istate.phantomLogPath);
-
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice, NULL,
-            istate.logPhantom ? phantomlog :
-            istate.logSurface ? surfacelog : NULL);
+            istate.logPhantom ? istate.phantomLogPath :
+            istate.logSurface ? istate.surfaceLog : NULL);
 
     if (istate.logPhantom) {
        fprintf(stderr,
              "Opening internal_device_connection "
              "to record phantom to path %s.\n",
-             phantomlog);
+             istate.phantomLogPath);
 
     }
 
@@ -7080,15 +7080,15 @@ int main (int argc, char* argv[])
                             "force device.\n");
       force_device_connection = new vrpn_Synchronized_Connection
                     (wellKnownPorts->secondLocalDevice, NULL,
-                     surfacelog);
+                     istate.surfaceLog);
     } else {
       force_device_connection = internal_device_connection;
     }
 #endif
 
-  }
+    force_device_connection = internal_device_connection;
 
-  force_device_connection = internal_device_connection;
+  }
 
   if (peripheral_init(internal_device_connection, force_device_connection,
                       handTrackerName,
@@ -7978,7 +7978,8 @@ VERBOSE(1, "Entering main loop");
     // Allow this thing to run for a limited time only.
 
     gettimeofday(&time2, NULL);
-    if (time2.tv_sec > time1.tv_sec + istate.runtimeLimit) {
+    if (istate.runtimeLimit &&
+        (time2.tv_sec > time1.tv_sec + istate.runtimeLimit)) {
       dataset->done = VRPN_TRUE;
     }
   }  // end of mainloop

@@ -1,5 +1,28 @@
 2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
 
+        * interaction.c (doFeelLive) : Fail over to PLANE (touch stored)
+        mode instead of GRAB mode if the user enters this function while
+        not connected to a live device.
+        * minit.c (handle_magellan_button_change) : Pay attention to button
+        3 even if viewing a file or streamfile.
+
+        * minit.c (phantom_init) : More careful division of function between
+        local_device_connection and force_device_connection.  Don't create
+        a ForceDevice_Remote if we don't have a "true" connection, since
+        hooking it up to a streamfile creates lots of extra errors.
+
+        * microscape.c (shutdown_connections) : Tweak deletion of
+        force_device_connection and internal_device_connection.
+        (main) : Tweak creation and logging for force_device_connection
+        and internal_device_connection.
+
+        * microscape.c (ParseArgs) : Insert "file:" in argument of
+        -replayphantom if necessary.
+
+        * microscape.c (main) : Fix termination test for -runfor argument.
+
+2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
+
 	* microscape.c (ParseArgs) : New argument -runfor.
 	(main) : Check runtimeLimit.
 	(MicroscapeInitializationState::runtimeLimit) : New data member.

@@ -2745,7 +2745,13 @@ int doFeelLive (int whichUser, int userEvent)  {
   /* if we are not running live, you should not be able
      to do this, so put the user into grab mode */
   if (dataset->inputGrid->readMode() != READ_DEVICE) {
-    user_0_mode = USER_GRAB_MODE;
+
+    // TCH Dissertation July 2001
+    // Fail over to touch surface, not grab.
+
+    user_0_mode = USER_PLANE_MODE;
+    //user_0_mode = USER_GRAB_MODE;
+
     printf("SharpTip mode available only on live data!!!\n");
     return 0;
   }

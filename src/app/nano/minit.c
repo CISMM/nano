@@ -254,7 +254,11 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        break;
        
    case 3:
-       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       // Code in interaction.c catches the failure modes here.
+       // Removing this abort means that when reading from a file/streamfile
+       // we can have PLANEL fail over into PLANE mode.
+       //if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       //
        if ((microscope) && (microscope->state.commands_suspended)) return;
        // Cycling button -cycles through Touch Live and Select
        if (user_0_mode == USER_PLANEL_MODE) {
@@ -483,7 +487,10 @@ int connect_Magellan() {
         // vrpn_Tracker_AnalogFlyParam is consistent with the
         // server names, and it shouldn't make any difference. 
 
-            if (!magellan_connection->get_File_Connection()) {
+      if (!magellan_connection->get_File_Connection()) {
+
+fprintf(stderr, "Opening a Magellan server.\n");
+
         // Open the Magellan puck and button box.
         if ((magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
                                                     magellan_connection, 
@@ -527,7 +534,7 @@ int connect_Magellan() {
         if (magellanTrackerServer == NULL) {
           return -1;
         }
-            }
+      }
 
 
 
@@ -735,7 +742,7 @@ phantom_init (vrpn_Connection * local_device_connection,
         bp = strchr(handTrackerName, '@');
         if (bp == NULL) {
             // If there is no local connection, we can't do anything.
-            if (!local_device_connection || !force_device_connection) {
+            if (!local_device_connection) {
               return 0;
             }
 
@@ -743,7 +750,9 @@ phantom_init (vrpn_Connection * local_device_connection,
             // (All sorts of nasty error messages ensue, plus guaranteed
             // confusion if there really is a Phantom attached to this
             // host.)
-            if (!force_device_connection->get_File_Connection()) {
+            if (!local_device_connection->get_File_Connection()) {
+
+fprintf(stderr, "Creating a real phantom server.\n");
             
               // Sleep to get phantom in reset positon
               // Should notify user...
@@ -769,7 +778,9 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
     } else {
     
-            if (!local_device_connection->get_File_Connection()) {
+      if (!local_device_connection->get_File_Connection()) {
+
+fprintf(stderr, "Creating a \"Mouse Phantom\" server.\n");
 
         // Make a mouse phantom server - the mouse acts like a phantom
         // Only if there is no real phantom - they conflict. 
@@ -780,8 +791,10 @@ phantom_init (vrpn_Connection * local_device_connection,
           return -1;
         }
 
-            }
+      }
     }
+
+    if (!force_device_connection->get_File_Connection()) {
 
     // If we get here, some phantom server has been created or contacted.
     forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 
@@ -803,6 +816,8 @@ phantom_init (vrpn_Connection * local_device_connection,
 			"Error: can't register vrpn_ForceDevice handler\n");
 		return -1;
 	}
+    }
+
         phantButton = new vrpn_Button_Remote(handTrackerName, 
                                              local_device_connection);
         if (phantButton->register_change_handler(&phantButtonState,
