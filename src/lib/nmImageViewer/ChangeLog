@@ -1,3 +1,8 @@
+2001-10-23    <conrad@cs.unc.edu>
+
+	* imageViewer.C: Changed #ifndef to _WIN32 from WIN32 so that it
+	can compile with the VC++ makefiles
+
 2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* imageViewer.C (setWindowPosition): new function to move a window

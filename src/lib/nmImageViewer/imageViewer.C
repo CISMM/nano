@@ -20,7 +20,7 @@
 #       include <X11/cursorfont.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 
