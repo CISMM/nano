@@ -57,22 +57,6 @@ catch { option add *Font {helvetica -15 } startupFile}
 #global  maxR maxG maxB minR minG minB ruler_r ruler_g ruler_b
 #global  color_flag polish region_changed term_input surface_changed
 
-# where do I find supporting files?
-# If the environment variable NM_TCL_DIR is not set, 
-# check for NANO_ROOT. If that is not set, 
-# assume files are in the current directory. Allows
-# "wish mainwin.tcl" to bring up the interface.
-if {[info exists env(NM_TCL_DIR)] } {
-    set tcl_script_dir $env(NM_TCL_DIR)
-} elseif {[info exists env(NANO_ROOT)]} {
-    set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
-} else {
-    set tcl_script_dir .
-}
-if {[string match -nocase "*wish*" [info nameofexecutable]] } {
-    set tcl_script_dir .
-}
-
 #
 # 3rdTech modifications:
 #   There are several parts of the interface we don't expose in the
@@ -84,6 +68,26 @@ set thirdtech_ui 1
 # version can't connect to live SPMs.
 if {![info exists viewer_only] } { set viewer_only 0 }
  
+# where do I find supporting files?
+# If the environment variable NM_TCL_DIR is not set, 
+# check for NANO_ROOT. If that is not set, 
+# assume files are in the current directory. Allows
+# "wish mainwin.tcl" to bring up the interface.
+if {[info exists env(NM_TCL_DIR)] } {
+    set tcl_script_dir $env(NM_TCL_DIR)
+} elseif {[info exists env(NANO_ROOT)]} {
+    if {$viewer_only} {
+        set tcl_script_dir [file join $env(NANO_ROOT) share tcl_view]
+    } else {
+        set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
+    }
+} else {
+    set tcl_script_dir .
+}
+if {[string match -nocase "*wish*" [info nameofexecutable]] } {
+    set tcl_script_dir .
+}
+
 #appearance variables
     # vertical padding between floatscales - image and modify windows
 set fspady 3
@@ -307,7 +311,7 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
 }
 
 #Only use the Mouse Phantom if the hand-tracker is null
-if {[string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0} {
+if {([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) || ($viewer_only)} {
     $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
 } else {

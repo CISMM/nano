@@ -303,8 +303,14 @@ static void handle_load_button_press_change (vrpn_int32, void *);
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
 static void handle_timed_sync (vrpn_int32, void *);
-
-static void handle_collab_measure_change (vrpn_float64, void *);
+static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
+                                              void * userdata);
+static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
+                                                void * userdata);
+static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
+                                               void * userdata);
+static void handle_collab_measure_change (nmb_Dataset * data,
+                                          int which_line);
 static void handle_center_pressed (vrpn_int32, void *);
 
 static void handle_mutex_request (vrpn_int32, void *);
@@ -545,22 +551,14 @@ TclNet_int set_stream_time ("set_stream_time", 0);
 TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
 
-#if 1
 // NANOX - XXX
 /// Quick method of sharing measure line locations
-TclNet_float measureRedX ("measure_red_x", 0.0,
-                           handle_collab_measure_change, (void *) 0);
-TclNet_float measureRedY ("measure_red_y", 0.0,
-                           handle_collab_measure_change, (void *) 0);
-TclNet_float measureGreenX ("measure_green_x", 0.0,
-                           handle_collab_measure_change, (void *) 1);
-TclNet_float measureGreenY ("measure_green_y", 0.0,
-                           handle_collab_measure_change, (void *) 1);
-TclNet_float measureBlueX ("measure_blue_x", 0.0,
-                           handle_collab_measure_change, (void *) 2);
-TclNet_float measureBlueY ("measure_blue_y", 0.0,
-                           handle_collab_measure_change, (void *) 2);
-#endif
+TclNet_float measureRedX ("measure_red_x", 0.0);
+TclNet_float measureRedY ("measure_red_y", 0.0);
+TclNet_float measureGreenX ("measure_green_x", 0.0);
+TclNet_float measureGreenY ("measure_green_y", 0.0);
+TclNet_float measureBlueX ("measure_blue_x", 0.0);
+TclNet_float measureBlueY ("measure_blue_y", 0.0);
 
 
 /// the Tk slider for recovery time
@@ -1847,21 +1845,33 @@ static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
 static vrpn_bool ignoreCollabMeasureChange = 0;
 
 // NANOX
+static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
+                                          void * userdata) {
+    handle_collab_measure_change( (nmb_Dataset *) userdata, 0);
+}
+static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
+                                          void * userdata) {
+    handle_collab_measure_change( (nmb_Dataset *) userdata, 1);
+}
+static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
+                                          void * userdata) {
+    handle_collab_measure_change( (nmb_Dataset *) userdata, 2);
+}
+
 /// Line position has changed in tcl (probably due to update from
 /// collaborator) so change the position onscreen.
-static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
-                                          void * userdata) {
+static void handle_collab_measure_change (nmb_Dataset * data,
+                                          int whichLine) {
     // Ignore some changes caused by tcl variables. 
     if (ignoreCollabMeasureChange) return;
 
-  BCPlane * heightPlane = dataset->inputGrid->getPlaneByName
-                 (dataset->heightPlaneName->string());
+  BCPlane * heightPlane = data->inputGrid->getPlaneByName
+                 (data->heightPlaneName->string());
   if (!heightPlane) {
     display_error_dialog( "Internal: Couldn't find height plane named %s.\n",
-            dataset->heightPlaneName->string());
+            data->heightPlaneName->string());
     return;
   }
-  int whichLine = (int) userdata;   // hack to get the data here
 
   switch (whichLine) {
 
@@ -4123,12 +4133,24 @@ void setupCallbacks (nmb_Dataset *d) {
     (handle_realign_textures_selected_change, NULL);
 
   // DONE REALIGN TEXTURES
+  measureRedX.addCallback
+	(handle_collab_red_measure_change, d);
+  measureRedY.addCallback
+	(handle_collab_red_measure_change, d);
+  measureGreenX.addCallback
+	(handle_collab_green_measure_change, d);
+  measureGreenY.addCallback
+	(handle_collab_green_measure_change, d);
+  measureBlueX.addCallback
+	(handle_collab_blue_measure_change, d);
+  measureBlueY.addCallback
+	(handle_collab_blue_measure_change, d);
 
 }
 
 
 void teardownCallbacks (nmb_Dataset *d) {
-
+  if (!d ) return;
   exportPlaneName.removeCallback
 	(handle_exportPlaneName_change, d);
 
@@ -4138,6 +4160,18 @@ void teardownCallbacks (nmb_Dataset *d) {
   realign_textures_enabled.removeCallback
     (handle_realign_textures_selected_change, NULL);
 
+  measureRedX.removeCallback
+	(handle_collab_red_measure_change, d);
+  measureRedY.removeCallback
+	(handle_collab_red_measure_change, d);
+  measureGreenX.removeCallback
+	(handle_collab_green_measure_change, d);
+  measureGreenY.removeCallback
+	(handle_collab_green_measure_change, d);
+  measureBlueX.removeCallback
+	(handle_collab_blue_measure_change, d);
+  measureBlueY.removeCallback
+	(handle_collab_blue_measure_change, d);
 
 }
 
