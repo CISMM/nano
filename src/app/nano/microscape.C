@@ -2839,8 +2839,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpnLogFile = NULL;
 
     if (!microscopeRedundancyController) {
-      microscopeRedundancyController =
-        new vrpn_RedundantRemote (microscope_connection);
+      //microscopeRedundancyController =
+       // new vrpn_RedundantRemote (microscope_connection);
     }
 
     openSPMDeviceName = "";
@@ -6294,8 +6294,8 @@ int main (int argc, char* argv[])
 	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
 
-      microscopeRedundancyController = new vrpn_RedundantRemote
-        (microscope_connection);
+      //microscopeRedundancyController = new vrpn_RedundantRemote
+       // (microscope_connection);
 
       // BEFORE we call mainloop on our connection to the microscope,
       // open up a forwarder and spin until it is connected to.

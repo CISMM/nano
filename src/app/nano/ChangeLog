@@ -1,3 +1,10 @@
+2000-10-26  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c : 
+        disables microscopeRedundancyController by not creating it
+	(just commented out the call to new so this pointer is always NULL now)
+	this is just temporary for the release
+
 2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* error_display.C : merged with changes in thirdtech_branch
