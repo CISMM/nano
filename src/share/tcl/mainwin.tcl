@@ -676,7 +676,7 @@ if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
 if {![info exists readmode_device_commands_suspended] } \
                     { set readmode_device_commands_suspended 0 }
 
-proc disable_widgets_for_commands_suspended { name el op } {
+proc toggle_widgets_for_analysis_mode { name el op } {
     global device_only_controls  
     global spm_commands_suspended
     global collab_commands_suspended
@@ -722,11 +722,40 @@ proc disable_widgets_for_commands_suspended { name el op } {
         }
     }
 }
-trace variable spm_commands_suspended w disable_widgets_for_commands_suspended
+trace variable spm_commands_suspended w toggle_widgets_for_analysis_mode
 
 trace variable readmode_device_commands_suspended w \
-                    disable_widgets_for_commands_suspended
+                    toggle_widgets_for_analysis_mode
 
+proc disable_widgets_for_commands_suspended { name el op } {
+    global device_only_controls  
+    global spm_commands_suspended
+    global collab_commands_suspended
+    global readmode_device_commands_suspended
+    global spm_read_mode READ_DEVICE
+
+    # Don't do anything if we aren't talking to a device
+    if { $spm_read_mode != $READ_DEVICE } { return; }
+
+    set commands_suspended 0
+    if $spm_commands_suspended {set commands_suspended 1}
+    if $collab_commands_suspended {set commands_suspended 1}
+    if $readmode_device_commands_suspended {set commands_suspended 1}
+
+    if { $commands_suspended == 1 } {
+        # Commands are suspended, disable controls
+        foreach widget $device_only_controls {
+            if { ([llength $widget] > 1) } {
+                # some widget have a special "configure" command 
+                # saved in the list with the widget name, like 
+                # ".a.rb buttonconfigure 0 -state normal"
+                eval $widget -state disabled
+            } else {
+                $widget configure -state disabled
+            }
+        }
+    }
+}
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
@@ -867,7 +896,7 @@ after idle {
 
 if {![info exists collab_commands_suspended] } \
                  { set collab_commands_suspended 1; \
-                   disable_widgets_for_commands_suspended 0 0 0 }
+                   toggle_widgets_for_analysis_mode 0 0 0 }
 
-trace variable collab_commands_suspended w disable_widgets_for_commands_suspended
+trace variable collab_commands_suspended w toggle_widgets_for_analysis_mode
 
