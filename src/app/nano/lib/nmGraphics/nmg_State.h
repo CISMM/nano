@@ -144,13 +144,14 @@ public:
     int draw_collab_hand;
     vrpn_int32 collabMode;
 
-// Colormap Textures:
-    nmb_ColorMap * colormap_texture_curColorMap;
+//  Textures:
+    nmb_ColorMap * colormap_texture_curColorMap;        // also using for video texture, might want to add a separate one
     float colormap_texture_data_min;
     float colormap_texture_data_max;
     float colormap_texture_color_min;
     float colormap_texture_color_max;
     char colormap_texture_name[128];
+
 	URProjectiveTexture *currentProjectiveTexture;
 	URProjectiveTexture colormapTexture;
 	URProjectiveTexture rulergridTexture;

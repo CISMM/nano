@@ -171,12 +171,13 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
 
   d_createColormapTexture_type = 
     c->register_message_type("nmg Graphics createColormapTexture");
-  d_setColormapTextureConversionMap_type = 
-    c->register_message_type("nmg Graphics setColormapTextureConversionMap");
-  d_setColormapTextureSliderRange_type = 
-    c->register_message_type("nmg Graphics setColormapTextureSliderRange");
-  d_setColormapTextureAlpha_type =
-    c->register_message_type("nmg Graphics setColormapTextureAlpha");
+
+  d_setTextureColormapConversionMap_type = 
+    c->register_message_type("nmg Graphics setTextureColormapConversionMap");
+  d_setTextureColormapSliderRange_type = 
+    c->register_message_type("nmg Graphics setTextureColormapSliderRange");
+  d_setTextureAlpha_type =
+    c->register_message_type("nmg Graphics setTextureAlpha");
 
   d_setTextureTransform_type =
     c->register_message_type("nmg Graphics setTextureTransform");
@@ -2119,8 +2120,8 @@ int nmg_Graphics::decode_positionSphere
 // Colormap Texture Network Transmission Code:
 //
 
-// Encodes four floats for network transmission
-char *nmg_Graphics::encode_setColormapTextureSliderRange ( int *len,
+// Encodes four floats and an int for network transmission
+char *nmg_Graphics::encode_setTextureColormapSliderRange ( int *len, int which,
     float data_min,
     float data_max,
     float color_min,
@@ -2131,15 +2132,16 @@ char *nmg_Graphics::encode_setColormapTextureSliderRange ( int *len,
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(float) * sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setColormapTextureSliderRange:  "
+    fprintf(stderr, "nmg_Graphics::encode_setTextureSliderRange:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which);
     vrpn_buffer(&mptr, &mlen, data_min);
     vrpn_buffer(&mptr, &mlen, data_max);
     vrpn_buffer(&mptr, &mlen, color_min);
@@ -2149,13 +2151,14 @@ char *nmg_Graphics::encode_setColormapTextureSliderRange ( int *len,
   return msgbuf;
 }
 
-// Decodes four floats after network transmission
-int nmg_Graphics::decode_setColormapTextureSliderRange ( const char *buf,
+// Decodes four floats and an int after network transmission
+int nmg_Graphics::decode_setTextureColormapSliderRange ( const char *buf, int *which,
     float *data_min,
     float *data_max,
     float *color_min,
     float *color_max) {
-  if (!buf || !data_min || !data_max || !color_min || !color_max) return -1;
+  if (!buf || !which || !data_min || !data_max || !color_min || !color_max) return -1;
+  CHECK(vrpn_unbuffer(&buf, which));
   CHECK(vrpn_unbuffer(&buf, data_min));
   CHECK(vrpn_unbuffer(&buf, data_max));
   CHECK(vrpn_unbuffer(&buf, color_min));
@@ -2163,8 +2166,8 @@ int nmg_Graphics::decode_setColormapTextureSliderRange ( const char *buf,
   return 0;
 }
 
-// Encodes one float for network transmission
-char *nmg_Graphics::encode_setColormapTextureAlpha ( int *len,
+// Encodes one float and an int for network transmission
+char *nmg_Graphics::encode_setTextureAlpha ( int *len, int which,
     float alpha) {
   char * msgbuf = NULL;
   char * mptr;
@@ -2172,15 +2175,16 @@ char *nmg_Graphics::encode_setColormapTextureAlpha ( int *len,
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(float) + sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setColormapAlpha:  "
+    fprintf(stderr, "nmg_Graphics::encode_setAlpha:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which);
     vrpn_buffer(&mptr, &mlen, alpha);
   }
 
@@ -2188,11 +2192,32 @@ char *nmg_Graphics::encode_setColormapTextureAlpha ( int *len,
 }
 
 // Decodes one float after network transmission
-int nmg_Graphics::decode_setColormapTextureAlpha ( const char *buf,
+int nmg_Graphics::decode_setTextureAlpha ( const char *buf, int *which,
     float *alpha) {
-  if (!buf || !alpha ) return -1;
+  if (!buf || !which || !alpha ) return -1;
+  CHECK(vrpn_unbuffer(&buf, which));
   CHECK(vrpn_unbuffer(&buf, alpha));
   return 0;
+}
+
+// Encodes two char *'s and an int for network transmission
+char * nmg_Graphics::encode_setTextureColormapConversionMap (int *len, int which,
+                                             const char * name,
+                                             const char * newname) {
+  *len = strlen( name ) + strlen(newname) + 2 + sizeof(int);
+  char * msgbuf = new char [ *len ];
+  sprintf( msgbuf, "%d%s %s", which, name, newname );
+  return msgbuf;
+}
+
+// Decodes two char *'s and an int after network transmission
+int nmg_Graphics::decode_setTextureColormapConversionMap ( const char *buf, int *which,
+					   char **name,
+					   char **newname) {
+  if (!buf || !(*name) || !(*newname)) return -1;
+  sscanf( buf, "%d%s %s", which, *name, *newname );
+  return 0;
+
 }
 
 // Encodes two char *'s for network transmission
@@ -2214,7 +2239,7 @@ int nmg_Graphics::decode_two_char_arrays ( const char *buf,
 
 }
 
-// End Colormap Texture Network Transmission Code.
+// End Texture Network Transmission Code.
 
 char *nmg_Graphics::encode_updateTexture ( int *len, int whichTexture,
   const char *name, int start_x, int start_y, int end_x, int end_y) {

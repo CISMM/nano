@@ -14,12 +14,18 @@ class nmg_ImageDisplayProjectiveTexture: public nmb_ImageDisplay {
 	  bool transformIsSelfReferential);
   virtual void setDisplayColorMap(nmb_Image *image,
                        const char *map, const char *mapdir);
+  virtual void setVideoColorMap(nmb_Image *image,
+                       const char *map, const char *mapdir);
   virtual void setDisplayColorMapRange(nmb_Image *image,
                        float data_min, float data_max,
                        float color_min, float color_max);
-  virtual void updateImage(nmb_Image *image);
+  virtual void setVideoColorMapRange(nmb_Image *image,
+                       float data_min, float data_max,
+                       float color_min, float color_max);
+  virtual void updateColorMapTextureAlpha(float alpha);
+  virtual void updateVideoTextureAlpha(float alpha);
 
-  virtual void updateAlpha(float alpha);
+  virtual void updateImage(nmb_Image *image);
 
  protected:
   nmg_Graphics *d_graphicsDisplay;

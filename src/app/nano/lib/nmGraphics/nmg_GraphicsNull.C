@@ -149,9 +149,10 @@ void nmg_Graphics_Null::sendGeneticTexturesData (int, char **) {}
 
 // Colormap Textures:
 void nmg_Graphics_Null::createColormapTexture( const char * ) {}
-void nmg_Graphics_Null::setColormapTextureSliderRange (float, float) {}
-void nmg_Graphics_Null::setColormapTextureConversionMap( char *, char * ) {}
-void nmg_Graphics_Null::setColormapTextureAlpha( float ) {}
+
+void nmg_Graphics_Null::setTextureColormapSliderRange (float, float) {}
+void nmg_Graphics_Null::setTextureColormapConversionMap( char *, char * ) {}
+void nmg_Graphics_Null::setTextureAlpha( float ) {}
 
 void nmg_Graphics_Null::setTextureTransform(double *xform) {}
 

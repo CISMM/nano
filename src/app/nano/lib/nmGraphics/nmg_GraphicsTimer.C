@@ -294,22 +294,23 @@ void nmg_Graphics_Timer::createColormapTexture( const char *name ) {
 }
 
 void nmg_Graphics_Timer::
-setColormapTextureConversionMap( const char *map, const char *mapdir ) {
+setTextureColormapConversionMap( int which, const char *map, const char *mapdir ) {
   activateTimer();
-  d_imp->setColormapTextureConversionMap(map, mapdir);
+  d_imp->setTextureColormapConversionMap(which, map, mapdir);
 }
 
-void nmg_Graphics_Timer::setColormapTextureSliderRange ( float data_min,
+void nmg_Graphics_Timer::setTextureColormapSliderRange ( int which,
+    float data_min,
     float data_max,
     float color_min,
     float color_max) {
   activateTimer();
-  d_imp->setColormapTextureSliderRange(data_min,data_max,color_min, color_max);
+  d_imp->setTextureColormapSliderRange(which, data_min,data_max,color_min, color_max);
 }
 
-void nmg_Graphics_Timer::setColormapTextureAlpha ( float alpha ) {
+void nmg_Graphics_Timer::setTextureAlpha ( int which, float alpha ) {
   activateTimer();
-  d_imp->setColormapTextureAlpha(alpha);
+  d_imp->setTextureAlpha(which, alpha);
 }
 
 void nmg_Graphics_Timer::loadRawDataTexture(const int which,

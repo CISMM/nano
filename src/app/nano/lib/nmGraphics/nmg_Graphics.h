@@ -217,13 +217,16 @@ class nmg_Graphics {
 
     // Colormap Texture:
     virtual void createColormapTexture( const char * ) {};
-    virtual void setColormapTextureSliderRange (float, float, float, float) {};
-    virtual void setColormapTextureConversionMap
-                    (const char *, const char *) {};
-    virtual void setColormapTextureAlpha(float) {};
-
+    // Video Texture:
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y) {};
+
+    
+    virtual void setTextureColormapSliderRange (int, float, float, float, float) {};
+    virtual void setTextureColormapConversionMap
+                    (int, const char *, const char *) {};
+    virtual void setTextureAlpha(int, float) {};
+
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y, 
        int end_x, int end_y) {};
@@ -447,11 +450,13 @@ class nmg_Graphics {
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
 
-    /// Colormap Texture Network Types:
+    /// Colormap Texture Network Type:
     vrpn_int32 d_createColormapTexture_type;
-    vrpn_int32 d_setColormapTextureConversionMap_type;
-    vrpn_int32 d_setColormapTextureSliderRange_type;
-    vrpn_int32 d_setColormapTextureAlpha_type;
+
+    /// Texture Network Types:
+    vrpn_int32 d_setTextureColormapConversionMap_type;
+    vrpn_int32 d_setTextureColormapSliderRange_type;
+    vrpn_int32 d_setTextureAlpha_type;
 
     vrpn_int32 d_updateTexture_type;
     vrpn_int32 d_enableRegistration_type;
@@ -635,12 +640,15 @@ class nmg_Graphics {
     char * encode_setCollabMode (int * len, int);
     int decode_setCollabMode (const char *buf, int *);
 
-    // Colormap Texture Network Transmission Functions:
-    char *encode_setColormapTextureSliderRange ( int *len, float, float, float, float );
-    int decode_setColormapTextureSliderRange( const char *buf,float *, float *,float *, float *);
+    // Texture Network Transmission Functions:
+    char *encode_setTextureColormapSliderRange ( int *len, int, float, float, float, float );
+    int decode_setTextureColormapSliderRange( const char *buf, int*, float *, float *,float *, float *);
 
-    char *encode_setColormapTextureAlpha ( int *len, float);
-    int decode_setColormapTextureAlpha( const char *buf, float *);
+    char *encode_setTextureAlpha ( int *len, int, float);
+    int decode_setTextureAlpha( const char *buf, int*, float *);
+
+    char *encode_setTextureColormapConversionMap ( int *len, int, const char *, const char * );
+    int decode_setTextureColormapConversionMap ( const char *buf, int*, char **, char ** );
     
     char *encode_two_char_arrays ( int *len, const char *, const char * );
     int decode_two_char_arrays ( const char *buf, char **, char **);

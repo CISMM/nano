@@ -430,14 +430,16 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_createColormapTexture_type,
 				handle_createColormapTexture,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setColormapTextureSliderRange_type,
-				handle_setColormapTextureSliderRange,
+
+  // Texture Colormap and Alpha Handlers:
+  connection->register_handler( d_setTextureColormapSliderRange_type,
+				handle_setTextureColormapSliderRange,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setColormapTextureConversionMap_type,
-				handle_setColormapTextureConversionMap,
+  connection->register_handler( d_setTextureColormapConversionMap_type,
+				handle_setTextureColormapConversionMap,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setColormapTextureAlpha_type,
-                handle_setColormapTextureAlpha,
+  connection->register_handler( d_setTextureAlpha_type,
+                handle_setTextureAlpha,
                 this, vrpn_ANY_SENDER);
 
   connection->register_handler( d_updateTexture_type,
@@ -1294,12 +1296,14 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
 
   v_gl_set_context_to_vlib_window();
   state->colormapTexture.setImage(im);
-  state->colormapTexture.createTexture(false, 
-	  state->colormap_texture_curColorMap,
-	  state->colormap_texture_data_min, 
-	  state->colormap_texture_data_max,
-	  state->colormap_texture_color_min, 
-	  state->colormap_texture_color_max);
+  state->colormapTexture.setColorMap(state->colormap_texture_curColorMap);
+  state->colormapTexture.setColorMapMinMax(state->colormap_texture_data_min, 
+	                                       state->colormap_texture_data_max,
+	                                       state->colormap_texture_color_min, 
+	                                       state->colormap_texture_color_max);
+  state->colormapTexture.setUpdateColorMap(true);
+  state->colormapTexture.createTexture(false);
+
   return;
 }
 
@@ -1308,41 +1312,70 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
 // color values when making the colormap textures.
 //
 void nmg_Graphics_Implementation::
-setColormapTextureConversionMap( const char *map, const char* /*mapdir*/ ) {
-  if ( !strcmp( map, "none" ) ) {
-    if (state->colormap_texture_curColorMap) {
-      delete state->colormap_texture_curColorMap;
+setTextureColormapConversionMap( int which, const char *map, const char* /*mapdir*/ ) {
+    if ( !strcmp( map, "none" ) ) {
+        if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
+            if (state->colormap_texture_curColorMap) {
+                delete state->colormap_texture_curColorMap;
+            }
+            state->colormap_texture_curColorMap = NULL;
+
+            if (which == nmg_Graphics::VIDEO) {
+                state->videoTexture.setColorMap(NULL);
+                state->videoTexture.setUpdateColorMap(true);
+            }
+        }
     }
-    state->colormap_texture_curColorMap = NULL;
-  }
-  else {
-    if ( !state->colormap_texture_curColorMap ) {
-      state->colormap_texture_curColorMap = new nmb_ColorMap;
+    else {
+        if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
+            if ( !state->colormap_texture_curColorMap ) {
+                state->colormap_texture_curColorMap = new nmb_ColorMap;
+            }
+            state->colormap_texture_curColorMap->load_from_file( map, state->colorMapDir );
+
+            if (which == nmg_Graphics::VIDEO) {
+                state->videoTexture.setColorMap(state->colormap_texture_curColorMap);
+                state->videoTexture.setUpdateColorMap(true);
+            }
+        }
     }
-    state->colormap_texture_curColorMap->load_from_file( map, state->colorMapDir );
-  }
 }
 
 //
 // Sets the colormap texture colormap slider range:
 //
-void nmg_Graphics_Implementation::setColormapTextureSliderRange (
+void nmg_Graphics_Implementation::setTextureColormapSliderRange (
+    int which,
     float data_min,
     float data_max,
     float color_min,
     float color_max) {
-  state->colormap_texture_data_min = data_min;
-  state->colormap_texture_data_max = data_max;
-  state->colormap_texture_color_min = color_min;
-  state->colormap_texture_color_max = color_max;
+
+    if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
+        state->colormap_texture_data_min = data_min;
+        state->colormap_texture_data_max = data_max;
+        state->colormap_texture_color_min = color_min;
+        state->colormap_texture_color_max = color_max;
+
+        if (which == nmg_Graphics::VIDEO) {
+            state->videoTexture.setColorMapMinMax(data_min, data_max, color_min, color_max);
+            state->videoTexture.setUpdateColorMap(true);
+        }
+    }
 }
 
 //
 // Sets the colormap texture colormap alpha:
 //
-void nmg_Graphics_Implementation::setColormapTextureAlpha (
+void nmg_Graphics_Implementation::setTextureAlpha (
+    int which,
     float alpha) {
-  state->colormapTexture.setOpacity(alpha);
+  if (which == nmg_Graphics::COLORMAP) {
+    state->colormapTexture.setOpacity(alpha);
+  }
+  else if (which == nmg_Graphics::VIDEO) {
+    state->videoTexture.setOpacity(alpha);
+  }
 }
 
 void nmg_Graphics_Implementation::initializeTextures(void)
@@ -2932,37 +2965,40 @@ int nmg_Graphics_Implementation::handle_createColormapTexture (void *userdata,
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setColormapTextureSliderRange
+int nmg_Graphics_Implementation::handle_setTextureColormapSliderRange
 ( void *userdata, vrpn_HANDLERPARAM p) {
+  int which;
   float data_min,data_max,color_min, color_max;
   
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_setColormapTextureSliderRange(p.buffer, &data_min,&data_max,&color_min, &color_max), 
-	  "handle_setColormapTextureSliderRange");
-  it->setColormapTextureSliderRange( data_min,data_max,color_min, color_max );
+  CHECKF(it->decode_setTextureColormapSliderRange(p.buffer, &which, &data_min,&data_max,&color_min, &color_max), 
+	  "handle_setTextureColormapSliderRange");
+  it->setTextureColormapSliderRange( which, data_min,data_max,color_min, color_max );
   return 0;
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setColormapTextureAlpha
+int nmg_Graphics_Implementation::handle_setTextureAlpha
 ( void *userdata, vrpn_HANDLERPARAM p) {
+  int which;
   float alpha;
   
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_setColormapTextureAlpha(p.buffer, &alpha), 
-	  "handle_setColormapTextureAlpha");
-  it->setColormapTextureAlpha( alpha );
+  CHECKF(it->decode_setTextureAlpha(p.buffer, &which, &alpha), 
+	  "handle_setTextureAlpha");
+  it->setTextureAlpha( which, alpha );
   return 0;
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setColormapTextureConversionMap
+int nmg_Graphics_Implementation::handle_setTextureColormapConversionMap
 ( void *userdata, vrpn_HANDLERPARAM p) {
   
+  int which;
   char *map = new char[100], *mapdir = new char[100];
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_two_char_arrays(p.buffer, &map, &mapdir), "handle_setColormapTextureConversionMap");
-  it->setColormapTextureConversionMap( map, mapdir );
+  CHECKF(it->decode_setTextureColormapConversionMap(p.buffer, &which, &map, &mapdir), "handle_setTextureConversionMap");
+  it->setTextureColormapConversionMap( which, map, mapdir );
 
   if (map) {
     delete [] map;

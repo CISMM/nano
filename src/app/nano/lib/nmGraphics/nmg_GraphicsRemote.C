@@ -754,7 +754,8 @@ void nmg_Graphics_Remote::createColormapTexture( const char *name ) {
   }
 }
 
-void nmg_Graphics_Remote::setColormapTextureSliderRange (
+void nmg_Graphics_Remote::setTextureColormapSliderRange (
+    int which,
     float data_min,
     float data_max,
     float color_min,
@@ -764,15 +765,15 @@ void nmg_Graphics_Remote::setColormapTextureSliderRange (
   int len;
   int retval;
 
-  msgbuf = encode_setColormapTextureSliderRange(&len, data_min,data_max,color_min, color_max);
+  msgbuf = encode_setTextureColormapSliderRange(&len, which, data_min,data_max,color_min, color_max);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,
-					d_setColormapTextureSliderRange_type,
+					d_setTextureColormapSliderRange_type,
 					d_myId, msgbuf,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureSliderRange:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setTextureColormapSliderRange:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -780,22 +781,23 @@ void nmg_Graphics_Remote::setColormapTextureSliderRange (
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setColormapTextureAlpha (
+void nmg_Graphics_Remote::setTextureAlpha (
+    int which,
     float alpha) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setColormapTextureAlpha(&len, alpha);
+  msgbuf = encode_setTextureAlpha(&len, which, alpha);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,
-					d_setColormapTextureAlpha_type,
+					d_setTextureAlpha_type,
 					d_myId, msgbuf,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureAlpha:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setTextureAlpha:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -803,7 +805,7 @@ void nmg_Graphics_Remote::setColormapTextureAlpha (
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setColormapTextureConversionMap( const char *map,
+void nmg_Graphics_Remote::setTextureColormapConversionMap( int which, const char *map,
 							   const char *mapdir ) {
 
   struct timeval now;
@@ -811,15 +813,15 @@ void nmg_Graphics_Remote::setColormapTextureConversionMap( const char *map,
   int len;
   int retval;
 
-  msgbuf = encode_two_char_arrays(&len, map, mapdir);
+  msgbuf = encode_setTextureColormapConversionMap(&len, which, map, mapdir);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,
-					d_setColormapTextureConversionMap_type,
+					d_setTextureColormapConversionMap_type,
 					d_myId, msgbuf,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureConversionMap:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setTextureColormapConversionMap:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

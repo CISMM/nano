@@ -85,9 +85,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     // Colormap Texture:
     virtual void createColormapTexture( const char * );
-    virtual void setColormapTextureSliderRange (float, float, float, float);
-    virtual void setColormapTextureConversionMap( const char *, const char * );
-    virtual void setColormapTextureAlpha( float );
+
+    virtual void setTextureColormapSliderRange (int, float, float, float, float);
+    virtual void setTextureColormapConversionMap( int, const char *, const char * );
+    virtual void setTextureAlpha( int, float );
 
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y,
@@ -297,11 +298,13 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setCollabHandPos (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabMode (void *, vrpn_HANDLERPARAM);
 
-  // colormap texture handlers:
+  // colormap texture handler:
   static int handle_createColormapTexture (void *, vrpn_HANDLERPARAM);
-  static int handle_setColormapTextureSliderRange (void *, vrpn_HANDLERPARAM);
-  static int handle_setColormapTextureConversionMap(void *,vrpn_HANDLERPARAM);
-  static int handle_setColormapTextureAlpha(void *,vrpn_HANDLERPARAM);
+
+  // texture colormap and alpha handlers
+  static int handle_setTextureColormapSliderRange (void *, vrpn_HANDLERPARAM);
+  static int handle_setTextureColormapConversionMap(void *,vrpn_HANDLERPARAM);
+  static int handle_setTextureAlpha(void *,vrpn_HANDLERPARAM);
 
   static int handle_updateTexture(void *, vrpn_HANDLERPARAM);
 //  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);
