@@ -13,6 +13,8 @@
         function doesn't do anything if we're reading from a file since it
         only does stuff that affects a live microscope (was printing out an
         error message because we weren't in slow line 3D mode)
+        * AFMState.C (constructor) : added some missing initialization for
+        slow line variables
 
 2000-09-05  Adam Seeger  <seeger@cs.unc.edu>
 	
