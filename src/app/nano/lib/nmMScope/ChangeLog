@@ -1,3 +1,8 @@
+2002-07-01  David Borland <borland@cs.unc.edu>
+
+        * nmm_SimulatedMicroscope_Remote.[Cdef/hdef] : changed data 
+        member from a URender object to a URTubeFile object.
+
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope_Remote.hdef: adding missing public 

@@ -10,7 +10,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.h
 #include <nmb_Dataset.h>
 #include "nma_ShapeAnalyze.h"
 #include "vrpn_Connection.h"
-#include "URender.h"
+#include "URTubeFile.h"
 
 //
 class nmb_SharedDevice_Remote;
@@ -30,7 +30,7 @@ class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report,
 
 public:
 	nmm_SimulatedMicroscope_Remote(const char * name, vrpn_Connection * connection, 
-		const char * planename, nmb_Dataset * dataset, URender * testobject = NULL);
+		const char * planename, nmb_Dataset * dataset, URTubeFile * testobject = NULL);
 	virtual ~nmm_SimulatedMicroscope_Remote();
 	int mainloop();
 	void encode_and_sendGridandScanInfo(//encode grid and scan info (microscope extent) and nano
@@ -51,7 +51,7 @@ public:
 		vrpn_float32 length, vrpn_float32 radius);
 	void encode_and_sendScanData(float * Data, int y, const int num_cols);
 	int Send(long len, vrpn_int32 msg_type, char * buf);//send data across connection
-	void sendCylinders(URender * obj);//function to send cylinders if connection 
+	void sendCylinders(URTubeFile * obj);//function to send cylinders if connection 
 									  //made before shape analysis done
 	bool deviceNameRcv;
 	char* get_server_name();
@@ -83,7 +83,7 @@ private:
 	long simulator_id;				//our sender id
 	vrpn_int32 d_gotConnection_type;//id for connection message we need to receive before we send 
 									//anything
-	URender * myURenderObject;	
+	URTubeFile * myURTubeFileObject;	
 };
 //
 

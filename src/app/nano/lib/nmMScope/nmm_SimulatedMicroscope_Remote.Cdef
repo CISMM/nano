@@ -34,7 +34,7 @@ CLASSNAME nmm_SimulatedMicroscope_Remote
 
 nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   (const char * name, vrpn_Connection * connection, const char * planename, 
-  nmb_Dataset * dataset, URender * testobject) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
+  nmb_Dataset * dataset, URTubeFile * testobject) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
   nmb_SharedDevice_Remote(name,connection), d_dataset(dataset), 
   RealAFMPlaneName(d_dataset->heightPlaneName->string()),
   RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName)), 
@@ -58,7 +58,7 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
 	for(int i = 0;i<Ydim;++i)	DataArray[i] = NULL;//initialize to NULL
 	UnitsOK = true;
 	deviceNameRcv = false;
-	myURenderObject = testobject;
+	myURTubeFileObject = testobject;
 }
 //
 nmm_SimulatedMicroscope_Remote::~nmm_SimulatedMicroscope_Remote() {
@@ -74,30 +74,30 @@ int nmm_SimulatedMicroscope_Remote::mainloop() {
 }
 //
 void nmm_SimulatedMicroscope_Remote::
-sendCylinders(URender * obj){
+sendCylinders(URTubeFile * obj){
 	float midpt_x,midpt_y,midpt_z;
 
-	myURenderObject = obj;
+	myURTubeFileObject = obj;
 
-	for(int i = 0; i < myURenderObject->num_cylinders; ++i){
+	for(int i = 0; i < myURTubeFileObject->num_cylinders; ++i){
 	//only sends cylinders if they have been filled in in URender 
     //(i.e. num_cylinders != 0), so safe to keep have this for loop here
-	    midpt_x = (myURenderObject->cylinders[i].x2 + myURenderObject->cylinders[i].x1)/2;
-		midpt_y = (myURenderObject->cylinders[i].y2 + myURenderObject->cylinders[i].y1)/2;
-		midpt_z = (myURenderObject->cylinders[i].z2 + myURenderObject->cylinders[i].z1)/2;
+	    midpt_x = (myURTubeFileObject->cylinders[i].x2 + myURTubeFileObject->cylinders[i].x1)/2;
+		midpt_y = (myURTubeFileObject->cylinders[i].y2 + myURTubeFileObject->cylinders[i].y1)/2;
+		midpt_z = (myURTubeFileObject->cylinders[i].z2 + myURTubeFileObject->cylinders[i].z1)/2;
 	    encode_and_sendCylinder(
 			midpt_x,midpt_y,midpt_z,
-			myURenderObject->cylinders[i].alt,
-			myURenderObject->cylinders[i].az,
-			myURenderObject->cylinders[i].length,
-			myURenderObject->cylinders[i].radius);
-			cout << "sendCylinders: alt: " << myURenderObject->cylinders[i].alt << "\taz:  " 
-				 << myURenderObject->cylinders[i].az << endl;
+			myURTubeFileObject->cylinders[i].alt,
+			myURTubeFileObject->cylinders[i].az,
+			myURTubeFileObject->cylinders[i].length,
+			myURTubeFileObject->cylinders[i].radius);
+			cout << "sendCylinders: alt: " << myURTubeFileObject->cylinders[i].alt << "\taz:  " 
+				 << myURTubeFileObject->cylinders[i].az << endl;
 	}
-	encode_and_sendTrans(myURenderObject->GetLocalXform().GetTrans()[0],
-						myURenderObject->GetLocalXform().GetTrans()[1],
-						myURenderObject->GetLocalXform().GetTrans()[2]);
-	encode_and_sendScale(myURenderObject->GetLocalXform().GetScale());
+	encode_and_sendTrans(myURTubeFileObject->GetLocalXform().GetTrans()[0],
+						myURTubeFileObject->GetLocalXform().GetTrans()[1],
+						myURTubeFileObject->GetLocalXform().GetTrans()[2]);
+	encode_and_sendScale(myURTubeFileObject->GetLocalXform().GetScale());
 }
 //
 HANDLERS nmm_AFMSIM_Report ; 
@@ -115,43 +115,43 @@ handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
 			me->DeviceViewPlane->d_sourcePlane->minValue(),me->d_dataset->inputGrid->maxX(),
 			me->d_dataset->inputGrid->maxY(),me->DeviceViewPlane->d_sourcePlane->maxValue());
 
-	if(me->myURenderObject != NULL){
+	if(me->myURTubeFileObject != NULL){
    
-		for(int i = 0; i < me->myURenderObject->num_cylinders; ++i){
+		for(int i = 0; i < me->myURTubeFileObject->num_cylinders; ++i){
 			//only sends cylinders if they have been filled in in URender 
 			//(i.e. num_cylinders != 0), so safe to keep have this for loop here
-				midpt_x = (me->myURenderObject->cylinders[i].x2 + me->myURenderObject->cylinders[i].x1)/2;
-				midpt_y = (me->myURenderObject->cylinders[i].y2 + me->myURenderObject->cylinders[i].y1)/2;
-				midpt_z = (me->myURenderObject->cylinders[i].z2 + me->myURenderObject->cylinders[i].z1)/2;
+				midpt_x = (me->myURTubeFileObject->cylinders[i].x2 + me->myURTubeFileObject->cylinders[i].x1)/2;
+				midpt_y = (me->myURTubeFileObject->cylinders[i].y2 + me->myURTubeFileObject->cylinders[i].y1)/2;
+				midpt_z = (me->myURTubeFileObject->cylinders[i].z2 + me->myURTubeFileObject->cylinders[i].z1)/2;
 				me->encode_and_sendCylinder(
 					midpt_x,midpt_y,midpt_z,
-					me->myURenderObject->cylinders[i].alt,
-					me->myURenderObject->cylinders[i].az,
-					me->myURenderObject->cylinders[i].length,
-					me->myURenderObject->cylinders[i].radius);
+					me->myURTubeFileObject->cylinders[i].alt,
+					me->myURTubeFileObject->cylinders[i].az,
+					me->myURTubeFileObject->cylinders[i].length,
+					me->myURTubeFileObject->cylinders[i].radius);
 
-					cout << "handle_gotConnection: alt: " << me->myURenderObject->cylinders[i].alt << "\taz:  " 
-						 << me->myURenderObject->cylinders[i].az << endl;
+					cout << "handle_gotConnection: alt: " << me->myURTubeFileObject->cylinders[i].alt << "\taz:  " 
+						 << me->myURTubeFileObject->cylinders[i].az << endl;
 			}
 			
-			me->encode_and_sendTrans(me->myURenderObject->GetLocalXform().GetTrans()[0],
-											me->myURenderObject->GetLocalXform().GetTrans()[1],
-											me->myURenderObject->GetLocalXform().GetTrans()[2]);
-			me->encode_and_sendScale(me->myURenderObject->GetLocalXform().GetScale());
+			me->encode_and_sendTrans(me->myURTubeFileObject->GetLocalXform().GetTrans()[0],
+											me->myURTubeFileObject->GetLocalXform().GetTrans()[1],
+											me->myURTubeFileObject->GetLocalXform().GetTrans()[2]);
+			me->encode_and_sendScale(me->myURTubeFileObject->GetLocalXform().GetScale());
 		
-	}//end if(me->myURenderObject != NULL)
+	}//end if(me->myURTubeFileObject != NULL)
 
 
   //code from when we were using triangles, keeping it here in case want to use quaternions (scaling)/triangles
   //any time in the future
-  /*if(grpc_me->myURenderObject != NULL){
+  /*if(grpc_me->myURTubeFileObject != NULL){
 
 		//start send triangles--new method
 		q_vec_type p1, p2, p3;
 
 		//send triangle scale
 		if (num_vertices != 0){
-//			grpc_me->encode_and_sendTriangleScale(grpc_me->myURenderObject->GetLocalXform().GetScale());
+//			grpc_me->encode_and_sendTriangleScale(grpc_me->myURTubeFileObject->GetLocalXform().GetScale());
 			grpc_me->encode_and_sendTriangleScale(1.0);
 		}
 //
@@ -160,32 +160,32 @@ handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
                                           //(i.e. num_triangles != 0), so safe to keep have this for loop here
 			// rotate and translate points
 
-			q_vec_set(p1, grpc_me->myURenderObject->triangles[i][0],
-							grpc_me->myURenderObject->triangles[i][1],
-							grpc_me->myURenderObject->triangles[i][2]);
+			q_vec_set(p1, grpc_me->myURTubeFileObject->triangles[i][0],
+							grpc_me->myURTubeFileObject->triangles[i][1],
+							grpc_me->myURTubeFileObject->triangles[i][2]);
 
-			q_vec_set(p2, grpc_me->myURenderObject->triangles[i + 1][0],
-							grpc_me->myURenderObject->triangles[i + 1][1],
-							grpc_me->myURenderObject->triangles[i + 1][2]);
+			q_vec_set(p2, grpc_me->myURTubeFileObject->triangles[i + 1][0],
+							grpc_me->myURTubeFileObject->triangles[i + 1][1],
+							grpc_me->myURTubeFileObject->triangles[i + 1][2]);
 
-			q_vec_set(p3, grpc_me->myURenderObject->triangles[i + 2][0],
-							grpc_me->myURenderObject->triangles[i + 2][1],
-							grpc_me->myURenderObject->triangles[i + 2][2]);
+			q_vec_set(p3, grpc_me->myURTubeFileObject->triangles[i + 2][0],
+							grpc_me->myURTubeFileObject->triangles[i + 2][1],
+							grpc_me->myURTubeFileObject->triangles[i + 2][2]);
 
 			// rotate
-			q_xform(p1, grpc_me->myURenderObject->GetLocalXform().GetRot(), p1);
-			q_xform(p2, grpc_me->myURenderObject->GetLocalXform().GetRot(), p2);
-			q_xform(p3, grpc_me->myURenderObject->GetLocalXform().GetRot(), p3);
+			q_xform(p1, grpc_me->myURTubeFileObject->GetLocalXform().GetRot(), p1);
+			q_xform(p2, grpc_me->myURTubeFileObject->GetLocalXform().GetRot(), p2);
+			q_xform(p3, grpc_me->myURTubeFileObject->GetLocalXform().GetRot(), p3);
 
 			// translate
-			q_vec_add(p1, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p1);
-			q_vec_add(p2, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p2);
-			q_vec_add(p3, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p3);
+			q_vec_add(p1, grpc_me->myURTubeFileObject->GetLocalXform().GetTrans(), p1);
+			q_vec_add(p2, grpc_me->myURTubeFileObject->GetLocalXform().GetTrans(), p2);
+			q_vec_add(p3, grpc_me->myURTubeFileObject->GetLocalXform().GetTrans(), p3);
 
 			// scale
-//			q_vec_scale(p1, grpc_me->myURenderObject->GetLocalXform().GetScale(), p1);
-//			q_vec_scale(p2, grpc_me->myURenderObject->GetLocalXform().GetScale(), p2);
-//			q_vec_scale(p3, grpc_me->myURenderObject->GetLocalXform().GetScale(), p3);
+//			q_vec_scale(p1, grpc_me->myURTubeFileObject->GetLocalXform().GetScale(), p1);
+//			q_vec_scale(p2, grpc_me->myURTubeFileObject->GetLocalXform().GetScale(), p2);
+//			q_vec_scale(p3, grpc_me->myURTubeFileObject->GetLocalXform().GetScale(), p3);
 
 			q_vec_scale(p1, 2, p1);
 			q_vec_scale(p2, 2, p2);
