@@ -3,6 +3,9 @@
 	* microscape.c: Switch the example visualization methods over to
 	the new surface-region approach.
 
+	Minor modification to the visualization methods to demonstrate
+	something.
+
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (doSelect): Allow grab and translate of center of

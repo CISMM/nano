@@ -756,6 +756,7 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 //-----------------------------------------------------------------
 /// These variables are for controlling visualizations
 bool created_region = false;
+int viz_region = 0;
 Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
 Tclvar_float	viz_max_limit("viz_max_limit",1);
 Tclvar_float	viz_min_limit("viz_min_limit",0);
@@ -4130,27 +4131,29 @@ static void handle_analyze_shape(vrpn_int32, void *)
     analyze_shape = 0;
 }
 
-int viz_region = 0;
-static void handle_viz_change(vrpn_int32, void *)
-{    
-    if (viz_choice == 0) {       
-        if (created_region) {
-            graphics->destroyRegion(viz_region);
-            created_region = false;
-        }
-        viz_region = 0;
-    } else {
-        graphics->setRegionControlPlaneName("none", 0);
-        if (!created_region) {
-            viz_region = graphics->createRegion();
-            created_region = true;
-        }  
+void setup_region()
+{
+    if (!created_region) {
+        viz_region = graphics->createRegion();
+        created_region = true;
     }
 
     graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
-    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);    
+    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+
     switch(viz_choice) {
     case 0:
+        //Set the rest of the region to a lower stride;
+        graphics->lockStride(VRPN_TRUE, viz_region);
+
+        //Unlock everything else
+        graphics->lockAlpha(VRPN_FALSE, viz_region);
+        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);        
+        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
+        graphics->lockTextureMode(VRPN_FALSE, viz_region);
+        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+
+        graphics->setTesselationStride(5, viz_region);
         break;
     case 1:
         //Transparency case, so lock alpha
@@ -4199,6 +4202,11 @@ static void handle_viz_change(vrpn_int32, void *)
     };
 }
 
+static void handle_viz_change(vrpn_int32, void *)
+{        
+    setup_region();
+}
+
 static void handle_viz_min_change(vrpn_float64, void *)
 {
     graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
@@ -4226,15 +4234,19 @@ static void handle_viz_dataset_change(const char *, void *)
 	    viz_max_limit = plane->maxValue();
 	    viz_min = plane->minValue();
 	    viz_max = plane->maxValue();
+
+        setup_region();
     }
     else {
 	    viz_min_limit = 0;
 	    viz_max_limit = 1;
 	    viz_min = 0;
 	    viz_max = 1;
-    }
-
-    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
+        if (created_region) {
+            graphics->destroyRegion(viz_region);
+            created_region = false;
+        }        
+    }    
 }
 
 static void handle_viz_tex_new(const char *, void *) {
