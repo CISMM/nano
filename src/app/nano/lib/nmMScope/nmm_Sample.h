@@ -17,8 +17,16 @@ class nmm_Sample {
     nmm_Sample (nmm_Microscope_Remote *);
     virtual ~nmm_Sample (void) = 0;
 
+
+    // MANIPULATORS
+
+
+    void setMicroscope (nmm_Microscope_Remote *);
+      /**< Permits delayed binding of d_scope. */
+
     virtual void sampleAt (float x, float y) = 0;
       /**< Commands the microscope to take a sample at (x, y) */
+
 
   protected:
 
@@ -36,6 +44,10 @@ class nmm_SampleGrid : public nmm_Sample {
 
     nmm_SampleGrid (nmm_Microscope_Remote *);
     virtual ~nmm_SampleGrid (void);
+
+
+    // MANIPULATORS
+
 
     virtual void sampleAt (float x, float y);
 

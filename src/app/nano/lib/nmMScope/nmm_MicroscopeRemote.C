@@ -27,6 +27,7 @@
 //#include "relax.h"  // relax_set_min, relax_set_max
                     // encode and decode functions here ?
 #include "nmm_RelaxComp.h"
+#include "nmm_Sample.h"
 
 #include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
 
@@ -78,18 +79,19 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_relax_comp(this),
     d_dataset (NULL),
     d_decoration (NULL),
-    d_mod_window_initialized(vrpn_FALSE),
-    d_mod_window_min_x(0),
-    d_mod_window_min_y(0),
-    d_mod_window_max_x(0),
-    d_mod_window_max_y(0),
-    d_mod_window_pad(5),
+    d_mod_window_initialized (vrpn_FALSE),
+    d_mod_window_min_x (0),
+    d_mod_window_min_y (0),
+    d_mod_window_max_x (0),
+    d_mod_window_max_y (0),
+    d_mod_window_pad (5),
     readMode (READ_FILE),   // differentiates between Live and Replay
     d_pointDataHandlers (NULL),
     d_modifyModeHandlers (NULL),
     d_imageModeHandlers (NULL),
     d_scanlineModeHandlers (NULL),
-    d_scanlineDataHandlers (NULL)
+    d_scanlineDataHandlers (NULL),
+    d_sampleAlgorithm (NULL)
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -100,8 +102,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
       d_relax_comp.enable(nmm_RelaxComp::DECAY);
   }
 
-  if (!d_connection)
+  if (!d_connection) {
     return;
+  }
 
   d_connection->register_handler(d_VoltsourceEnabled_type,
                                  handle_VoltsourceEnabled,
@@ -312,16 +315,11 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
     // Wait to give the server a chance to receive the message before it
     // gets a connection-closed exception
     sleep(3);
-    // io's destructor will do a sdi_disconnect_from_device
     // TODO:  verify that destructors of members get called after
     //   this destructor;  otherwise we've got a mess to handle
   }
 
-  // Call the destructor, so the stream file gets closed!
-  //if (io)
-    //delete io;
-
-  // TODO:  clean up callback lists
+  // TODO:  clean up callback lists on d_connection
 }
 
 
@@ -555,6 +553,12 @@ long nmm_Microscope_Remote::ResumeScan (Point_value *,
 long nmm_Microscope_Remote::NewEpoch (void) {
   state.current_epoch++;
   return 0;
+}
+
+
+void nmm_Microscope_Remote::SetSampleMode (nmm_Sample * s) {
+  s->setMicroscope(this);
+  d_sampleAlgorithm = s;
 }
 
 
@@ -836,7 +840,16 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y, const float 
   return dispatchMessage(len, msgbuf, d_ScanToZ_type);
 }
 
+int nmm_Microscope_Remote::TakeSampleSet (float x, float y) {
 
+  if (!d_sampleAlgorithm) {
+    return -1;
+  }
+
+  d_sampleAlgorithm->sampleAt(x, y);
+
+  return 0;
+}
 
 
 long nmm_Microscope_Remote::TakeFeelStep (const float _x, const float _y,

@@ -3,8 +3,9 @@
 #include "nmm_MicroscopeRemote.h"
 
 
-nmm_Sample::nmm_Sample (nmm_Microscope_Remote * m) :
-    d_scope (m) {
+nmm_Sample::nmm_Sample (nmm_Microscope_Remote * m) {
+
+  setMicroscope(m);
 
 }
 
@@ -12,6 +13,15 @@ nmm_Sample::nmm_Sample (nmm_Microscope_Remote * m) :
 nmm_Sample::~nmm_Sample (void) {
 
 }
+
+
+
+void nmm_Sample::setMicroscope (nmm_Microscope_Remote * m) {
+  d_scope = m;
+}
+
+
+
 
 nmm_SampleGrid::nmm_SampleGrid (nmm_Microscope_Remote * m) :
     nmm_Sample (m),

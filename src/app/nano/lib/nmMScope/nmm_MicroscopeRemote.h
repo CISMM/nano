@@ -6,21 +6,21 @@
 #include "AFMState.h"
 
 #ifndef _WIN32
-#include <sys/time.h> // for RecordResistance() 
+#include <sys/time.h> // for timeval?
 #endif
 
-#include <nmm_Types.h>
+class Tclvar_checklist;  // from <Tcl_Linkvar.h>
+struct stm_stream;  // from <stm_file.h>
 
-class nmb_Dataset;  // from nmb_Dataset.h
-class nmb_Decoration;  // from nmb_Decoration.h
+class nmb_Dataset;  // from <nmb_Dataset.h>
+class nmb_Decoration;  // from <nmb_Decoration.h>
+class Point_value;  // from <Point.h>
+class BCPlane;  // from <BCPlane.h>
 
+#include "nmm_Types.h"
 #include "nmm_RelaxComp.h"   // for nmm_RelaxComp
 
-class Point_value;  // from Point.h
-class BCPlane;  // from BCPlane.h
-class Tclvar_checklist;  // from Tcl_Linkvar.h
-
-struct stm_stream;  // from stm_file.h
+class nmm_Sample;  // from nmm_Sample.h
 
 #ifndef VRPN_CONNECTION_H
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
@@ -91,58 +91,72 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
                     int (*) (stm_stream *),
                     const long socketType, const char * SPMhost,
                     const long SPMport, const long UDPport);
-      // Set up to read from a live scope
-      // Function parameter writes any necessary cookies on
-      // an output stream, returning nonzero on failure
-      // Last 4 parameters are for Michele Clark's experiments.
+      /**< Set up to read from a live scope.
+       * Function parameter writes any necessary cookies on
+       * an output stream, returning nonzero on failure
+       * Last 4 parameters are for Michele Clark's experiments.  OBSOLETE?
+       */
 
     long Initialize (int (*) (stm_stream *));
-      // Set up to read from a streamfile (or static files)
-      // Function parameter writes any necessary cookies on
-      // an output stream, returning nonzero on failure
+      /**< Set up to read from a streamfile (or static files)
+       * Function parameter writes any necessary cookies on
+       * an output stream, returning nonzero on failure  OBSOLETE?
+       */
 
     long NewEpoch (void);
-      // Forces refresh of grid (?)
+      /**< Forces refresh of grid (?) */
+
+    void SetSampleMode (nmm_Sample *);
+      /**< Passes in a pointer to the nmm_Sample subclass to be used by
+       * TakeSampleSet().
+       */
+
 
     // SENDS
 
     long ImageMode (void);
-      //   Enter imaging mode.  Sets parameters to values given in
-      // state.image (P/I/D gain, setpoint, amplitude).
+      /**<   Enter imaging mode.  Sets parameters to values given in
+       * state.image (P/I/D gain, setpoint, amplitude).
+       */
 
     long ModifyMode (void);
-      //   Enter modify mode.  Sets parameters to values given in
-      // state.modify (P/I/D gain, setpoint, amplitude, top & bottom
-      // delay, z_pull, punch distance, speed, watchdog)
+      /**<   Enter modify mode.  Sets parameters to values given in
+       * state.modify (P/I/D gain, setpoint, amplitude, top & bottom
+       * delay, z_pull, punch distance, speed, watchdog)
+       */
 
     //long GetNewSetOfDataChannels (const long mode,
                                  //const Tclvar_checklist * dataTypes);
     long GetNewPointDatasets (const Tclvar_checklist * dataTypes);
     long GetNewScanDatasets (const Tclvar_checklist * dataTypes);
-      //   Sets the list of datasets to be scanned by the microscope.
-      // Microscope will respond with the list that it is actually scanning,
-      // which may not match.
-      //   every active (marked) dataset in the checklist will be requested
+      /**<   Sets the list of datasets to be scanned by the microscope.
+       * Microscope will respond with the list that it is actually scanning,
+       * which may not match.
+       *   every active (marked) dataset in the checklist will be requested
+       */
 
 
     long ResumeScan (Point_value * = NULL,
                     BCPlane * = NULL);
-      //   Return to image mode *and start scanning*
-      //   Non-NULL parameters tell the microscope to check a small region
-      // of the surface before rescanning the entire surface, and only make
-      // sense with the old AFM.
+      /**<   Return to image mode *and start scanning*
+       *   Non-NULL parameters tell the microscope to check a small region
+       * of the surface before rescanning the entire surface, and only make
+       * sense with the old AFM.
+       */
 
     long ResumeFullScan (void);
 
     long ResumeWindowScan (void);
-      //   Causes the microscope to scan over the entire grid.
-      // SetScanWindow() may be called to limit scanning to a smaller
-      // portion of the grid;  this function undoes that operation.
+      /**<   Causes the microscope to scan over the entire grid.
+       * SetScanWindow() may be called to limit scanning to a smaller
+       * portion of the grid;  this function undoes that operation.
+       */
 
     long SetScanStyle (void);
-      //   Sets the microscope to scan in X or Y first, and in a raster or
-      // in boustrophedonic order.  Controlled by (state.do_raster,
-      // state.do_y_fastest)
+      /**<   Sets the microscope to scan in X or Y first, and in a raster or
+       * in boustrophedonic order.  Controlled by (state.do_raster,
+       * state.do_y_fastest)
+       */
 
     long SetRegionNM (const float minx, const float miny,
                      const float maxx, const float maxy);
@@ -189,6 +203,14 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     long ScanTo (const float x, const float y, const float z);
       // Sends the microscope to (x, y, z).
 
+    int TakeSampleSet (float x, float y);
+      /**< Uses the algorithm specified by SetSampleAlgorithm()
+       * to take one or more samples in a carefully-controlled
+       * pattern.  The results are made available to the user
+       * by a yet-to-be-determined mechanism, probably some combination
+       * of exposure on AFMState and a callback with an augmented Point_list.
+       * Returns negative values on failure.
+       */
 
 
 
@@ -598,6 +620,8 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     void doPointDataCallbacks (const Point_results *);
     void doScanlineModeCallbacks (void);
     void doScanlineDataCallbacks (const Scanline_results *);
+
+    nmm_Sample * d_sampleAlgorithm;
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H
