@@ -377,9 +377,9 @@ DEFINES += -DPROJECTIVE_TEXTURE
 
 CFLAGS += -g
 
-ifeq ($(HW_OS),pc_cygwin)
-  CFLAGS += -fhuge-objects
-endif
+#ifeq ($(HW_OS),pc_cygwin)
+#  CFLAGS += -fhuge-objects
+#endif
 
 ###########################
 #
