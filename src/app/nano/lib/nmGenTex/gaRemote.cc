@@ -162,6 +162,8 @@ int main( int argc, char *argv[] ) {
     }
     
 
+    // this may be broken.  See --baseport option in nano (microscape.c),
+    // which stores the port number in WellKnownPorts
     gaEngineClient = new gaEngine_Remote
          (new vrpn_Synchronized_Connection (gaEngine::defaultPort));
     gaEngineClient->registerEvaluationCompleteHandler

@@ -10,9 +10,6 @@
 
 #define CHECK(a) if (a == -1) return -1
 
-//static
-const unsigned int nmg_Graphics::defaultPort = 4507;
-
 nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
    d_textureMode (NO_TEXTURES),
    d_connection (c),

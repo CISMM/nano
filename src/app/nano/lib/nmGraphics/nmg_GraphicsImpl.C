@@ -29,19 +29,21 @@
 
 #define CHECK(a) if (a == -1) return -1
 
-nmg_Graphics_Implementation::nmg_Graphics_Implementation
-                                (nmb_Dataset * data,
-                                 const int minColor [3],
-                                 const int maxColor [3],
-                                 const char * rulergridName,
-                                 vrpn_Connection * connection) :
-    nmg_Graphics (connection, "nmg Graphics Implementation GL"),
+nmg_Graphics_Implementation::nmg_Graphics_Implementation(
+    nmb_Dataset * data,
+    const int minColor [3],
+    const int maxColor [3],
+    const char * rulergridName,
+    vrpn_Connection * connection,
+    unsigned int portNum)
+
+  : nmg_Graphics (connection, "nmg Graphics Implementation GL"),
     d_dataset (data),
     d_displayIndexList (new v_index [NUM_USERS]),
-    d_textureTransformMode(RULERGRID_COORD) {
-
-//fprintf(stderr,
-        //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
+    d_textureTransformMode(RULERGRID_COORD)
+{
+    //fprintf(stderr,
+    //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
   nmb_PlaneSelection planes; planes.lookup(data);
   int i;
@@ -174,7 +176,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
 
   vrpn_Connection * gac;
 
-  gac = new vrpn_Synchronized_Connection( 4503 );
+  gac = new vrpn_Synchronized_Connection( portNum );
   gaRemote = new gaEngine_Remote (gac);
   gaRemote->registerEvaluationCompleteHandler( genetic_textures_ready, this );
   gaRemote->registerConnectionCompleteHandler(send_genetic_texture_data,this );

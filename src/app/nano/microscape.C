@@ -360,21 +360,48 @@ vrpn_Analog_Server *vrpnMode_Local;
 /// These are used for synchronizing with a remote user's streamfile playback.
 static vrpn_bool isSynchronized;
 
-// static can't be decalred for this struct?
+/// Set of port numbers to use.
 class WellKnownPorts {
 
-  public:
+    // server ports on this machine.  They used to be static, but jeff is
+    // changing them to be non-static so that they can be set in main(), based
+    // on a command-line option.
 
-    // server ports on this machine
+ public:
 
-    static const int interfaceLog;
-    static const int graphicsControl;
-    static const int remoteRenderingData;
-    static const int collaboratingPeerServer;
-    static const int roundTripTime;
+    static const int defaultBasePort = 4501;
+    
+    const int basePortNumber; ///< the start of the range of port nums
 
+    // port numbers will be allocated to the following data
+    // members in consecutive order, starting with basePortNumber.
+
+    const int interfaceLog;
+    const int graphicsControl;
+    const int remoteRenderingData;
+    const int collaboratingPeerServer;
+    const int roundTripTime;
+    const int remote_gaEngine;
+
+ public:
+    WellKnownPorts (int base_port_number=defaultBasePort);
 };
 
+WellKnownPorts::WellKnownPorts (int base_port_number)
+  : basePortNumber          (0+base_port_number),
+    interfaceLog            (1+base_port_number),
+    graphicsControl         (2+base_port_number),
+    remoteRenderingData     (3+base_port_number),
+    collaboratingPeerServer (4+base_port_number),
+    roundTripTime           (5+base_port_number),
+    remote_gaEngine         (6+base_port_number)
+{
+    // empty
+}
+
+WellKnownPorts * wellKnownPorts = 0;
+
+/* old, not used anymore.
 
 const int WellKnownPorts::interfaceLog (4501);
 
@@ -383,7 +410,7 @@ const int WellKnownPorts::remoteRenderingData (nmg_Graphics::defaultPort + 1);
 
 const int WellKnownPorts::collaboratingPeerServer (4510);
 const int WellKnownPorts::roundTripTime (4581);
-
+*/
 
 //-----------------------------------------------------------------------
 // TCL initialization section.
@@ -1433,7 +1460,7 @@ static void getPeerRemote (const char * hostname) {
   char buf [256];
   char sfbuf [1024];
 
-  sprintf(buf, "%s:%d", hostname, WellKnownPorts::collaboratingPeerServer);
+  sprintf(buf, "%s:%d", hostname, wellKnownPorts->collaboratingPeerServer);
   if (replayingInterface) {
     sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
             loggingTimestamp.tv_sec);
@@ -1469,13 +1496,13 @@ static void handle_collab_machine_name_change
     sprintf(collab_ModeName, "Cmode0@file:%s", sfbuf);
   } else {
     sprintf(collab_handTrackerName, "ccs0@%s:%d", new_value,
-            WellKnownPorts::collaboratingPeerServer);
+            wellKnownPorts->collaboratingPeerServer);
     sprintf(collab_ModeName, "Cmode0@%s:%d", new_value,
-            WellKnownPorts::collaboratingPeerServer);
+            wellKnownPorts->collaboratingPeerServer);
 
     //if (loggingInterface) {
       //sprintf(buf, "%s:%d", new_value,
-              //WellKnownPorts::collaboratingPeerServer);
+              //wellKnownPorts->collaboratingPeerServer);
       //vrpn_get_connection_by_name (buf, sfbuf,
                                    //vrpn_LOG_INCOMING);
     //}
@@ -1517,7 +1544,7 @@ static void handle_collab_machine_name_change2
 
   getPeerRemote(new_value);
 
-  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
+  sprintf(buf, "%s:%d", new_value, wellKnownPorts->collaboratingPeerServer);
   if (collaboratingPeerRemoteConnection &&
       collaboratingPeerRemoteConnection->doing_okay()) {
 
@@ -1871,7 +1898,7 @@ fprintf(stderr, "++   ... sent synch request to peer.\n");
 
 }
 
-static void handle_peer_sync_change (void * userdata, vrpn_bool value) {
+static void handle_peer_sync_change (void * /*userdata*/, vrpn_bool value) {
 
 fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
   if (isSynchronized && value) {  // both synchronized
@@ -1884,7 +1911,7 @@ fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
 
 /// Linked to button in tcl UI. If pressed, copy the shared state to
 /// the private state.
-static void handle_copy_to_private (vrpn_int32 value, void * userdata) {
+static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
   nmui_PlaneSync * plane_sync = stuff->planesync;
@@ -1925,7 +1952,7 @@ fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
 
 /// Linked to button in tcl UI. If pressed, copy the private state to
 /// the shared state.
-static void handle_copy_to_shared (vrpn_int32 value, void * userdata) {
+static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
   nmui_PlaneSync * plane_sync = stuff->planesync;
@@ -1959,7 +1986,7 @@ fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
 Currently assumes that only the most recently added peer is
   "valid";  others are a (small?) memory/network leak.
 */
-static void handle_timed_sync (vrpn_int32 value, void * userdata) {
+static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
   nmui_PlaneSync * plane_sync = stuff->planesync;
@@ -4142,6 +4169,7 @@ struct MicroscapeInitializationState {
 
   int monitorPort;
   int collabPort;
+  int basePort;
 
   float x_min;
   float x_max;
@@ -4180,6 +4208,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   socketType (SOCKET_TCP),
   monitorPort (-1),
   collabPort (-1),
+  basePort (WellKnownPorts::defaultBasePort),
   x_min (afm.xMin),
   x_max (afm.xMax),
   y_min (afm.yMin),
@@ -4193,7 +4222,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   tesselation (1),
   packetlimit (0)
 {
-
+    // empty
 }
 
 
@@ -4233,6 +4262,13 @@ void ParseArgs (int argc, char ** argv,
           fprintf(stderr, "Cannot read ppm file %s\n",argv[i]);
           exit(-1);
         }
+      } else if (strcmp(argv[i], "-b") == 0) {
+        using_phantom_button = 1;
+      } else if (strcmp(argv[i], "-baseport") == 0) {
+        if (++i >= argc) Usage (argv[0]);
+        istate->basePort = atoi(argv[i]);
+        printf("Will open ports starting with %d as the default port number\n",
+               istate->basePort);
       } else if (strcmp(argv[i], "-call") == 0) {
         //DO_CALLBACKS = 1;
         fprintf(stderr, "Warning: -call obsolete.\n");
@@ -4655,7 +4691,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-SPMhost host port] [-UDPport port]\n");
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] \n");
-  fprintf(stderr, "       [-monitor port] [-collaborate port] [-peer name]\n");
+  fprintf(stderr, "       [-baseport port] [-monitor port]\n");
+  fprintf(stderr, "       [-collaborator port] [-peer name]\n");
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
   fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n");
@@ -4719,7 +4756,8 @@ void Usage(char* s)
   fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
                          "from the microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -peer:  connect to named collaborative peer.\n");
-
+  fprintf(stderr, "       -baseport:  consecutively numbered ports will be "
+                          "opened starting with this port\n");
   fprintf(stderr, "       -renderserver:  start up as a server for "
                           "remote rendering.\n");
   fprintf(stderr, "       -renderclient:  start up as a client for "
@@ -4856,12 +4894,12 @@ void sharedGraphicsServer (void * data) {
 
   // start a server connection
 //fprintf(stderr, "g>Graphics thread starting vrpn server\n");
-  c = new vrpn_Synchronized_Connection (WellKnownPorts::graphicsControl);
+  c = new vrpn_Synchronized_Connection (wellKnownPorts->graphicsControl);
 
   // start a graphics implementation
 //fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
-  g = new nmg_Graphics_Implementation
-    (dataset, minC, maxC, rulerPPMName, c);
+  g = new nmg_Graphics_Implementation (
+      dataset, minC, maxC, rulerPPMName, c, wellKnownPorts->remote_gaEngine);
 
   // release the main process to run
 
@@ -4945,8 +4983,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
     case LOCAL_GRAPHICS:
       fprintf(stderr, "Using local GL graphics implementation.\n");
-      graphics = new nmg_Graphics_Implementation(dataset,minC, maxC, 
-                                                      rulerPPMName);
+      graphics = new nmg_Graphics_Implementation(
+          dataset, minC, maxC, rulerPPMName,
+          NULL, wellKnownPorts->remote_gaEngine);
       graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
       break;
 
@@ -4963,7 +5002,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
           exit(0);
         }
         sprintf(qualifiedName, "nmg@%s:%d", name,
-                WellKnownPorts::graphicsControl);
+                wellKnownPorts->graphicsControl);
 
         range_ps = new Semaphore (1);
 
@@ -4978,10 +5017,10 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
               "    THIS MODE IS FOR TESTING ONLY.\n");
       shmem_connection = new vrpn_Synchronized_Connection
-                            (WellKnownPorts::graphicsControl);
-      gi = new nmg_Graphics_Implementation
-               (dataset,
-                minC, maxC, rulerPPMName, shmem_connection);
+                            (wellKnownPorts->graphicsControl);
+      gi = new nmg_Graphics_Implementation (
+          dataset, minC, maxC, rulerPPMName,
+          shmem_connection, wellKnownPorts->remote_gaEngine);
       graphics = new nmg_Graphics_Remote (shmem_connection);
       break;
 
@@ -4992,12 +5031,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       renderServerOutputConnection =
               new vrpn_Synchronized_Connection
-                        (WellKnownPorts::remoteRenderingData);
+                        (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
               new vrpn_Synchronized_Connection
-                          (WellKnownPorts::graphicsControl);
+                          (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
                  (dataset, minC, maxC, renderServerOutputConnection,
@@ -5015,12 +5054,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       renderServerOutputConnection =
               new vrpn_Synchronized_Connection
-                        (WellKnownPorts::remoteRenderingData);
+                        (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
               new vrpn_Synchronized_Connection
-                          (WellKnownPorts::graphicsControl);
+                          (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
                  (dataset, minC, maxC, renderServerOutputConnection,
@@ -5038,12 +5077,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       renderServerOutputConnection =
               new vrpn_Synchronized_Connection
-                        (WellKnownPorts::remoteRenderingData);
+                        (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
               new vrpn_Synchronized_Connection
-                          (WellKnownPorts::graphicsControl);
+                          (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
                (dataset, minC, maxC, renderServerOutputConnection,
@@ -5061,13 +5100,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::remoteRenderingData);
+              wellKnownPorts->remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::graphicsControl);
+              wellKnownPorts->graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -5095,13 +5134,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::remoteRenderingData);
+              wellKnownPorts->remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::graphicsControl);
+              wellKnownPorts->graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -5128,13 +5167,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::remoteRenderingData);
+              wellKnownPorts->remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              WellKnownPorts::graphicsControl);
+              wellKnownPorts->graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -5166,13 +5205,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 void initialize_rtt (void) {
 
   rtt_server_connection = new vrpn_Synchronized_Connection
-           (WellKnownPorts::roundTripTime);
+           (wellKnownPorts->roundTripTime);
   rtt_server = new vrpn_Analog_Server ("microscope_rtt",
                                        rtt_server_connection);
   rtt_server->setNumChannels(1);
 
   fprintf(stderr, "Service named microscope_rtt is now listening "
-                  "on port %d.\n", WellKnownPorts::roundTripTime);
+                  "on port %d.\n", wellKnownPorts->roundTripTime);
 
 }
 
@@ -5245,7 +5284,9 @@ int main(int argc, char* argv[])
 
     ParseArgs(argc, argv, &istate);
 
-
+    /* set up list of well-known ports based on optional command-line args */
+    wellKnownPorts = new WellKnownPorts (istate.basePort);
+    
     if(glenable){
     	char	*envir;
 	envir = getenv("TRACKER");
@@ -5714,7 +5755,7 @@ int main(int argc, char* argv[])
             loggingTimestamp.tv_sec);
     collaboratingPeerServerConnection = 
   	new vrpn_Synchronized_Connection
-          (WellKnownPorts::collaboratingPeerServer,
+          (wellKnownPorts->collaboratingPeerServer,
            istate.logInterface ? sfbuf : NULL,
            istate.logInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
                               vrpn_LOG_NONE);
@@ -5745,7 +5786,7 @@ int main(int argc, char* argv[])
     sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", loggingPath,
             loggingTimestamp.tv_sec);
     interfaceLogConnection = new vrpn_Synchronized_Connection
-            (WellKnownPorts::interfaceLog, sfbuf, vrpn_LOG_OUTGOING);
+            (wellKnownPorts->interfaceLog, sfbuf, vrpn_LOG_OUTGOING);
     if (!interfaceLogConnection->doing_okay()) {
       fprintf(stderr, "ERROR:  Couldn't open log file.\n");
       //shutdown_connections();

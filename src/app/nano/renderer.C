@@ -291,8 +291,9 @@ int main (int argc, char ** argv) {
     exit(0);
   }
 
-  graphics = new nmg_Graphics_Implementation
-    (dataset, s.minColor, s.maxColor, NULL, graphics_connection);
+  graphics = new nmg_Graphics_Implementation (
+      dataset, s.minColor, s.maxColor, NULL,
+      graphics_connection, wellKnownPorts->remote_gaEngine);
   if (!graphics) {
     fprintf(stderr, "%s:  out of memory.  Exiting.\n", argv[0]);
     exit(0);

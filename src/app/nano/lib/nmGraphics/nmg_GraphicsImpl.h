@@ -16,7 +16,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
                                  const int minColor [3],
                                  const int maxColor [3],
                                  const char * rulergridName = NULL,
-                                 vrpn_Connection * = NULL);
+                                 vrpn_Connection * = NULL,
+                                 unsigned int portNum = 4503);
 
     virtual ~nmg_Graphics_Implementation (void);
 
