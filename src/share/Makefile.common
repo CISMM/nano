@@ -94,7 +94,7 @@ endif
 # Get my username
 #
 
-ifeq ($(HW_OS),pc_cygwin)     # This is set up in NT
+ifeq ($(HW_OS),pc_cygwin)
    WHOAMI := $(USERNAME)
 else
    WHOAMI := $(USER)
@@ -361,8 +361,7 @@ endif
 
 DEFINES := -DINCLUDE_CALLBACK_CODE
 
-ifdef OLD_MICROSCOPE
-else
+ifndef OLD_MICROSCOPE
    DEFINES += -DUSE_VRPN_MICROSCOPE
 endif
 
