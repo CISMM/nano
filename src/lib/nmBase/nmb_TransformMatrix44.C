@@ -108,6 +108,7 @@ void nmb_TransformMatrix44::compose(nmb_TransformMatrix44 &m)
 }
 
 void nmb_TransformMatrix44::transform(double *p_src, double *p_dest) const {
+    assert(p_src != p_dest);
     for (int i = 0; i < 4; i++){
         p_dest[i] = 0;
         for (int j = 0; j < 4; j++){
@@ -122,6 +123,7 @@ void nmb_TransformMatrix44::transform(double *pnt) const {
 }
 
 void nmb_TransformMatrix44::invTransform(double *p_src, double *p_dest) {
+    assert(p_src != p_dest);
     if (!hasInverse()) {
         fprintf(stderr, "nmb_TransformMatrix44::invTransform: Warning,"
                " failed use of inverse (non-invertible transform)\n");

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 #include "nmb_Transform_TScShR.h"
 
 const int nmb_numTransformParameters = 12;
@@ -405,6 +406,7 @@ void nmb_Transform_TScShR::getCenter(double &x, double &y, double &z)
 
 void nmb_Transform_TScShR::transform(double *p_src, double *p_dest)
 {
+  assert(p_src != p_dest);
   if (d_matrixNeedsUpdate) {
     updateMatrix();
   }

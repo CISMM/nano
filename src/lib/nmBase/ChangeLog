@@ -1,3 +1,12 @@
+2001-12-16  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_ImageManager.C (addImageToGrid): if there is no input grid then
+	the image still gets added to the list (it wasn't added before)
+        * nmb_TransformMatrix44.C (transform): checks to make sure the input
+	point is not the same as the output point (at least in the version of
+	that function that doesn't handle that case)
+        * nmb_Transform_TScShR.C (transform): "
+
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_ImageManager.hC : new file - along the same lines as 
