@@ -526,8 +526,6 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
 	if (!d_greyscaleImage) {
 		return -1;
 	}
-
-printf("updateTextureMipmap\n");
     
     int XMin = d_greyscaleImage->borderXMin();
     int XMax = d_greyscaleImage->borderXMax();

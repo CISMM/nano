@@ -1,5 +1,10 @@
 2002-10-24  David Borland <borland@cs.unc.edu>
 
+        * URProjectiveTexture.C : removed a print statement I had been using
+        for debugging.
+
+2002-10-24  David Borland <borland@cs.unc.edu>
+
         * URProjectiveTexture.[Ch] : numerous changes to fix some problems with
         the texture borders and colormaps.  Added code to be able to set the
         alpha value of the projective texture.
