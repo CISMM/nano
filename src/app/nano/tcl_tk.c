@@ -160,6 +160,7 @@ char *handle_knob_change(ClientData /*clientData*/,
 	return NULL;
 }
 
+#if 0
 char *handle_surface_change(ClientData clientData,
 	Tcl_Interp *interp, char *name1, char *name2, int flags)
 {
@@ -203,6 +204,7 @@ char *handle_surface_change(ClientData clientData,
   
   return NULL;
 }
+#endif
 
 char * handle_term_input (ClientData, Tcl_Interp * interp,
                           char * name1, char *, int)
@@ -380,23 +382,10 @@ int     init_Tk_variables ()
 		return(-1);
 	}
 
-	/* setup callback for changes to lighting and material */
-	/* this callback does nothing except force a redraw of the entire surface */
-	/* you still need to link the tcl and c lighting variables */
-	/* only works for the GL version currently XXX */
-	if (Tcl_TraceVar2(tk_control_interp, "surface_changed",NULL,
-		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-		handle_surface_change, (ClientData) NULL) != TCL_OK) {
-		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "surface_change",
-			tk_control_interp->result);
-		return(-1);
-	}
-
-
-
 	minColor = graphics->getMinColor();
 	maxColor = graphics->getMaxColor();
 
+#if 0
 	/* initialize Tk variables for color settings */
 	sprintf(cvalue, "%d", (int)minColor[0]);
 	Tcl_SetVar(tk_control_interp,"minR",(char *) cvalue,TCL_GLOBAL_ONLY);
@@ -413,6 +402,8 @@ int     init_Tk_variables ()
 
 	sprintf(cvalue, "%d", graphics->getSpecularity());
 	Tcl_SetVar(tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
+#endif
+
 	controls_on = 1;
 
 

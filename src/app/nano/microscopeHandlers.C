@@ -10,6 +10,7 @@
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
 #include <nmb_Line.h>
+#include <nmb_Debug.h>
 
 #include <nmm_Types.h>
 #include <nmm_Globals.h>
@@ -652,6 +653,9 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
 void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   BCPlane * plane =
     dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+
+  collabVerbose(5, "handle_z_scale_change\n");
+
   // If user is feeling from data at the same time that she is changing
   // the zscale, she could get a strong jerk from the phantom, so put her
   // into grab mode first
@@ -954,6 +958,8 @@ void    handle_z_dataset_change(const char *, void * _mptr)
   }
   
   // Set the scale to that of the one we just selected.
+  collabVerbose(5, "handle_z_dataset_change:  stm_z_scale = %.5f\n",
+                plane->scale());
   microscope->state.stm_z_scale = plane->scale();
   
   graphics->setHeightPlaneName(dataset->heightPlaneName->string());

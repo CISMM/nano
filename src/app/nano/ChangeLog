@@ -1,3 +1,10 @@
+2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (setupSynchronization) : add long comment about
+        the bugs we've had recently
+	* tcl_tk.c (handle_surface_change) : remove dead code
+	(init_Tk_control_panels) : same
+
 2000-09-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main) : moved call to init_Tk_control_panels to an

@@ -543,7 +543,6 @@ TclNet_int set_stream_time ("set_stream_time", 0);
 TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
 
-#if 1
 // NANOX - XXX
 /// Quick method of sharing measure line locations
 TclNet_float measureRedX ("measure_red_x", 0.0,
@@ -558,7 +557,6 @@ TclNet_float measureBlueX ("measure_blue_x", 0.0,
                            handle_collab_measure_change, (void *) 2);
 TclNet_float measureBlueY ("measure_blue_y", 0.0,
                            handle_collab_measure_change, (void *) 2);
-#endif
 
 
 /// the Tk slider for recovery time
@@ -1832,8 +1830,8 @@ static vrpn_bool ignoreCollabMeasureChange = 0;
 /// collaborator) so change the position onscreen.
 static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
                                           void * userdata) {
-    // Ignore some changes caused by tcl variables. 
-    if (ignoreCollabMeasureChange) return;
+  // Ignore some changes caused by tcl variables. 
+  if (ignoreCollabMeasureChange) return;
 
   BCPlane * heightPlane = dataset->inputGrid->getPlaneByName
                  (dataset->heightPlaneName->string());
@@ -1843,6 +1841,8 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
     return;
   }
   int whichLine = (int) userdata;   // hack to get the data here
+
+  collabVerbose(5, "handle_collab_measure_change for line %d.\n", whichLine);
 
   switch (whichLine) {
 
@@ -1887,6 +1887,8 @@ static void handle_collab_measure_move (float x, float y,
   int whichLine = (int) userdata;   // hack to get the data here
 
   //collaborationTimer.block(collaborationTimer.getListHead());
+
+  collabVerbose(5, "handle_collab_measure_move for line %d.\n", whichLine);
 
   switch (whichLine) {
     case 0:
@@ -3158,6 +3160,8 @@ static	void	handle_set_xform_change (vrpn_int32, void * userdata)
   q_copy(temp.rotate, save_diff_xform.rotate);
   temp.scale = save_diff_xform.scale + cent_xf.scale;
   
+collabVerbose(5, "handle_set_xform_change:  updateWorldFromRoom().\n");
+
   updateWorldFromRoom(&temp);
 
   g->setLightDirection(save_light_dir);
@@ -3495,6 +3499,9 @@ static void handle_joymove(vrpn_float64 , void *userdata)
 			/*recalculate world to room xform and save*/
 			v_x_invert(&modxform,&modxform);
                         //v_x_copy(&v_world.users.xforms[0],&modxform);
+
+collabVerbose(5, "handle_joymove (r):  updateWorldFromRoom().\n");
+
                         updateWorldFromRoom(&modxform);
 			break;
 	    case 0: // this is a release
@@ -3519,6 +3526,9 @@ static void handle_joymove(vrpn_float64 , void *userdata)
                 modxform.xlate[2]=shadowxform.xlate[2]+deltaz;
                 v_x_invert(&modxform,&modxform);
                 //v_x_copy(&v_world.users.xforms[0],&modxform);
+
+collabVerbose(5, "handle_joymove (t):  updateWorldFromRoom().\n");
+
                 updateWorldFromRoom(&modxform);
 		break;
 	    case 0: // release
@@ -4428,6 +4438,45 @@ void setupSynchronization (CollaborationManager * cm,
 
   //set_stream_time.d_permitIdempotentChanges = VRPN_TRUE;
 
+  //
+  // BIG WARNING
+  //
+
+  // Ordering of these components is constrained by external semantics.
+  //   For example, changing stm_z_scale executes a center() command.
+  // This is right and good when we're running locally.  However, it
+  // is really nasty under collaboration - every time we get a copy of
+  // the entire remote state, there's a center() executed as a side-
+  // effect.  So we need to make sure that stm_z_scale is sent BEFORE
+  // tcl_wfr_*, so that after the center we get updated with the correct
+  // transforms.
+  //   That's all well and good.  However, every time the Z plane is
+  // changed, stm_z_scale is reset.  This means that heightPlaneName
+  // must also be sent BEFORE tcl_wfr_*.
+  //   This reordering was caused by a well-justified one-line feature,
+  // but took weeks of intermittent effort to track down (about 4 hours
+  // focus in the end, once the preceeding weeks had eliminated other
+  // possible causes & simple approaches).  Other small features added
+  // at the same time require other reorderings.
+  //   What if a reordering had to be across components?  What happens
+  // when we require cyclic cross-componet reorderings?  The original
+  // fix was complicated by the fact that the implementation of
+  // nmui_Component ordered ints before floats before strings, and
+  // we had to move a string forward;  that implementation has been fixed.
+  //   This points to the fragility of our system.  Possible causes are
+  // fine-grained sharing, side effects, and the fact that callback-based
+  // systems (at least, ours, with all its history) spread the semantics
+  // of an action out across a wide area.
+  //   To workaround:  document all ordering restrictions here, along
+  // with what parts of the code are known to require it.  Remember
+  // that we can't be sure these restrictions are exhaustive.
+
+  // m->state.stm_z_scale < tcl_wfr_*
+  //    handle_z_scale_change => center => reset tcl_wfr_*
+  // dset->heightPlaneName < tcl_wfr_*
+  //    handle_z_dataset_change => handle_z_scale_change => ...
+
+  // T. Hudson Sept 2000
 
   // View control
 
@@ -7765,6 +7814,8 @@ static float testarray [1000];
 	      v_x_invert(&modxform,&modxform);
 	      //v_x_copy(&v_world.users.xforms[0],&modxform);
 
+collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
+
               // HACK?
               updateWorldFromRoom(&modxform);
 
@@ -7790,6 +7841,8 @@ static float testarray [1000];
 	      /*recalculate world to room xform and save*/
 	      v_x_invert(&modxform,&modxform);
 	      //v_x_copy(&v_world.users.xforms[0],&modxform);
+
+collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
               // HACK?
               updateWorldFromRoom(&modxform);
 	    }
@@ -7815,6 +7868,8 @@ static float testarray [1000];
 	      modxform.xlate[1]=shadowxform.xlate[1]-deltay/1000;
 	      v_x_invert(&modxform,&modxform);
 	      //v_x_copy(&v_world.users.xforms[0],&modxform);
+
+collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
               // HACK?
               updateWorldFromRoom(&modxform);
 	    }
@@ -8373,6 +8428,8 @@ void center (void) {
 
 //    printf("Setting head scale to %f\n", lock.scale);
 
+
+collabVerbose(5, "center:  updateWorldFromRoom().\n");
   updateWorldFromRoom(&lock);
 }
 

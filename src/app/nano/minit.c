@@ -372,6 +372,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
 //                 q_normalize(new_world_from_room.rotate, 
 //                             new_world_from_room.rotate);
 
+collabVerbose(5, "handle_magellan_puck_change:  updateWorldFromRoom().\n");
                updateWorldFromRoom(&new_world_from_room);
 //                 printf ("\n");
 

@@ -1470,6 +1470,8 @@ doScale(int whichUser, int userEvent, double scale_factor)
         // scaled_w_f_o = scaled_w_f_h * h_f_o	
         v_x_compose(&temp, &scaledWorldFromHand, &handFromObject);
 
+collabVerbose(5, "doScale:  updateWorldFromRoom().\n");
+
         updateWorldFromRoom(&temp);
 	break;
 	
@@ -1771,11 +1773,12 @@ int doMeasure(int whichUser, int userEvent)
                      (clipPos[1] - decoration->blue.y()) );
       
         if (ishold == 0) {
-            graphics->setHandColor(BLUE);
-            if ((rdxy <= bdxy) && (rdxy <= gdxy))
-               graphics->setHandColor(RED);
-            else if (gdxy <= bdxy)
-               graphics->setHandColor(GREEN);
+          graphics->setHandColor(BLUE);
+          if ((rdxy <= bdxy) && (rdxy <= gdxy)) {
+             graphics->setHandColor(RED);
+          } else if (gdxy <= bdxy) {
+             graphics->setHandColor(GREEN);
+          }
         }
 
         // NANOX
@@ -1786,9 +1789,13 @@ int doMeasure(int whichUser, int userEvent)
 
         switch(userEvent) {
         
-	   case PRESS_EVENT: hold_color = graphics->getHandColor();
+	   case PRESS_EVENT:
+
+             hold_color = graphics->getHandColor();
+
            case HOLD_EVENT: 
-	     ishold =1;
+
+	     ishold = 1;
 	     if (hold_color == RED) { 
                decoration->red.doCallbacks(clipPos[0], clipPos[1], plane);
 	     }
@@ -1799,9 +1806,14 @@ int doMeasure(int whichUser, int userEvent)
                decoration->blue.doCallbacks(clipPos[0], clipPos[1], plane);
 	     }
 	     break;
+
 	   case RELEASE_EVENT:
-	     ishold =0;
-           default: break;
+
+	     ishold = 0;
+
+           default:
+
+             break;
         }
     return 0;
 }
@@ -2731,6 +2743,8 @@ doWorldGrab(int whichUser, int userEvent)
 	v_x_compose(&temp, &oldWorldFromHand, &handFromRoom);
 
         // NANOX
+collabVerbose(5, "doWorldGrab:  updateWorldFromRoom().\n");
+
         updateWorldFromRoom(&temp);
 
 	break;
@@ -2789,6 +2803,8 @@ void initializeInteraction (void) {
   tcl_lightDirX = lightdir[X];
   tcl_lightDirY = lightdir[Y];
   tcl_lightDirZ = lightdir[Z];
+
+collabVerbose(5, "initializeInteraction:  updateWorldFromRoom().\n");
 
   updateWorldFromRoom();
 
