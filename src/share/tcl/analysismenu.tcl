@@ -84,22 +84,31 @@ set rulergrid_position_line 0
 set rulergrid_orient_line 0
 
 
+
 ################################
 #
 # Procedure to adjust rulergrid scaling, translation, and color
 
 #set these so we can see do " wishx <mainwin.tcl" and test interface
-set ruler_r 255
-set ruler_g 255
-set ruler_b 100
+#set ruler_r 255
+#set ruler_g 255
+#set ruler_b 100
 
-set ruler_color [format #%02x%02x%02x $ruler_r $ruler_g $ruler_b]
+#set ruler_color [format #%02x%02x%02x $ruler_r $ruler_g $ruler_b]
+set ruler_color #ffff64
+
+# Procedure to change color-swatch color at collaborator
+proc ruler_color_changed { name el op } {
+    global nmInfo ruler_color
+    $nmInfo(rulergrid).c.colorsample configure -bg $ruler_color
+}
+trace variable ruler_color w ruler_color_changed
 
 proc set_rulergrid_color {} {
-    global ruler_r ruler_g ruler_b rulergrid_changed ruler_color
+    global rulergrid_changed ruler_color
     # Extract three component colors of ruler_color 
     # and save into ruler_r g b
-    scan $ruler_color #%02x%02x%02x ruler_r ruler_g ruler_b
+    #scan $ruler_color #%02x%02x%02x ruler_r ruler_g ruler_b
     set rulergrid_changed 1
 }
 
