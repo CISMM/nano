@@ -1,3 +1,7 @@
+2001-07-27  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile:  added USES_EXTERNAL_LIBS := magick for SGI build
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* BCGrid.Ch (BCGrid): Remove constructors which load files, so
