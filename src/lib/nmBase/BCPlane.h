@@ -18,7 +18,7 @@ const int BCPLANE_OPTIMIZE_LINE = 0;
 const int BCPLANE_OPTIMIZE_AREA = 1;
 
 #include "BCGrid.h"
-
+#include "vrpn_Types.h"
 
 const	int	MAX_PLANE_CALLBACKS = 32;
 /** Callback to say that one or more of the values in the plane have changed.
@@ -117,6 +117,24 @@ class BCPlane
     }
 
     virtual void setValue(int x, int y, float value);
+
+    /// for mathematical morphology it may be useful to work with integer
+    /// data so these functions are provided to access the raw AFM data:
+
+    /// Provides data values at the same precision at which
+    /// the data was actually acquired and in DAC units.
+    inline vrpn_uint16 valueDAC(int x, int y) const {
+        float fresult = (value(x,y) - tm_offset)/tm_scale;
+        return (vrpn_uint16)(fresult);
+    }
+
+    /// Converts values in DAC units into real world units (nm)
+    /// using the scale and offset values for the plane and sets the
+    /// plane value
+    inline void setValueDAC(int x, int y, vrpn_uint16 valDAC) {
+        float val = valDAC*tm_scale + tm_offset;
+        setValue(x, y, val);
+    }
 
     inline double xInWorld(int x, double scale = 1.0) const {
 	return scale*( minX() + (maxX()-minX()) * ((double)x/(numX()-1)) );
