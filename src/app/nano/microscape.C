@@ -1282,6 +1282,8 @@ void shutdown_connections (void) {
   ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
   color_min.bindConnection(NULL);
   color_max.bindConnection(NULL);
+  data_min.bindConnection(NULL);
+  data_max.bindConnection(NULL);
 
   measureRedX.bindConnection(NULL);
   measureRedY.bindConnection(NULL);

@@ -1,5 +1,10 @@
 2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
 
+	* microscape.c (shutdown_connections) : clean up after data_min
+	and data_max to avoid segfault
+
+2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
+
 	* microscape.c (setupSynchronization) : add long comment about
         the bugs we've had recently
 	* tcl_tk.c (handle_surface_change) : remove dead code
