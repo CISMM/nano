@@ -391,7 +391,7 @@ const nmb_Image8bit::FileExportingFunction
         nmb_Image8bit::file_exporting_function[] = {NULL};
 
 
-nmb_Image8bit::nmb_Image8bit(const char *name, const char *units, 
+nmb_Image8bit::nmb_Image8bit(const char *name, const char * /*units*/, 
 	short x, short y):
         nmb_Image(), num_x(x), num_y(y),
         units_x("none"), units_y("none"), units("ADC"),
@@ -477,10 +477,17 @@ double nmb_Image8bit::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
     }
 }
 
-void nmb_Image8bit::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x){}
-void nmb_Image8bit::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y){}
+void nmb_Image8bit::setBoundX(
+    nmb_ImageBounds::ImageBoundPoint /*ibp*/,
+    double /*x*/)
+{}
 
-void nmb_Image8bit::setBounds(const nmb_ImageBounds &ib) {}
+void nmb_Image8bit::setBoundY(
+    nmb_ImageBounds::ImageBoundPoint /*ibp*/,
+    double /*y*/)
+{}
+
+void nmb_Image8bit::setBounds(const nmb_ImageBounds & /*ib*/) {}
 
 void nmb_Image8bit::getBounds(nmb_ImageBounds &ib)  const
 {
@@ -494,7 +501,7 @@ BCString *nmb_Image8bit::unitsY() {return &units_y;}
 
 int nmb_Image8bit::numExportFormats() {return 0;}
 nmb_ListOfStrings *nmb_Image8bit::exportFormatNames() {return NULL;}
-const char *nmb_Image8bit::exportFormatType(int type)
+const char *nmb_Image8bit::exportFormatType(int /*type*/)
          {return NULL;}
 
 int nmb_Image8bit::exportToFile(FILE *f, const char *export_type){

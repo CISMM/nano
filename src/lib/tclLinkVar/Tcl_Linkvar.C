@@ -138,12 +138,14 @@ char	*handle_float_value_change(ClientData clientData,
 	   floatvar->mylastfloat = value;
 	}
 	return NULL;
-};
+}
+
+//	Update the string variable in the handler that is pointed to
+// when the variables changes.
 
 /**	Update the string variable in the handler that is pointed to
  when the variables changes.
 */
-//static
 char	*handle_string_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
@@ -171,10 +173,9 @@ char	*handle_string_value_change(ClientData clientData,
 	return NULL;
 };
 
-//	Update the list_of_strings variable in the handler that is pointed to
-// when the variables changes.
-
-//static
+/**	Update the list_of_strings variable in the handler that is pointed to
+ when the variables changes.
+*/
 char	*handle_list_of_strings_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
@@ -373,6 +374,10 @@ int	Tclvar_mainloop (void)
 	return 0;
 }
 
+//	Add an entry into the list of active integer Tcl variables, and
+// point it to this variable.
+//	Add a Tcl callback, if an interpreter has been declared.
+
 /**	Add an entry into the list of active integer Tcl variables, and
  point it to this variable.
 	Add a Tcl callback, if an interpreter has been declared.
@@ -423,8 +428,8 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 	    }
 	}
 
-	addCallback(c, ud);
-};
+  addCallback(c, ud);
+}
 
 ///	Remove the entry from the list of active integer Tcl variables.
 Tclvar_int::~Tclvar_int (void)
@@ -458,7 +463,7 @@ Tclvar_int::~Tclvar_int (void)
 
 	// Reduce the number in the list
 	num_ints--;
-};
+}
 
 #if 0
 int Tclvar_int::initialize (Tcl_Interp * interpreter) {
@@ -642,7 +647,7 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
   addCallback(c, ud);
 //fprintf(stderr, "Done with Tclvar_float #%d (%s = %.5f)\n",
 //num_floats, tcl_varname, default_value);
-};
+}
 
 //	Remove the entry from the list of active float Tcl variables.
 
@@ -678,7 +683,7 @@ Tclvar_float::~Tclvar_float (void)
 
 	// Reduce the number in the list
 	num_floats--;
-};
+}
 
 void Tclvar_float::addCallback (Linkvar_Floatcall cb, void * userdata) {
   tclFloatCallbackEntry * newEntry;
@@ -837,7 +842,7 @@ Tclvar_int_with_button::Tclvar_int_with_button
 	if ( (interpreter != NULL) && (tcl_widget_name != NULL) ) {
 		initialize(interpreter);
 	}
-};
+}
 
 Tclvar_int_with_button::~Tclvar_int_with_button (void)
 {
@@ -1241,6 +1246,7 @@ vrpn_int32 Tclvar_int_with_scale::operator = (vrpn_int32 v) {
 }
 
 */
+
 
 
 

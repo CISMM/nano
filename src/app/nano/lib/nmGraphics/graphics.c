@@ -333,7 +333,6 @@ void makeRulerImage (void) {
 
 void buildRemoteRenderedTexture (int width, int height, void * tex) {
   GLenum errval;
-  int retval;
 //fprintf(stderr, "Building remotely rendered texture.\n");
 
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);

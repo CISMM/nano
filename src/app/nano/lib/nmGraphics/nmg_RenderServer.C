@@ -473,7 +473,7 @@ vrpn_int32 nmg_Graphics_RenderServer::screenSizeY (void) const {
 }
 
 // virtual
-void nmg_Graphics_RenderServer::resizeViewport (int width, int height) {
+void nmg_Graphics_RenderServer::resizeViewport (int /*width*/, int /*height*/) {
 
   // do nothing
   // need to override nmg_Graphics_Implementation behavior
@@ -494,6 +494,8 @@ void nmg_Graphics_RenderServer::screenCapture (void) {
   int w, h;
   nmg_Graphics_Implementation::screenCapture(&w, &h, &d_pixelBuffer, VRPN_FALSE);
 }
+
+void nmg_Graphics_RenderServer::sendDepthData (void) {
 
 void nmg_Graphics_RenderServer::depthCapture (void) {
   int w, h;

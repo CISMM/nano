@@ -43,7 +43,7 @@ class BCGrid
 
     BCGrid (const BCGrid *);  // copy constructor
 
-    ~BCGrid (void);
+    virtual ~BCGrid (void);
 
     void     findUniquePlaneName(BCString base_name, BCString *result_name);
     BCPlane* addNewPlane(BCString dataset, BCString units, int timed);

@@ -50,7 +50,7 @@ struct stm_stream;  // from stm_file.h
 
 
 class nmm_Microscope_Remote : public nmm_Microscope {
-    friend nmm_RelaxComp;
+    friend class nmm_RelaxComp;
   public:
 
     nmm_Microscope_Remote (const AFMInitializationState &,

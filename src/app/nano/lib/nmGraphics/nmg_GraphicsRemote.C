@@ -1107,8 +1107,8 @@ void nmg_Graphics_Remote::setTextureCenter( float dx, float dy ) {
 //
 
 void nmg_Graphics_Remote::loadRawDataTexture
-       (const int which, const char *image_name,
-        const int start_x, const int start_y) {
+       (const int /*which*/, const char * /*image_name*/,
+        const int /*start_x*/, const int /*start_y*/) {
   // TODO BUG BUG BUG
 }
 

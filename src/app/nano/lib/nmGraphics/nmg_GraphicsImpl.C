@@ -1753,7 +1753,7 @@ This function will load data from an nmb_Image which contains
 an array of unsigned bytes - we do it this way so it will be as fast
 as possible (don't want to do unnecessary copying or scaling operations)
 */
-void nmg_Graphics_Implementation::loadRawDataTexture(const int which,
+void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
        const char *image_name,
        const int start_x, const int start_y)
 {
@@ -1789,7 +1789,7 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int which,
 void nmg_Graphics_Implementation::updateTexture(int which_texture,
        const char *image_name,
        int start_x, int start_y,
-       int end_x, int end_y)
+       int /*end_x*/, int /*end_y*/)
 {
     if (which_texture == SEM_DATA){
        loadRawDataTexture(which_texture, image_name, start_x, start_y);
@@ -2368,7 +2368,7 @@ int nmg_Graphics_Implementation::handle_loadRulergridImage
 
 // static
 int nmg_Graphics_Implementation::handle_causeGridRedraw
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
+                                 (void * userdata, vrpn_HANDLERPARAM /*p*/) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->causeGridRedraw();
@@ -2377,7 +2377,7 @@ int nmg_Graphics_Implementation::handle_causeGridRedraw
 
 // static
 int nmg_Graphics_Implementation::handle_causeGridRebuild
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
+                                 (void * userdata, vrpn_HANDLERPARAM /*p*/) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->causeGridRebuild();
