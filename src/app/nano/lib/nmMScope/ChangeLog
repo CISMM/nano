@@ -1,3 +1,7 @@
+2001-09-21  Aron Helser  <helser@cs.unc.edu>
+
+	* AFMState.C (autoscan): on by default. 
+
 2001-09-14 Jameson Miller <millerj@cs.unc.edu>
 
 	*AFMState.c, .h :added in direct step tool params

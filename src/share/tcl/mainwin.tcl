@@ -470,7 +470,7 @@ trace variable spm_scanning w scan_button_label
 
 checkbutton $w2.toolbar.autoscan -text "Rescan when\nStop Touch" \
 	-variable autoscan -padx 0 -pady 0
-set autoscan 0
+set autoscan 1
 
 button $w2.toolbar.withdraw_tip -text "Withdraw\nTip" \
         -command "set withdraw_tip 1"

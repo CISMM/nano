@@ -60,6 +60,7 @@ $graphmod(stripchart) axis create gm_Surface_Z_Axis_x -title "Surface Z axis (nm
 
 $graphmod(stripchart) xaxis use gm_timevec
 set graphmod(cur_x_axis) gm_timevec
+set graphmod(cur_x_data) gm_timevec
 
 
 proc set_for_scanline_mode {} {
@@ -90,7 +91,7 @@ proc set_for_point_mode {} {
 }
 
 # Changes the x axis back and forth between time, arclength
-# and the x and y position on the surface.
+# and the x, y and z position on the surface.
 proc change_x_axis { newaxis {newdata ""}} {
     global graphmod
 
@@ -104,12 +105,14 @@ proc change_x_axis { newaxis {newdata ""}} {
 	    $graphmod(stripchart) element configure $name \
 		-xdata $newaxis -mapx $newaxis
 	}
+        set graphmod(cur_x_data) $newaxis
     } else {
 	# The axis and the data are named differently.
 	foreach name [$graphmod(stripchart) element names] {
 	    $graphmod(stripchart) element configure $name \
 		-xdata $newdata -mapx $newaxis
 	}
+        set graphmod(cur_x_data) $newdata
     }
 }
 
@@ -229,6 +232,14 @@ proc add_stripchart_element { name id intensity {min 0} {max 0} } {
     global ${name}_min ${name}_max
 
     if { [$graphmod(stripchart) element exists $name] } { 
+        # make color match ID, so if ID changes, we don't use the
+        # same color for two graph elements. 
+        $graphmod(stripchart) element configure $name \
+                -color [unique_color $id $intensity] 
+        # This is "the new way", might cause problems on SGI, Aron H. 9/01
+        $graphmod(stripchart) axis configure $name \
+	    -limitscolor [unique_color $id $intensity] 
+
         if { $min != 0 || $max != 0} {
 	    $graphmod(stripchart) axis configure $name -min $min -max $max
             set ${name}_min $min
@@ -239,7 +250,7 @@ proc add_stripchart_element { name id intensity {min 0} {max 0} } {
 
     # Label strips off the leading "gm_"
     $graphmod(stripchart) element create $name \
-	-xdata $graphmod(cur_x_axis) -ydata $name \
+	-xdata $graphmod(cur_x_data) -ydata $name \
         -color [unique_color $id $intensity] \
         -label [string range $name 3 end]
     # new BLT version requires new syntax for axis creation.

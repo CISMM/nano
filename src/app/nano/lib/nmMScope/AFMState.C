@@ -486,7 +486,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     acquisitionMode(IMAGE),
 
     scanning ("spm_scanning", 0),
-    autoscan ("autoscan", 0),
+    autoscan ("autoscan", 1),
     withdraw_tip("withdraw_tip", 0),
     slowScanEnabled ("slowScan", 1),
     cannedLineVisible (VRPN_FALSE),

@@ -1,9 +1,18 @@
+2001-09-21  Aron Helser  <helser@cs.unc.edu>
+
+	* modify.tcl (init_live_controls): Added "eval", fixes bug/error
+	when connecting to live microscope. 
+
+	* stripchart.tcl (change_x_axis): Separate x axis data and x axis
+	name, resolves bug when choosing Surface_X_Axis to graph against.
+	(add_stripchart_element): Make color of element change if it
+	already exists. Avoids duplicate colors. 
+
 2001-14-06 Jameson Miller <millerj@cs.unc.edu>
+
 	* modify.tcl: added in direct step tool
 	* mainwin.tcl: added in direct step file for direct step windo
 	* directStep.tcl: window for direct_step controls
-
-
 
 2001-09-06  Shayne O'Neill   <oneill@mindspring.com>
 	

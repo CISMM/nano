@@ -1428,7 +1428,7 @@ proc init_live_controls {} {
 	$nmInfo(ml_slow_line).step-size \
 	-side top -pady 2 -anchor nw
 
-    lappend device_only_controls "$nmInfo(ml_slow_line).slow_line_play \
+    eval lappend device_only_controls "$nmInfo(ml_slow_line).slow_line_play \
 	$nmInfo(ml_slow_line).slow_line_step \
 	$nmInfo(ml_slow_line).slow_line_forward \
 	$nmInfo(ml_slow_line).slow_line_reverse \

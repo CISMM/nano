@@ -1,3 +1,8 @@
+2001-09-21  Aron Helser  <helser@cs.unc.edu>
+
+	* GraphMod.C (ReceiveNewPoint): Always init Z axis, even if it
+	isn't used.
+
 2001-08-21  Aron Helser  <helser@cs.unc.edu>
 
 	* GraphMod.Ch (ReceiveNewPoint): Add handling of Z coords 

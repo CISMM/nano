@@ -445,7 +445,7 @@ static   long	first_sec,first_usec;
       sprintf(command, "gm_Surface_Y_Axis set {%f}", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
-      if (me->d_is3D) {
+      //if (me->d_is3D) {
           //set up the z surface vector.
           sprintf(str, "gm_Surface_Z_Axis");
           if (!Blt_VectorExists(me->d_interp, str))  {
@@ -459,7 +459,7 @@ static   long	first_sec,first_usec;
           // chop it off to one element
           sprintf(command, "gm_Surface_Z_Axis set {%f}", p->z());
           TCLEVALCHECK(me->d_interp, command);
-      }
+          //}
 
       int j = 0;
       // Attach the X and Y surface elements to the y axis of the
@@ -472,13 +472,13 @@ static   long	first_sec,first_usec;
 		"gm_Surface_Y_Axis", j);
       TCLEVALCHECK(me->d_interp, command);
       j++;
-      if (me->d_is3D) {
+      //if (me->d_is3D) {
           // Do Z as well, if necessary. 
           sprintf(command, "add_stripchart_element \"%s\" %d 1.0 0.0 0.0",
                   "gm_Surface_Z_Axis", j);
           TCLEVALCHECK(me->d_interp, command);
           j++;
-      }
+          //}
 
       // create a vector for each value returned from microscope
       // and attach it to a graph in the stripchart
