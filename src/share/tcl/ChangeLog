@@ -1,3 +1,8 @@
+2002-07-25 Jameson Miller <millerj@cs.unc.edu>
+	*directStep.tcl : more work on the direct step UI when stepping
+	along user defined axis. Stepping buttons are disabled when not
+	in touch mode.
+
 2002-07-18 David Borland <borland@cs.unc.edu>
         * tem.tcl : new file for tem controls.  Currently just has one 
         button -- Acquire Image.

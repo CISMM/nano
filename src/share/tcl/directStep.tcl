@@ -632,10 +632,69 @@ set step_go_to_pos $go_to_pos
 }
 
 global newmodifyp_control
+global user_0_mode
 
+trace variable user_0_mode w set_direct_step_state
 trace variable newmodifyp_control w show_direct_step_controls
 trace variable setting_direct_step_axis w set_ds_axis
 trace variable setting_direct_step_axis w show_direct_step_controls
+
+#enables and disables direct step controls.
+#if we are not in touch mode, disable the stepping buttons
+#and the go to buttons.
+
+proc set_direct_step_state {nm el op} {
+global user_0_mode
+global takestep modifyp_tool collab_commands_suspended 
+# user_0_mode == 12 means we are in touch mode
+if { $collab_commands_suspended == 0 } {
+if {$user_0_mode == 12} {
+  #regular axis buttons
+  $takestep(buttons).plus_y configure -state normal
+  $takestep(buttons2).plus_x configure -state normal
+  $takestep(buttons2).minus_x configure -state normal
+  $takestep(buttons3).minus_y configure -state normal
+
+  $takestep(buttons_z).plus_z configure -state normal
+  $takestep(buttons_z3).minus_z configure -state normal
+
+  #colored axis
+  $takestep(buttons_c).plus_y_c configure -state normal
+  $takestep(buttons2_c).plus_x_c configure -state normal
+  $takestep(buttons2_c).minus_x_c configure -state normal
+  $takestep(buttons3_c).minus_y_c configure -state normal
+
+  $takestep(buttons_z_c).plus_z_c configure -state normal
+  $takestep(buttons_z3_c).minus_z_c configure -state normal
+
+  #goto button
+  $takestep(goto).go_to_pos configure -state normal
+  $takestep(goto_c).go_to_pos_c configure -state normal
+  } else {
+  #regular axis buttons
+  $takestep(buttons).plus_y configure -state disabled
+  $takestep(buttons2).plus_x configure -state disabled
+  $takestep(buttons2).minus_x configure -state disabled
+  $takestep(buttons3).minus_y configure -state disabled
+
+  $takestep(buttons_z).plus_z configure -state disabled
+  $takestep(buttons_z3).minus_z configure -state disabled
+
+  #colored axis
+  $takestep(buttons_c).plus_y_c configure -state disabled
+  $takestep(buttons2_c).plus_x_c configure -state disabled
+  $takestep(buttons2_c).minus_x_c configure -state disabled
+  $takestep(buttons3_c).minus_y_c configure -state disabled
+
+  $takestep(buttons_z_c).plus_z_c configure -state disabled
+  $takestep(buttons_z3_c).minus_z_c configure -state disabled
+
+  #goto button
+  $takestep(goto).go_to_pos configure -state disabled
+  $takestep(goto_c).go_to_pos_c configure -state disabled
+ }
+}
+}
 
 proc set_ds_axis {nm el op} {
     global modelFile import_file_label current_object current_object_new
@@ -648,9 +707,7 @@ proc set_ds_axis {nm el op} {
 	set current_object_new "axis.dsa"
 	set import_scale 300
     } else {
-    #maybe close the axis object here?
-
-	# this doesn't work
+    #close the axis object here?
     global modelFile nmInfo import_file_label
 
     set modelFile ""
@@ -789,7 +846,7 @@ proc show_direct_step_controls {nm el op} {
 	    
 	    pack $takestep(stepSize_c).step_z_size_c -side left
 	    pack $takestep(pos_c).z_pos_c -side left
-	    pack $takestep(current_pos_c).cur_z_c $takestep(current_pos).value_cur_z -side left
+	    pack $takestep(current_pos_c).cur_z_c $takestep(current_pos_c).value_cur_z_c -side left
 
 	    pack forget $takestep(axis_controls_2).import_tune_trans_button
 	    pack forget $takestep(axis_controls_4).import_tune_rot_button
