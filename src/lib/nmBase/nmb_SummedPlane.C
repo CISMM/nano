@@ -1,4 +1,11 @@
 
+#ifdef sgi
+#include <unistd.h>  // for gethostname
+#endif
+#ifdef _WIN32
+#include <winsock2.h>  // for gethostname
+#endif
+
 #include "nmb_SummedPlane.h"
 #include "BCPlane.h"
 #include "nmb_Dataset.h"

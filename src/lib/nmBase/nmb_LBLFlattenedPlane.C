@@ -1,4 +1,8 @@
 
+#ifdef sgi
+#include <unistd.h>  // for gethostname
+#endif
+
 #include "nmb_LBLFlattenedPlane.h"
 
 
