@@ -127,19 +127,19 @@ bool load_simulator_data(char* file){
 //prints values to file "microscopeData.er"
 bool fillArray(nmm_SimulatedMicroscope* nano_eroder_connection){
 	bool retval = nano_eroder_connection->FillDataArray(&MicroscopeHeightArray,xResolution,yResolution,
-		((float)(-Near + Far))/nano_eroder_connection->get_zrange() );
+		/*((float)(-Near + Far))/nano_eroder_connection->get_zrange()*/nano_eroder_connection->Sim_to_World_x );
 	if(retval){//only print if correctly filled
 		ofstream outstream;
 		char filename[100];
 		strcpy(filename,"microscopeData.er");
 		outstream.open(filename);
-		outstream << xResolution << " " << yResolution << endl;
+		//outstream << xResolution << " " << yResolution << endl;
 		int rownumber;
 		for(int y = 0;y < yResolution;++y){
 			rownumber = yResolution-y-1;//rownumber counts up from the bottom
 			for(int x = 0;x < xResolution;++x){
-				if(x < xResolution-1)	print_to_file(outstream, MicroscopeHeightArray[rownumber][x], " ");
-				else					print_to_file(outstream, MicroscopeHeightArray[rownumber][x], "\n");
+				//if(x < xResolution-1)	print_to_file(outstream, MicroscopeHeightArray[rownumber][x], " ");
+				//else					print_to_file(outstream, MicroscopeHeightArray[rownumber][x], "\n");
 			}
 		}
 	}
@@ -336,12 +336,12 @@ void changeBufferSize(){
   }
 }
 
-double ** doErosion(int& row_length,double zrange,nmm_SimulatedMicroscope* nano_eroder_connection) 
+double ** doErosion(int& row_length,double zrange,nmm_SimulatedMicroscope* nano_eroder_connection,double xworldratio) 
 {
   //think this should be 1.0 since didn't scale the z heights when read into the eroder,
   //so shouldn't scale them on the way out either, if did scale on the way in, values
   //would be mult. by xworldratio below, then div. by it for sending out (in invert_zHeight_values)
-  double xworldratio = 1.0;//= (-Near+Far)/zrange;
+  //double xworldratio = 1.0;//= (-Near+Far)/zrange;
   //changeBufferSize();
   showGrid();
 
@@ -354,11 +354,11 @@ double ** doErosion(int& row_length,double zrange,nmm_SimulatedMicroscope* nano_
 
   row_length = xResolution;
 
-  for(int y = 0;y < yResolution; ++y){
+  /*for(int y = 0;y < yResolution; ++y){
 	  for(int x = 0;x < xResolution; ++x){
-		  zDistanceScaled[y][x] = zDistanceScaled[y][x] /*+ nano_eroder_connection->get_zoffset()*/;
+		  zDistanceScaled[y][x] = zDistanceScaled[y][x]; //+ nano_eroder_connection->get_zoffset();
 	  }
-  }
+  }*/
 
 
   return zDistanceScaled;

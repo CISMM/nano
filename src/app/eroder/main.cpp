@@ -426,13 +426,17 @@ void displayFuncDepth( void ) {
 		//cout << "safe to erode = " << (int)safe_to_erode;
 		
 		if(connection_to_nano){//fill array, erode, and send
-			if( fillArray(&EroderConnection) && EroderConnection.last_filled_y == yResolution - 1 ){
+			gettimeofday(&currenttime,NULL);//current time
+			if( fillArray(&EroderConnection) && 
+				( (EroderConnection.last_filled_y == yResolution - 1) || 
+				((vrpn_TimevalDiff(currenttime,EroderConnection.lastfilltime)).tv_sec >= 10) ) ){
 			//true if array filled properly, and all rows filled in (ANDREA:fix second condition for partial fills later)
-				HeightData = doErosion(length,EroderConnection.get_zrange(),&EroderConnection);				
+				HeightData = doErosion(length,EroderConnection.get_zrange(),&EroderConnection,
+					EroderConnection.Sim_to_World_x);				
 			}
 
 			gettimeofday(&currenttime,NULL);//current time
-			int x = 1;
+			int x = 3;
 			if((vrpn_TimevalDiff(currenttime,oldtime)).tv_sec >= x)
 			{//send no greater than every x sec.
 				EroderConnection.encode_and_sendData(HeightData,length);
@@ -443,7 +447,7 @@ void displayFuncDepth( void ) {
 		}
 		else{//just erode
 			//cout << "erosion here" << endl;
-			HeightData = doErosion(length,1.0,&EroderConnection);
+			HeightData = doErosion(length,300,&EroderConnection,1.0);
 		}
 		new_microscope_data = false;
 		new_tip_data = false;		//we have taken care of the new microscope/tip data so set both to false
@@ -484,6 +488,10 @@ void commonIdleFunc( void ) {
 	int oldHeight = windowHeight;
 
 	if(EroderConnection.grid_size_rcv){
+		sp.set_r(sp.r* EroderConnection.Sim_to_World_x);
+        ics.set_r(ics.r* EroderConnection.Sim_to_World_x);
+		//change tip radius to match scan resolution from nano
+		
 		windowWidth = EroderConnection.get_xsize();
 		windowHeight = EroderConnection.get_ysize();
 

@@ -23,7 +23,8 @@ extern double Near;
 extern double Far;
 
 
-double ** doErosion( int& row_length,double zrange,nmm_SimulatedMicroscope* nano_eroder_connection );
+double ** doErosion( int& row_length,double zrange,nmm_SimulatedMicroscope* nano_eroder_connection,
+					double xworldratio );
 void  imageErosionRender();
 void changeBufferSize();
 void showGrid( void );
