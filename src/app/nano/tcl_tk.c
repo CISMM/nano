@@ -37,14 +37,12 @@
 extern "C" int Blt_Init (Tcl_Interp *interp);
 extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
-//#include "x_util.h"  // for x_set_scale()
 #include "microscape.h"  // for user_mode, mode_change, tcl_offsets,
                          // Arm_knobs, ...
 #include "globals.h"
 #include "tcl_tk.h"
 
 
-//#define TCL_WIDGETS_FILE "russ_widgets.tcl"
 #define TCL_MODE_FILE "mainwin.tcl"
 #ifdef TRUE
 #undef TRUE
@@ -160,51 +158,6 @@ char *handle_knob_change(ClientData /*clientData*/,
 	return NULL;
 }
 
-#if 0
-char *handle_surface_change(ClientData clientData,
-	Tcl_Interp *interp, char *name1, char *name2, int flags)
-{
-  char	*cvalue;
-  int   value;
- 
-  double minColor [3];
-  double maxColor [3];
-
-  /* Keep the compiler happy. */ 
-  name1 = name1; name2 = name2; flags = flags; clientData = clientData;
-
-  cvalue = Tcl_GetVar(interp, "minR", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  minColor[0] = (double)value/255.0;
-  cvalue = Tcl_GetVar(interp, "minG", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  minColor[1] = (double)value/255.0;
-  cvalue = Tcl_GetVar(interp, "minB", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  minColor[2] = (double)value/255.0;
-  graphics->setMinColor(minColor);
-
-  cvalue = Tcl_GetVar(interp, "maxR", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  maxColor[0] = (double)value/255.0;
-  cvalue = Tcl_GetVar(interp, "maxG", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  maxColor[1] = (double)value/255.0;
-  cvalue = Tcl_GetVar(interp, "maxB", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  maxColor[2] = (double)value/255.0;
-  graphics->setMaxColor(maxColor);
-
-  cvalue = Tcl_GetVar(interp, "polish", TCL_GLOBAL_ONLY);
-  Tcl_GetInt(interp, cvalue, &value);
-  graphics->setSpecularity(value);
-
-  /* need to force a redraw of the entire surface */
-  dataset->range_of_change.ChangeAll();
-  
-  return NULL;
-}
-#endif
 
 char * handle_term_input (ClientData, Tcl_Interp * interp,
                           char * name1, char *, int)
@@ -228,11 +181,6 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 	return NULL;
 }
 
-/* Trace routine that handles updates to X window scale variables from Tcl */
-// replaced with handle_x_value_change() in microscape.c and all the
-// standard automatic TclLinkvar stuff
-//char * handle_Tk_x_value_change
-
 /** Initialize the Tk control panels */
 int	init_Tk_control_panels (const char * tcl_script_dir,
                                 int collabMode,
@@ -247,7 +195,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	VERBOSE(4, "  Initializing Tcl");
 	tk_control_interp = Tcl_CreateInterp();
 
-	printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
+  printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
 
 #if defined (_WIN32) && !defined (__CYGWIN__)
         if (Tcl_InitStubs(tk_control_interp, TCL_VERSION, 1) == NULL) {
@@ -385,25 +333,6 @@ int     init_Tk_variables ()
 	minColor = graphics->getMinColor();
 	maxColor = graphics->getMaxColor();
 
-#if 0
-	/* initialize Tk variables for color settings */
-	sprintf(cvalue, "%d", (int)minColor[0]);
-	Tcl_SetVar(tk_control_interp,"minR",(char *) cvalue,TCL_GLOBAL_ONLY);
-	sprintf(cvalue, "%d", (int)minColor[1]);
-	Tcl_SetVar(tk_control_interp,"minG",(char *) cvalue,TCL_GLOBAL_ONLY);
-	sprintf(cvalue, "%d", (int)minColor[2]);
-	Tcl_SetVar(tk_control_interp,"minB",(char *) cvalue,TCL_GLOBAL_ONLY);
-	sprintf(cvalue, "%d", (int)maxColor[0]);
-	Tcl_SetVar(tk_control_interp,"maxR",(char *) cvalue,TCL_GLOBAL_ONLY);
-	sprintf(cvalue, "%d", (int)maxColor[1]);
-	Tcl_SetVar(tk_control_interp,"maxG",(char *) cvalue,TCL_GLOBAL_ONLY);
-	sprintf(cvalue, "%d", (int)maxColor[2]);
-	Tcl_SetVar(tk_control_interp,"maxB",(char *) cvalue,TCL_GLOBAL_ONLY);
-
-	sprintf(cvalue, "%d", graphics->getSpecularity());
-	Tcl_SetVar(tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
-#endif
-
 	controls_on = 1;
 
 
@@ -435,7 +364,9 @@ int	poll_Tk_control_panels(void)
 	
 	int  i,new_val;
 	
-	if (!controls_on) return(-1);
+	if (!controls_on) {
+          return -1;
+        }
 
 	/* Check user mode and see if it has changed.  If so, set in Tcl */
 	if (user_mode[0] != old_user_mode) {

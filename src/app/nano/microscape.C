@@ -73,7 +73,11 @@ pid_t getpid();
 #include <Tcl_Netvar.h>
 #include <nmb_Line.h>
 #include <nmb_TimerList.h>
+#include <Topo.h>
+#include <Tcl_Linkvar.h>
+#include <Tcl_Netvar.h>
 
+// microscope
 #include <nmm_Globals.h>	
 #include <nmm_MicroscopeRemote.h>
 #include <nmm_Types.h>
@@ -117,15 +121,13 @@ pid_t getpid();
 #endif
 #include "updt_display.h"
 #include "tcl_tk.h"
-#include <Tcl_Linkvar.h>
-#include <Tcl_Netvar.h>
 #include "nma_Keithley2400_ui.h"  // VI Curve generator - Keithley 2400
 #include "ohmmeter.h"   /* French ohmmeter */
 #include "nmui_SEM.h" // EDAX SEM
-#include <Topo.h>
 #include "Timer.h"
 #include "microscopeHandlers.h"
 #include "CollaborationManager.h"
+#include "minit.h"
 #include "microscape.h"
 
 #include "error_display.h"
@@ -1533,6 +1535,7 @@ Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
                                  handle_finegrained_changed, NULL);
 
 // NANOX
+
 
 void handle_mutex_request (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
@@ -6018,6 +6021,8 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     // clear the modify markers
     handleCharacterCommand("C", &dataset->done, 1);
 
+    microscope->requestMutex();
+
     return 0;
 }
 
@@ -6325,8 +6330,9 @@ int main (int argc, char* argv[])
     graphics->setTextureDirectory(textureDir);
     graphics->setAlphaColor(alpha_red, alpha_green, alpha_blue);
 
-    if (rulerPPMName)
+    if (rulerPPMName) {
       graphics->loadRulergridImage(rulerPPMName);
+    }
 
 
     // These call is duplicated in createNewMicroscope, 
@@ -6337,8 +6343,7 @@ int main (int argc, char* argv[])
 
     // initialize graphics
     VERBOSE(1, "Before X display initialization");
-    if (glenable)
-    {
+    if (glenable) {
 #if !defined(FLOW) && !defined(V_GLUT)  /* don't use with glut or PixelFlow */
 	/*INITIALIZE EVENT MASK FOR VLIB WINDOW -- DCR Sept 29, 1997*/
 	XSelectInput(VLIB_dpy,VLIB_win,ResizeRedirectMask);
@@ -6396,8 +6401,7 @@ int main (int argc, char* argv[])
     if (peripheral_init(internal_device_connection, istate.do_magellan)){
         display_fatal_error_dialog("Cannot initialize peripheral devices\n");
         return(-1);
-    }
-    else if (register_vrpn_callbacks()){
+    } else if (register_vrpn_callbacks()) {
         display_fatal_error_dialog("Cannot setup tracker callbacks\n");
         return(-1);
     }
@@ -6628,8 +6632,10 @@ int main (int argc, char* argv[])
   World.TSetContents(temp);
  
   initializeInteraction();
-  // did this in createNewMicroscope() but things were NULL then.
+
+  // did these in createNewMicroscope() but things were NULL then.
   linkMicroscopeToInterface(microscope);
+  microscope->requestMutex();
 
   // Registration - displays images with glX or GLUT depending on V_GLUT
   // flag

@@ -38,9 +38,6 @@
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 #endif
-#ifndef _TOPO_
-#include <Topo.h>
-#endif
 
 class ColorMap;
 class PPM;
@@ -82,30 +79,6 @@ extern	ColorMap	*curColorMap;	// microscape.c
 
 
 /************************
- * Which knob performs which function
- ************************/
-
-#define	     FORCE_KNOB		(1)
-#define	     MOD_FORCE_KNOB 	(2) /* arbitrary knob */
-#define	     IMG_FORCE_KNOB 	(6) /* arbitrary knob */
-#define      FRICTION_KNOB      (5)
-#define      RATE_KNOB 		(3)
-#define      RECOVERY_KNOB      (0) /* DIM recover cylces */
-#define F_MIN_DIAL              (0)
-#define F_MAX_DIAL              (1)
-#define F_CUR_DIAL              (2)
-#define F_XTR_DISPLAY           (0)
-#define F_MIN_DISPLAY           (1)
-#define F_MAX_DISPLAY           (2)
-#define F_CUR_DISPLAY           (3)
-#define	F_XTR_TITLE		(4)
-#define	F_MIN_TITLE		(5)
-#define	F_MAX_TITLE		(6)
-#define	F_CUR_TITLE		(7)
-#define	F_TITLE			(8)
-
-
-/************************
  * External stuff
  ************************/
 
@@ -141,6 +114,7 @@ extern  vrpn_Button_Remote *buttonBox;
 extern  vrpn_Analog_Remote *dialBox;
 extern  int bdboxButtonState[BDBOX_NUMBUTTONS];
 extern  double bdboxDialValues[BDBOX_NUMDIALS];
+
 #ifndef NO_MAGELLAN
 extern  vrpn_Magellan *magellanButtonBoxServer;
 extern  vrpn_Tracker_AnalogFly *magellanTrackerServer;
@@ -153,11 +127,11 @@ extern  vrpn_bool magellanPuckActive;
 #endif
 /* end vrpn stuff */
 
-extern  char                    *headTrackerName;
-extern  char                    *handTrackerName;
-extern  char			*bdboxName;
+extern  char * headTrackerName;
+extern  char * handTrackerName;
+extern  char * bdboxName;
 
-extern	int	user_mode[];
+extern	int user_mode [];
 
 // used in interaction.c
 extern int mouse3button;
@@ -178,7 +152,6 @@ extern  Tclvar_float            color_min_limit;
 extern  Tclvar_float            color_max_limit;
 extern  TclNet_float            color_min, color_max;
 extern  TclNet_float            data_min, data_max;
-extern int noDataAlpha;
 extern TclNet_int surface_r;
 extern TclNet_int surface_g;
 extern TclNet_int surface_b;
@@ -235,33 +208,8 @@ extern Tclvar_float              sound_slider_max_limit;
 extern Tclvar_float              sound_slider_min, sound_slider_max;
 extern Tclvar_string           soundPlaneName;
 
-
 //---------------------------------------------------------------------------
-/// These select the offset and scale of the overlaid ruler grid, when it is on
-// used in interaction.c
-extern  TclNet_int rulergrid_position_line;
-extern  TclNet_int rulergrid_orient_line;
-extern  TclNet_float rulergrid_xoffset;
-extern  TclNet_float rulergrid_yoffset;
-extern  TclNet_float rulergrid_angle;
-extern	TclNet_int rulergrid_enabled;
-
-//---------------------------------------------------------------------------
-/// This is for toggling the null data alpha compensation on and off
-extern  TclNet_int toggle_null_data_alpha;
-
-//---------------------------------------------------------------------------
-/// These select the plane to map alpha from and the scale of the mapping. 
-extern  Tclvar_float            alpha_slider_min_limit;
-extern  Tclvar_float            alpha_slider_max_limit;
-extern  Tclvar_float            alpha_slider_min, alpha_slider_max;
-
-
-//---------------------------------------------------------------------------
-/// These select the plane to map x from and the scale of the mapping. 
-extern  Tclvar_float            x_min_value;
-extern  Tclvar_float            x_max_value;
-extern  Tclvar_float            x_min_scale, alpha_max_scale;
+/// This selects the plane to map x from. 
 extern  Tclvar_string         xPlaneName;
 
 //---------------------------------------------------------------------------
@@ -286,17 +234,6 @@ extern int register_vrpn_phantom_callbacks(void);
 // a global user interface object so I put it here temporarily (AAS)
 enum TextureMode {RULERGRID, SEM, REGISTRATION, MANUAL_REALIGN, GENETIC};
 extern int disableOtherTextures (TextureMode m);
-
-/* defined in minit.c */
-int x_init(char* argv[]);
-int reset_phantom();
-int peripheral_init(vrpn_Connection *, vrpn_bool do_magellan);
-int stm_init (const vrpn_bool set_region,
-              const vrpn_bool set_mode, const int, const char *,
-              const int, const int);
-
-/** TopoFile class global declaration to store header information from stream/topo files - moved to microscope library */
-//extern TopoFile GTF;
 
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
 // mytimer, frametimer, stm_new_frame, mode_change, tcl_offsets, user_mode,

@@ -51,5 +51,17 @@ extern TclNet_float tcl_wfr_scale;
 extern Tclvar_float handTracker_update_rate;
 
 extern Tclvar_int xy_lock;
+
+/************************
+ * Which knob performs which function
+ ************************/
+
+#define FORCE_KNOB              (1)
+#define MOD_FORCE_KNOB          (2) /* arbitrary knob */
+#define IMG_FORCE_KNOB          (6) /* arbitrary knob */
+#define FRICTION_KNOB           (5)
+#define RATE_KNOB               (3)
+#define RECOVERY_KNOB           (0) /* DIM recover cylces */
+
 #endif  // INTERACTION_H
 

@@ -1,3 +1,16 @@
+2000-11-29  Tom Hudson  <hudson@cs.unc.edu>
+
+	* minit.h : new file
+	* interaction.c : #include minit.h
+        (doSelect) : add test of microscope->haveMutex()
+	* interaction.h : add #defines for knob box
+	* microscape.c : move around #includes, #include minit.h
+	(createNewMicroscope) : add call of microscope->requestMutex()
+	* microscape.h : remove redundant, obsolete, or mis-placed items
+	* microscapeHandlers.C : #include minit.h
+
+	* tcl_tk.c : remove dead code
+
 2000-11-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c : add vrpn_bool g_syncPending to reduce problems

@@ -72,6 +72,7 @@
 #include "globals.h"
 #include "microscape.h"  // for lots of #defines, graphicsTimer
 #include "interaction.h"
+#include "minit.h"  // for reset_phantom()
 
 #include "vrpn_ForceDevice.h"
 
@@ -190,7 +191,8 @@ char    *MODE_SOUNDS[] = {      (char *)"fly_mode",
 
 
 /** parameter locking the tip in sharp tip mode */
-Tclvar_int xy_lock("xy_lock_pressed");
+static void handle_xyLock (vrpn_int32, void *);
+Tclvar_int xy_lock ("xy_lock_pressed", 0, handle_xyLock);
 
 /// Trigger button from the virtual button box in Tcl
 static int	tcl_trigger_just_forced_on = 0;
@@ -471,6 +473,11 @@ void updateMicroscopeRTTEstimate (double time) {
 }
 
 
+void handle_xyLock (vrpn_int32, void *) {
+  if (!microscope->haveMutex()) {
+    xy_lock = 0;
+  }
+}
 
 
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
@@ -1197,17 +1204,17 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 
     /* code dealing with locking the tip in sharp tip mode */
     /* locks the tip in one place so you can take repeated measurements */
-    if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
+    if ((PRESS_EVENT == eventList[XY_LOCK_BT]) && microscope->haveMutex()) {
       // save the position the user is currently at so we have
       // the x and y coords of their hand in the world, only the z varies
       // (CONSTR_FREEHAND_XYZ mode only)
       if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
 	nmui_Util::getHandInWorld(user, xy_pos);
       }
-      xy_lock =1;
+      xy_lock = 1;
     }
-    if( RELEASE_EVENT ==eventList[XY_LOCK_BT] ) {
-      xy_lock =0;
+    if (RELEASE_EVENT == eventList[XY_LOCK_BT]) {
+      xy_lock = 0;
     }
 
     /* Handle a "commit" or "cancel" button press/release on
@@ -2421,7 +2428,7 @@ int doFeelLive (int whichUser, int userEvent)  {
 
   if (!microscope->haveMutex()) {
     handleCharacterCommand("G", &dataset->done, 1);
-    printf("Can't touch when we don't have access to the microscope.\n");
+    //printf("Can't touch when we don't have access to the microscope.\n");
     return 0;
   }
 
@@ -2713,6 +2720,12 @@ doSelect(int whichUser, int userEvent)
 	    printf("Select mode available only on live data!!!\n");
 	    return 0;
 	  }
+
+  if (!microscope->haveMutex()) {
+    handleCharacterCommand("G", &dataset->done, 1);
+    //printf("Can't touch when we don't have access to the microscope.\n");
+    return 0;
+  }
 
 	BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());

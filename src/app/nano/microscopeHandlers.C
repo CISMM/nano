@@ -22,6 +22,7 @@
 #include <microscape.h>
 
 #include "microscopeHandlers.h"
+#include "minit.h"  // for reset_phantom()
 
 
 
