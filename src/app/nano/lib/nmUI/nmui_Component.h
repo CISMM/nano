@@ -65,18 +65,20 @@ typedef int (* nmui_LockHandler) (void * userdata);
 
 class nmui_Component {
 
+
   public:
+
 
     // CONSTRUCTORS
 
+
     nmui_Component (char name [30]);
-                    //TclNet_int ** = NULL, int = 0,
-                    //TclNet_float ** = NULL, int = 0,
-                    //TclNet_string ** = NULL, int = 0);
 
     virtual ~nmui_Component (void);
 
+
     // ACCESSORS
+
 
     const char * name (void) const;
 
@@ -109,14 +111,9 @@ class nmui_Component {
        * Used for locking, which is not fully implemented.
        */
 
+
     // MANIPULATORS
 
-    //void add (TclNet_int *);
-      /**< Adds a netvar to the hierarchy under this component. */
-    //void add (TclNet_float *);
-      /**< Adds a netvar to the hierarchy under this component. */
-    //void add (TclNet_string *);
-      /**< Adds a netvar to the hierarchy under this component. */
 
     void add (Tcl_Netvar *);
       /**< Adds a netvar to the hierarchy under this component. */
@@ -202,18 +199,15 @@ class nmui_Component {
        * we should recieve and respond to synchronization requests.
        */
 
+
   protected:
+
 
   private:
 
+
     char d_name [31];
 
-    //int d_numInts;
-    //TclNet_int * d_ints [NMUI_COMPONENT_MAX_SIZE];
-    //int d_numFloats;
-    //TclNet_float * d_floats [NMUI_COMPONENT_MAX_SIZE];
-    //int d_numStrings;
-    //TclNet_string * d_strings [NMUI_COMPONENT_MAX_SIZE];
     int d_numVars;
     Tcl_Netvar * d_vars [3 * NMUI_COMPONENT_MAX_SIZE];
     int d_numComponents;
