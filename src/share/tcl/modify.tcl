@@ -31,6 +31,9 @@
 #   config_play_name:              changes play to pause and vice versa on modify live window
 #   init_live_controls:            initialize the live controls
 #
+#   modify_change_made:            when a modifyp_* variable changes, update corresponding
+#                                  newmodifyp_* variable
+#
 #
 #  Go to the end of the file to see the intialization calls.
 
@@ -689,6 +692,7 @@ proc init_full {} {
 	set newmodifyp_$modifyvar [set modifyp_$modifyvar]
     }
 
+
     # The following is a list of variables that could potentially
     # cause changes to the window when they are written to (for
     # instance, when a radio button gets selected).  Each member
@@ -701,11 +705,13 @@ proc init_full {} {
     }
 
     # These traces change the color of Accept and Cancel when you haven't
-    # pressed Accept yet.
+    # pressed Accept yet. and if a modify var changes outside of nano,
+    # set the newmodifyvar.
     foreach modifyvar $modifyplist {
 	trace variable newmodifyp_$modifyvar w modBackgChReal
+	trace variable modifyp_$modifyvar w "modify_change_made $modifyvar"
     }
-
+    
     # The following variables have been rendered
     # obsolete.  I put them here so that they can
     # be found if you ever want to use them again.
@@ -1112,6 +1118,23 @@ proc change_made {nm el op} {
 	set_view
     }
 }
+##############################################
+# when a value of a modify variable changes, #
+# change the newmodify value as well         #
+#                                            #
+##############################################
+proc modify_change_made {val nm el op} {
+    global nmInfo
+    global save_bg
+	global modifyp_$val
+	global newmodifyp_$val
+	if {[set newmodifyp_$val] != [set modifyp_$val] } {
+	    set newmodifyp_$val [set modifyp_$val]
+	}
+
+    $nmInfo(modifyfull).mode.accept configure -background $save_bg
+    $nmInfo(modifyfull).mode.cancel configure -background $save_bg
+}
 
 ##############################################
 # Dynamically enables/disables widgets       #
@@ -1448,8 +1471,8 @@ proc init_live_controls {} {
     generic_entry $nmInfo(ml_slow_line).step-size modifyp_step_size \
 	"Step Size (nm)" real 
 
-pack $nmInfo(top_slow_line) -side top
-pack $nmInfo(top_slow_line).slow_line_collect_data \
+    pack $nmInfo(top_slow_line) -side top
+    pack $nmInfo(top_slow_line).slow_line_collect_data \
 	$nmInfo(top_slow_line).slow_line_play -side right
 
     pack $nmInfo(ml_slow_line).slow_line_step \
