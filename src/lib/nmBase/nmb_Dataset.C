@@ -29,15 +29,15 @@ bool nmb_Dataset::doInitHeight = false;
 char nmb_Dataset::initHeight[256];
 char nmb_Dataset::initColorPlane[256];
 
-nmb_Dataset::nmb_Dataset
-              (vrpn_bool useFileResolution, int xSize, int ySize,
-               float xMin, float xMax, float yMin, float yMax,
-               int readMode, const char ** gridFileNames, int numGridFiles,
-               const char ** imageFileNames, int numImageFiles,
-               nmb_String * (* string_allocator) (const char *),
-	       nmb_ListOfStrings * (* list_of_strings_allocator) (),
-               TopoFile &topoFile):
-
+nmb_Dataset::
+nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
+	     float xMin, float xMax, float yMin, float yMax,
+	     int readMode, const char ** gridFileNames, int numGridFiles,
+	     const char ** imageFileNames, int numImageFiles,
+	     nmb_String * (* string_allocator) (const char *),
+	     nmb_ListOfStrings * (* list_of_strings_allocator) (),
+	     TopoFile &topoFile ) :
+  
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
                          readMode)),
   inputPlaneNames (list_of_strings_allocator()),

@@ -77,13 +77,6 @@ int nmb_ImgMagick::readFileMagick(const char * filename, const char * name, BCGr
       }
       for (unsigned int j=0; j<image->rows; j++) {
           for (unsigned int i=0; i < image->columns; i++) {
-//                if (pixels[i + image->columns*j].red > MaxRGB/2) {
-//                    printf("0");
-//                } else {
-//                    printf(".");
-//                }
-//            }
-//            printf("\n");
               //  data ranges 0 to 256
               // Swap data vertically, to match NM convention.
               plane->setValue(i,image->rows-1-j,pixels[i + image->columns*j].red);
@@ -97,9 +90,9 @@ int nmb_ImgMagick::readFileMagick(const char * filename, const char * name, BCGr
 }
 
 int nmb_ImgMagick::writeFileMagick(const char * filename, 
-                    const char * mgk_filetype, 
-                    int cols, int rows, 
-                    int bpp, unsigned char * pixels)
+				   const char * /*mgk_filetype*/, 
+				   int cols, int rows, 
+				   int /*bpp*/, unsigned char * pixels)
 {
     ExceptionInfo
         exception;
@@ -120,8 +113,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
         // Get here if we can't create the image, let caller handle it. 
         return -1;
     }
-//      SetImageDepth(image, 8);
-//      image->depth = 8;
+
     // Image is flipped vertically, with data coming from frame buffer. 
     flip_image = FlipImage(image, &exception);
     DestroyImage(image);
@@ -131,12 +123,10 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
         return -1;
     }
     image_info=CloneImageInfo((ImageInfo *) NULL);
-//    image_info->depth = 8;
     strcpy(flip_image->filename,filename);
     if(!WriteImage(image_info, flip_image)) {
         return -1;
     }
-    //printf("%d %d %d\n", pixels[0].red, pixels[0].green, pixels[0].blue);
     DestroyImageInfo(image_info);
     DestroyImage(flip_image);
     return(0);
@@ -166,7 +156,6 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     unsigned int val;
     int x, y;
       
-    //printf("%f %f %f\n", minValue(), maxValue(), scale);
     for(y = 0; y <h ; y++ ) {
         for(x = 0; x < w; x++ ) {
             // Flip access of data vertically, 
@@ -212,7 +201,6 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     if(!WriteImage(image_info, image)) {
         return -1;
     }
-    //printf("%d %d %d\n", pixels[0].red, pixels[0].green, pixels[0].blue);
     DestroyImageInfo(image_info);
     DestroyImage(image);
     return(0);
@@ -242,7 +230,6 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     unsigned int val;
     int x, y;
 
-    //printf("%f %f %f\n", minValue(), maxValue(), scale);
     for(y = 0; y <h ; y++ ) {
         for(x = 0; x < w; x++ ) {
             // Flip access of data vertically,
@@ -288,7 +275,6 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     if(!WriteImage(image_info, image)) {
         return -1;
     }
-    //printf("%d %d %d\n", pixels[0].red, pixels[0].green, pixels[0].blue);
     DestroyImageInfo(image_info);
     DestroyImage(image);
     return(0);

@@ -939,8 +939,8 @@ BCGrid::writePPMFile(FILE* file, BCPlane* plane)
 int 
 BCGrid::writeImageFile(FILE* file, BCPlane* plane, const char * filename, const char * mgk_filetype)
 {
-    int file_descriptor;
-    if ( (file_descriptor = fileno(file)) == -1) {
+    int file_descriptor = fileno(file);
+    if ( file_descriptor == -1 ) {
       perror("BCGrid::writeTIFFile: Could not get descriptor!");
       return -1;
     }

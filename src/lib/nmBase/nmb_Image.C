@@ -1790,7 +1790,7 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
 }
 
 // static
-int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, 
+int nmb_ImageArray::exportToTIFF(FILE* /*file*/, nmb_ImageArray *im, 
                                  const char * filename)
 {
   if(nmb_ImgMagick::writeFileMagick(filename,"TIF",(nmb_Image *)im)) {
@@ -1798,34 +1798,6 @@ int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im,
       return -1;
   }
 
-/*
-  if (im->pixelType() != NMB_UINT8) {
-    printf("error, can't write images that aren't 8 bits per pixel\n");
-    return 0;
-  }
-  int w = im->width();
-  int h = im->height();
-
-  // use color image because greyscale export is broken
-  unsigned char *pixels = new unsigned char [w*h*3];
-
-  int i, j;
-  for (i = 0; i < w; i++){
-    for (j = 0; j < h; j++) {
-       float val = im->getValue(i,j);
-       unsigned char byteval = (unsigned char)val;
-       pixels[(i+j*w)*3] = byteval;
-       pixels[(i+j*w)*3+1] = byteval;
-       pixels[(i+j*w)*3+2] = byteval;
-    }
-  }
-// This doesn't work for some reason:
-  if (nmb_ImgMagick::writeFileMagick(filename, "TIF", w, h, 3, pixels)) {
-      fprintf(stderr, "Failed to write image to file\n");
-  }
-
-  delete [] pixels;
-*/
   return 0;
 }
 
@@ -1849,23 +1821,16 @@ nmb_ImageList::~nmb_ImageList()
 void nmb_ImageList::addFileImages(const char **file_names, int num_files,
                              TopoFile &topoFile)
 {
-    //printf("nmb_ImageList::nmb_ImageList building list\n");
-
     for (int i = 0; i < num_files; i++) {
-//          printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
-//              file_names[i]);
         BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
                                READ_FILE);
         g->loadFile( file_names[i], topoFile);
         nmb_Image *im;
         BCPlane *p;
-//          printf("file contained: \n");
         for (p = g->head(); p != NULL; p = p->next()){
             im = new nmb_ImageGrid(p);
             im->setTopoFileInfo(topoFile);
             addImage(im);
-//              printf("  %s\n", (const char *)(*(im->name())));
-//          printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());
         }
     }
 }
