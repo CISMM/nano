@@ -15,10 +15,11 @@ class nmr_Util {
     /// this function converts a transformation between scaled image 
     /// coordinates in A and scaled image coordinates in image B
     /// to one between world coordinates in A and world coordinates in B
-    static int computeResampleTransformInWorldCoordinates(
-           nmb_Image *imA, nmb_Image *imB,
-           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
-           nmb_TransformMatrix44 &worldA_from_worldB);
+// see comment in nmr_Util.C file
+//    static int computeResampleTransformInWorldCoordinates(
+//           nmb_Image *imA, nmb_Image *imB,
+//           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
+//           nmb_TransformMatrix44 &worldA_from_worldB);
     /// this function converts a transformation between scaled image
     /// coordinates in A and scaled image coordinates in image B
     /// to one between normalized image coordinates in A and normalized
@@ -35,6 +36,8 @@ class nmr_Util {
     /// The returned indices tell you what resolution you should use to
     /// create a resampled image containing the target image but with the 
     /// same resolution as the source image
+    /// xform should be from normalized image coordinates of src to 
+    /// normalized image coordinates of target
     static int computeResampleExtents(const nmb_Image &src, 
                         const nmb_Image &target,
                         nmb_TransformMatrix44 &xform, int &min_i, int &min_j,
@@ -73,6 +76,14 @@ class nmr_Util {
     static void createResampledImageWithImageSpaceTransformation(
           nmb_Image &target, const nmb_TransformMatrix44 &xform,
           nmb_Image &resampleImage);
+
+    /// xform defines a transformation from source to target
+    /// resampleImage is assumed to have the same world coordinate system as
+    /// the source image but may cover a larger region in the world than the
+    /// source image (as may be necessary to completely cover the target)
+    static void createResampledImageWithImageSpaceTransformation(
+          nmb_Image &target, nmb_Image &source, 
+          const nmb_TransformMatrix44 &xform, nmb_Image &resampleImage);
 
     /// for 3D->2D transformations
     /// computes interpolated height for points in the resampleImage by

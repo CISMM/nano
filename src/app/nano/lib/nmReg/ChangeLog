@@ -1,3 +1,34 @@
+2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.C (handle_registrationImage2D_change): instead
+	of updating the image all the time, does so only if the texture is
+	enabled
+        (handle_registrationImage2D_change): added some setup of the colormap
+	to do what used to be done in handle_registrationImage2D_change
+	(createResampleImage): lots of important bug fixes in this function
+	and its subroutines, the main theme
+	of these changes is removing dependence on the worldToImage
+	transformations in individual images - the registration code stores
+	its own transformation between images that is independent of 
+	world coordinates so there doesn't need to be any reference to
+	world coordinates
+        (createResamplePlane): "
+	* nmr_Util.C (computeResampleTransformInWorldCoordinates): commented 
+	out because it's use was leading to lots of problems due to 
+	confusion about whether or not world coordinates
+	meant the same thing to different images
+        (computeResampleExtents): changed semantics of the xform parameter
+	- now it means a transformation from normalized image coordinates of
+        src to normalized image coordinates of target
+	also fixed a nasty bug in use of the invTransform function -
+	it didn't handle the input and output parameters being the same pointer
+	(createResampledImageWithImageSpaceTransformation): created a new
+	version of this that takes an extra sourceImage parameter; the old
+	version assumes that the resampleImage has the same coordinates as
+	the sourceImage so there was no need for this parameter
+	but this one does not make this assumption
+
+
 2001-12-07    <marshbur@TUNGSTEN-CS>
 
 	* nmReg.dsp:  adds new files and removes old files.

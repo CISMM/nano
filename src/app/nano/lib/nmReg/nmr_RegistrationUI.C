@@ -429,18 +429,20 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
  
         me->d_last2DImage = im;
        
-        if (me->d_imageDisplay) {
+        if (me->d_imageDisplay && me->d_textureDisplayEnabled) {
           // set up texture in graphics
-          me->d_imageDisplay->setDisplayColorMap(im, 
-              me->d_2DImageCMap->getColorMapName(), "");
-          me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax, 
+          if (im) {
+            me->d_imageDisplay->setDisplayColorMap(im, 
+                  me->d_2DImageCMap->getColorMapName(), "");
+            me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax, 
                                                           cmin,cmax);
-          me->d_imageDisplay->addImageToDisplay(im);
+            me->d_imageDisplay->addImageToDisplay(im);
+            me->d_imageDisplay->updateImage(im);
+          }
 
           if (me->d_last3DImage) {
             me->updateTextureTransform();
           }
-          me->d_imageDisplay->updateImage(im);
         }
     }
 }
@@ -533,7 +535,15 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
 
     nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
                                 me->d_registrationImageName2D.string());
+    if (!im) return;
+
     if (value) {
+      // set up texture in graphics
+      double dmin,dmax,cmin,cmax;
+      me->d_imageDisplay->setDisplayColorMap(im,
+         me->d_2DImageCMap->getColorMapName(), "");
+      me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax,
+                                                cmin,cmax);
       me->d_imageDisplay->addImageToDisplay(im);
       me->updateTextureTransform();
       me->d_imageDisplay->updateImage(im);
@@ -741,6 +751,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         }
 
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_3D), 
+                 (*im_2D),
                  topoImageFromProjImage, (*new_image));
 
         // an extra step: combine the two datasets in a somewhat arbitrary
@@ -772,28 +783,30 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
                                    d_scaledProjImFromScaledTopoIm*
                                    scaledTopoImFromTopoWorld
         */
-        nmb_TransformMatrix44 projWorldFromTopoWorld;
-        if (nmr_Util::computeResampleTransformInWorldCoordinates(im_2D, im_3D,
+        nmb_TransformMatrix44 projImageFromTopoImage;
+        if (nmr_Util::computeResampleTransformInImageCoordinates(im_2D, im_3D,
                 d_scaledProjImFromScaledTopoIm[displayedTransformIndex],
-                projWorldFromTopoWorld)) {
+                projImageFromTopoImage)) {
           fprintf(stderr,
               "createResampleImage failed: worldFromProjIm not invertible\n");
           return;
         }
         
-        nmr_Util::createResampledImage((*im_2D), (*im_3D),
-            projWorldFromTopoWorld, 
+        nmr_Util::createResampledImageWithImageSpaceTransformation(
+            (*im_2D),
+            projImageFromTopoImage, 
             (*new_image));
       } else {
-        /*
-          projWorldFromTopoWorld = projWorldFromScaledProjIm*
-                                   d_scaledProjImFromScaledTopoIm*
-                                   scaledTopoImFromTopoWorld
-        */
-        nmb_TransformMatrix44 projWorldFromTopoWorld;
-        if (nmr_Util::computeResampleTransformInWorldCoordinates(im_2D, im_3D,
+        
+        // projWorldFromTopoWorld = identity because the transforms have 
+	// already been adjusted inside the nmb_Image objects to make them
+        // their world coordinate systems identical
+
+        nmb_TransformMatrix44 projWorldFromTopoWorld;       
+        nmb_TransformMatrix44 projImageFromTopoImage;
+        if (nmr_Util::computeResampleTransformInImageCoordinates(im_2D, im_3D,
                 d_scaledProjImFromScaledTopoIm[displayedTransformIndex],
-                projWorldFromTopoWorld)){
+                projImageFromTopoImage)){
           fprintf(stderr, 
               "createResampleImage failed: worldFromProjIm not invertible\n");
           return;
@@ -804,7 +817,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         // height field constant
         int min_i, min_j, max_i, max_j;
         nmr_Util::computeResampleExtents((*im_3D), (*im_2D), 
-            projWorldFromTopoWorld, 
+            projImageFromTopoImage, 
             min_i, min_j, max_i, max_j);
         int res_x = max_i - min_i;
         int res_y = max_j - min_j;
@@ -814,6 +827,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
                 (const char *)(d_newResampleImageName.string()),
                 (const char *)(im_2D->unitsValue()),
                 res_x, res_y);
+        d_newResampleImageName = (const char *) "";
         printf("allocated image\n");
         TopoFile tf;
         im_3D->getTopoFileInfo(tf);
@@ -821,8 +835,8 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);
-        nmr_Util::createResampledImage((*im_2D), 
-                 projWorldFromTopoWorld, (*new_image));
+        nmr_Util::createResampledImageWithImageSpaceTransformation((*im_2D), 
+                 (*im_3D), projImageFromTopoImage, (*new_image));
 
         // HACK:
         // an extra step: combine the two datasets in a somewhat arbitrary
@@ -875,16 +889,18 @@ void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
         im_3D->getTopoFileInfo(tf);
         new_image->setTopoFileInfo(tf);
         d_newResamplePlaneName = (const char *) "";
-        nmb_TransformMatrix44 projWorldFromTopoWorld;
-        if (nmr_Util::computeResampleTransformInWorldCoordinates(im_2D, im_3D,
+        nmb_TransformMatrix44 projImageFromTopoImage;
+        if (nmr_Util::computeResampleTransformInImageCoordinates(im_2D, im_3D,
             d_scaledProjImFromScaledTopoIm[displayedTransformIndex], 
-            projWorldFromTopoWorld)) {
+            projImageFromTopoImage)) {
            fprintf(stderr, 
                  "createResamplePlane Error, non-invertible transform\n");
            return;
         }
-        nmr_Util::createResampledImage((*im_2D), (*im_3D),
-                 projWorldFromTopoWorld, (*new_image));
+
+        nmr_Util::createResampledImageWithImageSpaceTransformation(
+                 (*im_2D),
+                 projImageFromTopoImage, (*new_image));
 
     printf("finished resampling image\n");
     // now make it available elsewhere:

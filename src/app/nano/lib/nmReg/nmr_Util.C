@@ -2,17 +2,23 @@
 #include "stdlib.h"
 #include "nmr_Gaussian.h"
 
+/* it is dangerous to use this because it assumes that the
+   worldToScaledImageTransform is independent of the transform that gets
+   passed in (scaledImA_from_scaledImB)
+   and that is not the case - as in the seegerizer
+*/
+/*
 //static 
 int nmr_Util::computeResampleTransformInWorldCoordinates(
            nmb_Image *imA, nmb_Image *imB,
            nmb_TransformMatrix44 &scaledImA_from_scaledImB,
            nmb_TransformMatrix44 &worldA_from_worldB)
 {
-  /*  
-    worldA_from_worldB = worldA_from_scaledImA *
-                         scaledImA_from_scaledImB *
-                         scaledImB_from_worldB
-  */
+    
+ //   worldA_from_worldB = worldA_from_scaledImA *
+ //                        scaledImA_from_scaledImB *
+ //                        scaledImB_from_worldB
+  
   nmb_TransformMatrix44 temp;
   nmb_TransformMatrix44 scaledImB_from_worldB;
   imA->getWorldToScaledImageTransform(temp);
@@ -27,6 +33,7 @@ int nmr_Util::computeResampleTransformInWorldCoordinates(
 
   return 0;
 }
+*/
 
 // static
 int nmr_Util::computeResampleTransformInImageCoordinates(
@@ -50,7 +57,7 @@ int nmr_Util::computeResampleTransformInImageCoordinates(
 
 /**
  computeResampleExtents:
-   given target image, source image and ImageTransform, this function
+   given target image, source image and transformation, this function
    computes the extents of the source image in the pixel coordinates of the
    target image
 
@@ -94,23 +101,12 @@ int nmr_Util::computeResampleExtents(const nmb_Image &src,
     }
 
     /* now we transform corners of the target image into the source space */
-    nmb_ImageBounds ib;
-    target.getBounds(ib);
     // this array is to contain the 4 corners of the image
     // both before and after transforming into the source world coordinates
     double corner_pnt[4][4] = {{0, 0, 0, 1},
-                               {0, 0, 0, 1},
-                               {0, 0, 0, 1},
-                               {0, 0, 0, 1}};
-
-    corner_pnt[0][0] = ib.getX(nmb_ImageBounds::MIN_X_MIN_Y);
-    corner_pnt[0][1] = ib.getY(nmb_ImageBounds::MIN_X_MIN_Y);
-    corner_pnt[1][0] = ib.getX(nmb_ImageBounds::MIN_X_MAX_Y);
-    corner_pnt[1][1] = ib.getY(nmb_ImageBounds::MIN_X_MAX_Y);
-    corner_pnt[2][0] = ib.getX(nmb_ImageBounds::MAX_X_MIN_Y);
-    corner_pnt[2][1] = ib.getY(nmb_ImageBounds::MAX_X_MIN_Y);
-    corner_pnt[3][0] = ib.getX(nmb_ImageBounds::MAX_X_MAX_Y);
-    corner_pnt[3][1] = ib.getY(nmb_ImageBounds::MAX_X_MAX_Y);
+                               {0, 1, 0, 1},
+                               {1, 0, 0, 1},
+                               {1, 1, 0, 1}};
 
     int i;
     printf("nmr_Util::computeResampleExtents corners:\n");
@@ -118,22 +114,23 @@ int nmr_Util::computeResampleExtents(const nmb_Image &src,
        printf("(%g,%g)\n", corner_pnt[i][0], corner_pnt[i][1]);
     }
 
-    xform.invTransform(corner_pnt[0], corner_pnt[0]);
-    xform.invTransform(corner_pnt[1], corner_pnt[1]);
-    xform.invTransform(corner_pnt[2], corner_pnt[2]);
-    xform.invTransform(corner_pnt[3], corner_pnt[3]);
+    xform.invTransform(corner_pnt[0]);
+    xform.invTransform(corner_pnt[1]);
+    xform.invTransform(corner_pnt[2]);
+    xform.invTransform(corner_pnt[3]);
 
     for (i = 0; i < 4; i++){
        printf("(%g,%g)\n", corner_pnt[i][0], corner_pnt[i][1]);
     }
 
+
     /* now, corner_pnt gives the positions of the corners of the target image
-       in the world coordinates of the source image ,
+       in the image coordinates of the source image ,
        convert these into pixels in source image */
     double i_corner[4], j_corner[4];
     for (i = 0; i < 4; i++) {
-        src.worldToPixel(corner_pnt[i][0], corner_pnt[i][1],
-                                  i_corner[i], j_corner[i]);
+        i_corner[i] = corner_pnt[i][0] * src.width();
+        j_corner[i] = corner_pnt[i][1] * src.height();
     }
 
     // find the extremes:
@@ -265,6 +262,89 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
           value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
           if ((value_target < targetImage.minNonZeroValue()) ||
 	      (value_target > targetImage.maxValue())) {
+              fprintf(stderr, "Warning: resampleImageIST:"
+                      " not getting expected values from interpolation\n");
+          }
+      } else {
+          value_target = 0.0;
+      }
+
+
+      resampleImage.setValue(i,j, value_target);
+    }
+  }
+ // fprintf(stderr, "(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
+}
+
+// static
+void nmr_Util::createResampledImageWithImageSpaceTransformation(
+                        nmb_Image &targetImage, nmb_Image &sourceImage,
+                        const nmb_TransformMatrix44 &xform,
+                        nmb_Image &resampleImage)
+{
+  int i,j;
+  int w,h;
+//  double i_targ_min, i_targ_max, j_targ_min, j_targ_max;
+  w = resampleImage.width();
+  h = resampleImage.height();
+  double i_center, j_center;
+  double i_target, j_target; // pixel coordinates
+  double value_target;
+  double p_resample_image[4] = {0,0,0,1}; // normalized image coordinates
+  double p_resample_world[4] = {0,0,0,1}; // world coordinates
+  double p_source_image[4] = {0,0,0,1}; // normalized image coordinates
+  double p_target_image[4] = {0,0,0,1}; // normalized image coordinates
+  double x_incr, y_incr;
+
+  x_incr = 1.0/(double)w;
+  y_incr = 1.0/(double)h;
+
+  nmb_TransformMatrix44 resampleImageToWorld, sourceWorldToImage;
+  resampleImage.getWorldToImageTransform(resampleImageToWorld);
+  if (!resampleImageToWorld.hasInverse()) {
+    fprintf(stderr, "createResampledImageWithImageSpaceTransformation: "
+                    "Error, no inverse\n");
+    return;
+  }
+  resampleImageToWorld.invert();
+  sourceImage.getWorldToImageTransform(sourceWorldToImage);
+
+  fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n",
+        targetImage.minValue(), targetImage.minNonZeroValue(),
+        targetImage.maxValue());
+
+  for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
+    for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
+
+      p_resample_image[0] = i_center;
+      p_resample_image[1] = j_center;
+      resampleImageToWorld.transform(p_resample_image, p_resample_world);
+      // here is where we assume the resample and source images have the
+      // same world coordinate system
+      sourceWorldToImage.transform(p_resample_world, p_source_image);
+
+      xform.transform(p_source_image, p_target_image);
+      i_target = p_target_image[0]*targetImage.width();
+      j_target = p_target_image[1]*targetImage.height();
+
+/*
+      for debugging:
+      if (i == 0 && j== 0) {
+         i_targ_min = i_targ_max = i_target;
+         j_targ_min = j_targ_max = j_target;
+      } else {
+         if (i_target > i_targ_max) i_targ_max = i_target;
+         if (i_target < i_targ_min) i_targ_min = i_target;
+         if (j_target > j_targ_max) j_targ_max = j_target;
+         if (j_target < j_targ_min) j_targ_min = j_target;
+      }
+*/
+      if (i_target >= 0 && j_target >= 0 &&
+          i_target < targetImage.width() &&
+          j_target < targetImage.height()) {
+          value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
+          if ((value_target < targetImage.minNonZeroValue()) ||
+              (value_target > targetImage.maxValue())) {
               fprintf(stderr, "Warning: resampleImageIST:"
                       " not getting expected values from interpolation\n");
           }
