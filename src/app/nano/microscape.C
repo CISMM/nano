@@ -2893,6 +2893,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         // already opened. Rewind.
         if (vrpnLogFile)
             vrpnLogFile->reset();
+		//done working
+		doneWorkingMsg();
         return;
     }
     

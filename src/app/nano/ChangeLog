@@ -1,3 +1,7 @@
+2002-06-12 Jameson Miller <millerj@cs.unc.edu>
+	* microscope.c : "working" message is now turned off
+			when we load the same streamfile twice.
+
 2002-06-06 Jameson Miller <millerj@cs.unc.edu>
 	* interaction.c - added code to go into modify mode when in
 		direct step (and commit button is pressed).
