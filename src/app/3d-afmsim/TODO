@@ -1,0 +1,5 @@
+- Fix the initial glClear bug. The contents of the zbuffer for the prev AFM scan pops up initially. 
+
+- Is uncertainty map working correctly ? Why does it appear discontinuous near the edges ? Is it because of limited precision of the z & color buffers ?
+
+- Need to change some DNA force calculations.
