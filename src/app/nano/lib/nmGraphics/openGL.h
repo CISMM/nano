@@ -2,6 +2,7 @@
 #define	OPENGL_H
 
 class nmg_State;
+class nmg_haptic_graphics;
 void determine_GL_capabilities(nmg_State * state);
 
 extern int report_gl_errors(void);

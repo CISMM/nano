@@ -32,6 +32,7 @@ class nmb_Subgrid;  // from nmb_Subgrid.h
 class PPM;  // from PPM.h
 class Position_list;  // from Position.h
 class nmg_Surface;
+class nmg_haptic_graphics;
 
 ///Debugging printout flag
 extern  int     spm_graphics_verbosity;
@@ -105,6 +106,20 @@ public:
     int config_smooth_shading;
     int config_trueTip;
     int config_enableUber;
+
+	//JM
+	int config_feelGrid;
+	int config_feelPlane;
+
+	int fg_xside;
+	int fg_yside;
+	q_vec_type * fg_vertices;
+
+	q_vec_type fp_origin;
+	q_vec_type fp_normal;
+
+
+
 
 	GLuint contourTextureID;
 	int contourTextureBlendFunc;

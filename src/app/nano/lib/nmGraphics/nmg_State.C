@@ -9,6 +9,8 @@
 #include "nmg_Graphics.h" // for enums
 #include "nmg_Surface.h"
 
+#include "nmg_haptic_graphics.h"
+
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
 
@@ -52,6 +54,15 @@ nmg_State::nmg_State ()
     config_smooth_shading = 1;
     config_trueTip = 0;
     config_enableUber = 1;
+
+	//JM
+	config_feelGrid = 0;
+	config_feelPlane = 0;
+
+	fg_xside = 0;
+	fg_yside = 0;
+	fg_vertices = NULL;
+
 
 	contourTextureBlendFunc = GL_DECAL;
     contour_r = 255;

@@ -9,6 +9,8 @@ class Position_list;  // from Position.h
 class nmg_State;
 //class nmm_Microscope_Remote;
 
+class nmg_haptic_graphics;
+
 // Function Prototypes
 
 //   Called in openGL.c
@@ -21,7 +23,10 @@ extern int make_blue_line (nmg_State * state,
                            const float a [], const float b []);
 
 extern int make_ds_sphere_axis(nmg_State * state, const q_type rot);
-//extern nmm_Microscope_Remote* microscope;
+extern int make_feelPlane(void *data);
+
+extern q_vec_type fp_origin_j, fp_normal_j;
+extern int config_feelPlane_temp;
 
 //   Called in nmg_GraphicsImpl.c
 extern int make_aim (const float a [], const float b []);
@@ -62,5 +67,10 @@ extern int spm_render_mark (const nmb_LocationInfo &, void *);
 
 extern int replaceDefaultObjects (nmg_State * state);
 extern int initialize_globjects ( nmg_State * state, const char * fontName = NULL);
+
+
+//JM from TCH branch 11/02
+extern void enableFeelGrid (nmg_State * state,int on);
+extern void enableFeelPlane (nmg_haptic_graphics * haptic_graphics, int on);
 
 #endif  // GLOBJECTS_H

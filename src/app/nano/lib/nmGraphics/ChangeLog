@@ -1,6 +1,14 @@
-2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+2002-12-02 Jameson Miller<millerj@cs.unc.edu>
+	* nmg_haptic_graphics.c (.h) - new files to handle graphics for displaying haptic plane and the patch
+            being sent to the phantom (soon...not yet)
+	* opengl.c - calls to  display the haptic plane on screen
+	*globject.c (.h) - code for drawing haptic plane
 
-	* nmg_GraphicsImpl.C : took out references to state->colormap_texture*
+  
+
+  <seeger@cs.unc.edu>
+
+	* nmg_Graphcpl.C : took out references to state->colormap_texture*
 	variables because they were redundant and confusing - also, made several
 	changes which allow the colormap and video textures to have separate
 	colormaps

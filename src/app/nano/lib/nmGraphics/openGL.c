@@ -47,9 +47,15 @@ extern UTree World;
 
 #include	"Timer.h"
 
+#include "nmg_haptic_graphics.h"
+
+
 /*Globals*/
 extern int	do_y_fastest;		/* Tells which direction to scan in */
 extern int	do_raster;	      /* Raster (vs. Boustrophedonic) scan? */
+
+//JM TEMP
+extern int config_feelPlane_temp;
 
 // default position of the light:  overhead, at infinity
 static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
@@ -153,6 +159,7 @@ char	message[1000];		/* Message to display on screen */
 int draw_world (int, void * data)
 {
   nmg_State * state = (nmg_State *) data;
+  nmg_haptic_graphics * haptic_graphics = (nmg_haptic_graphics *) data;
     
     v_gl_set_context_to_vlib_window(); 
     // Draw Ubergraphics
@@ -295,7 +302,15 @@ int draw_world (int, void * data)
             mysphere(NULL);
         }
     }
-	
+	//if we are drawing haptic graphics
+
+    //if(haptic_graphics->get_show_feel_plane() ) {
+    if(config_feelPlane_temp) {
+           make_feelPlane(state);
+    }
+
+
+
 	//if we are drawing the axis on the sphere for direct step...
 	if(decoration-> ds_sphere_axis) {
 
