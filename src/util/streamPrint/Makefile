@@ -10,7 +10,14 @@ include ../Makefile.share
 vrpn_headerPrint:
 	$(MAKE) APP_NAME=vrpn_headerPrint \
                 GENERATED_SRC= \
-                EXCLUDE_SRC="nmsPrint.C streamEdit.c streamPrint.c streamToNewVrpn.C streamToVrpn.C vrpn_streamTimeFix.C vrpn_uiHeaderPrint.C vrpnsp.C" \
+                EXCLUDE_SRC="nmsPrint.C streamEdit.c streamPrint.c streamToNewVrpn.C streamToVrpn.C vrpn_streamTimeFix.C vrpn_uiHeaderPrint.C vrpnsp.C vrpn_streamPrint.C" \
+                MAKECMDGOALS=""
+
+.PHONY: vrpn_streamPrint
+vrpn_streamPrint:
+	$(MAKE) APP_NAME=vrpn_streamPrint \
+                GENERATED_SRC= \
+                EXCLUDE_SRC="streamEdit.c streamPrint.c streamToNewVrpn.C streamToVrpn.C vrpn_streamTimeFix.C vrpn_uiHeaderPrint.C vrpnsp.C vrpn_headerPrint.C" \
                 MAKECMDGOALS=""
 
 .PHONY: vrpn_uiHeaderPrint
