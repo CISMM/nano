@@ -177,6 +177,16 @@ class PatternShape {
 			worldFromObject44.getMatrix(transform);
 		}
 	}
+	virtual void getObjectFromWorld(double *transform)
+	{
+		double worldFromObjM[16];
+		getWorldFromObject(worldFromObjM);
+		double objFromWorldM[16];
+		nmb_TransformMatrix44 objFromWorld;
+		objFromWorld.setMatrix(worldFromObjM);
+		objFromWorld.invert();
+		objFromWorld.getMatrix(transform);
+	}
 
 	virtual void handleWorldFromObjectChange() {}
 

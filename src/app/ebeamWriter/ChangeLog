@@ -1,3 +1,13 @@
+2003-02-26  Adam Seeger  <seeger@cs.unc.edu>
+
+   * controlPanels.C: added control to set the pattern color
+   * patternEditor.C (setPatternColor): new function
+   fixed bug with saving files using ImageMagick which was 
+   discovered on Palladium - it seemed to be failing if the filetype suffix
+   wasn't included in the filename
+   Fixed positioning of dose number printed next to each shape so it is
+   constant in units of pixels which helps when you zoom in
+
 2003-02-19  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C - changed delete key to delete last point instead of

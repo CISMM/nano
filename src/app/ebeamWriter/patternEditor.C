@@ -27,6 +27,10 @@ int ImageElement::operator< (const ImageElement& ie) {
 PatternEditor::PatternEditor(int startX, int startY):
    d_segmentLength_nm("segment_length", "0 nm")
 {
+   d_patternRed = 1.0;
+   d_patternGreen = 1.0;
+   d_patternBlue = 1.0;
+
    d_canvasImage = NULL;
    d_liveImage = NULL;
    d_allocatedTextures = vrpn_FALSE;
@@ -540,9 +544,33 @@ void PatternEditor::saveImageBuffer(const char *filename,
   glPixelStorei(GL_PACK_ALIGNMENT, 4);
   glReadBuffer(GL_FRONT);
 
+
+  char filename_with_type[128];
+  const char *psuffix = filename+strlen(filename)-strlen(filetype);
+  char compSuffix[16];
+  if (strcmp(filetype, "TIFF")==0 ||
+	  strcmp(filetype, "TIF")==0) {
+	sprintf(compSuffix, ".tif");
+  } else if (strcmp(filetype, "JPG")==0 ||
+	         strcmp(filetype, "JPEG") == 0) {
+	sprintf(compSuffix, ".jpg");
+  } else if (strcmp(filetype, "BMP") == 0) {
+	sprintf(compSuffix, ".bmp");
+  } else if (strcmp(filetype, "PGM") == 0) {
+	sprintf(compSuffix, ".pgm");
+  } else {
+	sprintf(compSuffix, ".%s", filetype);
+  }
+  if (strlen(filename) < strlen(filetype) ||
+	  strcmp(psuffix, compSuffix) != 0) {
+	sprintf(filename_with_type, "%s.%s", filename, filetype);
+  } else {
+	sprintf(filename_with_type, "%s", filename);
+  }
+  
   //AbstractImage *ai = ImageMaker(filetype, h, w, 3, pixels, true);
-  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
-      fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+  if(nmb_ImgMagick::writeFileMagick(filename_with_type, NULL, w, h, 3, pixels)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename_with_type);
   }
   delete [] pixels;
   /*
@@ -602,6 +630,7 @@ void PatternEditor::setScanRange(double minX_nm, double minY_nm,
 	  d_worldMaxX_nm, d_worldMaxY_nm);
 	d_viewportSet = vrpn_FALSE;
   } else {
+	  /*
 	double minX, minY, maxX, maxY;
 	getViewport(minX, minY, maxX, maxY);
 	if (minX < d_worldMinX_nm || minY < d_worldMinY_nm ||
@@ -609,6 +638,7 @@ void PatternEditor::setScanRange(double minX_nm, double minY_nm,
 		setViewport(d_worldMinX_nm, d_worldMinY_nm,
 			d_worldMaxX_nm, d_worldMaxY_nm);
 	}
+	*/
   }
   updatePatternTransform();
   d_viewer->dirtyWindow(d_mainWinID);
@@ -660,6 +690,14 @@ void PatternEditor::setCanvasImage(nmb_Image *image)
 	d_canvasImage = image;
 	updatePatternTransform();
 	d_canvasTextureNeedsUpdate = vrpn_TRUE;
+	d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::setPatternColor(double r, double g, double b)
+{
+	d_patternRed = r;
+	d_patternGreen = g;
+	d_patternBlue = b;
 	d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -721,8 +759,10 @@ void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform,
     d_viewer->dirtyWindow(d_mainWinID);
   }
   updateWorldExtents();
+  /*
   setViewport(d_worldMinX_nm, d_worldMinY_nm,
 	  d_worldMaxX_nm, d_worldMaxY_nm);
+	  */
 }
 
 void PatternEditor::setDisplayColorMap(nmb_Image *image,
@@ -1171,12 +1211,14 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinHeight;
 
   if (d_currShape) {
-	  double currColor[3] = {1.0, 1.0, 0.0};
+	double r = d_patternRed*0.8;
+	double g = d_patternGreen*0.8;
+	double b = d_patternBlue*0.8;
     d_currShape->drawToDisplay(units_per_pixel_x, units_per_pixel_y,
-                           currColor[0], currColor[1], currColor[2]);
+                           r,g,b);
   }
   d_pattern.drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
-                           d_patternColorMap);
+                         d_patternRed, d_patternGreen, d_patternBlue);
 }
 
 void PatternEditor::drawScale()

@@ -39,6 +39,11 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_addTestGrid("add_test_grid", 0),
    d_canvasImage("canvas_image", "none"),
 
+   d_patternColorChanged("pattern_color_changed", 0),
+   d_patternRed("pattern_r", 255),
+   d_patternGreen("pattern_g", 255),
+   d_patternBlue("pattern_b", 255),
+
    d_imageColorChanged("image_color_changed", 0),
    d_imageRed("image_r", 255),
    d_imageGreen("image_g", 255),
@@ -202,6 +207,8 @@ void ControlPanels::setupCallbacks()
   d_clearPattern.addCallback(handle_clearPattern_change, this);
   d_addTestGrid.addCallback(handle_addTestGrid_change, this);
   d_canvasImage.addCallback(handle_canvasImage_change, this);
+  d_patternColorChanged.addCallback(handle_patternColorChanged_change, this);
+
 
   d_imageColorChanged.addCallback(handle_imageColorChanged_change, this);
   d_imageOpacity.addCallback(handle_imageOpacity_change, this);
@@ -554,6 +561,20 @@ void ControlPanels::handle_canvasImage_change(const char * /*new_value*/,
   me->d_disableDisplaySettingCallbacks = vrpn_TRUE;
   me->updateCurrentImageControls();
   me->d_disableDisplaySettingCallbacks = vrpn_FALSE;
+}
+
+// static
+void ControlPanels::handle_patternColorChanged_change(int /*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+//  printf("color: %d,%d,%d\n", 
+//          (int)me->d_patternRed, (int)me->d_patternGreen, (int)me->d_patternBlue);
+
+  double r, g, b;
+  r = (double)((int)(me->d_patternRed))/255.0;
+  g = (double)((int)(me->d_patternGreen))/255.0;
+  b = (double)((int)(me->d_patternBlue))/255.0;
+  me->d_patternEditor->setPatternColor(r,g,b);
 }
 
 // static

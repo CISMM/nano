@@ -95,6 +95,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void setCanvasImage(nmb_Image *image);
    void setLiveImage(nmb_Image *image);
    void updatePatternTransform();
+   void setPatternColor(double r, double g, double b);
 
    // more general ImageDisplay interface used by nmr_RegistrationUI:
 
@@ -257,6 +258,7 @@ class PatternEditor : public nmb_ImageDisplay {
 
    Tclvar_string d_segmentLength_nm;
 
+   double d_patternRed, d_patternGreen, d_patternBlue;
 
    // texture stuff
    vrpn_bool d_canvasTextureNeedsUpdate;

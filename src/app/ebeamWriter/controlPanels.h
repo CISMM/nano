@@ -46,6 +46,8 @@ class ControlPanels {
    static void handle_clearPattern_change(int new_value, void *ud);
    static void handle_addTestGrid_change(int new_value, void *ud);
    static void handle_canvasImage_change(const char *new_value, void *ud);
+   static void handle_patternColorChanged_change(int new_value, void *ud);
+
 
    static void handle_imageColorChanged_change(int new_value, void *ud);
    static void handle_imageOpacity_change(double new_value, void *ud);
@@ -111,6 +113,11 @@ class ControlPanels {
    Tclvar_int d_undoPoint;
    Tclvar_int d_addTestGrid;
    Tclvar_string d_canvasImage;
+
+   Tclvar_int d_patternColorChanged;
+   Tclvar_int d_patternRed;
+   Tclvar_int d_patternGreen;
+   Tclvar_int d_patternBlue;
 
    // display parameters:
    Tclvar_int d_imageColorChanged;

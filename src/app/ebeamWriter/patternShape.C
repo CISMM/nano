@@ -184,13 +184,13 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 {
   if (d_numPoints == 0) return;
   double color[3] = {1.0, 1.0, 1.0};
-  /*
+  
   if (d_lineWidth_nm == 0) {
 	map.linearExposureColor(d_exposure_pCoulombs_per_cm, color);
   } else {
 	map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
   }
-  */
+  
   drawToDisplay(units_per_pixel_x, units_per_pixel_y,
 	  color[0], color[1], color[2]);
 
@@ -227,15 +227,15 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 	double textOffsetX = 0;
 	double textOffsetY = 0;
 
+    double worldFromObjM[16];
+    getWorldFromObject(worldFromObjM);
+    double objFromWorldM[16];
+    nmb_TransformMatrix44 objFromWorld;
+    objFromWorld.setMatrix(worldFromObjM);
+    objFromWorld.invert();
+    objFromWorld.getMatrix(objFromWorldM);
 
     if (d_numPoints == 1) {
-      double worldFromObjM[16];
-      getWorldFromObject(worldFromObjM);
-      double objFromWorldM[16];
-      nmb_TransformMatrix44 objFromWorld;
-      objFromWorld.setMatrix(worldFromObjM);
-      objFromWorld.invert();
-      objFromWorld.getMatrix(objFromWorldM);
 
       list<PatternPoint>::iterator pntIter;
       pntIter = d_points.begin();
@@ -259,7 +259,7 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 	  }
       glEnd();
 	  textOffsetX = x_obj;
-	  textOffsetY = y_obj+0.01;
+	  textOffsetY = y_obj;
     } else {
       glBegin(GL_LINE_LOOP);
       int i;
@@ -282,7 +282,9 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
       glEnd();
     }
 
-	glRasterPos2d(textOffsetX+0.01, textOffsetY);
+	double objFromWorldScale = sqrt(fabs(objFromWorldM[0]*objFromWorldM[5]) + 
+								fabs(objFromWorldM[1]*objFromWorldM[4]));
+	glRasterPos2d(textOffsetX+10.0*units_per_pixel_x*objFromWorldScale, textOffsetY);
 	char str[128];
 	sprintf(str, "%g uCoul/cm2", d_exposure_uCoulombs_per_square_cm);
 	int i;
@@ -941,8 +943,13 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
     }
     glEnd();
   }
-  
-  double textOffsetX = x_xMax+0.01;
+ 
+
+  double objFromWorldM[16];
+  getObjectFromWorld(objFromWorldM);
+  double objFromWorldScale = sqrt(fabs(objFromWorldM[0]*objFromWorldM[5]) + 
+								fabs(objFromWorldM[1]*objFromWorldM[4]));
+  double textOffsetX = x_xMax+10*units_per_pixel_x*objFromWorldScale;
   double textOffsetY = y_xMax;
 
   glRasterPos2d(textOffsetX, textOffsetY);
@@ -1160,7 +1167,7 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
 
 
   double color[3] = {1.0, 1.0, 1.0};
-  //map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
+  map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
 
   drawToDisplay(units_per_pixel_x, units_per_pixel_y,
 	  color[0], color[1], color[2]);
@@ -1211,7 +1218,11 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
     glEnd();
   }
 
-  glRasterPos2d(textOffsetX+0.01, textOffsetY);
+  double objFromWorldM[16];
+  getObjectFromWorld(objFromWorldM);
+  double objFromWorldScale = sqrt(fabs(objFromWorldM[0]*objFromWorldM[5]) + 
+								fabs(objFromWorldM[1]*objFromWorldM[4]));
+  glRasterPos2d(textOffsetX+10.0*units_per_pixel_x*objFromWorldScale, textOffsetY);
   char str[128];
   sprintf(str, "%g uCoul/cm2", d_exposure_uCoulombs_per_square_cm);
   int i;
