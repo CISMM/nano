@@ -1,3 +1,9 @@
+2002-02-22  David Marshburn  <marshbur@cs.unc.edu>
+
+	* mainwin.tcl (handle_texture_mode_change):  set texture-enabling
+	variables to their none/off state only if the change is not
+	idempotent.
+
 2002-02-12  Aron Helser  <helser@cs.unc.edu>
 
 	* filemenu.tcl (save_plane_data): Correct file extension for SPIP

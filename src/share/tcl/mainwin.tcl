@@ -798,19 +798,29 @@ proc handle_texture_mode_change {mode name element op} {
 
   #puts "setting the texture mode"
   if {$mode != "ALPHA"} {
-    set alpha_comes_from "none"
+	if {$alpha_comes_from != "none" } {
+	    set alpha_comes_from "none"
+	}
   }
   if {$mode != "CONTOUR"} {
-    set contour_comes_from "none"
+	if {$contour_comes_from != "none" } {
+	    set contour_comes_from "none"
+	}
   }
   if {$mode != "RULERGRID"} {
-    set rulergrid_enabled 0
+	if {$rulergrid_enabled != 0 } {
+	    set rulergrid_enabled 0
+	}
   }
   if {$mode != "SEM"} {
-    set sem_display_texture 0
+	if {$sem_display_texture != 0 } {
+	    set sem_display_texture 0
+	}
   }
   if {$mode != "REGISTRATION"} {
-    set reg_display_texture 0
+	if {$reg_display_texture != 0 } {
+	    set reg_display_texture 0
+	}
   }
 
   set texture_mode_change_in_progress 0
