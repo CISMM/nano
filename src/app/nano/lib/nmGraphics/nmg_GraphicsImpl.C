@@ -1796,7 +1796,7 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   
   for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
     for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      sem_data[l] = 255*((i/10+j/10)%2);
+      sem_data[l] = 20*((i/30+j/30)%2);
       l++;
     }
   }
@@ -1875,6 +1875,8 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
         glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
                im->width(), im->height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, 
 	       (void *)data);
+        g_tex_image_width[SEM_DATA_TEX_ID] = im->width();
+        g_tex_image_height[SEM_DATA_TEX_ID] = im->height();
 	if (report_gl_errors()) {
 	  printf(" Error loading sem texture.\n");
 	}
