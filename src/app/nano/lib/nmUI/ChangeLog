@@ -1,3 +1,7 @@
+2000-11-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmui_SurfaceFeatures.C : add #include minit.h
+
 2000-11-20  Kwan Skinner  <skinner@cs.unc.edu>
 
 	* nmui_Component.[Ch] (nmui_Component::remove) : new function.

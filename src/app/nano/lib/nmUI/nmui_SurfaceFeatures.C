@@ -8,6 +8,7 @@
 
 // BUG - violates librariness
 #include "microscape.h"  // for adhesion_slider_min &c, MIN_K and MAX_K
+#include "interaction.h"  // for knob #defines
 #include "globals.h"  // for Arm_knobs[]
 
 #ifndef min
