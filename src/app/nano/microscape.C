@@ -4049,10 +4049,11 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
   pMe->state.guardedscan.fPlaneD = aGS.GetPlaneDistance();
 
   // Initialize the channel and direction from the currently selected height plane...
-  char* sPlane = _strlwr(strdup(dataset->heightPlaneName->string()));
-  printf("Height plane = %s\n", sPlane);
+  //char* sPlane = _strlwr(strdup(dataset->heightPlaneName->string()));
+  char* sPlane = strdup(dataset->heightPlaneName->string());
+  printf("\n Height plane = %s\n", sPlane);
 
-  char* pFound = strstr(sPlane, "reverse");
+  char* pFound = strstr(sPlane, "Reverse");
   if(pFound == NULL) {
     // Forward...
     printf(" Forward - ");
@@ -4063,7 +4064,7 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
     pMe->state.guardedscan.bDirection = 0;
   }
 
-  pFound = strstr(sPlane, "z piezo");
+  pFound = strstr(sPlane, "Z Piezo");
   if(pFound == NULL) {
     // Topography...
     printf("Topography.\n");
