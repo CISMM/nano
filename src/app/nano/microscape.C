@@ -1849,21 +1849,24 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
   switch (whichLine) {
 
     case 0:
-//fprintf(stderr, "Moving RED line due to Tcl change.\n");
+     collabVerbose(5, "Moving RED line to %.3f, %.3f due to Tcl change.\n",
+                   measureRedX, measureRedY);
      decoration->red.moveTo(measureRedX, measureRedY, heightPlane);
      // DO NOT doCallbacks()
      updateRulergridOffset();
      break;
 
     case 1:
-//fprintf(stderr, "Moving GREEN line due to Tcl change.\n");
+     collabVerbose(5, "Moving GREEN line to %.3f, %.3f due to Tcl change.\n",
+                   measureRedX, measureRedY);
      decoration->green.moveTo(measureGreenX, measureGreenY, heightPlane);
      // DO NOT doCallbacks()
      updateRulergridAngle();
      break;
 
     case 2:
-//fprintf(stderr, "Moving BLUE line due to Tcl change.\n");
+     collabVerbose(5, "Moving BLUE line to %.3f, %.3f due to Tcl change.\n",
+                   measureRedX, measureRedY);
      decoration->blue.moveTo(measureBlueX, measureBlueY, heightPlane);
      // DO NOT doCallbacks()
      break;
@@ -5913,8 +5916,15 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     decoration->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
                             height_plane);
     decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
-                            height_plane);
-    // DO NOT doCallbacks()?
+                               height_plane);
+
+    // Copy these coordinates into the Tcl variables!
+    decoration->red.doCallbacks(height_plane->minX(), height_plane->minY(),
+                                height_plane);
+    decoration->green.doCallbacks(height_plane->maxX(), height_plane->minY(),
+                                  height_plane);
+    decoration->blue.doCallbacks(height_plane->minX(), height_plane->maxY(),
+                                height_plane);
 
     VERBOSE(1, "Before SPM initialization");
     if (new_microscope->Initialize()) {

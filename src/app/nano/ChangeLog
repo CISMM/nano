@@ -1,3 +1,9 @@
+2000-09-28  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (createNewMicroscope) : call doCallbacks() on measure
+        lines after they're initialized to propagate those values into Tcl
+
+
 2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (shutdown_connections) : clean up after data_min
