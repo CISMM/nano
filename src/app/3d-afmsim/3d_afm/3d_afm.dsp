@@ -215,6 +215,10 @@ SOURCE=.\11nmtip_protein1.dat
 # End Source File
 # Begin Source File
 
+SOURCE=.\11nmtip_protein1_x4.dat
+# End Source File
+# Begin Source File
+
 SOURCE=.\11nmtip_protein2.dat
 # End Source File
 # Begin Source File
