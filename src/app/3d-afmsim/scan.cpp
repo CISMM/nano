@@ -92,14 +92,16 @@ void get_z_buffer_values() {
   
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
 
+  int rownumber;
   for(int j=0; j<scanResolution; j++ ) {
+	rownumber = scanResolution-j-1;//rownumber counts from the top of the grid down
 
 	//create row array only if hasn't been done before
     if(zDistance[j] == NULL)		zDistance[j] = new double[MAX_GRID];
 	if(zDistanceScaled[j] == NULL)	zDistanceScaled[j] = new double[MAX_GRID];
 
     for(int i=0; i<scanResolution; i++ ) {
-      float zNormalized = zBuffer[ (scanResolution-j-1)*pixelGridSize + i ];
+      float zNormalized = zBuffer[rownumber*pixelGridSize + i];
 	  //changed back for now
 	  //changed to (scanResolution-j-1) from j so that top of zBuffer ends up in top of zDistance array
 	  //zBuffer has lower values at the bottom of the grid, while zDistance should have lower values at the 
@@ -109,10 +111,9 @@ void get_z_buffer_values() {
       // volume (see definition of glOrtho)
       double zDepth = -scanFar + (1-(double)zNormalized)*(-scanNear + scanFar);
       // Open GL convention
-      zHeight[(scanResolution-j-1)/*j*/][i] = zDepth;
+      zHeight[rownumber][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
 	  zDistanceScaled[j][i] = 10*zDistance[j][i];
-      //I *think* it should be '+ scanFar'
     }
   }
 
@@ -273,7 +274,10 @@ void showGrid( void ) {
   setColor( gridColor );
 
   lighting();
-  for( int j=0; j<scanResolution-1; j++ ) {
+  int rownumber;
+  for(int j=0; j<scanResolution; j++ ) {
+	rownumber = scanResolution-j-1;//rownumber counts from the top of the grid down
+
     for( int i=0; i<scanResolution-1; i++ ) {
       double x = i * scanStep  +  scanXMin;
       double y = j * scanStep  +  scanYMin;
@@ -288,7 +292,7 @@ void showGrid( void ) {
       double x4 = x;     double y4 = y+dy;  double z4 = zHeight[j+1][i];
 
       // gray color values
-      double gcol1 = colorBuffer[(scanResolution-j-1)/*j*/*scanResolution + i];
+      double gcol1 = colorBuffer[rownumber*scanResolution + i];
       //      double gcol2 = colorBuffer[j*scanResolution + i+1];
       //      double gcol3 = colorBuffer[(j+1)*scanResolution + i+1];
       //      double gcol4 = colorBuffer[(j+1)*scanResolution + i];

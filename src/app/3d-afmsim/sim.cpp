@@ -147,120 +147,25 @@ int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
 void Usage(char *progname);
-
+void glutInitializeStuff();
 
 //has to be put out here so variable that can be accessed later...
 char * machineName = "dummy_name";
-vrpn_Synchronized_Connection *connection = new 
-vrpn_Synchronized_Connection();
-nmm_SimulatedMicroscope AFM_Simulator(machineName, connection);
+vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
+nmm_SimulatedMicroscope SimMicroscopeServer(machineName, connection,scanResolution);
 int counter = 0;
 timeval oldtime, currenttime;
 bool first = true;
+double Sim_x_ratio;
+double Sim_y_ratio;
+bool undone = true;
 
 Tclvar_string cname("tclname","");
-/*char * tcl_script_dir = NULL;
-#define MAX_PLANNING_IMAGES 10
-static char **planningImageNames;
-static int numPlanningImages = 0;
-nmb_ImageManager *dataset = NULL;
-nmb_ImageList *imageData = NULL;
-
-static char transformFileName[256];
-
-//static vrpn_bool semDeviceSet = VRPN_FALSE, alignerDeviceSet = VRPN_FALSE;
-//static char semDeviceName[256];
-static char alignerDeviceName[256];
-static vrpn_bool virtualAcquisition = vrpn_FALSE;
-
-static TransformFile transformFile;
-
-static Tclvar_int timeToQuit ("time_to_quit", 0);
-//static Tclvar_int semControlsEnabled("sem_controls_enabled", 1);
-//static vrpn_bool needToDisableSEMControls = vrpn_FALSE;
-//static Tclvar_int nextLeftWindowPos("next_left_pos", 0);
-
-vrpn_Connection *local_connection;
-PatternEditor *patternEditor = NULL;
-nmr_Registration_Proxy *aligner = NULL;
-nmr_RegistrationUI *alignerUI = NULL;
-//nmm_Microscope_SEM_Remote *sem = NULL;
-ControlPanels *controls = NULL;
-*/
 
 int main(int argc, char *argv[])
 {
-/*    //tcl stuff
-    // Initialize TCL/TK so that TclLinkvar variables link up properly
-    char *tcl_script_dir;
-    char command[128];
-
-    if ((tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
-         tcl_script_dir = "./";
-    }
-    Tcl_Interp *tk_control_interp = Tcl_Interpreter::getInterpreter();
-    Tclvar_init(tk_control_interp);
-
-    // Hide the main window.
-    sprintf(command, "wm withdraw .");
-    TCLEVALCHECK(tk_control_interp, command);
-
-    // Tell tcl script what directory it lives in. 
-    sprintf(command, "%s",tcl_script_dir);
-    Tcl_SetVar(tk_control_interp,"tcl_script_dir",command,
-    TCL_GLOBAL_ONLY);
-    // source the litho_main.tcl file
-    if ((tcl_script_dir[strlen(tcl_script_dir)-1]) == '/') {
-        sprintf(command, "%s%s",tcl_script_dir,"litho_main.tcl");
-    } else {
-        sprintf(command, "%s/%s",tcl_script_dir,"litho_main.tcl");
-    }
-    if (Tcl_EvalFile(tk_control_interp, command) != TCL_OK) {
-        fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-                tk_control_interp->result);
-        return 0;
-    }
-*/
-/*    static int tkenable = 1;
-
-    if (tkenable) {
-        // init_Tk_control_panels creates the interpreter and adds most of
-        // the Tk widgits
-        init_Tk_control_panels(tcl_script_dir, istate.collabMode,
-                           &collaborationTimer);
-        init_Tk_variables();
-    }
-
-
-
-*/
-/*	// Now we can hook up the Tcl/Tk control panels 
-    // to the parts that do the work
-    controls = new ControlPanels(patternEditor, sem);
-
-    alignerUI = new nmr_RegistrationUI(aligner, patternEditor);
-    alignerUI->setupCallbacks();
-
-    // load the images specified on the command line
-    TopoFile defaultTopoFileSettings;
-    imageData = new nmb_ImageList(controls->imageNameList());
-
-    dataset = new nmb_ImageManager(imageData);
-
-    alignerUI->changeDataset(dataset);
-
-    controls->setImageList(imageData);
-    // this needs to come after the controls get the pointer to the imageData
-    // list so that as the list of image names in tcl is updated and tcl
-    // selectors that index into this list generate callbacks, the C-code has
-    // the corresponding list in C where it needs to search for the images
-    imageData->addFileImages((const char **)planningImageNames,
-                          numPlanningImages,defaultTopoFileSettings);
-
-*/
     cname = "";
     cname.addCallback(handle_cname_change, NULL);
-//
 
     //opengl stuff
     adjustOrthoProjectionParams();
@@ -270,11 +175,20 @@ int main(int argc, char *argv[])
     
     VolumeFilename = NULL;
     bool unitsGiven = false;
-
+	Sim_x_ratio = 1.0;
+	Sim_y_ratio = 1.0;
 
     // Parse the command line
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "-units")) {
+		if (!strcmp(argv[i], "-connection")) {
+            connection_to_nano = true;
+            char * newName = "AFMSimulator"/*argv[i]*/;
+            SimMicroscopeServer.change_machineName(newName);
+			//Sim_x_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_x();
+			//Sim_y_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_y();
+        }//need to take care of -connection argument first so that ratios are set before
+		 //any objects are drawn
+        else if (!strcmp(argv[i], "-units")) {
             if(++i >= argc) { Usage(argv[0]); }
             strcpy(units,argv[i]);
             cout << endl << "Make sure that the units you have input are 'nm'" << endl
@@ -337,8 +251,9 @@ int main(int argc, char *argv[])
         else if (!strcmp(argv[i], "-connection")) {
             connection_to_nano = true;
             char * newName = "AFMSimulator"/*argv[i]*/;
-            AFM_Simulator.change_machineName(newName);
-            //ANDREA
+            SimMicroscopeServer.change_machineName(newName);
+			Sim_x_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_x();
+			Sim_y_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_y();
         }
         else if (!strcmp(argv[i], "-unca_nano")) {
                 bool breakOut = false;
@@ -378,11 +293,23 @@ int main(int argc, char *argv[])
              << "Press 'q' if this is not what you intended." << endl;
     }
 
-
-  // Deal with command line.
+	/*if(connection_to_nano){
+		while(!SimMicroscopeServer.grid_size_rcv){
+			//try again
+		}
+		//once received
+		glutInit(&argc, argv);
+		glutInitializeStuff();
+	}
+	else{
+		glutInit(&argc, argv);
+		glutInitializeStuff();
+	}*/
   glutInit(&argc, argv);
+
   glutInitDisplayMode(dblBuf);
   // glutInitDisplayMode(singleBuf);
+
 
   /* The view on Main window is a view of XY plane from a pt on the +ve 
    * Z-axis. +ve X axis is towards right while +ve Y is to upwards
@@ -390,6 +317,7 @@ int main(int argc, char *argv[])
   
   // MAIN WINDOW
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
+
   glutInitWindowPosition( 50, 0 );
   mainWindowID = glutCreateWindow( "3D AFM simulator - Top View" );
   adjustOrthoProjectionToWindow();
@@ -418,8 +346,10 @@ int main(int argc, char *argv[])
 
 #if 1
   
-  // another view WINDOW
+  //another view window
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
+
+
   glutInitWindowPosition( 800, 0 );
   viewWindowID = glutCreateWindow( "Front View" );
   adjustOrthoProjectionToViewWindow();
@@ -442,9 +372,11 @@ int main(int argc, char *argv[])
   glutKeyboardFunc(commonKeyboardFunc);
 #endif
 
-  // Depth WINDOW
+
+  //depth window
   glutInitWindowSize( (int)DEPTHSIZE, (int)DEPTHSIZE );
-  glutInitWindowPosition( 50, 650 );
+
+  glutInitWindowPosition( 50, 750 );
   depthWindowID = glutCreateWindow( "Depth window" );
 
 #if DISP_LIST
@@ -466,16 +398,6 @@ int main(int argc, char *argv[])
   if (e != GL_NO_ERROR) {
     printf("Found error %d\n",e);
   }
-
-  /*if(find_volume){
-    volume = find_volume();
-    fout << argv[3] << ": Volume of all objects on plane is " << volume << " " 
-     << units << "^3.\n" << flush;
-
-    
-   }*/
-
-  //fout.close();
 
   // app's main loop, from which callbacks to above routines occur
   glutMainLoop();
@@ -569,7 +491,7 @@ void displayFuncDepth( void ) {
     }*/
 
     glutSetWindow( depthWindowID );
-    // in Z-buffer of Depth Window using graphics hardware.
+    //in Z-buffer of Depth Window using graphics hardware.
     //HeightData is a double array 
     int length = 0;
     //will be filled in by doImageScanApprox
@@ -581,11 +503,10 @@ void displayFuncDepth( void ) {
         int x = 1;
         if((vrpn_TimevalDiff(currenttime,oldtime)).tv_sec >= x)
 		{//send every x sec. for now
-            AFM_Simulator.encode_and_sendData(HeightData,length);
+            SimMicroscopeServer.encode_and_sendData(HeightData,length);
             gettimeofday(&oldtime,NULL);//give oldtime a new value to reflect that data 
             //just sent
         }
-        //ANDREA
     }
 
     // end of display frame, so flip buffers
@@ -597,6 +518,32 @@ void displayFuncDepth( void ) {
 // their display callbacks to be invoked.
 void commonIdleFunc( void ) {
 #define PERIOD 30
+
+	int x_to_y = 1;
+	if(SimMicroscopeServer.grid_size_rcv){
+		x_to_y = SimMicroscopeServer.Sim_to_World_y/SimMicroscopeServer.Sim_to_World_x;
+	}
+  //ANDREA:  changes here
+  if(connection_to_nano){
+	if(x_to_y > 1){//alter if ratio is not 1 on nano side so that ratio is the same on this side
+		glutReshapeWindow( (int)windowWidth, (int)(windowHeight/x_to_y) );
+	}
+	else if(x_to_y < 1){
+		glutReshapeWindow( (int)windowWidth/x_to_y, (int)(windowHeight) );
+	}
+	//ANDREA:  take out this else later...
+	/*else{
+		if (undone){
+			glutReshapeWindow( (int)windowWidth/x_to_y*1.5, (int)(windowHeight) );
+			undone = false;
+		}
+		else{
+			glutReshapeWindow( (int)windowWidth/x_to_y*2.0/3.0, (int)(windowHeight) );
+			undone = true;
+		}
+	}*/
+  }
+  //
 
   static int run_cnt=0;
   if (dna) {

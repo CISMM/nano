@@ -21,6 +21,8 @@ GLenum drawStyle = GL_FILL;
 extern void drawSphere(double diamter);
 extern void drawCylinder(double diamter, double height);
 
+
+
 /* Class : OB */
 void OB :: setPos_z(double _z) {
 

@@ -1,6 +1,8 @@
 2002-01-18 Andrea Hilchey <hilchey@cs.unc.edu>
 
-	* scan.cpp : changed zDistance and zDistanceScaled so that inverse of zBuffer
+	* scan.cpp : changed zDistance and zDistanceScaled so that inverse of zBuffer,
+	zBuffer stores values s.t. low row numbers are at the bottom of the grid, while
+	we want zDistance to store values s.t. low row numbers are at the top of the grid
 
 
 2002-01-17 Andrea Hilchey <hilchey@cs.unc.edu>
