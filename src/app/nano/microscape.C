@@ -3732,18 +3732,18 @@ void    handle_tracker2room_change(void *userdata,
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
 
-//      if (xformIndex == V_ROOM_FROM_HAND_TRACKER) {
-//          printf("Updating hand tracker from room xform\n");
-//      } else if (xformIndex == V_ROOM_FROM_HEAD_TRACKER) {
-//          printf("Updating head tracker from room xform\n");
-//      }
+      if (xformIndex == V_ROOM_FROM_HAND_TRACKER) {
+          printf("Updating hand tracker from room xform\n");
+      } else if (xformIndex == V_ROOM_FROM_HEAD_TRACKER) {
+          printf("Updating head tracker from room xform\n");
+      }
 
     if ((xformIndex == V_ROOM_FROM_HEAD_TRACKER) || 
 	(xformIndex == V_ROOM_FROM_HAND_TRACKER)) {
-//          printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
-//                 info.tracker2room[0], info.tracker2room[1], info.tracker2room[2],
-//                 info.tracker2room_quat[0], info.tracker2room_quat[1], 
-//                 info.tracker2room_quat[2], info.tracker2room_quat[3]);
+          printf(" t2r (%g, %g, %g), (%g, %g, %g, %g)\n",
+                 info.tracker2room[0], info.tracker2room[1], info.tracker2room[2],
+                 info.tracker2room_quat[0], info.tracker2room_quat[1], 
+                 info.tracker2room_quat[2], info.tracker2room_quat[3]);
 	
 	v_update_user_xform(0, xformIndex, UGLYCAST info.tracker2room, 
 			    UGLYCAST info.tracker2room_quat);
@@ -3765,9 +3765,11 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
     }
     if ((xformIndex == V_TRACKER_FROM_HEAD_SENSOR) ||
 	(xformIndex == V_TRACKER_FROM_HAND_SENSOR)) {
-        //printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
-        //       info.pos[0], info.pos[1], info.pos[2],
-        //       info.quat[0], info.quat[1], info.quat[2], info.quat[3]);
+//printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+printf("ph (%g, %g, %g)\n",
+info.pos[0], info.pos[1], info.pos[2]
+);
+//,info.quat[0], info.quat[1], info.quat[2], info.quat[3]);
 	v_update_user_xform(0, xformIndex, UGLYCAST info.pos,
                             UGLYCAST info.quat);
     } else {

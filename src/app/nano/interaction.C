@@ -1115,6 +1115,7 @@ void setupHaptics (int mode) {
     case USER_PLANEL_MODE:
 
       if (microscope->state.modify.tool == FEELAHEAD) {
+fprintf(stderr, "In feelahead for live plane!\n");
         haptic_manager.setSurface(haptic_manager.d_feelAhead);
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
@@ -1126,6 +1127,7 @@ void setupHaptics (int mode) {
     case USER_LINE_MODE:
 
       if (microscope->state.modify.tool == WARPED_PLANE) {
+fprintf(stderr, "In warped plane for live line/plane mode!\n");
         haptic_manager.setSurface(haptic_manager.d_warpedPlane);
       } else {
         haptic_manager.setSurface(haptic_manager.d_livePlane);

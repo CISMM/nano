@@ -1,3 +1,12 @@
+2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
+
+   * Makefile : change ghost30 to ghost31.
+
+   * interaction.c (setupHaptics) : temporary diagnostic output.
+
+   * microscape.c (handle_tracker2room_change) : same.
+   (handle_sensor2tracker_change) : same.
+
 2001-07-28  Tom Hudson  <hudson@cs.unc.edu>
 
         * error_display.C (disable_dialogs) : Change default value.
