@@ -585,6 +585,7 @@ TclNet_int replay_rate("stream_replay_rate", 1,
 TclNet_int	rewind_stream("rewind_stream",0,
 			handle_rewind_stream_change, NULL);
 
+//checkthis
 /// This is the time value to jump to in the stream file. 
 TclNet_float set_stream_time ("set_stream_time", 0);
 /// This is a flag (0/1) to say " jump to new time now!"
@@ -1253,6 +1254,7 @@ struct MicroscapeInitializationState {
   char heightplane [256];
 
   bool index_mode;
+
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -2466,8 +2468,6 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
   center();
   tcl_center_pressed = 0;
 }
-
-
 // Handler for set_stream_time_now, NOT set_stream_time. 
 static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
 //fprintf(stderr, "handle_set_stream_time_change to %d (flag %d).\n",
@@ -5391,7 +5391,7 @@ void ParseArgs (int argc, char ** argv,
     i = 1;
     while (i < argc) {
         //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
-
+		
       if (strcmp(argv[i], "-allowdup") == 0) {
         istate->afm.allowdup = 1;
       } else if (strcmp(argv[i], "-alphacolor") == 0) {
@@ -5514,7 +5514,20 @@ void ParseArgs (int argc, char ** argv,
 	    } else {
 		// next arg is a number
 		decoration->rateOfTime = play_rate;
-	    }
+		if (++i < argc){
+			//check and see if next arg is a number
+			int time_to_jump = atoi(argv[i]);
+			if((time_to_jump == 0) && (strcmp("0", argv[i]) != 0)){
+				// not a number, let next iteration process it.
+				--i;
+			}
+			else{
+				//arg is a number, set stream time to jump to
+				set_stream_time = time_to_jump;
+			}
+		}
+		}
+		
 	}
 	replay_rate = decoration->rateOfTime;
       } else if ( strcmp( argv[i], "-index" ) == 0 ) {
@@ -5853,7 +5866,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-dsem device] [-daligner device]\n");
   fprintf(stderr, "       [-f infile] [-z scale] \n");
   fprintf(stderr, "       [-grid x y] [-perf]\n");
-  fprintf(stderr, "       [-i streamfile rate][-o streamfile]\n");
+  fprintf(stderr, "       [-i streamfile_rate streamfile_time][-o streamfile]\n");
   fprintf(stderr, "       [-index] \n");
   fprintf(stderr, "       [-keybd] \n");
   fprintf(stderr, "       [-region lowx lowy highx highy]\n");
@@ -5896,8 +5909,8 @@ void Usage(char* s)
   fprintf(stderr, "       -fmods: mod force range (def 50,0)\n");
   fprintf(stderr, "       -fimgs: img force range and setpt (def 10,0, 50)\n");
   fprintf(stderr, "       -grid: Take x by y samples for the grid\n");
-  fprintf(stderr, "       -i: Rate at which data is to be read "
-                         "from streamfile\n");
+  fprintf(stderr, "       -i: Rate at which data is to be read from streamfile\n");
+  fprintf(stderr, "           and time to jump to in stream file\n");
   fprintf(stderr, "       -o: Write the STM data stream to streamfile\n");
   fprintf(stderr, "       -region: Scan from low to high in x and y\n");
   fprintf(stderr, "                (Default what scanner has, units are nm)\n");
