@@ -1,4 +1,15 @@
+2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* interaction.c (specify_directZ_force) :
+		Make it specify a zero force, rather than doing nothing,
+		when it has no good information to display.  Removed print
+		statements.
+		(doFeelLive) : Puts the microscope back into image mode when
+		leaving feel modes, so that relaxation compensation can do
+		the right thing, and the background color does the right thing.
+
 2001-08-10 Jameson Miller <millerj@cs.unc.edu>
+
 	* interaction.c: changed so that the sphere can be positioned 
 	properly with new changes in optimize_now. 
 

@@ -1921,7 +1921,7 @@ double touch_surface (int, q_vec_type handpos) {
 
 
 
-/** When controling the position of the tip in 3D, this calculates
+/** When controlling the position of the tip in 3D, this calculates
  * the force the user should feel based on internal sensor measurements.
  */
 int specify_directZ_force(int whichUser) 
@@ -1930,9 +1930,12 @@ int specify_directZ_force(int whichUser)
      q_vec_type		up = { 0.0, 0.0, 1.0 };
      v_xform_type               WorldFromTracker, TrackerFromWorld;
 
-     // If directz hasn't been initialized, do nothing. 
+     // If directz hasn't been initialized, specify a force field that has
+     // zero force, so that when the forcefield is turned on the user won't
+     // feel anything.
      if (microscope->state.modify.freespace_normal_force == BOGUS_FORCE) {
-	 return 0;
+	forceDevice->setFF_Force(0.0, 0.0, 0.0);
+	return 0;
      }
      point[X] = microscope->state.data.inputPoint->x();
      point[Y] = microscope->state.data.inputPoint->y();
@@ -1976,8 +1979,8 @@ int specify_directZ_force(int whichUser)
      // internal sensor recorded when we entered direct-z control
      double diff_force = current_force - microscope->state.modify.freespace_normal_force;
 
-     printf("specify_directZ_force: internal sensor difference: %g\n",
-	    diff_force);
+//     printf("specify_directZ_force: internal sensor difference: %g\n",
+//	    diff_force);
      // got user's hand position and force direction (up) in microscope space, 
      //XForm into hand-tracker space
      // Rotate, Xlate and scale point from world space to hand-tracker space.
@@ -2003,10 +2006,11 @@ int specify_directZ_force(int whichUser)
     forceDevice->setFF_Force(diff_force*up[Q_X]*directz_force_scale, 
 			     diff_force*up[Q_Y]*directz_force_scale, 
 			     diff_force*up[Q_Z]*directz_force_scale);
-    printf("   Final force vector: %g %g %g\n", 
-	   diff_force*up[Q_X]*directz_force_scale, 
-			     diff_force*up[Q_Y]*directz_force_scale, 
-			     diff_force*up[Q_Z]*directz_force_scale);
+//    printf("   Final force vector: %g %g %g\n", 
+//	   diff_force*up[Q_X]*directz_force_scale, 
+//			     diff_force*up[Q_Y]*directz_force_scale, 
+//			     diff_force*up[Q_Z]*directz_force_scale);
+
     // Force field does not change as we move around.
     forceDevice->setFF_Jacobian(0,0,0,  0,0,0,  0,0,0);
     forceDevice->setFF_Radius(0.02); // 2cm radius of validity
@@ -2713,7 +2717,8 @@ static void setupSweepIcon (int whichUser, q_vec_type clipPos,
 	moves the tip in x, y and z.
  *
  */
-int doFeelLive (int whichUser, int userEvent)  {
+int doFeelLive (int whichUser, int userEvent)
+{
   BCPlane * plane;
 
   // static to allow xy_lock to work properly
@@ -2993,7 +2998,11 @@ int doFeelLive (int whichUser, int userEvent)  {
           //microscopeRedundancyController->set(0, vrpn_MsecsTimeval(0.0));
       }
 
-      /* Start image mode and resume previous scan pattern */
+      /* Start image mode (to make the relaxation compensation code work
+       * as it should, and to turn the background the right color in case
+       * we don't scan more, and to stop points from coming into the list
+       * of points) and resume previous scan pattern. */
+      microscope->ImageMode();
       microscope->ResumeScan();
 
       break;
@@ -3734,8 +3743,4 @@ int clear_polyline( void * userdata ) {
   g->emptyPolyline();
   return 0;
 }
-
-
-
-
 
