@@ -6,10 +6,10 @@
 
 
 // raw values (normalized) from Z-buffer
-extern float zBuffer[ 128*128 ];			
+extern float zBuffer[ DEPTHSIZE*DEPTHSIZE ];//***			
 // array of heights: image scan data
 extern double zHeight [MAX_GRID][MAX_GRID];	
-extern float colorBuffer[ 128*128 ];			
+extern float colorBuffer[ DEPTHSIZE*DEPTHSIZE ];//***			
 extern int    scanResolution;
 extern double scanStep;
 extern double scanXMin;

@@ -42,6 +42,7 @@ int numObs;
 int selectedOb = NULLOB;
 int buttonpress=-1;
 int selected_triangle_side;
+double unca_minx = -1, unca_miny = -1, unca_maxx = -1, unca_maxy = -1;
 
 int uncertainty_mode=0;
 
@@ -65,8 +66,8 @@ double windowWidth  = 600.;
 double windowHeight = 600.;
 double orthoFrustumCenterX = 64.;	// area of XY plane always visible for all window aspect ratios
 double orthoFrustumCenterY = 64.;
-double orthoFrustumWidthNominal  = 128.;
-double orthoFrustumHeightNominal = 128.;
+double orthoFrustumWidthNominal  = DEPTHSIZE;//***
+double orthoFrustumHeightNominal = DEPTHSIZE;//***
 
 // actual bounds of current ortho view frustum matching window aspect ratio
 double orthoFrustumLeftEdge;
@@ -179,6 +180,13 @@ int main(int argc, char *argv[])
 			TipSize = atof(argv[i]);
 			sp.set_r(TipSize);
 			ics.set_r(TipSize);//let the user specify the tip radius desired
+		}
+		else if (!strcmp(argv[i], "-unca_nano")) {
+			if (++i > argc) { Usage(argv[0]); }
+			unca_minx = 0;
+			unca_miny = 0;
+			unca_maxx = 1000;
+			unca_maxy = 1000;
 		}
     }
 
@@ -297,8 +305,18 @@ int main(int argc, char *argv[])
 void write_to_unca(char *filename) {
   
   // Everything here is in Angstroms. Unca takes care of this.
-  Unca u = Unca(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), -scanFar, -scanNear, (double *)zHeight);
-  u.writeUnca(filename);
+	Unca u;
+	if(unca_minx != -1 ||  unca_maxx != -1){
+		u.set(DEPTHSIZE, DEPTHSIZE, unca_minx, unca_maxx, unca_miny, unca_maxy, 
+			-scanFar, -scanNear, (double *)zHeight);
+	}
+	else{
+		u.set(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,
+			(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,
+			(orthoFrustumBottomEdge + orthoFrustumHeight), -scanFar, -scanNear, 
+			(double *)zHeight);
+	}
+	u.writeUnca(filename);
 }
 
 void write_to_uncertw(char *filename) {
@@ -655,39 +673,37 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     case 'w':
       stopAFM=1;
       
-      if (uncertainty_mode) {// write out uncert.map
-	char filename[40];
-	if (tip.type == SPHERE_TIP) {
-	  sprintf(filename,"uncert_sptip_r_%.1lfnm.UNCERTW",tip.spTip->r);
-	}
-	else {
-	  sprintf(filename,"uncert_icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCERTW",tip.icsTip->r,tip.icsTip->ch,
-		  RAD_TO_DEG*tip.icsTip->theta);
-	}
-	cout << "Writing to file " << filename << endl;
-	write_to_uncertw(filename);
-	cout << "Finished writing to file " << filename << endl;
+		if (uncertainty_mode) {// write out uncert.map
+			char filename[40];
+			if (tip.type == SPHERE_TIP) {
+				sprintf(filename,"uncert_sptip_r_%.1lfnm.UNCERTW",tip.spTip->r);
+			}
+			else {
+				sprintf(filename,"uncert_icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCERTW",tip.icsTip->r,tip.icsTip->ch,
+				RAD_TO_DEG*tip.icsTip->theta);
+			}
+			cout << "Writing to file " << filename << endl;
+			write_to_uncertw(filename);
+			cout << "Finished writing to file " << filename << endl;
 	
-      }
-      else {
-	{
-	  // write output to a file.
-	  char filename[40];
-	  if (tip.type == SPHERE_TIP) {
-	    sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
-	  }
-	  else {
-	    sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,
-		    RAD_TO_DEG*tip.icsTip->theta);
-	  }
-	  cout << "Writing to file " << filename << endl;
-	  write_to_unca(filename);
-	  cout << "Finished writing to file " << filename << endl;
-	}
-      }
+		}
+		else {// write output to a file.
+			char filename[40];
+			if (tip.type == SPHERE_TIP) {
+				sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
+			}
+			else {
+				sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,
+				RAD_TO_DEG*tip.icsTip->theta);
+			}
+			cout << "Writing to file " << filename << endl;
+			write_to_unca(filename);
+			cout << "Finished writing to file " << filename << endl;
+		
+		}
 
-      stopAFM=0;
-      break;
+		stopAFM=0;
+		break;
     case 'q' :
       exit(0);
       break;

@@ -20,17 +20,19 @@
 #include "sim.h"
 #include "input.h"
 
-// raw values (normalized) from Z-buffer
-float zBuffer[ 128*128 ];			
+const double dimension = DEPTHSIZE;//128*******changed this
 
-float colorBuffer[ 128*128 ];			
+// raw values (normalized) from Z-buffer
+float zBuffer[ DEPTHSIZE*DEPTHSIZE ];			
+
+float colorBuffer[ DEPTHSIZE*DEPTHSIZE ];			
 
 // array of heights: image scan data
 double zHeight        [MAX_GRID][MAX_GRID];	
 double zDistance [MAX_GRID][MAX_GRID];
 
 // scan grid resolution
-int    scanResolution = 128;	
+int    scanResolution = DEPTHSIZE;	
 // scan grid pitch (sample-to-sample spacing)
 double scanStep   = 1.;		
 // scan grid origin X coord (left side)
@@ -41,13 +43,13 @@ double scanYMin =  0.;
 //double scanXMax =   scanXMin + (scanStep * scanResolution);
 //double scanYMax =   scanYMin + (scanStep * scanResolution);
 //double scanNear =  -100.;	// near end of Z-buffer range
-double scanNear =  -128.;	// near end of Z-buffer range
+double scanNear =  -DEPTHSIZE;	// near end of Z-buffer range
 
 double scanFar  =   0.;	// far  end of Z-buffer range
 
 double Volume;
-int numberUnits_onedim = 128;
-int numberPixels_onedim = 128;
+int numberUnits_onedim = DEPTHSIZE;
+int numberPixels_onedim = DEPTHSIZE;
 
 void get_z_buffer_values() {
 

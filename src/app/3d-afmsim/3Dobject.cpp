@@ -211,7 +211,7 @@ Vec3d Ntube :: getRightEndPt() { // the one in the direction of the axis
 }
 
 
-float zBuffer2[ 128*128 ];			
+float zBuffer2[ DEPTHSIZE*DEPTHSIZE ];//***			
 extern int mousepress;
 
 

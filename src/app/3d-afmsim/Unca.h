@@ -17,9 +17,11 @@ public:
 		      row major order */
   //  Unca(void) {}
   // will point to a height field.
+  Unca();
   Unca(int _Xres, int _Yres, double _minx, double _maxx, double _miny, double _maxy, double _minz, double _maxz, double *_zHeight);
   void set(int _Xres, int _Yres, double _minx, double _maxx, double _miny, double _maxy, double _minz, double _maxz, double *_zHeight);
   void writeUnca(char *filename);
 };
+
 
 #endif

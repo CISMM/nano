@@ -3,6 +3,8 @@
 #ifndef _DEFNS_H_
 #define _DEFNS_H_
 
+#define UNCA 0 //to create 512 by 512 UNCA files, set this to 1
+
 #define PI            3.14159265358979323846
 #define DEG_TO_RAD (PI/180.)
 #define RAD_TO_DEG	(180. / PI)
@@ -56,8 +58,17 @@
 #define XMAX 90
 #define YMAX 90
 
+//*** changed this from 128
+#if UNCA
+	#define MAX_GRID 512//128 // changed this to 128 from 64
+#endif
 
-#define MAX_GRID 128 // changed this to 128 from 64
+#if !UNCA
+	#define MAX_GRID 128
+#endif
+
+
 #define DEPTHSIZE MAX_GRID
 
+		
 #endif
