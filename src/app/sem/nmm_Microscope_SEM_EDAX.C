@@ -1,6 +1,8 @@
 #include <vrpn_Connection.h>
 #include "nmm_Microscope_SEM_EDAX.h"
+#ifdef _WIN32
 #include "delay.h"
+#endif
 #include "nmm_EDAX.h"
 #include "nmb_Image.h"
 #include <stdlib.h>
@@ -278,9 +280,9 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 #endif
 
 #ifdef USE_BUSYWAIT_DELAY
-
+#ifdef _WIN32
   Delay::init();
-
+#endif
 #endif
 
 }
@@ -1210,7 +1212,9 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportMaxScanSpan()
   return dispatchMessage(len, msgbuf, d_ReportMaxScanSpan_type);
 }
 
+#ifdef _WIN32
 #pragma optimize("",off)
+#endif
 vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC,
                ShapeType shapeType)
 {
@@ -1273,7 +1277,9 @@ if (!d_virtualAcquisition) {
                            d_pointCommandOverheadPerPoint_msec[shapeType];
   if (!d_timingTestActive) {
     if (delay_time_msec > 0) {
+#ifdef _WIN32
       Delay::busyWaitSleep(delay_time_msec);
+#endif
     }
   }
   // XXX otherwise we fall straight through to go as fast as we can
@@ -1303,7 +1309,9 @@ if (!d_virtualAcquisition) {
       return 0;
     }
 }
+#ifdef _WIN32
 #pragma optimize("",on)
+#endif
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::reportBeamLocation()
 {
@@ -1494,13 +1502,18 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::exposePattern()
   d_completedPatternNumPoints = 0;
   d_completedPatternDwellTime_sec = 0.0;
 
+#ifdef _WIN32
   Delay::beginRealTimeSection();
+#endif
 
   d_pattern.drawToSEM(this,
           d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm,
           numPoints, dwellTime);
 
+#ifdef _WIN32
   Delay::endRealTimeSection();
+#endif
+
   return 0;
 }
 
@@ -1518,13 +1531,17 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::exposureTimingTest()
   d_completedPatternDwellTime_sec = 0.0;
 
   startTimingTest();
+#ifdef _WIN32
   Delay::beginRealTimeSection();
+#endif
   startTimingTest();
   d_pattern.drawToSEM(this,
           d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm,
           numPoints, expTime);
   endTimingTest();
+#ifdef _WIN32
   Delay::endRealTimeSection();
+#endif
   return 0;
 }
 
