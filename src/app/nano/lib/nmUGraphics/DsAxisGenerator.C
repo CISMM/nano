@@ -69,6 +69,8 @@ int DsAxisGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	Pobject->GetLocalXform().SetZOffset(z_value);
 	Pobject->GetLocalXform().SetTranslate(0, 0, 0);
 
+	Pobject->GetLocalXform().SetScale(350);
+
 	return 1;	// number of display lists
 }
 
@@ -81,21 +83,18 @@ void DsAxisGenerator::BuildListDsAxis(URender *Pobject, GLuint dl) {
 	glNewList(dl, GL_COMPILE);	// init display list
 	
 	glBegin(GL_LINES);
-	//glLineWidth(10.0);
 	glColor3f(1.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(1.0, 0.0, 0.0);
 	glEnd();
 
 	glBegin(GL_LINES);
-	//glLineWidth(10.0);
 	glColor3f(0.0, 1.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(0.0, 1.0, 0.0);
 	glEnd();
 
 	glBegin(GL_LINES);
-	//glLineWidth(10.0);
 	glColor3f(0.0, 0.0, 1.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 1.0);

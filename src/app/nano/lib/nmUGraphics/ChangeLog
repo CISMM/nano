@@ -1,3 +1,6 @@
+2002-07-08 Jameson Miller <millerj@cs.unc.edu>
+	* DsAxisGenerator.C : set the scale of the axis icon when loaded.
+
 2002-07-08 David Borland <borland@cs.unc.edu>
         * TubeFileGenerator.C : removed some debugging statements
 
