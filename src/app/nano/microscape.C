@@ -89,6 +89,7 @@ pid_t getpid();
 // microscope
 #include <nmm_Globals.h>	
 #include <nmm_MicroscopeRemote.h>
+#include <nmm_SimulatedMicroscope_Remote.h>
 #include <nmm_Types.h>
 
 // graphics
@@ -421,8 +422,12 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 /// Calculated data plane controls. 
 static void handle_sumPlaneName_change(const char *new_value, void *userdata);
 static void handle_adhPlaneName_change(const char *new_value, void *userdata);
+static void handle_SimScanPlaneName_change(const char *new_value, void *userdata);
+static void handle_SimScanComputerName_change(const char *new_value, void *userdata);
 static void handle_flatPlaneName_change(const char *new_value, void *userdata);
 static void handle_lblflatPlaneName_change(const char *new_value, void *userdata);
+Tclvar_string	newSimScanPlaneName("simscanplane_name","");
+Tclvar_string	SimScanComputerName("simscanIPaddress","");
 Tclvar_string	newFlatPlaneName("flatplane_name","");
 
 //added 1-9-99 by Amy Henderson
@@ -1221,6 +1226,17 @@ static vrpn_Connection * collab_forwarder_connection = NULL;
 static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
+
+//Sim Scan stuff
+BCPlane * BasePlane; //added by Andrea for unit check for SimScanPlane
+bool SimScanComputerNameGiven = false;
+bool SimScanPlaneNameGiven = false;
+Tclvar_string SimScanIPAddress("","");
+Tclvar_string SimScanStoredPlaneName("","");
+nmm_SimulatedMicroscope_Remote * SimulatedMicroscope = NULL;
+static void startSimulatedMicroscope();
+
+//end Sim Scan stuff
 
 struct MicroscapeInitializationState {
 
@@ -2115,8 +2131,6 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
-    if( keithley2400_ui)
-        keithley2400_ui->reset( );
     if (semLogFile)
         semLogFile->reset();
     rewind_stream = 0;  // necessary
@@ -2628,6 +2642,7 @@ static void handle_openStaticFilename_change (const char *, void *)
         //printf("Found plane %s\n", (p->name())->Characters());
         // Add it to the list if it's not there already.
         if (dataset->inputPlaneNames->getIndex(*(p->name())) == -1) {
+	    BasePlane = p;
             //printf("Add entry\n");
             dataset->inputPlaneNames->addEntry(*(p->name()));
             // This is the new plane we just added, so switch the heightplane
@@ -3059,7 +3074,77 @@ static void handle_filterPlaneName_change(const char *, void *) {
     }
 }
 
+/** See if the user has given a name to the sim. scan plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
+static void handle_SimScanPlaneName_change(const char *, void *)
+{
+	if( strlen(newSimScanPlaneName.string() ) <= 0 )
+		return;
+  
+	try{
+		SimScanStoredPlaneName = newSimScanPlaneName.string(); // XXX Make operator =
+		//stored one is SimScanStoredPlaneName
+		SimScanPlaneNameGiven = true;
+		if(SimScanComputerNameGiven){
+			startSimulatedMicroscope();
+		}
+		//only start up simulated microscope connection if both plane name and
+		//IP address for the simulator have been filled in by the user
+	}
+	catch( nmb_CalculatedPlaneCreationException e ){
+		display_error_dialog( e.getMsgString() );
+		newSimScanPlaneName = (const char *) "";
+		return;
+	}
 
+	newSimScanPlaneName = (const char *) "";
+} 
+
+
+static void startSimulatedMicroscope(){
+	cout << "got into startSimulatedMicroscope()" << endl;
+	//form cname from hostname:port (I think)
+	vrpn_Connection * connection = 
+		vrpn_get_connection_by_name(SimScanIPAddress.string());
+	if(connection != NULL)	cout << "Connection not NULL" << endl;
+
+	if(SimulatedMicroscope != NULL)	delete SimulatedMicroscope;
+	
+	cout << "Line before Simulated Microscope to be created" << endl;
+
+	SimulatedMicroscope = new 
+		nmm_SimulatedMicroscope_Remote(SimScanIPAddress.string(), connection, 
+		SimScanStoredPlaneName.string(), dataset);
+
+	if(SimulatedMicroscope != NULL)	cout << "SimulatedMicroscope created" << endl;
+	else	cout << "Got past SimulatedMicroscope creation but object is NULL" << endl;
+}
+
+
+static void handle_SimScanComputerName_change(const char *, void *)
+{
+	if( strlen(SimScanComputerName.string() ) <= 0 )
+		return;
+  
+	try{
+		SimScanIPAddress = SimScanComputerName.string();
+		//stored one is SimScanIPAddress
+		SimScanComputerNameGiven = true;
+		if(SimScanPlaneNameGiven){
+			startSimulatedMicroscope();		
+		}
+		//only start up simulated microscope connection if both plane name and
+		//IP address for the simulator have been filled in by the user
+	}
+	catch( nmb_CalculatedPlaneCreationException e ){
+		display_error_dialog( e.getMsgString() );
+		SimScanComputerName = (const char *) "";
+		return;
+	}
+
+	SimScanComputerName = (const char *) "";  
+} 
 
 
 /** See if the user has given a name to the flattened plane other
@@ -4405,6 +4490,14 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
 #endif
+
+  newSimScanPlaneName = "";
+  newSimScanPlaneName.addCallback
+            (handle_SimScanPlaneName_change, NULL);
+
+  SimScanComputerName = "";
+  SimScanComputerName.addCallback
+            (handle_SimScanComputerName_change, NULL);
 
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
@@ -7420,18 +7513,18 @@ int main (int argc, char* argv[])
       printf("main: attempting to connect to vicurve: %s\n",
 	     istate.vicurve.deviceName);
 #ifdef VRPN_5
-      vicurve_connection = 
-	vrpn_get_connection_by_name( istate.vicurve.deviceName,
-				     istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-				     : (char *) NULL,
-				     istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
-				     : vrpn_LOG_NONE);
+      vicurve_connection = vrpn_get_connection_by_name
+	(istate.vicurve.deviceName,
+	 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+	 : (char *) NULL,
+	 istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
+         : vrpn_LOG_NONE);
 #else
-      vicurve_connection = 
-	vrpn_get_connection_by_name( istate.vicurve.deviceName,
-				     istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-				     : (char *) NULL,
-				     NULL);
+      vicurve_connection = vrpn_get_connection_by_name
+        (istate.vicurve.deviceName,
+         istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+         : (char *) NULL,
+         NULL);
 #endif
       if (!vicurve_connection) {
 	display_error_dialog( "Couldn't open connection to %s.\n",
@@ -7445,7 +7538,7 @@ int main (int argc, char* argv[])
 	  // But the file name is hidden inside istate.vicurve.deviceName and
 	  // only vrpn_Connection knows how to parse this
 	} else {
-	  // If we are reading a microscope stream file, we DON'T want 
+	  // If we are reading a microscope stream file, we DONT want 
 	  // to connect to a live device - kill connection in this case.
 	  if (istate.afm.readingStreamFile == VRPN_TRUE) {
 	    vicurve_connection = NULL;
@@ -7454,17 +7547,21 @@ int main (int argc, char* argv[])
 	if (vicurve_connection != NULL) {
 	  // If we got to here, we have a connection to vi_curve -
 	  // create the beast.
+
 	  keithley2400_ui = new nma_Keithley2400_ui( Tcl_Interpreter::getInterpreter(), 
 						     tcl_script_dir, 
 						     "vi_curve@dummyname.com", 
 						     vicurve_connection);
+
 	  // Allow the Keithley to take IV curves when we are doing a
 	  // modification - start when we enter modify mode, and stop
 	  // when we start imaging again.
-	  microscope->registerModifyModeHandler( nma_Keithley2400_ui::EnterModifyMode, 
-						 keithley2400_ui);
-	  microscope->registerImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
-					        keithley2400_ui);
+	  microscope->registerModifyModeHandler(
+						nma_Keithley2400_ui::EnterModifyMode, 
+						keithley2400_ui);
+	  microscope->registerImageModeHandler(
+					       nma_Keithley2400_ui::EnterImageMode, 
+					       keithley2400_ui);
 	} else {
 	  keithley2400_ui = NULL;
 	}
