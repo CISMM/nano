@@ -675,7 +675,7 @@ Tclvar_int realign_textures_enabled ("realign_dataset", 0);
 Tclvar_int set_realign_center ("set_center", 0);
 
 Tclvar_string texturePlaneName ("texture_comes_from" ,"none" );
-Tclvar_string textureConversionMapName( "texture_conversion_map","CUSTOM" );
+Tclvar_string textureConversionMapName( "texture_conversion_map","none" );
 
 Tclvar_float realign_textures_slider_min_limit("realign_textures_slider_min_limit",0);
 Tclvar_float realign_textures_slider_max_limit("realign_textures_slider_max_limit", 1.0);
