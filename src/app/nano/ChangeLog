@@ -1,3 +1,7 @@
+2001-08-10 Jameson Miller <millerj@cs.unc.edu>
+	* interaction.c: changed so that the sphere can be positioned 
+	properly with new changes in optimize_now. 
+
 2001-08-10  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* microscape.c: (setupSynchronization, teardownSynchronization)
