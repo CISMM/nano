@@ -11,6 +11,8 @@ set import_roty 0
 set import_rotz 0
 set import_type ""
 set import_visibility 1
+set import_proj_text 1
+set import_CCW 1
 
 set import_color gray
 set import_r 192
@@ -31,6 +33,8 @@ label $nmInfo(basic_options).file.import_file_label -justify left -text \
 	"Current Imported file: $import_file_label"
 
 button $nmInfo(basic_options).file.buttons.import_button -text "Import File" -command open_import_file
+radiobutton $nmInfo(basic_options).file.buttons.ccw -text "CCW" -variable import_CCW -value 1
+radiobutton $nmInfo(basic_options).file.buttons.cw -text "CW" -variable import_CCW -value 0
 button $nmInfo(basic_options).file.buttons.close_button -text "Close File" -command close_import_file
 
 #generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
@@ -52,7 +56,9 @@ generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
      "Z Rotation" real
 generic_entry $nmInfo(basic_options).f3.import_scale import_scale \
      "Scale" real 
-button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command open_import_file
+button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
+checkbutton $nmInfo(basic_options).f3.proj_text_button \
+    -text "Show Projective Texture" -variable import_proj_text
 
 button $nmInfo(basic_options).f3.set_color \
         -text "Set color" -command {
@@ -72,7 +78,10 @@ pack $nmInfo(basic_options).file -anchor w -fill x
 pack $nmInfo(basic_options).file.import_file_label -anchor w -side left
 pack $nmInfo(basic_options).file.buttons -anchor w -fill x
 pack $nmInfo(basic_options).file.buttons.import_button -anchor nw -side left -padx 1m -pady 1m
-pack $nmInfo(basic_options).file.buttons.close_button -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.close_button -anchor nw -side left -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.ccw -anchor nw 
+pack $nmInfo(basic_options).file.buttons.cw -anchor nw
+
 
 pack $nmInfo(basic_options).f1 -side left -fill x
 pack $nmInfo(basic_options).f2 -side left -fill x
@@ -85,6 +94,7 @@ pack $nmInfo(basic_options).f2.import_roty -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotz -padx 1m -pady 1m
 pack $nmInfo(basic_options).f3.import_scale -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.set_color -side left -padx 1m
 pack $nmInfo(basic_options).f3.colorsample -side left -padx 1m -fill x -expand yes
 

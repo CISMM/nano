@@ -21,6 +21,8 @@ static  void handle_import_rotz_change (vrpn_float64, void *);
 static  void handle_import_visibility (vrpn_int32, void *);
 static  void handle_import_color_change (vrpn_int32, void *);
 static  void handle_import_alpha (vrpn_float64, void *);
+static  void handle_import_proj_text (vrpn_int32, void *);
+static	void handle_import_CCW (vrpn_int32, void *);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -38,6 +40,8 @@ Tclvar_float	import_rotx("import_rotx",0, handle_import_rotx_change);
 Tclvar_float	import_roty("import_roty",0, handle_import_roty_change);
 Tclvar_float	import_rotz("import_rotz",0, handle_import_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
+Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
+Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
 Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
@@ -54,6 +58,8 @@ Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
 static void handle_import_file_change (const char *, void *) {
     static char * old_name = "";
     static const float convert = 1.0f/255;
+
+cout << "in handle_import_file_change" << endl;
     
     if (modelFile.string()) {        
         if (strcmp(modelFile.string(),"") != 0) {          
@@ -62,16 +68,19 @@ static void handle_import_file_change (const char *, void *) {
             URPolygon *obj = new URPolygon;
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
+			obj->SetCCW(import_CCW);
             obj->LoadGeometry(gen);
             obj->SetVisibility(import_visibility);
-            obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
+			obj->SetProjText(import_proj_text);
+	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
             obj->GetLocalXform().SetScale(import_scale);
             obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
             World.TAddNode(obj, modelFile.string());
         }
-        if (strcmp(old_name, "") != 0) {
+// Took this out because we want more than one object loaded at a time...
+/*        if (strcmp(old_name, "") != 0) {
             UTree *node = World.TGetNodeByName(old_name);
 
             node->TGetParent()->TRemoveTreeNode(node);
@@ -80,6 +89,7 @@ static void handle_import_file_change (const char *, void *) {
             delete [] old_name;
             old_name = NULL;
         }
+*/
 
         old_name = new char[strlen(modelFile.string())+1];
         strcpy(old_name, modelFile.string());
@@ -92,6 +102,24 @@ static  void handle_import_visibility (vrpn_int32, void *)
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetVisibility(import_visibility);
+    }
+}
+
+static  void handle_import_proj_text (vrpn_int32, void *)
+{
+    UTree *node = World.TGetNodeByName(modelFile.string());
+    if (node != NULL) {
+        URender &obj = node->TGetContents();
+        obj.SetProjText(import_proj_text);
+    }
+}
+
+static  void handle_import_CCW (vrpn_int32, void *)
+{
+    UTree *node = World.TGetNodeByName(modelFile.string());
+    if (node != NULL) {
+        URender &obj = node->TGetContents();
+        obj.SetCCW(import_CCW);
     }
 }
 

@@ -114,7 +114,7 @@ imported_obj::imported_obj(){
 
   import_mode_value = 0; //assume that we start out in bond mode
   visibility_mode_value = 1; //assume that we start out with object visible
-
+ 
   imported_obj_count++;
   object_number = imported_obj_count;
   URPoly = new URPolygon;
@@ -584,6 +584,9 @@ imported_obj_list::imported_obj_list() { //default constructor
 void imported_obj_list::import_new_obj(char* filename,UTree *World) {
     GeometryGenerator *gen = FileGenerator::CreateFileGenerator(filename);
     //Empty linked list
+
+
+cout << "in import_new_obj" << endl;
     if(imported_obj_list_head==NULL){
         imported_obj_list_head = new imported_obj;
         imported_obj_list_tail = imported_obj_list_head;
