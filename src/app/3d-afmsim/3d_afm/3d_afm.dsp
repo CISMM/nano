@@ -110,10 +110,6 @@ SOURCE=..\lightcol.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmm_SimulatedMicroscope.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\scan.cpp
 # End Source File
 # Begin Source File

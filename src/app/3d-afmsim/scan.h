@@ -18,7 +18,7 @@ extern double scanNear;
 extern double scanFar;
 
 
-void  doImageScanApprox( void );
+double ** doImageScanApprox( int& row_col_length );
 void  imageScanDepthRender();
 void showGrid( void );
 double find_volume();

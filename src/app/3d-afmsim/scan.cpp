@@ -28,7 +28,7 @@ float colorBuffer[ DEPTHSIZE*DEPTHSIZE ];
 
 // array of heights: image scan data
 double zHeight        [MAX_GRID][MAX_GRID];	
-double zDistance [MAX_GRID][MAX_GRID];
+double** zDistance;
 
 // scan grid resolution
 int    scanResolution = DEPTHSIZE;	
@@ -66,9 +66,12 @@ void get_z_buffer_values() {
   // width and height the same for now
 
   glReadBuffer(GL_BACK);
+
+  zDistance = new double*[MAX_GRID];
   
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
   for(int j=0; j<scanResolution; j++ ) {
+    zDistance[j] = new double[MAX_GRID];
     for(int i=0; i<scanResolution; i++ ) {
       float zNormalized = zBuffer[ j*pixelGridSize + i ];
       
@@ -79,9 +82,6 @@ void get_z_buffer_values() {
       zHeight[j][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
       //I *think* it should be '+ scanFar'
-
-      
-
     }
   }
 
@@ -135,7 +135,7 @@ void get_color_buffer_values() {
   glReadPixels(0,0,pixelGridSize,pixelGridSize,GL_GREEN,GL_FLOAT,colorBuffer);
 }
 
-void  doImageScanApprox() 
+double ** /*void */ doImageScanApprox(int& row_col_length) 
 {
   // Render tube images (enlarged to account for tip radius)
   // into window.  
@@ -147,6 +147,10 @@ void  doImageScanApprox()
   get_z_buffer_values();
 
   get_color_buffer_values();
+
+  row_col_length = scanResolution;
+
+  return zDistance;
 }
 
 /* This is the most critical part of the afmsim. This is the one which 

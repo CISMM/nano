@@ -29,6 +29,9 @@
 #include "lightcol.h"
 #include "uncert.h"
 #include "sim.h"
+#include <vrpn_Connection.h>
+//#include <nmm_SimulatedMicroscope.h>
+//ANDREA
 
 GLuint list_sphere;
 GLuint list_cylinder;
@@ -43,7 +46,12 @@ int selectedOb = NULLOB;
 int buttonpress=-1;
 
 int selected_triangle_side;
+
+//added by ANDREA
 double unca_minx = -1, unca_miny = -1, unca_maxx = -1, unca_maxy = -1;
+double ** HeightData;
+bool connection_to_nano = false;
+//end
 
 int uncertainty_mode=0;
 
@@ -117,6 +125,7 @@ void Usage(char *progname);
 
 int main(int argc, char *argv[])
 {
+	
 	adjustOrthoProjectionParams();
 	bool radius = true;	//for protein/spheres files--false means use default
 						//true means the file contains radii
@@ -187,6 +196,14 @@ int main(int argc, char *argv[])
 			TipSize = atof(argv[i]);
 			sp.set_r(TipSize);
 			ics.set_r(TipSize);//let the user specify the tip radius desired
+		}
+		else if (!strcmp(argv[i], "-connection")) {
+			if (++i > argc) { Usage(argv[0]); }
+			connection_to_nano = true;
+			char * machineName = argv[i];
+			//vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
+			//nmm_SimulatedMicroscope AFM_Simulator(machineName, connection);
+			//ANDREA
 		}
 		else if (!strcmp(argv[i], "-unca_nano")) {
 		        bool breakOut = false;
@@ -393,9 +410,16 @@ void displayFuncView( void ) {
 void  displayFuncDepth( void ) {
   if (!stopAFM) {
     glutSetWindow( depthWindowID );
-
     // in Z-buffer of Depth Window using graphics hardware.
-    doImageScanApprox();
+	//HeightData is a double array 
+	int length = 0;
+	//will be filled in by doImageScanApprox
+	//is the size of both rows and columns in the height array (double array)
+    HeightData = doImageScanApprox(length);
+	if(connection_to_nano){
+		//ANDREA
+		//AFM_Simulator.encode_and_sendData(HeightData,length);
+	}
 
     // end of display frame, so flip buffers
     glutSwapBuffers();
@@ -591,7 +615,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       selectedOb = numObs-1;
       break;
     case 'm' :
-      radius = 21.139;
+      radius = (float)21.139;
       addNtube( SPHERE,  Vec3d(64.0, 64.0, -20.1127), 0., 0., 0., 0., radius*2.0);
       selectedOb = numObs-1;
 
