@@ -1,5 +1,9 @@
 2002-05-23 David Borland <borland@cs.unc.edu>
 
+        * import.tcl : user control for fine-tuning translations and rotations
+
+2002-05-23 David Borland <borland@cs.unc.edu>
+
         * import.tcl : added user control for individual manipulation of
         spider legs
 
