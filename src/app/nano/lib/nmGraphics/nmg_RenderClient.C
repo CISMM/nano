@@ -34,8 +34,6 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
   d_implementation.setTextureDirectory("");
   d_implementation.setAlphaColor(0.0f, 0.0f, 0.0f);
   d_implementation.setTextureScale(1.0f);
-  d_implementation.setBumpMapName("");
-  d_implementation.setHatchMapName("");
   d_implementation.setColorMapName("");
   d_implementation.setTextureMode(NO_TEXTURES);
   d_implementation.resetLightDirection();
@@ -142,45 +140,15 @@ void nmg_Graphics_RenderClient::setOpacitySliderRange (float a, float b) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setComplianceSliderRange (float a, float b) {
-  blockTimer();
-  nmg_Graphics_Remote::setComplianceSliderRange (a, b);
-}
-
-// virtual
 void nmg_Graphics_RenderClient::setContourColor (int a, int b, int c) {
   blockTimer();
   nmg_Graphics_Remote::setContourColor (a, b, c);
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setFrictionSliderRange (float a, float b) {
-  blockTimer();
-  nmg_Graphics_Remote::setFrictionSliderRange (a, b);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::setBumpSliderRange (float a, float b) {
-  blockTimer();
-  nmg_Graphics_Remote::setBumpSliderRange (a, b);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::setBuzzSliderRange (float a, float b) {
-  blockTimer();
-  nmg_Graphics_Remote::setBuzzSliderRange (a, b);
-}
-
-// virtual
 void nmg_Graphics_RenderClient::setContourWidth (float a) {
   blockTimer();
   nmg_Graphics_Remote::setContourWidth (a);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::setPatternMapName (const char * a) {
-  blockTimer();
-  nmg_Graphics_Remote::setPatternMapName (a);
 }
 
 // virtual

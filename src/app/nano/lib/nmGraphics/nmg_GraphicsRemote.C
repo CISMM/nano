@@ -229,26 +229,6 @@ void nmg_Graphics_Remote::enableTrueTip (int value) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setAdhesionSliderRange (float low, float hi) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setAdhesionSliderRange(&len, low, hi);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setAdhesionSliderRange_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setAdhesionSliderRange:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
 void nmg_Graphics_Remote::setAlphaColor (float r, float g, float b) {
   struct timeval now;
   char * msgbuf;
@@ -290,24 +270,6 @@ void nmg_Graphics_Remote::setAlphaSliderRange (float low, float hi) {
   }
   if (msgbuf)
     delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setBumpMapName (const char * name) {
-  struct timeval now;
-  int len = 0;
-  int retval;
-
-  if (name)
-    len = 1 + strlen(name);
-  gettimeofday(&now, NULL);
-  if (d_connection) {
-    retval = d_connection->pack_message(len, now, d_setBumpMapName_type,
-                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setBumpMapName:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
 }
 
 void nmg_Graphics_Remote::setColorMapDirectory (const char * name) {
@@ -460,27 +422,6 @@ void nmg_Graphics_Remote::setOpacitySliderRange (float low, float hi) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setComplianceSliderRange (float low, float hi) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setComplianceSliderRange(&len, low, hi);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-                           d_setComplianceSliderRange_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setComplianceSliderRange:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
 void nmg_Graphics_Remote::setContourColor (int r, int g, int b) {
   struct timeval now;
   char * msgbuf;
@@ -521,69 +462,6 @@ void nmg_Graphics_Remote::setContourWidth (float width) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setFrictionSliderRange (float low, float hi) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setFrictionSliderRange(&len, low, hi);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setFrictionSliderRange_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setFrictionSliderRange:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setBumpSliderRange (float low, float hi) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setBumpSliderRange(&len, low, hi);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-							d_setBumpSliderRange_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setBumpSliderRange:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setBuzzSliderRange (float low, float hi) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_setBuzzSliderRange(&len, low, hi);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-						d_setBuzzSliderRange_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setBuzzSliderRange:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-
 void nmg_Graphics_Remote::setHandColor (int color) {
   struct timeval now;
   char * msgbuf;
@@ -602,24 +480,6 @@ void nmg_Graphics_Remote::setHandColor (int color) {
   }
   if (msgbuf)
     delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setHatchMapName (const char * name) {
-  struct timeval now;
-  int len = 0;
-  int retval;
-
-  if (name)
-    len = 1 + strlen(name);
-  gettimeofday(&now, NULL);
-  if (d_connection) {
-    retval = d_connection->pack_message(len, now, d_setHatchMapName_type,
-                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setHatchMapName:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
 }
 
 // virtual
@@ -869,24 +729,6 @@ void nmg_Graphics_Remote::setSurfaceColor (const int c [3]) {
   }
   if (msgbuf)
     delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setPatternMapName (const char * name) {
-  struct timeval now;
-  int len;
-  int retval;
-
-  if (name)
-    len = 1 + strlen(name);
-  gettimeofday(&now, NULL);
-  if (d_connection) {
-    retval = d_connection->pack_message(len, now, d_setPatternMapName_type,
-                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setPatternMapName:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
 }
 
 //

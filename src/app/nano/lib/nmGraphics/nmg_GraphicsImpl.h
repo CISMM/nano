@@ -46,12 +46,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void enableUber (int);
     virtual void enableTrueTip (int);
 
-    virtual void setAdhesionSliderRange (float low, float hi);
-
     virtual void setAlphaColor (float r, float g, float b);
     virtual void setAlphaSliderRange (float low, float hi);
-
-    virtual void setBumpMapName (const char *);
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
@@ -62,17 +58,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setTextureDirectory (const char *);
 
-    virtual void setComplianceSliderRange (float low, float hi);
-
     virtual void setContourColor (int r, int g, int b);
     virtual void setContourWidth (float);
 
-    virtual void setFrictionSliderRange (float low, float hi);
-    virtual void setBumpSliderRange (float low, float hi);
-    virtual void setBuzzSliderRange (float low, float hi);
-
     virtual void setHandColor (int);
-    virtual void setHatchMapName (const char *);  // RENAME?
 
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
@@ -91,8 +80,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setSurfaceColor (const double [3]);
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]);
-
-    virtual void setPatternMapName (const char *);  // RENAME?
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
@@ -253,24 +240,17 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_enableFilledPolygons (void *, vrpn_HANDLERPARAM);
     static int handle_enableSmoothShading (void *, vrpn_HANDLERPARAM);
     static int handle_enableTrueTip (void *, vrpn_HANDLERPARAM);
-    static int handle_setAdhesionSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setAlphaColor (void *, vrpn_HANDLERPARAM);
     static int handle_setAlphaSliderRange (void *, vrpn_HANDLERPARAM);
-    static int handle_setBumpMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMinMax (void *, vrpn_HANDLERPARAM);
     static int handle_setDataColorMinMax (void *, vrpn_HANDLERPARAM);
     static int handle_setOpacitySliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setTextureDirectory (void *, vrpn_HANDLERPARAM);
-    static int handle_setComplianceSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setContourColor (void *, vrpn_HANDLERPARAM);
     static int handle_setContourWidth (void *, vrpn_HANDLERPARAM);
-    static int handle_setFrictionSliderRange (void *, vrpn_HANDLERPARAM);
-    static int handle_setBumpSliderRange (void *, vrpn_HANDLERPARAM);
-    static int handle_setBuzzSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setHandColor (void *, vrpn_HANDLERPARAM);
-    static int handle_setHatchMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setAlphaPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setContourPlaneName (void *, vrpn_HANDLERPARAM);
@@ -278,7 +258,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
 	static int handle_setMaskPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setSurfaceColor (void *, vrpn_HANDLERPARAM);
-    static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
 //    static int handle_enableRulergrid (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridAngle (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridColor (void *, vrpn_HANDLERPARAM);

@@ -71,13 +71,8 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setColorMinMax (float, float);
     virtual void setDataColorMinMax (float, float);
     virtual void setOpacitySliderRange (float, float);
-    virtual void setComplianceSliderRange (float, float);
     virtual void setContourColor (int, int, int);
-    virtual void setFrictionSliderRange (float, float);
-    virtual void setBumpSliderRange (float, float);
-    virtual void setBuzzSliderRange (float, float);
     virtual void setContourWidth (float);
-    virtual void setPatternMapName (const char *);
     virtual void translateTextures (int, float, float);
     virtual void scaleTextures (int, float, float);
     virtual void shearTextures (int, float, float);

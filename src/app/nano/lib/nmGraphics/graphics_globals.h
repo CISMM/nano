@@ -41,7 +41,6 @@ extern  int     spm_graphics_verbosity;
 class PPM;  // from PPM.h
 class Position_list;  // from Position.h
 
-// HACK
 #define TIP_HEIGHT (1.0)
 #define NUM_USERS (1)
 #define NUM_OBJECTS (100)
@@ -49,9 +48,6 @@ class Position_list;  // from Position.h
 
 #define PUSH_ATTRIB(x) glPushAttrib(x)
 #define POP_ATTRIB() glPopAttrib()
-
-extern float g_adhesion_slider_min;
-extern float g_adhesion_slider_max;
 
 extern float g_alpha_r;
 extern float g_alpha_g;
@@ -78,9 +74,6 @@ extern float g_data_max; // real data units (nm, for example), measured from dat
 
 extern char * g_textureDir;
 
-extern float g_compliance_slider_min;
-extern float g_compliance_slider_max;
-
 extern int g_config_chartjunk;
 extern int g_config_measurelines;
 extern int g_config_planeonly;
@@ -96,15 +89,7 @@ extern float g_contour_width;
 
 extern v_index * g_displayIndexList;
 
-extern float g_friction_slider_min;
-extern float g_friction_slider_max;
-
-extern float g_bump_slider_min;
-extern float g_bump_slider_max;
-
-extern float g_buzz_slider_min;
-extern float g_buzz_slider_max;
-
+/// color of hand icon in measure mode. red, yellow, or blue. 
 extern int g_hand_color;
 
 extern float g_icon_scale;

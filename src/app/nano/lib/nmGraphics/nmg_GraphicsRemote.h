@@ -40,12 +40,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void enableSmoothShading (int);
     virtual void enableTrueTip (int);
 
-    virtual void setAdhesionSliderRange (float low, float hi);
-
     virtual void setAlphaColor (float r, float g, float b);
     virtual void setAlphaSliderRange (float low, float hi);
-
-    virtual void setBumpMapName (const char *);
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
@@ -56,17 +52,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setTextureDirectory (const char *);
 
-    virtual void setComplianceSliderRange (float low, float hi);
-
     virtual void setContourColor (int r, int g, int b);
     virtual void setContourWidth (float);
 
-    virtual void setFrictionSliderRange (float low, float hi);
-	virtual void setBumpSliderRange (float low, float hi);
-	virtual void setBuzzSliderRange (float low, float hi);
-
     virtual void setHandColor (int);
-    virtual void setHatchMapName (const char *);  // RENAME?
 
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
@@ -85,8 +74,6 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setSurfaceColor (const double [3]);
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]);
-
-    virtual void setPatternMapName (const char *);  // RENAME?
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );

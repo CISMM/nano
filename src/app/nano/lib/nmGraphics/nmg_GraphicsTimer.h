@@ -51,24 +51,17 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void enableFilledPolygons (int on, int region = 0);
     virtual void enableSmoothShading (int on);
     virtual void enableTrueTip (int on);
-    virtual void setAdhesionSliderRange (float low, float hi);
     virtual void setAlphaColor (float r, float g, float b);
     virtual void setAlphaSliderRange (float low, float hi);
-    virtual void setBumpMapName (const char *);
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
     virtual void setColorMinMax (float low, float hi);
     virtual void setDataColorMinMax (float low, float hi);
     virtual void setOpacitySliderRange (float low, float hi);
     virtual void setTextureDirectory (const char *);
-    virtual void setComplianceSliderRange (float low, float hi);
     virtual void setContourColor (int r, int g, int b);
     virtual void setContourWidth (float);
-    virtual void setFrictionSliderRange (float low, float hi);
-    virtual void setBumpSliderRange (float low, float hi);
-    virtual void setBuzzSliderRange (float low, float hi);
     virtual void setHandColor (int);
-    virtual void setHatchMapName (const char *);
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
@@ -81,7 +74,6 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setCollabMode(int);
     virtual void setSurfaceColor (const double [3]);
     virtual void setSurfaceColor (const int [3]);
-    virtual void setPatternMapName (const char *);
     virtual void createRealignTextures( const char * );
     virtual void setRealignTextureSliderRange (float, float, float, float);
     virtual void setRealignTexturesConversionMap

@@ -249,17 +249,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_enableTrueTip_type,
                                handle_enableTrueTip,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setAdhesionSliderRange_type,
-                               handle_setAdhesionSliderRange,
-                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setAlphaColor_type,
                                handle_setAlphaColor,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setAlphaSliderRange_type,
                                handle_setAlphaSliderRange,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setBumpMapName_type,
-                               handle_setBumpMapName,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setColorMapDirectory_type,
                                handle_setColorMapDirectory,
@@ -276,29 +270,14 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setOpacitySliderRange_type,
 			       handle_setOpacitySliderRange,
 			       this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setComplianceSliderRange_type,
-                               handle_setComplianceSliderRange,
-                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setContourColor_type,
                                handle_setContourColor,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setContourWidth_type,
                                handle_setContourWidth,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setFrictionSliderRange_type,
-                               handle_setFrictionSliderRange,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setBumpSliderRange_type,
-                               handle_setBumpSliderRange,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setBuzzSliderRange_type,
-                               handle_setBuzzSliderRange,
-                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setHandColor_type,
                                handle_setHandColor,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setHatchMapName_type,
-                               handle_setHatchMapName,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setAlphaPlaneName_type,
                                handle_setAlphaPlaneName,
@@ -320,9 +299,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setSurfaceColor_type,
                                handle_setSurfaceColor,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setPatternMapName_type,
-                               handle_setPatternMapName,
                                this, vrpn_ANY_SENDER);
 /*
   connection->register_handler(d_enableRulergrid_type,
@@ -1026,13 +1002,6 @@ void nmg_Graphics_Implementation::enableTrueTip (int on) {
 
 
 
-void nmg_Graphics_Implementation::setAdhesionSliderRange (float low,
-                                                          float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setAdhesionSliderRange().\n");
-  g_adhesion_slider_min = low;
-  g_adhesion_slider_max = high;
-}
-
 void nmg_Graphics_Implementation::setAlphaColor (float r, float g, float b) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setAlphaColor().\n");
   g_alpha_r = r;
@@ -1047,11 +1016,6 @@ void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
   g_alpha_slider_min = low;
   g_alpha_slider_max = high;
   causeGridRedraw();
-}
-
-void nmg_Graphics_Implementation::setBumpMapName (const char * /*name*/)
-{
-//fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 }
 
 void nmg_Graphics_Implementation::setColorMapDirectory (const char * dir) {
@@ -1117,43 +1081,12 @@ void nmg_Graphics_Implementation::setOpacitySliderRange (float low, float high) 
   causeGridReColor();
 }
 
-void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setComplianceSliderRange().\n");
-  g_compliance_slider_min = low;
-  g_compliance_slider_max = high;
-  causeGridRedraw();
-}
-
 void nmg_Graphics_Implementation::setContourColor (int r, int g, int b) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setContourColor().\n");
   g_contour_r = r;
   g_contour_g = g;
   g_contour_b = b;
   buildContourTexture();
-  causeGridRedraw();
-}
-
-void nmg_Graphics_Implementation::setFrictionSliderRange (float low,
-                                                          float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setFrictionSliderRange().\n");
-  g_friction_slider_min = low;
-  g_friction_slider_max = high;
-  causeGridRedraw();
-}
-
-void nmg_Graphics_Implementation::setBumpSliderRange (float low,
-                                                          float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setBumpSliderRange().\n");
-  g_bump_slider_min = low;
-  g_bump_slider_max = high;
-  causeGridRedraw();
-}
-
-void nmg_Graphics_Implementation::setBuzzSliderRange (float low,
-                                                          float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setBuzzSliderRange().\n");
-  g_buzz_slider_min = low;
-  g_buzz_slider_max = high;
   causeGridRedraw();
 }
 
@@ -1189,13 +1122,6 @@ void nmg_Graphics_Implementation::setCollabMode(int mode)
 {
     //fprintf(stderr, "nmg_Graphics_Implementation::setCollabMode().\n");
   g_collabMode = mode;
-}
-
-void nmg_Graphics_Implementation::setHatchMapName (const char * /*name*/)
-{
-//fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
-
-
 }
 
 
@@ -1269,12 +1195,6 @@ void nmg_Graphics_Implementation::setSurfaceColor (const int c [4]) {
   g_surfaceColor[2] = c[2] / 255.0;
   //use alpha value from Opacity scrollbar
   g_surfaceColor[3] = g_surface_alpha;
-}
-
-void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
-{
-//fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
-
 }
 
 //
@@ -2937,17 +2857,6 @@ int nmg_Graphics_Implementation::handle_enableTrueTip
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setAdhesionSliderRange
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  float low, hi;
-
-  CHECKF(it->decode_setAdhesionSliderRange(p.buffer, &low, &hi), "handle_setAdhesionSliderRange");
-  it->setAdhesionSliderRange(low, hi);
-  return 0;
-}
-
-// static
 int nmg_Graphics_Implementation::handle_setAlphaColor
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
@@ -2966,15 +2875,6 @@ int nmg_Graphics_Implementation::handle_setAlphaSliderRange
 
   CHECKF(it->decode_setAlphaSliderRange(p.buffer, &low, &hi), "handle_setAlphaSliderRange");
   it->setAlphaSliderRange(low, hi);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setBumpMapName
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-
-  it->setBumpMapName(p.buffer);
   return 0;
 }
 
@@ -3040,17 +2940,6 @@ int nmg_Graphics_Implementation::handle_setOpacitySliderRange
 
 
 // static
-int nmg_Graphics_Implementation::handle_setComplianceSliderRange
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  float low, hi;
-
-  CHECKF(it->decode_setComplianceSliderRange(p.buffer, &low, &hi), "handle_setComplianceSliderRange");
-  it->setComplianceSliderRange(low, hi);
-  return 0;
-}
-
-// static
 int nmg_Graphics_Implementation::handle_setContourColor
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
@@ -3069,39 +2958,6 @@ int nmg_Graphics_Implementation::handle_setContourWidth
 
   CHECKF(it->decode_setContourWidth(p.buffer, &width), "handle_setContourWidth");
   it->setContourWidth(width);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setFrictionSliderRange
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  float low, hi;
-
-  CHECKF(it->decode_setFrictionSliderRange(p.buffer, &low, &hi), "handle_setFrictionSliderRange");
-  it->setFrictionSliderRange(low, hi);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setBumpSliderRange
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  float low, hi;
-
-  CHECKF(it->decode_setBumpSliderRange(p.buffer, &low, &hi), "handle_setBumpSliderRange");
-  it->setBumpSliderRange(low, hi);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setBuzzSliderRange
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  float low, hi;
-
-  CHECKF(it->decode_setBuzzSliderRange(p.buffer, &low, &hi), "handle_setBuzzSliderRange");
-  it->setBuzzSliderRange(low, hi);
   return 0;
 }
 
@@ -3149,15 +3005,6 @@ int nmg_Graphics_Implementation::handle_setCollabMode
 
   CHECKF(it->decode_setCollabMode(p.buffer, &mode), "handle_setCollabMode");
   it->setCollabMode(mode);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setHatchMapName
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-
-  it->setHatchMapName(p.buffer);
   return 0;
 }
 
@@ -3232,15 +3079,6 @@ int nmg_Graphics_Implementation::handle_setSurfaceColor
 
   CHECKF(it->decode_setSurfaceColor(p.buffer, c), "handle_setSurfaceColor");
   it->setSurfaceColor(c);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setPatternMapName
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-
-  it->setPatternMapName(p.buffer);
   return 0;
 }
 

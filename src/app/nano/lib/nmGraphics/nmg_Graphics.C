@@ -54,14 +54,10 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     //c->register_message_type("nmg Graphics enableUber");
   d_enableTrueTip_type =
     c->register_message_type("nmg Graphics enableTrueTip");
-  d_setAdhesionSliderRange_type =
-    c->register_message_type("nmg Graphics setAdhesionSliderRange");
   d_setAlphaColor_type =
     c->register_message_type("nmg Graphics setAlphaColor");
   d_setAlphaSliderRange_type =
     c->register_message_type("nmg Graphics setAlphaSliderRange");
-  d_setBumpMapName_type =
-    c->register_message_type("nmg Graphics setBumpMapName");
   d_setColorMapDirectory_type =
     c->register_message_type("nmg Graphics setColorMapDirectory");
   d_setColorMapName_type =
@@ -74,22 +70,12 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setOpacitySliderRange");
   d_setTextureDirectory_type =
     c->register_message_type("nmg Graphics setTextureDirectory");
-  d_setComplianceSliderRange_type =
-    c->register_message_type("nmg Graphics setComplianceSliderRange");
   d_setContourColor_type =
     c->register_message_type("nmg Graphics setContourColor");
   d_setContourWidth_type =
     c->register_message_type("nmg Graphics setContourWidth");
-  d_setFrictionSliderRange_type =
-    c->register_message_type("nmg Graphics setFrictionSliderRange");
-  d_setBumpSliderRange_type =
-	c->register_message_type("nmg Graphics setBumpSliderRange");
-  d_setBuzzSliderRange_type =
-	c->register_message_type("nmg Graphics setBuzzSliderRange");
   d_setHandColor_type =
     c->register_message_type("nmg Graphics setHandColor");
-  d_setHatchMapName_type =
-    c->register_message_type("nmg Graphics setHatchMapName");
   d_setIconScale_type =
     c->register_message_type("nmg Graphics setIconScale");
   d_enableCollabHand_type =
@@ -114,8 +100,6 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setSurfaceColor");
   d_setSurfaceColor_type =
     c->register_message_type("nmg Graphics setSurfaceColor");
-  d_setPatternMapName_type =
-    c->register_message_type("nmg Graphics setPatternMapName");
   d_enableRulergrid_type =
     c->register_message_type("nmg Graphics enableRulergrid");
   d_setRulergridAngle_type =
@@ -450,39 +434,6 @@ int nmg_Graphics::decode_enableTrueTip (const char * buf,
   return 0;
 }
 
-char * nmg_Graphics::encode_setAdhesionSliderRange
-                     (int * len, float low, float hi) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setAdhesionSliderRange:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setAdhesionSliderRange
-                   (const char * buf, float * low, float * hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
-  return 0;
-}
-
-
 char * nmg_Graphics::encode_setAlphaColor
                      (int * len, float r, float g, float b) {
   char * msgbuf = NULL;
@@ -646,38 +597,6 @@ int nmg_Graphics::decode_setOpacitySliderRange
   return 0;
 }
 
-char * nmg_Graphics::encode_setComplianceSliderRange
-                     (int * len, float low, float hi) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setComplianceSliderRange:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setComplianceSliderRange
-                   (const char * buf, float * low, float * hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
-  return 0;
-}
-
 char * nmg_Graphics::encode_setContourColor
                      (int * len, int r, int g, int b) {
   char * msgbuf = NULL;
@@ -739,102 +658,6 @@ int nmg_Graphics::decode_setContourWidth
                    (const char * buf, float * width) {
   if (!buf || !width) return -1;
   CHECK(vrpn_unbuffer(&buf, width));
-  return 0;
-}
-
-char * nmg_Graphics::encode_setFrictionSliderRange
-                     (int * len, float low, float hi) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setFrictionSliderRange:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setFrictionSliderRange
-                   (const char * buf, float * low, float * hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
-  return 0;
-}
-
-char * nmg_Graphics::encode_setBumpSliderRange
-                     (int * len, float low, float hi) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setBumpSliderRange:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setBumpSliderRange
-                   (const char * buf, float * low, float * hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
-  return 0;
-}
-
-char * nmg_Graphics::encode_setBuzzSliderRange
-                     (int * len, float low, float hi) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setBuzzSliderRange:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setBuzzSliderRange
-                   (const char * buf, float * low, float * hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 

@@ -12,9 +12,6 @@
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
 
-float g_adhesion_slider_min = 0.0f;
-float g_adhesion_slider_max = 1.0f;
-
 float g_alpha_r = 0.0f;
 float g_alpha_g = 1.0f;
 float g_alpha_b = 0.0f;
@@ -50,24 +47,12 @@ int g_config_smooth_shading = 1;
 int g_config_trueTip = 0;
 int g_config_enableUber = 1;
 
-float g_compliance_slider_min = 0.0f;
-float g_compliance_slider_max = 1.0f;
-
 int g_contour_r = 255;
 int g_contour_g = 55;
 int g_contour_b = 55;
 float g_contour_width = 10.0f;
 
-float g_friction_slider_min = 0.0f;
-float g_friction_slider_max = 1.0f;
-
-float g_bump_slider_min = 0.0f;
-float g_bump_slider_max = 1.0f;
-
-float g_buzz_slider_min = 0.0f;
-float g_buzz_slider_max = 1.0f;
-
-int g_hand_color;  // XXX no initial value
+int g_hand_color = 0;  
 int g_null_data_alpha_toggle = 0;
 float g_icon_scale = 0.25f;
 

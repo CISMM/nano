@@ -171,12 +171,6 @@ void nmg_Graphics_Timer::associateStride(vrpn_bool associate, int region)
     d_imp->associateStride(associate, region);;
 }
 
-void nmg_Graphics_Timer::setAdhesionSliderRange (float low,
-                                                          float high) {
-  activateTimer();
-  d_imp->setAdhesionSliderRange(low, high);
-}
-
 void nmg_Graphics_Timer::setAlphaColor (float r, float g, float b) {
   activateTimer();
   d_imp->setAlphaColor(r,g,b);
@@ -185,11 +179,6 @@ void nmg_Graphics_Timer::setAlphaColor (float r, float g, float b) {
 void nmg_Graphics_Timer::setAlphaSliderRange (float low, float high) {
   activateTimer();
   d_imp->setAlphaSliderRange(low, high);
-}
-
-void nmg_Graphics_Timer::setBumpMapName (const char * name) {
-  activateTimer();
-  d_imp->setBumpMapName(name);
 }
 
 void nmg_Graphics_Timer::setColorMapDirectory (const char * dir) {
@@ -222,29 +211,9 @@ void nmg_Graphics_Timer::setOpacitySliderRange (float low, float high) {
   d_imp->setOpacitySliderRange(low, high);
 }
 
-void nmg_Graphics_Timer::setComplianceSliderRange (float low, float high) {
-  activateTimer();
-  d_imp->setComplianceSliderRange(low, high);
-}
-
 void nmg_Graphics_Timer::setContourColor (int r, int g, int b) {
   activateTimer();
   d_imp->setContourColor(r,g,b);
-}
-
-void nmg_Graphics_Timer::setFrictionSliderRange (float low, float high) {
-  activateTimer();
-  d_imp->setFrictionSliderRange(low, high);
-}
-
-void nmg_Graphics_Timer::setBumpSliderRange (float low, float high) {
-  activateTimer();
-  d_imp->setBumpSliderRange(low, high);
-}
-
-void nmg_Graphics_Timer::setBuzzSliderRange (float low, float high) {
-  activateTimer();
-  d_imp->setBuzzSliderRange(low, high);
 }
 
 void nmg_Graphics_Timer::setHandColor (int c) {
@@ -273,12 +242,6 @@ void nmg_Graphics_Timer::setCollabMode(int mode)
   activateTimer();
   d_imp->setCollabMode(mode);
 }
-
-void nmg_Graphics_Timer::setHatchMapName (const char * name) {
-  activateTimer();
-  d_imp->setHatchMapName(name);
-}
-
 
 void nmg_Graphics_Timer::setAlphaPlaneName (const char * n) {
   activateTimer();
@@ -323,11 +286,6 @@ void nmg_Graphics_Timer::setSurfaceColor (const double c [4]) {
 void nmg_Graphics_Timer::setSurfaceColor (const int c [4]) {
   activateTimer();
   d_imp->setSurfaceColor(c);
-}
-
-void nmg_Graphics_Timer::setPatternMapName (const char * name) {
-  activateTimer();
-  d_imp->setPatternMapName(name);
 }
 
 void nmg_Graphics_Timer::createRealignTextures( const char *name ) {

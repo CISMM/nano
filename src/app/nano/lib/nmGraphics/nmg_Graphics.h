@@ -165,21 +165,11 @@ class nmg_Graphics {
       ///< Controls latency compensation technique:  displaying second
       ///< tip image.
 
-    virtual void setAdhesionSliderRange (float low, float hi) {};
-      // Sets the range over which adhesion is interpolated from 0 to 1.
-      // Adhesion is not normally a graphics parameter, but is mapped
-      // to one on PxFl.  This could be made clearer by renaming
-      // "adhesion" within this module.
-
     virtual void setAlphaColor (float r, float g, float b) {};
       ///< Sets the color of the alpha-blended texture.
     virtual void setAlphaSliderRange (float low, float hi) {};
       ///< Sets the range over which the alpha-blended texture's
       ///< alpha values vary from 0 to 1.
-
-    virtual void setBumpMapName (const char *) {};
-      ///< Specifies the name of the dataset to use to drive bump mapping
-      ///< on PxFl.
 
     virtual void setColorMapDirectory (const char *) {};
       ///< Specifies the path in which to search for color maps.
@@ -194,12 +184,6 @@ class nmg_Graphics {
     virtual void setTextureDirectory (const char *) {};
       ///< Specifies the path in which to search for textures.
 
-    virtual void setComplianceSliderRange (float low, float hi) {};
-      ///< Sets the range over which compliance is interpolated from
-      ///< 0 to 1.  Compliance is not normally a graphics parameter,
-      ///< but is mapped to one on PxFl.  This could be made clearer
-      ///< by renaming "compliance" within this module.
-
     virtual void setContourColor (int r, int g, int b) {};
       ///< Sets the color of the intermediate lines drawn in the
       ///< contour map (The major lines, every 10th,
@@ -207,24 +191,8 @@ class nmg_Graphics {
     virtual void setContourWidth (float) {};
       ///< Sets the width of the contour lines.
 
-    virtual void setFrictionSliderRange (float low, float hi) {};
-      ///< Sets the range over which friction is interpolated from
-      ///< 0 to 1.  Friction is not normally a graphics parameter,
-      ///< but is mapped to one on PxFl.  This could be made clearer
-      ///< by renaming "friction" within this module.
-
-	virtual void setBumpSliderRange (float low, float hi) {};
-		///< sets the range over which haptic bump size is
-		///< interpolated from 0 to 1
-	virtual void setBuzzSliderRange (float low, float hi) {};
-		///< sets the range over which haptic buzz amplitude is
-		///< interpolated from 0 to 1
-
     virtual void setHandColor (int) {};
-      ///< UNKNOWN.
-    virtual void setHatchMapName (const char *) {};  // RENAME?
-      ///< Specifies the name of the data plane to use to drive hatch
-      ///< maps on PxFl.
+      ///< Color for hand icon in measure mode, Red Yellow or Blue.
 
     virtual void setAlphaPlaneName (const char *) {};
     virtual void setColorPlaneName (const char *) {};
@@ -249,10 +217,6 @@ class nmg_Graphics {
     virtual void setSurfaceColor (const double [3]) {};
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]) {};
-
-    virtual void setPatternMapName (const char *) {};  // RENAME?
-      ///< Specifies the name of the data plane to use to drive pattern
-      ///< maps on PxFl.
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * ) {};
@@ -433,24 +397,17 @@ class nmg_Graphics {
     vrpn_int32 d_enableSmoothShading_type;
     //vrpn_int32 d_enableUber_type;
     vrpn_int32 d_enableTrueTip_type;
-    vrpn_int32 d_setAdhesionSliderRange_type;
     vrpn_int32 d_setAlphaColor_type;
     vrpn_int32 d_setAlphaSliderRange_type;
-    vrpn_int32 d_setBumpMapName_type;
     vrpn_int32 d_setColorMapDirectory_type;
     vrpn_int32 d_setColorMapName_type;
     vrpn_int32 d_setColorMinMax_type;
     vrpn_int32 d_setDataColorMinMax_type;
     vrpn_int32 d_setOpacitySliderRange_type;
     vrpn_int32 d_setTextureDirectory_type;
-    vrpn_int32 d_setComplianceSliderRange_type;
     vrpn_int32 d_setContourColor_type;
     vrpn_int32 d_setContourWidth_type;
-    vrpn_int32 d_setFrictionSliderRange_type;
-    vrpn_int32 d_setBumpSliderRange_type;
-    vrpn_int32 d_setBuzzSliderRange_type;
     vrpn_int32 d_setHandColor_type;
-    vrpn_int32 d_setHatchMapName_type;
     vrpn_int32 d_setAlphaPlaneName_type;
     vrpn_int32 d_setColorPlaneName_type;
     vrpn_int32 d_setContourPlaneName_type;
@@ -459,7 +416,6 @@ class nmg_Graphics {
 	vrpn_int32 d_setMaskPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setSurfaceColor_type;
-    vrpn_int32 d_setPatternMapName_type;
     vrpn_int32 d_enableRulergrid_type;
     vrpn_int32 d_setRulergridAngle_type;
     vrpn_int32 d_setRulergridColor_type;
@@ -564,9 +520,6 @@ class nmg_Graphics {
     //int decode_enableUber (const char * buf, int *);
     char * encode_enableTrueTip (int * len, int);
     int decode_enableTrueTip (const char * buf, int *);
-    char * encode_setAdhesionSliderRange (int * len, float low, float hi);
-    int decode_setAdhesionSliderRange (const char * buf,
-                                        float * low, float * hi);
     char * encode_setAlphaColor (int * len, float r, float g, float b);
     int decode_setAlphaColor (const char * buf,
                                float * r, float * g, float * b);
@@ -580,22 +533,10 @@ class nmg_Graphics {
     char * encode_setOpacitySliderRange (int * len, float low, float hi);
     int decode_setOpacitySliderRange (const char * buf,
 				      float * low, float * hi);
-    char * encode_setComplianceSliderRange (int * len, float low, float hi);
-    int decode_setComplianceSliderRange (const char * buf,
-                                     float * low, float * hi);
     char * encode_setContourColor (int * len, int r, int g, int b);
     int decode_setContourColor (const char * buf, int * r, int * g, int * b);
     char * encode_setContourWidth (int * len, float);
     int decode_setContourWidth (const char * buf, float *);
-    char * encode_setFrictionSliderRange (int * len, float low, float hi);
-    int decode_setFrictionSliderRange (const char * buf,
-                                        float * low, float * hi);
-	char * encode_setBumpSliderRange (int * len, float low, float hi);
-    int decode_setBumpSliderRange (const char * buf,
-                                        float * low, float * hi);
-    char * encode_setBuzzSliderRange (int * len, float low, float hi);
-    int decode_setBuzzSliderRange (const char * buf,
-                                        float * low, float * hi);
     char * encode_setHandColor (int * len, int);
     int decode_setHandColor (const char * buf, int *);
     //char * encode_setAlphaPlaneName (int * len, const char *);
