@@ -21,6 +21,10 @@
 #include <nmui_PlaneSync.h>
 
 #include "nM_coord_change.h"
+#include "error_display.h"
+#include "tcl_tk.h"
+   // HACK - evil coupling to UI; ought to trigger a callback here
+   // and have it handled by some routine in the UI space.
 
 // Verbosity scheme
 // 1 - initialization & major changes
@@ -126,6 +130,7 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_NIC_IP (NULL),
     d_replay (replay),
     d_userMode (1),
+    d_peerName (NULL),
     d_handServerName (NULL),
     d_modeServerName (NULL),
     d_uiController (NULL),
@@ -133,7 +138,9 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_myId_svr (-1),
     d_myId_rem (-1),
     d_timerSN_type (-1),
-    d_timerSNreply_type (-1)
+    d_timerSNreply_type (-1),
+    d_gotPeerServer (VRPN_FALSE),
+    d_gotPeerRemote (VRPN_FALSE)
 {
 
 }
@@ -295,6 +302,7 @@ void CollaborationManager::initialize
   char sfbuf [1024];
   timeval now;
   vrpn_int32 timerSN;
+  vrpn_int32 firstC_type;
 
   if (d_replay) {
 
@@ -322,6 +330,20 @@ void CollaborationManager::initialize
     fprintf(stderr, "CollaborationManager::initialize:  "
                     "Couldn't create server for collaboration.\n");
     return;
+  }
+
+  if (d_peerServer->connected()) {
+
+//fprintf(stderr, "CM Quickie server\n");
+    d_gotPeerServer = VRPN_TRUE;
+    if (d_gotPeerRemote) {
+      fullyConnected();
+    }
+  } else {
+    firstC_type =
+      d_peerServer->register_message_type(vrpn_got_connection);
+    d_peerServer->register_handler(firstC_type, handle_gotPeerServerConnection,
+                                   this);
   }
 
   d_handServer = new nM_coord_change (d_handServerName, handTracker,
@@ -381,9 +403,25 @@ void CollaborationManager::setPeerName
   vrpn_bool shouldSynchronize;
   vrpn_int32 newConnection_type;
   vrpn_int32 timerSNreply;
+  vrpn_int32 firstC_type;
 
   collabVerbose(1, "CollaborationManager::setPeerName:  Peer named %s.\n",
                 newName);
+
+  // TCH 6 March 2001
+  // If the name is already set, it isn't safe to change!
+  if (d_peerName) {
+    display_warning_dialog
+        ("Can't change which collaborator we're connected to.\n");
+    return;
+  }
+
+  if (d_peerName) {
+    delete [] d_peerName;
+  }
+
+  d_peerName = new char [1 + strlen(newName)];
+  strcpy(d_peerName, newName);
 
   // Open peerRemote FIRST so we're sure logging happens
 
@@ -392,6 +430,21 @@ void CollaborationManager::setPeerName
   } else {
     d_peerRemote = getPeer(newName, d_peerPort, d_logPath, d_logTime,
                            d_log, d_NIC_IP);
+  }
+
+  if (d_peerRemote->connected()) {
+
+//fprintf(stderr, "CM Quickie remote\n");
+    d_gotPeerRemote = VRPN_TRUE;
+    if (d_gotPeerServer) {
+      fullyConnected();
+    }
+  } else {
+    firstC_type =
+      d_peerRemote->register_message_type(vrpn_got_connection);
+
+    d_peerRemote->register_handler(firstC_type, handle_gotPeerRemoteConnection,
+                                   this);
   }
 
   collabVerbose(1, "CollaborationManager::setPeerName:  Remote is %ld.\n",
@@ -506,8 +559,6 @@ nmui_PlaneSync * CollaborationManager::planeSync (void) {
   return d_planeSync;
 }
 
-
-
 void CollaborationManager::sendOurTimer (void) {
 
   char msgbuf [24];
@@ -604,5 +655,54 @@ int CollaborationManager::handle_timerResponse (void * userdata,
 }
 
 
+
+
+// static
+int CollaborationManager::handle_gotPeerServerConnection
+      (void * ud, vrpn_HANDLERPARAM p) {
+  CollaborationManager * it = (CollaborationManager *) ud;
+
+//fprintf(stderr, "CM got Peer Server Connection\n");
+
+  it->d_gotPeerServer = VRPN_TRUE;
+  if (it->d_gotPeerRemote) {
+    it->fullyConnected();
+  }
+
+  return 0;
+}
+
+// static
+int CollaborationManager::handle_gotPeerRemoteConnection
+      (void * ud, vrpn_HANDLERPARAM p) {
+  CollaborationManager * it = (CollaborationManager *) ud;
+
+//fprintf(stderr, "CM got Peer Remote Connection\n");
+
+  it->d_gotPeerRemote = VRPN_TRUE;
+  if (it->d_gotPeerServer) {
+    it->fullyConnected();
+  }
+
+  return 0;
+}
+
+
+int CollaborationManager::fullyConnected (void) {
+
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+  display_warning_dialog("Now collaborating with %s.\n", d_peerName);
+
+  sprintf(command, "collab_connection_good");
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    display_error_dialog(
+      "Internal: Tcl_Eval failed in fullyConnected: %s.\n",
+      tk_control_interp->result);
+  }
+}
 
 

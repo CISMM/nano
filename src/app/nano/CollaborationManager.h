@@ -181,6 +181,7 @@ class CollaborationManager {
     char * d_NIC_IP;
     vrpn_bool d_replay;
     int d_userMode;
+    char * d_peerName;
 
     char * d_handServerName;
       ///< VRPN name of d_peerHand and d_handServer.
@@ -226,6 +227,19 @@ class CollaborationManager {
     static int handle_timerResponse (void *, vrpn_HANDLERPARAM);
       ///< React to the response from our peer by unblocking the
       ///< specified frame of d_timer.
+
+    // Tom Hudson, 2001
+
+    // Tell the user when the collaborative connection is set up;
+    // let them copy & change to shared state then.
+
+    vrpn_bool d_gotPeerServer;
+    vrpn_bool d_gotPeerRemote;
+    static int handle_gotPeerServerConnection (void *, vrpn_HANDLERPARAM);
+    static int handle_gotPeerRemoteConnection (void *, vrpn_HANDLERPARAM);
+
+    int fullyConnected (void);
+
 };
 
 

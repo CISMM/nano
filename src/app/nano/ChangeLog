@@ -1,3 +1,18 @@
+2001-03-09  Tom Hudson  <hudson@cs.unc.edu>
+
+	* CollaborationManager.h (d_peerName, d_gotPeerServer,
+        d_gotPeerRemote) : new data members.
+	(handle_gotPeerServerConnection) : new function.
+	(handle_gotPeerRemoteConnection) : same.
+	(fullyConnected) : same.
+	* CollaborationManager.C (constructor) : initialize new members.
+	(initialize) : check for connected state on vrpn_Connection.
+	(setPeername) : same.
+	(handle_gotPeerServerConnection) : new function.
+	(handle_gotPeerRemoteConnection) : same.
+	(fullyConnected) : same.
+	
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main): changed registration to always go through vrpn
