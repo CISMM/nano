@@ -30,12 +30,14 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
 CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     viewer = ImageViewer::getImageViewer();
     correspondence = new Correspondence(num_im, DEFAULT_MAX_POINTS);
-	char *display_name;
-	display_name = (char *)getenv("V_X_DISPLAY");
-	if (display_name == NULL)
-		display_name = strdup("unix:0");
-	else
-		display_name = strdup(display_name);
+    char *display_name;
+    display_name = (char *)getenv("V_X_DISPLAY");
+    if (!display_name) {
+       display_name = (char *)getenv("DISPLAY");
+       if (!display_name) {
+          display_name = "unix:0";
+       }
+    }
 
     char win_name[64];
     printf("CorrespondenceEditor: opening display %s\n", display_name);

@@ -1,4 +1,4 @@
-USES_LIBS := nmSEM nmUI nmBase vrpn quat
+USES_LIBS := nmSEM nmUI nmImageViewer nmBase vrpn quat
 
 EXTRA_CFLAGS := -DVIRTUAL_SEM
 

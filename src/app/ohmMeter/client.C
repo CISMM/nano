@@ -180,6 +180,14 @@ int init_Tk(){
 		fprintf(stderr, "Package_Init failed: %s\n",tk_control_interp->result);
 		return -1;
 	}
+        if (Itk_Init(tk_control_interp) == TCL_ERROR) {
+                fprintf(stderr,
+                        "Package_Init failed: %s\n",tk_control_interp->result);
+                return(-1);
+        }
+        Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+        Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, 
+                          (Tcl_PackageInitProc *) NULL);
 
 	return 0;
 }

@@ -1,9 +1,21 @@
-Microsoft Developer Studio Workspace File, Format Version 5.00
+Microsoft Developer Studio Workspace File, Format Version 6.00
 # WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
 
 ###############################################################################
 
 Project: "ohm_server"=.\ohm_server.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ohm_server_fake"=.\ohm_server_fake.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
