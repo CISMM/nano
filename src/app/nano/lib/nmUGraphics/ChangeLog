@@ -1,5 +1,10 @@
 2002-05-06  David Borland <borland@cs.unc.edu>
 
+        * WaveFrontFileGenerator.C:  deleted a couple of lines by mistake 
+        before last commit.  Fixed this.
+
+2002-05-06  David Borland <borland@cs.unc.edu>
+
         * SpiderGenerator.C:  new file for the creation of spider TAMS objects
 
         * SpiderGenerator.h:  new header file for SpiderGenerator.C

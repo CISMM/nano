@@ -72,13 +72,16 @@ void BuildList(URender *Pobject, GLuint dl,
 			   vector<face> faces, 
 			   group* g);
 
+WaveFrontFileGenerator::WaveFrontFileGenerator(const char* fname) 
+	: FileGenerator(fname, "obj")
+{
+}
+
 
 int WaveFrontFileGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array)
 {
     return Load(Pobject, Dlist_array);
 }
-
-
 
 
 
