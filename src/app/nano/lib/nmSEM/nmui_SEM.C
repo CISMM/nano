@@ -359,7 +359,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
         }
       break;
     default:
-        printf("unknown message type: %d\n", info.msg_type);
+        printf("nms_SEM_ui: Warning, unknown message type: %d\n", info.msg_type);
       break;
   }
 }
