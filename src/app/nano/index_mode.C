@@ -9,6 +9,8 @@
 #endif
 
 #include "BCPlane.h"
+#include "nmb_Dataset.h"
+#include "nmb_Decoration.h"
 #include "nmg_Globals.h"
 #include "nmg_Graphics.h"
 #include "ImageMaker.h"
@@ -20,10 +22,10 @@
 // Initialize static members of class Index_mode
 BCPlane* Index_mode::plane = NULL;
 bool Index_mode::initialized = false;
-bool Index_mode::snapshots_taken = 0;
 const char* Index_mode::callback_username = "index_mode";
 char* Index_mode::outputDir = NULL;
-
+int Index_mode::prev_time = -1;
+bool Index_mode::first_scan = true;
 
 void
 Index_mode::init( BCPlane* plane, const char* streamfileName )
@@ -71,19 +73,26 @@ Index_mode::newPlane( BCPlane* plane )
   if( Index_mode::plane == NULL )
     cout << "NULL";
   else
-    cout << Index_mode::plane->name( );
+    cout << *Index_mode::plane->name( );
   cout << endl;
   cout << "\tto:    ";
   if( plane == NULL )
     cout << "NULL";
   else
-    cout << plane->name( );
+    cout << *plane->name( );
   cout << endl;
   
   Index_mode::plane = plane;
   if( plane == NULL ) return;
   plane->add_callback( (Plane_Valuecall) handle_new_datapoint,
 		     (void*) callback_username );
+
+  if( dataset == NULL || graphics == NULL ) return; 
+  
+  // Set colorplane to match new heightplane
+  dataset->colorPlaneName->Set( *plane->name() );
+  graphics->setColorPlaneName( *plane->name() );  
+
 #else // _WIN32
   cout << "No index mode on the PC" << endl;
 #endif
@@ -114,21 +123,40 @@ void
 Index_mode::snapshot( )
 {
 #ifndef _WIN32
-  if( !initialized ) return;
+  if( !initialized || decoration == NULL || dataset == NULL || plane == NULL ){
+     cerr << "Index_mode: Unable to create snapshot."<< endl; 
+     return;
+  }
 
+  prev_time = (int) decoration->elapsedTime;
+
+  /* Create filename using elapsed time in stream file, 00000 for static file */
   char* filename = new char[ strlen( outputDir ) + 9 /* xxxxx.tif */ + 1 ];
-  sprintf( filename, "%s%05d%s", outputDir, snapshots_taken, ".tif" );
+  sprintf( filename, "%s%05d%s", outputDir, prev_time, ".tif" );
   /* this should be made to do the right thing to figure out if \ or / is needed. 
      then the #ifndef _WIN32 can be removed from all over the place */
   
-  cout << "Index_mode:  " << filename << endl;
+  cout << "Index_mode: Preparing snapshot " << filename << endl;
 
+  /* Pop vlib window to front */
+  #ifdef V_GLUT
+     v_gl_set_context_to_vlib_window();
+     glutPopWindow();
+     glutProcessEvents_UNC();
+
+  #else
+     /* XWindows stuff would go here */
+  #endif
+
+  graphics->setColorMapName( dataset->colorMapName->string() );
+  graphics->setColorPlaneName( *plane->name() );
   graphics->enableChartjunk( false );
   center( ); // from microscape.h
+  graphics->mainloop();
   graphics->createScreenImage( filename, TIFFImageType );
   graphics->enableChartjunk( true );
   
-  snapshots_taken++;
+  cout<< "Index_mode: Snapshot taken:" << filename << endl;
 #else // _WIN32
   cout << "No index mode on the PC" << endl;
 #endif
@@ -138,12 +166,18 @@ Index_mode::snapshot( )
 void
 Index_mode::handle_new_datapoint( BCPlane *plane, int x, int y, void *userdata )
 {
+
 #ifndef _WIN32
   if( !initialized ) return;
 
-  if( x == 0 && y == plane->numY() - 1 )
+  if( x == 0 && y == plane->numY() - 1 && decoration != NULL && (int) decoration->elapsedTime > prev_time)
     {
-      cout << "Index_mode:  point (" << x << ", " << y << ")" << endl;
+
+      if( first_scan ){ 
+          first_scan = false;
+          return;
+      }
+
       Index_mode::snapshot( );
     }
 #endif

@@ -37,9 +37,10 @@ class Index_mode
   
   static BCPlane* plane;
   static bool initialized;
-  static bool snapshots_taken;
   static const char* callback_username;
   static char* outputDir;
+  static int prev_time = -1;
+  static bool first_scan = true;
 };
 
 #endif

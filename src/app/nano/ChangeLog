@@ -1,3 +1,20 @@
+2001-08-06  Brian Boyd  <boydb@cs.unc.edu>
+
+	* microscape.c (main): changed initialization of index mode so that 
+	static files can be indexed. for indexing of static files, nano exits 
+	after the first time through mainloop.
+
+	* index_mode.C (newPlane): changed it so that colorplane in dataset 
+	and graphics is set the new heightplane.
+	(snapshot): added checks for initialization of dataset and decoration,
+	changed filename to be elapsed time in stream, added code (copied from 
+	microscape.c) to pop the graphics window to front, set the colormap 
+	and colorplane before creating screen image
+	(handle_new_datapoint): added checks to ignore the first image
+
+	* index_mode.h: added the variables prev_time and first_scan and removed
+	snapshots_taken
+	
 2001-08-06  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* tcl_tk.c (init_Tk_control_panels): changed the

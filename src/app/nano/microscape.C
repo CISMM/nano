@@ -4894,9 +4894,8 @@ void teardownSynchronization(CollaborationManager *cm,
   nmui_Component * paramControls = ui_Root->find("Params");
   if(paramControls) {
     paramControls->remove(&(m->state.modify.new_mode));
-    paramControls->remove(&(m->state.modify.new_style));
-    paramControls->remove(&(m->state.modify.new_tool));
     paramControls->remove(&(m->state.modify.new_control));
+    paramControls->remove(&(m->state.modify.new_style));
     paramControls->remove(&m->state.modify.new_constr_xyz_param);
     paramControls->remove(&m->state.modify.new_optimize_now_param);
     paramControls->remove(&(m->state.modify.new_setpoint));
@@ -5222,9 +5221,8 @@ void setupSynchronization (CollaborationManager * cm,
   paramControls->add(&changed_scanline_params);
 
   paramControls->add(&m->state.modify.new_mode);
-  paramControls->add(&m->state.modify.new_style);
-  paramControls->add(&m->state.modify.new_tool);
   paramControls->add(&m->state.modify.new_control);
+  paramControls->add(&m->state.modify.new_style);
   paramControls->add(&m->state.modify.new_constr_xyz_param);
   paramControls->add(&m->state.modify.new_optimize_now_param);
   paramControls->add(&m->state.modify.new_setpoint);
@@ -6908,13 +6906,13 @@ int main (int argc, char* argv[])
     ParseArgs(argc, argv, &istate);
 
     /* Check set-up for indexing mode */
-    if( istate.index_mode == VRPN_TRUE )
-      if( !istate.afm.readingStreamFile )
-	{	
-	  cerr << "Error:  index mode requires a stream file" << endl;
-	  exit( -1 );
+    if( istate.index_mode == VRPN_TRUE ){
+        if( ! ( istate.afm.readingStreamFile || istate.num_stm_files > 0 ) ){
+	
+	    cerr << "Error:  index mode requires a stream or static file" << endl;
+	    exit( -1 );
 	}
-    
+    }
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
 
@@ -7508,13 +7506,20 @@ microscope->ResetClock();
   collaborationTimer.start();
 
   /* set up index mode, if we're doing that */
-  if( istate.index_mode == VRPN_TRUE )
-    {
+  if( istate.index_mode == VRPN_TRUE ){
       cout << "Index mode:  from \"" << dataset->heightPlaneName->string( ) << "\"" << endl;
-      cout << "Index mode:  input stream:  " << istate.afm.inputStreamName << endl;
-      Index_mode::init( dataset->inputGrid->getPlaneByName( dataset->heightPlaneName->string() ), 
+
+      if( istate.afm.readingStreamFile ){
+          cout << "Index mode:  input stream:  " << istate.afm.inputStreamName << endl;
+          Index_mode::init( dataset->inputGrid->getPlaneByName( dataset->heightPlaneName->string() ), 
 			istate.afm.inputStreamName );
-    }
+      }
+      else if( istate.num_stm_files > 0 ){
+          cout << "Index mode: static file: " << istate.stm_file_names[0] << endl;
+          Index_mode::init( dataset->inputGrid->getPlaneByName( dataset->heightPlaneName->string() ),
+          		istate.stm_file_names[0] );
+      }
+  }
 
   if(istate.initTime !=0){
     set_stream_time=istate.initTime;
@@ -7903,17 +7908,22 @@ VERBOSE(1, "Entering main loop");
 #endif
 
     // for index mode:
-    // if we've reached the end of the file, exit
-    if( istate.index_mode )
-      {
-	vrpn_File_Connection* conn = microscope_connection->get_File_Connection( );
-	if( conn == NULL )
-	  {
-	    // what?  how the heck are we in index mode with no file connection?
-	  }
-	else if( conn->eof( ) != 0 )
-	  { break; }
-      }
+    // if stream file and we've reached end of file exit, 
+    // else if static file take a snapshot and exit
+    if( istate.index_mode ){
+	if( istate.afm.readingStreamFile ){
+	    vrpn_File_Connection* conn = microscope_connection->get_File_Connection( );
+	    if( conn == NULL ){
+	        // what?  how the heck are we in index mode with no file connection?
+	    }
+	    else if( conn->eof( ) != 0 )
+	    { break; }
+        }
+	else if( istate.num_stm_files > 0 ){
+            Index_mode::snapshot();
+	    break;
+        }
+    }
 
     /* One more iteration done */
     VERBOSE(4, "  Done with mainloop iteration");
