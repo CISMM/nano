@@ -180,31 +180,6 @@ proc set_surface_color {} {
 
 
 #
-##################################
-# Controls for haptics visualization
-# JM 11/02
-
-set nmInfo(viz_hap_settings) [nmInfo(visualizations).frame childsite]
-
-iwidgets::Labeledframe $nmInfo(viz_hap_settings).frame \
-	-labeltext "Haptics Visualization options" \
-	-labelpos nw
-
-checkbutton $nmInfo(viz_hap_settings).feel_grid -text "Feel Grid Enable" -variable \
-	feel_grid_enabled
-checkbutton $nmInfo(viz_hap_settings).feel_plane -text "Feel Plane Enable" -variable \
-	feel_plane_enabled
-
-
-
-
-pack $nmInfo(viz_hap_settings).frame -side top -fill x  
-    pack $nmInfo(viz_hap_settings).feel_grid $nmInfo(viz_hap_settings).feel_plane -side left
-
-
-
-
-#
 #################################    
 # Controls for the various visualizations
 
@@ -304,6 +279,7 @@ proc update_minmax_label {name el op} {
 	$nmInfo(viz_controls).planemax configure -text \
 	"Visualization plane max height $viz_max_limit"
 }
+
 
 #
 ################################
@@ -490,6 +466,8 @@ set compliance_slider_max_limit 1
 set spring_slider_min_limit 0.01
 set spring_slider_max_limit 1
 set spring_k_slider 0
+
+
 
 
 #proc adjust_adhesion {} {
@@ -828,6 +806,41 @@ if {$spring_slider_min_limit != $spring_slider_max_limit} {
 	    100 1 1 spring_k_slider "Spring Constant"
     pack $nmInfo(springkscale).scale
 }
+
+
+#
+##################################
+# Controls for haptics visualization
+# JM 11/02
+
+
+
+iwidgets::Labeledframe $nmInfo(haptic).haptics \
+	-labeltext "Haptics Visualization options" \
+	-labelpos nw
+
+set nmInfo(viz_hap_settings) [$nmInfo(haptic).haptics childsite]
+
+checkbutton $nmInfo(viz_hap_settings).feel_grid -text "Feel Grid Enable" -variable \
+	show_feel_grid
+checkbutton $nmInfo(viz_hap_settings).feel_plane -text "Feel Plane Enable" -variable \
+	show_feel_plane
+checkbutton $nmInfo(viz_hap_settings).grid_mesh - text "Use haptic Mesh" - variable \
+       use_mesh_grid
+
+
+
+
+    pack $nmInfo(haptic).haptics -side top -fill x  
+    pack $nmInfo(viz_hap_settings).feel_grid $nmInfo(viz_hap_settings).feel_plane -side left
+
+#end haptics vis
+########################################################
+
+
+
+
+
 
 
 #

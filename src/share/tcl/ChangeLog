@@ -1,3 +1,7 @@
+2003-01-13 Jameson Miller <millerj@cs.unc.edu>
+	*setupmenu.tcl : added controls for displaying the grid to be sent to
+		phantom.
+
 2002-12-01 Jameson Miller <millerj@cs.unc.edu>
 	* setupmenu.tcl : added controls for displaying haptic graphics
 
