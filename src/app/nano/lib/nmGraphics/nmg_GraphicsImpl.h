@@ -87,6 +87,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void createColormapTexture( const char * );
     virtual void setColormapTextureSliderRange (float, float, float, float);
     virtual void setColormapTextureConversionMap( const char *, const char * );
+    virtual void setColormapTextureAlpha( float );
 
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y,
@@ -300,6 +301,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_createColormapTexture (void *, vrpn_HANDLERPARAM);
   static int handle_setColormapTextureSliderRange (void *, vrpn_HANDLERPARAM);
   static int handle_setColormapTextureConversionMap(void *,vrpn_HANDLERPARAM);
+  static int handle_setColormapTextureAlpha(void *,vrpn_HANDLERPARAM);
 
   static int handle_updateTexture(void *, vrpn_HANDLERPARAM);
 //  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);

@@ -1,3 +1,21 @@
+2002-10-24  David Borland <borland@cs.unc.edu>
+
+        * nmg_Graphics.[Ch] : added functions to be able to change the 
+        colormap (slow) projective texture's alpha value through the UI.
+
+        * nmg_GraphicsImpl.[Ch] : same
+
+        * nmg_GraphicsNull.[Ch] : same
+
+        * nmg_GraphicsRemote.[Ch] : same
+
+        * nmg_GraphicsTimer.[Ch] : same
+
+        * nmg_ImageDisplayProjectiveTexture.[Ch] : same
+
+        * openGL.c : fixed the transform for the projective texture's model
+        registration mode so that it scales to the surface correctly.
+
 2002-10-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (setColormapTextureSliderRange): fixed bad bug

@@ -79,6 +79,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void createColormapTexture( const char * );
     virtual void setColormapTextureSliderRange (float, float, float, float);
     virtual void setColormapTextureConversionMap( const char *, const char * );
+    virtual void setColormapTextureAlpha(float);
 
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y);

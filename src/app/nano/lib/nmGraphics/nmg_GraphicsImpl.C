@@ -436,6 +436,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_setColormapTextureConversionMap_type,
 				handle_setColormapTextureConversionMap,
 				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setColormapTextureAlpha_type,
+                handle_setColormapTextureAlpha,
+                this, vrpn_ANY_SENDER);
 
   connection->register_handler( d_updateTexture_type,
 				handle_updateTexture,
@@ -1334,7 +1337,13 @@ void nmg_Graphics_Implementation::setColormapTextureSliderRange (
   state->colormap_texture_color_max = color_max;
 }
 
-
+//
+// Sets the colormap texture colormap alpha:
+//
+void nmg_Graphics_Implementation::setColormapTextureAlpha (
+    float alpha) {
+  state->colormapTexture.setOpacity(alpha);
+}
 
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
@@ -2931,6 +2940,18 @@ int nmg_Graphics_Implementation::handle_setColormapTextureSliderRange
   CHECKF(it->decode_setColormapTextureSliderRange(p.buffer, &data_min,&data_max,&color_min, &color_max), 
 	  "handle_setColormapTextureSliderRange");
   it->setColormapTextureSliderRange( data_min,data_max,color_min, color_max );
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setColormapTextureAlpha
+( void *userdata, vrpn_HANDLERPARAM p) {
+  float alpha;
+  
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  CHECKF(it->decode_setColormapTextureAlpha(p.buffer, &alpha), 
+	  "handle_setColormapTextureAlpha");
+  it->setColormapTextureAlpha( alpha );
   return 0;
 }
 

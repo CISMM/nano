@@ -689,21 +689,26 @@ void computeModelRegistrationTextureTransform(nmg_State * state, double *matrix)
 		q_copy(q, obj.GetLocalXform().GetRot());
 		q_invert(q, q);
 
-//		if (state->texture_displayed == nmg_Graphics::VIDEO) {
-			// center of textue in texture coordinates
-			transform.translate(0.5, 0.5, 0.0);
+        transform.translate(0.5, 0.5, 0.0);
 
-			// should be 1 / the size of the scan range...hard coded to assume a 5000 nm range for now
-			// should change this to a variable
-			transform.scale(0.0002, 0.0002, 1.0);
-//		}
-/*
-		else {
-			transform.translate(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
-			double scale = state->surfaceModeTextureTransform[0];
-			transform.scale(scale, scale, scale);
-		}
-*/
+        double plane_width = state->inputGrid->maxX() - state->inputGrid->minX();
+        double plane_height = state->inputGrid->maxY() - state->inputGrid->minY();
+	    transform.scale(1 / plane_width, 1 / plane_height, 1.0);
+
+        // scale to correct ratio in x and y
+        int image_width = state->currentProjectiveTexture->width();
+        int image_height = state->currentProjectiveTexture->height();
+        if (image_width != 0 && image_height != 0) {
+            double scale;
+            if (image_width > image_height) {
+                scale = (double)image_width / (double)image_height;
+                transform.scale(1.0, scale, 1.0);
+            }
+            else if (image_height > image_width) {
+                scale = (double)image_height / (double)image_width;
+                transform.scale(scale, 1.0, 1.0);
+            }
+        }
 
 		q_to_ogl_matrix(mat, q);
 		transform.compose(mat);

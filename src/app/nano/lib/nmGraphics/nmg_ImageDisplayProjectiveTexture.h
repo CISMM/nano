@@ -3,6 +3,7 @@
 
 #include "nmb_ImageDisplay.h"
 #include "nmg_Graphics.h"
+#include "nmg_GraphicsImpl.h"
 
 class nmg_ImageDisplayProjectiveTexture: public nmb_ImageDisplay {
  public:
@@ -17,6 +18,8 @@ class nmg_ImageDisplayProjectiveTexture: public nmb_ImageDisplay {
                        float data_min, float data_max,
                        float color_min, float color_max);
   virtual void updateImage(nmb_Image *image);
+
+  virtual void updateAlpha(float alpha);
 
  protected:
   nmg_Graphics *d_graphicsDisplay;

@@ -76,6 +76,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setSurfaceColor (const int [3]);
     virtual void createColormapTexture( const char * );
     virtual void setColormapTextureSliderRange (float, float, float, float);
+    virtual void setColormapTextureAlpha(float);
     virtual void setColormapTextureConversionMap
                     (const char *, const char *);
     virtual void loadRawDataTexture(const int which, const char *image_name,

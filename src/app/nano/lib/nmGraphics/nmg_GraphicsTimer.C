@@ -307,6 +307,11 @@ void nmg_Graphics_Timer::setColormapTextureSliderRange ( float data_min,
   d_imp->setColormapTextureSliderRange(data_min,data_max,color_min, color_max);
 }
 
+void nmg_Graphics_Timer::setColormapTextureAlpha ( float alpha ) {
+  activateTimer();
+  d_imp->setColormapTextureAlpha(alpha);
+}
+
 void nmg_Graphics_Timer::loadRawDataTexture(const int which,
        const char *image_name,
        const int start_x, const int start_y)

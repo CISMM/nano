@@ -82,6 +82,7 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual void createColormapTexture( const char * );
     virtual void setColormapTextureSliderRange (float, float);
     virtual void setColormapTextureConversionMap( char *, char * );
+    virtual void setColormapTextureAlpha( float );
 
     virtual void setTextureTransform(double *xform);
 

@@ -780,6 +780,29 @@ void nmg_Graphics_Remote::setColormapTextureSliderRange (
     delete [] msgbuf;
 }
 
+void nmg_Graphics_Remote::setColormapTextureAlpha (
+    float alpha) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_setColormapTextureAlpha(&len, alpha);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now,
+					d_setColormapTextureAlpha_type,
+					d_myId, msgbuf,
+					vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureAlpha:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
 void nmg_Graphics_Remote::setColormapTextureConversionMap( const char *map,
 							   const char *mapdir ) {
 

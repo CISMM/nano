@@ -1,9 +1,11 @@
 #include "nmg_ImageDisplayProjectiveTexture.h"
+#include "nmg_State.h"
 
 nmg_ImageDisplayProjectiveTexture::
 nmg_ImageDisplayProjectiveTexture( nmg_Graphics *g ):
   nmb_ImageDisplay(),
-  d_graphicsDisplay(g), d_projectiveTexturesEnabled(vrpn_FALSE)
+  d_graphicsDisplay(g), 
+  d_projectiveTexturesEnabled(vrpn_FALSE)
 {
 
 }
@@ -61,4 +63,8 @@ setDisplayColorMapRange( nmb_Image * /*image*/,
 void nmg_ImageDisplayProjectiveTexture::updateImage(nmb_Image *image) 
 {
   d_graphicsDisplay->createColormapTexture(image->name()->c_str());
+}
+
+void nmg_ImageDisplayProjectiveTexture::updateAlpha(float alpha) {
+  d_graphicsDisplay->setColormapTextureAlpha(alpha);
 }

@@ -220,6 +220,7 @@ class nmg_Graphics {
     virtual void setColormapTextureSliderRange (float, float, float, float) {};
     virtual void setColormapTextureConversionMap
                     (const char *, const char *) {};
+    virtual void setColormapTextureAlpha(float) {};
 
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y) {};
@@ -450,6 +451,7 @@ class nmg_Graphics {
     vrpn_int32 d_createColormapTexture_type;
     vrpn_int32 d_setColormapTextureConversionMap_type;
     vrpn_int32 d_setColormapTextureSliderRange_type;
+    vrpn_int32 d_setColormapTextureAlpha_type;
 
     vrpn_int32 d_updateTexture_type;
     vrpn_int32 d_enableRegistration_type;
@@ -636,6 +638,9 @@ class nmg_Graphics {
     // Colormap Texture Network Transmission Functions:
     char *encode_setColormapTextureSliderRange ( int *len, float, float, float, float );
     int decode_setColormapTextureSliderRange( const char *buf,float *, float *,float *, float *);
+
+    char *encode_setColormapTextureAlpha ( int *len, float);
+    int decode_setColormapTextureAlpha( const char *buf, float *);
     
     char *encode_two_char_arrays ( int *len, const char *, const char * );
     int decode_two_char_arrays ( const char *buf, char **, char **);
