@@ -23,7 +23,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <vrpn_Connection.h>
-#include <vrpn_TempImager.h>
+#include <vrpn_Imager.h>
 #include <vrpn_Tracker.h>
 #include <vrpn_Text.h>
 
@@ -50,17 +50,34 @@ static	bool  g_quit = false;
 // function being performed.
 char	    *g_name_suffix = "_imager_plugin";
 
+//-------------------------------------------------------------------
+// *** Application global state replaces what comes below.  It should prepare
+// *** whatever is needed to handle regions once they come.
+
+// Sum up the values of the region to end up with the total signed volume
+// of the region above zero once we divide by the image size.  We are going
+// to quit after the last row has been received, and the first time through,
+// the nM sends all of the rows in order, so it is safe to assume that we
+// will see each row once by the time we get the last row.
+double g_volume = 0.0;
+
+// *** Application code replaces what comes above.
+//-------------------------------------------------------------------
+
 //------------------------------------------------------------------------
-// A TempImager client to read the image from the nanoManipulator.
-// A TempImager Server to send an image back once we've modified it
+// An Imager client to read the image from the nanoManipulator.
+// An Imager Server to send an image back once we've modified it
 // to suit, or filtered it, or done whatever we want to do with it.
 // Be sure to wait until we know what the size is before actually
 // creating it.  The connection object is global because it is needed
 // by the callback routine.  Also, a text sender and tracker server to
-// position and send text messages.
+// position and send text messages.  Also, ImagerPose objects to send
+// and receive the pixel coordinates.
 
-static	vrpn_TempImager_Remote	*g_imager_client = NULL;
-static	vrpn_TempImager_Server	*g_imager_server = NULL;
+static	vrpn_Imager_Remote	*g_imager_client = NULL;
+static	vrpn_Imager_Server	*g_imager_server = NULL;
+static	vrpn_ImagerPose_Remote	*g_imagerpose_client = NULL;
+static	vrpn_ImagerPose_Server	*g_imagerpose_server = NULL;
 static	vrpn_Connection		*g_connection = NULL;
 static	vrpn_Text_Sender	*g_text_server = NULL;
 static	vrpn_Tracker_Server	*g_tracker_server = NULL;
@@ -75,37 +92,43 @@ static	vrpn_float32		*g_image_buffer = NULL;
 static	vrpn_int32 g_nCols = 0;
 static	vrpn_int32 g_nRows = 0;
 static	int g_outgoing_channel = -1;
+static  vrpn_int16  g_incoming_channel = -1;
 
 //------------------------------------------------------------------------
 // The handlers are where the action happens in this program.  This first
 // callback handles the report of the imager characteristics, it is
 // guaranteed to be called before any region callbacks are called, and
 // it creates the imager server that will send any resulting image back.
-// If the the image description changes (size, for example, then
-// this message will be called again.  If that happens in this example,
-// we quit.  It is possible to tear down and reallocate everything to
-// handle this.
+// If the the image description changes, this re-allocates a new set
+// of servers.
 
-void  handle_description_message(void *, const struct timeval)
+// This is complicated by the fact that the position of the pixels is
+// passed for the callback from the ImagerPose and the pixel counts are
+// from the Imager, so we have to make sure we get both callbacks before
+// proceeding.
+
+void  VRPN_CALLBACK handle_description_message(void *sender, const struct timeval)
 {
-  static bool got_message = false;
-  if (g_verbose) {
-    fprintf(stderr, "Got description message (%dx%d image)\n",
-      g_imager_client->nCols(), g_imager_client->nRows());
-  }
-  if (got_message) {
-    // Make sure that the size has not changed.  If it has, we exit.
-    if ( (g_nCols != g_imager_client->nCols()) || (g_nRows != g_imager_client->nRows()) ) {
-      fprintf(stderr,"handle_description_message(): Data size changed - exiting!\n");
-      exit(-1);
+  static bool got_imager_message = false;
+  static bool got_pose_message = false;
+
+  if (sender == g_imager_client) {
+    if (g_verbose) {
+      fprintf(stderr, "Got imager description message (%dx%d image)\n",
+	g_imager_client->nCols(), g_imager_client->nRows());
     }
-  } else {
-    // Get any required information from the imager client.  It will
-    // have been filled in by the time this callback is called.
-    vrpn_float32 minX = g_imager_client->minX();
-    vrpn_float32 maxX = g_imager_client->maxX();
-    vrpn_float32 minY = g_imager_client->minY();
-    vrpn_float32 maxY = g_imager_client->maxY();
+    got_imager_message = true;
+
+    // Delete any existing servers and buffers.
+    if (g_imager_server) {
+      delete g_imager_server;
+      g_imager_server = NULL;
+    }
+    if (g_image_buffer) {
+      delete [] g_image_buffer;
+      g_image_buffer = NULL;
+    }
+
     g_nCols = g_imager_client->nCols();
     g_nRows = g_imager_client->nRows();
 
@@ -123,10 +146,10 @@ void  handle_description_message(void *, const struct timeval)
 // *** whatever is needed to handle regions once they come.
 
     // Create the imager server that will be used to send the images.
-    g_imager_server = new vrpn_TempImager_Server( return_name, g_connection,
-      g_nCols, g_nRows, minX, maxX, minY, maxY);
+    g_imager_server = new vrpn_Imager_Server( return_name, g_connection,
+      g_nCols, g_nRows);
     if (g_imager_server == NULL) {
-      fprintf(stderr,"Out of memory allocating TempImager_Server\n");
+      fprintf(stderr,"Out of memory allocating Imager_Server\n");
       exit(-1);
     }
 
@@ -143,12 +166,135 @@ void  handle_description_message(void *, const struct timeval)
 // *** Application code replaces what comes above.
 //-------------------------------------------------------------------
 
-    got_message = true;
+  }
+
+  if (sender == g_imagerpose_client) {
+    vrpn_float64  origin[3];
+    vrpn_float64  dCol[3];
+    vrpn_float64  dRow[3];
+    vrpn_float64  dDepth[3];
+    g_imagerpose_client->get_origin(origin);
+    g_imagerpose_client->get_dCol(dCol);
+    g_imagerpose_client->get_dRow(dRow);
+    g_imagerpose_client->get_dDepth(dDepth);
+
+    if (g_verbose) {
+      fprintf(stderr, "Got pose description message (%lg,%lg)-(%lg,%lg)\n",
+	origin[0], origin[1],
+	origin[0] + dCol[0], origin[1] + dRow[1] );
+    }
+    got_pose_message = true;
+
+    if (g_imagerpose_server) {
+      delete g_imagerpose_server;
+      g_imagerpose_server = NULL;
+    }
+
+//-------------------------------------------------------------------
+// *** Application code replaces what comes below.  It should prepare
+// *** whatever is needed to handle regions once they come.
+
+    // Create the imagerpose server that will be used to send the pose.
+    g_imagerpose_server = new vrpn_ImagerPose_Server( return_name, 
+      origin, dCol, dRow, NULL, g_connection);
+    if (g_imagerpose_server == NULL) {
+      fprintf(stderr,"Out of memory allocating ImagerPose_Servers\n");
+      exit(-1);
+    }
+
+// *** Application code replaces what comes above.
+//-------------------------------------------------------------------
+  }
+
+  // If we have both messages, send a description back to the app.
+  if (got_pose_message && got_imager_message) {
+    // Force the server to send its values back to the client
+    g_imagerpose_server->send_description();
+    g_imager_server->send_description();
   }
 }
 
 //------------------------------------------------------------------------
-// The handlers are where the action happens in this program.  This second
+// The handlers are where the action happens in this program.  This 
+// callback handles the "beginning of frame" message.  It sets the volume
+// to zero (for this example).
+
+void  VRPN_CALLBACK handle_begin_frame(void *, const vrpn_IMAGERBEGINFRAMECB info)
+{
+//-------------------------------------------------------------------
+// *** Application code replaces what comes below.  It should prepare
+// *** whatever is needed to handle regions once they come.
+
+  // Reset the volume to zero
+  g_volume = 0;
+
+// *** Application code replaces what comes above.
+//-------------------------------------------------------------------
+}
+
+//------------------------------------------------------------------------
+// The handlers are where the action happens in this program.  This 
+// callback handles the "end of frame" message.  It computes the volume
+// based on the region size and returns a label with this info to the
+// nano program (in this example).  It also sets the "g_quit" flag, though
+// the code could be generalized to handle multiple scans if desired.
+
+static	vrpn_float64 length(const vrpn_float64 vec[3])
+{
+  return sqrt ( vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2] );
+}
+
+void  VRPN_CALLBACK handle_end_frame(void *, const vrpn_IMAGERENDFRAMECB info)
+{
+//-------------------------------------------------------------------
+// *** Application code replaces what comes below.  It should prepare
+// *** whatever is needed to handle regions once they come.
+
+  if (g_verbose) {
+    fprintf(stderr, "Got total region, sending back text\n");
+  }
+
+  // Scale the volume by the footprint of one pixel on the image.
+  // We do this because we summed the values at each pixel and did
+  // not take into account the pixel footprint.  We do this by
+  // multiplying by the square-meters size of the total region and
+  // dividing by the number of inter-pixel steps (one less than the
+  // number of pixels).
+  // The X,Y units started out in meters.  The Z units are whatever
+  // the data set holds.
+  vrpn_float64  origin[3];
+  vrpn_float64  dCol[3];
+  vrpn_float64  dRow[3];
+  g_imagerpose_client->get_origin(origin);
+  g_imagerpose_client->get_dCol(dCol);
+  g_imagerpose_client->get_dRow(dRow);
+  // This assumes that dCol and dRow are orthogonal, which they are
+  // for nano imager plug-ins, but perhaps not for general code.
+  g_volume *= length(dCol) * length(dRow);
+
+  // Position 10nm above the center pixel, using the identity orientation
+  vrpn_float64  pos[3], quat[4] = {0, 0, 0, 1};
+  struct timeval  now;
+  gettimeofday(&now, NULL);
+  g_imagerpose_client->compute_pixel_center(pos, *g_imager_client, g_nCols/2, g_nRows/2);
+  pos[2] = g_image_buffer[ g_nCols/2 + g_nRows/2 * g_nCols ] + 10;
+  g_tracker_server->report_pose(0, now, pos, quat, vrpn_CONNECTION_RELIABLE);
+
+  // Send a text message with the volume in it
+  char msg[1024];
+  sprintf(msg, "Signed volume of surface is %g mXmX%s\n", g_volume, g_imager_client->channel(g_incoming_channel)->units);
+  g_text_server->send_message(msg);
+
+  // Set this if you want to exit after the first complete image has been
+  // read.
+  g_quit = true;
+
+// *** Application code replaces what comes above.
+//-------------------------------------------------------------------
+}
+
+//------------------------------------------------------------------------
+// The handlers are where the action happens in this program.  This 
 // callback handles each region as it comes.  This version sends the same
 // data back to the nanoManipulator and it also calculates the volume
 // above zero in the image, which it sends back as a text message that is
@@ -156,16 +302,16 @@ void  handle_description_message(void *, const struct timeval)
 // has been sent, it quits.  User code could continue to listen for multiple
 // copies of the image, which may come as the microscope scans.
 
-void  handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
+void  VRPN_CALLBACK handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
 {
   if (g_verbose) {
     fprintf(stderr, "Got region message\n");
   }
 
-  // Used to index into the TempImager based on the region info.
-  vrpn_int16  channel_index = info.region->d_chanIndex;
-  vrpn_float32 offset = g_imager_client->channel(channel_index)->offset;
-  vrpn_float32 scale = g_imager_client->channel(channel_index)->scale;
+  // Used to index into the Imager based on the region info.
+  g_incoming_channel = info.region->d_chanIndex;
+  vrpn_float32 offset = g_imager_client->channel(g_incoming_channel)->offset;
+  vrpn_float32 scale = g_imager_client->channel(g_incoming_channel)->scale;
 
   // If this is the first region, add a channel with the same name to the
   // imager server so we'll have something to send back.  The limits we
@@ -174,8 +320,8 @@ void  handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
   // set suffix attached.
   static bool got_message = false;
   if (!got_message) {
-    const char  *oldname = g_imager_client->channel(channel_index)->name;
-    const char  *units = g_imager_client->channel(channel_index)->units;
+    const char  *oldname = g_imager_client->channel(g_incoming_channel)->name;
+    const char  *units = g_imager_client->channel(g_incoming_channel)->units;
     char *newname = new char[strlen(oldname) + strlen(g_name_suffix) + 1];
     if (newname == NULL) {
       fprintf(stderr, "Out of memory in handle_region_message\n");
@@ -214,25 +360,10 @@ void  handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
 // *** Data from later can come in any order as new scans are made or other
 // *** changes are made to the data.
 
-  // Sum up the values of the region to end up with the total signed volume
-  // of the region above zero once we divide by the image size.  We are going
-  // to quit after the last row has been received, and the first time through,
-  // the nM sends all of the rows in order, so it is safe to assume that we
-  // will see each row once by the time we get the last row.
-  static double volume = 0.0;
-  static bool started = false;
-
-  // If we've got the first pixel in the image, then tell that we have
-  // started and reset our state.
-  if ( (info.region->d_rMin == 0) && (info.region->d_cMin == 0) ) {
-    started = true;
-    volume = 0.0;
-  }
-
   vrpn_uint16 r,c;
   for (r = info.region->d_rMin; r <= info.region->d_rMax; r++) {
     for (c = info.region->d_cMin; c <= info.region->d_cMax; c++) {
-      volume += g_image_buffer[c + r * g_nCols];
+      g_volume += g_image_buffer[c + r * g_nCols];
     }
   }
 
@@ -241,39 +372,10 @@ void  handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
   g_imager_server->send_region_using_base_pointer(g_outgoing_channel,
     info.region->d_cMin, info.region->d_cMax,
     info.region->d_rMin, info.region->d_rMax,
-    g_image_buffer, 1, g_nCols, g_nRows, false, &info.msg_time);
+    g_image_buffer, 1, g_nCols, g_nRows, false, 0,0,0, &info.msg_time);
 
-  // If this region includes the last pixel, multiply to find the volume, move
-  // over the center and send a text message telling the volume.
-  // Then reset the "started" flag.
-  if ( (info.region->d_rMax == g_nRows - 1) && (info.region->d_cMax == g_nCols - 1) ) {
-    if (g_verbose) {
-      fprintf(stderr, "Got total region, sending back text\n");
-    }
-
-    // Scale the volume by the footprint of one pixel on the image.
-    volume *= ((g_imager_client->maxX() - g_imager_client->minX()) / g_imager_client->nCols()) *
-	      ((g_imager_client->maxY() - g_imager_client->minY()) / g_imager_client->nRows());
-
-    // Position 10nm above the center pixel, using the identity orientation
-    vrpn_float64  pos[3], quat[4] = {0, 0, 0, 1};
-    struct timeval  now;
-    gettimeofday(&now, NULL);
-    pos[0] = (g_imager_client->maxX() + g_imager_client->minX()) / 2;
-    pos[1] = (g_imager_client->maxY() + g_imager_client->minY()) / 2;
-    pos[2] = g_image_buffer[ g_nCols/2 + g_nRows/2 * g_nCols ] + 10;
-    g_tracker_server->report_pose(0, now, pos, quat, vrpn_CONNECTION_RELIABLE);
-
-    // Send a text message with the volume in it
-    char msg[1024];
-    sprintf(msg, "Signed volume of surface is %g\n", volume);
-    g_text_server->send_message(msg);
-
-    started = false;
-
-    // Set this if you want to exit after the first complete image has been
-    // read.
-    g_quit = true;
+  if (g_verbose) {
+    printf("Volume so far = %lg\n", g_volume);
   }
 
 // *** Application code replaces what comes above.
@@ -325,7 +427,8 @@ main (int argc, char * argv[])
   if (g_verbose) {
     fprintf(stderr,"Opening connection to imager at %s\n", device_name);
   }
-  g_imager_client = new vrpn_TempImager_Remote(device_name);
+  g_imager_client = new vrpn_Imager_Remote(device_name);
+  g_imagerpose_client = new vrpn_ImagerPose_Remote(device_name);
   g_connection = g_imager_client->connectionPtr();
   if (g_connection == NULL) {
     fprintf(stderr, "Error: NULL connection when opening %s\n", device_name);
@@ -343,8 +446,11 @@ main (int argc, char * argv[])
   // handler is guaranteed to be called before the region callback handler is,
   // so we use it to set up the server that sends values back.
 
-  g_imager_client->register_description_handler(NULL, handle_description_message);
+  g_imager_client->register_description_handler(g_imager_client, handle_description_message);
   g_imager_client->register_region_handler(NULL, handle_region_message);
+  g_imager_client->register_begin_frame_handler(NULL, handle_begin_frame);
+  g_imager_client->register_end_frame_handler(NULL, handle_end_frame);
+  g_imagerpose_client->register_description_handler(g_imagerpose_client, handle_description_message);
 
   //------------------------------------------------------------------------
   // Okay, now we keep calling mainloop() on the various objects forever (until
@@ -356,6 +462,7 @@ main (int argc, char * argv[])
 
     // See if the imager has any data for us.
     g_imager_client->mainloop();
+    g_imagerpose_client->mainloop();
 
     //------------------------------------------------------------------------
     // We called the imager_client mainloop first so that its callback would
@@ -365,6 +472,7 @@ main (int argc, char * argv[])
     // missed and the last messages discarded without being sent.
 
     if (g_imager_server) { g_imager_server->mainloop(); } //< Once it is created, use it.
+    if (g_imagerpose_server) { g_imagerpose_server->mainloop(); } //< Once it is created, use it.
     g_tracker_server->mainloop();
     g_text_server->mainloop();
     g_connection->mainloop();
@@ -376,6 +484,7 @@ main (int argc, char * argv[])
   delete g_text_server;
   delete g_tracker_server;
   delete g_imager_client;
+  delete g_imagerpose_client;
 
   // Run for a fraction of a second to give messages time to clear out before
   // closing the connection.
@@ -384,6 +493,7 @@ main (int argc, char * argv[])
     vrpn_SleepMsecs(1);
   }
   if (g_imager_server) { delete g_imager_server; }
+  if (g_imagerpose_server) { delete g_imagerpose_server; }
   // The connection will have been deleted when the last object using it was deleted.
   if (g_image_buffer) { delete [] g_image_buffer; }
   

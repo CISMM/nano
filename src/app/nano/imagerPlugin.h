@@ -8,7 +8,7 @@
 
 //-------------------------------------------------------------------------
 // This implements an imager plug-in class for the nanoManipulator program.
-// It uses the vrpn_TempImager class to send the data plane mapped to
+// It uses the vrpn_Imager class to send the data plane mapped to
 // height out through a well-known VRPN port to which image analysis programs
 // can connect.  The image analysis programs can also send back an image,
 // which will be added to the list of available data planes.  It can also
@@ -31,7 +31,7 @@
 #include <vrpn_Connection.h>
 #include <vrpn_Tracker.h>
 #include <vrpn_Text.h>
-#include <vrpn_TempImager.h>
+#include <vrpn_Imager.h>
 #include <nmb_Dataset.h>
 
 class imagerPlugin {
@@ -68,18 +68,21 @@ protected:
   bool d_incoming_data_matches;
 
   //------------------------------------------------------------------------
-  // A TempImager client to read the image from the image analysis program.
-  // A TempImager Server to send an image.  A connection object to send the
+  // An Imager client to read the image from the image analysis program.
+  // An Imager Server to send an image.  A connection object to send the
   // data on.  Also, a text receiver and tracker remote to receive
-  // position and send text messages.
+  // position and send text messages.  An ImagerPose server and remote to
+  // send and recieve the pixel coordinates.
 
-  vrpn_Connection		*d_connection;
-  vrpn_TempImager_Remote	*d_imager_client;
-  vrpn_Text_Receiver		*d_text_client;
-  vrpn_Tracker_Remote		*d_tracker_client;
-  vrpn_Text_Sender		*d_server_stand_in;
-  vrpn_TempImager_Server	*d_imager_server;
-  int				d_channel_id;
+  vrpn_Connection	  *d_connection;
+  vrpn_Imager_Remote	  *d_imager_client;
+  vrpn_ImagerPose_Remote  *d_imagerpose_client;
+  vrpn_Text_Receiver	  *d_text_client;
+  vrpn_Tracker_Remote	  *d_tracker_client;
+  vrpn_Text_Sender	  *d_server_stand_in;
+  vrpn_Imager_Server	  *d_imager_server;
+  vrpn_ImagerPose_Server  *d_imagerpose_server;
+  int			  d_channel_id;
 
   //------------------------------------------------------------------------
   // Buffer to hold a line of data that is being sent by the imager server.

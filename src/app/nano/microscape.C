@@ -209,12 +209,6 @@ static imported_obj_list* object_list = NULL;
 # define UGLYCAST
 #endif  // linux || sgi || hpux || __CYGWIN__
 
-#if (!defined(X) || !defined(Y) || !defined(Z))
-#define	X	(0)
-#define	Y	(1)
-#define	Z	(2)
-#endif
-
 #ifndef MAX
 #define MAX(a,b) ((a)<(b)?(b):(a))
 #endif
@@ -235,6 +229,11 @@ static imported_obj_list* object_list = NULL;
 #include "imagerPlugin.h"
 static imagerPlugin *g_imager_plugin = NULL;
 
+#if (!defined(X) || !defined(Y) || !defined(Z))
+#define	X	(0)
+#define	Y	(1)
+#define	Z	(2)
+#endif
 
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.

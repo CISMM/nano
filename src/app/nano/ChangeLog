@@ -1,3 +1,12 @@
+2004-12-07  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* imagerPlugin.C : Changed from TempImager to Imager, which
+		require quite a bit of re-writing.
+	* imagerPlugin.h : Same.
+	* microscape.C : Moved the definitions of X, Y, and Z
+		after where they were causing trouble with other include
+		files.
+
 2004-10-01  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.C : Comment changes.

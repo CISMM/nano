@@ -40,6 +40,8 @@ imagerPlugin::imagerPlugin(nmb_Dataset *data_set) :
   d_connection(NULL),
   d_imager_server(NULL),
   d_imager_client(NULL),
+  d_imagerpose_server(NULL),
+  d_imagerpose_client(NULL),
   d_text_client(NULL),
   d_tracker_client(NULL),
   d_server_stand_in(NULL),
@@ -74,15 +76,20 @@ imagerPlugin::imagerPlugin(nmb_Dataset *data_set) :
   // that the servers do not exist.  A bit of a hack...
   d_tracker_client = new vrpn_Tracker_Remote(g_return_name, d_connection);
   d_text_client = new vrpn_Text_Receiver(g_return_name, d_connection);
-  d_imager_client = new vrpn_TempImager_Remote(g_return_name, d_connection);
+  d_imager_client = new vrpn_Imager_Remote(g_return_name, d_connection);
+  d_imagerpose_client = new vrpn_ImagerPose_Remote(g_return_name, d_connection);
   d_server_stand_in = new vrpn_Text_Sender(g_return_name, d_connection);
-  d_imager_server = new vrpn_TempImager_Server(g_send_name, d_connection,
-    d_data_set->inputGrid->numX(), d_data_set->inputGrid->numY(),
-    d_data_set->inputGrid->minX(), d_data_set->inputGrid->maxX(),
-    d_data_set->inputGrid->minY(), d_data_set->inputGrid->maxY());
+  d_imager_server = new vrpn_Imager_Server(g_send_name, d_connection,
+    d_data_set->inputGrid->numX(), d_data_set->inputGrid->numY());
+
+  vrpn_float64	origin[3] = {d_data_set->inputGrid->minX(), d_data_set->inputGrid->minY(), 0};
+  vrpn_float64	dCol[3] = {d_data_set->inputGrid->maxX() - d_data_set->inputGrid->minX(), 0, 0};
+  vrpn_float64	dRow[3] = {0, d_data_set->inputGrid->maxY() - d_data_set->inputGrid->minY(), 0};
+  d_imagerpose_server = new vrpn_ImagerPose_Server(g_send_name, origin, dCol, dRow, NULL, d_connection);
 
   // Make sure they were constructed
-  if ( !d_tracker_client || !d_text_client || !d_imager_client || !d_imager_server ) {
+  if ( !d_tracker_client || !d_text_client || !d_imager_client || !d_imager_server ||
+       !d_imagerpose_client || !d_imagerpose_server ) {
     fprintf(stderr,"imagerPlugin::imagerPlugin(): Cannot create objects, becoming inactive\n");
     delete d_connection;
     d_connection = NULL;
@@ -93,6 +100,7 @@ imagerPlugin::imagerPlugin(nmb_Dataset *data_set) :
   // the creating object as the userdata parameter.
   d_imager_client->register_description_handler(this, handle_description_message);
   d_imager_client->register_region_handler(this, handle_region_message);
+  d_imagerpose_client->register_description_handler(this, handle_description_message);
   d_tracker_client->register_change_handler(this, handle_tracker_message);
   d_text_client->register_message_handler(this, handle_text_message);
 
@@ -143,6 +151,8 @@ void imagerPlugin::teardown()
   if (d_tracker_client) { delete d_tracker_client; d_tracker_client = NULL; }
   if (d_imager_server) { delete d_imager_server; d_imager_server = NULL; }
   if (d_imager_client) { delete d_imager_client; d_imager_client = NULL; }
+  if (d_imagerpose_client) { delete d_imagerpose_client; d_imagerpose_client = NULL; }
+  if (d_imagerpose_server) { delete d_imagerpose_server; d_imagerpose_server = NULL; }
   if (d_text_client) { delete d_text_client; d_text_client = NULL; }
   if (d_connection) {
     d_connection->unregister_handler(d_connection->register_message_type(vrpn_got_connection), handle_new_connection, this, vrpn_ANY_SENDER);
@@ -172,12 +182,22 @@ void imagerPlugin::send_region_update(void)
     return;
   }
 
+  // Return if we don't have a matched description (this
+  // avoids the race condition where the imager sends its
+  // description and the region before the imagerpose
+  // can send its description.  It throttles back our send
+  // of the region until we hear back the results from our
+  // send of the image description and imagerpose description.
+  if (!d_incoming_data_matches) {
+    return;
+  }
+
   // Exit if the region is empty (nothing changed).
   if ( (d_bottom < d_top) || (d_right < d_left) ) {
     return;
   }
 
-  // Send the part of the region that has changed.  Send it one
+  // Send the part of the plane that has changed.  Send it one
   // row at a time to avoid overflowing the buffer size for
   // the send.  Make sure to mainloop() the imager client in case
   // the other side is sending something back so that we don't
@@ -186,6 +206,7 @@ void imagerPlugin::send_region_update(void)
   // it has possible padding in it.  We also need to scale and
   // offset it into the correct units.  Need to copy into our line
   // buffer first and send that.
+  d_imager_server->send_begin_frame(d_left, d_right, d_top, d_bottom);
   int r, c;
   for (r = d_top; r <= d_bottom; r++) {
     for (c = d_left; c <= d_right; c++) {
@@ -195,9 +216,10 @@ void imagerPlugin::send_region_update(void)
       d_channel_id,
       d_left, d_right,	r, r, 
       &d_linebuf[d_left],
-      1, d_source_plane->numX(), d_source_plane->numY());
+      1, d_source_plane->numX());
     d_imager_client->mainloop();
   }
+  d_imager_server->send_end_frame(d_left, d_right, d_top, d_bottom);
 
   // Set the change region boundaries so that they indicate no
   // region and they will be adjusted properly by the min and max
@@ -259,14 +281,8 @@ void imagerPlugin::heartbeat(void)
   // See if the resolution or footprint of the grid has changed.
   // If so, we need to set the size differently and send a new description message.
   if ( (d_data_set->inputGrid->numX() != d_imager_server->nCols()) ||
-       (d_data_set->inputGrid->numY() != d_imager_server->nRows()) ||
-       !floats_close(d_data_set->inputGrid->minX(), d_imager_server->minX()) ||
-       !floats_close(d_data_set->inputGrid->maxX(), d_imager_server->maxX()) ||
-       !floats_close(d_data_set->inputGrid->minY(), d_imager_server->minY()) ||
-       !floats_close(d_data_set->inputGrid->maxY(), d_imager_server->maxY()) ) {
+    (d_data_set->inputGrid->numY() != d_imager_server->nRows()) ) {
     d_imager_server->set_resolution(d_data_set->inputGrid->numX(), d_data_set->inputGrid->numY());
-    d_imager_server->set_range(d_data_set->inputGrid->minX(), d_data_set->inputGrid->maxX(),
-      d_data_set->inputGrid->minY(), d_data_set->inputGrid->maxY());
 
     // Allocate a new buffer to hold each line of data as it is sent.
     if (!allocate_line_buffer()) {
@@ -274,6 +290,35 @@ void imagerPlugin::heartbeat(void)
       teardown();
       return;
     }
+  }
+
+  vrpn_float64	origin[3];
+  vrpn_float64	dCol[3];
+  vrpn_float64	dRow[3];
+  d_imagerpose_server->get_origin(origin);
+  d_imagerpose_server->get_dCol(dCol);
+  d_imagerpose_server->get_dRow(dRow);
+
+  // This assumes no rotation of the grid.
+
+  if ( !floats_close(d_data_set->inputGrid->minX(), origin[0] * 1e+9) ||
+       !floats_close(d_data_set->inputGrid->maxX(), (origin[0]+dCol[0]) * 1e+9) ||
+       !floats_close(d_data_set->inputGrid->minY(), origin[1] * 1e+9) ||
+       !floats_close(d_data_set->inputGrid->maxY(), (origin[1]+dRow[1]) * 1e+9) ) {
+
+    vrpn_float64  set_origin[3] = { d_data_set->inputGrid->minX(), d_data_set->inputGrid->minY() , 0 };
+    vrpn_float64  set_dCol[3] = { d_data_set->inputGrid->maxX() - d_data_set->inputGrid->minX(), 0, 0 };
+    vrpn_float64  set_dRow[3] = { 0, d_data_set->inputGrid->maxY() - d_data_set->inputGrid->minY(), 0 };
+    set_origin[0] *= 1e-9;	// Convert nanometers to meters
+    set_origin[1] *= 1e-9;	// Convert nanometers to meters
+    set_origin[2] *= 1e-9;	// Convert nanometers to meters
+    set_dCol[0] *= 1e-9;	// Convert nanometers to meters
+    set_dCol[1] *= 1e-9;	// Convert nanometers to meters
+    set_dCol[2] *= 1e-9;	// Convert nanometers to meters
+    set_dRow[0] *= 1e-9;	// Convert nanometers to meters
+    set_dRow[1] *= 1e-9;	// Convert nanometers to meters
+    set_dRow[2] *= 1e-9;	// Convert nanometers to meters
+    d_imagerpose_server->set_range(set_origin, set_dCol, set_dRow);
   }
 
   // Check to see if the data set mapped to height has changed.  If so,
@@ -300,8 +345,10 @@ void imagerPlugin::heartbeat(void)
   // connection.
   d_tracker_client->mainloop();
   d_text_client->mainloop();
-  d_imager_client->mainloop();
+  d_imagerpose_server->mainloop();
   d_imager_server->mainloop();
+  d_imagerpose_client->mainloop();
+  d_imager_client->mainloop();
   d_server_stand_in->mainloop();
   d_connection->mainloop();
 }
@@ -310,7 +357,10 @@ void imagerPlugin::heartbeat(void)
 // The description message is guaranteed to be called before any region
 // updates are called for the imager client.  We use this to initialize
 // a data plane to hold the image that is coming over (after checking that
-// its dimensions match what we expect).
+// its dimensions match what we expect).  This is set as the callback for
+// both the imager_client and the imagerpose_client, so that it will get
+// called when both of them are active.  The first call will fail, but
+// the second will succeed.
 
 void  imagerPlugin::handle_description_message(void *userdata, const struct timeval)
 {
@@ -320,10 +370,16 @@ void  imagerPlugin::handle_description_message(void *userdata, const struct time
 
   // Get any required information from the imager client.  It will
   // have been filled in by the time this callback is called.
-  vrpn_float32 minX = me->d_imager_client->minX();
-  vrpn_float32 maxX = me->d_imager_client->maxX();
-  vrpn_float32 minY = me->d_imager_client->minY();
-  vrpn_float32 maxY = me->d_imager_client->maxY();
+  vrpn_float64	origin[3];
+  vrpn_float64	dCol[3];
+  vrpn_float64	dRow[3];
+  me->d_imagerpose_client->get_origin(origin);
+  me->d_imagerpose_server->get_dCol(dCol);
+  me->d_imagerpose_server->get_dRow(dRow);
+  vrpn_float32 minX = origin[0] * 1e+9;
+  vrpn_float32 maxX = (origin[0]+dCol[0]) * 1e+9;
+  vrpn_float32 minY = origin[1] * 1e+9;
+  vrpn_float32 maxY = (origin[1]+dRow[1]) * 1e+9;
   int nCols = me->d_imager_client->nCols();
   int nRows = me->d_imager_client->nRows();
 
@@ -339,15 +395,26 @@ void  imagerPlugin::handle_description_message(void *userdata, const struct time
        floats_close(maxY, me->d_data_set->inputGrid->maxY()) ) {
     me->d_incoming_data_matches = true;
   } else {
-    fprintf(stderr,"imagerPlugin::handle_description_message(): Description doesn't match grid!\n");
     me->d_incoming_data_matches = false;
+    return;
+  }
+}
+
+void  imagerPlugin::handle_region_message(void *userdata, const vrpn_IMAGERREGIONCB info)
+{
+  // Turn the userdata pointer into a pointer to the instance of the class
+  // that has registered this callback handler.
+  imagerPlugin	*me = (imagerPlugin *)userdata;
+
+  // Give up if the incoming data doesn't match
+  if (!(me->d_incoming_data_matches)) {
+    fprintf(stderr,"imagerPlugin::handle_region_message(): Got mismatched region (ignoring)\n");
     return;
   }
 
   // Make sure we have at least one channel defined.
   if (me->d_imager_client->nChannels() <= 0) {
-    fprintf(stderr,"imagerPlugin::handle_description_message(): No channels in image description!\n");
-    me->d_incoming_data_matches = false;
+    fprintf(stderr,"imagerPlugin::handle_region_message(): No channels in image description!\n");
     return;
   }
 
@@ -383,26 +450,9 @@ void  imagerPlugin::handle_description_message(void *userdata, const struct time
     }
     me->d_data_set->dataImages->addImage(output_im);
   }
-}
-
-void  imagerPlugin::handle_region_message(void *userdata, const vrpn_IMAGERREGIONCB info)
-{
-  // Turn the userdata pointer into a pointer to the instance of the class
-  // that has registered this callback handler.
-  imagerPlugin	*me = (imagerPlugin *)userdata;
-
-  // Give up if the incoming data doesn't match
-  if (!(me->d_incoming_data_matches)) {
-    fprintf(stderr,"imagerPlugin::handle_region_message(): Got mismatched region (ignoring)\n");
-    return;
-  }
 
   // Get any required information from the imager client.  It will
   // have been filled in by the time this callback is called.
-  vrpn_float32 minX = me->d_imager_client->minX();
-  vrpn_float32 maxX = me->d_imager_client->maxX();
-  vrpn_float32 minY = me->d_imager_client->minY();
-  vrpn_float32 maxY = me->d_imager_client->maxY();
   int nCols = me->d_imager_client->nCols();
   int nRows = me->d_imager_client->nRows();
 
@@ -437,9 +487,9 @@ void  imagerPlugin::handle_tracker_message(void *userdata, const vrpn_TRACKERCB 
   imagerPlugin	*me = (imagerPlugin *)userdata;
 
   // Store the position and orientation for when the next text message arrives.
-  me->d_pos[0] = info.pos[0];
-  me->d_pos[1] = info.pos[1];
-  me->d_pos[2] = info.pos[2];
+  me->d_pos[0] = info.pos[0] * 1e+9;	// Convert X and Y units from meters to nanometers
+  me->d_pos[1] = info.pos[1] * 1e+9;	// Convert X and Y units from meters to nanometers
+  me->d_pos[2] = info.pos[2];		// Z units were already in nanometers
   me->d_quat[0] = info.quat[0];
   me->d_quat[1] = info.quat[1];
   me->d_quat[2] = info.quat[2];
