@@ -119,7 +119,7 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setRulergridWidths");
   d_setSpecularity_type =
     c->register_message_type("nmg Graphics setSpecularity");
-  d_setSpecularity_type =
+  d_setSpecularColor_type =
     c->register_message_type("nmg Graphics setSpecularColor");
   d_setDiffusePercent_type = 
     c->register_message_type("nmg Graphics setDiffusePercent"); 

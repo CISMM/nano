@@ -7,6 +7,7 @@
 #include <nmb_TimerList.h>
 
 #include <GL/glu.h>  // for gluErrorString
+//#include <GL/glut.h>
 
 #include "graphics_globals.h"  // for g_PRERENDERED_COLORS
 #include "spm_gl.h"  // for init_vertexArray()
@@ -323,12 +324,23 @@ void nmg_RCIS_TextureBase::handlePixelData (
   vrpn_int32 l;
 
   k = (y * d_screenSizeX + x) * 4;
+
+//if (!(y % 10)) {
+//fprintf(stderr, "in handlePixelData at (%d, %d) for %d - offset %d:  %d, %d, %d.\n",
+//x, y, pixelCount, k, buffer[0], buffer[1], buffer[2]);
+//}
+
   for (l = 0, i = 0; i < pixelCount; i++) {
     remote_data[k++] = buffer[l++];
     remote_data[k++] = buffer[l++];
     remote_data[k++] = buffer[l++];
     remote_data[k++] = 255;
   }
+
+//if (!(y % 10)) {
+//fprintf(stderr, "leaving handlePixelData at (%d, %d) for %d - final offset %d:  %d, %d, %d.\n",
+//x, y, pixelCount, k, buffer[l-3], buffer[l-2], buffer[l-1]);
+//}
 
   d_textureChanged = VRPN_TRUE;
 }
@@ -351,7 +363,7 @@ nmg_RCIS_Texture::~nmg_RCIS_Texture (void) {
 // virtual
 void nmg_RCIS_Texture::mainloop (void) {
 
-fprintf(stderr, "Texture mainloop.\n");
+//fprintf(stderr, "Texture mainloop.\n");
 
   if (d_textureChanged) {
     buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY, remote_data);
@@ -417,24 +429,60 @@ nmg_RCIS_Video::~nmg_RCIS_Video (void) {
 }
 
 
+extern void swapbuffers ();
+
 // virtual
 void nmg_RCIS_Video::mainloop (void) {
 
   GLenum i;
 
-fprintf(stderr, "Video mainloop.\n");
+//fprintf(stderr, "Video mainloop.\n");
 
+  // get any new frame data
+  d_imp->inputConnection()->mainloop();
+
+  // draw all the frame data we've got:
+
+  // in the right window
   v_gl_set_context_to_vlib_window();
+
+  // let glRasterPos() work in screen coordinates
+  glViewport(0, 0, d_screenSizeX, d_screenSizeY);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(0.0, d_screenSizeX, 0.0, d_screenSizeY);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glShadeModel(GL_FLAT);
+  glDrawBuffer(GL_FRONT);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+  //glScissor(0, 0, d_screenSizeX, d_screenSizeY);
+  glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_ALPHA_TEST);
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_DEPTH_TEST);
 
   // blit remote_data onto the screen
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  glDrawPixels(d_screenSizeX, d_screenSizeY, GL_RGB, GL_UNSIGNED_BYTE,
+  //glClear(GL_COLOR_BUFFER_BIT);
+  glRasterPos2i(0, 0);
+  glDrawPixels(d_screenSizeX, d_screenSizeY, GL_RGBA, GL_UNSIGNED_BYTE,
                remote_data);
+  glFlush();
 
+//fprintf(stderr, "Drew %d x %d.\n", d_screenSizeX, d_screenSizeY);
+
+  // check for errors
   while ((i = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "  %s\n", gluErrorString(i));
   }
+
+  // hack - from vlib (vogl)
+  //swapbuffers();
+  //glutSwapBuffers();
 
 }
 

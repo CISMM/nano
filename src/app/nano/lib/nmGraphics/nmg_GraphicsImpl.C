@@ -36,6 +36,7 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 
 #define CHECK(a) if (a == -1) return -1
+#define CHECKF(a,b) if (a == -1) { fprintf(stderr, "Error: %s\n", b); return -1; }
 
 nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     nmb_Dataset * data,
@@ -2658,7 +2659,7 @@ int nmg_Graphics_Implementation::handle_resizeViewport
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int height, width;
 
-  CHECK(it->decode_resizeViewport(p.buffer, &height, &width));
+  CHECKF(it->decode_resizeViewport(p.buffer, &height, &width), "handle_resizeViewport");
   it->resizeViewport(height, width);
   return 0;
 }
@@ -2696,7 +2697,7 @@ int nmg_Graphics_Implementation::handle_enableChartjunk
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
 
-  CHECK(it->decode_enableChartjunk(p.buffer, &value));
+  CHECKF(it->decode_enableChartjunk(p.buffer, &value), "handle_enableChartjunk");
   it->enableChartjunk(value);
   return 0;
 }
@@ -2707,7 +2708,7 @@ int nmg_Graphics_Implementation::handle_enableFilledPolygons
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
 
-  CHECK(it->decode_enableFilledPolygons(p.buffer, &value));
+  CHECKF(it->decode_enableFilledPolygons(p.buffer, &value), "handle_enableFilledPolygons");
   it->enableFilledPolygons(value);
   return 0;
 }
@@ -2718,7 +2719,7 @@ int nmg_Graphics_Implementation::handle_enableSmoothShading
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
 
-  CHECK(it->decode_enableSmoothShading(p.buffer, &value));
+  CHECKF(it->decode_enableSmoothShading(p.buffer, &value), "handle_enableSmoothShading");
   it->enableSmoothShading(value);
 
   return 0;
@@ -2730,7 +2731,7 @@ int nmg_Graphics_Implementation::handle_enableTrueTip
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
 
-  CHECK(it->decode_enableTrueTip(p.buffer, &value));
+  CHECKF(it->decode_enableTrueTip(p.buffer, &value), "handle_enableTrueTip");
   it->enableTrueTip(value);
 
   return 0;
@@ -2742,7 +2743,7 @@ int nmg_Graphics_Implementation::handle_setAdhesionSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setAdhesionSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setAdhesionSliderRange(p.buffer, &low, &hi), "handle_setAdhesionSliderRange");
   it->setAdhesionSliderRange(low, hi);
   return 0;
 }
@@ -2753,7 +2754,7 @@ int nmg_Graphics_Implementation::handle_setAlphaColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float r, g, b;
 
-  CHECK(it->decode_setAlphaColor(p.buffer, &r, &g, &b));
+  CHECKF(it->decode_setAlphaColor(p.buffer, &r, &g, &b), "handle_setAlphaColor");
   it->setAlphaColor(r, g, b);
   return 0;
 }
@@ -2764,7 +2765,7 @@ int nmg_Graphics_Implementation::handle_setAlphaSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setAlphaSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setAlphaSliderRange(p.buffer, &low, &hi), "handle_setAlphaSliderRange");
   it->setAlphaSliderRange(low, hi);
   return 0;
 }
@@ -2811,7 +2812,7 @@ int nmg_Graphics_Implementation::handle_setColorSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setColorSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setColorSliderRange(p.buffer, &low, &hi), "handle_setColorSliderRange");
   it->setColorSliderRange(low, hi);
   return 0;
 }
@@ -2822,7 +2823,7 @@ int nmg_Graphics_Implementation::handle_setComplianceSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setComplianceSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setComplianceSliderRange(p.buffer, &low, &hi), "handle_setComplianceSliderRange");
   it->setComplianceSliderRange(low, hi);
   return 0;
 }
@@ -2833,7 +2834,7 @@ int nmg_Graphics_Implementation::handle_setContourColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int r, g, b;
 
-  CHECK(it->decode_setContourColor(p.buffer, &r, &g, &b));
+  CHECKF(it->decode_setContourColor(p.buffer, &r, &g, &b), "handle_setContourColor");
   it->setContourColor(r, g, b);
   return 0;
 }
@@ -2844,7 +2845,7 @@ int nmg_Graphics_Implementation::handle_setContourWidth
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float width;
 
-  CHECK(it->decode_setContourWidth(p.buffer, &width));
+  CHECKF(it->decode_setContourWidth(p.buffer, &width), "handle_setContourWidth");
   it->setContourWidth(width);
   return 0;
 }
@@ -2855,7 +2856,7 @@ int nmg_Graphics_Implementation::handle_setFrictionSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setFrictionSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setFrictionSliderRange(p.buffer, &low, &hi), "handle_setFrictionSliderRange");
   it->setFrictionSliderRange(low, hi);
   return 0;
 }
@@ -2866,7 +2867,7 @@ int nmg_Graphics_Implementation::handle_setBumpSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setBumpSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setBumpSliderRange(p.buffer, &low, &hi), "handle_setBumpSliderRange");
   it->setBumpSliderRange(low, hi);
   return 0;
 }
@@ -2877,7 +2878,7 @@ int nmg_Graphics_Implementation::handle_setBuzzSliderRange
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setBuzzSliderRange(p.buffer, &low, &hi));
+  CHECKF(it->decode_setBuzzSliderRange(p.buffer, &low, &hi), "handle_setBuzzSliderRange");
   it->setBuzzSliderRange(low, hi);
   return 0;
 }
@@ -2888,7 +2889,7 @@ int nmg_Graphics_Implementation::handle_setHandColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int color;
 
-  CHECK(it->decode_setHandColor(p.buffer, &color));
+  CHECKF(it->decode_setHandColor(p.buffer, &color), "handle_setHandColor");
   it->setHandColor(color);
   return 0;
 }
@@ -2900,7 +2901,7 @@ int nmg_Graphics_Implementation::handle_enableCollabHand
   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
   vrpn_bool on;
 
-  CHECK(it->decode_enableCollabHand(p.buffer, &on));
+  CHECKF(it->decode_enableCollabHand(p.buffer, &on), "handle_enableCollabHand");
   it->enableCollabHand(on);
   return 0;
 }
@@ -2912,7 +2913,7 @@ int nmg_Graphics_Implementation::handle_setCollabHandPos
   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
   double pos[3], quat[4];
 
-  CHECK(it->decode_setCollabHandPos(p.buffer, pos, quat));
+  CHECKF(it->decode_setCollabHandPos(p.buffer, pos, quat), "handle_setCollabHandPos");
   it->setCollabHandPos(pos, quat);
   return 0;
 }
@@ -2924,7 +2925,7 @@ int nmg_Graphics_Implementation::handle_setCollabMode
   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
   int mode;
 
-  CHECK(it->decode_setCollabMode(p.buffer, &mode));
+  CHECKF(it->decode_setCollabMode(p.buffer, &mode), "handle_setCollabMode");
   it->setCollabMode(mode);
   return 0;
 }
@@ -2981,7 +2982,7 @@ int nmg_Graphics_Implementation::handle_setMinColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   double c [3];
 
-  CHECK(it->decode_setMinColor(p.buffer, c));
+  CHECKF(it->decode_setMinColor(p.buffer, c), "handle_setMinColor");
   it->setMinColor(c);
   return 0;
 }
@@ -2992,7 +2993,7 @@ int nmg_Graphics_Implementation::handle_setMaxColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   double c [3];
 
-  CHECK(it->decode_setMaxColor(p.buffer, c));
+  CHECKF(it->decode_setMaxColor(p.buffer, c), "handle_setMaxColor");
   it->setMaxColor(c);
   return 0;
 }
@@ -3013,7 +3014,7 @@ int nmg_Graphics_Implementation::handle_enableRulergrid
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
 
-  CHECK(it->decode_enableRulergrid(p.buffer, &value));
+  CHECKF(it->decode_enableRulergrid(p.buffer, &value), "handle_enableRulergrid");
   it->enableRulergrid(value);
   return 0;
 }
@@ -3025,7 +3026,7 @@ int nmg_Graphics_Implementation::handle_setRulergridAngle
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float angle;
 
-  CHECK(it->decode_setRulergridAngle(p.buffer, &angle));
+  CHECKF(it->decode_setRulergridAngle(p.buffer, &angle),  "handle_setRulergridAngle");
   it->setRulergridAngle(angle);
   return 0;
 }
@@ -3036,7 +3037,7 @@ int nmg_Graphics_Implementation::handle_setRulergridColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int r, g, b;
 
-  CHECK(it->decode_setRulergridColor(p.buffer, &r, &g, &b));
+  CHECKF(it->decode_setRulergridColor(p.buffer, &r, &g, &b), "handle_setRulergridColor");
   it->setRulergridColor(r, g, b);
   return 0;
 }
@@ -3047,7 +3048,7 @@ int nmg_Graphics_Implementation::handle_setRulergridOffset
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float x, y;
 
-  CHECK(it->decode_setRulergridOffset(p.buffer, &x, &y));
+  CHECKF(it->decode_setRulergridOffset(p.buffer, &x, &y), "handle_setRulergridOffset");
   it->setRulergridOffset(x, y);
   return 0;
 }
@@ -3058,7 +3059,7 @@ int nmg_Graphics_Implementation::handle_setNullDataAlphaToggle
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int val;
 
-  CHECK(it->decode_setNullDataAlphaToggle(p.buffer, &val));
+  CHECKF(it->decode_setNullDataAlphaToggle(p.buffer, &val), "handle_setNullDataAlphaToggle");
   it->setNullDataAlphaToggle(val);
   return 0;
 }
@@ -3069,7 +3070,7 @@ int nmg_Graphics_Implementation::handle_setRulergridOpacity
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float alpha;
 
-  CHECK(it->decode_setRulergridOpacity(p.buffer, &alpha));
+  CHECKF(it->decode_setRulergridOpacity(p.buffer, &alpha), "handle_setRulergridOpacity");
   it->setRulergridOpacity(alpha);
   return 0;
 }
@@ -3080,7 +3081,7 @@ int nmg_Graphics_Implementation::handle_setRulergridScale
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float scale;
 
-  CHECK(it->decode_setRulergridScale(p.buffer, &scale));
+  CHECKF(it->decode_setRulergridScale(p.buffer, &scale), "handle_setRulergridScale");
   it->setRulergridScale(scale);
   return 0;
 }
@@ -3091,7 +3092,7 @@ int nmg_Graphics_Implementation::handle_setRulergridWidths
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float x, y;
 
-  CHECK(it->decode_setRulergridWidths(p.buffer, &x, &y));
+  CHECKF(it->decode_setRulergridWidths(p.buffer, &x, &y), "handle_setRulergridWidths");
   it->setRulergridWidths(x, y);
   return 0;
 }
@@ -3102,7 +3103,7 @@ int nmg_Graphics_Implementation::handle_setSpecularity
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int shiny;
 
-  CHECK(it->decode_setSpecularity(p.buffer, &shiny));
+  CHECKF(it->decode_setSpecularity(p.buffer, &shiny), "handle_setSpecularity");
   it->setSpecularity(shiny);
   return 0;
 }
@@ -3113,7 +3114,7 @@ int nmg_Graphics_Implementation::handle_setDiffusePercent
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float diffuse;
 
-  CHECK(it->decode_setDiffusePercent(p.buffer, &diffuse));
+  CHECKF(it->decode_setDiffusePercent(p.buffer, &diffuse), "handle_setDiffusePercent");
   it->setDiffusePercent(diffuse);
   return 0;
 }
@@ -3123,7 +3124,7 @@ int nmg_Graphics_Implementation::handle_setSurfaceAlpha
    nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
    float surface_alpha;
 
-   CHECK(it->decode_setSurfaceAlpha(p.buffer, &surface_alpha));
+   CHECKF(it->decode_setSurfaceAlpha(p.buffer, &surface_alpha), "handle_setSurfaceAlpha");
    it->setSurfaceAlpha(surface_alpha);
    return 0;
 }
@@ -3134,7 +3135,7 @@ int nmg_Graphics_Implementation::handle_setSpecularColor
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float specular_color;
 
-  CHECK(it->decode_setSpecularColor(p.buffer, &specular_color));
+  CHECKF(it->decode_setSpecularColor(p.buffer, &specular_color), "handle_setSpecularColor");
   it->setSpecularColor(specular_color);
   return 0;
 }
@@ -3145,7 +3146,7 @@ int nmg_Graphics_Implementation::handle_setSphereScale
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float scale;
 
-  CHECK(it->decode_setSphereScale(p.buffer, &scale));
+  CHECKF(it->decode_setSphereScale(p.buffer, &scale), "handle_setSphereScale");
   it->setSphereScale(scale);
   return 0;
 }
@@ -3156,7 +3157,7 @@ int nmg_Graphics_Implementation::handle_setTesselationStride
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int stride;
 
-  CHECK(it->decode_setTesselationStride(p.buffer, &stride));
+  CHECKF(it->decode_setTesselationStride(p.buffer, &stride), "handle_setTesselationStride");
   it->setTesselationStride(stride);
   return 0;
 }
@@ -3168,7 +3169,7 @@ int nmg_Graphics_Implementation::handle_setTextureMode
   TextureMode m;
   TextureTransformMode xm;
 
-  CHECK(it->decode_setTextureMode(p.buffer, &m, &xm));
+  CHECKF(it->decode_setTextureMode(p.buffer, &m, &xm), "handle_setTextureMode");
   it->setTextureMode(m, xm);
   return 0;
 }
@@ -3179,7 +3180,7 @@ int nmg_Graphics_Implementation::handle_setTextureScale
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float scale;
 
-  CHECK(it->decode_setTextureScale(p.buffer, &scale));
+  CHECKF(it->decode_setTextureScale(p.buffer, &scale), "handle_setTextureScale");
   it->setTextureScale(scale);
   return 0;
 }
@@ -3190,7 +3191,7 @@ int nmg_Graphics_Implementation::handle_setTrueTipScale
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float scale;
 
-  CHECK(it->decode_setTrueTipScale(p.buffer, &scale));
+  CHECKF(it->decode_setTrueTipScale(p.buffer, &scale), "handle_setTrueTipScale");
   it->setTrueTipScale(scale);
   return 0;
 }
@@ -3201,7 +3202,7 @@ int nmg_Graphics_Implementation::handle_setUserMode
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int oldMode, newMode, style;
 
-  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &newMode, &style));
+  CHECKF(it->decode_setUserMode(p.buffer, &oldMode, &newMode, &style), "handle_setUserMode");
   it->setUserMode(oldMode, newMode, style);
   return 0;
 }
@@ -3212,7 +3213,7 @@ int nmg_Graphics_Implementation::handle_setLightDirection
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   q_vec_type v;
 
-  CHECK(it->decode_setLightDirection(p.buffer, v));
+  CHECKF(it->decode_setLightDirection(p.buffer, v), "handle_setLightDirection");
   it->setLightDirection(v);
   return 0;
 }
@@ -3234,7 +3235,7 @@ int nmg_Graphics_Implementation::handle_addPolylinePoint
 
   pp = new PointType [2];
 
-  CHECK(it->decode_addPolylinePoint(p.buffer, pp));
+  CHECKF(it->decode_addPolylinePoint(p.buffer, pp), "handle_addPolylinePoint");
   it->addPolylinePoint(pp);
   return 0;
 }
@@ -3245,7 +3246,7 @@ int nmg_Graphics_Implementation::handle_addPolySweepPoints
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   PointType topL, botL, topR, botR;
 
-  CHECK(it->decode_addPolySweepPoints(p.buffer, topL, botL, topR, botR));
+  CHECKF(it->decode_addPolySweepPoints(p.buffer, topL, botL, topR, botR), "handle_addPolySweepPoints");
   it->addPolySweepPoints( topL, botL, topR, botR);
   return 0;
 }
@@ -3265,7 +3266,7 @@ int nmg_Graphics_Implementation::handle_setRubberLineStart
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float pt [2];
 
-  CHECK(it->decode_setRubberLineStart(p.buffer, pt));
+  CHECKF(it->decode_setRubberLineStart(p.buffer, pt), "handle_setRubberLineStart");
   it->setRubberLineStart(pt);
   return 0;
 }
@@ -3276,7 +3277,7 @@ int nmg_Graphics_Implementation::handle_setRubberLineEnd
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float pt [2];
 
-  CHECK(it->decode_setRubberLineEnd(p.buffer, pt));
+  CHECKF(it->decode_setRubberLineEnd(p.buffer, pt), "handle_setRubberLineEnd");
   it->setRubberLineEnd(pt);
   return 0;
 }
@@ -3287,7 +3288,7 @@ int nmg_Graphics_Implementation::handle_setRubberSweepLineStart
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   PointType left, right;
 
-  CHECK(it->decode_setRubberSweepLineStart(p.buffer, left, right));
+  CHECKF(it->decode_setRubberSweepLineStart(p.buffer, left, right), "handle_setRubberSweepLineStart");
   it->setRubberSweepLineStart(left, right);
   return 0;
 }
@@ -3298,7 +3299,7 @@ int nmg_Graphics_Implementation::handle_setRubberSweepLineEnd
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   PointType left, right;
 
-  CHECK(it->decode_setRubberSweepLineEnd(p.buffer, left, right));
+  CHECKF(it->decode_setRubberSweepLineEnd(p.buffer, left, right), "handle_setRubberSweepLineEnd");
   it->setRubberSweepLineEnd(left, right);
   return 0;
 }
@@ -3309,7 +3310,7 @@ int nmg_Graphics_Implementation::handle_setScanlineEndpoints
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float pt [6];
 
-  CHECK(it->decode_setScanlineEndpoints(p.buffer, pt));
+  CHECKF(it->decode_setScanlineEndpoints(p.buffer, pt), "handle_setRubberSweepLineEnd");
   it->setScanlineEndpoints(&(pt[0]), &(pt[3]));
   return 0;
 }
@@ -3319,7 +3320,7 @@ int nmg_Graphics_Implementation::handle_displayScanlinePosition
 				(void *userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int enable;
-  CHECK(it->decode_displayScanlinePosition(p.buffer, &enable));
+  CHECKF(it->decode_displayScanlinePosition(p.buffer, &enable), "handle_displayScanlinePosition");
   it->displayScanlinePosition(enable);
   return 0;
 }
@@ -3330,7 +3331,7 @@ int nmg_Graphics_Implementation::handle_positionAimLine
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   PointType top, bottom;
 
-  CHECK(it->decode_positionAimLine(p.buffer, top, bottom));
+  CHECKF(it->decode_positionAimLine(p.buffer, top, bottom), "handle_positionAimLine");
   it->positionAimLine(top, bottom);
   return 0;
 }
@@ -3341,7 +3342,7 @@ int nmg_Graphics_Implementation::handle_positionRubberCorner
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float x0, y0, x1, y1;
 
-  CHECK(it->decode_positionRubberCorner(p.buffer, &x0, &y0, &x1, &y1));
+  CHECKF(it->decode_positionRubberCorner(p.buffer, &x0, &y0, &x1, &y1), "handle_positionRubberCorner");
   it->positionRubberCorner(x0, y0, x1, y1);
   return 0;
 }
@@ -3352,7 +3353,7 @@ int nmg_Graphics_Implementation::handle_positionSweepLine
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   PointType topL, bottomL, topR, bottomR;
 
-  CHECK(it->decode_positionSweepLine(p.buffer, topL, bottomL, topR, bottomR));
+  CHECKF(it->decode_positionSweepLine(p.buffer, topL, bottomL, topR, bottomR), "handle_positionSweepLine");
   it->positionSweepLine(topL, bottomL, topR, bottomR);
   return 0;
 }
@@ -3363,7 +3364,7 @@ int nmg_Graphics_Implementation::handle_positionSphere
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float x, y, z;
 
-  CHECK(it->decode_positionSphere(p.buffer, &x, &y, &z));
+  CHECKF(it->decode_positionSphere(p.buffer, &x, &y, &z), "handle_positionSphere");
   it->positionSphere(x, y, z);
   return 0;
 }
@@ -3520,7 +3521,7 @@ int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
 						       vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
   int value;
-  it->decode_enableGeneticTextures( p.buffer, &value );
+  CHECKF(it->decode_enableGeneticTextures(p.buffer, &value), "handle_enableGeneticTextures");
   it->enableGeneticTextures( value );
   return 0;
 }
@@ -3532,8 +3533,8 @@ int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
   int number_of_variables;
   char **variable_list;
-  it->decode_sendGeneticTexturesData( p.buffer, 
-				      &number_of_variables, &variable_list );
+  CHECKF(it->decode_sendGeneticTexturesData
+          (p.buffer, &number_of_variables, &variable_list), "handle_sendGeneticTexturesData");
   it->sendGeneticTexturesData( number_of_variables, variable_list );
   for ( int i = 0; i < number_of_variables; i++ ) {
     if (variable_list && variable_list[i]) {
@@ -3566,7 +3567,7 @@ int nmg_Graphics_Implementation::handle_setRealignTextureSliderRange
   float low, hi;
   
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_setRealignTextureSliderRange( p.buffer, &low, &hi );
+  CHECKF(it->decode_setRealignTextureSliderRange(p.buffer, &low, &hi), "handle_setRealignTextureSliderRange");
   it->setRealignTextureSliderRange( low, hi );
   return 0;
 }
@@ -3577,7 +3578,7 @@ int nmg_Graphics_Implementation::handle_setRealignTexturesConversionMap
   
   char *map = new char[100], *mapdir = new char[100];
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_two_char_arrays( p.buffer, &map, &mapdir );
+  CHECKF(it->decode_two_char_arrays(p.buffer, &map, &mapdir), "handle_setRealignTexturesConversionMap");
   it->setRealignTexturesConversionMap( map, mapdir );
 
   if (map) {
@@ -3595,7 +3596,7 @@ int nmg_Graphics_Implementation::handle_computeRealignPlane (void *userdata,
 
   char *name = new char[100], *newname = new char[100];
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_two_char_arrays( p.buffer, &name, &newname );
+  CHECKF(it->decode_two_char_arrays(p.buffer, &name, &newname), "handle_computeRealignPlane");
   it->computeRealignPlane( name, newname );
 
   if (name) {
@@ -3613,7 +3614,7 @@ int nmg_Graphics_Implementation::handle_enableRealignTextures (void *userdata,
 						       vrpn_HANDLERPARAM p) {
   int on;
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_enableRealignTextures( p.buffer, &on );
+  CHECKF(it->decode_enableRealignTextures(p.buffer, &on), "handle_enableRealignTextures");
   it->enableRealignTextures( on );
   return 0;
 }
@@ -3684,18 +3685,6 @@ int nmg_Graphics_Implementation::handle_updateTexture (void *userdata,
   delete [] image_name;
   return 0;
 }
-
-/*
-// static
-int nmg_Graphics_Implementation::handle_enableRegistration (void *userdata,
-                                                       vrpn_HANDLERPARAM p) {
-  int on;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_enableRegistration( p.buffer, &on );
-  it->enableRegistration( on );
-  return 0;
-}
-*/
 
 // static
 int nmg_Graphics_Implementation::handle_setTextureTransform (void *userdata,
