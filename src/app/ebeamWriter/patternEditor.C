@@ -43,9 +43,32 @@ PatternEditor::PatternEditor()
    
 }
 
+PatternEditor::~PatternEditor()
+{
+   d_viewer->destroyWindow(d_navWinID);
+   d_viewer->destroyWindow(d_mainWinID);
+}
+
 void PatternEditor::addImage(nmb_Image *im)
 {
+   nmb_ImageBounds ib;
+   im->getBounds(ib);
+   nmb_ImageBounds::ImageBoundPoint points[4] = 
+     {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
+      nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
+   
    d_images.insert(d_images.begin(), im);
+
+   for (int i = 0; i < 4; i++) {
+       d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
+       d_worldMaxX_nm = max(d_worldMaxX_nm, ib.getX(points[i]));
+       d_worldMinY_nm = min(d_worldMinY_nm, ib.getY(points[i]));
+       d_worldMaxY_nm = max(d_worldMaxY_nm, ib.getY(points[i]));
+   }
+   d_mainWinMinX_nm = d_worldMinX_nm;
+   d_mainWinMinY_nm = d_worldMinY_nm;
+   d_mainWinMaxX_nm = d_worldMaxX_nm;
+   d_mainWinMaxY_nm = d_worldMaxY_nm;
 }
 
 void PatternEditor::removeImage(nmb_Image *im)
@@ -159,7 +182,14 @@ int PatternEditor::mainWinDisplayHandler(
   glTexParameterf(GL_TEXTURE_2D,
                   GL_TEXTURE_MIN_FILTER,
                   GL_LINEAR_MIPMAP_LINEAR);
-  glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_DECAL);
+  glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_BLEND);
+  GLfloat textureColor[] = {0.5, 0.5, 0.5, 0.5};
+  glTexEnvfv(GL_TEXTURE_2D, GL_TEXTURE_ENV_COLOR, textureColor);
+
+  glEnable(GL_BLEND);
+
+  // XXX - may need to change this in the future
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   GLfloat eyePlaneS[] =
        {1.0, 0.0, 0.0, 0.0};
@@ -231,7 +261,8 @@ int PatternEditor::mainWinDisplayHandler(
          break;
        default:
          textureOkay = VRPN_FALSE;
-         fprintf(stderr, "Error, unrecognized pixel type\n");
+         fprintf(stderr, "mainWinDisplayHandler::"
+                         "Error, unrecognized pixel type\n");
          break;
      }
      if (!texture) {
@@ -239,9 +270,9 @@ int PatternEditor::mainWinDisplayHandler(
      }
 
      if (textureOkay) {
-       printf("Loading texture %d with type %d\n", 
-              i, (*currImage)->pixelType());
-       gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,width, height, GL_LUMINANCE,
+       printf("Loading texture %s with type %d\n", 
+              (*currImage)->name()->Characters(), (*currImage)->pixelType());
+       gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_LUMINANCE,
               pixType, texture);
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
               GL_LINEAR_MIPMAP_LINEAR);
@@ -260,7 +291,7 @@ int PatternEditor::mainWinDisplayHandler(
        glLoadMatrixd(worldToImage);
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
-       glColor3f(1.0, 1.0, 1.0);
+       glColor4f(1.0, 1.0, 1.0, 0.5);
        glVertex3f(me->d_mainWinMinX_nm, me->d_mainWinMinY_nm, 0);
        glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMinY_nm, 0);
        glVertex3f(me->d_mainWinMaxX_nm, me->d_mainWinMaxY_nm, 0);

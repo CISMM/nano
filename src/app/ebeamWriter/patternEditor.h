@@ -19,6 +19,7 @@ class PatternElement {
 class PatternEditor {
   public:
    PatternEditor();
+   ~PatternEditor();
    void show();
    void addImage(nmb_Image *im);
    void removeImage(nmb_Image *im);
