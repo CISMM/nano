@@ -220,11 +220,12 @@ int clear_world_modechange(int mode)
   removeFunctionFromFunclist(&v_hand,hand_id);
   removeFunctionFromFunclist(&vir_world,sphere_id);  
 
-  /* The other user's hand doesn't depend on what your hand is doing...
-  if (!g_draw_collab_hand) {
+  /* The other user's hand doesn't depend on what your hand is doing,
+     but we seem to need this anyway... */
+  if (g_draw_collab_hand) {
     removeFunctionFromFunclist(&vir_world, collabHand_id);
   }
-  */
+  /* */
 
   return(0);
 }
@@ -328,17 +329,19 @@ int init_world_modechange(int mode, int style)
 		(void *)g_scanlinePt, "scanline_indicator");
   }
 
-  /* The other user's hand doesn't depend on what your hand is doing...
+  /* The other user's hand doesn't depend on what your hand is doing,
+     but we seem to need this anyway... */
   if (g_draw_collab_hand) {
     collabHand_id =
         addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
 			      "draw_list(collab_hand_struct)");
   }
-  */
+  /* */
   return 0;
 }
 
 void enableCollabHand (int enable) {
+  g_draw_collab_hand = enable;
   if (enable) {
     collabHand_id =
         addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
@@ -347,6 +350,13 @@ void enableCollabHand (int enable) {
     removeFunctionFromFunclist(&vir_world, collabHand_id);
   }
 }
+
+// collabHand_id:
+//   add in enableCollabHand(VRPN_TRUE)
+//   remove in clear_world_modechange()
+//   add in init_world_modechange()
+//   ...
+//   remove in enableCollabHand(VRPN_FALSE)
 
 // function to toggle display of the scanline position icon:
 void enableScanlinePositionDisplay(const int enable) {
