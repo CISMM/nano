@@ -4,6 +4,11 @@ ifeq ($(MAKECMDGOALS),afmcntsim)
    EXTRA_CFLAGS+=-DAFMSIM
 endif
 
+# EXTRA_CFLAGS+=-I/afs/unc/proj/walk/include
+LATE_INCLUDE_PATH := -I/afs/unc/proj/walk/include
+LATE_LOAD_PATH := -L/afs/unc/proj/walk/lib/$(HW_OS).$(SGI_ABI)
+#LATE_LIBRARIES := -lglut
+
 include ../Makefile.share
 
 ifeq ($(MAKELEVEL),0)
@@ -23,3 +28,4 @@ $(OBJECT_DIR)/afmcntsim:
            MAKECMDGOALS="$(filter-out afmcntsim,$(MAKECMDGOALS))" \
            EXCLUDE_SRC=surface.C
 endif
+

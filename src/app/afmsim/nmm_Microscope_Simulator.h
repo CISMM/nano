@@ -1,9 +1,10 @@
 #ifndef NMM_MICROSCOPE_SIMULATOR_H
 #define NMM_MICROSCOPE_SIMULATOR_H
 
-#include "nmm_Microscope.h"
-#include "nmb_Types.h"
-#include "BCGrid.h"
+#include <nmm_Microscope.h>
+#include <nmb_Types.h>
+#include <BCGrid.h>
+#include <nmb_Device.h>
 
 #define NANOM_VERSION    7     // Version 7
 #define NANOM_REVISION   1     // Release 1
@@ -113,8 +114,8 @@ extern int	currentline;
 extern vrpn_Connection * connection;
 extern nmm_Microscope_Simulator * AFMSimulator;
 
-class nmm_Microscope_Simulator: public nmb_Device_Server, nmm_Microscope
-{
+class nmm_Microscope_Simulator : public nmb_Device_Server,
+                                 public nmm_Microscope {
 
 	// Simulator server for Microscope
 

@@ -4,13 +4,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include "nmm_Microscope_Simulator.h"
-#include "BCPlane.h"
-#include "nmb_Util.h"		
+#include <BCPlane.h>
+//#include "nmb_Util.h"		
 
 #ifndef WARRENCNTSIM_H
 #include "warrencntsim.h"
 #endif
 
+#include <vrpn_Types.h>
 
 // Tom Hudson 10 June 99
 // Things that were declared in the header file by the 145 team

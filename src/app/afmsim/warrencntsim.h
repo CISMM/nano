@@ -32,7 +32,9 @@
 #endif
 
 #include <math.h>
+//#ifdef GLUT
 #include <GL/glut.h>
+//#endif
 
 #include "vec2d.h"
 
