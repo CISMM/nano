@@ -3,8 +3,13 @@
 #include "nmm_EDAX.h"
 #include "nmb_TransformMatrix44.h"
 #include "exposureUtil.h"
+#include "nmb_ImgMagick.h"
 
 static int expose_point_count = 0;
+
+int ControlPanels::s_numImageFileFormats = 5;
+char *ControlPanels::s_imageFileFormatNames[] = 
+{"TIFF", "JPG", "BMP", "PGM", "PPM"};
 
 ControlPanels::ControlPanels(PatternEditor *pe,
                              nmm_Microscope_SEM_Remote *sem):
@@ -81,8 +86,8 @@ ControlPanels::ControlPanels(PatternEditor *pe,
   d_imageNames->initializeTcl("imageNames");
   d_bufferImageFormatList->initializeTcl("bufferImage_format_list");
   d_semBufferImageNames->initializeTcl("sem_bufferImageNames");
-  for (i = 0; i < ImageType_count; i++)
-    d_bufferImageFormatList->addEntry(ImageType_names[i]);
+  for (i = 0; i < s_numImageFileFormats; i++)
+    d_bufferImageFormatList->addEntry(s_imageFileFormatNames[i]);
 
   d_saveImageFormatList->initializeTcl("save_image_format_list");
 
@@ -277,6 +282,7 @@ void ControlPanels::handle_bufferImageFileName_change(
   printf("save to file %s with format %s\n", 
                               (const char *)me->d_bufferImageFileName,
                               (const char *)me->d_bufferImageFormat);
+  /*
   ImageType filetype = TIFFImageType;
 
   if (strcmp(ImageType_names[TIFFImageType], 
@@ -286,9 +292,10 @@ void ControlPanels::handle_bufferImageFileName_change(
       (const char *)me->d_bufferImageFormat) == 0) {
      filetype = PNMImageType;
   }
+  */
   me->d_patternEditor->saveImageBuffer(
                              (const char *)me->d_bufferImageFileName,
-                             filetype);
+                             (const char *)me->d_bufferImageFormat);
 }
 
 //static
@@ -343,8 +350,10 @@ void ControlPanels::handle_saveImageFileName_change(const char * /*new_value*/,
       }
       fclose(file_ptr);
       file_ptr = NULL;
-      if (im->exportToFile(file_ptr, me->d_saveImageFileType.string(),
-                              me->d_saveImageFileName.string())) {
+	  if (nmb_ImgMagick::writeFileMagick(me->d_saveImageFileName.string(),
+		  me->d_saveImageFileType.string(), im)) {
+//      if (im->exportToFile(file_ptr, me->d_saveImageFileType.string(),
+//                              me->d_saveImageFileName.string())) {
           fprintf(stderr, "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 me->d_saveImageFileName.string());

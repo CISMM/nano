@@ -163,6 +163,9 @@ class ControlPanels {
                     // of images being stored at each resolution
    char *d_autoEnabledImageName;
 
+   static int s_numImageFileFormats;
+   static char *s_imageFileFormatNames[];
+
 };
 
 #endif

@@ -85,10 +85,6 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\lib\ImgFormat\AbstractImage.C
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\nmBase\BCGrid.C
 # End Source File
 # Begin Source File
@@ -261,14 +257,6 @@ SOURCE=..\nano\lib\nmUI\nmui_Component.C
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\ImgFormat\PNMImage.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\PPM.C
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\nmBase\readNanoscopeFile.C
 # End Source File
 # Begin Source File
@@ -286,10 +274,6 @@ SOURCE=..\..\lib\tclLinkVar\Tcl_Netvar.C
 # Begin Source File
 
 SOURCE=..\..\lib\nmMP\thread.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\ImgFormat\TIFFImage.C
 # End Source File
 # Begin Source File
 
@@ -311,10 +295,6 @@ SOURCE=..\..\lib\nmBase\vc_dirent.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\..\lib\ImgFormat\AbstractImage.h
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\BCGrid.h
@@ -469,14 +449,6 @@ SOURCE=..\nano\lib\nmUI\nmui_Component.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\ImgFormat\PNMImage.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\PPM.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\nmBase\readNanoscopeFile.h
 # End Source File
 # Begin Source File
@@ -494,10 +466,6 @@ SOURCE=..\..\lib\tclLinkVar\Tcl_Netvar.h
 # Begin Source File
 
 SOURCE=..\..\lib\nmMP\thread.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\ImgFormat\TIFFImage.h
 # End Source File
 # Begin Source File
 

@@ -26,6 +26,8 @@ main.C : this file contains the main() function for the seegerizer. This
 #include "nmm_Microscope_SEM_EDAX.h"
 #include "controlPanels.h"
 
+#include "nmb_ImgMagick.h"
+
 #include "thread.h"
 
 /* arguments:
@@ -101,6 +103,8 @@ Thread *serverThread;
 
 int main(int argc, char **argv)
 {
+
+	nmb_ImgMagick::initMagick(argv[0]);
 
     // Initialize TCL/TK so that TclLinkvar variables link up properly
     char *tcl_script_dir;

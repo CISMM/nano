@@ -1,5 +1,6 @@
 #include "patternEditor.h"
 #include "GL/gl.h"
+#include "nmb_ImgMagick.h"
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -31,6 +32,7 @@ PatternEditor::PatternEditor(int startX, int startY)
          PatternEditor::navWinEventHandler, this);
    d_viewer->setWindowDisplayHandler(d_navWinID,
          PatternEditor::navWinDisplayHandler, this);
+   
 
    // 20 microns should be a reasonable size - maybe should make this adjustable
    // since it affects the ease of use of the navigator window
@@ -241,7 +243,7 @@ void PatternEditor::showSingleImage(nmb_Image *im)
 void PatternEditor::show() 
 {
    d_viewer->showWindow(d_mainWinID);
-   d_viewer->showWindow(d_navWinID);
+   //d_viewer->showWindow(d_navWinID);
 }
 
 void PatternEditor::setDrawingParameters(double lineWidth_nm, 
@@ -418,7 +420,7 @@ int PatternEditor::findNearestPoint(list<PatternPoint> points,
 */
 
 void PatternEditor::saveImageBuffer(const char *filename, 
-                                    const ImageType filetype)
+                                    const char *filetype)
 {
   glutProcessEvents_UNC();
   d_viewer->dirtyWindow(d_mainWinID);
@@ -433,14 +435,19 @@ void PatternEditor::saveImageBuffer(const char *filename,
   glPixelStorei(GL_PACK_ALIGNMENT, 4);
   glReadBuffer(GL_FRONT);
 
-  AbstractImage *ai = ImageMaker(filetype, h, w, 3, pixels, true);
+  //AbstractImage *ai = ImageMaker(filetype, h, w, 3, pixels, true);
+  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+  }
   delete [] pixels;
+  /*
   if (ai)
   {
     if (!ai->Write(filename))
        fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
     delete ai;
   }
+  */
 }
 
 void PatternEditor::setViewport(double minX_nm, double minY_nm, 

@@ -70,7 +70,7 @@ class PatternEditor : public nmb_ImageDisplay {
                     double endX_nm, double endY_nm,
                     int numHorizontal, int numVertical);
    void saveImageBuffer(const char *filename,
-                const ImageType filetype);
+                const char *filetype);
    void setViewport(double minX_nm, double minY_nm, 
                     double maxX_nm, double maxY_nm);
    void getViewport(double &minX_nm, double &minY_nm,

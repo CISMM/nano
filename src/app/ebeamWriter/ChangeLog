@@ -1,3 +1,11 @@
+2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (show): disabled display of navigation window 
+            because it doesn't work very well
+	  (saveImageBuffer): changed this to use ImgMagick
+	* main.C (main): added initMagick()
+	* controlPanels.hC : changed to use ImgMagick
+
 2002-04-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* changed #include <list.h> to #include <list>; added
