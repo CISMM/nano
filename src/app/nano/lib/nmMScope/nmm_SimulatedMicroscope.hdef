@@ -50,6 +50,8 @@ public:
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
 							//knowledgeof Node class
+	double get_x_offset(){return d_xmin;};
+	double get_y_offset(){return d_ymin;};
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;

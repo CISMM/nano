@@ -10,6 +10,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.h
 #include <nmb_Dataset.h>
 #include "nma_ShapeAnalyze.h"
 #include "vrpn_Connection.h"
+#include "URender.h"
 
 //
 class nmb_SharedDevice_Remote;
@@ -28,7 +29,7 @@ class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, nmm_AFMSIMSERVER
 
 public:
 	nmm_SimulatedMicroscope_Remote(const char * name, vrpn_Connection * connection, 
-		const char * planename, nmb_Dataset * dataset);
+		const char * planename, nmb_Dataset * dataset, URender * testobject);
 	virtual ~nmm_SimulatedMicroscope_Remote();
 	int mainloop();
 	void encode_and_sendGridandScanInfo(//encode grid and scan info (microscope extent) and nano
@@ -66,7 +67,7 @@ private:
 	long simulator_id;				//our sender id
 	vrpn_int32 d_gotConnection_type;//id for connection message we need to receive before we send 
 									//anything
-	
+	URender * myURenderObject;
 
 };
 //

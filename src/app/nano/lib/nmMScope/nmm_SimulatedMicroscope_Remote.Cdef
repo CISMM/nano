@@ -34,7 +34,7 @@ CLASSNAME nmm_SimulatedMicroscope_Remote
 
 nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   (const char * name, vrpn_Connection * connection, const char * planename, 
-  nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
+  nmb_Dataset * dataset, URender * testobject) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
   nmb_SharedDevice_Remote(name,connection), d_dataset(dataset), 
   RealAFMPlaneName(d_dataset->heightPlaneName->string()),
   RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName)), 
@@ -57,6 +57,7 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
 	DataArray = new double*[Xdim]; //ANDREA:  check on whether this should be something sent over
 								   //or stay as is
 	UnitsOK = true;
+	myURenderObject = testobject;
 }
 //
 nmm_SimulatedMicroscope_Remote::~nmm_SimulatedMicroscope_Remote() {
@@ -79,8 +80,18 @@ int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_
 			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
 			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
   //send two triangles for testing
-  grpc_me->encode_and_sendTriangle(200.0f,200.0f,100.0f,300.0f,200.0f,100.0f,250.0f,300.0f,150.0f);
+  //grpc_me->encode_and_sendTriangle(200.0f,200.0f,100.0f,300.0f,200.0f,100.0f,250.0f,300.0f,150.0f);
   //grpc_me->encode_and_sendTriangle(400.0f,400.0f,400.0f,300.0f,300.0f,20.0f,400.0f,300.0f,20.0f);
+  int counter = 0;
+  int num_vertices = (grpc_me->myURenderObject->num_triangles * 3);
+  cout << "num triangles: " << grpc_me->myURenderObject->num_triangles << "\tnum vertices: " << num_vertices << endl;
+  for(int i = 0; i < num_vertices;i++){
+	grpc_me->encode_and_sendTriangle(
+		grpc_me->myURenderObject->triangles[i][0],  grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
+		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
+		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2]);
+	cout << counter++ << flush << " ";
+  }
   
   return 0;
 }
