@@ -97,6 +97,10 @@ SOURCE=.\MSIFileGenerator.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\ProjTextObjGenerator.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\SpiderGenerator.C
 # End Source File
 # Begin Source File
@@ -154,6 +158,10 @@ SOURCE=.\GeomGenerator.h
 # Begin Source File
 
 SOURCE=.\MSIFileGenerator.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ProjTextObjGenerator.h
 # End Source File
 # Begin Source File
 

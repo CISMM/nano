@@ -1,5 +1,9 @@
 2002-06-06  David Borland <borland@cs.unc.edu>
 
+        * nmUGraphics.dps : added ProjTextObjGenerator files
+
+2002-06-06  David Borland <borland@cs.unc.edu>
+
         * ProjTextObjGenerator.C : removed an erroneous error message
 
 	* FileGenerator.C : same
