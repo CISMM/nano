@@ -132,7 +132,7 @@ else
       ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
          CC := CC +w
       else                          # default case
-         CC := g++ -Wall
+         CC := g++ -Wall -march=i686 -O2
       endif
    endif
 endif
@@ -216,8 +216,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_linux)
-   SYS_INCLUDE := $(TCL_INC_DIR) \
-                  /usr/include /usr/local/contrib/include \
+   SYS_INCLUDE := /usr/X11R6/include /usr/include /usr/local/contrib/include \
                   /usr/local/contrib/mod/include /usr/include/bsd \
                   /usr/local/contrib/unmod/include/Mesa
 endif
@@ -294,7 +293,7 @@ ifeq ($(HW_OS), hp700_hpux10)
 endif
 
 ifeq ($(HW_OS), pc_linux)
-   GRAPHICS_LIBS := -lMesaGL
+   GRAPHICS_LIBS := -lglut -lGLU -lGL
 endif
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
@@ -366,6 +365,10 @@ ifndef OLD_MICROSCOPE
 endif
 
 ifeq ($(HW_OS),pc_cygwin)
+  DEFINES += -DV_GLUT
+endif
+
+ifeq ($(HW_OS),pc_linux)
   DEFINES += -DV_GLUT
 endif
 

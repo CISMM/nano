@@ -11,6 +11,15 @@ OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(THIS_DIR)
 
 ###############################################################################
 #
+# Extras?
+#
+
+ifdef EXTRA_CFLAGS
+   CFLAGS += $(EXTRA_CFLAGS)
+endif
+
+###############################################################################
+#
 # Specifics for a library
 #
 
@@ -84,13 +93,13 @@ $(OBJECT_DIR):
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.C
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.cc
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
 	$(AR) ruv $(LIBRARY_ARCHIVE) $(OBJECT_DIR)/*.o
