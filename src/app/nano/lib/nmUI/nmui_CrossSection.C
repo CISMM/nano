@@ -18,6 +18,12 @@
 #include <Tcl_Interpreter.h>
 #include "nmui_CrossSection.h"
 
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 nmui_CrossSection::nmui_CrossSection (void) :
     d_snap_to_45("xs_snap_to_45", 0),
