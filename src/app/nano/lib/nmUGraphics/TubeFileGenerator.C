@@ -13,6 +13,7 @@ using std::vector;
 #include <nmb_Dataset.h>
 
 #include "URender.h"
+#include "URTubeFile.h"
 #include "TubeFileGenerator.h"
 
 #include "quat.h"
@@ -64,7 +65,7 @@ typedef vector<vertex> verts;
 typedef vector<cylinder> cylinders;
 
 
-void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count);
+void BuildListTube(URTubeFile *Pobject, GLuint dl, verts vs, int & count);
 
 
 
@@ -105,7 +106,10 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	q_type coord_fix;
 	q_vec_type trans;
 
-	int tess = Pobject->GetTess();
+	URTubeFile* tube = (URTubeFile*)Pobject;		// cast the URender as a URTubeFile
+
+	int tess = tube->GetTess();
+	long num_triangles = 0;
 
 	int numtubes = 0;
 
@@ -209,7 +213,7 @@ printf("%f\n", height->scaledMaxValue());
 					skip_first = false;
 				}
 				else {
-					if (cur_step++ % Pobject->GetAxisStep() == 0) {
+					if (cur_step++ % tube->GetAxisStep() == 0) {
 						cur_step = 1;
 
 						/* 
@@ -296,7 +300,7 @@ printf("%f\n", height->scaledMaxValue());
 							vs.push_back(v);
 							theta += 2 * PI / tess;
 
-							Pobject->num_triangles += 2;	// two triangles per vertex
+							num_triangles += 2;	// two triangles per vertex
 						}
 						// do cylinder stuff
 						c.x1 = p1[0];
@@ -365,29 +369,20 @@ printf("%f\n", height->scaledMaxValue());
 		}
 	}
 
-
-
-	// create space for triangles in Pobject
-	Pobject->num_triangles -= numtubes * tess * 2;
-	Pobject->triangles = new float* [Pobject->num_triangles * 3];
-	for (i = 0; i < Pobject->num_triangles * 3; i++) {
-		Pobject->triangles[i] = new float[4];
-	}
-
-	// copy cylinders to Pobjects cylinder list
-	Pobject->num_cylinders = cs.size();
-	Pobject->cylinders = new cylinder[Pobject->num_cylinders];
-	for (i = 0; i < Pobject->num_cylinders; i++) {
-		memcpy(&Pobject->cylinders[i], &cs[i], sizeof(c));
+	// copy cylinders to tube's cylinder list
+	tube->num_cylinders = cs.size();
+	tube->cylinders = new cylinder[tube->num_cylinders];
+	for (i = 0; i < tube->num_cylinders; i++) {
+		memcpy(&tube->cylinders[i], &cs[i], sizeof(c));
 	}
 	// set up tubes so that it's origin is around the center--helps for doing scaling and rotation
-	for (i = 0; i < Pobject->num_cylinders; i++) {
-		Pobject->cylinders[i].x1 -= xmid;
-		Pobject->cylinders[i].y1 -= ymid;
-		Pobject->cylinders[i].z1 -= zmid;
-		Pobject->cylinders[i].x2 -= xmid;
-		Pobject->cylinders[i].y2 -= ymid;
-		Pobject->cylinders[i].z2 -= zmid;
+	for (i = 0; i < tube->num_cylinders; i++) {
+		tube->cylinders[i].x1 -= xmid;
+		tube->cylinders[i].y1 -= ymid;
+		tube->cylinders[i].z1 -= zmid;
+		tube->cylinders[i].x2 -= xmid;
+		tube->cylinders[i].y2 -= ymid;
+		tube->cylinders[i].z2 -= zmid;
 	}
 
 /*
@@ -420,34 +415,34 @@ printf("%f\n", height->scaledMaxValue());
 	for (i = 0; i < numtubes; i++){
 		//BuildListTube actually builds the geometry from
 		//the data structures previously built
-        BuildListTube(Pobject, dl + i, t[i], count);
+        BuildListTube(tube, dl + i, t[i], count);
 		Dlist_array[i] = dl + i;
 	}
 
 	readfile.close();
 
 	// add minimum extents of the height plane
-	Pobject->GetLocalXform().SetXOffset(minX);
-	Pobject->GetLocalXform().SetYOffset(minY);
-	Pobject->GetLocalXform().SetZOffset(z_value);
+	tube->GetLocalXform().SetXOffset(minX);
+	tube->GetLocalXform().SetYOffset(minY);
+	tube->GetLocalXform().SetZOffset(z_value);
 
 	// translate back from object center at origin
-//	Pobject->GetLocalXform().SetTranslate(xmid * scale_factor, ymid * scale_factor, zmid * scale_factor);
-	Pobject->GetLocalXform().SetTranslate(xmid, ymid, zmid);
+//	tube->GetLocalXform().SetTranslate(xmid * scale_factor, ymid * scale_factor, zmid * scale_factor);
+	tube->GetLocalXform().SetTranslate(xmid, ymid, zmid);
 	// coordinate systems are different
 	// this fixes it
-//	Pobject->GetLocalXform().SetTranslate(trans[0] + xmid, trans[1] + ymid, trans[2] + zmid);
-//	Pobject->GetLocalXform().SetTranslate(0,0,0);
+//	tube->GetLocalXform().SetTranslate(trans[0] + xmid, trans[1] + ymid, trans[2] + zmid);
+//	tube->GetLocalXform().SetTranslate(0,0,0);
 
 	// scale 
-//	Pobject->GetLocalXform().SetScale(scale_factor);
+//	tube->GetLocalXform().SetScale(scale_factor);
 
 	return numtubes;  // should be number of display lists
 }
 
 
 
-void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count) {
+void BuildListTube(URTubeFile *Pobject, GLuint dl, verts vs, int & count) {
 	float v1[4];
 	float v2[4];
 	float v3[4];
@@ -501,22 +496,6 @@ void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count) {
 		glVertex4fv(v2);
 		glVertex4fv(v4);
 
-
-		Pobject->triangles[count][0] = v1[0];
-		Pobject->triangles[count][1] = v1[1];
-		Pobject->triangles[count][2] = v1[2];
-		Pobject->triangles[count++][3] = 1.0;
-
-		Pobject->triangles[count][0] = v2[0];
-		Pobject->triangles[count][1] = v2[1];
-		Pobject->triangles[count][2] = v2[2];
-		Pobject->triangles[count++][3] = 1.0;
-
-		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][1] = v4[1];
-		Pobject->triangles[count][2] = v4[2];
-		Pobject->triangles[count++][3] = 1.0;
-
 		// Compute the normal...only flat shading for now...should be good enough???
 		q_vec_set(n1, v4[0] - v3[0],
 						v4[1] - v3[1],
@@ -535,24 +514,6 @@ void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count) {
 		glVertex4fv(v2);
 		glVertex4fv(v3);
 		glVertex4fv(v4);
-
-
-		Pobject->triangles[count][0] = v2[0];
-		Pobject->triangles[count][1] = v2[1];
-		Pobject->triangles[count][2] = v2[2];
-		Pobject->triangles[count++][3] = 1.0;
-
-		Pobject->triangles[count][0] = v3[0];
-		Pobject->triangles[count][1] = v3[1];
-		Pobject->triangles[count][2] = v3[2];
-		Pobject->triangles[count++][3] = 1.0;
-
-		Pobject->triangles[count][0] = v4[0];
-		Pobject->triangles[count][1] = v4[1];
-		Pobject->triangles[count][2] = v4[2];
-		Pobject->triangles[count++][3] = 1.0;
-
-
 
 		Pobject->UpdateBoundsWithPoint(v1[0], v1[1], v1[2]);  // should do for all points
 		glEnd();

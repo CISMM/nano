@@ -3,6 +3,8 @@
 
 #include "FileGenerator.h"
 
+#include "URSpider.h"
+
 class SpiderGenerator : public FileGenerator {
 public:
 	SpiderGenerator(const char *filename = NULL);

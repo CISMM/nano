@@ -11,6 +11,7 @@ using std::vector;
 #include <nmb_Dataset.h>
 
 #include "URender.h"
+#include "URWaveFront.h"
 #include "WaveFrontFileGenerator.h"
 
 
@@ -65,7 +66,7 @@ typedef struct {
 
 
 
-void BuildListWaveFrontFile(URender *Pobject, GLuint dl, 
+void BuildListWaveFrontFile(URWaveFront *Pobject, GLuint dl, 
 			   vector<vertex> verts, 
 			   vector<vertex> texts, 
 			   vector<vertex> norms, 
@@ -199,6 +200,9 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 	// pointer to the current plane
 	BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+
+	// cast Pobject as a URPolygon
+	URWaveFront* wave = (URWaveFront*) Pobject;
 
 	// set up min and max values for the current plane
 	minX = height->minX();
@@ -453,7 +457,7 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	// invert normals if wanted
-	if (!Pobject->GetCCW()) {
+	if (!wave->GetCCW()) {
 		for (i = 0; i < norms.size(); i++) {
 			for (j = 0; j < 3; j++) {
 				norms[i][j] *= -1.0;
@@ -474,17 +478,17 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	for(i = 0; i < groups.size(); i++){
 		//BuildListWaveFrontFile actually builds the geometry from
 		//the data structures previously built
-        BuildListWaveFrontFile(Pobject, dl + i, verts, texts, norms, faces, &groups[i]);
+        BuildListWaveFrontFile(wave, dl + i, verts, texts, norms, faces, &groups[i]);
 		Dlist_array[i] = dl + i;
 	}
 
 	readfile.close();
 	
 	// add minimum extents of the height plane
-	Pobject->GetLocalXform().SetXOffset(minX);
-	Pobject->GetLocalXform().SetYOffset(minY);
-	Pobject->GetLocalXform().SetZOffset(z_value);
-	Pobject->GetLocalXform().SetTranslate(0, 0, 0);
+	wave->GetLocalXform().SetXOffset(minX);
+	wave->GetLocalXform().SetYOffset(minY);
+	wave->GetLocalXform().SetZOffset(z_value);
+	wave->GetLocalXform().SetTranslate(0, 0, 0);
 
 	return groups.size();
 }
@@ -492,7 +496,7 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
   
 
-void BuildListWaveFrontFile(URender *Pobject, GLuint dl, 
+void BuildListWaveFrontFile(URWaveFront *Pobject, GLuint dl, 
 				vector<vertex> verts, 
 				vector<vertex> texts, 
 				vector<vertex> norms,

@@ -43,7 +43,7 @@ extern UTree World;
 #endif
 
 //RUN TIME TYPE INFORMATION THAT I'M KEEPING FOR EACH OBJECT
-enum URender_Type {URENDER, URAXIS, URTEXTURE, URPOLYGON};
+enum URender_Type {URENDER, URAXIS, URTEXTURE, URPOLYGON, URSPIDER, URTUBEFILE, URWAVEFRONT};
 
 
 typedef struct {
@@ -51,15 +51,6 @@ typedef struct {
 	float green;
 	float blue;
 } RGB;
-
-typedef struct {
-	double x1, y1, z1;
-	double x2, y2, z2;
-	double radius;
-	double length;
-	double az;
-	double alt;
-} cylinder;
 
 class URender{
 friend class UTree;
@@ -74,13 +65,8 @@ protected:
 	int show_bounds;	//not used yet
 	int wireframe;		//not used yet
 	int disp_proj_text;
-	int CCW;			// true if load as counter clockwise, false if load as clockwise
-	int tess;			// controls the number of faces along the nano-tube
-	int axis_step;		// controls the number of nano-tube sections 
 	int lock_object;	// controls whether or not to lock the object to the projective texture
 	int lock_texture;	// controls whether or not to lock the projective texture to the object
-	int update_AFM;		// controls whether position, orientation, and scale are sent to the
-						// AFM simulator, when a connection is present
 	int grab_object;	// when true, translations and rotations from using the mouse in the
 						// surface window are applied to the current object
 
@@ -97,14 +83,6 @@ protected:
 	// used for fine-tuning transformations
 	int tune_trans;
 	int tune_rot;
-
-	// stuff for spiders -- changed to store per leg
-	double spider_length[8];
-	double spider_width[8];
-	double spider_thick[8];
-	int spider_tess[8];
-	double spider_curve[8];
-	int spider_legs;
 
 	//bounding box
 	BBOX bounds;	
@@ -152,12 +130,8 @@ public:
 	void SetRecursion(int r);
 	void SetSelect(int s){ if(s>0) selected=1; else selected=0;}
 	void SetProjText(int b) { disp_proj_text = b; }
-	void SetCCW(int b) { CCW = b; }
-	void SetTess(int t) { tess = t; }
-	void SetAxisStep(int s) { axis_step = s; }
 	void SetLockObject(int l) { lock_object = l; }
 	void SetLockTexture(int l) { lock_texture = l; }
-	void SetUpdateAFM(int u) { update_AFM = u; }
 	void SetGrabObject(int g) { grab_object = g; }
 	void SetLockTransx(int l) { lock_transx = l; }
 	void SetLockTransy(int l) { lock_transy = l; }
@@ -168,23 +142,12 @@ public:
 	void SetTuneTrans(int t) { tune_trans = t; }
 	void SetTuneRot(int t) { tune_rot = t; }
 
-	void SetSpiderLength(int i, double l) { spider_length[i] = l; }
-	void SetSpiderWidth(int i, double w) { spider_width[i] = w; }
-	void SetSpiderThick(int i, double t) { spider_thick[i] = t; }
-	void SetSpiderTess(int i, int t) { spider_tess[i] = t; }
-	void SetSpiderCurve(int i, double c) { spider_curve[i] = c; }
-	void SetSpiderLegs(int l) { spider_legs = l; }
-
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
 	int GetSelect(){ return selected;}
 	int ShowProjText() { return disp_proj_text; }
-	int GetCCW() { return CCW; }
-	int GetTess() { return tess; }
-	int GetAxisStep() { return axis_step; }
 	int GetLockObject() { return lock_object; }
 	int GetLockTexture() { return lock_texture; }
-	int GetUpdateAFM() { return update_AFM; }
 	int GetGrabObject() { return grab_object; }
 	int GetLockTransx() { return lock_transx; }
 	int GetLockTransy() { return lock_transy; }
@@ -194,14 +157,6 @@ public:
 	int GetLockRotz() { return lock_rotz; }
 	int GetTuneTrans() { return tune_trans; }
 	int GetTuneRot() { return tune_rot; }
-
-	double GetSpiderLength(int i) { return spider_length[i]; }
-	double GetSpiderWidth(int i) { return spider_width[i]; }
-	double GetSpiderThick(int i) { return spider_thick[i]; }
-	int GetSpiderTess(int i) { return spider_tess[i]; }
-	double GetSpiderCurve(int i) { return spider_curve[i]; }
-	int GetSpiderLegs() { return spider_legs; }
-	void SaveSpider(const char*);
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
@@ -267,15 +222,6 @@ public:
 	//configuration state -- prototype it like Render
 	//	virtual int ReadParam(void *userdata=NULL);
 	//	virtual int WriteParam(void *userdata=NULL);
-
-
-	
-	// holds geometry for sending to afm simulator
-	float** triangles;
-	long num_triangles;
-
-	cylinder* cylinders;
-	long num_cylinders;
 };
 
 //defines for virtual functions that will be used by the UTREE iterator

@@ -1,3 +1,42 @@
+2002-07-01  David Borland <borland@cs.unc.edu>
+
+        * ProjTextObjGenerator.C : no real change.
+
+        * SpiderGenerator.[Ch] : small changes to comply with changes to the 
+        overall UberGraphics setup.  Previously, the various types of 
+        objects had all had their functionality included in the URender
+        base class.  Now objects that have functionality not included in
+        basic functionality of the URender class have their own class.  Since
+        the three classes created below are all polygonal objects, they 
+        are derived from URPolygon, which is derived from URender.  
+
+        * SpiderGenerator.h : same
+
+        * TubeFileGenerator.C : same
+
+        * URPolygon.[Ch] : same
+
+        * URSpider.[Ch] : new class for spider object.  It is derived from
+        URPolygon, and contains variables only needed for spider objects.
+
+        * URTubeFile.[Ch] : new class for objects created from the Shape 
+        Analysis code.  It is derived from URPolygon, and contains variables
+        only needed for tube file objects.
+
+        * URWaveFront.[Ch] : new class for WaveFront objects.  It is derived
+        from URPolygon, and contains variables only needed for WaveFront
+        objects.
+
+        * URender.[Ch] : removed a bunch of variables that now reside in 
+        classes the new classes.
+
+        * WaveFrontFileGenerator.C : small changes for compatibility with 
+        above changes.
+
+        * nmUGraphics.dsp : added the URSpider, URTubeFile, and URWaveFront
+        files
+        
+
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URender.C (ReloadGeometry) : added dummy base class implementation so

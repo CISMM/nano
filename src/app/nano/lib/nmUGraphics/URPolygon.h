@@ -30,7 +30,7 @@ public:
     //constructor destructor
     URPolygon();
     ~URPolygon();
-    
+
     //standard functions
     int Render(void *userdata=NULL);
 

@@ -43,10 +43,6 @@ URender::URender(){
 	obj_type=URENDER;
 	texture=NULL;
 	name=NULL;
-	disp_proj_text = 1;
-	CCW = 0;
-	tess = 10;
-	num_triangles = 0;
 }
 
 void URender::UpdateBoundsWithPoint(double vx, double vy, double vz)
@@ -161,50 +157,23 @@ int URender::SetAlphaAll(void * /*userdata*/) {
 
 
 int URender::ChangeStaticFile(void* /*userdata*/) {
-	// bas class does nothing
+	// base class does nothing
 	cerr << "Base class Changing Static File\n";
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
 int URender::ChangeHeightPlane(void* /*userdata*/) {
-	// bas class does nothing
+	// base class does nothing
 	cerr << "Base class Changing Static File\n";
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
 
 void URender::ReloadGeometry() {
-        // bas class does nothing
+        // base class does nothing
         cerr << "Base class Reloading Geometry\n";
 }
 
-
-void URender::SaveSpider(const char* filename) {
-	ofstream writefile;
-	int i;
-
-	writefile.open(filename);
-	assert(writefile);
-
-	if (writefile.bad()) {
-		cerr << "Unable to open output file" << endl;
-		return;
-	}
-
-	// write the filename to the file
-	writefile << filename << endl << endl;
-
-	// write spider data to the file
-	for (i = 0; i < spider_legs; i++) {
-		writefile << "Leg " << i + 1 << endl
-				  << "\tLength\t" << spider_length[i] << endl
-				  << "\tWidth\t\t" << spider_width[i] << endl
-				  << "\tThickness\t" << spider_thick[i] << endl
-				  << "\tCurvature\t" << Q_RAD_TO_DEG(spider_curve[i]) << endl << endl;
-	}
-
-	writefile.close();
-}
 
 void URender::DrawBounds(){
 

@@ -46,7 +46,7 @@ int ProjTextObjGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
 
 
 
-// This function creates a Projective Texture Object, used to control the transfrom for the Projective Texture
+// This function creates a Projective Texture Object, used to control the transform for the Projective Texture
 int ProjTextObjGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 {
 	GLuint dl;

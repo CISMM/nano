@@ -5,11 +5,7 @@
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 
-#include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
-											// scaling tubes when we change scale 
 #include <string.h>
-
-extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
 
 URPolygon::URPolygon():URender(){
 
@@ -71,7 +67,6 @@ int URPolygon::SetLockTextureAll(void* userdata) {
 
 int URPolygon::ChangeStaticFile(void* userdata) {
     // modifies the scale and translation so appears in same place...
-	int i;
 	extern Tclvar_float	import_scale;
 	extern Tclvar_float import_transx;
 	extern Tclvar_float import_transy;
@@ -110,16 +105,6 @@ int URPolygon::ChangeStaticFile(void* userdata) {
 		import_transz = q2[2];
 	}
 
-	// line up cylinders to send to AFM properly
-	for (i = 0; i < num_cylinders; i++) {
-		cylinders[i].x1 += q3[0] - q2[0];
-		cylinders[i].y1 += q3[1] - q2[1];
-		cylinders[i].z1 += q3[2] - q2[2];
-		cylinders[i].x2 += q3[0] - q2[0];
-		cylinders[i].y2 += q3[1] - q2[1];
-		cylinders[i].z2 += q3[2] - q2[2];
-	}
-
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
@@ -148,13 +133,6 @@ int URPolygon::ScaleAll(void* userdata) {
 
 	this->GetLocalXform().SetScale(scale);
 
-	// if a tube file, send scale
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendScale(scale);
-	}
-
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
@@ -165,15 +143,6 @@ int URPolygon::SetTransxAll(void* userdata) {
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(transx, trans[1], trans[2]);
 
-	// if a tube file, send trans
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
-													this->GetLocalXform().GetTrans()[1],
-													this->GetLocalXform().GetTrans()[2]);
-	}
-
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
 }
@@ -183,15 +152,6 @@ int URPolygon::SetTransyAll(void* userdata) {
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(trans[0], transy, trans[2]);
 
-	// if a tube file, send trans
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
-													this->GetLocalXform().GetTrans()[1],
-													this->GetLocalXform().GetTrans()[2]);
-	}
-
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
 }
@@ -200,15 +160,6 @@ int URPolygon::SetTranszAll(void* userdata) {
 	double transz = *(double*) userdata;
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(trans[0], trans[1], transz);
-
-	// if a tube file, send trans
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
-													this->GetLocalXform().GetTrans()[1],
-													this->GetLocalXform().GetTrans()[2]);
-	}
 
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
@@ -230,14 +181,6 @@ int URPolygon::SetRotAll(void* userdata) {
 	q_from_euler(rot, euler[0], euler[1], euler[2]);
 
     this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
-
-	// if a tube file, send rot
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
-	}
 
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;

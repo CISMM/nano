@@ -8,6 +8,7 @@
 #include <nmb_Dataset.h>
 
 #include "URender.h"
+#include "URSpider.h"
 #include "SpiderGenerator.h"
 
 #include "quat.h"
@@ -39,7 +40,7 @@ SpiderGenerator::SpiderGenerator(const char *fname) : FileGenerator(fname, "spi"
 }
 
 
-void BuildListSpider(URender *Pobject, GLuint dl);
+void BuildListSpider(URSpider *Pobject, GLuint dl);
 
 
 int SpiderGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
@@ -55,7 +56,7 @@ int SpiderGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
         return 0;
 	}
         
-	BuildListSpider(Pobject, dl);
+	BuildListSpider((URSpider*)Pobject, dl);
 		
 	Dlist_array[0] = dl;
 
@@ -70,6 +71,8 @@ void ParseFileSpider(URender *Pobject, const char* filename) {
 	ifstream readfile;
 
 	extern int current_leg;		// found in import.C
+
+	URSpider* spider = (URSpider*)Pobject;
 
 	readfile.open(filename);
     assert(readfile);
@@ -91,23 +94,23 @@ void ParseFileSpider(URender *Pobject, const char* filename) {
 			}
 			else if (strcmp(token, "Length") == 0) {
 				token = strtok(NULL, " \t\n");
-				Pobject->SetSpiderLength(current_leg, atof(token));
+				spider->SetSpiderLength(current_leg, atof(token));
 			}
 			else if (strcmp(token, "Width") == 0) {
 				token = strtok(NULL, " \t\n");
-				Pobject->SetSpiderWidth(current_leg, atof(token));
+				spider->SetSpiderWidth(current_leg, atof(token));
 			}
 			else if (strcmp(token, "Thickness") == 0) {
 				token = strtok(NULL, " \t\n");
-				Pobject->SetSpiderThick(current_leg, atof(token));
+				spider->SetSpiderThick(current_leg, atof(token));
 			}
 			else if (strcmp(token, "Curvature") == 0) {
 				token = strtok(NULL, " \t\n");
-				Pobject->SetSpiderCurve(current_leg, Q_DEG_TO_RAD(atof(token)));
+				spider->SetSpiderCurve(current_leg, Q_DEG_TO_RAD(atof(token)));
 			}
 		}
 	}
-	Pobject->SetSpiderLegs(current_leg + 1);
+	spider->SetSpiderLegs(current_leg + 1);
 }
 
 
@@ -140,7 +143,7 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
         return 0;
 	}
         
-	BuildListSpider(Pobject, dl);
+	BuildListSpider((URSpider*)Pobject, dl);
 		
 	Dlist_array[0] = dl;
 
@@ -155,7 +158,7 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 
-void BuildListSpider(URender *Pobject, GLuint dl) {
+void BuildListSpider(URSpider *Pobject, GLuint dl) {
 	int i, j, k;
 	q_vec_type p[8];	// 8 points per section
 	q_vec_type n;

@@ -125,7 +125,19 @@ SOURCE=.\URPolygon.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\URSpider.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\URTexture.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\URTubeFile.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\URWaveFront.C
 # End Source File
 # Begin Source File
 
@@ -193,7 +205,19 @@ SOURCE=.\URPolygon.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\URSpider.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\URTexture.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\URTubeFile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\URWaveFront.h
 # End Source File
 # Begin Source File
 
