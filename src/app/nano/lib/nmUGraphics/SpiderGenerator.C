@@ -105,16 +105,34 @@ void ParseFileSpider(URender *Pobject, const char* filename) {
 				spider->SetSpiderThick(current_leg, atof(token));
 			}
 			else if (strcmp(token, "Begin") == 0) {
+                token = strtok(NULL, " \t\n");  // skip "Curvature" 
 				token = strtok(NULL, " \t\n");
 				spider->SetSpiderBegCurve(current_leg, Q_DEG_TO_RAD(atof(token)));
 			}
             else if (strcmp(token, "End") == 0) {
+                token = strtok(NULL, " \t\n");  // skip "Curvature" 
 				token = strtok(NULL, " \t\n");
 				spider->SetSpiderEndCurve(current_leg, Q_DEG_TO_RAD(atof(token)));
+			}
+            else if (strcmp(token, "X") == 0) {
+                token = strtok(NULL, " \t\n");  // skip "Translation" 
+				token = strtok(NULL, " \t\n");
+				spider->SetSpiderLegX(current_leg, atof(token));
+			}
+            else if (strcmp(token, "Y") == 0) {
+                token = strtok(NULL, " \t\n");  // skip "Translation" 
+				token = strtok(NULL, " \t\n");
+				spider->SetSpiderLegY(current_leg, atof(token));
+			}
+            else if (strcmp(token, "Rotation") == 0) {
+				token = strtok(NULL, " \t\n");
+				spider->SetSpiderLegRot(current_leg, atof(token));
 			}
 		}
 	}
 	spider->SetSpiderLegs(current_leg + 1);
+
+    readfile.close();
 }
 
 
@@ -155,7 +173,12 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	Pobject->GetLocalXform().SetXOffset(minX);
 	Pobject->GetLocalXform().SetYOffset(minY);
 	Pobject->GetLocalXform().SetZOffset(z_value);
-	Pobject->GetLocalXform().SetTranslate(0, 0, 0);
+
+    // put in the middle of the height plane
+	Pobject->GetLocalXform().SetTranslate(2500, 2500, 0);
+
+    // scale the spider
+    Pobject->GetLocalXform().SetScale(200);
 
 	return 1;	// number of display lists
 }

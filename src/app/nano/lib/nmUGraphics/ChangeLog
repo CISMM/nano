@@ -1,4 +1,11 @@
-2002-01-31  David Borland <borland@cs.unc.edu>
+2003-02-07  David Borland <borland@cs.unc.edu>
+
+        * File Generator.C : fixed a couple of comments
+
+        * SpiderGenerator.C : now parses the new curvature, leg translation, 
+        and leg rotation parameters correctly.
+
+2003-01-31  David Borland <borland@cs.unc.edu>
 
         * SpiderGenerator.C : made changes so that each leg can be translated
         and rotated individually.  Some actual spider devices are not very 
@@ -10,7 +17,7 @@
         * URProjectiveTexture.C : no change
         
 
-2002-01-20  David Borland <borland@cs.unc.edu>
+2003-01-20  David Borland <borland@cs.unc.edu>
 
         * SpiderGenerator.C : changed the way the spider curve is computed.  
         Now, we have the beginning and ending curvature over the leg, as 

@@ -48,7 +48,7 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
 	else if (strncmp(fname + i + 1,"txt", 3) == 0) {
 		return new TubeFileGenerator(fname);
 	}
-	// added by David Borland for creating spider
+	// added by David Borland for creating spiders
 	else if (strncmp(fname + i + 1,"spi", 3) == 0) {
 		return new SpiderGenerator(fname);
 	}
@@ -56,7 +56,7 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
 	else if (strncmp(fname + i + 1,"ptx", 3) == 0) {
 		return new ProjTextObjGenerator(fname);
 	}
-    //added by Jameson Miller for loading axis object for direct tep
+    //added by Jameson Miller for loading axis object for direct step
 	else if(strncmp(fname + i + 1,"dsa", 3) == 0) {
 		return new DsAxisGenerator(fname);
 	}
