@@ -392,10 +392,10 @@ void FDOnOffMonitor::startSurface (void) {
   }
 
   if (surfaceGoing) {
-fprintf(stderr, "  fdoom sending surface\n");
+//fprintf(stderr, "  fdoom sending surface\n");
     forceDevice->sendSurface();
   } else {
-fprintf(stderr, "  fdoom starting surface\n");
+//fprintf(stderr, "  fdoom starting surface\n");
     forceDevice->startSurface();
     surfaceGoing = vrpn_TRUE;
   }
@@ -403,7 +403,7 @@ fprintf(stderr, "  fdoom starting surface\n");
 
 void FDOnOffMonitor::stopSurface (void) {
   if (surfaceGoing && forceDevice) {
-fprintf(stderr, "  fdoom stopping surface\n");
+//fprintf(stderr, "  fdoom stopping surface\n");
     forceDevice->stopSurface();
     surfaceGoing = vrpn_FALSE;
   }
@@ -416,7 +416,7 @@ void FDOnOffMonitor::startForceField (void) {
   }
 
   if (forceDevice) {
-fprintf(stderr, "  fdoom starting field\n");
+//fprintf(stderr, "  fdoom starting field\n");
     forceDevice->sendForceField();
     forceFieldGoing = vrpn_TRUE;
   }
@@ -424,7 +424,7 @@ fprintf(stderr, "  fdoom starting field\n");
 
 void FDOnOffMonitor::stopForceField (void) {
   if (forceFieldGoing && forceDevice) {
-fprintf(stderr, "  fdoom stopping field\n");
+//fprintf(stderr, "  fdoom stopping field\n");
     forceDevice->stopForceField();
     forceFieldGoing = vrpn_FALSE;
   }
@@ -547,6 +547,12 @@ void handle_user_mode_change(vrpn_int32, void *)
 {
     // There was some stuff here, but it is all handled in 
     // interaction(), below. 
+    //
+    if ((user_0_mode == FEELAHEAD) || (user_0_mode == PSEUDO_FEELAHEAD)) {
+      microscope->EnableUpdatableQueue(VRPN_FALSE);
+    } else {
+      microscope->EnableUpdatableQueue(VRPN_TRUE);
+    }
 }
 
 void handle_xyLock (vrpn_int32, void *) {
@@ -1120,12 +1126,13 @@ void setupHaptics (int mode) {
     case USER_PLANEL_MODE:
 
       if (microscope->state.modify.tool == FEELAHEAD) {
-fprintf(stderr, "In feelahead for live plane!\n");
+//fprintf(stderr, "In feelahead for live plane!\n");
         haptic_manager.setSurface(haptic_manager.d_feelAhead);
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
         return;
-      } else if (microscope->state.modify.tool = PSEUDO_FEELAHEAD) {
+      } else if (microscope->state.modify.tool == PSEUDO_FEELAHEAD) {
+//fprintf(stderr, "In pseudo-feelahead for live plane!\n");
         haptic_manager.setSurface(haptic_manager.d_pseudoFA);
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
@@ -1139,7 +1146,7 @@ fprintf(stderr, "In feelahead for live plane!\n");
     case USER_LINE_MODE:
 
       if (microscope->state.modify.tool == WARPED_PLANE) {
-fprintf(stderr, "In warped plane for live line/plane mode!\n");
+//fprintf(stderr, "In warped plane for live line/plane mode!\n");
         haptic_manager.setSurface(haptic_manager.d_warpedPlane);
       } else {
         haptic_manager.setSurface(haptic_manager.d_livePlane);
