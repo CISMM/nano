@@ -72,13 +72,9 @@ nmb_SummedPlane( const char* inputPlaneName1,
   // where the plane came from
   char newOutputPlaneName[256];
 #if 1
-  // XXX change this to use gethostname(); remove d_hostname from nmb_Dataset
-  if( dataset->getHostname( ) ) {
-    sprintf(newOutputPlaneName, "%s from %s", outputPlaneName, 
-	    dataset->getHostname( ) );
-  } else {
-    sprintf(newOutputPlaneName, "%s from noHostname", outputPlaneName);
-  }
+  char hostname[256];
+  gethostname( hostname, 256 );
+  sprintf( newOutputPlaneName, "%s from %s", outputPlaneName, hostname );
 #else
   // XXX 3rdTech only - no weird plane names.
   sprintf(newOutputPlaneName, "%s", outputPlaneName);

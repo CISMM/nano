@@ -1,5 +1,8 @@
 2001-08-02  David Marshburn  <marshbur@cs.unc.edu>
 
+	* microscape.c (createNewMicroscope): removed hostname argument
+	from nmb_Dataset constructor.
+
 	* Makefile: removed references to nmRobotControl and nmTipConvolution.
 	* microscape.c: removed TipConvolution code.  removed RobotControl code.
 

@@ -1,3 +1,12 @@
+2001-08-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_Dataset.C: removed d_hostname member, removed hostname
+	argument from constructor, removed getHostname().
+	* nmb_SummedPlane.C (nmb_SummedPlane): for naming, uses gethostname() 
+	instead of hostname parameter from nmb_Dataset.
+	* nmb_LBLFlattenedPlane.C (nmb_LBLFlattenedPlane): ditto
+	* nmb_FlattenedPlane.C (nmb_FlattenedPlane): ditto
+
 2001-07-30  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Decoration.C: Compile warning fix. 

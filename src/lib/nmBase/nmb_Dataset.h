@@ -45,7 +45,6 @@ class nmb_Dataset {
                  float xMin, float xMax, float yMin, float yMax,
                  int readMode, const char ** fileNames, int numFiles,
 		 const char ** imageFileNames, int numImageFiles,
-		 nmb_String * hostname, 
                  nmb_String * (* string_allocator) (const char *),
                  nmb_ListOfStrings * (* list_of_strings_allocator) (),
                  TopoFile &topoFile);
@@ -141,10 +140,6 @@ class nmb_Dataset {
     ///< Computes average of the first scan line in the plane provided. 
 
 
-    const char* getHostname( ) const;
-    ///< returns what this Dataset currently thinks the hostname is.
-
-
    void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
    ///< adds a new plane to the list of calculated planes and calls
    ///< any callbacks registered to listen for new (calc'd) plane creation.
@@ -156,7 +151,6 @@ private:
 
     nmb_CalculatedPlaneNode* calculatedPlane_head;
 
-    nmb_String * d_hostname;
 };
 
 

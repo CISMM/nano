@@ -34,7 +34,6 @@ nmb_Dataset::nmb_Dataset
                float xMin, float xMax, float yMin, float yMax,
                int readMode, const char ** gridFileNames, int numGridFiles,
                const char ** imageFileNames, int numImageFiles,
-	       nmb_String * hostname,
                nmb_String * (* string_allocator) (const char *),
 	       nmb_ListOfStrings * (* list_of_strings_allocator) (),
                TopoFile &topoFile):
@@ -60,8 +59,7 @@ nmb_Dataset::nmb_Dataset
   vizPlaneName (string_allocator("none")),
 
   done (0),
-  calculatedPlane_head( NULL ),
-  d_hostname(hostname)
+  calculatedPlane_head( NULL )
 {
     //variables to save the command line args for heightplane and colorplane
     initHeight[0] = '\0';
@@ -538,9 +536,3 @@ float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
 
 }
 
-
-const char*
-nmb_Dataset::getHostname( ) const
-{
-  return d_hostname->string( );
-}

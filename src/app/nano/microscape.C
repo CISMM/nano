@@ -6548,20 +6548,20 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     }
 
     nmb_Dataset *
-    new_dataset = new nmb_Dataset (istate.use_file_resolution,
-                               istate.afm.image.grid_resolution, 
-                               istate.afm.image.grid_resolution,
-                               istate.x_min, istate.x_max,
-                               istate.y_min, istate.y_max, new_microscope->ReadMode(),
-                               (const char **) istate.stm_file_names,
-                               istate.num_stm_files, 
-                               (const char **) istate.image_file_names,
-                               istate.num_image_files,
-			       &my_hostname,
-                               allocate_TclNet_string,
-                               allocate_Tclvar_list_of_strings,
-                               new_microscope->d_topoFile);
-
+    new_dataset = new nmb_Dataset( istate.use_file_resolution,
+				   istate.afm.image.grid_resolution, 
+				   istate.afm.image.grid_resolution,
+				   istate.x_min, istate.x_max,
+				   istate.y_min, istate.y_max, 
+				   new_microscope->ReadMode(),
+				   (const char **) istate.stm_file_names,
+				   istate.num_stm_files, 
+				   (const char **) istate.image_file_names,
+				   istate.num_image_files,
+				   allocate_TclNet_string,
+				   allocate_Tclvar_list_of_strings,
+				   new_microscope->d_topoFile );
+    
     if (!new_dataset) {
         //display_error_dialog( "Cannot initialize dataset.\n");
       return -1;
