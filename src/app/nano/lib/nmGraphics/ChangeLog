@@ -1,3 +1,12 @@
+2000-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (nmg_Graphics_Implementation),
+	(causeGridRebuild) : removed checks of the g_VERTEX_ARRAY variable
+	as was done in thirdtech_branch so that even when we don't use
+	the vertex array extension, the arrays can still be used for
+	storing calculated normals (I had broken this for the pc version in 
+	my previous commit)
+
 2000-08-31  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (nmg_Graphics_Implementation) : put back in
