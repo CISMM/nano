@@ -1,3 +1,7 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile.common: added V_GLUT to BAREDEFINES
+
 2001-03-02  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.app_common (OBJECT_SUFFIX): New export symbol

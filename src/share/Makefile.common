@@ -518,7 +518,7 @@ ifndef OLD_MICROSCOPE
 endif
 
 ifeq ($(HW_OS),sgi_irix) 
-  BAREDEFINES += NO_MAGELLAN NO_PHANTOM_SERVER
+  BAREDEFINES += V_GLUT NO_MAGELLAN NO_PHANTOM_SERVER
 endif
 
 ifeq ($(HW_OS),pc_cygwin)
