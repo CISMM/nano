@@ -23,6 +23,7 @@
 #include <sys/wait.h>	// wait()
 #endif
 
+/*
 // This is a horrible hack.  It should be fixed.  (WTL-20/Apr/1999)
 #ifdef __CYGWIN__
 #ifndef _GNU_H_WINDOWS32_SOCKETS
@@ -40,6 +41,10 @@ int sdi_noint_block_write( SOCKET, char[], int );
 #include "sdi.h"
 #endif
 #endif  // not __CYGWIN__
+*/
+
+// instead of the above using sdi we have this:
+#include "vrpn_Connection.h"
 
 #include "BCGrid.h"
 #include "BCPlane.h"
@@ -73,7 +78,7 @@ static	int	filter_write(const char *newset_name, BCPlane *plane, int fd)
 		plane->maxY() - plane->minY()); //actual size in y
 
 #if (!defined(_WIN32) || defined(__CYGWIN))
-	if (sdi_noint_block_write(fd,header,strlen(header)) != strlen(header)) {
+	if (vrpn_noint_block_write(fd,header,strlen(header)) != strlen(header)) {
 		perror("filter_write(): Can't write header");
 		return -1;
 	}
@@ -99,7 +104,7 @@ static	int	filter_write(const char *newset_name, BCPlane *plane, int fd)
 		}
 
 #if (!defined(_WIN32) || defined(__CYGWIN))
-		if (sdi_noint_block_write(fd, (char*)xlist, xsize) != xsize) {
+		if (vrpn_noint_block_write(fd, (char*)xlist, xsize) != xsize) {
 			perror("filter_write(): Can't write line");
 			delete [] xlist;
 			return -1;

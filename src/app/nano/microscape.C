@@ -1219,6 +1219,8 @@ static int vec_cmp (const q_vec_type a, const q_vec_type b);
 //static void guessAdhesionNames (void);
 void guessAdhesionNames (nmb_Dataset * dset);
 
+/*
+don't think we need this anymore AAS 8/17/00
 #ifdef FLOW
    extern int sdi_disconnect_from_device(int);
 #else
@@ -1226,7 +1228,7 @@ void guessAdhesionNames (nmb_Dataset * dset);
      extern "C" int sdi_disconnect_from_device(int);
   #endif
 #endif
-
+*/
     
 // REMOTERENDERING
 nmb_TimerList graphicsTimer;

@@ -79,7 +79,8 @@ extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
 // Added by Michele Clark 6/2/97
 unsigned long inet_addr();
 
-
+/*
+Don't think we need this anymore (AAS 8/17/00)
 #ifdef FLOW
   extern int sdi_start_server(char *, char *, char *);
   extern int sdi_connect_to_device(char *);
@@ -89,6 +90,7 @@ unsigned long inet_addr();
      extern "C" int sdi_connect_to_device(char *);
   #endif
 #endif
+*/
 
 #define NANO_FONT	(34)
 

@@ -1,4 +1,4 @@
-USES_LIBS := tclLinkVar nmAux nmMScope nmBase nmMP vrpn quat sdi
+USES_LIBS := tclLinkVar nmAux nmMScope nmBase nmMP vrpn quat
 
 include ../Makefile.share
 

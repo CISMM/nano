@@ -1,4 +1,4 @@
-USES_LIBS := nmMP vrpn sdi quat
+USES_LIBS := nmMP vrpn quat
 EXCLUDE_SRC := readNanoscopeFile.C tnv.t.C
 ifndef VC
 # Only include vc_dirent.c if we are compiling on VC++

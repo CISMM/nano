@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include        <sdi.h>
+//#include        <sdi.h>
 #include	<vrpn_Connection.h> // for vrpn replacements of sdi functions
 
 #include	"stm_cmd.h"
