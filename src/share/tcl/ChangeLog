@@ -1,3 +1,10 @@
+2001-14-06 Jameson Miller <millerj@cs.unc.edu>
+	* modify.tcl: added in direct step tool
+	* mainwin.tcl: added in direct step file for direct step windo
+	* directStep.tcl: window for direct_step controls
+
+
+
 2001-09-06  Shayne O'Neill   <oneill@mindspring.com>
 	
 	* modify.tcl: Complete rewrite of file for better readability.

@@ -1,3 +1,13 @@
+2001-09-14 Jameson Miller <millerj@cs.unc.edu>
+
+	*AFMState.c, .h :added in direct step tool params
+	*directstep.c .h: direct step controls. Lets user take steps in x/y
+	or x/y/z. the size of the step can be changed. Also the user can 
+	step to a certain point by inputing position.
+	*Makefile: added in librarys to be included so nano would compile on SGIs
+	*nmm_Types.h:  added Direct_step types to list of enums
+
+
 2001-09-12  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.Cdef (InSpectroscopyMode): Set state

@@ -420,6 +420,8 @@ set view $w1
 
 source [file join ${tcl_script_dir} view.tcl]
 
+source [file join ${tcl_script_dir} directStep.tcl]
+
 
 #
 # Show the w1 frame

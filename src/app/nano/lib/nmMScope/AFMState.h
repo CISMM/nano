@@ -91,6 +91,8 @@ struct AFMModifyState {
   TclNet_int new_constr_xyz_param;
   Tclvar_int optimize_now_param;
   TclNet_int new_optimize_now_param;
+  Tclvar_int direct_step_param;
+  TclNet_int new_direct_step_param;
     ///< the current mode of the microscope
 
   // parameters for Tapping and Contact mode

@@ -1,5 +1,7 @@
 USES_LIBS := nmMP nmBase tclLinkVar nmAux nmUI vrpn vogl quat
 
+USES_EXTERNAL_LIBS := RhinoIO
+
 EXCLUDE_SRC = stm_file.c
 
 NAUGHTY := 1

@@ -36,7 +36,6 @@
 
 # useful for debugging
 proc errorOut {string} {puts $string}
-
 ##############################
 # Sets up the .modify window #
 ##############################
@@ -298,7 +297,7 @@ proc init_full {} {
 			 z_end z_pullback force_limit fcdist num_layers \
 			 num_hcycles sample_speed pullback_speed start_speed feedback_speed \
 			 avg_num optimize_now max_z_step max_xy_step min_z_setpoint \
-			 max_z_setpoint max_lat_setpoint]
+			 max_z_setpoint max_lat_setpoint direct_step]
 
     # Get globals for modifyp_* and newmodifyp_*.
     # newmodifyp_* gets updated as the user changes
@@ -566,24 +565,29 @@ proc init_full {} {
          -variable newmodifyp_tool -value 6 -anchor nw
     radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
 	-variable newmodifyp_tool -value 7 -anchor nw
+    radiobutton $nmInfo(modifyfull).tool.direct_step -text "Direct Step" \
+	-variable newmodifyp_tool -value 8 -anchor nw
 
     eval lappend changing_widgets "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
 	$nmInfo(modifyfull).tool.slow_line \
 	$nmInfo(modifyfull).tool.feelahead \
-	$nmInfo(modifyfull).tool.optimize_now"
+	$nmInfo(modifyfull).tool.optimize_now \
+	$nmInfo(modifyfull).tool.direct_step "
 
     eval lappend device_only_controls "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
 	$nmInfo(modifyfull).tool.slow_line \
 	$nmInfo(modifyfull).tool.feelahead \
-	$nmInfo(modifyfull).tool.optimize_now"
+	$nmInfo(modifyfull).tool.optimize_now \
+	$nmInfo(modifyfull).tool.direct_step "
 
     ### TOOL PARAMETERS ###
     set modifyp_step_size 1
     set modifyp_optimize_now 3
+    set modifyp_direct_step 0
 
     frame $nmInfo(modifyfull).toolparam
     label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -610,7 +614,7 @@ proc init_full {} {
     # eval command expands the lists so we get one list of single elements. 
     eval lappend device_only_controls "$mod_line_list \
 	$mod_slow_line_list \
-	$optimize_now_param_list"
+	$optimize_now_param_list "
 
     if { !$thirdtech_ui } {    
 	### CONTROL ###
@@ -709,6 +713,11 @@ proc init_full {} {
     # These variables could cause the modify_live window to pop up
     trace variable newmodifyp_tool w show_modify_live
     trace variable newmodifyp_control w show_modify_live 
+
+	#these variables could cause the directStep window to pop up
+	trace variable newmodifyp_tool w show_directStep
+	trace variable newmodifyp_control w show_directStep
+
 
     # Packing list is important in pack_full, but it needs to be
     # initialized here
@@ -969,12 +978,13 @@ proc pack_full {} {
 	 $nmInfo(modifyfull).tool.slow_line \
 	 $nmInfo(modifyfull).tool.feelahead \
 	 $nmInfo(modifyfull).tool.optimize_now \
+	 $nmInfo(modifyfull).tool.direct_step \
 	 -side top -fill x
 
     ### TOOL PARAMETERS ###
     global newmodifyp_tool
     # Only pack when tool is Line, Slow Line, or Optimize Now
-    if { $newmodifyp_tool == 1 || $newmodifyp_tool == 4 || $newmodifyp_tool == 7 } {
+    if { $newmodifyp_tool == 1 || $newmodifyp_tool == 4 || $newmodifyp_tool == 7} {
 	pack $nmInfo(modifyfull).toolparam -side left -padx 4 -fill both
 	pack $nmInfo(modifyfull).toolparam.label -side top -anchor nw
 	lappend packing_list $nmInfo(modifyfull).toolparam
@@ -1051,6 +1061,24 @@ proc show_modify_live {nm el op} {
     # HACK ALERT?
     focus -force .modify
 }
+#################################
+# show/hide direct_step window  #
+#Called when tool or control is #
+#changed.				  #
+#################################
+
+proc show_directStep {nm el op} {
+	#show if tool is direct_step
+	global newmodifyp_tool direct_step newmodifyp_control newmodifyp_direct_step
+if {$newmodifyp_tool == 8} {
+    show.directStep} else { hide.directStep }
+if {$newmodifyp_control == 0 } {
+	set newmodifyp_direct_step 0 
+      } else { set newmodifyp_direct_step 1
+	}
+}
+
+
 
 #########################################
 # Traced to variables that might change #
@@ -1132,7 +1160,8 @@ proc set_enabling {} {
     if { $style == 4                                     || \
 	 $style == 3                                     || \
 	($style == 2 && ($control == 1 || $tool == 7))   || \
-	($style == 0 && $tool == 1 && $control == 1)     } {
+	($style == 0 && $tool == 1 && $control == 1)     || \
+	$tool == 8						    } {
 	
 	$nmInfo(modifyfull).mode.oscillating configure -state disabled
     }
@@ -1154,7 +1183,7 @@ proc set_enabling {} {
 
     # disable sweep
     if { $tool == 7     || \
-	 $control == 1  } {
+	 $control == 1  || $tool == 8 } {
 
 	$nmInfo(modifyfull).style.sweep configure -state disabled
     }
@@ -1162,6 +1191,7 @@ proc set_enabling {} {
     # disable sewing
     if { $mode == 0     || \
 	 $tool == 4     || \
+	 $tool == 8     || \
 	 $tool == 7     || \
 	 $control == 1  } {
 
@@ -1172,6 +1202,7 @@ proc set_enabling {} {
     if { $mode == 0     || \
 	 $tool == 4     || \
 	 $tool == 7     || \
+	 $tool == 8     || \
 	 $control == 1  } {
 
 	$nmInfo(modifyfull).style.forcecurve configure -state disabled
@@ -1179,14 +1210,14 @@ proc set_enabling {} {
 
     # disable freehand
     if { ($style != 0 && $control == 1)                || \
-	 ($mode == 0 && ($style == 3 || $style == 4))  } {
+	 ($mode == 0 && ($style == 3 || $style == 4)) } {
 
 	$nmInfo(modifyfull).tool.freehand configure -state disabled
     }
 
     # disable line
     if { $control == 1                                 || \
-	 ($mode == 0 && ($style == 3 || $style == 4))  } {
+	 ($mode == 0 && ($style == 3 || $style == 4))} {
 
 	$nmInfo(modifyfull).tool.line configure -state disabled
     }
@@ -1212,6 +1243,11 @@ proc set_enabling {} {
 
 	$nmInfo(modifyfull).tool.optimize_now configure -state disabled
     }
+	
+	# disable direct step
+	if {$style != 0} {
+	$nmInfo(modifyfull).tool.direct_step configure -state disabled
+}
 
     # disable feedback
     if { ($style != 0 && $tool == 7)                                   || \

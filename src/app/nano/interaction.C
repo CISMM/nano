@@ -69,7 +69,7 @@
 #include <nmui_SurfaceFeatures.h>
 
 #include <optimize_now.h>
-
+#include <directstep.h>
 #include "normal.h"
 #include "relax.h"
 #include "butt_mode.h"
@@ -530,9 +530,15 @@ void handle_user_mode_change(vrpn_int32, void *)
 }
 
 void handle_xyLock (vrpn_int32, void *) {
-  if (!microscope->haveMutex()) {
-    xy_lock = 0;
-  }
+	if (!microscope->haveMutex()) {
+		xy_lock = 0;
+	}
+		//get Z position of when xy_lock was set for direct step
+		if (microscope->haveMutex() && microscope->state.modify.tool == DIRECT_STEP) {
+			nmui_Util::getHandInWorld(0, xy_pos);
+			z_pos = xy_pos[2];
+			//printf("z_pos when xylock is set: %f" , z_pos);
+		}
 }
 
 
@@ -1133,11 +1139,8 @@ void setupHaptics (int mode) {
       haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
                                (haptic_manager.d_pointFeatures);
       break;
-
-
   }
 }
-
 
 /**
  *
@@ -2806,6 +2809,8 @@ int doFeelLive (int whichUser, int userEvent)
   // xy_lock fixes the hand in one position, until it is released
 
   if (!xy_lock) {
+
+   
      if (microscope->state.modify.tool == CONSTR_FREEHAND) {
         // Constrained freehand only allows motion along a line
          nmui_Util::getHandInWorld(whichUser, clipPos);
@@ -2822,9 +2827,32 @@ int doFeelLive (int whichUser, int userEvent)
          nmui_Util::clipPosition(plane, clipPos);
      }
   } else if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
-    nmui_Util::getHandInWorld(whichUser, clipPos);
-    clipPos[0] = xy_pos[0];
-    clipPos[1] = xy_pos[1];
+	  nmui_Util::getHandInWorld(whichUser, clipPos);
+	  clipPos[0] = xy_pos[0];
+	  clipPos[1] = xy_pos[1];
+  } else if (xy_lock && microscope->state.modify.tool == DIRECT_STEP) {
+	  
+	  //if we are in xy_lock and in direct_Step mode, we want to be able to move microscope
+	  // and update position on screen
+	  if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE) {
+		  BCPlane* plane = dataset->inputGrid->getPlaneByName
+			  (dataset->heightPlaneName->string());
+
+		  //current position of microscope
+		  clipPos[0] = microscope->state.data.inputPoint->x();
+		  clipPos[1] = microscope->state.data.inputPoint->y();
+		  //printf(" x %f   y %f",clipPos[0], clipPos[1] );
+
+		  //height on BCPlane
+		  double height;
+		  plane -> valueAt(&height,clipPos[0],clipPos[1]);
+		  clipPos[2] = height;
+	  } else {
+		  // Direct_STEP_3D
+		  clipPos[0] = microscope->state.data.inputPoint->x();
+		  clipPos[1] = microscope->state.data.inputPoint->y();
+		  clipPos[2] = z_pos;
+	  }
   }
 
   // Used only for direct Z control - we need to have the Z converted

@@ -1,3 +1,9 @@
+2001-09-14 <millerj@cs.unc.edu>
+	*interaction.c, .h : added direct step capability. Display will get updated when steps
+	are taken in xy__lock, when selecting xy_lock, the z_position of the microscope gets set
+	so direct stepping in xyz works. added in an variable so that the z position of microscope
+	is remembered.
+
 2001-08-28    <dwyer@BISMUTH-CS>
 
 	* microscape.c (handle_guardedscan_planeacquire): Fixed string problem.

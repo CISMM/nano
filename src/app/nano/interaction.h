@@ -37,6 +37,9 @@ void updateMicroscopeRTTEstimate (double time);
 
 void updateWorldFromRoom (v_xform_type * src = NULL);
 
+/** variable for Z position of microscope for Direct_step */
+extern double z_pos;
+
 extern TclNet_float tcl_lightDirX;
 extern TclNet_float tcl_lightDirY;
 extern TclNet_float tcl_lightDirZ;

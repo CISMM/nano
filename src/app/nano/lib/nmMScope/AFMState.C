@@ -83,6 +83,8 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     new_constr_xyz_param ("newmodifyp_constr_xyz_mode", CONSTR_XYZ_LINE ),
     optimize_now_param ("modifyp_optimize_now", OPTIMIZE_NOW_LINE ),
     new_optimize_now_param ("newmodifyp_optimize_now", OPTIMIZE_NOW_LINE ),
+	direct_step_param ("modifyp_direct_step", DIRECT_STEP ),
+	new_direct_step_param ("newmodifyp_direct_step", DIRECT_STEP ),
     style ("modifyp_style", i.style ),
     new_style ("newmodifyp_style", i.style ),
     tool ("modifyp_tool", FREEHAND),

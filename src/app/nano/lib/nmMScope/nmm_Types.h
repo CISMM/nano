@@ -27,7 +27,8 @@ enum Tool {
   SLOW_LINE,
   SLOW_LINE_3D,
   FEELAHEAD,
-  OPTIMIZE_NOW
+  OPTIMIZE_NOW,
+  DIRECT_STEP
 };  // tool
 
 // style is defined in nmb_Types.h
@@ -52,6 +53,11 @@ enum ConstrXYZMode {
 enum OptimizeNowMode {
   OPTIMIZE_NOW_LINE,
   OPTIMIZE_NOW_AREA
+};
+
+enum DirectStepMode{
+	DIRECT_STEP_PLANE,
+	DIRECT_STEP_3D
 };
 // TODO:  rewrite NetworkedMicroscopeChannel so we don't expose these,
 // (or switch to VRPN first)
