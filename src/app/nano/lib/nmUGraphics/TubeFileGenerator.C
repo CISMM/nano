@@ -84,7 +84,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	int i;
 	float radius, x, y, z, az, alt;
 	double theta;
-	double max_y = 0.0;
+	int imageX, imageY;
 
 //	tubes t;				// gives a bunch of warnings because the name is too big...
 	verts t[10];			// go with static number for now...  10 tubes allowed
@@ -98,6 +98,9 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	q_vec_type p2;
 	q_type q;
 
+	q_type coord_fix;
+	q_vec_type trans;
+
 	int tess = Pobject->GetTess();
 
 	int numtubes = 0;
@@ -107,6 +110,10 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	GLuint dl;
 
 
+	q_from_euler(coord_fix, -PI / 2, 0, 0);		// coordinate systems are different
+												// this fixes it
+	q_vec_set(trans, 0, 400, 0);
+
 	readfile.open(filename);
     assert(readfile);
 
@@ -114,13 +121,27 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		cerr << "Unable to open input file" << endl;
         return 0;
     }
-	readfile.getline(buffer, MAXLENGTH);	// skip first line, it doesn't give any data
 	while(!readfile.eof()) {
 		readfile.getline(buffer, MAXLENGTH);
 
 		token = strtok(buffer, " \t\n");
 		if (token != NULL) {
-			if (strcmp(token, "radius") == 0) {
+			if (*token == 'X') { 
+				// do nothing
+			}
+			else if (strcmp(token, "image") == 0) {
+				// get image dimensions
+				token = strtok(NULL, ":");
+
+				token = strtok(NULL, " \t\n");
+				imageX = atoi(token);
+
+				token = strtok(NULL, " \t\n");
+
+				token = strtok(NULL, " \t\n");
+				imageY = atoi(token);
+			}
+			else if (strcmp(token, "radius") == 0) {
 				// if not first tube, add to tubes
 				if (vs.size() != 0) {
 					t[numtubes++] = vs;
@@ -162,33 +183,32 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 					// THIS CODE IS FOR USING X and Y (constant Z)
 
-					// skip first number until Yoni changes this
 
-
-					// x and y are switched for some reason.......
-					token = strtok(NULL, " \t\n");		
-					y = -atof(token) + 300;			// hack, change this
-					token = strtok(NULL, " \t\n");
 					x = atof(token);
 
-					z = 10.0;
+					token = strtok(NULL, " \t\n");
+					y = atof(token);
+
+					z = radius;
 	
 					// skip X3D, Y3D, Z3D
 					token = strtok(NULL, " \t\n");
 					token = strtok(NULL, " \t\n");
 					token = strtok(NULL, " \t\n");
 
-					token = strtok(NULL, " \t\n");
-					az = atof(token);
-					token = strtok(NULL, " \t\n");
-					alt = atof(token);
 
+					token = strtok(NULL, " \t\n");
+					az = atof(token) + PI / 2;
+					token = strtok(NULL, " \t\n");
+					// buggy alt output from shape analysis...just set to zero for now
+//					alt = atof(token);
+					alt = 0.0;
 
 					// set up medial axis point
 					q_vec_set(p1, x, y, z);
 
 					// set up rotation quat
-					q_from_euler(q, az + PI / 2, 0, alt);
+					q_from_euler(q, az, 0, alt);
 
 					// get vertices
 					theta = 0.0;
@@ -199,7 +219,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 						q_vec_set(p2,	x + radius * cos(theta),
 										y,
 										z + radius * sin(theta));
-	
+
 						// translate point to origin
 						q_vec_subtract(p2, p2, p1);
 					
@@ -208,6 +228,12 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 						// translate back
 						q_vec_add(p2, p2, p1);
+
+						// coordinate systems are different
+						// this fixes it
+						q_xform(p2, coord_fix, p2);
+
+						q_vec_add(p2, p2, trans);
 	
 						v.push_back(p2[0]);
 						v.push_back(p2[1]);
@@ -219,14 +245,14 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 						Pobject->num_triangles += 2;	// two triangles per vertex
 					}
 					// do cylinder stuff
-					c.x1 = x;
-					c.y1 = y;
-					c.z1 = z;
+					c.x1 = p2[0];
+					c.y1 = p2[1];
+					c.z1 = p2[2];
 					if (!newtube) {	
 						// fill in last guys second point
-						cs.back().x2 = x;
-						cs.back().y2 = y;
-						cs.back().z2 = z;
+						cs.back().x2 = p2[0];
+						cs.back().y2 = p2[1];
+						cs.back().z2 = p2[2];
 						// fill in length
 						cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
 												(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
@@ -234,7 +260,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 																					
 					}
 					c.radius = radius;
-					c.az = az;
+					c.az = az;		// change in coordinate system
 					c.alt = alt;
 					cs.push_back(c);
 					newtube = false;
@@ -310,6 +336,8 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 	float v3[4];
 	float v4[4];
 
+	int i, k;
+
 	q_vec_type n1;
 	q_vec_type n2;
 
@@ -317,10 +345,9 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 
 	glNewList(dl, GL_COMPILE);	// init display list
 
-	for (int i = 0; i < vs.size() - tess; i++) {
-		glBegin(GL_POINTS);
-		int last_k = 0; // dtm
-		for (int k = 0; k < 3; k++) {
+	for (i = 0; i < vs.size() - tess; i++) {
+		glBegin(GL_TRIANGLES);
+		for (k = 0; k < 3; k++) {
 			// special case for last two triangles per segment
 			if ((i + 1) >= tess && (i + 1) % tess == 0) {
 				v1[k] = vs[i][k];
@@ -334,10 +361,8 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 				v3[k] = vs[i + tess + 1][k];
 				v4[k] = vs[i + 1][k];
 			}
-			last_k = k; // dtm
 		}
-		last_k++; // dtm
-		v1[last_k] = v2[last_k] = v3[last_k] = v4[last_k] = 1.0; // dtm
+		v1[k] = v2[k] = v3[k] = v4[k] = 1.0; // dtm
 
 
 		// Compute the normal...only flat shading for now...should be good enough???

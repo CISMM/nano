@@ -1,3 +1,8 @@
+2002-04-03  David Borland <borland@cs.unc.edu>
+        * TubeFileGenerator.C:  further additions for loading the new output
+        format as tubes.  Corrected some bugs in sending data to the AFM
+        simulator
+
 2002-04-02  David Marshburn <marshbur@cs.unc.edu>
 
 	* Makefile:  added libs so that this builds on the SGI
