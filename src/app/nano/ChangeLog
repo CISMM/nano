@@ -1,3 +1,7 @@
+2002-10-24  David Borland  <borland@cs.unc.edu>
+
+        * microscape.c : changed the name of the TEM image.
+
 2002-10-10  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nm_Tip.C : added control to make the tip appear at the hand position 
