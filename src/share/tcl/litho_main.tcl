@@ -82,10 +82,94 @@ pack .main .menubar -side top -fill x
 # menu bar
 menu .menu -tearoff 0
 
-#### FILE menu #############################
+#### FILE menu globals, windows and procedures #####################
+set fileinfo(open_dir) ""
+set fileinfo(save_dir) ""
+
+iwidgets::dialog .save_buffer_dialog -title "Save buffer image"
+#-modality application
+.save_buffer_dialog hide Help
+.save_buffer_dialog hide Apply
+.save_buffer_dialog buttonconfigure OK -text "Save" -command {
+    global fileinfo bufferImage_format
+    .save_buffer_dialog deactivate 1
+    set types { {"All files" *}
+    {"TIFF" ".tif" }
+    {"PPM" ".ppm" }}
+
+    # Set the file extension correctly
+    set def_file_exten ".tif"
+    foreach item $types {
+        if { [string compare $bufferImage_format [lindex $item 0]] == 0} {
+            set def_file_exten [lindex $item 1]
+        }
+    }
+    
+    set filename [tk_getSaveFile -filetypes $types \
+                -initialfile aligned_data$def_file_exten \
+                -initialdir $fileinfo(save_dir) \
+                -title "Save buffer image"]
+    if {$filename != ""} {
+        #puts "Save buffer image: $filename $bufferImage_format"
+        update idletasks
+        after idle {
+        # Setting this variable triggers a callback which saves the file.
+            # Dialog checks for writeable directory, and asks about
+            # replacing existing files.
+        set bufferImage_filename $filename
+        }
+        set fileinfo(save_dir) [file dirname $filename]
+    } else {
+        # otherwise do nothing - user pressed cancel or didn't enter file name
+    }
+
+}
+
+.save_buffer_dialog buttonconfigure Cancel -command {
+    .save_buffer_dialog deactivate 0
+}
+
+set win [.save_buffer_dialog childsite]
+set bufferImage_format_list {}
+generic_optionmenu $win.bufferImage_format bufferImage_format \
+        "Format for saved picture:" bufferImage_format_list
+pack $win.bufferImage_format -anchor nw
+
+# Allow the user to open a file
+proc open_file {} {
+    global open_image_filename fileinfo
+    set types { {"All files" *} }
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $fileinfo(open_dir) \
+            -title "Open an image file"]
+    if {$filename != ""} {
+        # setting this variable triggers a callback in C code
+        # which saves the file.
+        # dialog check whether file exists.
+        set open_image_filename $filename
+        set fileinfo(open_dir) [file dirname $filename]
+    }
+    # otherwise do nothing.
+}
+
+# Allow the user to save
+proc save_buffer {} {
+    global  bufferImage_format bufferImage_filename
+    # All activity is done in the button commands defined above.
+    .save_buffer_dialog activate
+}
+
+#### FILE menu commands ####################
+
 set filemenu .menu.file
 menu $filemenu -tearoff 0
 .menu add cascade -label "File" -menu $filemenu -underline 0
+
+$filemenu add command -label "Open File..." -underline 0 \
+    -command "open_file"
+
+$filemenu add command -label "Save Buffer..." -underline 0 \
+    -command "save_buffer"
 
 $filemenu add command -label "Quit" -underline 1 -command {
     if {[string match "*wish*" [info nameofexecutable]] } {
@@ -164,6 +248,11 @@ button $drawing_parameters_win.clear_drawing -text "Clear" -command \
     { set clear_drawing 1 }
 pack $drawing_parameters_win.clear_drawing -side top
 
+#generic_optionmenu $drawing_parameters_win.coordinate_system \
+#     drawing_coordinate_system "Coordinate System" imageNames
+
+#pack $drawing_parameters_win.coordinate_system -side top
+
 ######### End of Drawing Parameters Control Panel ####################
 
 ######### Display Parameters Control Panel ###########################
@@ -195,6 +284,14 @@ proc set_image_color {} {
     scan $image_color #%02x%02x%02x image_r image_g image_b
     set image_color_changed 1
 }
+
+proc update_color_sample {name el op} {
+    global image_r image_g image_b image_color display_parameters_win
+    set image_color [format #%02x%02x%02x $image_r $image_g $image_b]
+    $display_parameters_win.image_color.colorsample configure -bg $image_color
+}
+
+trace variable image_color_changed w update_color_sample
 
 frame $display_parameters_win.image_color
 button $display_parameters_win.image_color.set_color -text "Set image color" \
@@ -233,7 +330,7 @@ pack $display_parameters_win.enable_display_check -anchor nw -padx 3 -pady 3
 ######### End of Drawing Parameters Control Panel ####################
 
 ######### Alignment ##################################################
-set clear_align_points 0
+#set clear_align_points 0
 set alignment_needed 0
 set source_image_name "none"
 set target_image_name "none"
@@ -255,25 +352,50 @@ button $align_win.align_now -text "Align Now" -command \
     { set alignment_needed 1 }
 pack $align_win.align_now
 
-button $align_win.clear_points -text "Clear Points" -command \
-    { set clear_align_points 1 }
-pack $align_win.clear_points
+
+#button $align_win.clear_points -text "Clear Points" -command \
+#    { set clear_align_points 1 }
+#pack $align_win.clear_points
 
 ######### End Alignment ##############################################
 
 ######### SEM Image Acquisition ######################################
 global sem_window_open sem_acquire_image sem_acquire_continuous \
        sem_pixel_integration_time_nsec sem_inter_pixel_delay_time_nsec \
-       sem_resolution
+       sem_resolution sem_overwrite_old_data sem_data_buffer \
+       sem_bufferImageNames sem_acquisition_magnification \
+       sem_beam_blank_enable sem_horiz_retrace_delay sem_vert_retrace_delay \
+       sem_x_dac_gain sem_x_dac_offset sem_y_dac_gain sem_y_dac_offset \
+       sem_z_adc_gain sem_z_adc_offset sem_external_scan_control_enable
+       
 
 set sem_pixel_integration_time_nsec 0
 set sem_inter_pixel_delay_time_nsec 0
 set sem_resolution 1
 set sem_acquire_continuous 0
+set sem_overwrite_old_data 1
+set sem_data_buffer "none"
+set sem_bufferImageNames {none}
+set sem_acquisition_magnification 1000
+set sem_beam_blank_enable 0
+set sem_horiz_retrace_delay_nsec 0
+set sem_vert_retrace_delay_nsec 0
+set sem_x_dac_gain 16384
+set sem_x_dac_offset 0
+set sem_y_dac_gain 16384
+set sem_y_dac_offset 0
+set sem_z_adc_gain 16384
+set sem_z_adc_offset 0
+set sem_external_scan_control_enable 0
 
 set sem_win  \
    [create_closing_toplevel_with_notify sem_image_acquisition sem_window_open \
               "SEM Image Acquisition"]
+
+# controls whether we have any scan control at all
+checkbutton $sem_win.external_scan_control \
+   -text "Enable Scan Control" -variable sem_external_scan_control_enable
+pack $sem_win.external_scan_control -anchor w -padx 3 -pady 3
 
 # Button to start the scan
 button $sem_win.acquire_image -text "Acquire Image" \
@@ -284,26 +406,58 @@ pack $sem_win.acquire_image -anchor w -padx 3 -pady 3
 checkbutton $sem_win.acquire_continuous \
         -text "Acquire Continuously" \
         -variable sem_acquire_continuous
+checkbutton $sem_win.overwrite_old_data \
+        -text "Overwrite Old Data" \
+        -variable sem_overwrite_old_data
+
+# this could be made selectable but its a bit complicated and unnecessary
+#generic_optionmenu $sem_win.buffer_select sem_data_buffer \
+#        "data buffer" sem_bufferImageNames
+frame $sem_win.data_buf_label
+
+label $sem_win.data_buf_label.descr -text "Data Buffer: "
+label $sem_win.data_buf_label.value -textvariable sem_data_buffer \
+      -fg blue -bg white
+
+generic_entry $sem_win.magnification sem_acquisition_magnification \
+        "Magnification (for 12.8 cm wide display)" integer
+checkbutton $sem_win.beam_blank_enable \
+        -text "Blank Beam Between Points" \
+        -variable sem_beam_blank_enable
+generic_entry $sem_win.horiz_retrace sem_horiz_retrace_delay_nsec \
+        "Horiz. Retrace Delay (nsec)" integer
+generic_entry $sem_win.vert_retrace sem_vert_retrace_delay_nsec \
+        "Vert. Retrace Delay (nsec)" integer
+
 pack $sem_win.acquire_continuous -anchor w -padx 3 -pady 3
+pack $sem_win.overwrite_old_data -anchor w -padx 3 -pady 3
+#pack $sem_win.buffer_select -anchor w -padx 3 -pady 3
+pack $sem_win.data_buf_label -anchor w -padx 3 -pady 3
+pack $sem_win.data_buf_label.descr -padx 3 -pady 3 -side left
+pack $sem_win.data_buf_label.value -padx 3 -pady 3 -side left
+pack $sem_win.magnification -anchor w -padx 3 -pady 3
+pack $sem_win.beam_blank_enable -anchor w -padx 3 -pady 3
+pack $sem_win.horiz_retrace -anchor w -padx 3 -pady 3
+pack $sem_win.vert_retrace -anchor w -padx 3 -pady 3
 
 frame $sem_win.res -bd 3 -relief groove
 pack $sem_win.res -side top
 label $sem_win.res.res_label -text "Resolution"
 pack $sem_win.res.res_label -side top
 radiobutton $sem_win.res.res1 -variable sem_resolution \
-     -value 1 -text "50x64" -justify left -anchor nw
+     -value 0 -text "50x64" -justify left -anchor nw
 radiobutton $sem_win.res.res2 -variable sem_resolution \
-     -value 2 -text "100x128" -justify left -anchor nw
+     -value 1 -text "100x128" -justify left -anchor nw
 radiobutton $sem_win.res.res3 -variable sem_resolution \
-     -value 3 -text "200x256" -justify left -anchor nw
+     -value 2 -text "200x256" -justify left -anchor nw
 radiobutton $sem_win.res.res4 -variable sem_resolution \
-     -value 4 -text "400x512" -justify left -anchor nw
+     -value 3 -text "400x512" -justify left -anchor nw
 radiobutton $sem_win.res.res5 -variable sem_resolution \
-     -value 5 -text "800x1024" -justify left -anchor nw
+     -value 4 -text "800x1024" -justify left -anchor nw
 radiobutton $sem_win.res.res6 -variable sem_resolution \
-     -value 6 -text "1600x2048" -justify left -anchor nw
+     -value 5 -text "1600x2048" -justify left -anchor nw
 radiobutton $sem_win.res.res7 -variable sem_resolution \
-     -value 7 -text "3200x4096" -justify left -anchor nw
+     -value 6 -text "3200x4096" -justify left -anchor nw
 
 pack $sem_win.res.res1 $sem_win.res.res2 \
      $sem_win.res.res3 $sem_win.res.res4 \
@@ -318,14 +472,34 @@ generic_entry $sem_win.inter_pixel_delay_time_nsec \
     sem_inter_pixel_delay_time_nsec \
     "Inter Pixel Delay (nsec)" integer
 pack $sem_win.inter_pixel_delay_time_nsec -padx 3 -pady 3
+
+frame $sem_win.dac_settings -bd 3 -relief groove
+pack $sem_win.dac_settings -side top -fill x
+label $sem_win.dac_settings.header_label -text "DAC Settings"
+pack $sem_win.dac_settings.header_label -side top
+generic_entry $sem_win.dac_settings.x_gain sem_x_dac_gain "X gain" integer
+generic_entry $sem_win.dac_settings.x_offset sem_x_dac_offset "X offset" integer
+generic_entry $sem_win.dac_settings.y_gain sem_y_dac_gain "Y gain" integer
+generic_entry $sem_win.dac_settings.y_offset sem_y_dac_offset "Y offset" integer
+generic_entry $sem_win.dac_settings.z_gain sem_z_adc_gain "Z gain" integer
+generic_entry $sem_win.dac_settings.z_offset sem_z_adc_offset "Z offset" integer
+
+pack $sem_win.dac_settings.x_gain \
+     $sem_win.dac_settings.x_offset \
+     $sem_win.dac_settings.y_gain \
+     $sem_win.dac_settings.y_offset \
+     $sem_win.dac_settings.z_gain \
+     $sem_win.dac_settings.z_offset -fill x
+
 ######### End Image Acquisition ###########################
 
 ######### Beam Control Panel ##############################
-global sem_beam_width_nm sem_beam_current_uAmps \
+global sem_exposure_magnification sem_beam_width_nm sem_beam_current_picoAmps \
        sem_beam_expose_now
 
+set sem_exposure_magnification 10000
 set sem_beam_width_nm 200
-set sem_beam_current_uAmps 1
+set sem_beam_current_picoAmps 1
 set sem_beam_expose_now 0
 
 set sem_win \
@@ -339,14 +513,19 @@ label $sem_win.calibration.calibration_label -text "Calibration Parameters"
 pack $sem_win.calibration.calibration_label \
          -padx 3 -pady 3
 
+generic_entry $sem_win.calibration.magnification \
+    sem_exposure_magnification \
+    "Magnification (for 12.8 cm wide display)" integer
+pack $sem_win.calibration.magnification -anchor w -padx 3 -pady 3
+
 generic_entry $sem_win.calibration.beam_width \
     sem_beam_width_nm \
     "Beam Width (nm)" real
 pack $sem_win.calibration.beam_width -anchor w -padx 3 -pady 3
 
 generic_entry $sem_win.calibration.beam_current \
-    sem_beam_current_uAmps \
-    "Beam Current (uAmps)" real
+    sem_beam_current_picoAmps \
+    "Beam Current (picoAmps)" real
 pack $sem_win.calibration.beam_current -anchor w -padx 3 -pady 3
 
 button $sem_win.expose_now -text "EXPOSE" \
