@@ -2259,8 +2259,6 @@ int nmm_Microscope_Remote::handle_InModMode
                           (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  vrpn_int32 sec, usec;	// Tiger  
-  ms->decode_InModModeT(&param.buffer, &sec, &usec);
   ms->RcvInModMode();
 
   return 0;
@@ -2283,9 +2281,6 @@ int nmm_Microscope_Remote::handle_InImgMode
                           (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  vrpn_int32 sec,usec;
-
-  ms->decode_InImgModeT(&param.buffer, &sec, &usec);
   ms->RcvInImgMode();
 
   return 0;
