@@ -530,6 +530,9 @@ AFMState::AFMState (const AFMInitializationState & i) :
     rasterX (0),
     rasterY (0),
 
+    fc_data(NULL),
+    fc_zValues(NULL),
+
     first_PID_message_pending(VRPN_TRUE),  //message starts out pending
 
     //dlistchange (VRPN_FALSE),
@@ -558,7 +561,12 @@ AFMState::AFMState (const AFMInitializationState & i) :
 }
 
 AFMState::~AFMState (void) {
-
+    if (fc_data != NULL) {
+      delete [] fc_data;
+    }
+    if (fc_zValues != NULL) {
+      delete [] fc_zValues;
+    }
 }
 
 

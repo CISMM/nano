@@ -1,3 +1,12 @@
+2002-06-14  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemoteGen.Cdef (ForceCurveData): Change the order
+	force-curve data is handled, to match the order it is
+	collected. Corrects order in mod files, and creates correct graph
+	for stripchart.
+
+	* AFMState.Ch: new fc_ variables to help. 
+
 2002-06-05 Woojin Seok <seok@cs.unc.edu>
         *AFMState.h : replace Tclvar_int doRelaxComp by 
         TclNet_int doRelaxComp to share a state of button whose variable 

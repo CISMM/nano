@@ -1341,39 +1341,88 @@ RECEIVE_MSG_HEADER ForceCurveData {
     //printf("  values:");
   }
 
+  // Save fc data as we receive it. See Note for RECEIVE_MSG_BODY ForceCurveData below.
+  if (state.fc_data == NULL) {
+      state.fc_data = new vrpn_float32[numSamples*numHalfcycles];
+  } else if (state.fc_numSamples != numSamples ||
+             state.fc_numHalfcycles != numHalfcycles) {
+      delete [] state.fc_data;
+      state.fc_data = new vrpn_float32[numSamples*numHalfcycles];
+  }
+  if (state.fc_zValues == NULL) {
+      state.fc_zValues = new vrpn_float32[numSamples];
+  } else if (state.fc_numSamples != numSamples ) {
+      delete [] state.fc_zValues;
+      state.fc_zValues = new vrpn_float32[numSamples];
+  }
   state.fc_x = xr;
   state.fc_y = yr;
   state.fc_numSamples = numSamples ;
+  state.fc_samplesSoFar = 0;
   state.fc_numHalfcycles = numHalfcycles;
   state.fc_sec = sec;
   state.fc_usec = usec;
 }
 
+/** 
+Receive data from a force-curve modification.
+
+@Note Unfortunately we handle the data in an awkward way. We receive the
+first point from each half cycle first, then the second point from each
+half-cycle, but we want to process _all_ the points from the first half-cycle
+first, so we must save all the data and process it at the end. We are forced
+to do this to maintain compatibility with older stream files. XXX Fix if 
+we change to new stream file version.
+ */
 RECEIVE_MSG_BODY ForceCurveData {
 //      float32 z
 //      float32 *d 
 //      int32 numHalfcycles
 
-  // Make the report. This has the side effect of updating
-  // the fc_inputPoint values.
-  // HACK HACK HACK
-  for (int i = 0; i < numHalfcycles; i++){
-      // Some weirdness here - we hard-code number of channels to 1
-      // that means we are only collecting one kind of data, but
-      // in a cycle. 
-      if (state.data.forcecurve_channels->Handle_report(state.fc_x, 
-                        state.fc_y, z, state.fc_sec, state.fc_usec, 
-                        (float *)&(d[i]), 1))
-	fprintf(stderr, "Error handling SPM force curve result data\n");
-      doPointDataCallbacks(state.data.fc_inputPoint);
+  int i,j;
+  // Put the data in the order we need it - all points for
+  // first half-cycle first, then second half-cycle...
+  for (i = 0; i < numHalfcycles; i++){
+      state.fc_data[i*state.fc_numSamples + state.fc_samplesSoFar] = d[i];
   }
-  // draw graphical representation
-  DisplayModResult(state.data.fc_inputPoint->x(),
-		   state.data.fc_inputPoint->y(),
-		   0.0f, NULL, VRPN_FALSE);
+  state.fc_zValues[state.fc_samplesSoFar] = z;
 
+  state.fc_samplesSoFar++;
+
+  // This is the signal we've received all the data for this force curve,
+  // so let's go ahead and process it. 
+  if (state.fc_samplesSoFar == state.fc_numSamples) {
+      // We want to reverse the order of "up" half cycles,
+      // to match the order the data was actually collected, and
+      // so the stripchart looks pretty (no connecting line between ends):
+      // set a flag and reverse j
+      bool up_cycle = false;
+      for (i = 0; i < numHalfcycles; i++){
+          for (j = (up_cycle ? state.fc_numSamples-1 : 0); 
+               up_cycle ? (j>=0) : (j < state.fc_numSamples); 
+               up_cycle ? j-- : j++) {
+
+              // Make the report. This has the side effect of updating
+              // the fc_inputPoint values. Hack.
+              // Some weirdness here - we hard-code number of channels to 1
+              // that means we are only collecting one kind of data, but
+              // in a cycle. 
+              if (state.data.forcecurve_channels->Handle_report(state.fc_x, 
+                        state.fc_y, state.fc_zValues[j],
+                        state.fc_sec, state.fc_usec, 
+                        (float *)&(state.fc_data[i*state.fc_numSamples + j]), 1))
+                  fprintf(stderr, "Error handling SPM force curve result data\n");
+              doPointDataCallbacks(state.data.fc_inputPoint);
+          }
+          // draw tick mark in surface view/3D window.
+          DisplayModResult(state.data.fc_inputPoint->x(),
+                           state.data.fc_inputPoint->y(),
+                           0.0f, NULL, VRPN_FALSE);
+          
+          up_cycle = !up_cycle;
+      }
+  }
 }
-
 // updates user interface
 RECEIVE_MSG InScanlineMode {
 //    int32 enabled   

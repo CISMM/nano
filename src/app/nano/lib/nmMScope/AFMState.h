@@ -587,9 +587,14 @@ struct AFMState {
   vrpn_float32 fc_x;
   vrpn_float32 fc_y;
   vrpn_int32 fc_numSamples;
+  vrpn_int32 fc_samplesSoFar;
   vrpn_int32 fc_numHalfcycles;
   vrpn_int32 fc_sec;
   vrpn_int32 fc_usec;
+    /// Saved data values from ForceCurveData message, so it
+    /// can be processed in the correct order
+  vrpn_float32 * fc_data;
+  vrpn_float32 * fc_zValues;
 
     /// tracks when PID received from AFM/stream, so we can set
     /// modify PID to match.
