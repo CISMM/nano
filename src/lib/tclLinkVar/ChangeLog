@@ -1,3 +1,10 @@
+2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Tcl_Interpreter.Ch : this provides a home for the global
+	Tcl_Interp pointer and contains some Tcl/Tk/BLT/Itcl/Itk etc.
+	initialization from tcl_tk.c but leaves the code specific to 
+	nano in tcl_tk.c
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Tcl_Linkvar.C (Tclvar_int::Tclvar_int): added an extra optional
