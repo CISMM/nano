@@ -817,7 +817,6 @@ long nmm_Microscope_Remote::rotateScanCoords (const double _x, const double _y,
 
     double centerx = state.xMin + (state.xMax - state.xMin)/2.0 ;
     double centery = state.yMin + (state.yMax - state.yMin)/2.0 ;
-
     double x = _x - centerx; // translate points to center
     double y = _y - centery;
 
@@ -1776,28 +1775,6 @@ long nmm_Microscope_Remote::JumpToScanLine(long line)
   return dispatchMessage(len, msgbuf, d_JumpToScanLine_type);
 }
 
-/* OBSOLETE
-long nmm_Microscope_Remote::SetStdDevParams (const long _samples,
-                                            const float _freq) {
-  state.modify.std_dev_samples = _samples;
-  state.modify.std_dev_frequency = _freq;
-  return SetStdDevParams();
-}
-
-long nmm_Microscope_Remote::SetStdDevParams (void) {
-  char * msgbuf;
-  long len;
-
-  msgbuf = encode_SetStdDevParams(&len, 
-                  state.modify.std_dev_samples,
-                  state.modify.std_dev_frequency);
-  if (!msgbuf)
-    return -1;
-
-  return dispatchMessage(len, msgbuf, d_SetStdDevParams_type);
-}
-*/
-
 
 
 
@@ -1808,11 +1785,6 @@ long nmm_Microscope_Remote::QueryScanRange (void) {
 
 
 
-/* OBSOLETE
-long nmm_Microscope_Remote::QueryStdDevParams (void) {
-  return dispatchMessage(0, NULL, d_QueryStdDevParams_type);
-}
-*/
 
 
 
@@ -1850,6 +1822,18 @@ void nmm_Microscope_Remote::ResetClock (void) {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
   d_next_time.tv_usec = 0L;
+}
+
+long nmm_Microscope_Remote::EnableUpdatableQueue (vrpn_bool on) {
+  char * msgbuf;
+  long len;
+ 
+  msgbuf = encode_EnableUpdatableQueue(&len, on);
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_EnableUpdatableQueue_type);
 }
 
 

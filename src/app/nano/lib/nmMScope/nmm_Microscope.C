@@ -330,6 +330,9 @@ nmm_Microscope::nmm_Microscope (
     // unrelated to Scanline mode (this is for 2D scanning)
     d_JumpToScanLine_type = connection->register_message_type
         ("nmm Microscope JumpToScanLine");
+
+    d_EnableUpdatableQueue_type = connection->register_message_type
+        ("nmm Microscope EnableUpdatableQueue");
   }
 
 //  if (servicename)	moved to nmb_Device
@@ -4333,3 +4336,34 @@ long nmm_Microscope::decode_JumpToScanLine (const char ** buf,
   CHECK(vrpn_unbuffer(buf, line_number));
   return 0;
 }
+
+char * nmm_Microscope::encode_EnableUpdatableQueue (long * len, 
+                                                    vrpn_bool on) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+  
+  *len = sizeof(vrpn_bool);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_EnableUpdatableQueue:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, on);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_EnableUpdatableQueue (const char ** buf, 
+                                                  vrpn_bool * on) {
+  CHECK(vrpn_unbuffer(buf, on));
+  return 0;
+}
+
+

@@ -305,6 +305,15 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 //      Blunt_result * getBluntResult (void)
 //        { return &d_bluntResult; }
 
+    long EnableUpdatableQueue (vrpn_bool);
+      ///< If TRUE, only the most recent ScanTo/ScanToZ/ZagTo request
+      ///< is obeyed at the microscope;  older requests are thrown away.
+      ///< If FALSE, all ScanTo/ScanToZ/ZagTo requests are executed.
+      ///< Should be turned off for line mode!
+
+    Blunt_result * getBluntResult (void)
+      { return &d_bluntResult; }
+
 
     // Register callbacks from the user interface so we can decouple some
     // UI functions that currently go through here.

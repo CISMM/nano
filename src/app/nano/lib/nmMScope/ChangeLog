@@ -1,3 +1,17 @@
+2000-08-16  Tom Hudson  <hudson@cs.unc.edu>
+
+        * nmm_Microscope.h:  added data member d_EnableUpdatableQueue_type.
+        (encode_EnableUpdatableQueue):  new function.
+        (decode_EnableUpdatableQueue):  same.
+        * nmm_Microscope.C (constructor):  set value of
+        d_EnableUpdatableQueue_type.
+        (encode_EnableUpdatableQueue):  new function.
+        (decode_EnableUpdatableQueue):  same.
+        * nmm_MicroscopeRemote.h (EnableUpdatableQueue):  new function.
+        * nmm_MicroscopeRemote.C :  deleted some obsolete functions that had
+        long been commented-out.
+        (EnableUpdatableQueue):  new function.
+
 2000-08-13  Jeffrey Juliano  <juliano@cs.unc.edu>
 
 	* active_set.C: Pull Kwan's merged source to the trunk.  He had

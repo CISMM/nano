@@ -131,6 +131,8 @@ class nmm_Microscope {
 
     long d_JumpToScanLine_type;
 
+    long d_EnableUpdatableQueue_type;
+
     long d_VoltsourceEnabled_type;  // server ==> client
     long d_VoltsourceDisabled_type;
     long d_AmpEnabled_type;
@@ -531,6 +533,9 @@ class nmm_Microscope {
 
     char * encode_JumpToScanLine (long *len, vrpn_int32 line_number);
     long decode_JumpToScanLine (const char ** buf, vrpn_int32 *line_number);
+
+    char * encode_EnableUpdatableQueue (long * len, vrpn_bool on);
+    long decode_EnableUpdatableQueue (const char ** buf , vrpn_bool * on);
 
     // AFM-ish
 
