@@ -934,8 +934,9 @@ int ImageViewer::drawImage(int winID) {
     float pix_per_im_y = 1.0/(window[win_index].im_y_per_pixel);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glOrtho(1, -1, -1, 1, -1, 1);
     glRasterPos2f(-1.0, -1.0);
-    glPixelZoom(pix_per_im_x, pix_per_im_y);
+    glPixelZoom(-pix_per_im_x, pix_per_im_y);
     if (window[win_index].d_pixelMode == GL_FLOAT) {
         glDrawPixels(window[win_index].im_width, window[win_index].im_height,
             GL_LUMINANCE, GL_FLOAT, (float *)(window[win_index].image));
@@ -946,8 +947,7 @@ int ImageViewer::drawImage(int winID) {
     } else {
 		fprintf(stderr, "drawImage: Error, unknown pixel type\n");
 		return -1;
-	}
-
+    }
     return 0;
 }
 
@@ -1009,12 +1009,16 @@ int ImageViewer::drawString(int x, int y, char *str) {
 int ImageViewer::toImage(int winID, double *x, double *y){
     int win_index = winID-1;
     *x /= (double)window[win_index].win_width;
+    *x = 1.0-*x;
     *y /= (double)window[win_index].win_height;
+    *y = 1.0-*y;
     return 0;
 }
 
 int ImageViewer::toPixels(int winID, double *x, double *y){
     int win_index = winID-1;
+    *x = 1.0-*x;
+    *y = 1.0-*y;
     *x *= (double)window[win_index].win_width;
     *y *= (double)window[win_index].win_height;
     return 0;
