@@ -153,28 +153,29 @@ double Sim_x_ratio;
 double Sim_y_ratio;
 bool undone = true;
 double x_to_y = 1.0;
-int TriangleCounter = 0;
 bool once_thru = false;
 FILE *file;
 float current_scale = 1;
-float current_trans_x = 0;
-float current_trans_y = 0;
-float current_trans_z = 0;
 bool grouping;
 int* group;
 bool first_in_group = true;
 int bcounter = 0;
 int oldShift = 0;
+double water = 0.0;
+char* proteinName;
+bool save_for_eroder = false;
+float current_trans_x = 0;
+float current_trans_y = 0;
+float current_trans_z = 0;
 float current_rot_x = 0;
 float current_rot_y = 0;
 float current_rot_z = 0;
-double water = 0.0;
-char* proteinName;
 
 Tclvar_string cname("tclname","");
 
 int main(int argc, char *argv[])
 {
+	nmm_SimulatedMicroscope *test = &SimMicroscopeServer;
 	for(int j = 0;j < MAXGROUPS;j++){
 		number_in_group[j] = 0;
 	}
@@ -505,8 +506,8 @@ void displayFuncView( void ) {
 void displayFuncDepth( void ) {
     
   if(first){
-    gettimeofday(&oldtime,NULL);
-    first = false;
+	  gettimeofday(&oldtime,NULL);	
+	  first = false;
   }
 
   if (!stopAFM) {
@@ -517,12 +518,19 @@ void displayFuncDepth( void ) {
     //will be filled in by doImageScanApprox
     //length is the size of both rows and columns in the height array 
     //(double array)
+	
 	if(SimMicroscopeServer.grid_size_rcv){
 		HeightData = doImageScanApprox(length,SimMicroscopeServer.Sim_to_World_x);
 	}
 	else{
 		HeightData = doImageScanApprox(length,1.0);
 	}
+	if(save_for_eroder){
+		save_to_eroder();
+		save_for_eroder = false;
+	}
+	
+	
     if(connection_to_nano){
         gettimeofday(&currenttime,NULL);//current time
         int x = 1;
@@ -1038,7 +1046,7 @@ make_uncert_cone_sphere(ics);
 void commonKeyboardFunc(unsigned char key, int x, int y) {
     ofstream fout2;
     fout2.open("protein_vols_backwards.txt", fstream::out | fstream::app);
-    char c,d;
+    char c;
     float radius = 0.0;
 	float depth = 0.0;
 	float radius1,radius2,depth1,depth2;
@@ -1047,15 +1055,11 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	float length = 0.0;
     float decimal = 0.0;
 	int * dimergroup;
-    bool done;
 	bool add = true;
     double volume;
-	float _x,_y,_z;
-	//float altitude,azimuth;
 	int counter = 0;
 	//float val[5];
 	int i = 0;
-	bool negative = false;
 
     switch (key) {
     case 'u' : /* want to see uncertainty map : 
@@ -1101,53 +1105,13 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
 	case 'n' :
 	  //deal with radius
-	  cout << "Enter a radius: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            radius = radius*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      radius = radius + decimal;
-
+	  cout << "Enter a radius: " << flush;      
+	  scanf("%f",&radius);
+      
 	  //deal with length
 	  cout << "Enter a length: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            length = length*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      length = length + decimal;
-
+	  scanf("%f",&length);
+      
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 		length = length * SimMicroscopeServer.Sim_to_World_x;
@@ -1169,8 +1133,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	  cout << "6		helicase" << endl;
 	  cout << "7		any other protein (you enter the dimensions)" << endl;
       cout << endl <<"Enter a number for the protein you want: " << flush;
-      c = getchar();
-	  d = getchar();//gets carriage return
+      scanf("%c",&c);
 
 	  switch(c){
 	  case '1':
@@ -1199,51 +1162,11 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 		  break;
 	  case '7':
 		  cout << "Enter a radius: " << flush;
-		  done = false;
-		  c = getchar();
-		  while(int(c) != 10){//carriage return ascii value is 10
-				if(c != '.'){//handle numbers to the left first
-					radius = radius*10 + int(c - '0');
-				}
-				else{//numbers to the right of the dec. pt.
-					c = getchar();
-					while(int(c) != 10){
-						decimal = decimal/10 + int(c - '0')/10;
-						c = getchar();
-					} 
-					done = true;
-				}
-				if (done) break;
-				c = getchar();
-		  }
-          radius = radius + decimal;
-		  
+		  scanf("%f",&radius);
+		  		  
 		  cout << "Enter a depth (place to put origin of protein sphere in z): " << flush;
-		  done = false;
-		  c = getchar();
-		  while(int(c) != 10){//carriage return ascii value is 10
-			    if(c == '-'){
-					negative = true;
-				}
-				else if(c != '.'){//handle numbers to the left first
-					depth = depth*10 + int(c - '0');
-				}
-				else{//numbers to the right of the dec. pt.
-					c = getchar();
-					while(int(c) != 10){
-						decimal = decimal/10 + int(c - '0')/10;
-						c = getchar();
-					} 
-					done = true;
-				}
-				if (done) break;
-				c = getchar();
-		  }
-          depth = depth + decimal; 
-		  if(negative){
-			  depth = -depth;
-		  }
-		  negative = false;
+		  scanf("%f",&depth);
+		  
 		  break;
 	  default:
 		  cout << "Please try again with a valid option number." << endl
@@ -1271,9 +1194,8 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 		cout << "2		helicase dimer" << endl;
 		cout << "3		any other protein dimer (you enter the dimensions)" << endl;
 		cout << endl << "Enter a number for the protein you want: " << flush;
-		c = getchar();
-		d = getchar();//gets carriage return
-
+		scanf("%c",&c);
+		
 		switch(c){
 		case '1':
 		  radius1 = radius2 = 35.1499;
@@ -1291,66 +1213,26 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 		  cout << "Enter the radius and depth for the first protein then the second." << endl;
 		  for(i = 0;i<2;++i){
 			  cout << "Enter a radius: " << flush;
-			  done = false;
-			  c = getchar();
-			  while(int(c) != 10){//carriage return ascii value is 10
-					if(c != '.'){//handle numbers to the left first
-						radius = radius*10 + int(c - '0');
-					}
-					else{//numbers to the right of the dec. pt.
-						c = getchar();
-						while(int(c) != 10){
-							decimal = decimal/10 + int(c - '0')/10;
-							c = getchar();
-						} 
-						done = true;
-					}
-					if (done) break;
-					c = getchar();
-			  }
-			  radius = radius + decimal;
-			  
-			  
+			  scanf("%f",&radius);
+			  			  
 			  cout << "Enter a depth (place to put origin of protein sphere in z): " << flush;
-			  done = false;
-			  c = getchar();
-			  while(int(c) != 10){//carriage return ascii value is 10
-				    if(c == '-'){
-						negative = true;
-					}
-					if(c != '.'){//handle numbers to the left first
-						depth = depth*10 + int(c - '0');
-					}
-					else{//numbers to the right of the dec. pt.
-						c = getchar();
-						while(int(c) != 10){
-							decimal = decimal/10 + int(c - '0')/10;
-							c = getchar();
-						} 
-						done = true;
-					}
-					if (done) break;
-					c = getchar();
-			  }
-			  depth = depth + decimal; 
-			  if(negative){
-					depth = -depth;
-			  }
-			  negative = false;
-
-			  if(i==1){
+			  scanf("%f",&depth);
+			  
+			  if(i==0){
 				  radius1 = radius;
 				  depth1 = depth;
 			  }
 			  else{
 				  radius2 = radius;
 				  depth2 = depth;
+				  cout << "Enter the spacing between the proteins on the surface: " << flush;
+				  scanf("%f",&spacing2);
 			  }
 		  }
 		  break;
 		default:
 		  cout << "Please try again with a valid option number." << endl
-			   << "Try 7 if your protein is not in the list given." << endl;
+			   << "Try 3 if your protein is not in the list given." << endl;
 		  add = false;
 		  break;
 		}
@@ -1390,148 +1272,19 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 
 		}
       break;
-	case 'c' ://add cylinder
-/*
-	  //radius
-      cout << "Enter a radius: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            radius = radius*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      radius = radius + decimal;
-
-	  //length
-	  cout << "Enter a length: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            length = length*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      length = length + decimal;
-
-	  //other parameters
-	  char* string[5];
-	  string[0] = new char[1];
-	  strcpy(string[0],"x");
-
-	  string[1] = new char[1];
-	  strcpy(string[1],"y");
-
-	  string[2] = new char[1];
-	  strcpy(string[2],"z");
-
-	  string[3] = new char[8];
-	  strcpy(string[3],"azimuth");
-
-	  string[4] = new char[9];
-	  strcpy(string[4],"altitude");
-
-	  counter = 0;
-	  while(counter <5){
-		cout << "Enter " << string[counter] << " value: " << flush;
-		done = false;
-		c = getchar();
-		while(int(c) != 10){//carriage return ascii value is 10
-			if(c != '.'){//handle numbers to the left first
-				val[counter] = val[counter]*10 + int(c - '0');
-				//cout << int(c) << flush;
-			}
-			
-			if (done) break;
-			c = getchar();
-		}
-		counter++;
-	  }//counter = 5 now
-
-	  //adjust if there is a connection
-	  if(SimMicroscopeServer.grid_size_rcv){
-		  for(int i = 0;i < counter; ++i){
-			val[i] = val[i]*SimMicroscopeServer.Sim_to_World_x;
-		  }
-		  radius = radius*SimMicroscopeServer.Sim_to_World_x;
-		  length = length*SimMicroscopeServer.Sim_to_World_x;
-	  }
-
-	  _x = val[0];
-	  _y = val[1];
-	  _z = val[2];
-	  azimuth = val[3];
-	  altitude = val[4];
-      
-	  //draw
-	  addNtube(CYLINDER, Vec3d(_x,_y,_z), azimuth, 0, altitude, length, radius*2.0);*/	
-
-	  _x = 60;
-	  _y = _x;
-	  _z = _x;
-	  radius = 5.0;
-	  length = 20.0;
-	  addNtube(CYLINDER, Vec3d(_x,_y,_z), 0, 0, 0, length, radius*2.0);
-
-
-      selectedOb = numObs-1;
-
-      break;
 	case 'S' :
 		saveAllGroups();
 		break;
 	case 'L':
 		retrieveAllGroups();
 		break;
+	case 'F':
+		save_for_eroder = true;
+		break;
     case 's' ://add sphere
       cout << "Enter a radius: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            radius = radius*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      radius = radius + decimal;
+	  scanf("%f",&radius);
+      
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 	  }
@@ -1541,27 +1294,8 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
 	case 'h' ://add 1/2 sphere
       cout << "Enter a radius: " << flush;
-      done = false;
-      c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 10
-        if(c != '.'){//handle numbers to the left first
-            radius = radius*10 + int(c - '0');
-            //cout << int(c) << flush;
-        }
-        else{//numbers to the right of the dec. pt.
-            //cout << c << flush;
-            c = getchar();
-            while(int(c) != 10){
-                  //cout << int(c) << flush;
-                decimal = decimal/10 + int(c - '0')/10;
-                c = getchar();
-            } 
-            done = true;
-        }
-        if (done) break;
-        c = getchar();
-      }
-      radius = radius + decimal;
+	  scanf("%f",&radius);
+      
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 	  }

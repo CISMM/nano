@@ -55,6 +55,49 @@ int numberPixels_onedim = DEPTHSIZE;
 
 
 
+
+
+//saves data into .er file in the following format:
+//xdim ydim
+//data(0,0)		data(0,1) ...
+//data(1,0)		data(1,1) ...
+//...
+void save_to_eroder(){
+	ofstream outstream;
+	char filename[100];
+	int i = 0;
+
+	cout << "Save for Eroder\nEnter filename to save to (do not include extension): ";
+	scanf("%s",filename);
+	char * fileminusext;//filename minus extension
+	fileminusext = strtok(filename,".");
+	strcat(fileminusext,".er");
+	
+	cout << "The filename is: " << fileminusext << endl
+		 << "All files are saved as type '*.er'" << endl;;
+
+	outstream.open(fileminusext);
+    outstream << scanResolution << " " << scanResolution << endl;;
+
+	int rownumber;
+	for(int j=0; j<scanResolution; j++ ) {
+		rownumber = scanResolution-j-1;//rownumber counts from the top of the grid down
+
+		for(int i=0; i<scanResolution; i++ ) {	
+			outstream.width(7);
+			outstream.precision(6);
+			outstream.setf(ios_base::showpoint);
+			outstream.fill('0');
+			outstream.setf(ios_base::right);
+			outstream << zDistanceScaled[rownumber][i] << "\t";//feed data into array
+		}
+		outstream << endl;
+	}
+	outstream.close();
+
+}
+
+
 void get_z_buffer_values(double xworldratio) {
 
   GLint PackAlignment;
@@ -191,6 +234,7 @@ double ** doImageScanApprox(int& row_col_length,double xworldratio)
 
 }
 
+
 /* This is the most critical part of the afmsim. This is the one which 
  * renders the afm scan
  */
@@ -282,19 +326,46 @@ void showGrid( void ) {
   for(int j=0; j<scanResolution; j++ ) {
 	rownumber = scanResolution-j-1;//rownumber counts from the top of the grid down
 
-    for( int i=0; i<scanResolution-1; i++ ) {
+	
+    for( int i=0; i<scanResolution; i++ ) {
       double x = i * scanStep  +  scanXMin;
       double y = j * scanStep  +  scanYMin;
       double dx = scanStep;
       double dy = scanStep;
+	  double x1,x2,x3,x4,y1,y2,y3,y4,z1,z2,z3,z4;
 
-      // Get the the 4 (x,y,z) coords on the corners of this grid cell.
-      // Show objects above the surface only
-      double x1 = x;     double y1 = y;     double z1 = zHeight[j  ][i  ];
-      double x2 = x+dx;  double y2 = y;     double z2 = zHeight[j][i+1  ];
-      double x3 = x+dx;  double y3 = y+dy;  double z3 = zHeight[j+1][i+1];
-      double x4 = x;     double y4 = y+dy;  double z4 = zHeight[j+1][i];
-
+	  if(i<scanResolution-1 && j<scanResolution-1){
+		  // Get the the 4 (x,y,z) coords on the corners of this grid cell.
+		  // Show objects above the surface only
+		   x1 = x;      y1 = y;      z1 = zHeight[j][i];
+		   x2 = x+dx;   y2 = y;      z2 = zHeight[j][i+1];
+		   x3 = x+dx;   y3 = y+dy;   z3 = zHeight[j+1][i+1];
+		   x4 = x;      y4 = y+dy;   z4 = zHeight[j+1][i];
+	  }
+	  else if(i ==scanResolution-1 && j<scanResolution-1){
+		  // Get the the 4 (x,y,z) coords on the corners of this grid cell.
+		  // Show objects above the surface only
+		   x1 = x;      y1 = y;      z1 = zHeight[j  ][i-1  ];
+		   x2 = x+dx;   y2 = y;      z2 = zHeight[j][i];
+		   x3 = x+dx;   y3 = y+dy;   z3 = zHeight[j+1][i];
+		   x4 = x;      y4 = y+dy;   z4 = zHeight[j+1][i-1];		
+	  }
+	  else if(i < scanResolution-1 && j==scanResolution-1){
+		  // Get the the 4 (x,y,z) coords on the corners of this grid cell.
+		  // Show objects above the surface only
+		   x1 = x;      y1 = y;      z1 = zHeight[j-1][i];
+		   x2 = x+dx;   y2 = y;      z2 = zHeight[j-1][i+1];
+		   x3 = x+dx;   y3 = y+dy;   z3 = zHeight[j][i+1];
+		   x4 = x;      y4 = y+dy;   z4 = zHeight[j][i];
+	  }
+	  else{
+		  // Get the the 4 (x,y,z) coords on the corners of this grid cell.
+		  // Show objects above the surface only
+		   x1 = x;      y1 = y;      z1 = zHeight[j-1][i-1];
+		   x2 = x+dx;   y2 = y;      z2 = zHeight[j-1][i];
+		   x3 = x+dx;   y3 = y+dy;   z3 = zHeight[j][i];
+		   x4 = x;      y4 = y+dy;   z4 = zHeight[j][i-1];
+	  }
       // gray color values
       double gcol1 = colorBuffer[rownumber*scanResolution + i];
       //      double gcol2 = colorBuffer[j*scanResolution + i+1];

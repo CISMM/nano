@@ -22,5 +22,6 @@ double ** doImageScanApprox( int& row_col_length,double xworldratio );
 void  imageScanDepthRender();
 void showGrid( void );
 double find_volume(double & avgHeight, double & maxHeight,double& area);
+void save_to_eroder();
 
 #endif
