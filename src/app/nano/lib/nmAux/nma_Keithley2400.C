@@ -13,6 +13,8 @@
 
 #include <stdio.h>
 
+#include <vrpn_FileConnection.h>
+
 #include "nma_Keithley2400.h"
 
 #define CHECK(a) if ((a) == -1) return -1
@@ -77,9 +79,28 @@ int nma_Keithley2400::mainloop (const struct timeval * timeout ) {
 
 bool nma_Keithley2400::isReadingStreamFile( )
 {
+  if( d_connection == NULL ) return false;
   return ( d_connection->get_File_Connection() != NULL );
 }
 
+
+int nma_Keithley2400::getTimeSinceConnected( void ) 
+{
+  timeval elapsedTime;
+
+  if( d_connection == NULL ) return 0; // we're not really connected
+  if( isReadingStreamFile( ) ) 
+  {
+    vrpn_File_Connection * logFile;
+    logFile = (vrpn_File_Connection *)(d_connection->get_File_Connection());
+    logFile->time_since_connection_open(&elapsedTime);
+  }
+  else
+  {
+    d_connection->time_since_connection_open(&elapsedTime);
+  }
+  return elapsedTime.tv_sec;
+}
 
 
 int nma_Keithley2400::send_AllSettings() {

@@ -41,6 +41,7 @@ nma_Keithley2400_ui::nma_Keithley2400_ui( Tcl_Interp *interp,
    
    // Note: These WON'T be the default values - those come from the 
    // keithley2400 object and are set in set_tcl_callbacks();
+   vi_stream_time( "vi(stream_time)", 0),
    connect_and_init("vi(connect_and_init)",0),
    source("vi(source)", 0),
    compliance("vi(compliance)", 0),
@@ -122,6 +123,7 @@ void nma_Keithley2400_ui::reset( )
 
 int nma_Keithley2400_ui::mainloop(const struct timeval * timeout)
 {
+  vi_stream_time = keithley2400->getTimeSinceConnected( );
   return keithley2400->mainloop(timeout);
 }
 
@@ -327,6 +329,7 @@ handle_take_repeat_iv_curves(vrpn_int32 /*_newvalue*/, void *_userdata) {
 
 int nma_Keithley2400_ui::set_tcl_callbacks() 
 {
+  vi_stream_time = keithley2400->getTimeSinceConnected( );
   connect_and_init.addCallback(handle_connect_and_init, this);
   source = keithley2400->d_source;
   source.addCallback(handle_int_param_change, this);

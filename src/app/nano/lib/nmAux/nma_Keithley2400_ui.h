@@ -44,7 +44,8 @@ public:
   
   //--------------------------------------------------------------------
   // Declaring some integer and floating-point variables that will be
-  // automatically linked to Tcl variables.  
+  // automatically linked to Tcl variables.
+  Tclvar_int vi_stream_time;
   Tclvar_int connect_and_init;
   Tclvar_int source;
   Tclvar_int compliance;

@@ -1,3 +1,8 @@
+2001-11-12    <marshbur@TUNGSTEN-CS>
+
+	* nma_Keithley2400_ui.[h,C]: added Tcl var vi_stream_time
+	* nma_Keithley2400.[h,C]: added function getTimeSinceConnected
+
 2001-11-09    <marshbur@TUNGSTEN-CS>
 
 	* nma_Keithley2400_ui.[h,C]: formatting

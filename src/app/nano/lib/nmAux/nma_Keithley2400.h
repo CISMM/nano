@@ -33,6 +33,7 @@ public:
   virtual ~nma_Keithley2400();
   
   bool isReadingStreamFile( );
+  int getTimeSinceConnected( void );
 
   // Registers functions to call when we receive data or errors.
   int register_result_handler(void *userdata, vrpn_VIRESULTDATAHANDLER handler);
