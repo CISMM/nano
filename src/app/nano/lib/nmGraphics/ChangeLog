@@ -1,6 +1,12 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* openGL.c (computeModelRegistrationTextureTransform): fixed this so it
+	no longer uses uninitialized state from the surface registration code in
+	calculating the transformation
+
 2002-10-01 Jameson Miller <millerj@cs.unc.edu>
-      * globjects.c (.h) removed calls for direct step 
-        that depended on the microscope. Information is now kept in nmb_decoration.
+    * globjects.c (.h) removed calls for direct step 
+    that depended on the microscope. Information is now kept in nmb_decoration.
 
 2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
 
