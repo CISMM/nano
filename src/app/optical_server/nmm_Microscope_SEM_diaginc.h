@@ -47,6 +47,16 @@ public:
     vrpn_int32 reportScanlineData(int line_num);
     vrpn_int32 reportMaxScanSpan();
 
+    vrpn_int32 reportPixelIntegrationTime();
+    vrpn_int32 reportInterPixelDelayTime();
+    vrpn_int32 reportBeamBlankEnable();
+    vrpn_int32 reportPointDwellTime();
+    vrpn_int32 reportBeamLocation();
+    vrpn_int32 reportRetraceDelays();
+    vrpn_int32 reportDACParams();
+    vrpn_int32 reportExternalScanControlEnable();
+    vrpn_int32 reportMagnification();
+
   
 private:
 
@@ -72,8 +82,8 @@ private:
     vrpn_bool d_virtualAcquisition;
 
 	int maxBufferSize;
-	void* myImageBuffer;
-	void* cameraImageBuffer;
+	vrpn_uint8* myImageBuffer;
+	vrpn_uint8* cameraImageBuffer;
 
 
 	friend void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DWORD dwUserData );

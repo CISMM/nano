@@ -8,6 +8,10 @@
 #include "nmm_Microscope_SEM_diaginc.h"
 #include "nmb_Image.h"
 
+
+#define VIRTUAL_ACQ_RES_X (128)
+#define VIRTUAL_ACQ_RES_Y (100)
+
 nmm_Microscope_SEM_diaginc::
 nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool virtualAcq ) 
 	: nmb_Device_Server(name, c),
@@ -15,11 +19,7 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	  d_scan_enabled(vrpn_FALSE), 
 	  d_lines_per_message(1), 
 	  d_scans_to_do(0),
-#ifdef VIRTUAL_SEM
-	  d_virtualAcquisition(vrpn_TRUE)
-#else
 	  d_virtualAcquisition(virtualAcq)
-#endif
 {
 	// VRPN initialization
 	if (!d_connection) {
@@ -38,26 +38,37 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	d_connection->register_handler(disconnect_id, RcvDroppedConnection, this);
 	
 	// SPOT camera initialization
-	if( setupCamera( ) != 0 )
-	{ return; }
+	if( !d_virtualAcquisition )
+	{
+		if( setupCamera( ) != 0 ) { return; }
+	}
 
 	initializeParameterDefaults();
+
 	// create buffers in which to store data
 	short maxExtents[2]; // width then height
-	int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
-	if( ret != SPOT_SUCCESS )
+	if( d_virtualAcquisition )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc constructor:  Error querying "
-			"the SPOT camera max. resolution.  Code:  %d\n", ret );
-		return;
+		maxExtents[0] = VIRTUAL_ACQ_RES_X;
+		maxExtents[1] = VIRTUAL_ACQ_RES_Y;
+	}
+	else
+	{
+		int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
+		if( ret != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc constructor:  Error querying "
+					"the SPOT camera max. resolution.  Code:  %d\n", ret );
+			return;
+		}
 	}
 	// the maximum number of bytes is (width + 3) * height * 3
 	// each line can have up to 3 extra bytes to make its length a
 	// multiple of 4.  in addition, each image can have up to 3
 	// bytes per pixel (red, green, blue)
 	maxBufferSize = (maxExtents[0] + 3) * maxExtents[1] * 3;
-	myImageBuffer = (void*) new vrpn_uint8[ maxBufferSize ];
-	cameraImageBuffer = (void*) new vrpn_uint8[ maxBufferSize ];
+	myImageBuffer = new vrpn_uint8[ maxBufferSize ];
+	cameraImageBuffer = new vrpn_uint8[ maxBufferSize ];
 
 	
 }
@@ -101,7 +112,6 @@ mainloop(const struct timeval *timeout)
 	//  if (!d_connection || !(d_connection->connected())) {
 	//    return 0;
 	//  }
-	/*
 	if (d_scans_to_do > 0) {
 		// When running controlling the server without going over the network 
 		// (in the same process as the client) there is a slight difference
@@ -114,7 +124,6 @@ mainloop(const struct timeval *timeout)
 		acquireImage();
 	} else {
 	}
-	*/
 	return 0;
 }
 
@@ -164,17 +173,25 @@ int i;
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 {
-	RECT rect;
-	int ret = SpotGetValue( SPOT_IMAGERECT, &rect );
-	if( ret != SPOT_SUCCESS )
+	if( d_virtualAcquisition )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::getResolution:  "
-			"Error getting resolution.  Code:  %d\n", ret );
-		res_x = -1;  res_y = -1;
-		return ret;
+		res_x = VIRTUAL_ACQ_RES_X;
+		res_y = VIRTUAL_ACQ_RES_Y;
 	}
-	res_x = rect.right - rect.left;
-	res_y = rect.bottom - rect.top;
+	else
+	{
+		RECT rect;
+		int ret = SpotGetValue( SPOT_IMAGERECT, &rect );
+		if( ret != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::getResolution:  "
+				"Error getting resolution.  Code:  %d\n", ret );
+			res_x = -1;  res_y = -1;
+			return ret;
+		}
+		res_x = rect.right - rect.left;
+		res_y = rect.bottom - rect.top;
+	}
 	return 0;
 }
 
@@ -182,16 +199,24 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 {
-	short maxExtents[2]; // width then height
-	int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
-	if( ret != SPOT_SUCCESS )
+	if( d_virtualAcquisition )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::getMaxResolution:  Error querying "
-			"the SPOT camera max. resolution.  Code:  %d\n", ret );
-		return -1;
+		x = VIRTUAL_ACQ_RES_X;
+		y = VIRTUAL_ACQ_RES_Y;
 	}
-	x = maxExtents[0];
-	y = maxExtents[1];
+	else
+	{
+		short maxExtents[2]; // width then height
+		int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
+		if( ret != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::getMaxResolution:  Error querying "
+				"the SPOT camera max. resolution.  Code:  %d\n", ret );
+			return -1;
+		}
+		x = maxExtents[0];
+		y = maxExtents[1];
+	}
 	return 0;
 }
 
@@ -286,73 +311,33 @@ y_span_DAC = d_yScanSpan;
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 acquireImage()
 {
-	/*
 	int i, j;
 	
+	/*
 	if (d_shared_settings_changed) {
 		//  do something
 	}
 	if (d_image_mode_settings_changed) {
 		//  do something else
 	}
+	*/
+	int result = SPOT_SUCCESS;
+	int resX = 0, resY = 0;
+	this->getResolution( resX, resY );
 	
 	if (!d_virtualAcquisition) {
-#ifndef VIRTUAL_SEM
 		// variables used for timing
-		double t_SetSgScan, t_SetupSgColl, t_CollectSgLine, t_reportScanlineData;
+		double t_CollectSgLine, t_reportScanlineData;
 		//int result;
 		struct timeval t0, t1, t2;
-		
-		gettimeofday(&t0, NULL);
-		// start the scan as configured
-		// this is supposedly where the scan gets started but then
-		// does that require later calls to wait until the next scan starts?
-		// result = SetSgScan(diaginc_FULL_SCAN);
-		
-		gettimeofday(&t1, NULL);
-		t0 = vrpn_TimevalDiff(t1, t0);
-		t_SetSgScan = vrpn_TimevalMsecs(t0);
-		
-		if (result == diaginc_ERROR) {
-		fprintf(stderr, "Error starting scan\n");
-		return -1;
-		}
-		
-		gettimeofday(&t0, NULL);
-		
-		// integration time is in 100 ns units
-		// I guess this initializes the buffer to acquire a new image
-		// last two parameters: ADC = 1, number of strips to collect= 1
-		// integration time = 0 has special meaning - only gives us most
-		// significant byte from ADC
-		result = SetupSgColl(d_resolution_index, d_pix_integrate_nsec/100, 1, 1);
-		if (result == diaginc_ERROR) {
-		fprintf(stderr, "acquireImage: SetupSgColl failed\n");
-		return -1;
-		}
-		gettimeofday(&t1, NULL);
-		t0 = vrpn_TimevalDiff(t1, t0);
-		t_SetupSgColl = vrpn_TimevalMsecs(t0);
 		
 		// collect the image
 		t_CollectSgLine = 0.0;
 		t_reportScanlineData = 0.0;
-		for (i = 0; i < d_resolution_y; i++){
-			//printf("about to call CollectSgLine for line %d\n", i);
-			// WARNING: I think this is where we block waiting for the data to
-			// come in. This call has been known to block indefinitely in certain
-			// situations such as when you don't call SetupSgColl()
-			// right before this loop; I once attempted to not call it
-			// every time since SetupSgColl looks like it is just a configuration
-			// function but it didn't work very well
+		for (i = 0; i < resY; i++){
 			gettimeofday(&t0, NULL);
-			#ifdef UCHAR_PIXEL
-			result = CollectSgLine(&(d_scanBuffer[i*d_resolution_x]));
-			#else
-			result = CollectSgLine(&(d_scanBuffer[2*i*d_resolution_x]));
-			#endif
-			//printf("finished collecting\n");
-			if (result == diaginc_ERROR) {
+			//result = CollectSgLine(&(d_scanBuffer[2*i*d_resolution_x]));
+			if (result != SPOT_SUCCESS) {
 			fprintf(stderr, "Error collecting scan line for row %d\n", i);
 			}
 			gettimeofday(&t1, NULL);
@@ -363,32 +348,20 @@ acquireImage()
 			t_CollectSgLine += vrpn_TimevalMsecs(t0);
 			t_reportScanlineData += vrpn_TimevalMsecs(t1);
 		}
-#endif // not VIRTUAL_SEM
-	} else { // assert(d_virtualAcquisition == true)
+	} 
+	else 
+	{ // assert(d_virtualAcquisition == true)
 		// make some fake data:
 		static int count = 0;
 		
 		//int dx, dy;
-		for (i = 0; i < d_resolution_y; i++){
-#ifdef UCHAR_PIXEL
-			dy = i-d_resolution_y/4;
-			if (dy < 0) dy = -dy;
-			for (j = 0; j < d_resolution_x; j++){
-				dx = j-d_resolution_x/3;
-				if (dx < 0) dx = -dx;
-				((vrpn_uint8 *)d_scanBuffer)[i*d_resolution_x + j] =
-					((dx+dy+count)%(d_resolution_y/4))*255/
-					(d_resolution_y/4);
+		for (i = 0; i < resY; i++){
+			for (j = 0; j < resX; j++){
+				((vrpn_uint8 *)myImageBuffer)[i*(resX + resX%4) + j] = 
+					((i+(int)count)%resY)*250/resY;
 			}
-#else
-			for (j = 0; j < d_resolution_x; j++){
-				((vrpn_uint16 *)d_scanBuffer)[i*d_resolution_x + j] = 
-					((i+(int)count)%d_resolution_y)*64000/d_resolution_y;
-			}
-#endif
 			
 			reportScanlineData(i);
-			//d_connection->mainloop();
 		}
 		
 		count++;
@@ -403,64 +376,52 @@ acquireImage()
 	//          t_CollectSgLine);
 	//printf("  reportScanlineData x %d : %g msec\n", d_resolution_y,
 	//          t_reportScanlineData);
-	*/
+
 	return 0;
 }
 
 
 vrpn_int32 nmm_Microscope_SEM_diaginc::reportScanlineData(int line_num)
 {
-	/*
-	// line data is at d_scanBuffer[line_num*d_resolution_x]
+	// line data is at d_scanBuffer[line_num*(d_resolution_x + d_resolution_x%4)]
+	//  the spot camera can have "zero to three padding bytes per image line
+	//  so that the number of bytes per line is an integer multiple of four."
+	vrpn_int32 resX = 0, resY = 0;
+	if( this->getResolution( resX, resY ) != 0 )  { return -1; }
 	char *msgbuf;
 	vrpn_int32 len;
 	struct timeval now;
-#ifdef UCHAR_PIXEL
-	void *data = &(d_scanBuffer[line_num*d_resolution_x]);
-#else
-	void *data = &(d_scanBuffer[2*line_num*d_resolution_x]);
-#endif
+	void* data = &(myImageBuffer[ line_num * (resX + resX%4) ]);
 	
 	gettimeofday(&now, NULL);
 	vrpn_int32 lines_per_message = d_lines_per_message;
-	if (line_num + lines_per_message > d_resolution_y){
-		lines_per_message = d_resolution_y - line_num;
+	if (line_num + lines_per_message > resY){
+		lines_per_message = resY - line_num;
 	}
 
-#ifdef UCHAR_PIXEL
 	msgbuf = encode_ScanlineData(&len, 0, line_num, 1, 1,
-		d_resolution_x, 1, lines_per_message, now.tv_sec, now.tv_usec,
+		resX, 1, lines_per_message, now.tv_sec, now.tv_usec,
 		NMB_UINT8, &data);
-#else
-	msgbuf = encode_ScanlineData(&len, 0, line_num, 1, 1,
-		d_resolution_x, 1, lines_per_message, now.tv_sec, now.tv_usec, 
-		NMB_UINT16, &data);
-#endif
 	if (!msgbuf) { 
 		return -1;
 	}
 	return dispatchMessage(len, msgbuf, d_ScanlineData_type);
-	*/
-	return 0;
 }
 
 
 vrpn_int32 nmm_Microscope_SEM_diaginc::reportMaxScanSpan()
 {
-/*
-vrpn_int32 x, y;
-x = d_xScanSpan;
-y = d_yScanSpan;
-char *msgbuf;
-vrpn_int32 len;
-
-  msgbuf = encode_ReportMaxScanSpan(&len, x, y);
-  if (!msgbuf){
-  return -1;
-  }
-  return dispatchMessage(len, msgbuf, d_ReportMaxScanSpan_type);
-	*/
-	return -1;
+	vrpn_int32 x, y;
+	this->getMaxResolution( x, y );
+	char *msgbuf;
+	vrpn_int32 len;
+	
+	msgbuf = encode_ReportMaxScanSpan(&len, x, y);
+	if (!msgbuf)
+	{
+		return -1;
+	}
+	return dispatchMessage(len, msgbuf, d_ReportMaxScanSpan_type);
 }
 
 
@@ -516,7 +477,15 @@ int nmm_Microscope_SEM_diaginc::RcvGotConnection
 		(nmm_Microscope_SEM_diaginc *)_userdata;
 	
     me->reportResolution();
+    me->reportPixelIntegrationTime();
+    me->reportInterPixelDelayTime();
     me->reportMaxScanSpan();
+    me->reportBeamBlankEnable();
+    me->reportPointDwellTime();
+    me->reportRetraceDelays();
+    me->reportDACParams();
+    me->reportExternalScanControlEnable();
+    me->reportMagnification();
     me->d_scans_to_do = 0;
     me->d_scan_enabled = 0;
     return 0;
@@ -559,4 +528,117 @@ void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DW
 		} 		
 	} // end if live image ready
 	
+}
+
+
+// bogus function so that we appear to be an SEM
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportPixelIntegrationTime()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportPixelIntegrationTime(&len, -1);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportPixelIntegrationTime_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportInterPixelDelayTime()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportInterPixelDelayTime(&len, 0);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportInterPixelDelayTime_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportPointDwellTime()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportPointDwellTime(&len, 0);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportPointDwellTime_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportBeamBlankEnable()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportBeamBlankEnable(&len, 0);
+  if (!msgbuf){
+    return -1;
+  }
+  
+  return dispatchMessage(len, msgbuf, d_ReportBeamBlankEnable_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportMagnification()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportMagnification(&len, 1);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportMagnification_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportExternalScanControlEnable()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+ 
+  msgbuf = encode_ReportExternalScanControlEnable(&len, 0);
+  if (!msgbuf){
+    return -1;
+  }
+  
+  return dispatchMessage(len, msgbuf, d_ReportExternalScanControlEnable_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportDACParams()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportDACParams(&len, 0, 0, 0, 0, 0, 0);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportDACParams_type);
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::reportRetraceDelays()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportRetraceDelays(&len, 0, 0);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportRetraceDelays_type);
 }
