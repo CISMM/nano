@@ -1,3 +1,7 @@
+2001-07-06 Jameson Miller <millerj@cs.unc.edu>
+	*optimize_now.c, .h : new functions added to take care of optimize_now
+	mode.
+
 2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
 
 	* AFMState.h:  Changed some Tclvars to TclNets.
