@@ -2083,7 +2083,7 @@ void nmg_Graphics_Implementation::setRulergridAngle (float v) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
   g_rulergrid_sin = sin(-v / 180.0 * M_PI);
   g_rulergrid_cos = cos(-v / 180.0 * M_PI);
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
@@ -2106,7 +2106,7 @@ void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOffset().\n");
   g_rulergrid_xoffset = x;
   g_rulergrid_yoffset = y;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
@@ -2129,7 +2129,7 @@ void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
 void nmg_Graphics_Implementation::setRulergridScale (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridScale().\n");
   g_rulergrid_scale = s;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {

@@ -296,7 +296,7 @@ menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
 
 set show_mode_buttons 1
-$toolmenu add checkbutton -label "Show Mode Buttons" -underline 5 \
+$toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
         -variable show_mode_buttons \
         -command {
     if { $show_mode_buttons } {
@@ -308,7 +308,7 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 5 \
 
 #Only use the Mouse Phantom if the hand-tracker is null
 if {[string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0} {
-    $toolmenu add command -label "Mouse Phantom" -underline 0 \
+    $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
 } else {
     # Use a real phantom.

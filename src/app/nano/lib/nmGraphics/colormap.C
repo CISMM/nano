@@ -185,12 +185,18 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	// Look for the word 'ColorMap' at the start of the file
 	fgets(line, sizeof(line), infile);
 	if (strncmp(line,"Colormap",strlen("Colormap"))) {
+            // Attempt to read a Thermo PAL file instead. 
+            if (read_PAL_from_file(line, sizeof(line), infile )) {
 		fprintf(stderr,
 		  "ColorMap::load_from_file(): Expected 'Colormap' in file\n");
 		fprintf(stderr,
 		  "   (got %s)\n",line);
 		fprintf(stderr,"   (File %s)\n",full_name);
 		return -1;
+            } else {
+                // We successfully read a ThermoMicroscopes PAL colormap
+                return 0;
+            }
 	}
 	// Look for the line of -----------'s separating header from body
 	while (strncmp(line,"--------",8)) {
@@ -239,6 +245,64 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	return 0;
 }
 
+/** Reads a ThermoMicroscopes PAL colormap from a file. First line has already
+ been read by read_from_file above - we attempt to continue reading. This file
+ is an arbitrary number of lines, each with three ints, for R G and B. Seems
+ like thermo only uses files of length 192 and 230, for some reason.
+  */
+int ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
+{
+    int ret;
+    int	r,g,b;
+    // If line is null, error. 
+    if (!line) return -1;
+
+    // First line has been read. See if it contains 3 ints. 
+    ret = sscanf(line,"%d%d%d", &r, &g, &b);
+    if (ret != 3) return -1; // Not 3 numbers - error
+
+    // Fill in the new entry
+    table[0].value = 0.0f;  // Scale 0 to 1 later. 
+    table[0].r = r/255.0f;
+    table[0].g = g/255.0f;
+    table[0].b = b/255.0f;
+    table[0].a = 255.0f;
+    num_entries=1;
+
+    // Read in the file body.  Each line is float value, int r,g,b,a
+    while (fgets(line,line_len,infile)) {
+
+        // line has been read. See if it contains 3 ints. 
+        ret = sscanf(line,"%d%d%d", &r, &g, &b);
+        if (ret != 3) return -1; // Not 3 numbers - error
+        
+        // XXX Ensure we have enough room for the entry
+        if (num_entries >= num_allocated) {
+            fprintf(stderr,"ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
+            continue;
+        }
+        
+        // Fill in the new entry
+        table[num_entries].value = num_entries/230.0f;  // Scale 0 to 1 later. 
+        table[num_entries].r = r/255.0f;
+        table[num_entries].g = g/255.0f;
+        table[num_entries].b = b/255.0f;
+        table[num_entries].a = 255.0f;
+        num_entries++;
+    }
+
+    // Scale the values to the range 0..1
+    float inv_max_val = 1.0f/table[num_entries -1].value ;
+    for (int i = 0; i < num_entries; i++) {
+        table[i].value = table[i].value * inv_max_val;
+    }
+    // Close the file
+    if (fclose(infile)) {
+        perror("ColorMap::load_from_file(): Error closing file");
+        return -1;
+    }
+    return 0;
+}
 
 int	ColorMap::store_to_file (const char * filename, const char * dir)
 {

@@ -44,6 +44,15 @@ proc show_colormap_images {nm el op} {
         $m entryconfigure $i -image cm_image_$cm_name -columnbreak 1
         incr i
     }
+    # Handle a really long list of colormaps. 
+    set j [expr $i/15]
+    if { $j > 0 } {
+        for {set k 0} {$k < $i} { incr k} {
+            if {[expr $k % $j]} {
+                $m entryconfigure $k -columnbreak 0
+            }
+        }
+    }
 }
 
 trace variable colorMapNames w show_colormap_images

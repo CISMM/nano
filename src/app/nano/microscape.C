@@ -1508,13 +1508,13 @@ static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
 static void handle_rulergrid_offset_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridOffset(rulergrid_xoffset, rulergrid_yoffset);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_rulergrid_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridScale(rulergrid_scale);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_x_value_change (vrpn_float64, void *) {
@@ -1808,7 +1808,6 @@ void updateRulergridOffset (void) {
    rulergrid_xoffset = (vrpn_float64) measureRedX;
    rulergrid_yoffset = (vrpn_float64) measureRedY;
    graphics->setRulergridOffset(rulergrid_xoffset, rulergrid_yoffset);
-   graphics->causeGridRedraw();
  }
 }
 
@@ -1829,14 +1828,13 @@ void updateRulergridAngle (void) {
      rulergrid_angle = 360 - (acos(xdiff / hyp) * 180.0f / M_PI);
    }
    graphics->setRulergridAngle(rulergrid_angle);
-   graphics->causeGridRedraw();
 
  }
 }
 
 static void handle_rulergridPositionLine_change (vrpn_int32, void *) {
   updateRulergridOffset();
-  updateRulergridAngle();  // Do we want this?
+  updateRulergridAngle();  // Do this so angle is right, too, if toggle is on. 
 }
 
 static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
@@ -1872,6 +1870,7 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
      decoration->red.moveTo(measureRedX, measureRedY, heightPlane);
      // DO NOT doCallbacks()
      updateRulergridOffset();
+     updateRulergridAngle();  // Do this so angle stays right, if toggle is on. 
      break;
 
     case 1:
@@ -1955,6 +1954,14 @@ static void resetMeasureLines(nmb_Dataset * data, nmb_Decoration * decor)
                              height_plane);
     decor->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
                             height_plane);
+    // Make the rulergridPositionLine and rulergridOrientLine buttons 
+    // work when measure lines are in the default positions. 
+    measureRedX = height_plane->minX();
+    measureRedY =height_plane->minY();
+    measureGreenX = height_plane->maxX();
+    measureGreenY = height_plane->minY();
+    measureBlueX = height_plane->maxX();
+    measureBlueY = height_plane->maxY();
     // DO NOT doCallbacks()
 }
 

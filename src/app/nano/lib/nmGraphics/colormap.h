@@ -16,6 +16,8 @@
 #ifndef	COLORMAP_H
 #define	COLORMAP_H
 
+#include <stdio.h> // for FILE
+
 typedef enum {
 		COLORMAP_LINEAR
 	} Colormap_Interpolation;
@@ -65,6 +67,7 @@ class ColorMap {
 	Colormap_Interpolation	interp;	///< Type of interpolation to be done
 
 	int	get_full_name (const char *, const char *, char *, int);
+        int read_PAL_from_file(char * line, int line_len, FILE * infile );
 };
 
 #endif
