@@ -7,12 +7,12 @@ CWD := $(shell $(PWD_COMMAND))
 
 THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
-OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX),$(THIS_DIR))
+OBJECT_DIR := $(join $(FULL_OBJECT_DIR),$(THIS_DIR))
 
 DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
-   DUMMY := $(shell mkdir -p $(FULL_OBJECT_DIR))
-   DUMMY += $(shell $(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX))
+   DUMMY := $(shell mkdir -p $(REAL_OBJECT_DIR))
+   DUMMY += $(shell $(LINK) $(REAL_OBJECT_DIR)/ $(FULL_OBJECT_DIR))
    DUMMY += $(shell mkdir -p $(OBJECT_DIR))
 endif
 
@@ -113,8 +113,8 @@ clobber: thisclean
 .SUFFIXES: .c .C .cc .o .a .obj
 
 $(OBJECT_DIR):
-	-mkdir -p $(FULL_OBJECT_DIR)
-	$(LINK) $(FULL_OBJECT_DIR) $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+	-mkdir -p $(REAL_OBJECT_DIR)
+	$(LINK) $(REAL_OBJECT_DIR) $(FULL_OBJECT_DIR)
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c

@@ -83,3 +83,16 @@ $(MAKEFILE_DEPEND):
 	@echo -- remake the dependency file by typing \"$(MAKE) depend\"
 	@echo ----------------------------------------------------------------
 	$(DEPEND_BUILD_RULE) > $(MAKEFILE_DEPEND)
+
+.PHONY: test-makefile
+test-makefile:
+	@echo USES_LIBS_LD  = $(USES_LIBS_LD)
+	@echo SEARCH_LIBS = $(SEARCH_LIBS)
+	@echo SEARCH_PATH = $(SEARCH_PATH)
+	@echo FULL_OBJECT_DIR      = $(FULL_OBJECT_DIR)
+	@echo TOP_LEVEL_DIR        = $(TOP_LEVEL_DIR)
+	@echo TOP_LEVEL_OBJ_DIR    = $(TOP_LEVEL_OBJ_DIR)
+	@echo OBJECT_DIR           = $(OBJECT_DIR)
+	@echo MY_NANO_SRC_DIR      = $(MY_NANO_SRC_DIR)
+	@echo DEFAULT_NANO_SRC_DIR = $(DEFAULT_NANO_SRC_DIR)
+	@echo DEFAULT_PROJ_SRC_DIR = $(DEFAULT_PROJ_SRC_DIR)

@@ -1,0 +1,162 @@
+Overview
+--------
+
+Chris Weigle created a pretty cool makefile system.  The makefiles are
+actaully pretty easy to understand.  Most of the ugliness that's still
+there is stuff he "borrowed" from the old makefiles, and from a desire to
+leave the existing source code unchanged as much as possible.
+
+First, src/share/ contains a few makefiles which actually do all the work.
+Let's call them the common makefiles.  They are included by the small
+makefiles in the source directories, which we'll call the source
+makefiles.
+
+As you may have guessed by now, the makefile system makes some
+assumptions:
+
+ o Each source directory should fit into one of the following categories:
+
+   A) There are no source files in this directory.  Include
+      Makefile.root_common.
+
+   B) The source files in this directory are combined into a library.
+      Include Makefile.lib_common.
+
+   C) The source files in this directory are combined into an executable.
+      (There is a link stage).  Include Makefile.app_common.
+
+ o Currently, there isn't a way to have both an executable and a library
+   in the same directory.
+
+ o The top-level makefile, src/Makefile, doesn't really fit into any of
+   these categories.  It should probably be make into a "root_common"
+   makefile.
+
+
+Variables found in Source Makefiles
+-----------------------------------
+
+A makefile in an individual source directory will be pretty small.  It
+normally will contain just some varaible definitions followed by a
+"include" of the appropriate Makefile.*_common.  The variables that can be
+defined may include:
+
+  USES_LIBS - the names of libraries that are used by source files found
+      here.  Makefile.depend has a search algorithm that looks for:\
+
+        o A directory with the same name as the library
+
+        o A library in the MY_ALT_LIB_DIR paths
+
+        o Anywhere else?
+
+      When a library is found during a "make depend", then Makefile.depend
+      prints out to the screen the name of the library and where it was
+      found.  This information is cached in the .depend file, in the form
+      of -I and -L flags for the compiler and linker.
+
+  USES_EXTERNAL_LIBS - names of libraries to be found in the "external"
+      directory.  See documentation in the external directory.  (if you
+      can find it ;)
+
+  EXCLUDE_SRC - names of source files to exclude from the build process.
+
+  NAUGHTY - Because some source file found here does a #include of some
+      source file in src/app/nano, even though src/app/nano is not a lib
+      directory, we need to have a -I flag for src/app/nano.  Understand
+      that USES_LIBS cannot be used for this purpose, so an alternative
+      "naughty" method had to be developed.  It's generally bad practice
+      for a library to #include an application's headers.
+
+  EXTRA_CFLAGS - you can put -D compiler flags here.  Better would be to
+      create a file called configure.h.  Populate it with #defines and
+      #include it into every source file that needs any of the defines.
+      This scheme is directly supported by the GNU configure system
+      (autoconf and configure scripts), so if we ever change to using that
+      system then migration will be easier.
+
+
+
+What's in src/share/Makefile.*
+------------------------------
+
+Here are the common makefiles in src/share/
+
+  Included by every source makefile:
+
+    Makefile.common - Defines a bunch of variables for things like:
+      platform, source and object directories, compiler flags, and system
+      libraries (which are platform-specific)
+
+    Makefile.depend - Knows how to build the dependency rules.  They are
+      stored in the object directories in files named ".depend*".  If you
+      are ever confused about what directory a particular .h file or
+      library comes from, look at the .depend file.
+
+  A source makefile will include exactly one of the following:
+
+    Makefile.root_common - Included by a source makefile that's in a
+      directory which doesn't contain any source files, but is an ancestor
+      of directories that do contain source files.
+
+    Makefile.lib_common - Included by a source makefile that's in a
+      directory who's source files are combined into a library.
+
+    Makefile.app_common - Included by a source makefile that's in a
+      directory who's source files are combined into an executable
+      (application).
+
+  Helpers:
+
+    find-lib.sh - helper to Makefile.depend.
+
+
+If you are debugging the makefiles or simply trying to understand them,
+then try doing a "make test-makefile".  This will give you results
+specific to the directory you try it in.  The test-makefile target is in
+Makefile.depend because it prints out the values of some variables that
+are defined there.  Feel free to add "echo"'s of more variables.  If you
+do, please commit the additions.
+
+
+
+Multiple Checked-Out Copies of the Source
+-----------------------------------------
+
+Preferably, the makefiles should get at the object files through the
+symlinks in nano/obj/.  The only place where the real object directory,
+REAL_OBJECT_DIR, should be used is where the makefile creates it and where
+the makefile sets up the symlink to it from nano/obj/.  Instead, use
+FULL_OBJECT_DIR, which should go thorugh the nano/obj/$(HW_OS)/ symlink.
+
+The reason is that by going through the obj symlink to find the obj files,
+then one can easily do the following:
+
+ o Check out two complete copies of nano from the CVS repository.  This is
+   common if you want to:
+
+   o Have a "development" copy where you are working on a new feature that
+     will take a few weeks to implement.
+
+   o Also have a "stable" copy where you can do quick bug fixes and bulid
+     working executables.
+
+ o Make the obj/$(HW_OS)/ symlink in each copy point to different places
+
+ o Then, there will be two complete object file trees, and you won't have
+   to do a "make clean" every time you switch from one source tree to the
+   other.
+
+Currently, the win32 platform (cygwin and VC++?) sets FULL_OBJECT_DIR to
+the same thing as REAL_OBJECT_DIR.  Fixing this (at least for cygwin) may
+take a bit of effort, and is not necessary work.  But remember that on
+those platforms you have to do a "make clean" every time you switch source
+trees.  If you never have more than one copy of the source, it's not a
+problem.
+
+
+Anything Else?
+--------------
+
+... please add to this documentation if you "figure out" something that
+wasn't stated here...

@@ -191,6 +191,17 @@ endif
 ##########################
 #
 # Paths to everything
+# 
+# To debug/understand this, go to some source directory and type "make
+# test-makefile".
+# 
+# NB: test-makefile gives different info for each dir of the source
+# tree.  The test-makefile target is defined in Makefile.depend
+# because it echos the values of some variables that are defined in
+# that file.
+# 
+# Feel free to add more variables to the info printed by
+# test-makefile.  If you do, please commit your additions.
 #
 
 DEFAULT_PROJ_HOME    := /afs/cs.unc.edu/project/stm
@@ -216,9 +227,20 @@ TOP_LEVEL_DIR      := $(MY_NANO_SRC_DIR)/nano
 TOP_LEVEL_SRC_DIR  := $(TOP_LEVEL_DIR)/src
 TOP_LEVEL_MAKE_DIR := $(TOP_LEVEL_SRC_DIR)/share
 
+###
+### MY_NANO_OBJ_DIR must be an absolute pathname.
+###   (Are we sure that relative doesn't work?)
+###
+### TOP_LEVEL_OBJ_DIR absolute pathname to object files.
+### 
+### Because we don't know where the source is on a PC, we will use the
+### real object dir prefix there instead of the actual source dir.
+### Note that this is different behavior on a PC than in unix.  In
+### unix you can easily have one obj dir per source tree because each
+### source tree contains it's own obj dir.
+###
 ifndef MY_NANO_OBJ_DIR
    ifeq ($(HW_OS),pc_win32)
-#   if (($(HW_OS)==pc_cygwin)||($(HW_OS)==pc_win32))
       MY_NANO_OBJ_DIR   := /tmp
       TOP_LEVEL_OBJ_DIR := $(MY_NANO_OBJ_DIR)
    else
@@ -229,7 +251,18 @@ else
    TOP_LEVEL_OBJ_DIR := $(MY_NANO_OBJ_DIR)
 endif
 
-FULL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+### Where are the object directories?
+### Make them if they do not exist
+### 
+### REAL_OBJECT_DIR is the canonical pathname (possibly including
+### not_backed_up) of the object directory
+### 
+### FULL_OBJECT_DIR is the relative pathname (through the symlinked
+### dirs in nano/obj) of the object directory
+
+REAL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+FULL_OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+
 
 TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include \
                /net/nano/nano3/tcltk.$(HW_OS)/include
