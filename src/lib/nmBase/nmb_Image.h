@@ -225,11 +225,13 @@ class nmb_Image8bit : public nmb_Image {
 
 class nmb_ImageList {
   public:
-	nmb_ImageList() : num_images(0) {};
+	nmb_ImageList(nmb_ListOfStrings *namelist);
         ~nmb_ImageList();
-	nmb_ImageList(const char **file_names, int num_files);
+	nmb_ImageList(nmb_ListOfStrings *namelist,
+                      const char **file_names, int num_files,
+                      TopoFile &topoFile);
 	int addImage(nmb_Image *im);
-	nmb_ListOfStrings *imageNameList() {return &imageNames;}
+	nmb_ListOfStrings *imageNameList() {return imageNames;}
 	nmb_Image *getImageByName(BCString name) {
 		int i;
 		return getImageByName(name, i);
@@ -241,7 +243,7 @@ class nmb_ImageList {
 
 	int num_images;
         nmb_Image *images[NMB_MAX_IMAGELIST_LENGTH];
-	nmb_ListOfStrings imageNames;
+	nmb_ListOfStrings *imageNames;
 };
 
 

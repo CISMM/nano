@@ -13,6 +13,8 @@ class nmb_String;  // from nmb_String.h
 #include "nmb_Subgrid.h"  // for range_of_change
 #endif
 
+#include "Topo.h"
+
 // class nmb_Dataset
 //
 // Tom Hudson, November 1997
@@ -44,7 +46,8 @@ class nmb_Dataset {
                  int readMode, const char ** fileNames, int numFiles,
 		 const char ** imageFileNames, int numImageFiles,
 		 const char * hostname, 
-                 nmb_String * (* string_allocator) (const char *));
+                 nmb_String * (* string_allocator) (const char *),
+                 nmb_ListOfStrings *imageNameList, TopoFile &topoFile);
       // Constructor.
 
     ~nmb_Dataset (void);

@@ -4,6 +4,8 @@
 #include "BCPlane.h"
 #include "nmb_String.h"
 
+#include "Topo.h"
+
 #include "filter.h"  // for filter_plane
 
 #ifndef min
@@ -51,11 +53,14 @@ nmb_Dataset::nmb_Dataset
                int readMode, const char ** gridFileNames, int numGridFiles,
                const char ** imageFileNames, int numImageFiles,
 	       const char * hostname,
-               nmb_String * (* string_allocator) (const char *)):
+               nmb_String * (* string_allocator) (const char *),
+               nmb_ListOfStrings *imageNameList, TopoFile &topoFile):
 
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
-                         readMode, gridFileNames, numGridFiles)),
-  dataImages (new nmb_ImageList(imageFileNames, numImageFiles)),
+                         readMode, gridFileNames, numGridFiles,
+                         topoFile)),
+  dataImages (new nmb_ImageList(imageNameList,imageFileNames, numImageFiles,
+                                topoFile)),
   range_of_change (inputGrid),   // reference to pointer!
 
   alphaPlaneName (string_allocator("none")),

@@ -8,11 +8,11 @@
 #define RET	(15)
 #define NL	'\n'
 
-#define	HEIGHT			(0)
-#define CURRENT			(1)
-#define DEFLECTION		(2)
-#define AUXC			(3)
-#define DO_SWAP			(10)
+#define	NS_HEIGHT			(0)
+#define NS_CURRENT			(1)
+#define NS_DEFLECTION			(2)
+#define NS_AUXC				(3)
+#define NS_DO_SWAP			(10)
 
 #define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
 
@@ -20,7 +20,7 @@ const int NANOSCOPE_GRID_X = 256;
 const int NANOSCOPE_GRID_Y = 256;
 
 double scan_size = 1000.0;
-int image_mode = HEIGHT;
+int image_mode = NS_HEIGHT;
 
 int header_size = 8192;
 int auxiliary_grids = 0;
@@ -155,14 +155,14 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
     _max_x = _max_y = scan_size;
 
     switch (image_mode) {
-	case HEIGHT:
-	case DEFLECTION:
+	case NS_HEIGHT:
+	case NS_DEFLECTION:
 		units_name = (char *)"nm";
 		break;
-	case AUXC:
+	case NS_AUXC:
 		units_name = (char *)"V";
 		break;
-	case CURRENT:
+	case NS_CURRENT:
 		units_name = (char *)"nA";
 		break;
 	default:
@@ -176,7 +176,7 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
 
     plane->_image_mode = image_mode;
     if (!*Endian_tst)
-	plane->_image_mode += DO_SWAP;
+	plane->_image_mode += NS_DO_SWAP;
 
     plane->readBinaryNanoscopeFile(file);
     
@@ -205,7 +205,7 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
 	    plane->_image_mode = auxiliary_grid_image_mode[i];
 
 	    if (!*Endian_tst)
-		plane->_image_mode += DO_SWAP;
+		plane->_image_mode += NS_DO_SWAP;
 
 	    // move file pointer to beginning of this auxiliary grid
 	    if (fseek(file, auxiliary_grid_offset[i], 0))
@@ -402,10 +402,10 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 	else if (!strncasecmp(token, "Image data", strlen("Image data")))
 	{
 	    // read  multi-layer data (added by qliu 6/27/95)
-	    if (image_count > 0) {	// Assume all but first are AUXC
+	    if (image_count > 0) {	// Assume all but first are NS_AUXC
 		char temp[BUFSIZ]; // not used for now
 		ngot = fscanf(file, ": %s", temp);
-		auxiliary_grid_image_mode[image_count-1] = AUXC;
+		auxiliary_grid_image_mode[image_count-1] = NS_AUXC;
 	    } else {
 		ngot = fscanf(file, ": %s", image_type);
 	    }
@@ -490,13 +490,13 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
     // is used in transform to determine how to convert a short
     // to a height value
     if (!strncasecmp(image_type, "Height", strlen("Height")))
-	image_mode = HEIGHT;
+	image_mode = NS_HEIGHT;
     else if (!strncasecmp(image_type, "Current", strlen("Current")))
-	image_mode = CURRENT;
+	image_mode = NS_CURRENT;
     else if (!strncasecmp(image_type, "Deflection", strlen("Deflection")))
-	image_mode = DEFLECTION;
+	image_mode = NS_DEFLECTION;
     else if (!strncasecmp(image_type, "AUX", strlen("AUX")))
-	image_mode = AUXC;	// XXX Assuming Aux C... could be others
+	image_mode = NS_AUXC;	// XXX Assuming Aux C... could be others
     
     return 0;
     
@@ -510,10 +510,10 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
     char  *b0 = b1 + 1;
 
     // Swap the bytes in the datum if we need to.  Once swapped, clear the
-    // DO_SWAP bit to allow us to select which method to use to convert
-    if (image_mode & DO_SWAP) {
+    // NS_DO_SWAP bit to allow us to select which method to use to convert
+    if (image_mode & NS_DO_SWAP) {
 	SWAP(*b1, *b0);
-	image_mode -= DO_SWAP;
+	image_mode -= NS_DO_SWAP;
     }
 
 
@@ -531,7 +531,7 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
 
     switch (image_mode)
     {
-      case HEIGHT: {
+      case NS_HEIGHT: {
 	double normalized = (*datum)/65536.0;
 	double volts = normalized * (2*_z_max);
 	double nm = volts * _z_sensitivity;
@@ -549,7 +549,7 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
 	return scaled * transform_scale;
       }
 
-      case DEFLECTION: {
+      case NS_DEFLECTION: {
 	double normalized = (*datum)/65536.0;
 	double scaled = normalized * (_z_scale / 65536.0);
 	double nm = scaled * (2*_input_1_max) * _input_sensitivity /
@@ -566,7 +566,7 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
 	return nm * transform_scale;
       }
 
-      case AUXC: {
+      case NS_AUXC: {
 	double normalized = (*datum)/65536.0;
 	double scaled = normalized * (_z_scale_auxc / 65536.0);
 //XXX The DI seems to be off by about a factor of 8 from our equation.

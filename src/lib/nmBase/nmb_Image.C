@@ -1,8 +1,6 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
 
-extern TopoFile GTF;
-
 nmb_ImageBounds::nmb_ImageBounds() 
 {
     for (int i = 0; i < 4; i++){
@@ -340,8 +338,9 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
 //static 
 int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im)
 {
-    GTF.imageToTopoData((nmb_Image *)im);
-    if (GTF.writeTopoFile(file) < 0) {
+    TopoFile tf;
+    tf.imageToTopoData((nmb_Image *)im);
+    if (tf.writeTopoFile(file) < 0) {
 	//error occured
 	return -1;
     }
@@ -528,16 +527,26 @@ int nmb_Image8bit::exportToFile(FILE *f, const char *export_type){
     }
 }
 
-nmb_ImageList::nmb_ImageList(const char **file_names, int num_files)
+nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist) :
+       num_images(0),
+       imageNames(namelist)
+{
+
+}
+
+nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
+                             const char **file_names, int num_files,
+                             TopoFile &topoFile) :
+       num_images(0),
+       imageNames(namelist)
 {
     printf("nmb_ImageList::nmb_ImageList building list\n");
-    num_images = 0;
 
     for (int i = 0; i < num_files; i++) {
         printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
 		file_names[i]);
 	BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
-			READ_FILE, file_names[i]);
+			READ_FILE, file_names[i], topoFile);
 	nmb_Image *im;
 	BCPlane *p;
         printf("file contained: \n");
@@ -565,7 +574,7 @@ int nmb_ImageList::addImage(nmb_Image *im)
 	// don't add if list is full
 	BCString name = (*(im->name()));
     if (num_images == NMB_MAX_IMAGELIST_LENGTH ||
-		(imageNames.addEntry(name))) return -1;
+		(imageNames->addEntry(name))) return -1;
 	images[num_images] = im;
 	num_images++;
 	return 0;
@@ -577,7 +586,7 @@ nmb_Image *nmb_ImageList::removeImageByName(BCString name) {
     if (im == NULL) return NULL;
     // getImageByName() succeeds ==> num_images >= 1
     images[i] = images[num_images-1];
-    imageNames.deleteEntry((const char *)(*(im->name())));
+    imageNames->deleteEntry((const char *)(*(im->name())));
     num_images--;
     return im;
 }

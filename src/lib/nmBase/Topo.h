@@ -14,16 +14,16 @@
  * XXX This is copied from topo/document.h
  * other misc constants from topo/image.h
  */
-#define HEIGHT                  (0)
-#define CURRENT                 (1)
-#define DEFLECTION              (2)
-#define AUX                     (3)
-#define FORCE_MODULATION_DATA   (8)
-#define SWAP_HEIGHT             (10)
-#define SWAP_CURRENT            (11)
-#define SWAP_DEFLECTION         (12)
-#define SWAP_AUX                (13)
-#define DO_SWAP                 (10)
+#define TF_HEIGHT                  (0)
+#define TF_CURRENT                 (1)
+#define TF_DEFLECTION              (2)
+#define TF_AUX                     (3)
+#define TF_FORCE_MODULATION_DATA   (8)
+#define TF_SWAP_HEIGHT             (10)
+#define TF_SWAP_CURRENT            (11)
+#define TF_SWAP_DEFLECTION         (12)
+#define TF_SWAP_AUX                (13)
+#define TF_DO_SWAP                 (10)
 
 /* for iDataType member of _tScanParams (also used by DSP) */
 #define ZDATA_NONE          -1

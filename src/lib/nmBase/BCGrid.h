@@ -31,13 +31,15 @@ class BCGrid
 	   double min_x, double max_x, 
 	   double min_y, double max_y,
 	   int read_mode,
-	   const char* file_name);
+	   const char* file_name,
+           TopoFile &topoFile);
 
     BCGrid(short num_x, short num_y, 
 	   double min_x, double max_x, 
 	   double min_y, double max_y,
 	   int read_mode,
-	   const char** file_names, int num_files);
+	   const char** file_names, int num_files,
+           TopoFile &topoFile);
 
     BCGrid(short num_x, short num_y, 
 	   double min_x, double max_x, 
@@ -134,11 +136,12 @@ class BCGrid
 	   double min_x, double max_x, 
 	   double min_y, double max_y,
 	   int read_mode,
-	   const char** file_names, int num_files);
+	   const char** file_names, int num_files,
+           TopoFile &topoFile);
 
     void addPlane(BCPlane* grid);
 
-    int readFile(FILE* file, const char *name);
+    int readFile(FILE* file, const char *name, TopoFile &topoFile);
     int readTextFile(FILE* file, const char *name);
     int readBinaryFile(FILE* file, const char *name);
     int readUNCAFile(FILE* file, const char *name);

@@ -75,7 +75,7 @@ int nmb_ListOfStrings::copyList(nmb_ListOfStrings * newList)
 {
   int i;
   for (i = 0; i < newList->d_numEntries; i++) {
-      strncpy(d_entries[d_numEntries], newList->d_entries[d_numEntries], 
+      strncpy(d_entries[i], newList->d_entries[i], 
 	      nmb_STRING_LENGTH);
   }
   d_numEntries = newList->d_numEntries;

@@ -1182,22 +1182,22 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
 
             case 1: /* Nanometers */
                 Zunits2nm = 1.0;
-                data_type = HEIGHT;
+                data_type = TF_HEIGHT;
                 break;
 
             case 6: /* Measuring Volts, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = AUX;
+                data_type = TF_AUX;
                 break;
 
             case 7: /* Measuring NanoAmps, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = DEFLECTION;
+                data_type = TF_DEFLECTION;
                 break;
 
             case 8: // Measuring force modulation data
                 Zunits2nm = 1.0;
-                data_type = FORCE_MODULATION_DATA;
+                data_type = TF_FORCE_MODULATION_DATA;
                 break;
 
             default:
@@ -1240,19 +1240,19 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
                  */
 
                 switch (data_type) {
-                  case HEIGHT:
+                  case TF_HEIGHT:
                         G->findUniquePlaneName(filename, &name);
                         plane = G->addNewPlane(name, "nm", NOT_TIMED);
                         break;
-                  case AUX:
+                  case TF_AUX:
                         G->findUniquePlaneName(filename, &name);
                         plane = G->addNewPlane(name, "V", NOT_TIMED);
                         break;
-                  case DEFLECTION:
+                  case TF_DEFLECTION:
                         G->findUniquePlaneName(filename, &name);
                         plane = G->addNewPlane(name, "nA", NOT_TIMED);
                         break;
-                  case FORCE_MODULATION_DATA:
+                  case TF_FORCE_MODULATION_DATA:
                         G->findUniquePlaneName(filename, &name);
                         plane = G->addNewPlane(name, "nA/Angstrom", NOT_TIMED);
                         break;
@@ -1339,22 +1339,22 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
 
             case 1: /* Nanometers */
                 Zunits2nm = 1.0;
-                data_type = HEIGHT;
+                data_type = TF_HEIGHT;
                 break;
 
             case 6: /* Measuring Volts, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = AUX;
+                data_type = TF_AUX;
                 break;
 
             case 7: /* Measuring NanoAmps, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = DEFLECTION;
+                data_type = TF_DEFLECTION;
                 break;
 
             case 8: // Measuring force modulation data
                 Zunits2nm = 1.0;
-                data_type = FORCE_MODULATION_DATA;
+                data_type = TF_FORCE_MODULATION_DATA;
                 break;
 
             default:
@@ -1466,22 +1466,22 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
 
             case 1: /* Nanometers */
                 Zunits2nm = 1.0;
-                data_type = HEIGHT;
+                data_type = TF_HEIGHT;
                 break;
 
             case 6: /* Measuring Volts, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = AUX;
+                data_type = TF_AUX;
                 break;
 
             case 7: /* Measuring NanoAmps, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = DEFLECTION;
+                data_type = TF_DEFLECTION;
                 break;
 
             case 8: // Measuring force modulation data
                 Zunits2nm = 1.0;
-                data_type = FORCE_MODULATION_DATA;
+                data_type = TF_FORCE_MODULATION_DATA;
                 break;
 
             default:
@@ -1594,22 +1594,22 @@ int TopoFile::gridToTopoData(BCGrid* G){
 
             case 1: /* Nanometers */
                 Zunits2nm = 1.0;
-                data_type = HEIGHT;
+                data_type = TF_HEIGHT;
                 break;
 
             case 6: /* Measuring Volts, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = AUX;
+                data_type = TF_AUX;
                 break;
 
             case 7: /* Measuring NanoAmps, not Nanometers at all */
                 Zunits2nm = 1.0;
-                data_type = DEFLECTION;
+                data_type = TF_DEFLECTION;
                 break;
 
             case 8: // Measuring force modulation data
                 Zunits2nm = 1.0;
-                data_type = FORCE_MODULATION_DATA;
+                data_type = TF_FORCE_MODULATION_DATA;
                 break;
 
             default:

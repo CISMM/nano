@@ -28,7 +28,6 @@ int close( int filedes );
 #include "readNanoscopeFile.C" // <------------ reading a .C file!
 
 const double STANDARD_DEVIATIONS = 3.0;
-extern TopoFile GTF;
 
 int BCGrid::_read_mode = READ_DEVICE;
 int BCGrid::_times_invoked = 0;
@@ -43,7 +42,8 @@ void
 BCGrid::BCGridFill(short num_x, short num_y, 
 		       double min_x, double max_x, 
 		       double min_y, double max_y,
-		       int read_mode, const char** file_names, int num_files)
+		       int read_mode, const char** file_names, int num_files,
+                       TopoFile &topoFile)
 {
    //BCDebug debug("BCGrid::BCGridFill", GRID_CODE);
     int i;
@@ -102,7 +102,7 @@ BCGrid::BCGridFill(short num_x, short num_y,
 	      return;
 	  }
   
-	  if (readFile(infile,file_names[0]) == -1) 
+	  if (readFile(infile,file_names[0], topoFile) == -1) 
 	  {
 	      fprintf(stderr,
 		"Error! BCGrid::BCGrid: Could not read grid from %s!\n",
@@ -119,7 +119,7 @@ BCGrid::BCGridFill(short num_x, short num_y,
 	 //
 	 for (i = 1; i < num_files; i++) {
 	  BCGrid grid(num_x,num_y, min_x,max_x,
-		      min_y, max_y, read_mode, file_names[i]);
+		      min_y, max_y, read_mode, file_names[i], topoFile);
 	  if (!(grid.empty())) {
 // 		if ( (grid._num_x != _num_x) ||
 // 		     (grid._num_y != _num_y) ||
@@ -168,10 +168,11 @@ BCGrid --> constructor
 BCGrid::BCGrid(short num_x, short num_y, 
 		       double min_x, double max_x, 
 		       double min_y, double max_y,
-		       int read_mode, const char** file_names, int num_files)
+		       int read_mode, const char** file_names, int num_files,
+                       TopoFile &topoFile)
 {
 	BCGridFill(num_x,num_y, min_x,max_x, min_y,max_y, read_mode,
-		file_names,num_files);
+		file_names,num_files, topoFile);
 }
 
 /**
@@ -186,14 +187,15 @@ BCGrid --> constructor
 BCGrid::BCGrid(short num_x, short num_y, 
 		       double min_x, double max_x, 
 		       double min_y, double max_y,
-		       int read_mode, const char* file_name)
+		       int read_mode, const char* file_name,
+                       TopoFile &topoFile)
 {    
 	const char	*files[1];
 	//BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 
 	files[0] = file_name;
 	BCGridFill(num_x,num_y, min_x,max_x, min_y,max_y, read_mode,
-		files, 1);
+		files, 1, topoFile);
 
 } // BCGrid;
 
@@ -1230,7 +1232,7 @@ readFile
  last modified: 9-10-95 by Kimberly Passarella Jones
 */
 int
-BCGrid::readFile(FILE* file, const char *filename)
+BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 {
     char magic[5];
     char more_magic[5];
@@ -1264,7 +1266,7 @@ BCGrid::readFile(FILE* file, const char *filename)
 	if (strncmp(magic, "form", 4) == 0)  // "fileformat..."
 	    return readSPIPFile(file, filename);
 	else // "file ..."
-	    return readAsciiRHKFile(GTF, file, filename);
+	    return readAsciiRHKFile(topoFile, file, filename);
     } 
 
     else if (strncmp(magic,"UNCB",4) == 0) 
@@ -1285,15 +1287,15 @@ BCGrid::readFile(FILE* file, const char *filename)
     } 
     else if (strncmp(magic,"#R3.0",4) == 0)   // Topo file, v 3.0x
     {
-        return readTopometrixFile(GTF,filename);
+        return readTopometrixFile(topoFile,filename);
     } 
     else if (strncmp(magic,"#R4.0",4) == 0)   // Topo file, v 4.0x
     {
-        return readTopometrixFile(GTF, filename);
+        return readTopometrixFile(topoFile, filename);
     } 
     else if (strncmp(magic,"#R5.0",4) == 0)   // Topo file, v 5.0x
     {
-        return readTopometrixFile(GTF, filename);
+        return readTopometrixFile(topoFile, filename);
     } 
     else if (strncmp(magic,"P6",2) == 0) 
     {
