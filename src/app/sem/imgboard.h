@@ -3,7 +3,7 @@
 #define IMGBOARD_H
 #define EDXCALL _stdcall
 /***************** FUNCTION DECLARATIONS ************************/
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 	int  EDXCALL  GetBoardId();
@@ -103,7 +103,7 @@ extern "C" {
 	//
 	//			scan type: normal/fast (0,1)
 	//			DataTransfer: off/on (0,1)
-	//			PixelDataSize: byte/word (0,1)
+	//			PixelDataSize: byte/work (0,1)
 
 	int EDXCALL	  SgSetScanParams(LONG ScanType, LONG DataTransfer);
 	int EDXCALL	  SgGetScanParams(PLONG ScanType, PLONG DataTransfer);
@@ -127,7 +127,10 @@ extern "C" {
 
 	BOOL EDXCALL  IsWin95();
 	int  EDXCALL  SpDwel(int, int, int);
-#ifdef _cplusplus
+
+	int EDXCALL		CollectPointVideo(ULONG idc, ULONG nReads, ULONG ipd, PULONG video);
+	int SpMoveEx(int x, int y);
+#ifdef __cplusplus
 	};
 #endif
 

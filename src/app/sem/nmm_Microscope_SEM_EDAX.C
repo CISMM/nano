@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define TRUST_EDAX
+//#define USE_COLUMN_AND_STAGE
 //#define USE_SCAN_TABLE
 #define USE_SET_SCAN_PARAMS
-#define USE_BUSYWAIT_DELAY
+//#define USE_BUSYWAIT_DELAY
 #define UCHAR_PIXEL
 //#define VIRTUAL_SEM
 
@@ -394,7 +394,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::openEDAXHardware()
         fprintf(stderr, "initializeHardware: InitGpuBoard failure\n");
         return -1;
     }
-#ifdef TRUST_EDAX
+#ifdef USE_COLUMN_AND_STAGE
 	printf("attemping to open the column\n");
     result = OpenColumn();
     if (result == EDAX_ERROR) {
@@ -423,7 +423,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::closeEDAXHardware()
         fprintf(stderr, "closeHardware: ResetGpuBoard failure\n");
         return -1;
     }
-#ifdef TRUST_EDAX
+#ifdef USE_COLUMN_AND_STAGE
     result = CloseColumn();
     if (result == EDAX_ERROR) {
         fprintf(stderr, "closeHardware: CloseColumn failure\n");
@@ -818,7 +818,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::getMagnification(vrpn_float32 &mag)
 {
 #ifndef VIRTUAL_SEM
 
-#ifdef TRUST_EDAX
+#ifdef USE_COLUMN_AND_STAGE
   long lmag;
   int result;
   printf("calling getmag\n");
@@ -1102,8 +1102,8 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC)
 
   // use y for the obsolete parameter just to check if EDAX does 
   // anything with it
-  //result = SpMoveEx(x,y);
-  result = SpMove(x, y, y);
+  result = SpMoveEx(x,y);
+  //result = SpMove(x, y, y);
 
   if (result != EDAX_OK) {
      fprintf(stderr, "Error calling SpMove(%ld, %ld)\n", x, y);
@@ -1113,9 +1113,11 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC)
 #else
   vrpn_SleepMsecs(1.234);
 #endif
-#ifdef USE_BUSYWAIT_DELAY
+
   gettimeofday(&t_end, NULL);
   double delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
+
+#ifdef USE_BUSYWAIT_DELAY
   while (delta_t < 0.000001*d_point_dwell_time_nsec) {
     gettimeofday(&t_end, NULL);
     delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
