@@ -1,5 +1,5 @@
 USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope \
-             nmRobotControl nmReg \
+             nmRobotControl nmReg nmImageViewer \
              nmMP tclLinkVar nmBase ImgFormat \
              vrpn vogl quat sdi
 

@@ -92,14 +92,6 @@ SOURCE=..\..\lib\nmBase\nmb_Device.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\nmBase\nmb_DeviceScript.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\nmb_DeviceScript.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\server.C
 # End Source File
 # Begin Source File

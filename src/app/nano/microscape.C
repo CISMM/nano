@@ -80,7 +80,8 @@ pid_t getpid();
 
 #ifdef	PROJECTIVE_TEXTURE
 // Registration
-#include "alignerUI.h"
+#include "nmr_Registration_Proxy.h"
+#include "nmr_RegistrationUI.h"
 // 
 #include "RobotControl.h"
 #endif
@@ -445,6 +446,7 @@ static	char	*colorMapDir;
 static ColorMap	colorMap;		///< Color map currently loaded
 ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
   // used in vrml.C
+
 
 
 /// Filename to get data from. Setting this variable in tcl triggers
@@ -836,7 +838,8 @@ nma_Keithley2400_ui * keithley2400_ui = NULL;
 nms_SEM_ui * sem_ui = NULL;
 
 /// Controls for registration
-AlignerUI * aligner_ui = NULL;
+nmr_RegistrationUI *alignerUI = NULL;
+nmr_Registration_Proxy *aligner = NULL;
 
 #ifdef NANO_WITH_ROBOT
 RobotControl * robotControl = NULL;
@@ -4259,6 +4262,7 @@ struct MicroscapeInitializationState {
   OhmmeterInitializationState ohm;
   nma_Keithley2400_ui_InitializationState vicurve;
   SEMInitializationState sem;
+  char *alignerName;
 
   vrpn_bool use_file_resolution;
   int num_x;
@@ -4307,6 +4311,7 @@ struct MicroscapeInitializationState {
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
+  alignerName(NULL),
   use_file_resolution(vrpn_TRUE),
   num_x (DATA_SIZE),
   num_y (DATA_SIZE),
@@ -4424,6 +4429,10 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-dsem") == 0) {
           if (++i >= argc) Usage(argv[0]);
           strcpy(istate->sem.deviceName, argv[i]);
+      } else if (strcmp(argv[i], "-daligner") == 0) {
+          if (++i >= argc) Usage(argv[0]);
+          istate->alignerName = new char[strlen(argv[i]) + 1];
+          strcpy(istate->alignerName, argv[i]);
       } else if (strcmp(argv[i], "-drift") == 0) {
         istate->afm.doDriftComp = 1;
       } else if (strcmp(argv[i], "-f") == 0) {
@@ -6125,29 +6134,11 @@ printf("nM_coord_change_server initialized\n");
         }
     }
 
-#ifdef USE_NMB_CHANNELS
-    dataset->initDeviceChannelHandlers(m);
-    if (keithley2400_ui && keithley2400_ui->keithley2400) {
-        dataset->initDeviceChannelHandlers(
-				keithley2400_ui->keithley2400);
-    }
-    if (ohmmeter) {         // French ohmmeter
-        dataset->initDeviceChannelHandlers(ohmmeter);
-    }
-#endif
-
-
-#ifdef  PROJECTIVE_TEXTURE
-    // Registration - displays images with glX or GLUT depending on V_GLUT
-    // flag
-    aligner_ui = new AlignerUI(graphics, dataset->dataImages,
-      get_the_interpreter(), tcl_script_dir,allocate_TclNet_string);
 
   #ifdef NANO_WITH_ROBOT
     robotControl = new RobotControl(microscope, dataset);
     robotControl->show();
   #endif
-#endif
 
 
   /* open raw terminal with echo if keyboard isn't off  */
@@ -6178,8 +6169,26 @@ VERBOSE(1, "Creating Ugraphics");
   return -1; }
   temp->SetVisibility(0);    
   World.TSetContents(temp);
-  
+ 
   initializeInteraction();
+
+
+  // Registration - displays images with glX or GLUT depending on V_GLUT
+  // flag
+  if (istate.alignerName == NULL){
+        char *aligner_name = getenv("NM_ALIGNER");
+        if (aligner_name != NULL){
+            istate.alignerName = new char [strlen(aligner_name) + 1];
+            strcpy(istate.alignerName, aligner_name);
+        }
+  }
+  // passing in NULL causes us to use the local implementation
+  // any non NULL string will be interpreted as a server name and
+  // the proxy will attempt to connect itself to the corresponding
+  // server
+  aligner = new nmr_Registration_Proxy(istate.alignerName);
+  alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
+      aligner);
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?
@@ -6190,12 +6199,14 @@ center();
 
   Tcl_Interp * interp = get_the_interpreter();
 
+
 /* Start timing */
 VERBOSE(1, "Starting timing");
 gettimeofday(&time1,&zone1);
 gettimeofday(&d_time,&zone1);
 microscope->ResetClock();
 //gettimeofday(&nowtime, &nowzone);
+
 
 /* 
  * main interactive loop
@@ -6435,6 +6446,7 @@ VERBOSE(1, "Entering main loop");
       ttest0(t_avg_r, "reports");
     } /* end for-loop (NUM_USERS) */
 
+
 #ifdef TIMING_TEST
       t_avg_loop += t_loop;
       if( ( ( n_disp >> TIM_LN ) << TIM_LN ) == n_disp ) {
@@ -6467,16 +6479,10 @@ VERBOSE(1, "Entering main loop");
     /* Check for mouse events in the X window display */
     handleMouseEvents(&graphicsTimer);
 
-#ifdef	PROJECTIVE_TEXTURE
-    if (aligner_ui) {
-      aligner_ui->mainloop();
-    }
-
   #ifdef NANO_WITH_ROBOT
     if (robotControl)
        robotControl->mainloop();
   #endif
-#endif
 
     /* Run the Tk control panel checker if we are using them */
     if (tkenable) {
@@ -6514,6 +6520,7 @@ VERBOSE(1, "Entering main loop");
 		"point_channel changed!!!\n");
     }
     */
+
     microscope->state.data.scan_channels->Update_microscope(microscope);
     microscope->state.data.point_channels->Update_microscope(microscope);
     // XXX What? No forcecurve channels ? - no, they are
@@ -6524,6 +6531,28 @@ VERBOSE(1, "Entering main loop");
     if( tkenable || (interp != NULL) ) {
 	VERBOSE(4, "  Handling Tk events");
 	while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
+    }
+
+    /* XXXXXXXXX MAJOR WARNING: This function is doing something bad
+       but I haven't figured out what is wrong with it because it doesn't
+       do anything that looks bad - basically it checks for x events and 
+       sets glx context a few times 
+       When it was located right after the call to handleMouseEvents() above
+       we had the following symptom:
+
+       on sgi (not cygwin) the rulergrid and colormap (used for registration)
+       texture images would not update even though all the
+       necessary openGL functions were being called with no errors returned
+       interestingly, the sem texture image would update correctly
+       Using some exploratory code rewriting, it was verified that once the
+       function is called (after the first time it is called), the texture
+       image will not update but just before the first time it is called
+       the texture image does update correctly.
+
+       This problem goes away with the function call at this location 
+    */
+    if (aligner) {
+       aligner->mainloop();
     }
 
     /* One more iteration done */
@@ -7997,8 +8026,8 @@ int disableOtherTextures (TextureMode m) {
     }
   }
   if (m != REGISTRATION){
-    if (aligner_ui) {
-      aligner_ui->displayTexture(0);
+    if (alignerUI) {
+      alignerUI->displayTexture(0);
     }
   }
   if (m != MANUAL_REALIGN){
