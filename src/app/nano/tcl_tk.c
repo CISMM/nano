@@ -102,7 +102,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(my_tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
 
-#ifndef NO_ITCL
 	/* Initialize Tcl packages */
 	if (Blt_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
@@ -111,6 +110,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(my_tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
+#ifndef NO_ITCL
 	if (Itcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
 			"Package_Init failed: %s\n",my_tk_control_interp->result);

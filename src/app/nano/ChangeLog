@@ -1,3 +1,9 @@
+2001-08-02  Aron Helser  <helser@cs.unc.edu>
+
+	* tcl_tk.c (init_Tk_control_panels): BLT must be statically
+	initialized with tcl/tk 8.3 for nano to run. Move #ifdef NO_ITCL
+	so this happens. 
+
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (regionOutsidePlane): new.
