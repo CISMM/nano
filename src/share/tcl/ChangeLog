@@ -1,3 +1,10 @@
+2001-08-14  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* mainwin.tcl: Added parameter to make system not scan after touch
+		by default, but let user ask it to.  This is to support the
+		SEM/AFM folks, to keep the system from trashing their
+		devices at startup and after modifications.
+
 2001-08-13  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Tweak to menu color and Windows checks. 
