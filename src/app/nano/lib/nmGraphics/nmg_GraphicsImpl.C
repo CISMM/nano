@@ -1365,7 +1365,9 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
     }
 
   }
-#elseif defined(__CYGWIN__)
+#else
+
+#if defined(__CYGWIN__)
 
 /*
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
@@ -1395,7 +1397,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
  #endif
 #endif
-
+#endif
 }
 
 //
