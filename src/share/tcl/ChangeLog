@@ -1,3 +1,9 @@
+2002-05-02    <marshbur@cs.unc.edu>
+
+	* image.tcl (chage_quick_mode_label):  new.  procedure to set the
+	imaging-mode string in the quick image view.  used in a trace
+	of the imagep_mode variable.
+
 2002-05-01  David Marshburn  <marshbur@cs.unc.edu>
 
 	* filemenu.tcl (popup_check_streamfile_dialog):  changed the

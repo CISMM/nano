@@ -498,6 +498,26 @@ trace variable imagep_ampl_or_phase w "change_setpoint_label \
         $nmInfo(imagepage).setpoint_pcnt \
         $nmInfo(imagepage).p-gain 0"
 
+
+proc change_quick_mode_label { name element op } {
+    global imagep_mode nmInfo
+
+    if { $imagep_mode == 0 } {
+        # oscillating mode
+	$nmInfo(imagestate).image_mode configure -text "Oscillate"
+    } elseif { $imagep_mode == 1 } { 
+	# contact mode
+	$nmInfo(imagestate).image_mode configure -text "Contact"
+    } elseif { $imagep_mode == 2 } { 
+	# guarded scan mode
+	$nmInfo(imagestate).image_mode configure -text "Guarded Scan"
+    }
+    # else leave the mode the same?
+	
+}    
+
+trace variable imagep_mode w "change_quick_mode_label"
+
 #
 # Change the background of Accept and Cancel buttons
 #    when you haven't yet committed your changes by clicking Accept
@@ -524,11 +544,11 @@ proc acceptImageVars {varlist} {
 	global imagep_$val
 	global newimagep_$val
 	set k [set newimagep_$val]
-#puts "newimagep_$val = $k"
 	if {$k !=  [set imagep_$val]} {
 	    set imagep_$val $k
 	}
     }
+        
     set accepted_image_params 1
     # None of the newimage_* vars are now changed
 	$nmInfo(imagefull).mode.accept configure -background $save_bg
