@@ -356,9 +356,9 @@ void nmm_Microscope_Remote::SetSampleMode (nmm_Sample * s) {
 
 long nmm_Microscope_Remote::ModifyMode (void) {
 
-  CHECK(SetRateNM(state.modify.scan_rate_microns * 1000.0));
-
   CHECK(MarkModifyMode());  // Put this event in output log
+
+  CHECK(SetRateNM(state.modify.scan_rate_microns * 1000.0));
 
   if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE)) {
      if (state.modify.control != DIRECTZ) {
@@ -448,9 +448,9 @@ long nmm_Microscope_Remote::ModifyMode (void) {
 
 long nmm_Microscope_Remote::ImageMode (void) {
 
-  CHECK(SetRateNM(state.image.scan_rate_microns * 1000.0));
-
   CHECK(MarkImageMode());  // Put this event in output log
+
+  CHECK(SetRateNM(state.image.scan_rate_microns * 1000.0));
 
   switch (state.image.mode) {
     case TAPPING:
