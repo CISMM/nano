@@ -202,6 +202,12 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     freespace_normal_force(BOGUS_FORCE),
     freespace_lat_force(BOGUS_FORCE),
 
+    feelahead_numX ("feelahead_num_x", 5),
+    feelahead_numY ("feelahead_num_y", 5),
+    feelahead_distX ("feelahead_dist_x", 5.0),
+    feelahead_distY ("feelahead_dist_y", 5.0),
+    feelahead_auto ("feelahead_automate", 0),
+
     stored_points (),
 
     constr_line_specified(VRPN_FALSE),

@@ -1,3 +1,10 @@
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* AFMState.h (AFMModifyState::feelahead_numX, feelahead_numY,
+	feelahead_distX, feelahead_distY, feelahead_auto) : New data members.
+
+	* nmm_Types.h (Tool::WARPED_PLANE) : New enum.
+
 2001-07-06 Jameson Miller <millerj@cs.unc.edu>
 	*optimize_now.c, .h : new functions added to take care of optimize_now
 	mode.

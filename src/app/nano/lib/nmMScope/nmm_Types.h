@@ -20,14 +20,15 @@ enum AFMMode {
 };  // mode
 
 enum Tool {
-  FREEHAND,
+  FREEHAND,  // 0
   LINE,
   CONSTR_FREEHAND,
   CONSTR_FREEHAND_XYZ,
   SLOW_LINE,
-  SLOW_LINE_3D,
+  SLOW_LINE_3D,  // 5
   FEELAHEAD,
-  OPTIMIZE_NOW
+  OPTIMIZE_NOW,
+  WARPED_PLANE
 };  // tool
 
 // style is defined in nmb_Types.h

@@ -199,6 +199,13 @@ struct AFMModifyState {
   float freespace_normal_force;
   float freespace_lat_force;
 
+  // Parameters for feelahead
+  Tclvar_int feelahead_numX;
+  Tclvar_int feelahead_numY;
+  Tclvar_float feelahead_distX;
+  Tclvar_float feelahead_distY;
+  Tclvar_int feelahead_auto;
+
 
   Position_list stored_points;
     ///< list of points used to actually carry out a modification
@@ -424,6 +431,7 @@ struct AFMGuardedScanState {
 
   AFMGuardedScanState (void);
   ~AFMGuardedScanState (void);
+
 
   float fNormalX;
   float fNormalY;
