@@ -8,14 +8,18 @@
 #include "tcl_tk.h"
 #include "error_display.h"
 
-void display_warning_dialog (const char *__format, ...) 
+/* Bug note. I started with const char *__format as the argument, 
+ and it caused a segfault when used near a printf!!!! Don't use
+ args starting with double underscore - they are reserved! */
+
+void display_warning_dialog (const char *format, ...) 
 {
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
   /* Print text in a string */
-  va_start(argptr, __format);
-  vsprintf (txtptr, __format, argptr);
+  va_start(argptr, format);
+  vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
   if (get_the_interpreter() == NULL) {
@@ -26,14 +30,14 @@ void display_warning_dialog (const char *__format, ...)
   }
 }
 
-void display_error_dialog (const char *__format, ...)
+void display_error_dialog (const char *format, ...)
 {
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
   /* Print text in a string */
-  va_start(argptr, __format);
-  vsprintf (txtptr, __format, argptr);
+  va_start(argptr, format);
+  vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
   if (get_the_interpreter() == NULL) {
@@ -44,14 +48,14 @@ void display_error_dialog (const char *__format, ...)
   }
 }
 
-void display_fatal_error_dialog (const char *__format, ...)
+void display_fatal_error_dialog (const char *format, ...)
 {
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
   /* Print text in a string */
-  va_start(argptr, __format);
-  vsprintf (txtptr, __format, argptr);
+  va_start(argptr, format);
+  vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
   if (get_the_interpreter() == NULL) {
