@@ -5493,7 +5493,8 @@ void setupSynchronization( CollaborationManager * cm,
 
     rootUIControl->add(frenchOhmmeterControls);
   }
-  /* */
+
+  /* Bind all connections */
   rootUIControl->bindConnection(serverConnection);
 
   if (logConnection) {
@@ -5508,20 +5509,16 @@ void setupSynchronization( CollaborationManager * cm,
     collab_machine_name.bindLogConnection(logConnection);
   }
 
-  // User Interface to synchronization
 
-  // NANOX FLAT
+  // Miscellaneous and ad-hoc synchronization
+
   // Set up a utility class to make sure derived planes are synchronized
   // between all replicas.
-
   nmui_PlaneSync * ps;
-
   ps = new nmui_PlaneSync( serverConnection );
 
   // Since streamfileControls are timed, the toplevel MUST use
-  // the timed callbacks.  Oops.  Took an hour or more to find,
-  // that one.
-
+  // the timed callbacks.
   share_sync_state.addCallback(handle_synchronize_timed_change, cm);
 
   copy_to_private_state.addCallback(handle_copy_to_private, cm);
