@@ -169,7 +169,29 @@ proc nano_done_working {} {
     }
      #destroy .working_dialog
 }
+######################
+# Change title of main window depending on streamfile open
+if { ![info exists display_stream_filename] } {
+    set display_stream_filename ""
+}
 
+proc change_mainwin_title { nm el op } {
+    global display_stream_filename viewer_only
+    set my_title "NMViewer"
+    if { !$viewer_only } {
+        set my_title "NanoManipulator"
+    } else {
+        set my_title "NMViewer"
+    }
+    if { $display_stream_filename != "" } {
+        append my_title ":  $display_stream_filename"
+    }
+    wm title . $my_title
+}
+
+trace variable display_stream_filename w change_mainwin_title
+
+######################
 # frames - overall layout of the screen
 frame .menubar -relief raised -bd 4 
 

@@ -1,11 +1,18 @@
+2002-07-01  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl: Display name of stream file in title bar, when one
+	is open. 
+
 2002-07-01  David Borland <borland@cs.unc.edu>
 
-        * import.tcl : fixed a bug that was causing the spider control to 
-        pop-up for all objects, not just spider objects.
+	* import.tcl : fixed a bug that was causing the spider control to 
+	pop-up for all objects, not just spider objects.
 
 2003-06-30  Woojin Seok  <seok@cs.unc.edu>
-        * mainwin.tcl <proc nano_warning>: replaced tk_messageBox by combination
-        of button and lable not to stall program to get user's click.
+
+	* mainwin.tcl (proc nano_warning): replaced tk_messageBox by
+	combination of button and lable not to stall program to get user's
+	click.
 
 2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -14,17 +21,17 @@
 
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
-        * mainwin.tcl: added tool menu item for AFM tip visualization controls
-        * tip.tcl: new file for AFM tip visualization
+	* mainwin.tcl: added tool menu item for AFM tip visualization controls
+	* tip.tcl: new file for AFM tip visualization
 
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
-        * analysismenu.tcl : added new tcl boxes dealing with eroder to
-        non-3rd tech section of file
+	* analysismenu.tcl : added new tcl boxes dealing with eroder to
+	non-3rd tech section of file
 
 2002-06-26  David Borland <borland@cs.unc.edu>
 
-        * import.tcl : added user control for saving spider
+	* import.tcl : added user control for saving spider
 
 2002-06-21  Aron Helser  <helser@cs.unc.edu>
 
