@@ -1,3 +1,10 @@
+2002-10-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (setColormapTextureSliderRange): fixed bad bug
+	in this function - was setting the 4 values for data/color min/max to
+	the same values and this made the colormaps look completely white when
+	used with a texture
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* openGL.c (computeModelRegistrationTextureTransform): fixed this so it

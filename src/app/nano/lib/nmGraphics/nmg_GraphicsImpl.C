@@ -1329,9 +1329,9 @@ void nmg_Graphics_Implementation::setColormapTextureSliderRange (
     float color_min,
     float color_max) {
   state->colormap_texture_data_min = data_min;
-  state->colormap_texture_data_min = data_max;
-  state->colormap_texture_data_min = color_min;
-  state->colormap_texture_data_min = color_max;
+  state->colormap_texture_data_max = data_max;
+  state->colormap_texture_color_min = color_min;
+  state->colormap_texture_color_max = color_max;
 }
 
 
