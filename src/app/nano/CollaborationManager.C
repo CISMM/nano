@@ -484,7 +484,17 @@ void CollaborationManager::setPeerName
     sprintf(buf, "%s", newName);
 
     gethostname(hnbuf, 256);
-    if (strcmp(hnbuf, buf) < 0) {
+    if (strcmp(hnbuf, buf) == 0) {
+      // a special case: testing two collaborators running on the same machine
+      // here we perpetuate this hack by using the port number to 
+      // select the winner as the ports must be different
+      // when running collaborating programs on the same machine
+      if (d_peerPort < d_serverPort) {
+        shouldSynchronize = VRPN_TRUE;
+      } else {
+        shouldSynchronize = VRPN_FALSE;
+      }
+    } else if (strcmp(hnbuf, buf) < 0) {
       shouldSynchronize = VRPN_TRUE;
     } else {
       shouldSynchronize = VRPN_FALSE;

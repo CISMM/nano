@@ -1,5 +1,17 @@
 2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
 
+	* CollaborationManager.C (setPeerName) : if you run both 
+		collaborators on the same machine this would not
+		work right because it used the machine name 
+		to select which of the collaborators would be
+		in charge of synchronization and with both machine names
+		equal, no one got to be in charge. Now, if you do this, this
+		checks to see if the machine names are equal and if they are
+		it uses the server port number to decide who is in charge of
+		synchronization
+
+2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
+
 	* microscape.c: added -peerbaseport argument to let you run two 
 		collaborating copies of nano on the same machine (you might 
 		want to do that for testing)
