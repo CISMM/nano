@@ -175,6 +175,12 @@ void nmm_QueueMonitor::enqueue (vrpn_HANDLERPARAM p) {
   }
 
   qm->data = p;
+  qm->data.buffer = new char [p.payload_len];
+  if (!qm->data.buffer) {
+    fprintf(stderr, "nmm_QueueMonitor::enqueue:  out of memory.\n");
+    return;
+  }
+  memcpy((void *) qm->data.buffer, p.buffer, p.payload_len);
   qm->next = NULL;
 
   d_queueTail = qm;
@@ -231,6 +237,9 @@ void nmm_QueueMonitor::deleteQueueHead (void) {
   }
 
   delete qm;
+  if (qm->data.buffer) {
+    delete [] qm->data.buffer;
+  }
 }
 
 void nmm_QueueMonitor::deleteQueue (void) {
@@ -238,6 +247,9 @@ void nmm_QueueMonitor::deleteQueue (void) {
 
   for (qm = d_queueHead; d_queueHead; qm = d_queueHead) {
     d_queueHead = qm->next;
+    if (qm->data.buffer) {
+      delete [] qm->data.buffer;
+    }
     delete qm;
   }
   d_queueTail = NULL;

@@ -1,5 +1,11 @@
 2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
 
+	* nmm_QueueMonitor.C (enqueue) : copy buffer from VRPN
+	(deleteQueueHead) : delete copy of buffer
+	(deleteQueue) : same
+
+2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
+
 	* nmm_QueueMonitor.C (deleteQueueHead) : set d_queueTail if needed
 
 2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
