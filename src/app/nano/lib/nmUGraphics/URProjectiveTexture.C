@@ -383,8 +383,6 @@ int URProjectiveTexture::updateTextureNoMipmap()
 	int imageBufferNumY = height + YMin + YMax;
 	void *imageData = d_greyscaleImage->pixelData();
 
-
-
     int pixelType;
 	int pixelSize;
     if (d_greyscaleImage->pixelType() == NMB_UINT8){
@@ -450,8 +448,12 @@ int URProjectiveTexture::updateTextureNoMipmap()
 	// XXX - for some strange reason, the value given for GL_UNPACK_SKIP_PIXELS 
 	// isn't having the desired effect - the whole row of the texture is getting
 	// transferred instead of just the part of the row specified
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
+	// XXXX -- it's not the whole row.  comment out the SKIP_ROW and SKIP_PIXELS
+	// lines to see.  seems like this is just texel interpolation ouside of the 
+	// active image area (since the nmb_Image whence this comes has what can be a
+	// very large border around it.
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin );
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin );
     glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
                     width, height,

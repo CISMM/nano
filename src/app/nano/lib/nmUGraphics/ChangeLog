@@ -1,3 +1,9 @@
+2004-05-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* URProjectiveTexture.C (UpdateTextureNoMipmap):  comments about a
+	bug I hope to fix one day (a one-texel-wide border around the 
+	projected image area).
+
 2003-12-03  David Marshburn  <marshbur@cs.unc.edu>
 
 	* URProjectiveTexture.C (UpdateTextureNoMipmap):  send the texture with
