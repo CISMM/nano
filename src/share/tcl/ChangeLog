@@ -3,6 +3,7 @@
 	* filemenu.tcl: removed export scene dialog
 	* mainwin.tcl:  removed tip convolution and export scene options.
 	Cleaned out some old code.
+	* tip_conv.tcl:  into the attic...
 
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
