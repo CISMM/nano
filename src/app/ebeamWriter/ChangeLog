@@ -1,3 +1,34 @@
+2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* errorDisplay.[Ch]: new file
+	* controlPanels.[Ch]: changed delete button to 3 new buttons for
+	undoing a point, shape and the whole pattern
+	Added flags to disable sending SEM commands during the handling of
+	SEM messages and to disable display parameter callbacks when switching
+	the values during a change of the current image.
+    Added handling of dot spacing and line spacing messages.
+	(patternInsideScanRange): new function
+	Added lots of error checking - especially for values entered by the user
+	* main.C : changed default image flip in X for registration windows
+	* patternEditor.C : fixed inconsistency in < operator used to sort images
+	Added parameters to store the current rectangle that the SEM can scan
+	(updateWorldExtents): new function to determine the minimum rectangle that
+	contains all data and the scanning rectangle
+	(undoPoint, undoShape, clearPattern): new functions
+	(setScanRange): new function
+	(updateDisplayTransform): added check to see if the transform is applied
+	to the canvas image and call to change the viewport
+	(mainWinDisplayHandler): draws the scan range as a red rectangle
+	(updateLengthIndicator): new function
+	* patternShape.C (PolylinePatternShape::drawToDisplay): now draws something
+	more reasonable when drawing a line with thickness and only one point is
+	specified
+	(handleWorldFromObjectChange): new function
+	(removePoint): now returns without doing anything if there are no points
+	(CompositePatternShape::CompositePatternShape and =operator): fixed
+	bug here involving copying of parent pointers for subshapes - this was
+	causing the bug with loading patterns from pattern files
+
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>	
 
 	* patternShape.C : added some error checks for exposure subroutines

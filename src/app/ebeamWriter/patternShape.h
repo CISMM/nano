@@ -178,6 +178,8 @@ class PatternShape {
 		}
 	}
 
+	virtual void handleWorldFromObjectChange() {}
+
   protected:
 	inline void transform(double *transform, double x_src, double y_src, 
 		double &x_dest, double &y_dest);
@@ -230,6 +232,7 @@ void PatternShape::transformVect(double *transform, float x_src, float y_src,
 /* this is basically a wrapper for a PatternShape pointer */
 class PatternShapeListElement {
   friend class PatternFile;
+  friend class CompositePatternShape;
   public:
     PatternShapeListElement(PatternShape *ps);
     PatternShapeListElement(const PatternShapeListElement &psle);
@@ -340,6 +343,8 @@ class PolylinePatternShape : public PatternShape {
     /// get all exposure levels in the shape
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels);
+
+	virtual void handleWorldFromObjectChange();
 
     void setPoints(list<PatternPoint> &points);
     void getPoint(int index, double &x, double &y);
@@ -461,6 +466,8 @@ class CompositePatternShape : public PatternShape {
     CompositePatternShape();
     ~CompositePatternShape() {};
 
+	CompositePatternShape &operator = (const CompositePatternShape &cps);
+
     virtual PatternShape *duplicate()
         {return (PatternShape *)new CompositePatternShape(*this);}
 
@@ -504,6 +511,8 @@ class CompositePatternShape : public PatternShape {
     /// get all exposure levels in the shape
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels);
+
+    virtual void handleWorldFromObjectChange();
 
     void setSubShapes(list<PatternShapeListElement> &shapes)
        { d_subShapes = shapes;}

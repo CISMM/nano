@@ -4,6 +4,7 @@
 #include "nmb_TransformMatrix44.h"
 #include "exposureUtil.h"
 #include "nmb_ImgMagick.h"
+#include "errorDisplay.h"
 
 static int expose_point_count = 0;
 
@@ -31,7 +32,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_area_exposure_uCoulombs_per_square_cm(
                  "area_exposure_uCoulombs_per_square_cm", 1000),
    d_drawingTool("drawing_tool", 1),
-   d_clearDrawing("clear_drawing", 0),
+   d_clearPattern("clear_pattern", 0),
+   d_undoShape("undo_shape", 0),
+   d_undoPoint("undo_point", 0),
    d_addTestGrid("add_test_grid", 0),
    d_canvasImage("canvas_image", "none"),
 
@@ -51,7 +54,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semPixelIntegrationTime_nsec("sem_pixel_integration_time_nsec", 0),
    d_semInterPixelDelayTime_nsec("sem_inter_pixel_delay_time_nsec", 0),
    d_semResolution("sem_resolution", 1),
-   d_semAcquisitionMagnification("sem_acquisition_magnification", 10000),
+   d_semAcquisitionMagnification("sem_acquisition_magnification", 1000),
    d_semOverwriteOldData("sem_overwrite_old_data", 1),
    d_semBeamBlankEnable("sem_beam_blank_enable", 0),
    d_semHorizRetraceDelay_nsec("sem_horiz_retrace_delay_nsec", 0),
@@ -66,7 +69,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semDataBuffer("sem_data_buffer", "none"),
    d_semBufferImageNames(new Tclvar_list_of_strings()),
 
-   d_semExposureMagnification("sem_exposure_magnification", 10000),
+   d_semExposureMagnification("sem_exposure_magnification", 1000),
    d_semDotSpacing_nm("sem_dot_spacing_nm", 10),
    d_semLineSpacing_nm("sem_line_spacing_nm", 10),
    d_semBeamCurrent_picoAmps("sem_beam_current_picoAmps", 10),
@@ -82,7 +85,12 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_patternEditor(pe),
    d_SEM(sem),
    d_imageList(NULL),
-   d_autoEnabledImageName(NULL)
+   d_autoEnabledImageName(NULL),
+   d_disableCommandsToSEM(false),
+   d_disableDisplaySettingCallbacks(false),
+   d_minAllowedDotSpacing(1.0),
+   d_minAllowedLineSpacing(1.0),
+   d_minAllowedBeamCurrent(1.0)
 {
   int i;
   d_imageNames->initializeTcl("imageNames");
@@ -187,7 +195,9 @@ void ControlPanels::setupCallbacks()
   d_area_exposure_uCoulombs_per_square_cm.addCallback(
         handle_area_exposure_change, this);
   d_drawingTool.addCallback(handle_drawingTool_change, this);
-  d_clearDrawing.addCallback(handle_clearDrawing_change, this);
+  d_undoShape.addCallback(handle_undoShape_change, this);
+  d_undoPoint.addCallback(handle_undoPoint_change, this);
+  d_clearPattern.addCallback(handle_clearPattern_change, this);
   d_addTestGrid.addCallback(handle_addTestGrid_change, this);
   d_canvasImage.addCallback(handle_canvasImage_change, this);
 
@@ -402,7 +412,7 @@ void ControlPanels::handle_savePatternFileName_change(
 void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
+//  printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
   me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth_nm),
                     (double)(me->d_area_exposure_uCoulombs_per_square_cm),
                     (double)(me->d_line_exposure_pCoulombs_per_cm));
@@ -419,7 +429,8 @@ void ControlPanels::handle_line_exposure_change(double /*new_value*/, void *ud)
                     (double)(me->d_line_exposure_pCoulombs_per_cm));
   if ((double)(me->d_line_exposure_pCoulombs_per_cm) <
       (double)(me->d_semMinLinExposure_pCoul_per_cm))  {
-    printf("WARNING: can't do that\n");
+    display_warning_dialog("Warning, dot spacing or beam current\n"
+			"will need to be changed to obtain that dose");
   }
 }
 
@@ -435,7 +446,8 @@ void ControlPanels::handle_area_exposure_change(double /*new_value*/, void *ud)
 
   if ((double)(me->d_area_exposure_uCoulombs_per_square_cm) <
       (double)(me->d_semMinAreaExposure_uCoul_per_sq_cm)) {
-    printf("WARNING: can't do that\n");
+    display_warning_dialog("Warning, dot spacing, line spacing or\n"
+			"beam current will need to be changed to obtain that dose");
   }
 }
 
@@ -443,7 +455,7 @@ void ControlPanels::handle_area_exposure_change(double /*new_value*/, void *ud)
 void ControlPanels::handle_drawingTool_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("tool: %d\n", (int)(me->d_drawingTool));
+//  printf("tool: %d\n", (int)(me->d_drawingTool));
   PE_DrawTool tool;
   if (new_value == 1) {
     // polyline
@@ -462,13 +474,31 @@ void ControlPanels::handle_drawingTool_change(int new_value, void *ud)
   me->d_patternEditor->setDrawingTool(tool);
 }
 
-// static
-void ControlPanels::handle_clearDrawing_change(int /*new_value*/, void *ud)
+//static 
+void ControlPanels::handle_undoPoint_change(int new_value, 
+											void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("clear drawing: %d\n", (int)(me->d_clearDrawing));
-  me->d_patternEditor->clearShape();
+  me->d_patternEditor->undoPoint();
   me->d_patternEditor->clearExposurePoints();
+}
+
+// static
+void ControlPanels::handle_undoShape_change(int /*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  //printf("clear drawing: %d\n", (int)(me->d_undoShape));
+  me->d_patternEditor->undoShape();
+  me->d_patternEditor->clearExposurePoints();
+}
+
+
+//static 
+void ControlPanels::handle_clearPattern_change(int new_value, 
+											   void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  me->d_patternEditor->clearPattern();
 }
 
 // static
@@ -519,8 +549,9 @@ void ControlPanels::handle_canvasImage_change(const char * /*new_value*/,
 void ControlPanels::handle_imageColorChanged_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("color: %d,%d,%d\n", 
-         (int)me->d_imageRed, (int)me->d_imageGreen, (int)me->d_imageBlue);
+  if (me->d_disableDisplaySettingCallbacks) return;
+//  printf("color: %d,%d,%d\n", 
+//          (int)me->d_imageRed, (int)me->d_imageGreen, (int)me->d_imageBlue);
 
   nmb_Image *im = me->d_imageList->getImageByName(
               string((const char *)(me->d_currentImage)));
@@ -539,7 +570,7 @@ void ControlPanels::handle_imageColorChanged_change(int /*new_value*/, void *ud)
 void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("opacity: %g\n", (double)me->d_imageOpacity);
+//  printf("opacity: %g\n", (double)me->d_imageOpacity);
   nmb_Image *im = me->d_imageList->getImageByName(
                 string((const char *)(me->d_currentImage)));
   if (!im) {
@@ -553,7 +584,8 @@ void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
 void ControlPanels::handle_imageMagnification_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("magnification: %g\n", (double)me->d_imageMagnification);
+//  printf("magnification: %g\n", (double)me->d_imageMagnification);
+  if (me->d_disableDisplaySettingCallbacks) return;
   nmb_Image *im = me->d_imageList->getImageByName(
                 string((const char *)(me->d_currentImage)));
   if (!im) {
@@ -567,14 +599,14 @@ void ControlPanels::handle_imageMagnification_change(double new_value, void *ud)
 	  (double)(im->width());
   worldToImage.scale(1.0/width_nm, 1.0/height_nm, 1.0);
   im->setWorldToImageTransform(worldToImage);
-  me->d_patternEditor->updateDisplayTransform(im, NULL);
+  me->d_patternEditor->updateDisplayTransform(im, NULL, false);
 }
 
 // static 
 void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("hide others: %d\n", (int)me->d_hideOtherImages);
+//  printf("hide others: %d\n", (int)me->d_hideOtherImages);
   if (new_value) {
     nmb_Image *im = me->d_imageList->getImageByName(
                 string((const char *)(me->d_currentImage)));
@@ -593,7 +625,8 @@ void ControlPanels::handle_enableImageDisplay_change(int /*new_value*/,
                                                      void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("enabled: %d\n", (int)me->d_enableImageDisplay);
+  if (me->d_disableDisplaySettingCallbacks) return;
+//  printf("enabled: %d\n", (int)me->d_enableImageDisplay);
 
   // lookup the current image by name in the nmb_ImageList
   if (me->d_imageList == NULL) {
@@ -626,14 +659,16 @@ void ControlPanels::handle_currentImage_change(const char * /*new_value*/,
                                                void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  me->d_disableDisplaySettingCallbacks = true;
   me->updateCurrentImageControls();
+  me->d_disableDisplaySettingCallbacks = false;
 }
 
 void ControlPanels::updateCurrentImageControls()
 {
   if (!d_imageList) return;
 
-  printf("current image: %s\n", (const char *)d_currentImage);
+//  printf("current image: %s\n", (const char *)d_currentImage);
   nmb_Image *im = d_imageList->getImageByName(
                   string((const char *)(d_currentImage)));
   if (!im) {
@@ -672,6 +707,7 @@ void ControlPanels::handleSEMChange(
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec = 0;
   vrpn_int32 enabled;
+  vrpn_float32 spacing_nm;
   vrpn_int32 x = 0, y = 0;
   double x_nm = 0.0, y_nm = 0.0;
   vrpn_int32 h_time_nsec, v_time_nsec;
@@ -696,6 +732,12 @@ void ControlPanels::handleSEMChange(
   nmb_TransformMatrix44 worldToImage;
   double imageRegionWidth = 1000;
   double imageRegionHeight = 1000;
+
+  // don't send any sem commands while handling messages from the sem or you
+  // could get an infinite loop - unless you know what you are doing
+  // This is a hack to get around the problem that there is no way to distinguish
+  // between Tclvar callbacks triggered from the user and those triggered from C.
+  d_disableCommandsToSEM = true;
 
   switch(info.msg_type) {
     case nmm_Microscope_SEM::REPORT_RESOLUTION:
@@ -748,15 +790,16 @@ void ControlPanels::handleSEMChange(
             d_semBufferImageNames->addEntry(currentImageName);
         }
 
+		if (info.sem->lastScanMessageCompletesImage()) {
+			info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
+			currentImage->setAcquisitionDimensions(imageRegionWidth, 
+												   imageRegionHeight);
 
-        info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
-        currentImage->setAcquisitionDimensions(imageRegionWidth, 
-                                               imageRegionHeight);
-
-		worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
-        currentImage->setWorldToImageTransform(worldToImage);
-        d_patternEditor->updateDisplayTransform(currentImage, NULL);
-        d_semDataBuffer.Set(currentImageName);
+			worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
+			currentImage->setWorldToImageTransform(worldToImage);
+			d_patternEditor->updateDisplayTransform(currentImage, NULL, false);
+		}
+		d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
            fprintf(stderr, "  got (%d,[%d-%d]), expected (%d,%d)\n",
@@ -888,6 +931,12 @@ void ControlPanels::handleSEMChange(
       printf("          x (%d, %d)\n", xg, xo);
       printf("          y (%d, %d)\n", yg, yo);
       printf("          z (%d, %d)\n", zg, zo);
+	  d_semXDACGain = xg;
+      d_semXDACOffset = xo;
+      d_semYDACGain = yg;
+      d_semYDACOffset = yo;
+      d_semZADCGain = zg;
+      d_semZADCOffset = zo;
       break;
     case nmm_Microscope_SEM::EXTERNAL_SCAN_CONTROL_ENABLE:
       info.sem->getExternalScanControlEnable(enabled);
@@ -906,23 +955,57 @@ void ControlPanels::handleSEMChange(
 //              numPointsTotal, numPointsDone, timeTotal_sec, timeDone_sec);
 	  if (numPointsTotal != 0) {
 		  percentDone = 100.0*(double)numPointsDone/(double)numPointsTotal;
-	     sprintf(status, "(%3.1lf sec) %3.2lf%% done", timeTotal_sec,percentDone);
+	     sprintf(status, "exposure: %3.2lf/%3.2lf sec done", 
+			 timeDone_sec, timeTotal_sec);
 	  } else {
 		 sprintf(status, "0 exposure points");
 	  }
 	  d_semExposureStatus = status;
       break;
+	case nmm_Microscope_SEM::REPORT_TIMING_STATUS:
+      info.sem->getExposureStatus(numPointsTotal, numPointsDone,
+                                  timeTotal_sec, timeDone_sec);
+//      printf("REPORT_EXPOSURE_STATUS: (%d, %d, %g, %g)\n",
+//              numPointsTotal, numPointsDone, timeTotal_sec, timeDone_sec);
+	  if (numPointsTotal != 0) {
+		  percentDone = 100.0*(double)numPointsDone/(double)numPointsTotal;
+	     sprintf(status, "timing test: %3.2lf/%3.2lf sec done", 
+			 timeDone_sec, timeTotal_sec);
+	  } else {
+		 sprintf(status, "0 exposure points");
+	  }
+	  if (numPointsTotal == numPointsDone) {
+		if (!d_semPointReportEnable) {
+			d_semBeamExposeEnabled = 1;
+		}
+	  }
+	  d_semExposureStatus = status;
+	  break;
+	case nmm_Microscope_SEM::POINT_REPORT_ENABLE:
+		info.sem->getPointReportEnable(enabled);
+		d_semPointReportEnable = enabled;
+		break;
+	case nmm_Microscope_SEM::DOT_SPACING:
+		info.sem->getDotSpacing(spacing_nm);
+		d_semDotSpacing_nm = spacing_nm;
+		break;
+	case nmm_Microscope_SEM::LINE_SPACING:
+		info.sem->getLineSpacing(spacing_nm);
+		d_semLineSpacing_nm = spacing_nm;
+		break;
     default:
       printf("unknown message type: %d\n", info.msg_type);
       break;
   }
+  d_disableCommandsToSEM = false;
+  return;
 }
 
 // static
 void ControlPanels::handle_semWindowOpen_change(int /*new_value */, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem window open: %d\n",(int)me->d_semWindowOpen);
+//  printf("sem window open: %d\n",(int)me->d_semWindowOpen);
 }
 
 // static
@@ -930,11 +1013,12 @@ void ControlPanels::handle_semAcquireImagePushed_change(int /*new_value*/,
                                                         void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem acquire image pushed: %d\n",(int)me->d_semAcquireImagePushed);
+  if (me->d_disableCommandsToSEM) return;
+//  printf("sem acquire image pushed: %d\n",(int)me->d_semAcquireImagePushed);
   
   if (me->d_SEM) {
     me->d_SEM->setExternalScanControlEnable(1);
-    printf("requesting scan\n");
+//    printf("requesting scan\n");
     me->d_SEM->requestScan(1);
   }
 }
@@ -944,8 +1028,9 @@ void ControlPanels::handle_semAcquireContinuousChecked_change(
                          int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem acquire continuous: %d\n",
-                      (int)me->d_semAcquireContinuousChecked);
+  if (me->d_disableCommandsToSEM) return;
+//  printf("sem acquire continuous: %d\n",
+//                      (int)me->d_semAcquireContinuousChecked);
 }
 
 // static
@@ -953,8 +1038,9 @@ void ControlPanels::handle_semPixelIntegrationTime_change(
                     int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem pixel integrate time: %d\n",
-                        (int)me->d_semPixelIntegrationTime_nsec);
+  if (me->d_disableCommandsToSEM) return;
+//  printf("sem pixel integrate time: %d\n",
+//                        (int)me->d_semPixelIntegrationTime_nsec);
   int curr_value;
   if (me->d_SEM) {
     me->d_SEM->getPixelIntegrationTime(curr_value);
@@ -969,8 +1055,9 @@ void ControlPanels::handle_semInterPixelDelayTime_change(
                     int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem interpix delay time: %d\n",
-                       (int)me->d_semInterPixelDelayTime_nsec);
+  if (me->d_disableCommandsToSEM) return;
+//  printf("sem interpix delay time: %d\n",
+//                       (int)me->d_semInterPixelDelayTime_nsec);
   int curr_value;
   if (me->d_SEM) {
     me->d_SEM->getInterPixelDelayTime(curr_value);
@@ -984,12 +1071,13 @@ void ControlPanels::handle_semInterPixelDelayTime_change(
 void ControlPanels::handle_semResolution_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_disableCommandsToSEM) return;
   printf("sem res: %d\n",(int)me->d_semResolution);
   
   int res_x; 
   int res_y;
   nmm_EDAX::indexToResolution(new_value, res_x, res_y);
-  printf("setting resolution to %d,%d\n", res_x, res_y);
+//  printf("setting resolution to %d,%d\n", res_x, res_y);
   int curr_res_x, curr_res_y;
   if (me->d_SEM) {
     me->d_SEM->getResolution(curr_res_x, curr_res_y);
@@ -1008,6 +1096,7 @@ void ControlPanels::handle_semAcquisitionMagnification_change(
   me->d_semExposureMagnification = (int)me->d_semAcquisitionMagnification;
   // scale the display so that images at this magnification fill the window
   double width, height;
+
   if (me->d_SEM) {
     me->d_SEM->getScanRegion_nm(width, height);
   } else {
@@ -1015,7 +1104,7 @@ void ControlPanels::handle_semAcquisitionMagnification_change(
     height = width;
   }
 //  printf("acq. mag.-> %d; viewport->(%g, %g)\n", new_value, width, height);
-  me->d_patternEditor->setViewport(0, 0, width, height);
+  me->d_patternEditor->setScanRange(0, 0, width, height);
 }
 
 // static
@@ -1023,12 +1112,8 @@ void ControlPanels::handle_semBeamBlankEnable_change(
              int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
-    int curr_value;
-    me->d_SEM->getBeamBlankEnabled(curr_value);
-    if (curr_value != new_value) {
-      me->d_SEM->setBeamBlankEnable(new_value);
-    }
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setBeamBlankEnable(new_value);
   }
 }
 
@@ -1037,13 +1122,9 @@ void ControlPanels::handle_semHorizRetraceDelay_change(
              int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
-    int hdelay, vdelay;
-    me->d_SEM->getRetraceDelays(hdelay, vdelay);
-    if (hdelay != new_value) {
-      me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
                                 (vrpn_int32)(me->d_semVertRetraceDelay_nsec));
-    }
   }
 }
 
@@ -1052,13 +1133,9 @@ void ControlPanels::handle_semVertRetraceDelay_change(
              int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
-    int hdelay, vdelay;
-    me->d_SEM->getRetraceDelays(hdelay, vdelay);
-    if (vdelay != new_value) {
-      me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
                                 (vrpn_int32)(me->d_semVertRetraceDelay_nsec));
-    }
   }
 }
 
@@ -1067,22 +1144,13 @@ void ControlPanels::handle_semVertRetraceDelay_change(
 void ControlPanels::handle_semDACParams_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
-    int xg, xo, yg, yo, zg, zo;
-    me->d_SEM->getDACParams(xg, xo, yg, yo, zg, zo);
-    if ((xg != (int)(me->d_semXDACGain)) || 
-        (xo != (int)(me->d_semXDACOffset)) ||
-        (yg != (int)(me->d_semYDACGain)) ||
-        (yo != (int)(me->d_semYDACOffset)) ||
-        (zg != (int)(me->d_semZADCGain)) ||
-        (zo != (int)(me->d_semZADCOffset))) {
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
       me->d_SEM->setDACParams((vrpn_int32)(me->d_semXDACGain),
                               (vrpn_int32)(me->d_semXDACOffset),
                               (vrpn_int32)(me->d_semYDACGain),
                               (vrpn_int32)(me->d_semYDACOffset),
                               (vrpn_int32)(me->d_semZADCGain),
                               (vrpn_int32)(me->d_semZADCOffset));
-    }
   }
 }
 
@@ -1091,12 +1159,8 @@ void ControlPanels::handle_semExternalScanControlEnable_change(
              int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
-    int curr_value;
-    me->d_SEM->getExternalScanControlEnable(curr_value);
-    if (curr_value != new_value) {
-      me->d_SEM->setExternalScanControlEnable(new_value);
-    }
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setExternalScanControlEnable(new_value);
   }
 }
 
@@ -1106,13 +1170,9 @@ void ControlPanels::handle_semExposureMagnification_change(
              int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem exposure mag: %d\n",(int)me->d_semExposureMagnification);
-  if (me->d_SEM) {
-    vrpn_float32 mag;
-    me->d_SEM->getMagnification(mag);
-    if ((int)mag != (int)me->d_semExposureMagnification) {
+//  printf("sem exposure mag: %d\n",(int)me->d_semExposureMagnification);
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
       me->d_SEM->setMagnification((vrpn_float32)me->d_semExposureMagnification);
-    }
   }
 }
 
@@ -1120,9 +1180,14 @@ void ControlPanels::handle_semExposureMagnification_change(
 void ControlPanels::handle_semDotSpacing_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  if (new_value < me->d_minAllowedDotSpacing) {
+	display_error_dialog("Can't set dot spacing below %g nm", 
+		me->d_minAllowedDotSpacing);
+	me->d_semDotSpacing_nm = me->d_minAllowedDotSpacing;
+  }
   me->updateMinimumDoses();
-  if (me->d_SEM) {
-    me->d_SEM->setDotSpacing((vrpn_float32)new_value);
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setDotSpacing((vrpn_float32)me->d_semDotSpacing_nm);
   }
 }
 
@@ -1130,9 +1195,14 @@ void ControlPanels::handle_semDotSpacing_change(double new_value, void *ud)
 void ControlPanels::handle_semLineSpacing_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  if (new_value < me->d_minAllowedLineSpacing) {
+	display_error_dialog("Can't set line spacing below %g nm", 
+		me->d_minAllowedLineSpacing);
+	me->d_semLineSpacing_nm = me->d_minAllowedLineSpacing;
+  }
   me->updateMinimumDoses();
-  if (me->d_SEM) {
-    me->d_SEM->setLineSpacing((vrpn_float32)new_value);
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setLineSpacing((vrpn_float32)me->d_semLineSpacing_nm);
   }
 }
 
@@ -1140,11 +1210,49 @@ void ControlPanels::handle_semLineSpacing_change(double new_value, void *ud)
 void ControlPanels::handle_semBeamCurrent_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  if (new_value < me->d_minAllowedBeamCurrent) {
+	display_error_dialog("Can't set beam current below %g picoAmps", 
+		me->d_minAllowedBeamCurrent);
+	me->d_semBeamCurrent_picoAmps = me->d_minAllowedBeamCurrent;
+  }
 //  printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_picoAmps);
   me->updateMinimumDoses();
-  if (me->d_SEM) {
-    me->d_SEM->setBeamCurrent((vrpn_float32)new_value);
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+    me->d_SEM->setBeamCurrent((vrpn_float32)me->d_semBeamCurrent_picoAmps);
   }
+}
+
+bool ControlPanels::patternInsideScanRange()
+{
+  bool result = true;
+  double minPatternX, minPatternY, maxPatternX, maxPatternY;
+  minPatternX = d_patternEditor->getPattern().minX();
+  minPatternY = d_patternEditor->getPattern().minY();
+  maxPatternX = d_patternEditor->getPattern().maxX();
+  maxPatternY = d_patternEditor->getPattern().maxY();
+
+  double fudgeDist = 2.0*max((double)d_semDotSpacing_nm, 
+	  (double)d_semLineSpacing_nm);
+  // it seems the rasterization code goes a little outside the
+  // lines but I'm pretty sure it won't go outside by more than
+  // fudgeDist - this shouldn't steal a significant amount of
+  // pattern real estate from the user and its easier than fixing
+  // the rasterization code which isn't broken badly enough to
+  // affect the exposure significantly
+  if (d_SEM) {
+	double scanWidth_nm, scanHeight_nm;
+	d_SEM->getScanRegion_nm(scanWidth_nm, scanHeight_nm);
+	double minX, minY, maxX, maxY;
+	minX = fudgeDist;
+	minY = fudgeDist;
+	maxX = scanWidth_nm-fudgeDist;
+	maxY = scanHeight_nm-fudgeDist;
+	if (minPatternX < minX || minPatternY < minY ||
+		maxPatternX > maxX || maxPatternY > maxY) {
+      result = false;
+	}
+  }
+  return result;
 }
 
 // static
@@ -1152,11 +1260,45 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
                                                       void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
+//  printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
 
-  me->d_patternEditor->clearExposurePoints();
+  if (me->d_patternEditor->getPattern().empty()) {
+	display_warning_dialog("No pattern specified");
+	return;
+  }
+  if (!me->patternInsideScanRange()) {
+	display_warning_dialog("Pattern is outside the scan range");
+	return;
+  }
+  double minLinExp = 
+             ExposureUtil::computeMinLinearExposure(EDAX_MIN_POINT_DWELL_SEC,
+                       (double)(me->d_semDotSpacing_nm),
+                       (double)(me->d_semBeamCurrent_picoAmps));
+  double minAreaExp = 
+             ExposureUtil::computeMinAreaExposure(EDAX_MIN_POINT_DWELL_SEC,
+                       (double)(me->d_semDotSpacing_nm),
+                       (double)(me->d_semLineSpacing_nm),
+                       (double)(me->d_semBeamCurrent_picoAmps));
+  double patternMinAreaExp, patternMinLinExp;
+  if (me->d_patternEditor->getPattern().minAreaExposure(patternMinAreaExp)) {
+	  if (patternMinAreaExp < minAreaExp) {
+		  display_warning_dialog("Can't expose when area exposure is below minimum");
+		  return;
+	  }
+  }
+  if (me->d_patternEditor->getPattern().minLinearExposure(patternMinLinExp)) {
+	  if (patternMinLinExp < minLinExp) {
+		  display_warning_dialog("Can't expose when line exposure is below minimum");
+		  return;
+	  }
+  }
 
-  if (me->d_SEM) {
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
+	if (me->d_semPointReportEnable) {
+	  display_warning_dialog("Automatically disabling dwell point display");
+	  me->d_semPointReportEnable = 0;
+	}
+	me->d_patternEditor->clearExposurePoints();
     me->d_SEM->setDotSpacing((vrpn_float32)me->d_semDotSpacing_nm);
     me->d_SEM->setLineSpacing((vrpn_float32)me->d_semLineSpacing_nm);
     me->d_SEM->setBeamCurrent((vrpn_float32)me->d_semBeamCurrent_picoAmps);
@@ -1167,7 +1309,6 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
     (me->d_patternEditor->getPattern()).drawToSEM(me->d_SEM);
     me->d_SEM->exposePattern();
     me->d_SEM->setExternalScanControlEnable(externalControlSave);
-    me->d_semBeamExposeEnabled = 0;
   }
 }
 
@@ -1175,9 +1316,16 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
 void ControlPanels::handle_semDoTimingTest_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem timing test: %d\n", (int)me->d_semDoTimingTest);
-
-  if (me->d_SEM) {
+//  printf("sem timing test: %d\n", (int)me->d_semDoTimingTest);
+  if (me->d_patternEditor->getPattern().empty()) {
+	display_warning_dialog("No pattern specified");
+	return;
+  }
+  if (!me->patternInsideScanRange()) {
+	display_warning_dialog("Pattern is outside the scan range");
+	return;
+  }
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
     me->d_SEM->setDotSpacing((vrpn_float32)me->d_semDotSpacing_nm);
     me->d_SEM->setLineSpacing((vrpn_float32)me->d_semLineSpacing_nm);
     me->d_SEM->setBeamCurrent((vrpn_float32)me->d_semBeamCurrent_picoAmps);
@@ -1188,7 +1336,7 @@ void ControlPanels::handle_semDoTimingTest_change(int /*new_value*/, void *ud)
     (me->d_patternEditor->getPattern()).drawToSEM(me->d_SEM);
     me->d_SEM->exposureTimingTest();
     me->d_SEM->setExternalScanControlEnable(externalControlSave);
-    me->d_semBeamExposeEnabled = 1;
+	me->d_semExposureStatus = "timing test in progress";
   }
 }
 
@@ -1197,7 +1345,7 @@ void ControlPanels::handle_semPointReportEnable_change(int /*new_value*/,
                                                        void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  if (me->d_SEM) {
+  if (me->d_SEM && !me->d_disableCommandsToSEM) {
     me->d_SEM->setPointReportEnable((vrpn_int32)me->d_semPointReportEnable);
   }
   me->d_patternEditor->setExposurePointDisplayEnable(

@@ -39,7 +39,9 @@ class ControlPanels {
    static void handle_line_exposure_change(double new_value, void *ud);
    static void handle_area_exposure_change(double new_value, void *ud);
    static void handle_drawingTool_change(int new_value, void *ud);
-   static void handle_clearDrawing_change(int new_value, void *ud);
+   static void handle_undoPoint_change(int new_value, void *ud);
+   static void handle_undoShape_change(int new_value, void *ud);
+   static void handle_clearPattern_change(int new_value, void *ud);
    static void handle_addTestGrid_change(int new_value, void *ud);
    static void handle_canvasImage_change(const char *new_value, void *ud);
 
@@ -79,6 +81,8 @@ class ControlPanels {
                         const nmm_Microscope_SEM_ChangeHandlerData &info);
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
 
+   bool patternInsideScanRange();
+
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
 
@@ -100,7 +104,9 @@ class ControlPanels {
    Tclvar_float d_line_exposure_pCoulombs_per_cm;
    Tclvar_float d_area_exposure_uCoulombs_per_square_cm;
    Tclvar_int d_drawingTool;
-   Tclvar_int d_clearDrawing;
+   Tclvar_int d_clearPattern;
+   Tclvar_int d_undoShape;
+   Tclvar_int d_undoPoint;
    Tclvar_int d_addTestGrid;
    Tclvar_string d_canvasImage;
 
@@ -157,6 +163,10 @@ class ControlPanels {
    double d_semMinLinExposure_pCoul_per_cm;
    double d_semMinAreaExposure_uCoul_per_sq_cm;
 
+   double d_minAllowedDotSpacing;
+   double d_minAllowedLineSpacing;
+   double d_minAllowedBeamCurrent;
+
    PatternEditor *d_patternEditor;
    PatternFile d_patternFile;
    nmm_Microscope_SEM_Remote *d_SEM;
@@ -167,7 +177,8 @@ class ControlPanels {
 
    static int s_numImageFileFormats;
    static char *s_imageFileFormatNames[];
-
+   bool d_disableCommandsToSEM;
+   bool d_disableDisplaySettingCallbacks;
 };
 
 #endif

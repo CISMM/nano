@@ -93,6 +93,10 @@ SOURCE=..\sem\delay.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\errorDisplay.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\exposurePattern.C
 # End Source File
 # Begin Source File
@@ -134,6 +138,10 @@ SOURCE=..\sem\delay.h
 # Begin Source File
 
 SOURCE=.\edgeTable.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\errorDisplay.h
 # End Source File
 # Begin Source File
 

@@ -218,6 +218,8 @@ int main(int argc, char **argv)
 
     alignerUI = new nmr_RegistrationUI(aligner, patternEditor);
     alignerUI->setupCallbacks();
+	alignerUI->d_flipXreference = 1;
+	alignerUI->d_flipProjectionImageInX = 0;
 
     // load the images specified on the command line
     TopoFile defaultTopoFileSettings;

@@ -84,6 +84,7 @@ int PatternFile::readFromFile(const char *filename)
     return -1;
   }
   int result = readFromFile(d_pattern.getSubShapes(), fin);
+  
   fclose(fin);
   return result;
 }
@@ -162,6 +163,7 @@ int PatternFile::readFromFile(list<PatternShapeListElement> &shapes, FILE *fin)
       }
     }
 
+	shape->setParent(&d_pattern);
     shapes.push_back(PatternShapeListElement(shape));
   }
   return 0;

@@ -32,11 +32,7 @@ class ImageElement {
             d_enabled(e), d_image(im) {}
 
    int operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
-   int operator< (const ImageElement& ie) {
-       return ((d_image->areaInWorld() > ie.d_image->areaInWorld()) ||
-               (d_opacity > ie.d_opacity));
-               
-   }
+   int operator< (const ImageElement& ie);
    
    double d_red;
    double d_green;
@@ -74,7 +70,9 @@ class PatternEditor : public nmb_ImageDisplay {
    void setDrawingParameters(double lineWidth_nm, 
                              double area_exposure, double line_exposure);
    void setDrawingTool(PE_DrawTool tool);
-   void clearShape();
+   void undoPoint();
+   void undoShape();
+   void clearPattern();
    void addShape(PatternShape *shape);
    void updateExposureLevels();
    void addTestGrid(double startX_nm, double startY_nm,
@@ -86,6 +84,8 @@ class PatternEditor : public nmb_ImageDisplay {
                     double maxX_nm, double maxY_nm);
    void getViewport(double &minX_nm, double &minY_nm,
                     double &maxX_nm, double &maxY_nm);
+   void setScanRange(double minX_nm, double minY_nm, 
+                    double maxX_nm, double maxY_nm);
    ExposurePattern &getPattern() {return d_pattern;}
    void setPattern(ExposurePattern &pattern);
    void setExposurePointDisplayEnable(vrpn_int32 enable);
@@ -101,7 +101,8 @@ class PatternEditor : public nmb_ImageDisplay {
    virtual void addImageToDisplay(nmb_Image *image);
    /// disable display but don't remove display settings
    virtual void removeImageFromDisplay(nmb_Image *image);
-   virtual void updateDisplayTransform(nmb_Image *image, double *transform);
+   virtual void updateDisplayTransform(nmb_Image *image, double *transform,
+	   bool transformIsSelfReferential);
    virtual void setDisplayColorMap(nmb_Image *image, 
                            const char *map, const char *mapdir);
    virtual void setDisplayColorMapRange(nmb_Image *image,
@@ -143,6 +144,8 @@ class PatternEditor : public nmb_ImageDisplay {
    void clampMainWinRectangle(double &xmin, double &ymin,
                               double &xmax, double &ymax);
 
+   void updateWorldExtents();
+
    // stuff for creating a pattern
    int startShape(ShapeType type);
    int startPoint(const double x_nm, const double y_nm);
@@ -152,6 +155,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void clearDrawingState();
    void addDumpPoint(const double x, const double y);
    void updateDumpPoint(const double x, const double y);
+   void updateLengthIndicator();
 
    // stuff for manipulating a pattern
    int updateGrab(const double x_nm, const double y_nm);
@@ -175,6 +179,11 @@ class PatternEditor : public nmb_ImageDisplay {
    int d_mainWinID;
    int d_navWinID;
    
+   double d_scanMinX_nm;
+   double d_scanMinY_nm;
+   double d_scanMaxX_nm;
+   double d_scanMaxY_nm;
+
    double d_worldMinX_nm;
    double d_worldMinY_nm;
    double d_worldMaxX_nm;

@@ -222,10 +222,33 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 	glMultMatrixd(d_parentFromObject);
 
     if (d_numPoints == 1) {
+      double worldFromObjM[16];
+      getWorldFromObject(worldFromObjM);
+      double objFromWorldM[16];
+      nmb_TransformMatrix44 objFromWorld;
+      objFromWorld.setMatrix(worldFromObjM);
+      objFromWorld.invert();
+      objFromWorld.getMatrix(objFromWorldM);
+
       list<PatternPoint>::iterator pntIter;
       pntIter = d_points.begin();
-      glBegin(GL_POINTS);
-      glVertex3f((*pntIter).d_x, (*pntIter).d_y, 0.0);
+      glBegin(GL_LINE_LOOP);
+	  float x_world, y_world, x_obj, y_obj;
+	  float x_center_world, y_center_world;
+	  transform(worldFromObjM, (*pntIter).d_x, (*pntIter).d_y,
+		  x_center_world, y_center_world);
+	  int i;
+	  int numPoints = 8;
+	  float angleIncr = 6.28318/(float)numPoints;
+	  float angle = 0.5*angleIncr;
+	  float radius = 0.5*d_lineWidth_nm;
+	  for (i = 0; i < numPoints; i++) {
+		x_world = x_center_world + radius*sin(angle);
+		y_world = y_center_world + radius*cos(angle);
+		transform(objFromWorldM, x_world, y_world, x_obj, y_obj);
+        glVertex3f(x_obj, y_obj, 0.0);
+		angle += angleIncr;
+	  }
       glEnd();
     } else {
       glBegin(GL_LINE_LOOP);
@@ -627,6 +650,13 @@ void PolylinePatternShape::getExposureLevels(list<double> &linearLevels,
   }
 }
 
+void PolylinePatternShape::handleWorldFromObjectChange()
+{
+	if (d_lineWidth_nm != 0) {
+		computeSidePoints();
+	}
+}
+
 void PolylinePatternShape::setLineWidth(double width_nm)
 {
   d_lineWidth_nm = width_nm;
@@ -694,6 +724,7 @@ void PolylinePatternShape::getPointInWorld(int index, double &x, double &y)
 
 void PolylinePatternShape::removePoint()
 {
+  if (d_points.empty()) return;
   d_points.pop_back();
   d_numPoints--;
   d_sidePointsNeedUpdate = vrpn_TRUE;
@@ -826,6 +857,7 @@ void PolylinePatternShape::computeSidePoints()
   objFromWorld.invert();
   objFromWorld.getMatrix(objFromWorldM);
 
+  // transform all points into object coordinates
   for (i = 0; i < d_numPoints; i++) {
 	transform(objFromWorldM, d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
 		x_obj, y_obj);
@@ -1530,6 +1562,7 @@ void PolygonPatternShape::getPointInWorld(int index, double &x, double &y)
 }
 
 void PolygonPatternShape::removePoint() {
+  if (d_points.empty()) return;
   d_points.pop_back();
   d_numPoints--;
 }
@@ -1552,6 +1585,24 @@ CompositePatternShape::CompositePatternShape(const CompositePatternShape &cps):
   for (i = 0; i < 16; i++) {
 	d_parentFromObject[i] = cps.d_parentFromObject[i];
   }
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+	(*shape).d_shape->setParent(this);
+  }
+}
+
+CompositePatternShape  &CompositePatternShape::operator = (const CompositePatternShape &cps)
+{
+  d_subShapes = cps.d_subShapes;
+  int i;
+  for (i = 0; i < 16; i++) {
+	d_parentFromObject[i] = cps.d_parentFromObject[i];
+  }
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+	(*shape).d_shape->setParent(this);
+  }
+  return *this;
 }
 
 void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
@@ -1775,6 +1826,14 @@ void CompositePatternShape::getExposureLevels(list<double> &linearLevels,
     (*shape).getExposureLevels(shapeLinLevels, shapeAreaLevels);
     linearLevels.merge(shapeLinLevels);
     areaLevels.merge(shapeAreaLevels);
+  }
+}
+
+void CompositePatternShape::handleWorldFromObjectChange()
+{
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+	(*shape).d_shape->handleWorldFromObjectChange();
   }
 }
 

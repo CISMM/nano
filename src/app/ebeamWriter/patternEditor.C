@@ -6,6 +6,19 @@
 #define M_PI           3.14159265358979323846
 #endif
 
+int ImageElement::operator< (const ImageElement& ie) {
+	bool result;
+	double myArea = d_image->areaInWorld();
+	double otherArea = ie.d_image->areaInWorld();
+	if (d_opacity == ie.d_opacity) {
+		result = (myArea > otherArea);
+	} else {
+		result = (d_opacity > ie.d_opacity);
+	}
+    return result;
+}
+
+
 PatternEditor::PatternEditor(int startX, int startY):
    d_segmentLength_nm("segment_length", "0 nm")
 {
@@ -39,6 +52,12 @@ PatternEditor::PatternEditor(int startX, int startY):
 
    // 20 microns should be a reasonable size - maybe should make this adjustable
    // since it affects the ease of use of the navigator window
+
+   d_scanMinX_nm = 0;
+   d_scanMinY_nm = 0;
+   d_scanMaxX_nm = 0;
+   d_scanMaxY_nm = 0;
+   
    d_worldMinX_nm = 0;
    d_worldMinY_nm = 0;
    d_worldMaxX_nm = 0;
@@ -111,11 +130,7 @@ PatternEditor::~PatternEditor()
 
 void PatternEditor::addImage(nmb_Image *im)
 {
-  nmb_ImageBounds ib;
-  im->getBounds(ib);
-  nmb_ImageBounds::ImageBoundPoint points[4] =
-     {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
-      nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
+
 
   ImageElement ie(im);
   double newArea = im->areaInWorld();
@@ -132,21 +147,47 @@ void PatternEditor::addImage(nmb_Image *im)
     insertPnt = testElt;
   }
 
-   d_images.insert(insertPnt, ie);
+  d_images.insert(insertPnt, ie);
 
-   for (int i = 0; i < 4; i++) {
-       d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
-       d_worldMaxX_nm = max(d_worldMaxX_nm, ib.getX(points[i]));
-       d_worldMinY_nm = min(d_worldMinY_nm, ib.getY(points[i]));
-       d_worldMaxY_nm = max(d_worldMaxY_nm, ib.getY(points[i]));
-   }
-/*
-   d_mainWinMinX_nm = d_worldMinX_nm;
-   d_mainWinMinY_nm = d_worldMinY_nm;
-   d_mainWinMaxX_nm = d_worldMaxX_nm;
-   d_mainWinMaxY_nm = d_worldMaxY_nm;
-*/
+  updateWorldExtents();
+  setViewport(d_worldMinX_nm, d_worldMinY_nm, 
+	  d_worldMaxX_nm, d_worldMaxY_nm);
 
+}
+
+
+void PatternEditor::updateWorldExtents()
+{
+  d_worldMinX_nm = d_scanMinX_nm;
+  d_worldMinY_nm = d_scanMinY_nm;
+  d_worldMaxX_nm = d_scanMaxX_nm;
+  d_worldMaxY_nm = d_scanMaxY_nm;
+
+
+  if (!d_images.empty()) {
+	  list<ImageElement>::iterator imElem;
+	  nmb_ImageBounds::ImageBoundPoint points[4] =
+			 {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
+			  nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
+	  nmb_ImageBounds ib;
+	  imElem = d_images.begin();
+	  (*imElem).d_image->getBounds(ib);
+	  for (imElem = d_images.begin(); imElem != d_images.end(); imElem++) {
+		(*imElem).d_image->getBounds(ib);
+		for (int i = 0; i < 4; i++) {
+		  d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
+		  d_worldMaxX_nm = max(d_worldMaxX_nm, ib.getX(points[i]));
+		  d_worldMinY_nm = min(d_worldMinY_nm, ib.getY(points[i]));
+		  d_worldMaxY_nm = max(d_worldMaxY_nm, ib.getY(points[i]));
+		}
+	  }
+  }
+
+  if (!d_viewportSet) {
+	setViewport(d_worldMinX_nm, d_worldMinY_nm, 
+		d_worldMaxX_nm, d_worldMaxY_nm);
+	d_viewportSet = false;
+  }
 }
 
 void PatternEditor::removeImage(nmb_Image *im)
@@ -278,7 +319,33 @@ void PatternEditor::setDrawingTool(PE_DrawTool tool)
     d_drawingTool = tool;
 }
 
-void PatternEditor::clearShape()
+void PatternEditor::undoPoint()
+{
+  if (d_shapeInProgress){
+    if (d_currShape->type() == PS_POLYGON) {
+	  PolygonPatternShape *pps = (PolygonPatternShape *)d_currShape;
+	  if (pps->numPoints() == 1) {
+		undoShape();
+	  } else {
+		pps->removePoint();
+	  }
+    } else if (d_currShape->type() == PS_POLYLINE) {
+	  PolylinePatternShape *pps = (PolylinePatternShape *)d_currShape;
+	  if (pps->numPoints() == 1) {
+		undoShape();
+	  } else {
+		pps->removePoint();
+	  }
+	} else {
+	  return;
+	}
+	updateExposureLevels();
+    d_viewer->dirtyWindow(d_mainWinID);
+  }
+  return;
+}
+
+void PatternEditor::undoShape()
 {
   if (d_shapeInProgress){
      clearDrawingState();
@@ -290,6 +357,21 @@ void PatternEditor::clearShape()
     updateExposureLevels();
     d_viewer->dirtyWindow(d_mainWinID);
   }
+  return;
+}
+
+void PatternEditor::clearPattern()
+{
+  if (d_shapeInProgress){
+     clearDrawingState();
+     d_userMode = PE_IDLE;
+     d_viewer->dirtyWindow(d_mainWinID);
+  }
+  while (!d_pattern.empty()) {
+    d_pattern.removeSubShape();
+    d_viewer->dirtyWindow(d_mainWinID);
+  }
+  updateExposureLevels();
   return;
 }
 
@@ -467,6 +549,7 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   d_mainWinMaxX_nm = maxX_nm;
   d_mainWinMaxY_nm = maxY_nm;
 
+
   d_worldMinX_nm = min(d_worldMinX_nm, minX_nm);
   d_worldMinY_nm = min(d_worldMinY_nm, minY_nm);
   d_worldMaxX_nm = max(d_worldMaxX_nm, maxX_nm);
@@ -490,9 +573,42 @@ void PatternEditor::getViewport(double &minX_nm, double &minY_nm,
   maxY_nm = d_mainWinMaxY_nm;
 }
 
+void PatternEditor::setScanRange(double minX_nm, double minY_nm, 
+                                double maxX_nm, double maxY_nm)
+{
+  d_scanMinX_nm = minX_nm;
+  d_scanMinY_nm = minY_nm;
+  d_scanMaxX_nm = maxX_nm;
+  d_scanMaxY_nm = maxY_nm;
+  updateWorldExtents();
+  if (!d_viewportSet) {
+    setViewport(d_worldMinX_nm, d_worldMinY_nm,
+	  d_worldMaxX_nm, d_worldMaxY_nm);
+	d_viewportSet = false;
+  } else {
+	double minX, minY, maxX, maxY;
+	getViewport(minX, minY, maxX, maxY);
+	if (minX < d_worldMinX_nm || minY < d_worldMinY_nm ||
+		maxX > d_worldMaxX_nm || maxY > d_worldMaxY_nm) {
+		setViewport(d_worldMinX_nm, d_worldMinY_nm,
+			d_worldMaxX_nm, d_worldMaxY_nm);
+	}
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
 void PatternEditor::setPattern(ExposurePattern &pattern)
 {
   d_pattern = pattern;
+  double worldFromPattern[16] = {100000.0,0,0,0,0,78125.,0,0,0,0,1,0,0,0,0,1};
+  if (d_canvasImage) {
+	nmb_TransformMatrix44 worldFromPattern44;
+	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
+	worldFromPattern44.invert();
+	worldFromPattern44.getMatrix(worldFromPattern);
+  }
+  d_pattern.setParentFromObject(worldFromPattern);
+  d_pattern.handleWorldFromObjectChange();
   updateExposureLevels();
   d_viewer->dirtyWindow(d_mainWinID);
 }
@@ -554,9 +670,12 @@ void PatternEditor::removeImageFromDisplay(nmb_Image *image)
   setImageEnable(image, vrpn_FALSE);
 }
 
-void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform)
+void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform,
+										   bool transformIsSelfReferential)
 {
   // really this is only necessary if the image is currently displayed
+  if (transformIsSelfReferential) return;
+
   list<ImageElement>::iterator imIter;
   for (imIter = d_images.begin();
        imIter != d_images.end(); imIter++) {
@@ -570,19 +689,26 @@ void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform)
       }
     }
   }
+  if (image == d_canvasImage) {
+    // need to redraw the pattern 
+    d_viewer->dirtyWindow(d_mainWinID);
+  }
+  updateWorldExtents();
+  setViewport(d_worldMinX_nm, d_worldMinY_nm,
+	  d_worldMaxX_nm, d_worldMaxY_nm);
 }
 
 void PatternEditor::setDisplayColorMap(nmb_Image *image,
                 const char *map, const char *mapdir)
 {
-  printf("Sorry, setDisplayColorMap is not implemented\n");
+//  printf("Sorry, setDisplayColorMap is not implemented\n");
 }
 
 void PatternEditor::setDisplayColorMapRange(nmb_Image *image,
              float data_min, float data_max,
              float color_min, float color_max)
 {
-  printf("Sorry, setDisplayColorMapRange is not implemented\n");
+//  printf("Sorry, setDisplayColorMapRange is not implemented\n");
 }
 
 void PatternEditor::updateImage(nmb_Image *image)
@@ -609,12 +735,14 @@ int PatternEditor::handleMainWinEvent(
       case RESIZE_EVENT:
          d_mainWinWidth = event.width;
          d_mainWinHeight = event.height;
-         desired_width = d_mainWinHeight*
-                         (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
-                         (d_mainWinMaxY_nm - d_mainWinMinY_nm);
-         if (desired_width != d_mainWinWidth) {
-           d_viewer->setWindowSize(event.winID, desired_width, d_mainWinHeight);
-         }
+		 if (d_viewportSet) {
+			 desired_width = d_mainWinHeight*
+							 (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
+							 (d_mainWinMaxY_nm - d_mainWinMinY_nm);
+			 if (desired_width != d_mainWinWidth) {
+			   d_viewer->setWindowSize(event.winID, desired_width, d_mainWinHeight);
+			 }
+		 }
          break;
       case MOTION_EVENT:
          x = event.mouse_x; y = event.mouse_y;
@@ -655,6 +783,7 @@ int PatternEditor::handleMainWinEvent(
              }
              mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
              startPoint(x_world_nm, y_world_nm);
+			 updateExposureLevels();
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
@@ -739,6 +868,7 @@ void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
 	xmax = centerX_nm + (d_mainWinMaxX_nm - centerX_nm)/magFactor;
 	ymin = centerY_nm + (d_mainWinMinY_nm - centerY_nm)/magFactor;
 	ymax = centerY_nm + (d_mainWinMaxY_nm - centerY_nm)/magFactor;
+	clampMainWinRectangle(xmin, ymin, xmax, ymax);
 	setViewport(xmin, ymin, xmax, ymax);
 }
 
@@ -852,6 +982,14 @@ int PatternEditor::mainWinDisplayHandler(
 
   me->drawPattern();
 
+  glColor3f(1.0, 0.0, 0.0);
+  glBegin(GL_LINE_LOOP);
+  glVertex2f(me->d_scanMinX_nm, me->d_scanMinY_nm);
+  glVertex2f(me->d_scanMinX_nm, me->d_scanMaxY_nm);
+  glVertex2f(me->d_scanMaxX_nm, me->d_scanMaxY_nm);
+  glVertex2f(me->d_scanMaxX_nm, me->d_scanMinY_nm);
+  glEnd();
+
   double matrix[16];
   glGetDoublev(GL_MODELVIEW_MATRIX, matrix);
 //  printf("%g,%g\n", matrix[0], matrix[5]);
@@ -910,7 +1048,7 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinWidth;
   units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
                       (double)d_mainWinHeight;
-  double worldFromPattern[16] = {10000.0,0,0,0,0,7812.5,0,0,0,0,1,0,0,0,0,1};
+  double worldFromPattern[16] = {100000.0,0,0,0,0,78125.,0,0,0,0,1,0,0,0,0,1};
   if (d_canvasImage) {
 	nmb_TransformMatrix44 worldFromPattern44;
 	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
@@ -1309,7 +1447,7 @@ PE_UserMode PatternEditor::getUserMode()
 void PatternEditor::setUserMode(PE_UserMode mode)
 {
   if (mode == d_userMode) {
-    printf("warning: setUserMode called with same value as current mode\n");
+//    printf("warning: setUserMode called with same value as current mode\n");
     return;
   }
 
@@ -1350,7 +1488,7 @@ void PatternEditor::setUserMode(PE_UserMode mode)
 
 void PatternEditor::clearDrawingState()
 {
-  printf("clearing shape\n");
+//  printf("clearing shape\n");
   if (d_currShape) {
     delete d_currShape;
     d_currShape = NULL;
@@ -1367,7 +1505,7 @@ int PatternEditor::startShape(ShapeType type)
      return -1;
   }
 
-  printf("starting shape\n");
+//  printf("starting shape\n");
   d_shapeInProgress = vrpn_TRUE;
 
   PatternShape *newShape = NULL;
@@ -1437,11 +1575,47 @@ int PatternEditor::updateGrab(const double x_nm, const double y_nm)
   return 0;
 }
 
+void PatternEditor::updateLengthIndicator()
+{
+  char lengthIndicatorStr[128];
+  sprintf(lengthIndicatorStr, "N/A");
+  int numPoints;
+  double x_nm, y_nm, x_nm_last, y_nm_last;
+  double dx, dy, length;
+  if (d_shapeInProgress) {
+	if (d_currShape->type() == PS_POLYGON) {
+	  PolygonPatternShape *pps = (PolygonPatternShape *)d_currShape;
+	  numPoints = pps->numPoints();
+	  if (numPoints > 1) {
+		pps->getPointInWorld(numPoints-1, x_nm, y_nm);
+		pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
+		dx = x_nm - x_nm_last;
+		dy = y_nm - y_nm_last;
+		length = sqrt(dx*dx + dy*dy);
+		sprintf(lengthIndicatorStr, "%7g nm", length);
+	  }
+	} else if (d_currShape->type() == PS_POLYLINE) {
+	  PolylinePatternShape *pps = (PolylinePatternShape *)d_currShape;
+	  numPoints = pps->numPoints();
+	  if (numPoints > 1) {
+		pps->getPointInWorld(numPoints-1, x_nm, y_nm);
+		pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
+		dx = x_nm - x_nm_last;
+		dy = y_nm - y_nm_last;
+		length = sqrt(dx*dx + dy*dy);
+		sprintf(lengthIndicatorStr, "%7g nm", length);
+	  }
+	}
+  }
+  d_segmentLength_nm.Set(lengthIndicatorStr);
+}
+
 int PatternEditor::startPoint(const double x_nm, const double y_nm)
 {
+  int result = 0;
   d_pointInProgress = vrpn_TRUE;
   if (d_shapeInProgress) {
-    printf("adding point to current shape\n");
+//    printf("adding point to current shape\n");
     if (d_currShape->type() == PS_POLYGON) {
       ((PolygonPatternShape *)d_currShape)->addPoint(x_nm, y_nm);
     } else if (d_currShape->type() == PS_POLYLINE) {
@@ -1449,65 +1623,42 @@ int PatternEditor::startPoint(const double x_nm, const double y_nm)
     } else if (d_currShape->type() == PS_DUMP) {
       ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
     }
-    return 0;
   } else if (d_drawingTool == PE_SELECT){
     selectPoint(x_nm, y_nm);
   } else {
     d_pointInProgress = vrpn_FALSE;
     printf("Error, startPoint called when not drawing shape\n");
-    return -1;
+    result = -1;
   }
-  return 0;
+  updateLengthIndicator();
+  return result;
 }
 
 int PatternEditor::updatePoint(const double x_nm, const double y_nm)
 {
-  char lengthIndicatorStr[128];
-  sprintf(lengthIndicatorStr, "N/A");
-  int numPoints;
-  double x_nm_last, y_nm_last;
-  double dx, dy, length;
+  int result = 0;
   if (d_pointInProgress) {
     if (d_shapeInProgress) {
       if (d_currShape->type() == PS_POLYGON) {
 		PolygonPatternShape *pps = (PolygonPatternShape *)d_currShape;
         pps->removePoint();
         pps->addPoint(x_nm, y_nm);
-		numPoints = pps->numPoints();
-		if (numPoints > 1) {
-			pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
-			dx = x_nm - x_nm_last;
-			dy = y_nm - y_nm_last;
-			length = sqrt(dx*dx + dy*dy);
-			sprintf(lengthIndicatorStr, "%7g nm", length);
-		}
-		d_segmentLength_nm.Set(lengthIndicatorStr);
       } else if (d_currShape->type() == PS_POLYLINE) {
 		PolylinePatternShape *pps = (PolylinePatternShape *)d_currShape;
 		       pps->removePoint();
         pps->addPoint(x_nm, y_nm);
-		numPoints = pps->numPoints();
-		if (numPoints > 1) {
-			pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
-			dx = x_nm - x_nm_last;
-			dy = y_nm - y_nm_last;
-			length = sqrt(dx*dx + dy*dy);
-			sprintf(lengthIndicatorStr, "%7g nm", length);
-		}
-		d_segmentLength_nm.Set(lengthIndicatorStr);
       } else if (d_currShape->type() == PS_DUMP) {
         ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
       }
-      return 0;
     } else if (d_drawingTool == PE_SELECT && d_grabInProgress){
       updateGrab(x_nm, y_nm);
-      return 0;
     }
   } else {
     printf("Error, updatePoint called when not setting point\n");
-    return -1;
+    result = -1;
   }
-  return 0;
+  updateLengthIndicator();
+  return result;
 }
 
 int PatternEditor::finishPoint(const double x_nm, const double y_nm)
