@@ -44,12 +44,10 @@ bind $buttbox <Enter> "focus $buttbox"
 
 pack $win.site_name -anchor nw -side top
 
-set newSite ""
-generic_entry $win.newSite newSite "New Site:" ""
 set newSiteConnection ""
 generic_entry $win.newSiteConnection newSiteConnection "Hostname:" ""
 
-pack $win.newSite $win.newSiteConnection -side left
+pack $win.newSiteConnection -side left
 
 set collab_machine_name ""
 
@@ -59,20 +57,19 @@ proc open_collaboration_connection {} {
 
   global collaborationNames collaborationConnections
   global chosen_site_index
-  global newSite newSiteConnection
+  global newSiteConnection
 
   if { [.choose_collaborator_dialog activate] } {
 
     # OK
 
-    if { ($newSite != "") && ($newSiteConnection != "") } {
+	if { ($newSiteConnection != "") } {
 
       # Add this site to the list
       # Doesn't mean anything yet, since we can't reopen the
       # dialog.  We'd really like to save this list so that it's
       # persistent across sessions.
 
-      set collaborationNames [ lappend collaborationNames $newSite ]
       set collaborationConnections \
           [ lappend collaborationConnections $newSiteConnection ]
 

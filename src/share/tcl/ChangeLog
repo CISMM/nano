@@ -1,3 +1,10 @@
+2002-06-19  Woojin Seok  <seok@cs.unc.edu>
+        *shared_ptr.tcl: Remove all lines related to "New Site"
+        The newSite was the variable holding the name of "New Site", 
+        and we had to fill the entry to run collaboration 
+        even though it was not necessary to any work.
+        Now we do not need to.
+
 2002-06-19  Aron Helser  <helser@cs.unc.edu>
 
 	* modify.tcl (enforce_directz_heightplane): New, makes sure
