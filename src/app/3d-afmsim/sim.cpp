@@ -111,12 +111,8 @@ void grabNearestOb(int xy_or_xz);
 int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
+void Usage(char *progname);
 
-void Usage(char *progname)
-{
-    cerr << "See README file for usage instructions." << endl; 
-    exit(-1);
-}
 
 
 int main(int argc, char *argv[])
@@ -125,7 +121,8 @@ int main(int argc, char *argv[])
 	bool radius = true;	//for protein/spheres files--false means use default
 						//true means the file contains radii
 	bool centering = true;
-	VolumeFilename = "";
+	
+	VolumeFilename = NULL;
 	bool unitsGiven = false;
 
 
@@ -134,6 +131,8 @@ int main(int argc, char *argv[])
 		if (!strcmp(argv[i], "-units")) {
 			if(++i >= argc) { Usage(argv[0]); }
 			strcpy(units,argv[i]);
+			cout << endl << "Make sure that the units you have input are 'nm'" << endl
+			     << "if you want to send data to nano and display along with another file." << endl;
 			unitsGiven = true;
 		}
 		else if (!strcmp(argv[i], "-type")) {
@@ -154,10 +153,17 @@ int main(int argc, char *argv[])
 				char * proteinFile = argv[i];
 				float ratio = atof(argv[++i]);
 				char * dnaFile = argv[++i];
+				
 				addSpheresFromFile(proteinFile, ratio, !radius, centering);
-				char * proteinPortion = strcat(proteinFile, " & ");
-				VolumeFilename = strcat(proteinPortion, dnaFile);
+				char *proteinPortion = new char[strlen(proteinFile) + 3 + 1];
+				strcpy(proteinPortion, proteinFile);
+				strcat(proteinPortion, " & ");
+				VolumeFilename = new char[strlen(proteinPortion) + strlen(dnaFile) +1];
+				strcpy(VolumeFilename, proteinPortion);
+				strcat(VolumeFilename, dnaFile);// XXX  LEAKING MEMORY
 				init_dna(dnaFile);
+
+				delete proteinPortion;
 			}
 			else if(!strcmp(argv[i], "-t")){//triangles file
 				if ((++i + 1) >= argc) { Usage(argv[0]); }
@@ -183,10 +189,30 @@ int main(int argc, char *argv[])
 			ics.set_r(TipSize);//let the user specify the tip radius desired
 		}
 		else if (!strcmp(argv[i], "-unca_nano")) {
-			unca_minx = 0;
-			unca_miny = 0;
-			unca_maxx = 5000;
-			unca_maxy = 5000;
+		        bool breakOut = false;
+		        if (++i > argc){
+		        //determine if there are any arguments specific to the -unca_nano argument
+		        //by checking if next argument is another command line argument first--if not
+			//it has to be a parameter to -unca_nano
+			  if (!strcmp(argv[i], "-units"))  breakOut = true;
+			  else if (!strcmp(argv[i], "-type")) breakOut = true;
+			  else if (!strcmp(argv[i], "-tip_radius")) breakOut = true;
+			  if(breakOut == false){
+			    //if more arguments, but the next argument is none of the "standard"
+			    //arguments, it has to be a parameter for -unca_nano
+			    if ((i + 3) >= argc) { Usage(argv[0]); }//make sure there are 4 of them
+			    unca_minx = atof(argv[i]);
+			    unca_miny = atof(argv[++i]);
+			    unca_maxx = atof(argv[++i]);
+			    unca_maxy = atof(argv[++i]);
+			  }
+			  else{//breakOut == true
+			    unca_minx = 0;
+			    unca_miny = 0;
+			    unca_maxx = 5000;
+			    unca_maxy = 5000;
+			  }
+			}
 		}
     }
 
@@ -520,7 +546,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 		*/
       uncertainty_mode = !uncertainty_mode;
       break;
-    case 'm' : // toggle shading model
+    case 'M' : // toggle shading model
       if (shadingModel == GL_FLAT) {
 	shadingModel = GL_SMOOTH;
 	printf("Using smooth shading model\n");
@@ -560,6 +586,12 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM);
       selectedOb = numObs-1;
       break;
+    case 'm' :
+      radius = 21.139;
+      addNtube( SPHERE,  Vec3d(64.0, 64.0, -20.1127), 0., 0., 0., 0., radius*2.0);
+      selectedOb = numObs-1;
+
+      break;
     case 's' :
       cout << "Enter a radius: " << flush;
       done = false;
@@ -589,7 +621,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
     case 'f' ://find volume
       volume = find_volume();
-	  if(VolumeFilename != ""){
+	  if(VolumeFilename != NULL){
 		fout2 << VolumeFilename << ":  ";
 	  }
 	  fout2 << "Volume of all objects on plane is " << volume << " " 
@@ -905,4 +937,238 @@ void select_triangle_side() {
 
 
 
+void Usage(char *progname)
+{
+  cout << endl
+       <<"Running the program" << endl
+       <<"-------------------" << endl
+       << endl
+       <<"There are several command line argument options, but none are mandatory.  they are set up" << endl
+       <<"so that, as long as you have the correct arguments for each parameter that you want to " << endl
+       <<"specify, you can put the parameters in any order.  The parameters that can be specified are" << endl
+       <<"as follows:" << endl
+       <<endl
+       <<"	1.  units used" << endl
+       <<"	2.  tip radius" << endl
+       <<"       3.  type of file to open" << endl
+       <<endl
+       <<"1.  To specify what units you are using, type:" << endl
+       <<"	-units <units>" << endl
+       <<endl
+       <<"	(remember to include the '-'!)" << endl
+       <<" 	where <units> is a string such as 'nm'." << endl
+       <<"	Note that if you do not enter anything, the default units of nanometers" << endl
+       <<"	will be used.\n"<< endl
 
+       <<"2.  To specify what tip radius to use, type:" << endl
+       <<"       -tip_radius <radius>" << endl<< endl
+
+       <<"	where <radius> is a floating point value such as 7.5.  If you do not specify" << endl
+       <<"	a tip radius, the default value of 5.0 will be used." << endl<< endl
+
+       <<"3.  To specify that the file is to be loaded into nano as a unca file, type:" << endl
+       <<"	-unca_nano" << endl<< endl
+
+       <<"   	Optional arguments to follow specify the region, corresponding to the region for the" << endl
+       <<"	real afm image that the simulated scan is to be matched up against.  In order, these are:" << endl
+       <<"		min x" << endl
+       <<"		min y" << endl
+       <<"		max x" << endl
+       <<"		max y" << endl<< endl
+
+       <<"	Example:  -unca_nano 0 0 5000 5000" << endl<< endl
+
+       <<"4.  To specify a file to be opened, use one of the following formats:" << endl << endl
+       <<"	-type -p" << endl
+       <<" 	-type -d" << endl
+       <<"	-type -t" << endl
+       <<"	-type -s" << endl
+       <<"	-type -dp" << endl<< endl
+
+       <<"	In order, these are for opening a protein file, dna file, triangle file, " << endl
+       <<"	spheres file, and both a dna and protein file at the same time.  Note that you do" << endl
+       <<"	not have to open a file in order to run the simulation; leaving out a file type" << endl
+       <<"	specification opens the simulation without any objects.  Various keyboard commands" << endl
+       <<"	can then be used to place objects where desired." << endl<< endl
+
+       <<"Explanation of the '-type' command usage" << endl
+       <<"----------------------------------------" << endl<< endl
+
+       <<"1. To simply run the simulator, type:" << endl<< endl
+
+       <<"	./sim				if you are on an sgi" << endl
+       <<"		or"<<endl
+       <<"	./3d_afm/Debug/3d_afm.exe	if you are working in cygwin, or have the " << endl
+       <<"					application on your pc" << endl<< endl
+
+       <<"	Note that all future references to the application will use './sim' to lessen" << endl
+       <<"	confusion, but in all cases, either of the two options listed could be used." << endl<< endl
+
+       <<"2. To get the AFM of a protein" << endl
+       <<"	./sim -type -p <protein filename> <ratio>" << endl
+       <<"	<ratio> is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n" << endl
+       <<"	Example : ./sim -type -p lac.data 1" << endl<< endl
+
+       <<"Read pdb/README on how to generate a '.data' file from a PDB file." << endl
+       <<"--See Protein file format below" << endl<< endl
+
+       <<"3. To get AFM of a triangular model run" << endl
+       <<"	./sim -type -t <filename> <scale>" << endl
+       <<"	<scale> scales the values in the given input file" << endl
+       <<"	Example :  ./sim -type -t teddy.obj 10	" << endl<< endl
+
+       <<"4. To run DNA simulator" << endl
+       <<"	./sim -type -d <dna-filename>" << endl
+       <<"	Example :  ./sim -type -d dna.dat" << endl<< endl
+
+       <<"--See DNA file format below" << endl<< endl
+
+       <<"5.  To run DNA simulator and protein file" << endl
+       <<"	./sim -type -dp  <protein-filename> <ratio> <dna-filename>" << endl
+       <<"	Example : ./sim -type -dp lac-smaller.dat 1 dna2.dat " << endl<< endl
+
+       <<"--Note that in order to run the dna simulator and the protein at the same time," << endl 
+       <<"the data for the protein cannot be too large.  For example, the size of the file " << endl
+       <<"lac.data is too large to refresh all the data in a reasonable amount of time, but" << endl
+       <<"the file lac-smaller, which has been pared down, is okay.  Look at these files to " << endl
+       <<"gauge an appropriate size when preparing your data file."<< endl<< endl
+
+       <<"--Note also that the protein as a whole will also be centered in the simulation" << endl<< endl
+
+       <<"6.  To get the AFM of spheres where the position you specify is absolute" << endl
+       <<"	./sim -type -s <sphere-filename> <ratio>" << endl
+       <<"	Example :  ./sim -type -s testfile.dat 1" << endl<< endl
+
+       <<"--See Sphere file format below" << endl<< endl<< endl
+
+
+       <<"Again, for any of the above examples, tip radius and/or units can also be specified," << endl
+       <<"and the order in which the three parameters (the above two and file type) are specified" << endl
+       <<"is arbitrary.  So, the last example, ./sim -type -s testfile.dat 1, could also be any " << endl
+       <<"of the following, if we also wanted to specify tip radius and units:" << endl<< endl
+
+       <<"	./sim -units nm -tip_radius 10.0 -type -s testfile.dat 1" << endl
+       <<"	./sim -units nm -type -s testfile.dat 1 -tip_radius 10.0" << endl
+       <<"	./sim -tip_radius 10.0 -units nm -type -s testfile.dat 1" << endl
+       <<"	./sim -tip_radius 10.0 -type -s testfile.dat 1 -units nm" << endl
+       <<"	./sim -type -s testfile.dat 1 -units nm -tip_radius 10.0" << endl
+       <<"	./sim -type -s testfile.dat 1 -tip_radius 10.0 -units nm" << endl<< endl<< endl
+
+
+       <<"Format for the protein file" << endl
+       <<"---------------------------" << endl<< endl
+
+       <<"x_position y_position z_position" << endl
+       <<"repeat for all spheres" << endl<< endl
+
+       <<"Example" << endl<< endl
+
+       <<"34.0 34.0 0.0" << endl
+       <<"36.0 36.0 5.0" << endl<< endl
+
+       <<"--The above file would create a protein consisting of 2 spheres with the " << endl
+       <<"default radius." << endl<< endl<< endl
+
+
+       <<"Format for the sphere file" << endl
+       <<"--------------------------" << endl
+       <<"x_position y_position z_position radius" << endl
+       <<"repeat for all spheres" << endl<< endl
+
+       <<"Example" << endl<< endl
+
+       <<"34.0 34.0 0.0 2.0" << endl
+       <<"67.0 74.0 5.0 5.0" << endl<< endl
+
+       <<"--The above file would create two spheres." << endl<< endl
+
+
+       <<"Format for the dna file" << endl
+       <<"-----------------------" << endl<< endl
+
+       <<"	Number of segments in the DNA" << endl
+       <<"	Length of DNA" << endl
+       <<"	Position of site 1" << endl
+       <<"	Position of site 2" << endl
+       <<"	Tangent at site 1" << endl
+       <<"	Tangent at site 2" << endl<< endl
+
+       <<"Example (see file dna.dat)" << endl<< endl
+
+       <<"	30" << endl
+       <<"	160" << endl
+       <<"	20 10 10" << endl
+       <<"	110 40 50" << endl
+       <<"	-100 100 0" << endl
+       <<"	-50 -100 0" << endl<< endl<< endl<< endl<< endl
+
+
+
+       <<"Information" << endl
+       <<"-----------" << endl<< endl
+
+       <<". This code uses display lists. They are turned on by default. To turn them off, change " << endl
+       <<"the #define DISP_LIST in defns.h and recompile." << endl<< endl
+
+       <<". For objects totally composed of spheres, use the type SPHERE instead of NTUBE. This " << endl
+       <<"enable a number of optimizations. However you cannot change the length of an object " << endl
+       <<"declared as a SPHERE." << endl<< endl
+
+
+       <<"Key and Mouse bindings" << endl
+       <<"----------------------" << endl<< endl
+
+       <<". Left mouse click on an object selects it. The object's color turns red." << endl
+       <<". Left mouse when clicked and moved while the key remains pressed moves the object along " << endl
+       <<"XY plane." << endl
+       <<". Right mouse click works on triangles. It is used to select a side of a triangle." << endl<< endl
+
+<<"The following keys produce global changes (not object specific)" << endl
+<<"--------------------------------------------------------------" << endl<< endl
+
+<<". 'q' - exit" << endl
+<<". 'o' - draw objects. By default, objects are not drawn, only the AFM is." << endl
+<<". 'w' - write the AFM to a file." << endl
+<<"	In uncertainty mode, it writes out the uncertainty map." << endl
+<<". 'n' - add a new nano tube" << endl
+<<". 's' - add a sphere, you will get a prompt to enter a radius, which can be any" << endl
+<<"	reasonably-sized floating point number" << endl
+<<". 'm' - add new protein to display" << endl
+<<". 'M' - toggle shading mode" << endl
+<<". 'f' - find the volume of all objects drawn, the volume will be printed to the" << endl
+<<"	screen and will also be appended to the file sphere_output.txt" << endl
+<<". 't' - add a new triangle" << endl
+<<". 'p' - toggle the tip model, the default is the inverted ConeSphere tip model" << endl
+<<". 'r', 'R' - change the tip radius" << endl
+<<". 'a', 'A' - change the tip angle in case of inv ConeSphere tip." << endl
+<<". 'i' - toggles between 'no scan' to 'semi solid scan' to 'solid scan'." << endl
+<<". 'u' - to toggle to uncertainty mode" << endl
+<<endl
+<<"The following perform object specific actions" << endl
+<<"---------------------------------------------" << endl
+<<endl
+<<". DELETE - deleted that object" << endl
+<<". 'd', 'D' - change diam" << endl
+<<". 'l', 'L' - change length" << endl
+<<". '+', '-' - change z" << endl
+<<". 'x', 'X' - rotate about X" << endl
+<<". 'y', 'Y' - rotate about X" << endl
+<<". 'z', 'Z' - rotate about X" << endl
+<<endl
+<<"The following will have effect only on nano tubes" << endl
+<<"-------------------------------------------------" << endl
+<<endl
+<<". 'e', 'E' - change roll" << endl
+<<". 'f', 'F' - change yaw" << endl
+<<". 'g', 'g' - change pitch" << endl
+<<endl
+<<endl
+<<"Important Note :" << endl
+<<"----------------" << endl
+<<endl
+<<"We had said earlier, right click selects one side of a triangle. But since a side of a " << endl
+<<"triangle is modelled as a nanotube, you can perform all the nanotube operations on that " << endl
+       <<"side." << endl;
+
+    exit(-1);
+}

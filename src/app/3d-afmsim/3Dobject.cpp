@@ -162,9 +162,6 @@ void Ntube::recalc_all() {
 
 void Ntube :: setPos(Vec3d _pos) {
   pos = _pos;
-  if (pos.z < 1) {
-    pos.z = 0;
-  }
   recalc_all();
 }
 
@@ -784,7 +781,7 @@ void Ntube :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
 
 void Ntube :: moveGrabbedOb(Vec3d vMouseWorld) {
   // As vMouseWorld changes, move the object
-  setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z));
+     setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z));
 }
 
 /* We have a type field. Later, I plan to distingush spheres from ntubes */

@@ -587,6 +587,7 @@ void init_dna(char *filename) {
 
   ifstream fin;
   fin.open(filename);
+  cout << "filename=" << filename << endl;
   if(!fin.fail()){
 	fin >> numSegments >> dna_length >> P1.x >> P1.y >> P1.z >> P2.x >> P2.y >> P2.z
 		>> dP1.x >> dP1.y >> dP1.z >> dP2.x >> dP2.y >> dP2.z;

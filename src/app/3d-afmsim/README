@@ -43,7 +43,19 @@ as follows:
 	where <radius> is a floating point value such as 7.5.  If you do not specify
 	a tip radius, the default value of 5.0 will be used.
 
-3.  To specify a file to be opened, use one of the following formats:
+3.  To specify that the file is to be loaded into nano as a unca file, type:
+	-unca_nano
+
+   	Optional arguments to follow specify the region, corresponding to the region for the
+	real afm image that the simulated scan is to be matched up against.  In order, these are:
+		min x
+		min y
+		max x
+		max y
+
+	Example:  -unca_nano 0 0 5000 5000
+
+4.  To specify a file to be opened, use one of the following formats:
 	-type -p
  	-type -d
 	-type -t
@@ -89,8 +101,8 @@ Read pdb/README on how to generate a '.data' file from a PDB file.
 --See DNA file format below
 
 5.  To run DNA simulator and protein file
-	./sim -type -dp <dna-filename> <protein-filename> <ratio>
-	Example : ./sim -type -dp dna2.dat lac-smaller.dat 1
+	./sim -type -dp  <protein-filename> <ratio> <dna-filename>
+	Example : ./sim -type -dp lac-smaller.dat 1 dna2.dat 
 
 --Note that in order to run the dna simulator and the protein at the same time, 
 the data for the protein cannot be too large.  For example, the size of the file 
@@ -198,6 +210,8 @@ The following keys produce global changes (not object specific)
 . 'n' - add a new nano tube
 . 's' - add a sphere, you will get a prompt to enter a radius, which can be any
 	reasonably-sized floating point number
+. 'm' - add new protein to display
+. 'M' - toggle shading mode
 . 'f' - find the volume of all objects drawn, the volume will be printed to the
 	screen and will also be appended to the file sphere_output.txt
 . 't' - add a new triangle
