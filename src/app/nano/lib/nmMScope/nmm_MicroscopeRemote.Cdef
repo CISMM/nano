@@ -2514,9 +2514,18 @@ RECEIVE_MSG WindowLineData {
 //    int32 usec
 //    float32 data [reports][fields]
 
-  if (x < 0 || y < 0 || 
+  // Handle guarded scan differently...
+  if(state.image.mode == GUARDED_SCAN) {
+     BCPlane* pPlane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string());
+     pPlane->setValue(x, y, data[0][0]);
+     d_dataset->range_of_change.AddPoint(x, y);
+
+     return;
+  }
+
+  if ((x < 0 || y < 0 || 
      (x+(reports-1)*dx) > (d_dataset->inputGrid->numX()-1) ||
-     (y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1)) {
+     (y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1))) {
      display_fatal_error_dialog( "Internal: grid size (%d,%d) doesn't match"
            " reported data size (%dx%d). Exiting to avoid loss of data.", 
            d_dataset->inputGrid->numX(),
