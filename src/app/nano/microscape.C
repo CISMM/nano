@@ -7680,16 +7680,16 @@ int main (int argc, char* argv[])
   tclstride = istate.tesselation;
 
   if (istate.colorplane[0]) {
-    dataset->initHeightColor = true;
+    dataset->doInitColorPlane = true;
     strcpy(dataset->initColorPlane,istate.colorplane);
-  }
+    }
   if (istate.colormap[0]) {
     dataset->colorMapName->Set(istate.colormap);
     printf("Setting colormap to %s\n", istate.colormap);
 
   }
-  if (istate.heightplane[0]) {
-    dataset->initHeightColor = true;
+   if (istate.heightplane[0]) {
+    dataset->doInitHeight = true;
     strcpy(dataset->initHeight,istate.heightplane);
   }
   /* Center the image first thing */
