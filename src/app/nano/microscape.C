@@ -1355,6 +1355,10 @@ void shutdown_connections (void) {
     delete microscope;
     microscope = NULL;
   }
+  if (microscopeRedundancyController) {
+    delete microscopeRedundancyController;
+    microscopeRedundancyController = NULL;
+  }
   if (microscope_connection) {
     delete microscope_connection;
     microscope_connection = NULL;
@@ -2716,11 +2720,11 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // the same stream file twice!!
     if (microscope_connection &&
         (microscope_connection != new_microscope_connection)) {
-      delete microscope_connection;
       if (microscopeRedundancyController) {
         delete microscopeRedundancyController;
         microscopeRedundancyController = NULL;
       }
+      delete microscope_connection;
     }
 
     microscope_connection = new_microscope_connection;
@@ -2806,11 +2810,11 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     // the same stream file twice!!
     if (microscope_connection &&
         (microscope_connection != new_microscope_connection)) {
-      delete microscope_connection;
       if (microscopeRedundancyController) {
         delete microscopeRedundancyController;
         microscopeRedundancyController = NULL;
       }
+      delete microscope_connection;
     }
     microscope_connection = new_microscope_connection;
     vrpnLogFile = NULL;
@@ -2841,6 +2845,10 @@ static void openDefaultMicroscope()
 
     // Get rid of any old microscope connection
     if (microscope_connection) {
+      if (microscopeRedundancyController) {
+        delete microscopeRedundancyController;
+        microscopeRedundancyController = NULL;
+      }
       delete microscope_connection;
     }
     microscope_connection = NULL;

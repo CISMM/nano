@@ -1,3 +1,11 @@
+2000-12-14  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (shutdown_connections) : delete
+        microscopeRedundancyController before deleting microscope_connection
+	(handle_openStreamFilename_change) : same
+	(handle_openSPMDeviceName_change) : same
+	(openDefaultMicroscope) : same
+
 2000-12-05  Tom Hudson  <hudson@cs.unc.edu>
 
 	* interaction.c : add new Tclvars for network adaptation
