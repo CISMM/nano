@@ -987,7 +987,7 @@ void nmb_Dataset::updateSumOnPlaneChange (BCPlane *, int x, int y,
                             data->second_plane->value(x, y) * data->scale);
 }
 
-void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int /*x*/, int y,
+void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int y,
 						 void * userdata) {
   lblflatten_data * data = (lblflatten_data *) userdata;
   float avgVal = 0;

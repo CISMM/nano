@@ -42,17 +42,22 @@ setValue
  @date modified 7/2/96 by Russ Taylor
 */
 void
-BCPlane::setValue(int x, int y, float value, vrpn_bool notifyCallbacks)
+BCPlane::setValue(int x, int y, float value, vrpn_bool notifyLineCallbacks)
 {
     _value[x + _borderXMin + (y + _borderYMin)*
                              (_borderXMin + _num_x + _borderXMax)] = value;
     _modified = 1;
     _modified_nz = 1;
 
-    if (notifyCallbacks) {
-      for (int i = 0; i < _numcallbacks; i++)
-          _callbacks[i].callback(this, x,y, _callbacks[i].userdata);
+    if (notifyLineCallbacks) {
+      for (int i = 0; i < _num_linewise_callbacks; i++)
+          _linewise_callbacks[i].callback(this, y, 
+                        _linewise_callbacks[i].userdata);
     }
+    for (int i = 0; i < _num_linewise_callbacks; i++)
+          _pointwise_callbacks[i].callback(this, x, y,   
+                        _pointwise_callbacks[i].userdata);
+
 }
 
 /**
@@ -463,9 +468,9 @@ int     BCPlane::lookup_callback(Plane_Valuecall cb, void *userdata)
         int     i = 0;
 
         // Return its index if we find it in the list.
-        for (i = 0; i < _numcallbacks; i++) {
-          if ( (_callbacks[i].callback == cb) &&
-               (_callbacks[i].userdata == userdata) ) {
+        for (i = 0; i < _num_pointwise_callbacks; i++) {
+          if ( (_pointwise_callbacks[i].callback == cb) &&
+               (_pointwise_callbacks[i].userdata == userdata) ) {
             return i;
           }
         }
@@ -474,6 +479,24 @@ int     BCPlane::lookup_callback(Plane_Valuecall cb, void *userdata)
         return -1;
 }
 
+// Look up the callback with the given values and return its index in the
+// list.  If there is no such callback, return -1.
+
+int     BCPlane::lookup_callback(Plane_Linecall cb, void *userdata)
+{
+        int     i = 0;
+
+        // Return its index if we find it in the list.
+        for (i = 0; i < _num_linewise_callbacks; i++) {
+          if ( (_linewise_callbacks[i].callback == cb) &&
+               (_linewise_callbacks[i].userdata == userdata) ) {
+            return i;
+          }
+        }
+
+        // Return -1 if we didn't find it in the list.
+        return -1;
+}
 
 int     BCPlane::add_callback(Plane_Valuecall cb, void *userdata)
 {
@@ -484,15 +507,32 @@ int     BCPlane::add_callback(Plane_Valuecall cb, void *userdata)
         if (lookup_callback(cb, userdata) != -1) { return -1; }
 
         // If we have a full list, fail.
-        if (_numcallbacks >= MAX_PLANE_CALLBACKS) { return -1; }
+        if (_num_pointwise_callbacks >= MAX_PLANE_CALLBACKS) { return -1; }
 
         // Put it at the end of the list
-        _callbacks[_numcallbacks].callback = cb;
-        _callbacks[_numcallbacks].userdata = userdata;
-        _numcallbacks++;
+        _pointwise_callbacks[_num_pointwise_callbacks].callback = cb;
+        _pointwise_callbacks[_num_pointwise_callbacks].userdata = userdata;
+        _num_pointwise_callbacks++;
         return 0;
 }
 
+int     BCPlane::add_callback(Plane_Linecall cb, void *userdata)
+{
+        // If the callback is to a NULL function, fail.
+        if (cb == NULL) { return -1; }
+
+        // See if there is already one in the list.  If so, fail.
+        if (lookup_callback(cb, userdata) != -1) { return -1; }
+
+        // If we have a full list, fail.
+        if (_num_linewise_callbacks >= MAX_PLANE_CALLBACKS) { return -1; }
+
+        // Put it at the end of the list
+        _linewise_callbacks[_num_linewise_callbacks].callback = cb;
+        _linewise_callbacks[_num_linewise_callbacks].userdata = userdata;
+        _num_linewise_callbacks++;
+        return 0;
+}
 
 int     BCPlane::remove_callback(Plane_Valuecall cb, void *userdata)
 {
@@ -502,8 +542,23 @@ int     BCPlane::remove_callback(Plane_Valuecall cb, void *userdata)
         if ( (which = lookup_callback(cb, userdata)) == -1) { return -1; }
 
         // Move the last one on the list to this location and decrement count
-        _callbacks[which] = _callbacks[_numcallbacks-1];
-        _numcallbacks--;
+        _pointwise_callbacks[which] = 
+                  _pointwise_callbacks[_num_pointwise_callbacks-1];
+        _num_pointwise_callbacks--;
+        return 0;
+}
+
+int     BCPlane::remove_callback(Plane_Linecall cb, void *userdata)
+{
+        int     which;
+
+        // Find the callback, if it is in the list.  If not, fail.
+        if ( (which = lookup_callback(cb, userdata)) == -1) { return -1; }
+
+        // Move the last one on the list to this location and decrement count
+        _linewise_callbacks[which] = 
+                 _linewise_callbacks[_num_linewise_callbacks-1];
+        _num_linewise_callbacks--;
         return 0;
 }
 
@@ -569,7 +624,8 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
     _modified = 1;
     _modified_nz = 1;
 
-    _numcallbacks = 0;
+    _num_pointwise_callbacks = 0;
+    _num_linewise_callbacks = 0;
 
     _next = NULL;
 
@@ -622,7 +678,8 @@ BCPlane::BCPlane(BCPlane* plane)
     _modified = 1;
     _modified_nz = 1;
 
-    _numcallbacks = 0;
+    _num_pointwise_callbacks = 0;
+    _num_linewise_callbacks = 0;
 
     _next = NULL;
 
@@ -656,7 +713,8 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY)
     _modified = 1;
     _modified_nz = 1;
 
-    _numcallbacks = 0;
+    _num_pointwise_callbacks = 0;
+    _num_linewise_callbacks = 0;
 
     _next = NULL;
 

@@ -1,5 +1,15 @@
 2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
 
+	(oops, my last change would have messed up how the regular plane
+	flattening works)
+	* BCPlane.C : made separate callback lists for callbacks to be called
+	per point and those to be called per line; made separate list
+	management functions for each 
+	* nmb_Dataset.C (computeLBLFlattenedPlane): changed this to be in the
+	form of a Plane_Linecall instead of a Plane_Valuecall (removed x param)
+
+2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
+
 	* BCPlane.C (setValue): added an optional boolean argument to this 
 	that controls whether or not callbacks for the plane are called 
 	This way we don't have to do line-by-line flattening once for every
