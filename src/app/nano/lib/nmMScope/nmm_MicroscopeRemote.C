@@ -1093,6 +1093,9 @@ long nmm_Microscope_Remote::DrawLine (double _startx, double _starty,
 
     do {
       d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
       if ( ! d_connection->doing_okay()) {
         fprintf(stderr, "nmm_Microscope_Remote::DrawLine():  "
                         "can't read from microscope.\n");
@@ -1158,6 +1161,9 @@ long nmm_Microscope_Remote::DrawArc (double _x, double _y,
 
     do {
       d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
       if ( ! d_connection->doing_okay()) {
 
         fprintf(stderr, "nmm_Microscope_Remote::DrawLine():  "
@@ -1267,6 +1273,9 @@ long nmm_Microscope_Remote::TakeFeelStep (float _x, float _y,
     _point->results()->setPosition(-1.0, -1.0);
     do {
       d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
       if ( ! d_connection->doing_okay()) {
 
         fprintf(stderr, "nmm_Microscope_Remote::TakeFeelStep():  "
@@ -1314,6 +1323,9 @@ long nmm_Microscope_Remote::TakeModStep (float _x, float _y,
 
     do {
       d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
       if ( ! d_connection->doing_okay()) {
 
         fprintf(stderr, "nmm_Microscope_Remote::TakeModStep():  "
@@ -1346,6 +1358,9 @@ int nmm_Microscope_Remote::TakeDirectZStep (float _x, float _y, float _z,
 
     do {
       d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
       if ( ! d_connection->doing_okay()) {
 
         fprintf(stderr, "nmm_Microscope_Remote::TakeDirectZStep():  "
