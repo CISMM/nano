@@ -1,3 +1,8 @@
+2001-07-05  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* mainwin.tcl:  removed tip convolution from the analysis menu
+	(commented out for now)
+
 2001-06-18  David Marshburn  <marshbur@cs.unc.edu>
 
 	* shared_ptr.tcl:  removed lingering reference to copy_inactive_state

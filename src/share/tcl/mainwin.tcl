@@ -300,8 +300,8 @@ $analysismenu add command -label "Shape Analysis..." -underline 0 \
 if { !$thirdtech_ui } {
 $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
-$analysismenu add command -label "Tip Convolution..." \
-    -command "show.tip_conv"
+# $analysismenu add command -label "Tip Convolution..." \
+#     -command "show.tip_conv"
 }
 
 
