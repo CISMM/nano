@@ -25,6 +25,7 @@ int write( int fildes, const void *buf, size_t nbyte );
 #include "BCPlane.h"
 #include "BCGrid.h"
 
+
 #ifndef	min
 #define min(x,y) ( (x) < (y) ? (x) : (y) )
 #endif
@@ -146,41 +147,53 @@ minNonZeroValue
 double
 BCPlane::minNonZeroValue()
 {
-    if (!_modified_nz)
-	return minNonZeroValueComputedLast();
-    else
-    {
-      int x, y;
-      _min_nonzero_value = 0;
-      _max_nonzero_value = 0;
-	for (x = 0; x < numX(); x++) 
-	{
-	    for (y = 0; y < numY(); y++) 
-	    {
-		double value =  this->value(x, y);
-	    
-		if (((x == 0) && (y == 0)) || (_min_nonzero_value == 0))
-		{
-		    _min_nonzero_value = value;
-		    _max_nonzero_value = value;
-		}
-		if (value != 0.0) {
-		  if (value < _min_nonzero_value) { _min_nonzero_value = value; }
-		  if (value > _max_nonzero_value) { _max_nonzero_value = value; }
-		}
-	    }
+	//cout << "name = " << _dataset << endl;
+	FILE* out;
+	out = fopen("BCPlane.txt","a");	
+	//if(out!=NULL && _dataset=="e1")	fprintf(out,"%d %d\n",numX(),numY());
+	//else			cout << "out = NULL" << endl;
+
+    if (!_modified_nz){
+		fclose(out);
+		return minNonZeroValueComputedLast();
 	}
-	
-//  	if (_max_nonzero_value == _min_nonzero_value &&
-//              _max_nonzero_value == 0) // no real data has been stored in the grid
-//  	{
-//  	    _max_nonzero_value = -1.0e33;
-//  	    _min_nonzero_value = 1.0e33;
-//  	}
-	
-	_modified_nz = 0;
-	return _min_nonzero_value;
+    else{
+		int x, y;
+		_min_nonzero_value = 0;
+		_max_nonzero_value = 0;
+		cout << "numX() = " << numX() << endl;
+		//if(numX() != 300)	_grid->_num_x = 300;
+		cout << "numY() = " << numY() << endl;
+		//if(numY() != 300)	_grid->_num_y = 300;
+		for (x = 0; x < numX(); x++) {
+			
+			for (y = 0; y < numY(); y++) {
+				double value =  this->value(x, y);
+				
+				//save heights to file 
+				//if(out!=NULL && _dataset=="e1")		fprintf(out,"%04.4lf ",value);	
+							
+				if (((x == 0) && (y == 0)) || (_min_nonzero_value == 0)){
+					_min_nonzero_value = value;
+					_max_nonzero_value = value;
+				}
+
+				if (value != 0.0) {
+					  if (value < _min_nonzero_value) { _min_nonzero_value = value; }
+					  if (value > _max_nonzero_value) { _max_nonzero_value = value; }
+				}
+
+			}
+			//if(out != NULL && _dataset=="e1")		fprintf(out,"\n");
+		}
+
+
+		_modified_nz = 0;
+		fclose(out);
+		return _min_nonzero_value;
+		
     }
+	fclose(out);	
 } // minNonZeroValue
 
 

@@ -224,8 +224,9 @@ class BCGrid
     int readComment(FILE *file, char *buffer, double* max_value);
     int readPPMorPGMFile(FILE* file, const char *name);
     int readPPMorPGMFileNew(FILE *file, const char *filename);
-
+  public:
     short _num_x, _num_y;
+  private:
     double _min_x, _max_x;
     double _min_y, _max_y;
     double _derange_x, _derange_y;
