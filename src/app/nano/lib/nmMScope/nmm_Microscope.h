@@ -11,8 +11,6 @@ class vrpn_ConnectionForwarder;
 
 class vrpn_Connection;
 
-#include <nmb_Device.h>
-
 // nmm_Microscope
 //
 // Tom Hudson, May 1998

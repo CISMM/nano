@@ -2,6 +2,7 @@
 #define NMM_MICROSCOPE_REMOTE_H
 
 #include "nmm_Microscope.h"
+#include "nmb_Device.h"
 
 #include "AFMState.h"
 
