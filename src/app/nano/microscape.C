@@ -1052,7 +1052,7 @@ Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
 
 enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
        DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING,
-       RENDER_SERVER, TEXTURE_SERVER, VIDEO_SERVER,
+       RENDER_SERVER, TEXTURE_SERVER, CLOUD_SERVER, VIDEO_SERVER,
        RENDER_CLIENT, TEXTURE_CLIENT, VIDEO_CLIENT };
 
 /// A thread structure for multiprocessing.
@@ -4805,6 +4805,8 @@ void ParseArgs (int argc, char ** argv,
         istate->graphics_mode = RENDER_CLIENT;
       } else if (!strcmp(argv[i], "-trenderserver")) {
         istate->graphics_mode = TEXTURE_SERVER;
+      } else if (!strcmp(argv[i], "-crenderserver")) {
+        istate->graphics_mode = CLOUD_SERVER;
       } else if (!strcmp(argv[i], "-trenderclient")) {
 	if (++i >= argc) Usage(argv[0]);
         istate->graphics_mode = TEXTURE_CLIENT;
@@ -5528,6 +5530,29 @@ void createGraphics (MicroscapeInitializationState & istate) {
       graphics = new nmg_Graphics_RenderServer
                  (dataset, minC, maxC, renderServerOutputConnection,
                   nmg_Graphics::SUPERSAMPLED_COLORS,
+                  nmg_Graphics::NO_DEPTH,
+                  nmg_Graphics::ORTHO_PROJECTION,
+                  512, 512, rulerPPMName, renderServerControlConnection);
+
+      break;
+
+  case CLOUD_SERVER:
+      fprintf(stderr, "Starting up as a cloud texture rendering server "
+              "(orthographic projection).\n"
+              "    THIS MODE IS FOR TESTING ONLY.\n");
+
+      renderServerOutputConnection =
+              new vrpn_Synchronized_Connection
+                        (wellKnownPorts->remoteRenderingData);
+
+      //renderServerControlConnection = renderServerOutputConnection;
+      renderServerControlConnection = 
+              new vrpn_Synchronized_Connection
+                          (wellKnownPorts->graphicsControl);
+
+      graphics = new nmg_Graphics_RenderServer
+                 (dataset, minC, maxC, renderServerOutputConnection,
+                  nmg_Graphics::CLOUDMODEL_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
                   512, 512, rulerPPMName, renderServerControlConnection);

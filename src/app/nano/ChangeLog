@@ -1,3 +1,13 @@
+2000-10-01  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscape.c: Added in Cloud Texturer server as an option
+
+	* normal.c (Compute_Norm): New compute norm function
+
+	* normal.h (Compute_Norm): Added new Compute_Norm function that
+	takes floats instead of ints, so you can get the normal at an
+	interpolated point
+
 2000-09-28  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (createNewMicroscope) : call doCallbacks() on measure

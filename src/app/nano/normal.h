@@ -58,6 +58,7 @@
 		}
 
 int Compute_Norm(int x, int y, VectorType Normal, BCPlane* plane);
+int Compute_Norm(float x, float y, VectorType Normal, BCPlane* plane);
 int Update_Normals(int x, int y);
 
 #endif /* indef MF_NORMAL */
