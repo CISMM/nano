@@ -80,6 +80,18 @@ endif
 
 ##########################
 #
+# What SGI ABI?
+#
+
+ifeq ($(HW_OS),sgi_irix)
+   ifndef SGI_ABI
+      SGI_ABI := n32
+   endif
+   OBJECT_DIR_SUFFIX := .$(SGI_ABI)
+endif
+
+##########################
+#
 # How do I link?
 #
 
@@ -127,9 +139,8 @@ ifdef PBASE_ROOT                    # Must be flow
       CC    := g++
    endif
 else
-   ifeq ($(HW_OS),sgi_irix)         # "-32":  force 32-bit compilation
-                                    # to be compatible with our libraries
-      CC := CC -32 -fullwarn
+   ifeq ($(HW_OS),sgi_irix)
+      CC := CC -$(SGI_ABI) -fullwarn
    else
       ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
          CC := CC +w
@@ -193,12 +204,10 @@ else
    TOP_LEVEL_OBJ_DIR := $(MY_NANO_OBJ_DIR)
 endif
 
-FULL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/obj/$(HW_OS)
+FULL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
 
-TCL_INC_DIR := /net/nano/nano3/tcltk.sgi_irix/include \
-               /afs/unc/proj/stm/src/tcltk.sgi_irix/include
-TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib \
-               /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib
+TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include
+TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib
 
 ###############################################################################
 #
@@ -270,7 +279,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),sgi_irix)
-  LOAD_FLAGS += -L/usr/lib/internal -old_ld
+  LOAD_FLAGS += -L/usr/lib/internal
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -283,7 +292,7 @@ endif
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
    APLFLAGS   := $(filter-out -static,$(APLFLAGS))
-   LOAD_FLAGS := $(filter-out -L./$(HW_OS),$(LOAD_FLAGS))
+   LOAD_FLAGS := $(filter-out -L./$(HW_OS)$(OBJECT_DIR_SUFFIX),$(LOAD_FLAGS))
 
    ifeq ($(HW_OS),hp_flow)
       LOAD_FLAGS := $(filter-out $(V_OPENGL_LIB_DIRS),$(LOAD_FLAGS))
@@ -344,7 +353,7 @@ ifeq ($(HW_OS),pc_cygwin)
    TCL_LIBS := $(addprefix -l,BLT24 tk80 tcl80 itk30 itcl30)
 endif
 
-ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on SGI
+ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on Irix
    TCL_LIBS := -B static $(TCL_LIBS) -B dynamic
 endif
 
@@ -420,6 +429,7 @@ export SEARCH_PATH
 export SEARCH_PROG
 
 export FULL_OBJECT_DIR
+export OBJECT_DIR_SUFFIX
 
 export INCLUDE_FLAGS
 

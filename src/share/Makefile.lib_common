@@ -7,12 +7,12 @@ CWD := $(shell $(PWD_COMMAND))
 
 THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
-OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(THIS_DIR)
+OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)$(THIS_DIR)
 
 DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell mkdir -p $(FULL_OBJECT_DIR))
-   DUMMY += $(shell $(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS))
+   DUMMY += $(shell $(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX))
    DUMMY += $(shell mkdir -p $(OBJECT_DIR))
 endif
 
@@ -84,7 +84,7 @@ clobber: thisclean
 
 $(OBJECT_DIR):
 	mkdir -p $(FULL_OBJECT_DIR)
-	$(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)
+	$(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
 	mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
@@ -101,5 +101,7 @@ $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
 	-ranlib $(LIBRARY_ARCHIVE)
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
-   include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
+   ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)
+      include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
+   endif
 endif

@@ -11,12 +11,12 @@ endif
 # Expand the uses libs stuff
 #
 
-DEPEND := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
-ifneq ($(DEPEND),true)
+DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
+ifneq ($(DEPEND_EXISTS),true)
    ifdef USES_LIBS
       ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
       SEARCH_LIBS := $(filter-out $(ALT_LIBS),$(USES_LIBS))
-      USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS) $(lib) $(SEARCH_PATH)))
+      USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
       USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
       USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
       USES_LIBS_LIB := $(addprefix -l,$(USES_LIBS))
@@ -36,25 +36,26 @@ SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
 
 ifdef APP_EXEC
    APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /lib,$(addsuffix .a,$(SEARCH_LIBS))))"
-   #ifdef ALT_LIBS
-      #APP_LIST += " $(join $(patsubst -L%,%,$(filter-out -I%,$(MY_ALT_LIB_DIR))),$(addprefix /lib,$(addsuffix .a,$(ALT_LIBS))))"
-   #endif
 endif
+
+DEPEND_BUILD_RULE := ( \
+   $(CC) -M $(CFLAGS) $(DEFINES) $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" ; \
+   echo $(APP_LIST) ; \
+   echo DEP_LIBS_INC := $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) ; \
+   echo DEP_LIBS_LD := $(filter-out -I%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_LD) ; \
+   echo DEP_LIBS_LIB := $(USES_LIBS_LIB) ; \
+   echo MY_ALT_LIB_DIR := $(MY_ALT_LIB_DIR) ; \
+   echo ALT_LIBS := $(ALT_LIBS) ; \
+   echo SEARCH_LIBS := $(SEARCH_LIBS) \
+                     )
 
 .PHONY: depend
 depend: $(OBJECT_DIR) $(MAKEFILE_DEPEND)
 
 $(MAKEFILE_DEPEND):
-	@echo ----------------------------------------------------------------
+	@echo ---------------------------------------------------------------- 
 	@echo -- Making dependency file.  If you add files to the makefile,
 	@echo -- or add/remove includes from a .h or .C file, then you should
 	@echo -- remake the dependency file by typing \"$(MAKE) depend\"
 	@echo ----------------------------------------------------------------
-	$(shell $(CC) -M $(CFLAGS) $(DEFINES) $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" > $(MAKEFILE_DEPEND))
-	$(shell echo $(APP_LIST) >> $(MAKEFILE_DEPEND))
-	$(shell echo DEP_LIBS_INC := $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) >> $(MAKEFILE_DEPEND))
-	$(shell echo DEP_LIBS_LD := $(filter-out -I%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_LD) >> $(MAKEFILE_DEPEND))
-	$(shell echo DEP_LIBS_LIB := $(USES_LIBS_LIB) >> $(MAKEFILE_DEPEND))
-	$(shell echo MY_ALT_LIB_DIR := $(MY_ALT_LIB_DIR) >> $(MAKEFILE_DEPEND))
-	$(shell echo ALT_LIBS := $(ALT_LIBS) >> $(MAKEFILE_DEPEND))
-	$(shell echo SEARCH_LIBS := $(SEARCH_LIBS) >> $(MAKEFILE_DEPEND))
+	$(DEPEND_BUILD_RULE) > $(MAKEFILE_DEPEND)
