@@ -330,13 +330,14 @@ void nmg_RCIS_TextureBase::handlePixelData (
 //x, y, pixelCount, k, buffer[0], buffer[1], buffer[2]);
 //}
 
+      
   for (l = 0, i = 0; i < pixelCount; i++) {
     remote_data[k++] = buffer[l++];
     remote_data[k++] = buffer[l++];
     remote_data[k++] = buffer[l++];
     remote_data[k++] = 255;
   }
-
+  
 //if (!(y % 10)) {
 //fprintf(stderr, "leaving handlePixelData at (%d, %d) for %d - final offset %d:  %d, %d, %d.\n",
 //x, y, pixelCount, k, buffer[l-3], buffer[l-2], buffer[l-1]);
@@ -377,6 +378,7 @@ void nmg_RCIS_Texture::mainloop (void) {
   }
   // hack - overloading genetic texture coordinate handling
   // But now genetic textures have been removed. 
+
   float dx = d_imp->dataset()->inputGrid->maxX() -
              d_imp->dataset()->inputGrid->minX();
   float dy = d_imp->dataset()->inputGrid->maxY() -

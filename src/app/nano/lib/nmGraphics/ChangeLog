@@ -1,3 +1,37 @@
+2000-10-01  Jason Clark  <jclark@cs.unc.edu>
+
+	* graphics.c (buildRemoteRenderedTexture) : Changed
+	RULERGRID_TEX_ID to REMOTE_DATA_TEX_ID for consistency
+
+	* nmg_RenderServer.C: Added cloud strategy to constructor
+
+	* nmg_RenderServer.h: Add friend class of the
+	nmg_RenderServer_Strategy so that the strategies have a way of
+	updating the pixel buffer without exposing that to everyone
+
+	* nmg_RenderClient.C: Added needed accessors that simply pass the
+	request to the nmg_Graphics_RenderClient_Implementation object.
+
+	* nmg_RenderClient.h: same
+
+	* nmg_Graphics.h: Added new option to enum RemoteColorMode of
+	CLOUDMODEL_COLORS
+
+	* nmg_RenderServerStrategies.C: Source file for the render server
+	strategies.  These were broken out of nmg_RenderServer.h. Actually
+	done by Tom, but I am committing them.
+
+	* nmg_RenderServerStrategies.h: Header file for the render server
+	strategies.
+
+	* nmg_CloudTexturer.C: Source file for new class for "Cloud"
+	rendering. Cloud rendering is based on empirical observations of
+	clouds from an airplane.
+
+	* nmg_CloudTexturer.I: Inline file for new class for "Cloud" rendering
+
+	* nmg_CloudTexturer.h: Header file for new class for "Cloud" rendering
+
 2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (createRealignTextures) : replaced "CUSTOM"

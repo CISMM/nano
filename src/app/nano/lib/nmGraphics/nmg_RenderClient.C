@@ -286,4 +286,47 @@ void nmg_Graphics_RenderClient::setViewTransform (v_xform_type x) {
 }
 
 
+// virtual
+void nmg_Graphics_RenderClient::getViewportSize(int *width, int *height) 
+{
+    d_implementation.getViewportSize(width, height);
+    
+}
+
+// virtual
+void nmg_Graphics_RenderClient::getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
+                                                    q_vec_type &ur)
+{
+    d_implementation.getDisplayPosition(ll, ul, ur);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::getLightDirection (q_vec_type *l) const
+{
+    d_implementation.getLightDirection(l);
+}
+
+// virtual
+int nmg_Graphics_RenderClient::getHandColor (void) const
+{
+    return d_implementation.getHandColor();
+}
+
+// virtual
+int nmg_Graphics_RenderClient::getSpecularity (void) const
+{
+    return d_implementation.getSpecularity();
+}
+
+// virtual
+const double * nmg_Graphics_RenderClient::getMinColor (void) const
+{
+    return d_implementation.getMinColor();
+}
+
+// virtual
+const double * nmg_Graphics_RenderClient::getMaxColor (void) const
+{
+    return d_implementation.getMaxColor();
+}
 

@@ -76,6 +76,16 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
     virtual void setViewTransform (v_xform_type);
 
+    //Accessors
+    virtual void getViewportSize(int *width, int * height);
+    virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
+                                     q_vec_type &ur);
+    virtual void getLightDirection (q_vec_type *) const;
+    virtual int getHandColor (void) const;
+    virtual int getSpecularity (void) const;
+    virtual const double * getMinColor (void) const;
+    virtual const double * getMaxColor (void) const;
+
   protected:
 
     nmg_Graphics_RenderClient_Implementation d_implementation;

@@ -341,7 +341,8 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+  //glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef _WIN32
@@ -364,22 +365,26 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   //if (retval) {
     //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
     while ((errval = glGetError()) != GL_NO_ERROR) {
-      fprintf(stderr, " Error before making ruler texture: %s.\n", gluErrorString(errval));
+      fprintf(stderr, " Error before making remote texture: %s.\n", gluErrorString(errval));
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  width, height,
                  0, GL_RGBA, GL_UNSIGNED_BYTE,
                  tex);
     while ((errval = glGetError()) != GL_NO_ERROR) {
-      fprintf(stderr, " Error making ruler texture: %s.\n", gluErrorString(errval));
+      fprintf(stderr, " Error making remote texture: %s.\n", gluErrorString(errval));
     }
   //}
 #endif 
 
-  g_tex_image_width[RULERGRID_TEX_ID] = 
-           g_tex_installed_width[RULERGRID_TEX_ID] = width;
-  g_tex_image_height[RULERGRID_TEX_ID] = 
-           g_tex_installed_height[RULERGRID_TEX_ID] = height;
+  //g_tex_image_width[RULERGRID_TEX_ID] = 
+  //       g_tex_installed_width[RULERGRID_TEX_ID] = width;
+  //g_tex_image_height[RULERGRID_TEX_ID] = 
+  //       g_tex_installed_height[RULERGRID_TEX_ID] = height;
+  g_tex_image_width[REMOTE_DATA_TEX_ID] = 
+           g_tex_installed_width[REMOTE_DATA_TEX_ID] = width;
+  g_tex_image_height[REMOTE_DATA_TEX_ID] = 
+           g_tex_installed_height[REMOTE_DATA_TEX_ID] = height;
 }
 
 

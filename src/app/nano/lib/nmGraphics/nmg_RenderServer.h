@@ -7,21 +7,33 @@
 
 #include "nmg_GraphicsImpl.h"
 
-// The comment below is incorrect;  this class has been greatly generalized.
+// A RenderServer is an implementation of nmg_Graphics that expects to
+// render a nanoManipulator image and send it off to a RenderClient.
+// To generalize it, a RenderServer is driven by the small objects
+// defined in RenderServerStrategies.h.
+// The original set of strategies composes to form the following
+// meaningful options:
 
-// A RenderServer is an implementation of nmg_Graphics that renders
-// a microscope heightPlane in parallel projection at a user-defined
-// resolution, then captures the image and depth map of that
-// surface and writes it into an nmb_Dataset where it can be used
-// for remote rendering (IBR or other approaches).
+//   Orthogonal view, Texture capture:
+//     The server sends a texture to be draped over a polymesh.
+//   Orthogonal view, Vertex capture:
+//     "IBR":  The server sends a set of rgbz values to be used
+//     for IBR.
+//   Slave view, Texture capture:
+//     "Video":  The server sends a screen capture to be blitted
+//     to the client's screen.
 
-// To use:
-//   setenv V_DISPLAY "ortho crt"
-//   setenv V_SCREEN_DIM_PXFL "32 32"
-//     (or whatever size you pass in to the RenderServer constructor -
-//      to avoid interpolation artifacts this should be the grid size
-//      or an even multiple thereof.)
+//   (Slave view, vertex capture is in most ways inferior to orthogonal
+// view, vertex capture;  specularities are correct for the sampled
+// viewpoint, but the surface is undersampled because of occlusions.)
 
+// Strategies to be added in the near future include an interface to
+// Jason Clark's nmg_CloudTexturer rendering class.
+
+
+
+// from nmg_RenderServerStrategies.h
+// Circular dependency, so we can't include it.
 class nmg_RenderServer_ViewStrategy;
 class nmg_RenderServer_Strategy;
 
@@ -63,6 +75,8 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
 
     void sendPartialPixelData (int minx, int maxx, int miny, int maxy);
     void sendPartialDepthData (int minx, int maxx, int miny, int maxy);
+
+    void defaultRender (void);
 
   protected:
 
@@ -107,7 +121,14 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     nmg_RenderServer_ViewStrategy * d_viewStrategy;
 
   private:
-
+    
+    //Sometimes the Strategies need access to private data members of
+    //nmg_RenderServer.  The cleanest way to handle this I feel, is to set
+    //nmg_RenderServer_Strategy (the base class for all the strategies as a
+    //friend), then define member functions to access those members in the
+    //base strategy class, and have the children call those when necessary.
+    //This scopes the internal access of RenderServer to one class
+    friend class nmg_RenderServer_Strategy;
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

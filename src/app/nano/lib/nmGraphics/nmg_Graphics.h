@@ -98,7 +98,8 @@ class nmg_Graphics {
 		MANUAL_REALIGN_COORD, REMOTE_COORD};
 
     // enums for Remote Rendering
-    enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, SUPERSAMPLED_COLORS };
+    enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, 
+                           SUPERSAMPLED_COLORS, CLOUDMODEL_COLORS };
 
     enum RemoteDepthMode { NO_DEPTH, VERTEX_DEPTH };
 
