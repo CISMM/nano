@@ -277,7 +277,7 @@ void nma_Keithley2400_ui::
 handle_zero_after_meas_change( vrpn_int32 /*newvalue*/, void *userdata )
 {
   nma_Keithley2400_ui * me = (nma_Keithley2400_ui *) userdata;
-  me->keithley2400->d_zero_after_meas = me->zero_after_meas;
+  me->keithley2400->d_zero_after_meas = (me->zero_after_meas != 0);
   // don't send all settings to the keithley, since this is used 
   // internally in Keithley2400
 }

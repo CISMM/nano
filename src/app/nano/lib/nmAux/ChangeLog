@@ -1,3 +1,7 @@
+2004-04-26  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nma_Keithley2400_ui.C : Making compiler happy.
+
 2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nma_Keithley_ui.[h,C]:  new Tcl data members, initial_delay and 
