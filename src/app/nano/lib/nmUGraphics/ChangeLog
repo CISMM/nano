@@ -1,3 +1,13 @@
+2002--6-26  David Borland <borland@cs.unc.edu>
+
+        * SpiderGenerator.C : added code for parsing data from .spi files.
+	These files hold the data from a saved spider.  Saved spiders can now
+	be loaded with their parameters automatically generated.
+
+	* URender.C : added code for saving spider data.
+
+	* URender.h : added functin definition for saving spider data.
+
 2002-06-06  David Borland <borland@cs.unc.edu>
 
         * nmUGraphics.dps : added ProjTextObjGenerator files

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <Tcl_Linkvar.h>
+#include <Tcl_Netvar.h>
+
 #include <nmb_Dataset.h>
 
 #include "URender.h"
@@ -23,6 +26,8 @@ extern "C" {
 pid_t getpid();
 }
 #endif
+
+#define MAXLENGTH 512
 
 
 extern nmb_Dataset * dataset;
@@ -58,6 +63,53 @@ int SpiderGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
 }
 
 
+// parse the info in the .spi file
+void ParseFileSpider(URender *Pobject, const char* filename) {
+	char buffer[512];
+	char* token;
+	ifstream readfile;
+
+	extern int current_leg;		// found in import.C
+
+	readfile.open(filename);
+    assert(readfile);
+
+    if(readfile.bad()) {
+		cerr << "Unable to open input file" << endl;
+        return;
+    }
+
+	current_leg = -1;
+	while(!readfile.eof()) {
+		readfile.getline(buffer, 512);
+
+		token = strtok(buffer, " \t\n");
+
+		if (token != NULL) {
+			if (strcmp(token, "Leg") == 0) {
+				current_leg++;
+			}
+			else if (strcmp(token, "Length") == 0) {
+				token = strtok(NULL, " \t\n");
+				Pobject->SetSpiderLength(current_leg, atof(token));
+			}
+			else if (strcmp(token, "Width") == 0) {
+				token = strtok(NULL, " \t\n");
+				Pobject->SetSpiderWidth(current_leg, atof(token));
+			}
+			else if (strcmp(token, "Thickness") == 0) {
+				token = strtok(NULL, " \t\n");
+				Pobject->SetSpiderThick(current_leg, atof(token));
+			}
+			else if (strcmp(token, "Curvature") == 0) {
+				token = strtok(NULL, " \t\n");
+				Pobject->SetSpiderCurve(current_leg, Q_DEG_TO_RAD(atof(token)));
+			}
+		}
+	}
+	Pobject->SetSpiderLegs(current_leg + 1);
+}
+
 
 // This function creates a spider
 int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
@@ -73,6 +125,11 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	minX = height->minX();
 	minY = height->minY();
 	z_value = height->minNonZeroValue();
+
+	// if not the default /spider.spi, we are loading from a file, so parse the file
+	if (strcmp(filename, "/spider.spi") != 0) {
+		ParseFileSpider(Pobject, filename);
+	}
 
 	//	set up display list id
 	Dlist_array = new GLuint[1];

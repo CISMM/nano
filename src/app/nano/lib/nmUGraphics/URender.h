@@ -201,6 +201,7 @@ public:
 	int GetSpiderTess(int i) { return spider_tess[i]; }
 	double GetSpiderCurve(int i) { return spider_curve[i]; }
 	int GetSpiderLegs() { return spider_legs; }
+	void SaveSpider(const char*);
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
