@@ -54,8 +54,8 @@ class BCPlane
     inline double minNonZeroValueComputedLast() const { return _min_nonzero_value; }
     inline double maxNonZeroValueComputedLast() const { return _max_nonzero_value; }
 
-    inline double minAttainableValue() const { return _min_attainable_value; }
-    inline double maxAttainableValue() const { return _max_attainable_value; }
+    double minAttainableValue (void) const;
+    double maxAttainableValue (void) const;
       // Only valid for files, not streams or live devices
 
     inline void setMinAttainableValue(double v) { _min_attainable_value = v; }

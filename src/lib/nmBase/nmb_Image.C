@@ -17,6 +17,11 @@ nmb_ImageBounds::nmb_ImageBounds(double x0,double y0,double x1,double y1){
     y[MIN_X_MAX_Y] = y1; y[MAX_X_MAX_Y] = y1;
 }
 
+// virtual
+nmb_Image::~nmb_Image (void) {
+
+}
+
 float nmb_Image::getValueInterpolated(double i, double j) const {
 	int i_ip, j_ip;
 	double i_fp, j_fp;
