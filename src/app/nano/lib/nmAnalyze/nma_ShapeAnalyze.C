@@ -324,7 +324,8 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 	//create the row of new data, interpolating between x values
 	for(int i = 0; i < datain_rowlen; ++i){
-		if(new_index < d_rowlength){
+		if(new_index < d_rowlength){//new_index tracks index s.t. length of d_rowlength
+									//is not exceeded
 			newdataline[new_index++] = (*dataline)[i];
 		}
 
@@ -384,7 +385,8 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 		if(firstblur) firstblur = false;
 
-		if(new_index < d_rowlength){				
+		if(new_index < d_columnheight){//new_index tracks index s.t. length of d_columnheight
+									   //is not exceeded
 			d_dataArray[index] = (*dataline)[i];
 			val = d_dataArray[index];
 
@@ -411,7 +413,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 				inter_y = last_y + k;//dealing with d_dataArray
 				inter_index = datain_rowlen*inter_y+i;
 
-				if(new_index++ < d_rowlength){
+				if(new_index++ < d_columnheight){
 					d_dataArray[inter_index] = intermediate*k + d_dataArray[last_index];
 					val = d_dataArray[inter_index];
 
