@@ -1,3 +1,8 @@
+2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.C: took out unused argument in call to 
+    nmui_AFM_SEM_CalibrationUI constructor
+
 2003-02-07  David Borland <borland@cs.unc.edu>
 
         * import.C: added code for parsing .crv files.  The current spider

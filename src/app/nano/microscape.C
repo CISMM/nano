@@ -8155,8 +8155,7 @@ int main (int argc, char* argv[])
     alignerUI = new nmr_RegistrationUI(aligner, alignmentTextureDisplay);
     alignerUI->setupCallbacks();
 
-    afm_sem_calibrationUI = new nmui_AFM_SEM_CalibrationUI(aligner,
-		&World, alignmentTextureDisplay);
+    afm_sem_calibrationUI = new nmui_AFM_SEM_CalibrationUI(aligner, &World);
     afm_sem_calibrationUI->setSPM(microscope);
 	afm_sem_calibrationUI->changeDataset(imageManager);
   }
