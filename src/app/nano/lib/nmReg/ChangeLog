@@ -1,3 +1,8 @@
+2002-10-24  David Borland  <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.[Ch] : added callback for a slider to control
+        the alpha of the projective texture.
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_SurfaceModel.C (nmr_SurfaceModelHeightField): changed so it takes

@@ -81,6 +81,7 @@ class nmr_RegistrationUI {
     static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
     static void handle_registrationMinMax2D_change(vrpn_float64, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
+    static void handle_textureAlpha_change(vrpn_float64, void *ud);
     static void handle_textureTransformMode_change(const char *name, void *ud);
     static void handle_autoAlignRequested_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
@@ -120,6 +121,7 @@ class nmr_RegistrationUI {
     TclNet_int d_constrainToTopography;
     TclNet_int d_invertWarp;
     TclNet_int d_textureDisplayEnabled;
+    TclNet_float d_textureAlpha;
     TclNet_int d_resampleResolutionX;
     TclNet_int d_resampleResolutionY;
     TclNet_float d_resampleRatio;

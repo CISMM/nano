@@ -57,6 +57,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
+   d_textureAlpha("reg_texture_alpha", 1),
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
    d_resampleRatio("reg_resample_ratio", 0),
@@ -158,6 +159,8 @@ void nmr_RegistrationUI::setupCallbacks()
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.addCallback
          (handle_textureDisplayEnabled_change, (void *)this);
+    d_textureAlpha.addCallback
+         (handle_textureAlpha_change, (void *)this);
     d_newResampleImageName.addCallback
          (handle_resampleImageName_change, (void *)this);
     d_newResamplePlaneName.addCallback
@@ -205,6 +208,8 @@ void nmr_RegistrationUI::teardownCallbacks()
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.removeCallback
          (handle_textureDisplayEnabled_change, (void *)this);
+    d_textureAlpha.removeCallback
+         (handle_textureAlpha_change, (void *)this);
     d_newResampleImageName.removeCallback
          (handle_resampleImageName_change, (void *)this);
     d_newResamplePlaneName.removeCallback
@@ -624,6 +629,25 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
     else {
       me->d_imageDisplay->removeImageFromDisplay(im);
     }
+}
+
+// static
+void nmr_RegistrationUI::handle_textureAlpha_change(
+      vrpn_float64 alpha, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+
+    if (!(me->d_imageDisplay)) return;
+
+    if (!(me->d_dataset)) return;
+
+    nmb_Image *im = me->d_dataset->dataImages()->getImageByName(
+                                me->d_registrationImageName2D.string());
+    if (!im) return;
+
+    me->d_imageDisplay->updateAlpha(alpha);
+    
+    me->d_imageDisplay->updateImage(im);
 }
 
 void nmr_RegistrationUI::autoAlignImages()
