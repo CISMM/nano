@@ -1,0 +1,224 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "ImgFormat"=.\lib\ImgFormat\ImgFormat.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "NMmp"=.\lib\nmMP\NMmp.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nano"=.\app\nano\nano.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ImgFormat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmAnalyze
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmAux
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmBase
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmGraphics
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmImageViewer
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name NMmp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmMScope
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmReg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmSEM
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmUGraphics
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmUI
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tclLinkVar
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nmAnalyze"=.\APP\NANO\LIB\nmAnalyze\nmAnalyze.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmAux"=.\APP\NANO\LIB\nmAux\nmAux.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmBase"=.\lib\nmBase\nmBase.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmGraphics"=.\APP\NANO\LIB\nmGraphics\nmGraphics.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmImageViewer"=.\LIB\nmImageViewer\nmImageViewer.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmMScope"=.\app\nano\lib\nmMScope\nmMScope.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmReg"=.\APP\NANO\LIB\nmReg\nmReg.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmSEM"=.\APP\NANO\LIB\nmSEM\nmSEM.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmUGraphics"=.\APP\NANO\LIB\nmUGraphics\nmUGraphics.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmUI"=.\APP\NANO\LIB\nmUI\nmUI.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tclLinkVar"=.\lib\tclLinkVar\tclLinkVar.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
