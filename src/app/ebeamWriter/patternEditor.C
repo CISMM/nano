@@ -237,6 +237,11 @@ void PatternEditor::setImageOpacity(nmb_Image *im, double opacity)
           (*imIter).d_opacity = opacity;
      }
   }
+  if (im == d_canvasImage) {
+	d_canvasTextureNeedsUpdate = true;
+  } else if (im == d_liveImage) {
+	d_liveTextureNeedsUpdate = true;
+  }
   d_images.sort();
   d_viewer->dirtyWindow(d_mainWinID);
 }
@@ -252,6 +257,11 @@ void PatternEditor::setImageColor(nmb_Image *im, double r, double g, double b)
           (*imIter).d_green = g;
           (*imIter).d_blue = b;
      }
+  }
+  if (im == d_canvasImage) {
+	d_canvasTextureNeedsUpdate = true;
+  } else if (im == d_liveImage) {
+	d_liveTextureNeedsUpdate = true;
   }
   d_viewer->dirtyWindow(d_mainWinID);
 }
@@ -875,9 +885,10 @@ int PatternEditor::handleMainWinEvent(
              break;
 		   case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
 		   case 8:		// 8 is for backspace, ^H. 
-			 undoShape();
+			 undoPoint();
 			 break;
            default:
+			 //printf("got key %d\n", event.keycode); 
              break;
          }
   

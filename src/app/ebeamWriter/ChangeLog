@@ -1,3 +1,10 @@
+2003-02-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C - changed delete key to delete last point instead of
+	last shape, fixed bug - needed to update texture when changing opacity or
+	color for an image
+	* todo.doc - updated to do list for drawing features
+
 2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.C (handle_canvasImage_change): 
