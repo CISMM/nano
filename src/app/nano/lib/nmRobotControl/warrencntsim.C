@@ -2516,10 +2516,12 @@ setMaterialColor( GLfloat r, GLfloat g, GLfloat b )
       GLfloat mat_specular[]   = { 1.0*r, 1.0*g, 1.0*b, 1.0 };
       GLfloat mat_shininess[]  = { 30.0 };
 
+	  glPushAttrib(GL_LIGHTING_BIT);
       glMaterialfv( GL_FRONT_AND_BACK,  GL_AMBIENT,  mat_ambient );
       glMaterialfv( GL_FRONT_AND_BACK,  GL_DIFFUSE,  mat_diffuse );
       glMaterialfv( GL_FRONT_AND_BACK,  GL_SPECULAR,  mat_specular );
       glMaterialfv( GL_FRONT_AND_BACK,  GL_SHININESS, mat_shininess );
+	  glPopAttrib();
    }
 }
 

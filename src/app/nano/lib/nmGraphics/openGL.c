@@ -459,10 +459,10 @@ int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask 
     TIMERVERBOSE(5, mytimer, "begin build_grid_display_lists");
     
     /* set material parameters */
-    spm_set_surface_materials();
-    if (report_gl_errors()) {
-        printf("spm_set_surface_materials: generated gl error\n");
-    }
+    //spm_set_surface_materials();
+    //if (report_gl_errors()) {
+    //    printf("spm_set_surface_materials: generated gl error\n");
+    //}
     
     // If we have a very small grid size, make sure g_stride doesn't tell us
     // to skip any.
@@ -578,8 +578,7 @@ int draw_world (int) {
     
     VERBOSECHECK(4);
     VERBOSE(4,"    Setting surface materials");
-    TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");    
-    TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");
+    //TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");    
     
     /************************************************************
     * If the region has changed, we need to rebuild the display
@@ -649,7 +648,7 @@ int draw_world (int) {
     }
     
 
-    //See if there are any regions that need rebuilding for
+    //See if there are any regions that need full rebuilding for
     //some reason
     if (!g_surface->rebuildSurface()) {
         fprintf(stderr,

@@ -36,10 +36,12 @@ int URPolygon::Render(void * /*userdata*/ ){
 			glColor4fv(c);
 			// if alpha is not 1 then use alpha blending
 			if(c[3]!=1.0){
+				glPushAttrib(GL_COLOR_BUFFER_BIT);
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 				glAlphaFunc(GL_GREATER,0);
 				glEnable(GL_ALPHA_TEST);
+				glPopAttrib();
 			}
 	  	}
 

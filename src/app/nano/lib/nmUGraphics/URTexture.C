@@ -208,7 +208,7 @@ int URTexture::Render(void * /*userdata*/ )
 	glPushMatrix();
 	txform.Push_As_OGL();
 
-//	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
   
@@ -219,9 +219,10 @@ int URTexture::Render(void * /*userdata*/ )
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		glAlphaFunc(GL_GREATER,0);
-		glEnable(GL_ALPHA_TEST);
+		glEnable(GL_ALPHA_TEST);		
 	}
 	glMatrixMode(GL_MODELVIEW);
+	glPopAttrib();
 
 
 	return 1;

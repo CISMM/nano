@@ -24,6 +24,7 @@
 #include <nmb_Globals.h>
 #include "nmg_Surface.h"
 #include "nmg_SurfaceRegion.h"
+#include "nmg_StateGuardian.h"
 
 #include "graphics.h"
 #include "openGL.h"  // for check_extension(), display_lists_in_x
@@ -61,6 +62,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
+	g_guardian = new nmg_StateGuardian;
+
     if (d_dataset == NULL) {
         grid_size_x = 12;
         grid_size_y = 12;
@@ -138,9 +141,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     replaceDefaultObjects();
     
     v_replace_drawfunc(i, V_WORLD, draw_world);
-    v_replace_lightingfunc(i, setup_lighting);
+    v_replace_lightingfunc(i, setup_lighting);    
     
-    
+
     g_surface = new nmg_Surface;
     g_surface->changeDataset(data);
     

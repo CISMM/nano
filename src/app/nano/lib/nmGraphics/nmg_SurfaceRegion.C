@@ -753,6 +753,7 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
 void nmg_SurfaceRegion::
 renderRegion()
 {
+	static bool set = false;
     int i;
     
     SaveRenderState();
@@ -764,8 +765,8 @@ renderRegion()
     g_texture_transform_mode = d_currentState.textureTransformMode;
 
     spm_set_surface_materials();
-
     setFilled();
+
     for (i = 0; i < d_num_lists; i++) {
         glCallList(d_list_base + i);
     }

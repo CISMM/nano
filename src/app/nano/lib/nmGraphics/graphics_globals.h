@@ -277,6 +277,9 @@ extern int g_transparent;
 class nmg_Surface;
 extern nmg_Surface * g_surface;
 
+class nmg_StateGuardian;
+extern nmg_StateGuardian *g_guardian;
+
 extern PPM * g_vizPPM;
 
 //////////////////////////////////////////////////////////////////

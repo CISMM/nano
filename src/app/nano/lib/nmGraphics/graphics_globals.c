@@ -8,6 +8,7 @@
 #include "graphics_globals.h"
 #include "nmg_Graphics.h" // for enums
 #include "nmg_Surface.h"
+#include "nmg_StateGuardian.h"
 
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
@@ -229,6 +230,7 @@ int g_transparent = 0;
 float g_viztex_scale = 500.0f;
 
 nmg_Surface *g_surface;
+nmg_StateGuardian *g_guardian;
 
 PPM * g_vizPPM = NULL;
 
