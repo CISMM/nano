@@ -126,6 +126,12 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     void getExposureStatus(vrpn_int32 &numPointsTotal, 
        vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec, 
        vrpn_float32 &timeDone_sec);
+	void getTimingStatus(vrpn_int32 &numPointsTotal, 
+       vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec, 
+       vrpn_float32 &timeDone_sec);
+	void getPointReportEnable(vrpn_int32 &enable);
+	void getDotSpacing(vrpn_float32 &spacing_nm);
+	void getLineSpacing(vrpn_float32 &spacing_nm);
 
     int lastScanMessageCompletesImage() {
       return d_startY + d_numLines == d_resolutionY;
@@ -159,6 +165,11 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
                                                   vrpn_HANDLERPARAM _p);
     static int RcvReportMagnification(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvReportExposureStatus(void *_userdata, vrpn_HANDLERPARAM _p);
+	static int RcvReportTimingStatus(void *_userdata, vrpn_HANDLERPARAM _p);
+
+	static int RcvReportPointReportEnable(void *_userdata, vrpn_HANDLERPARAM _p);
+	static int RcvReportDotSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
+	static int RcvReportLineSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type,
         const struct timeval &msg_time);
@@ -170,6 +181,8 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     vrpn_int32 d_resolutionX, d_resolutionY;
     vrpn_int32 d_pixelIntegrationTime_nsec;
     vrpn_int32 d_interpixelDelayTime_nsec;
+	vrpn_int32 d_pointReportEnable;
+	vrpn_float32 d_dotSpacing_nm, d_lineSpacing_nm;
     // window line data
     vrpn_int32 d_startX, d_startY, d_dX, d_dY;
     vrpn_int32 d_lineLength;

@@ -118,6 +118,12 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
        "nmm_Microscope_SEM_Remote: can't register exposure status handler\n");
     return;
   }
+  if (d_connection->register_handler(d_ReportTimingStatus_type,
+                RcvReportTimingStatus, this)) {
+    fprintf(stderr,
+       "nmm_Microscope_SEM_Remote: can't register exposure status handler\n");
+    return;
+  }
 
   if (!d_connection->connected()) {
     fprintf(stderr,
@@ -631,6 +637,31 @@ void nmm_Microscope_SEM_Remote::getExposureStatus(vrpn_int32 &numPointsTotal,
   timeDone_sec = d_timeDone_sec;
 }
 
+void nmm_Microscope_SEM_Remote::getTimingStatus(vrpn_int32 &numPointsTotal,
+       vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec,
+       vrpn_float32 &timeDone_sec)
+{
+  numPointsTotal = d_numPointsTotal;
+  numPointsDone = d_numPointsDone;
+  timeTotal_sec = d_timeTotal_sec;
+  timeDone_sec = d_timeDone_sec;
+}
+
+void nmm_Microscope_SEM_Remote::getPointReportEnable(vrpn_int32 &enable)
+{
+  enable = d_pointReportEnable;
+}
+
+void nmm_Microscope_SEM_Remote::getDotSpacing(vrpn_float32 &spacing_nm)
+{
+  spacing_nm = d_dotSpacing_nm;
+}
+
+void nmm_Microscope_SEM_Remote::getLineSpacing(vrpn_float32 &spacing_nm)
+{
+  spacing_nm = d_lineSpacing_nm;
+}
+
 void nmm_Microscope_SEM_Remote::convert_nm_to_DAC(const double x_nm, 
                            const double y_nm,
                            int &xDAC, int &yDAC)
@@ -983,6 +1014,89 @@ int nmm_Microscope_SEM_Remote::RcvReportExposureStatus
   me->d_timeTotal_sec = timeTotal_sec;
   me->d_timeDone_sec = timeDone_sec;
   return me->notifyMessageHandlers(REPORT_EXPOSURE_STATUS, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportTimingStatus
+     (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 numPointsTotal, numPointsDone;
+  vrpn_float32 timeTotal_sec, timeDone_sec;
+
+  if (decode_ReportTimingStatus(&bufptr, &numPointsTotal, &numPointsDone,
+                                  &timeTotal_sec, &timeDone_sec) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportTimingStatus: "
+        "decode failed\n");
+    return -1;
+  }
+  me->d_numPointsTotal = numPointsTotal;
+  me->d_numPointsDone = numPointsDone;
+  me->d_timeTotal_sec = timeTotal_sec;
+  me->d_timeDone_sec = timeDone_sec;
+  return me->notifyMessageHandlers(REPORT_TIMING_STATUS, _p.msg_time);
+}
+
+//static 
+int nmm_Microscope_SEM_Remote::RcvReportPointReportEnable
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_ReportPointReportEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvReportPointReportEnable"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->d_pointReportEnable = enable;
+
+  return me->notifyMessageHandlers(POINT_REPORT_ENABLE, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportDotSpacing
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 spacing_nm;
+
+  if (decode_ReportDotSpacing(&bufptr, &spacing_nm) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_Remote::RcvReportDotSpacing"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->d_dotSpacing_nm = spacing_nm;
+
+  return me->notifyMessageHandlers(DOT_SPACING, _p.msg_time);
+}
+
+//static
+int nmm_Microscope_SEM_Remote::RcvReportLineSpacing
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 spacing_nm;
+
+  if (decode_ReportLineSpacing(&bufptr, &spacing_nm) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvReportLineSpacing"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->d_lineSpacing_nm = spacing_nm;
+
+  return me->notifyMessageHandlers(LINE_SPACING, _p.msg_time);
 }
 
 int nmm_Microscope_SEM_Remote::notifyMessageHandlers(

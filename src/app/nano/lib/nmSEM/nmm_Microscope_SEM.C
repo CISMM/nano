@@ -101,6 +101,14 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (
                 ("nmmMicroscopeSEM ReportBeamWidth");
     d_ReportExposureStatus_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportExposureStatus");
+	d_ReportTimingStatus_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportTimingStatus");
+	d_ReportPointReportEnable_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportPointReportEnable");
+	d_ReportDotSpacing_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportDotSpacing");
+    d_ReportLineSpacing_type = c->register_message_type
+                ("nmmMicroscopeSEM ReportLineSpacing");
   }
 }
 
@@ -1525,6 +1533,149 @@ vrpn_int32 nmm_Microscope_SEM::decode_ReportExposureStatus (
   }
 
   return 0;
+}
+
+char * nmm_Microscope_SEM::encode_ReportTimingStatus (
+                                            vrpn_int32 *len,
+                                            vrpn_int32 numPointsTotal,
+                                            vrpn_int32 numPointsDone,
+                                            vrpn_float32 timeTotal_sec,
+                                            vrpn_float32 timeDone_sec)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr,
+              "nmm_Microscope_SEM::encode_ReportTimingStatus:  "
+              "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, numPointsTotal);
+    vrpn_buffer(&mptr, &mlen, numPointsDone);
+    vrpn_buffer(&mptr, &mlen, timeTotal_sec);
+    vrpn_buffer(&mptr, &mlen, timeDone_sec);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportTimingStatus (
+                                            const char **buf,
+                                            vrpn_int32 *numPointsTotal,
+                                            vrpn_int32 *numPointsDone,
+                                            vrpn_float32 *timeTotal_sec,
+                                            vrpn_float32 *timeDone_sec)
+{
+  if (((vrpn_unbuffer(buf, numPointsTotal)) == -1) ||
+      ((vrpn_unbuffer(buf, numPointsDone)) == -1) ||
+      ((vrpn_unbuffer(buf, timeTotal_sec)) == -1) || 
+      ((vrpn_unbuffer(buf, timeDone_sec)) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_ReportPointReportEnable (vrpn_int32 *len,
+                                                        vrpn_int32 enable)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_ReportPointReportEnable:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, enable);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportPointReportEnable (const char **buf,
+                                        vrpn_int32 *enable)
+{
+  if ((vrpn_unbuffer(buf, enable)) == -1) {
+    return -1;
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_ReportDotSpacing (vrpn_int32 *len,
+                           vrpn_float32 dotSpacing_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_ReportDotSpacing:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, dotSpacing_nm);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportDotSpacing (const char **buf,
+                           vrpn_float32 *dotSpacing_nm)
+{
+  return vrpn_unbuffer(buf, dotSpacing_nm);
+}
+
+char * nmm_Microscope_SEM::encode_ReportLineSpacing (vrpn_int32 *len,
+                           vrpn_float32 lineSpacing_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_ReportLineSpacing:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, lineSpacing_nm);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_ReportLineSpacing (const char **buf,
+                           vrpn_float32 *lineSpacing_nm)
+{
+  return vrpn_unbuffer(buf, lineSpacing_nm);
 }
 
 

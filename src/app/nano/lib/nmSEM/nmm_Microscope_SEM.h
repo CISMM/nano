@@ -38,7 +38,7 @@ class nmm_Microscope_SEM {
                 REPORT_PIXEL_INTEGRATION_TIME,
                 REPORT_INTERPIXEL_DELAY_TIME,
                 WINDOW_LINE_DATA,
-		SCANLINE_DATA,
+				SCANLINE_DATA,
                 POINT_DWELL_TIME,
                 BEAM_BLANK_ENABLE,
                 MAX_SCAN_SPAN,
@@ -57,7 +57,11 @@ class nmm_Microscope_SEM {
                 EXPOSURE_TIMING_TEST,
                 BEAM_CURRENT,
                 BEAM_WIDTH,
-                REPORT_EXPOSURE_STATUS
+                REPORT_EXPOSURE_STATUS,
+				REPORT_TIMING_STATUS,
+				POINT_REPORT_ENABLE,
+				DOT_SPACING,
+				LINE_SPACING
                 } msg_t;
   protected:
 //    vrpn_Connection * d_connection;
@@ -66,52 +70,63 @@ class nmm_Microscope_SEM {
 //    vrpn_int32 d_myId;
 
     // (client-->server) messages
+	// parameters that can be set by the client
     vrpn_int32 d_SetResolution_type;
     vrpn_int32 d_SetPixelIntegrationTime_type;
     vrpn_int32 d_SetInterPixelDelayTime_type;
-    vrpn_int32 d_RequestScan_type;
-    vrpn_int32 d_SetPointDwellTime_type;
+	vrpn_int32 d_SetPointDwellTime_type;
     vrpn_int32 d_SetBeamBlankEnable_type;
-    vrpn_int32 d_GoToPoint_type;
     vrpn_int32 d_SetRetraceDelays_type;
     vrpn_int32 d_SetDACParams_type;
     vrpn_int32 d_SetExternalScanControlEnable_type;
+    vrpn_int32 d_SetBeamCurrent_type;
+    vrpn_int32 d_SetBeamWidth_type;
+    vrpn_int32 d_SetPointReportEnable_type;
+    vrpn_int32 d_SetDotSpacing_type;
+    vrpn_int32 d_SetLineSpacing_type;
+    vrpn_int32 d_SetLinearExposure_type;
+    vrpn_int32 d_SetAreaExposure_type;
+    vrpn_int32 d_SetMagnification_type;
+
+	// scan/data requests
+    vrpn_int32 d_RequestScan_type;
+    vrpn_int32 d_GoToPoint_type;
+
+	// exposure or exposure calculation requests
     vrpn_int32 d_ClearExposePattern_type;
     vrpn_int32 d_AddPolygon_type;
     vrpn_int32 d_AddPolyline_type;
     vrpn_int32 d_AddDumpPoint_type;
     vrpn_int32 d_ExposePattern_type;
     vrpn_int32 d_ExposureTimingTest_type;
-    vrpn_int32 d_SetBeamCurrent_type;
-    vrpn_int32 d_SetBeamWidth_type;
-    vrpn_int32 d_SetPointReportEnable_type;
-
-    vrpn_int32 d_SetDotSpacing_type;
-    vrpn_int32 d_SetLineSpacing_type;
-    vrpn_int32 d_SetLinearExposure_type;
-    vrpn_int32 d_SetAreaExposure_type;
-
-    vrpn_int32 d_SetMagnification_type;
 
     // (server-->client) messages
-
+    // parameters that can be set by the client
     vrpn_int32 d_ReportResolution_type;
     vrpn_int32 d_ReportPixelIntegrationTime_type;
     vrpn_int32 d_ReportInterPixelDelayTime_type;
-    vrpn_int32 d_WindowLineData_type;
-    vrpn_int32 d_ScanlineData_type;
     vrpn_int32 d_ReportPointDwellTime_type;
     vrpn_int32 d_ReportBeamBlankEnable_type;
-    vrpn_int32 d_ReportMaxScanSpan_type;
-    vrpn_int32 d_ReportBeamLocation_type;
     vrpn_int32 d_ReportRetraceDelays_type;
     vrpn_int32 d_ReportDACParams_type;
     vrpn_int32 d_ReportExternalScanControlEnable_type;
-    vrpn_int32 d_ReportMagnification_type;
     vrpn_int32 d_ReportBeamCurrent_type;
     vrpn_int32 d_ReportBeamWidth_type;
-    vrpn_int32 d_ReportExposureStatus_type;
 
+	vrpn_int32 d_ReportPointReportEnable_type;
+	vrpn_int32 d_ReportDotSpacing_type;
+    vrpn_int32 d_ReportLineSpacing_type;
+
+    vrpn_int32 d_ReportMagnification_type;
+
+	// responses to scan/data/exposure requests
+    vrpn_int32 d_ScanlineData_type;
+    vrpn_int32 d_ReportBeamLocation_type;
+    vrpn_int32 d_ReportExposureStatus_type;
+	vrpn_int32 d_ReportTimingStatus_type;
+
+	// parameters not settable by the client
+    vrpn_int32 d_ReportMaxScanSpan_type;
 
     // message encode, decode functions
     // (client-->server)
@@ -344,6 +359,33 @@ class nmm_Microscope_SEM {
                                                vrpn_int32 *numPointsDone,
                                                vrpn_float32 *timeTotal_sec,
                                                vrpn_float32 *timeDone_sec);
+
+    static char * encode_ReportTimingStatus (vrpn_int32 *len,
+                                               vrpn_int32 numPointsTotal,
+                                               vrpn_int32 numPointsDone,
+                                               vrpn_float32 timeTotal_sec,
+                                               vrpn_float32 timeDone_sec);
+    static vrpn_int32 decode_ReportTimingStatus (const char **buf,
+                                               vrpn_int32 *numPointsTotal,
+                                               vrpn_int32 *numPointsDone,
+                                               vrpn_float32 *timeTotal_sec,
+                                               vrpn_float32 *timeDone_sec);
+
+
+    static char * encode_ReportPointReportEnable (vrpn_int32 *len,
+                                               vrpn_int32 enable);
+    static vrpn_int32 decode_ReportPointReportEnable (const char **buf,
+                                                vrpn_int32 *enable);
+
+    static char * encode_ReportDotSpacing (vrpn_int32 *len,
+                           vrpn_float32 dotSpacing_nm);
+    static vrpn_int32 decode_ReportDotSpacing (const char **buf, 
+                           vrpn_float32 *dotSpacing_nm);
+
+    static char * encode_ReportLineSpacing (vrpn_int32 *len,
+                           vrpn_float32 lineSpacing_nm);
+    static vrpn_int32 decode_ReportLineSpacing (const char **buf,
+                           vrpn_float32 *lineSpacing_nm);
 
     static void convert_nm_to_DAC(const double mag,
                                 const int res_x, const int res_y,
