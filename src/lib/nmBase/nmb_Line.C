@@ -81,6 +81,31 @@ vrpn_bool nmb_Line::changed (void) const {
 }
 
 void nmb_Line::normalize (BCPlane * plane) {
+
+  if (!plane) {
+    fprintf(stderr, "nmb_Line::normalize:  no plane!\n");
+    return;
+  }
+
+  // Bounds check!  Should workaround bug in collaboration.
+
+  if (d_top[0] < plane->minX()) {
+    d_top[0] = plane->minX();
+    d_bottom[0] = plane->minX();
+  }
+  if (d_top[0] > plane->maxX()) {
+    d_top[0] = plane->maxX();
+    d_bottom[0] = plane->maxX();
+  }
+  if (d_top[1] < plane->minY()) {
+    d_top[1] = plane->minY();
+    d_bottom[1] = plane->minY();
+  }
+  if (d_top[1] > plane->maxY()) {
+    d_top[1] = plane->maxY();
+    d_bottom[1] = plane->maxY();
+  }
+
   d_top[2] = plane->maxAttainableValue() * plane->scale();
   d_bottom[2] = plane->minAttainableValue() * plane->scale();
   // Above works fine for stream files, where m**AttainableValues is

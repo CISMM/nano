@@ -1,3 +1,8 @@
+2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmb_Line (normalize) : add bounds checking to fix problem in
+	collaboration
+
 2000-10-04  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmb_Image.C (pixelToWorld) : changed to use width, height instead
