@@ -1,0 +1,21 @@
+APP_EXE=server;
+APP_DIR=app/deviceSequencerTest;
+
+if [ -z "$HW_OS" ]; then
+   uname=`uname`;
+   if [ "${uname#CYGWIN}" != "$uname" ]; then
+      HW_OS="pc_cygwin";
+   fi
+fi
+
+if [ -n "$MY_NANO_OBJ_DIR" ]; then
+   FULL_EXE=$MY_NANO_OBJ_DIR/$HW_OS/$APP_DIR/$APP_EXE;
+elif [ -n "$MY_NANO_SRC_DIR" ]; then
+   FULL_EXE=$MY_NANO_SRC_DIR/nano/obj/$HW_OS/$APP_DIR/$APP_EXE;
+elif [ "$HW_OS" != "pc_cygwin" ]; then
+   FULL_EXE=/afs/unc/proj/stm/src/$USER/nano/obj/$HW_OS/$APP_DIR/$APP_EXE;
+else
+   FULL_EXE=/tmp/obj/$HW_OS/$APP_DIR/$APP_EXE;
+fi
+
+exec $FULL_EXE $*
