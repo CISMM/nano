@@ -1,3 +1,8 @@
+2001-12-04  Andrea Hilchey  <hilchey@evans.cs.unc.edu>
+
+	* nma_ShapeAnalyze.C : removed unnecessary function call
+	from nmb_CalculatedPlane
+
 2001-10-31  Yoni Fridman  <fridman@cs.unc.edu>
 
 	* cnt_ia.C, cnt_ia.h, nma_ShapeAnalyze.C, nma_ShapeAnalyze.h:
