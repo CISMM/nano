@@ -12,6 +12,7 @@
 class nmb_PlaneSelection;
 class CNT_IA;
 
+#include <fstream.h>
 #include "nmb_CalculatedPlane.h"
 #include <vrpn_Connection.h>
 
@@ -66,6 +67,11 @@ private:
 //class added by andrea hilchey 6/14/01
 //adds a new height plane when you select "ShapeAnalysis" from the Analysis heading
 //the new plane shows where nanotubes have been identified
+//also used by nmm_SimulatedMicroscope_Remote
+//can update a plane with lines of data, and, if the data is not the same size as the
+//source plane (of the ShapeIdentifiedPlane), the data will be expanded by interpolating
+//between the existing data points and thus blurring the image to look smooth and be the
+//appropriate size
 class nma_ShapeIdentifiedPlane 
   : virtual public nmb_CalculatedPlane
 {
@@ -79,7 +85,7 @@ public:
     ~nma_ShapeIdentifiedPlane();
 
 	//updates d_cntMask when new information is received
-	void UpdateDataArray(double * cntMask, int size);
+	void UpdateDataArray(double * dataline, const int y, int datain_rowlen);
   
         // Accessor.  Returns true if this calc'd plane depend on
         // (is calculated from) the specified plane.
@@ -110,8 +116,15 @@ protected:
 	// Update the calculated plane for changes in the source plane
 	static void sourcePlaneChangeCallback( BCPlane* /* plane */, 
 					       int /* x */, int /* y */,
-					       void* /* userdata */ )
-	  { }
+					       void* /* userdata */ ){ }
+
+	//used by UpdateDataArray; blurs current dataline up or down to fit required rowlength 
+	//(filling in points in between if d_rowlength is larger, and blur between current row 
+	//of data and previous row
+	void nonblur(double ** dataline, int& y, int& datain_rowlen);
+	void blur_data_up(double ** dataline, int& y, int& datain_rowlen);
+	void blur_plane_up(double ** dataline, int& y, int& datain_rowlen);
+
 private:
 	int create_ShapeIdentifiedPlane();  //creates new plane
 
@@ -119,9 +132,13 @@ private:
 	BCPlane * d_outputPlane;       //new plane
 	nmb_Dataset * d_dataset;       //the dataset we belong to
 	const char * d_outputPlaneName;//what to call the plane
-	double * d_cntMask;            //the array of values (0 or 255) determining what is a nanotube (object)
-	                               //and what is not (255 is a nanotube)
-	int array_size;
+	double * d_dataArray;            //the array of values 
+	int d_array_size;
+	short d_rowlength;
+    short d_columnheight;
+	int planepts_per_datapt, num_leftovers;//for blurring
+	bool firstblur;
+	int stored_y;
 };
 
 

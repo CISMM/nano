@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+//#include <nmg_Graphics.h>
 
 
 #include <BCPlane.h>
@@ -165,22 +166,23 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
           nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, 
 			  d_desiredFilename, d_cntRec->cnt_image_Msk);
-		  /*this code tests the function UpdateDataArray
+		  //this code tests the function UpdateDataArray
 		  //fill in array
-		  double * d_cntMask = new double[512.0*512.0];
+		  double * d_cntMask = new double[512.0];
 		  for(int y = 0; y <= 512 - 1; y++) {
 			  for( int x = 0; x <= 512 - 1; x++){
 						if(y%2 == 0){
-							d_cntMask[y*512 + x] =  256.0;
+							d_cntMask[x] =  256.0;
 						}
 						else{
-							d_cntMask[y*512 + x] =  0.0;
+							d_cntMask[x] =  0.0;
 						}
 			  }
+			  shapePlane.UpdateDataArray(d_cntMask, y, 512.0);
 		  }
+		 
 		  //update shapePlane
-		  shapePlane.UpdateDataArray(d_cntMask, 512.0*512.0);
-		  */
+		 		  
 	}
 	if (d_ordWrite) {
 		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
@@ -194,28 +196,31 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
 //constructor for when data is sent across initially
 nma_ShapeIdentifiedPlane::
-nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName, double * cntMask)
+nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName, double * dataArray)
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
-  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_cntMask(cntMask)
+  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(dataArray)
 {
-    array_size = create_ShapeIdentifiedPlane();
+	d_rowlength = d_sourcePlane->GetGrid()->numX();
+    d_columnheight = d_sourcePlane->GetGrid()->numY();
+    d_array_size = create_ShapeIdentifiedPlane();
+	firstblur = true;
 }
 
 //'default' constructor for when no data sent across initially
 nma_ShapeIdentifiedPlane::
 nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName)
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
-  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_cntMask(NULL)
+  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(NULL)
 {
-  //cout << "In nma_ShapeIdentifiedPlane constructor" << endl;
-  array_size = 0;  
+  d_array_size = 0; 
+  d_rowlength = d_sourcePlane->GetGrid()->numX();
+  d_columnheight = d_sourcePlane->GetGrid()->numY();
+  firstblur = true;
 }
 
 nma_ShapeIdentifiedPlane::
 ~nma_ShapeIdentifiedPlane(){
-  /*delete d_sourcePlane;
-  delete d_outputPlane;
-  delete d_dataset;*/
+  
 }
 
 
@@ -241,50 +246,157 @@ dependsOnPlane( const char* planeName )
 }
 
 
-//updates d_cntMask when new information is received and fills in d_outputPlane with new values
+//updates d_dataArray when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
-UpdateDataArray(double * cntMask, int size){
-  //cout << "In nma_ShapeIdentifiedPlane::UpdateDataArray" << endl;
-
-  if(d_cntMask != NULL && array_size == size){//already filled once
-    //give d_cntMask new values
-    for(int i = 0; i < size; ++i){
-      d_cntMask[i] = cntMask[i];
-    }//don't know if above loop is necessary--already pointer to array?
-
-    short rowlength = d_sourcePlane->GetGrid()->numX();
-    short columnheight = d_sourcePlane->GetGrid()->numY();
-
-    //fill in d_outputPlane with the new values
-    for(int y = 0; y <= columnheight - 1; y++) 
-    {
-      for( int x = 0; x <= rowlength - 1; x++) 
-  	{
-	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]));  
-	  //the array d_cntMask fills from the top down when you "chunk" the array
-	  //into pieces of length rowlength.  However, traditional y values used
-	  //in setValue treat lower valued y's as at the bottom of the image, and
-	  //larger values at the top.  the above line accounts for this.
+UpdateDataArray(double * dataline, int y, int datain_rowlen){
+	if(firstblur && (y != 0) ) return;
+	if(!firstblur){
+		y = stored_y;
 	}
-    }
 
+  if(d_dataArray == NULL){//make it not NULL by filling in with dummy values
+        d_array_size = create_ShapeIdentifiedPlane();//need to initialize array_size if first time
   }
-  else if(d_cntMask == NULL){//first time filling it up
-    d_cntMask = cntMask;
-	cout << "Calling nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
-    array_size = create_ShapeIdentifiedPlane();//need to initialize array_size if first time
+
+  int sourceplane_size = d_rowlength*d_columnheight;
+  if(d_array_size == sourceplane_size){//already filled once, array_size starts out at zero
+	  
+	  if(y < d_columnheight){//okay to proceed
+			//blur necessary?
+			if(d_rowlength > datain_rowlen){
+				planepts_per_datapt = d_rowlength/datain_rowlen;
+				num_leftovers = d_rowlength%datain_rowlen;
+				blur_data_up(&dataline,y,datain_rowlen);
+			}
+			else if (datain_rowlen > d_rowlength){
+				planepts_per_datapt = datain_rowlen/d_rowlength;
+				num_leftovers = datain_rowlen%d_rowlength;
+				blur_plane_up(&dataline,y,datain_rowlen);
+			}//blur current dataline up or down to fit required rowlength (filling in points in between if
+			 //d_rowlength is larger, and blur between current row of data and previous row
+			else{
+				nonblur(&dataline,y,datain_rowlen);
+			}
+	  }
+
+	  stored_y = (y+planepts_per_datapt)%d_columnheight;
   }
-  else{//d_cntMask != NULL && array_size != size
+  else{//array_size != preexisting_size
     cerr << "Sizes do not match" << endl << "Cannot update with current scan" << endl;
     return;
-  }  
+  } 
+  delete [] dataline;
+  
 }
+
+
+//when d_rowlength and datain_rowlen are the same, no need to blur
+void nma_ShapeIdentifiedPlane::
+nonblur(double** dataline, int& y, int& datain_rowlen){
+	int new_index = 0;
+	float val;
+	
+	for(int i = 0; i < datain_rowlen; ++i){
+		if(firstblur) firstblur = false;
+		if(new_index < d_rowlength){
+			d_dataArray[datain_rowlen*y+i] = (*dataline)[i];
+			val = d_dataArray[datain_rowlen*y+i];
+			calculatedPlane->setValue(i,y,val);
+			d_dataset->range_of_change.AddPoint(i,y);
+		}
+
+	}
+}
+
+//used by UpdateDataArray; blurs current dataline up to fit required rowlength 
+//(filling in points in between since d_rowlength is larger, and blur between current row 
+//of data and previous row)
+void nma_ShapeIdentifiedPlane::
+blur_data_up(double** dataline, int& y, int& datain_rowlen){
+
+	double * newdataline = new double[d_rowlength];
+	double intermediate = 0.0;
+	int new_index = 0;
+	int inter_y;
+
+	//create the row of new data, interpolating between x values
+	for(int i = 0; i < datain_rowlen; ++i){
+		if(new_index < d_rowlength){
+			newdataline[new_index++] = (*dataline)[i];
+		}
+
+		if(i+1 < datain_rowlen){
+			intermediate = ((*dataline)[i+1] - (*dataline)[i])*(1.0/(double)planepts_per_datapt);
+			for(int k = 1; k <= planepts_per_datapt-1; k++){
+				if(new_index < d_rowlength){
+					newdataline[new_index++] = intermediate*k + (*dataline)[i];
+				}
+			}	
+		}
+		else{//take care of leftover slots
+			int to_do = num_leftovers + 3;
+			for(;to_do >= 0;to_do--){
+				intermediate = ((*dataline)[i] - (*dataline)[i-1])*(1.0/(double)planepts_per_datapt);
+				for(int k = 1; k <= planepts_per_datapt-1; k++){
+					if(new_index < d_rowlength){
+						newdataline[new_index++] = intermediate*k + (*dataline)[i];
+					}
+				}
+			}
+		}
+    }//fill in newdataline with values from dataline and values interpolated inbetween (blurring)
+
+
+	//clean up--change datain_rowlen to reflect current for row and change dataline to point to newdataline
+	datain_rowlen = d_rowlength;//(returned by reference)
+	delete [] (*dataline);
+	(*dataline) = newdataline;//now points to the new array we just made...
+
+
+	//now fill in the intervening rows by interpolating between previous row and this new row
+	new_index = 0;
+	float val;
+	
+	for(i = 0; i < datain_rowlen; ++i){
+		if(firstblur) firstblur = false;
+		if(new_index < d_rowlength){
+			d_dataArray[datain_rowlen*y+i] = (*dataline)[i];
+			val = d_dataArray[datain_rowlen*y+i];
+			calculatedPlane->setValue(i,y,val);
+			d_dataset->range_of_change.AddPoint(i,y);
+		}
+		if(y-planepts_per_datapt >=0){
+			intermediate = (d_dataArray[datain_rowlen*y+i] - d_dataArray[datain_rowlen*(y-planepts_per_datapt)+i])
+				*(1.0/(double)planepts_per_datapt);
+			for(int k = 1; k <= planepts_per_datapt-1; k++){
+				inter_y = (y-planepts_per_datapt) + k;
+				if(new_index++ < d_rowlength){
+					d_dataArray[datain_rowlen*inter_y+i] = intermediate*k 
+						+ d_dataArray[datain_rowlen*(y-planepts_per_datapt)+i];
+					val = d_dataArray[datain_rowlen*inter_y+i];
+					calculatedPlane->setValue(i,inter_y,val);
+					d_dataset->range_of_change.AddPoint(i,inter_y);
+				}
+			}	
+		}
+
+		new_index = 0;
+    }
+
+}
+
+
+void nma_ShapeIdentifiedPlane::
+blur_plane_up(double ** dataline, int& y, int& datain_rowlen){
+
+	
+
+}
+
 
 int nma_ShapeIdentifiedPlane::
 create_ShapeIdentifiedPlane()
 {
-  //cout << "In nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
-
   char uniqueOutputPlaneName[50];
   nma_ShapeAnalyze::nma_ShapeAnalyzeCounter++;
   sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyze::nma_ShapeAnalyzeCounter, d_outputPlaneName);
@@ -335,36 +447,36 @@ create_ShapeIdentifiedPlane()
   
   d_dataset->dataImages->addImage(output_im);
 
-  short rowlength = d_sourcePlane->GetGrid()->numX();
-  short columnheight = d_sourcePlane->GetGrid()->numY();
+  int size = d_columnheight*d_rowlength;//size of this array--used if first time filling
 
-  int size = columnheight*rowlength;//size of this array--used if first time filling
-
-  // fill in the new plane.
-  for(int y = 0; y <= columnheight - 1; y++) {
-
-      for( int x = 0; x <= rowlength - 1; x++){
-		  if(d_cntMask == NULL){//to test, since cnt_image_select does not seem to be
+  if(d_dataArray == NULL){//to test, since cnt_image_select does not seem to be
 								//working...
-			  if(y%2 == 0){
-				  calculatedPlane->setValue(x, (columnheight - y),
-						(float)(256.0)); 
-			  }
-			  else{
-				  calculatedPlane->setValue(x, (columnheight - y),
-						(float)(0.0)); 
-			  }
-		  }
-		  else{//normal operation
-			  calculatedPlane->setValue(x, (columnheight - y),
-					(float)(d_cntMask[y*rowlength + x]));
-			  //the array d_cntMask fills from the top down when you "chunk" the array
-			  //into pieces of length rowlength.  However, traditional y values used
-			  //in setValue treat lower valued y's as at the bottom of the image, and
-			  //larger values at the top.  the above line accounts for this.
-		  }
+	d_dataArray = new double[size];
+  // fill in the new plane.
+	for(int y = 0; y <= d_columnheight - 1; y++) {
+
+		for( int x = 0; x <= d_rowlength - 1; x++){
+
+			if(y%2 == 0){
+				d_dataArray[y*d_columnheight+x] = 0.0;
+				calculatedPlane->setValue(x, y,0.0f); 
+			}
+			else{
+				d_dataArray[y*d_columnheight+x] = 0.0;
+				calculatedPlane->setValue(x, y,0.0f); 
+			}
+		}
+	}
+  }
+  else{//normal operation
+	  for(int y = 0; y <= d_columnheight - 1; y++) {
+		for( int x = 0; x <= d_rowlength - 1; x++){
+			calculatedPlane->setValue(x, y,(float)(d_dataArray[y*d_rowlength + x]));
+			//the array d_dataArray fills from the bottom up when you "chunk" the array
+			//into pieces of length rowlength.  
+		}
 	  }
-   }
+  }
 
   // add ourselves to the dataset
   d_dataset->addNewCalculatedPlane( this );
