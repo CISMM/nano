@@ -117,9 +117,9 @@ class CollaborationManager {
 
     void setPeerName (const char * newName,
                       void * handChangeData,
-                      void (* handChangeCB) (void *, const vrpn_TRACKERCB),
+                      void (VRPN_CALLBACK * handChangeCB) (void *, const vrpn_TRACKERCB),
                       void * modeChangeData,
-                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB));
+                      void (VRPN_CALLBACK * modeChangeCB) (void *, const vrpn_ANALOGCB));
       ///< Connect to the named peer, calling the given callbacks in case
       ///< of change of peer's hand position or user mode; naming
       ///< must be by DNS name to guarantee correct collaboration.
@@ -225,11 +225,11 @@ class CollaborationManager {
       ///< A timing request from our peer has come out of queue;
       ///< send a response to it.
 
-    static int handle_peerTimer (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_peerTimer (void *, vrpn_HANDLERPARAM);
       ///< Our peer has sent us a timing request;  move that into the
       ///< local queue.
 
-    static int handle_timerResponse (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_timerResponse (void *, vrpn_HANDLERPARAM);
       ///< React to the response from our peer by unblocking the
       ///< specified frame of d_timer.
 
@@ -240,8 +240,8 @@ class CollaborationManager {
 
     vrpn_bool d_gotPeerServer;
     vrpn_bool d_gotPeerRemote;
-    static int handle_gotPeerServerConnection (void *, vrpn_HANDLERPARAM);
-    static int handle_gotPeerRemoteConnection (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_gotPeerServerConnection (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_gotPeerRemoteConnection (void *, vrpn_HANDLERPARAM);
 
     int fullyConnected (void);
 

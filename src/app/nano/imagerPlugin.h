@@ -99,11 +99,11 @@ protected:
   // Callback handlers to deal with messages coming across the VRPN connection,
   // and with new connections.
 
-  static int handle_new_connection(void *userdata, vrpn_HANDLERPARAM);
-  static void handle_description_message(void *userdata, const struct timeval);
-  static void handle_region_message(void *userdata, const vrpn_IMAGERREGIONCB info);
-  static void handle_tracker_message(void *userdata, const vrpn_TRACKERCB info);
-  static void handle_text_message(void *userdata, const vrpn_TEXTCB info);
+  static int VRPN_CALLBACK handle_new_connection(void *userdata, vrpn_HANDLERPARAM);
+  static void VRPN_CALLBACK handle_description_message(void *userdata, const struct timeval);
+  static void VRPN_CALLBACK handle_region_message(void *userdata, const vrpn_IMAGERREGIONCB info);
+  static void VRPN_CALLBACK handle_tracker_message(void *userdata, const vrpn_TRACKERCB info);
+  static void VRPN_CALLBACK handle_text_message(void *userdata, const vrpn_TEXTCB info);
 
   //------------------------------------------------------------------------
   // Callback handler to deal with plane data being updated.

@@ -33,8 +33,8 @@ protected:
     
     
     // from vrpn_Tracker
-    static int handle_update_rate_request (void *, vrpn_HANDLERPARAM);
-    static int handle_resetOrigin_change_message(void * userdata,
+    static int VRPN_CALLBACK handle_update_rate_request (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_resetOrigin_change_message(void * userdata,
                                                  vrpn_HANDLERPARAM p);
 
 public:

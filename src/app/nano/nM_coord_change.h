@@ -55,10 +55,10 @@ class nM_coord_change : public vrpn_Tracker {
 
   protected:
 
-    static void handle_tracker_pos_change (void * userdata,
+    static void VRPN_CALLBACK handle_tracker_pos_change (void * userdata,
 						const vrpn_TRACKERCB info);
 
-    static int handle_changeSyncStatus (void * userdata, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_changeSyncStatus (void * userdata, vrpn_HANDLERPARAM p);
 
     vrpn_int32 d_myId;
     vrpn_int32 d_changeSyncStatus_type;

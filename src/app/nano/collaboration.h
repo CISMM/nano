@@ -33,11 +33,11 @@ extern void handle_collab_machine_name_change( const char *new_value,
 /** handle_collab_sensor2tracker_change is the callback for the position
     and orientation messages sent from the nM_coord_change_server (to
     track a collaborator's hand position) */
-extern void handle_collab_sensor2tracker_change( void *userdata,
+extern void VRPN_CALLBACK handle_collab_sensor2tracker_change( void *userdata,
 						 const vrpn_TRACKERCB info);
 
 /** handle_collab_mode_change is the callback for the mode
     that track a collaborator's mode */
-extern void handle_collab_mode_change( void *userdata,
+extern void VRPN_CALLBACK handle_collab_mode_change( void *userdata,
 				       const vrpn_ANALOGCB info);
 

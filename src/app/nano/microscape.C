@@ -5,6 +5,7 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,9 +22,6 @@
 #include <vc_dirent.h>
 #endif
 
-#include <tcl.h>
-#include <tk.h>  // for Tk_DoOneEvent()
-
 #include <vrpn_Connection.h>
 #include <vrpn_FileConnection.h>
 #include <vrpn_FileController.h>
@@ -37,8 +35,6 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #include <vrpn_Text.h>
 #endif
-#include <nm_MouseInteractor.h>
-
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
@@ -47,6 +43,10 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #endif
 
+#include <nm_MouseInteractor.h>
+
+#include <tcl.h>
+#include <tk.h>  // for Tk_DoOneEvent()
 
 // this can be used to create specific installations of nano.
 // if this symbol is defined, nano will expect to find its
@@ -746,20 +746,20 @@ Tclvar_float constraint_kspring ("constraint_kspring", 10.0f);
 
 //-----------------------------------------------------------------------
 /// VRPN callback function, Hand tracker (i.e. Phantom motion). 
-static void handle_tracker2room_change(void *userdata, 
+static void VRPN_CALLBACK handle_tracker2room_change(void *userdata, 
 					const vrpn_TRACKERTRACKER2ROOMCB info);
 /// VRPN callback function, Hand tracker (i.e. Phantom motion). 
-static void handle_sensor2tracker_change(void *userdata, 
+static void VRPN_CALLBACK handle_sensor2tracker_change(void *userdata, 
 					const vrpn_TRACKERCB info);
 /* Not currently used
-static void handle_sensor2tracker_quat_change(void *userdata,
+static void VRPN_CALLBACK handle_sensor2tracker_quat_change(void *userdata,
 					const vrpn_TRACKERCB info);
-static void handle_forcedevice_scp_change(void *userdata, 
+static void VRPN_CALLBACK handle_forcedevice_scp_change(void *userdata, 
 					const vrpn_FORCESCPCB info);
 */
 
 
-static void handle_unit2sensor_change(void *userdata,
+static void VRPN_CALLBACK handle_unit2sensor_change(void *userdata,
 					const vrpn_TRACKERUNIT2SENSORCB info);
 
 
@@ -1019,7 +1019,7 @@ vrpn_Connection* tem_connection = NULL;
 // tem handler definitions
 static  void handle_tem_acquire_image(vrpn_int32, void *);
 
-vrpn_int32 GotFrontImage(void*, vrpn_HANDLERPARAM);
+vrpn_int32 VRPN_CALLBACK GotFrontImage(void*, vrpn_HANDLERPARAM);
 
 // tcl variables
 Tclvar_int      tem_acquire_image("tem_acquire_image", 0, handle_tem_acquire_image);
@@ -1051,7 +1051,7 @@ static void handle_tem_acquire_image(vrpn_int32, void *) {
     tem_connection->pack_message(0, now, GetFrontImage_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
 }
 
-vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // changed to handle lines of data, not the whole image
+vrpn_int32 VRPN_CALLBACK GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // changed to handle lines of data, not the whole image
     const char* bufptr = (char*)_p.buffer;
     static char* image = NULL;
     char* image2 = NULL;
@@ -2322,7 +2322,7 @@ void handle_mutex_release (vrpn_int32 value, void * userdata) {
 }
 
 // We asked for the mutex and got it.
-void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
+void VRPN_CALLBACK handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
@@ -2337,7 +2337,7 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
 }
 
 // We asked for the mutex, but somebody said "no".
-void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
+void VRPN_CALLBACK handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
@@ -2352,7 +2352,7 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
 }
 
 // Somebody else (NOT US?!) got the mutex.
-void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
+void VRPN_CALLBACK handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
@@ -2367,7 +2367,7 @@ void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
 }
 
 // Anybody released the mutex.
-void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
+void VRPN_CALLBACK handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
@@ -4221,7 +4221,7 @@ collabVerbose(5, "handle_joymove (t):  updateWorldFromRoom().\n");
 /*****************************************************************************
  VRPN tracker callbacks
  *****************************************************************************/
-void    handle_tracker2room_change(void *userdata,
+void    VRPN_CALLBACK handle_tracker2room_change(void *userdata,
                                         const vrpn_TRACKERTRACKER2ROOMCB info)
 {
     // userdata is VLIB transform index
@@ -4249,7 +4249,7 @@ void    handle_tracker2room_change(void *userdata,
     return;
 }
 
-void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
+void    VRPN_CALLBACK handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
 {
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
@@ -4273,7 +4273,7 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
 
 
 /**** Not currently used
-void    handle_sensor2tracker_quat_change(void *userdata,
+void    VRPN_CALLBACK handle_sensor2tracker_quat_change(void *userdata,
                                         const vrpn_TRACKERCB info)
 {
     // userdata is VLIB transform index
@@ -4289,7 +4289,7 @@ void    handle_sensor2tracker_quat_change(void *userdata,
 
 /**** Not currently used
 
-void    handle_forcedevice_scp_change(void *userdata, 
+void    VRPN_CALLBACK handle_forcedevice_scp_change(void *userdata, 
                                         const vrpn_FORCESCPCB info)
 {
     // userdata is VLIB transform index
@@ -4304,7 +4304,7 @@ void    handle_forcedevice_scp_change(void *userdata,
 }
 */
 
-void    handle_unit2sensor_change(void *userdata,
+void    VRPN_CALLBACK handle_unit2sensor_change(void *userdata,
                                         const vrpn_TRACKERUNIT2SENSORCB info)
 {
     // userdata is VLIB transform index
@@ -4380,7 +4380,7 @@ int register_vrpn_phantom_callbacks(void)
 }
 
 
-int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
+int VRPN_CALLBACK handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
 {
   handle_phantom_connect(vrpnHandTracker);
   return 0;

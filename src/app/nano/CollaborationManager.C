@@ -399,9 +399,9 @@ void CollaborationManager::setUserMode (int mode) {
 void CollaborationManager::setPeerName
                      (const char * newName,
                       void * handChangeData,
-                      void (* handChangeCB) (void *, const vrpn_TRACKERCB),
+                      void (VRPN_CALLBACK * handChangeCB) (void *, const vrpn_TRACKERCB),
                       void * modeChangeData,
-                      void (* modeChangeCB) (void *, const vrpn_ANALOGCB)) {
+                      void (VRPN_CALLBACK * modeChangeCB) (void *, const vrpn_ANALOGCB)) {
   char peerHandName [1024];
   char peerModeName [1024];
   char sfbuf [1024];

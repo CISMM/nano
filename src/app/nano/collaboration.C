@@ -373,12 +373,12 @@ void handle_collab_machine_name_change( const char * new_value,
 }
 
 
-void handle_collab_sensor2tracker_change(void *, 
+void VRPN_CALLBACK handle_collab_sensor2tracker_change(void *, 
 					const vrpn_TRACKERCB info) {
     graphics->setCollabHandPos( (double*) info.pos, (double*) info.quat );
 }
 
-void handle_collab_mode_change(void *, const vrpn_ANALOGCB info) {
+void VRPN_CALLBACK handle_collab_mode_change(void *, const vrpn_ANALOGCB info) {
     graphics->setCollabMode(info.channel[0]);
 }
 

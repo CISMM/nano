@@ -80,7 +80,7 @@ int x_init(char* argv[]);
 //                const int, const char *, const int, const int);
 //  extern "C" void txt_init(int);
 
-extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
+extern int VRPN_CALLBACK handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
 
 
 // Added by Michele Clark 6/2/97
@@ -135,7 +135,7 @@ x_init(char* argv[])
    Magellan would do for the same button number (we increment the button
    callback number to make it match the number printed on the Magellan).
   *********/
-void handle_phant_button_change(void *userdata, const vrpn_BUTTONCB b) {
+void VRPN_CALLBACK handle_phant_button_change(void *userdata, const vrpn_BUTTONCB b) {
   if (b.button == 0) {
    *(int *)userdata = b.state;
   } else {
@@ -231,7 +231,7 @@ int handle_phantom_conn_dropped(void * /*userdata*/, vrpn_HANDLERPARAM /*p*/){
    return 0;
 }
 
-void handle_phantom_error(void * /*userdata*/, const vrpn_FORCEERRORCB ferr){
+void VRPN_CALLBACK handle_phantom_error(void * /*userdata*/, const vrpn_FORCEERRORCB ferr){
     // On any phantom error, release the phantom button.
     phantButtonState = 0;
    fprintf(stderr, "Error: phantom server has failed: ");
@@ -288,12 +288,12 @@ void handle_phantom_button_mode_change( vrpn_int32, void * userdata)
 /** callbacks for vrpn_Button_Remote and vrpn_Analog_Remote for sgi button/dial
    box (registered below)
  */
-void handle_bdbox_button_change(void *userdata, const vrpn_BUTTONCB b){
+void VRPN_CALLBACK handle_bdbox_button_change(void *userdata, const vrpn_BUTTONCB b){
    int *bdboxButtonStates = (int *)userdata;
    bdboxButtonStates[b.button] = b.state;
 }
 
-void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
+void VRPN_CALLBACK handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
    double *bdboxDialValues = (double *)userdata;
    for (int i = 0; i < info.num_channel; i++){
    	bdboxDialValues[i] = info.channel[i];
@@ -305,7 +305,7 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
  * Buttons 3,4,7,8 are inactive if we aren't connected to a live AFM, or 
  * if commands to the live AFM are currently suspended. (Thermo in analysis mode). 
  */
-void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
+void VRPN_CALLBACK handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
    // Incidental - if we are getting button reports, magellan is not
    // resetting repeatedly.  Decrement count.
    if (magellan_reset_count > 0) magellan_reset_count--;
@@ -411,7 +411,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
 }
 /** callbacks for vrpn_Tracker_Remote for magellan (registered below)
  */
-void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr) 
+void VRPN_CALLBACK handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr) 
 {
    vrpn_bool puck_active = VRPN_FALSE;
    static vrpn_bool old_puck_active = VRPN_FALSE;
@@ -534,7 +534,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
  * If we get an ERROR, disconnect from the Magellan and tell the user
  * to restart if they want to re-connect.
  */
-void handle_magellan_text_message(void *userdata, const vrpn_TEXTCB p)
+void VRPN_CALLBACK handle_magellan_text_message(void *userdata, const vrpn_TEXTCB p)
 {
     if (p.type == vrpn_TEXT_ERROR) {
             shutdown_Magellan();

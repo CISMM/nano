@@ -1,3 +1,16 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* CollaborationManager.C : Uses new VRPN_CALLBACK definition.
+	* CollaborationManager.h : same.
+	* collaboration.C : same.
+	* collaboration.h : same.
+	* imagerPlugin.h : same.
+	* microscope.C : same.
+	* minit.c : same.
+	* nM_coord_change.h : same.
+	* nm_MouseInteractor.h : same.
+	* nano.dsp : Added D: to search for things.
+
 2004-07-23  Russ Taylor  <taylorr@cs.unc.edu>
 
 	* nano.dsp : Added include path for HDAPI library.
