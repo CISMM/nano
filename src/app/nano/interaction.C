@@ -2849,7 +2849,10 @@ int doFeelLive (int whichUser, int userEvent)  {
       graphics->showFeelGrid(VRPN_TRUE);
     }
   }
-  if (microscope->state.modify.tool == WARPED_PLANE) {
+  if ((microscope->state.modify.tool == WARPED_PLANE) ||
+      (microscope->state.modify.tool == FREEHAND) ||
+      (microscope->state.modify.tool == CONSTR_FREEHAND) ||
+      (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
     if (graphics) {
       graphics->showFeelPlane(VRPN_TRUE);
     }
