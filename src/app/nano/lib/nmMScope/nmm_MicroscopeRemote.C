@@ -3989,7 +3989,11 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   // latency compensation
   d_decoration->trueTipLocation[0] = _x;
   d_decoration->trueTipLocation[1] = _y;
-  d_decoration->trueTipLocation[2] = z_value->value();
+  if (z_value) {
+      d_decoration->trueTipLocation[2] = z_value->value();
+  } else {
+      d_decoration->trueTipLocation[2] = 0;
+  }
   d_decoration->trueTipLocation_changed = 1;
 
   if (state.acquisitionMode == MODIFY) {
