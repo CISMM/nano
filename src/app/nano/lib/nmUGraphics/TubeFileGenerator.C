@@ -308,7 +308,7 @@ printf("%f\n", height->scaledMaxValue());
 						c.z1 = p1[2];
 
 						if (!newtube) {	
-							// fill in last guys second point
+							// fill in previous guy's second point
 							cs.back().x2 = c.x1;
 							cs.back().y2 = c.y1;
 							cs.back().z2 = c.z1;
@@ -316,7 +316,6 @@ printf("%f\n", height->scaledMaxValue());
 							cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
 													(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
 													(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
-																						
 						}
 						c.radius = radius;
 						c.az = az + PI / 2;
@@ -356,8 +355,6 @@ printf("%f\n", height->scaledMaxValue());
 	ymid = ymid/cs.size();
 	zmid = zmid/cs.size();
 
-	printf("group center: [%d,%d,%d]\n",xmid,ymid,zmid);
-
 	//divide by size to get avg. x,y,z position of the entire tube
 	
 
@@ -384,21 +381,6 @@ printf("%f\n", height->scaledMaxValue());
 		tube->cylinders[i].y2 -= ymid;
 		tube->cylinders[i].z2 -= zmid;
 	}
-
-/*
-	for (i = 0; i < Pobject->num_cylinders; i++) {
-		printf("x1 = %f\n", Pobject->cylinders[i].x1);
-		printf("y1 = %f\n", Pobject->cylinders[i].y1);
-		printf("z1 = %f\n", Pobject->cylinders[i].z1);
-		printf("x2 = %f\n", Pobject->cylinders[i].x2);
-		printf("y2 = %f\n", Pobject->cylinders[i].y2);
-		printf("z2 = %f\n", Pobject->cylinders[i].z2);
-		printf("length = %f\n", Pobject->cylinders[i].length);
-		printf("radius = %f\n", Pobject->cylinders[i].radius);
-		printf("azimuth = %f\n", Pobject->cylinders[i].az);
-		printf("altitude = %f\n\n", Pobject->cylinders[i].alt);
-*/
-
 
 	// create geometry from list of vertices
 
@@ -437,6 +419,18 @@ printf("%f\n", height->scaledMaxValue());
 	// scale 
 //	tube->GetLocalXform().SetScale(scale_factor);
 
+
+/*
+	for (i = 0; i < tube->num_cylinders; i++) {
+		printf("x = %f\n", tube->cylinders[i].x1);
+		printf("y = %f\n", tube->cylinders[i].y1);
+		printf("z = %f\n", tube->cylinders[i].z1);
+		printf("altitude = %f\n", tube->cylinders[i].alt);
+		printf("azimuth = %f\n", tube->cylinders[i].az);
+		printf("length = %f\n", tube->cylinders[i].length);
+		printf("radius = %f\n\n", tube->cylinders[i].radius);
+	}
+*/
 	return numtubes;  // should be number of display lists
 }
 

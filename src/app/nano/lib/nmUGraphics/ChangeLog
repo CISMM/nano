@@ -1,3 +1,6 @@
+2002-07-08 David Borland <borland@cs.unc.edu>
+        * TubeFileGenerator.C : removed some debugging statements
+
 2002-07-03 Jameson Miller <millerj@cs.unc.edu>
 	* new files : DsAxisGenerator.Ch - creates an axis object.
 	Modified Files - GileGenerator.C - now creat axis when loading a .dsa file
