@@ -32,8 +32,8 @@ vrpn_Connection * getPeer (const char * hostname, int port,
   sprintf(buf, "%s:%d", hostname, port);
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath, timestamp);
 
-fprintf(stderr, "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
-buf, NIC_IP, sfbuf);
+//fprintf(stderr, "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
+//buf, NIC_IP, sfbuf);
 
   return vrpn_get_connection_by_name (buf,
              loggingInterface ? sfbuf : NULL,
@@ -49,7 +49,7 @@ vrpn_Connection * getPeerReplay (const char * loggingPath, int timestamp) {
   sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
           timestamp); 
 
-fprintf(stderr, "Replaying peer from file %s.\n", sfbuf);
+//fprintf(stderr, "Replaying peer from file %s.\n", sfbuf);
 
   return vrpn_get_connection_by_name (sfbuf);
 }
@@ -121,7 +121,12 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_userMode (0),
     d_handServerName (NULL),
     d_modeServerName (NULL),
-    d_uiController (NULL)
+    d_uiController (NULL),
+    d_timer (NULL),
+    d_myId_svr (-1),
+    d_myId_rem (-1),
+    d_timerSN_type (-1),
+    d_timerSNreply_type (-1)
 {
 
 }
@@ -215,6 +220,8 @@ void CollaborationManager::mainloop (void) {
     d_peerMode->mainloop();
   }
 
+  sendOurTimer();
+
   // Tell them the state of our TCL controls.
   if (d_peerServer) {
     d_peerServer->mainloop();
@@ -230,6 +237,7 @@ void CollaborationManager::mainloop (void) {
     d_peerRemote->mainloop();
   }
 
+  respondToPeerTimer();
 }
 
 
@@ -264,6 +272,9 @@ void CollaborationManager::enableLogging (vrpn_bool on) {
   d_log = on;
 }
 
+void CollaborationManager::setTimer (nmb_TimerList * timer) {
+  d_timer = timer;
+}
 
 
 void CollaborationManager::initialize
@@ -272,6 +283,7 @@ void CollaborationManager::initialize
       void (* syncChangeCB) (void *, vrpn_bool)) {
   char sfbuf [1024];
   timeval now;
+  vrpn_int32 timerSN;
 
   if (d_replay) {
 
@@ -317,6 +329,14 @@ void CollaborationManager::initialize
                     "Couldn't create mode server for collaboration.\n");
     return;
   }
+
+  d_myId_svr = d_peerServer->register_sender("nM Collaboration Manager");
+  d_timerSNreply_type =
+     d_peerServer->register_message_type("nM collab timer sN reply");
+
+  timerSN =
+     d_peerServer->register_message_type("nM collab timer sN");
+  d_peerServer->register_handler(timerSN, handle_peerTimer, this);
 }
 
 
@@ -348,6 +368,7 @@ void CollaborationManager::setPeerName
   char hnbuf [256];
   vrpn_bool shouldSynchronize;
   vrpn_int32 newConnection_type;
+  vrpn_int32 timerSNreply;
 
   // Open peerRemote FIRST so we're sure logging happens
 
@@ -423,6 +444,13 @@ d_peerPort);
     }
   }
 
+  d_myId_rem = d_peerRemote->register_sender("nM Collaboration Manager");
+  d_timerSN_type =
+     d_peerRemote->register_message_type("nM collab timer sN");
+
+  timerSNreply =
+     d_peerRemote->register_message_type("nM collab timer sN reply");
+  d_peerRemote->register_handler(timerSNreply, handle_timerResponse, this);
 }
 
 
@@ -450,5 +478,104 @@ nmui_Component * CollaborationManager::uiRoot (void) {
 nmui_PlaneSync * CollaborationManager::planeSync (void) {
   return d_planeSync;
 }
+
+
+
+void CollaborationManager::sendOurTimer (void) {
+
+  char msgbuf [24];
+  char * mptr;
+  timeval now;
+  vrpn_int32 sn;
+  vrpn_int32 msglen;
+
+  if (!d_timer) {
+    return;
+  }
+
+  sn = d_timer->getListHead();
+  if ((sn < 0) || (!d_timer->isBlocked(sn))) {
+    return;
+  }
+
+  msglen = 24;
+  mptr = msgbuf;
+  vrpn_buffer(&mptr, &msglen, sn);
+
+  gettimeofday(&now, NULL);
+  d_peerRemote->pack_message(24 - msglen, now, d_timerSN_type,
+                             d_myId_rem, msgbuf, vrpn_CONNECTION_RELIABLE);
+
+//fprintf(stderr, "CollaborationManager::sendOurTimer:  "
+                //"Sent message for sn %d.\n", sn);
+}
+
+
+void CollaborationManager::respondToPeerTimer (void) {
+
+  char msgbuf [24];
+  char * mptr;
+  timeval now;
+  vrpn_int32 sn;
+  vrpn_int32 msglen;
+
+  while ((sn = d_peerTimer.getListHead()) != -1) {
+    d_peerTimer.remove();
+
+    msglen = 24;
+    mptr = msgbuf;
+    vrpn_buffer(&mptr, &msglen, sn);
+
+    gettimeofday(&now, NULL);
+    d_peerServer->pack_message(msglen, now, d_timerSNreply_type,
+                               d_myId_svr, msgbuf, vrpn_CONNECTION_RELIABLE);
+
+//fprintf(stderr, "CollaborationManager::respondToPeerTimer:  "
+                //"Done with sn %d.\n", sn);
+  }
+
+}
+
+
+// static
+int CollaborationManager::handle_peerTimer (void * userdata,
+                                            vrpn_HANDLERPARAM p) {
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  const char * bp;
+  vrpn_int32 sn;
+
+  bp = p.buffer;
+  vrpn_unbuffer(&bp, &sn);
+
+  cm->d_peerTimer.insert(sn);
+
+//fprintf(stderr, "CollaborationManager::handle_peerTimer:  "
+                //"Queueing up sn %d.\n", sn);
+
+  return 0;
+}
+
+
+// static
+int CollaborationManager::handle_timerResponse (void * userdata,
+                                                vrpn_HANDLERPARAM p) {
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  const char * bp;
+  vrpn_int32 sn;
+
+  bp = p.buffer;
+  vrpn_unbuffer(&bp, &sn);
+
+  if (cm->d_timer) {
+    cm->d_timer->unblock(sn);
+
+//fprintf(stderr, "CollaborationManager::handle_timerResponse:  "
+                //"Unblocking sn %d.\n", sn);
+  }
+
+  return 0;
+}
+
+
 
 

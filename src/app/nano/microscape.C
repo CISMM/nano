@@ -296,10 +296,6 @@ static void handle_load_button_press_change (vrpn_int32, void *);
 
 // NANOX
 /// synchronization UI handlers
-// generic synchronization
-//static void handle_synchronize_change (vrpn_int32, void *);
-//static void handle_get_sync (vrpn_int32, void *);
-//static void handle_lock_sync (vrpn_int32, void *);
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
 static void handle_timed_sync (vrpn_int32, void *);
@@ -1153,7 +1149,7 @@ struct MicroscapeInitializationState {
   vrpn_bool replayInterface;
 
   // control synchronization method for collaboration
-  vrpn_bool useOptimism;
+  int collabMode;
 
   float phantomRate;
   int tesselation;
@@ -1187,7 +1183,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
-  useOptimism (VRPN_FALSE),
+  collabMode (2),
   phantomRate (60.0),  // standard default
   tesselation (1),
   packetlimit (0),
@@ -1890,9 +1886,7 @@ static void handle_collab_measure_move (float x, float y,
                                           void * userdata) {
   int whichLine = (int) userdata;   // hack to get the data here
 
-  // TODO - a message needs to be sent so that this timer
-  // gets unblocked!
-  collaborationTimer.block(collaborationTimer.getListHead());
+  //collaborationTimer.block(collaborationTimer.getListHead());
 
   switch (whichLine) {
     case 0:
@@ -1956,70 +1950,21 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 
 // NANOX
 // synchronization UI handlers
-/* UNUSED
-// Checkbox - if checked, request that the peer keep us synced;
-//   if unchecked, stop keeping synced.
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
-static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
-  int s;
 
-  switch (value) {
-    case 0:
-      // stop synchronizing;  use local state (#0)
-      s = 0;
-      break;
-    default:
-      // use shared state (#1)
-      //s = 1;  // SYNC-ROBUSTNESS
-      s = sync->numPeers();
-fprintf(stderr, "Synchronizing with peer #%d.\n", s);
-      break;
-  }
-
-  sync->syncReplica(s);
-//fprintf(stderr, "++ Synchronized to replica #%d.\n", sync->synchronizedTo());
-
-}
-
-// Button - if pressed, request immediate sync.
-// (If synchronize_stream is checked, this is meaningless.)
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
-static void handle_get_sync (vrpn_int32, void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
-  int c;
-  // Christmas sync
-  // handles 2-way;  may handle n-way sync
-  switch (sync->synchronizedTo()) {
-    case 0:
-      // copy shared state (#1) into local state (#0)
-      //c = 1;  // SYNC-ROBUSTNESS
-      c = sync->numPeers();
-fprintf(stderr, "Copying peer #%d.\n", c);
-      break;
-    default:
-      // copy local state (#0) into shared state (#1)
-      c = 0;
-      break;
-  }
-  sync->copyReplica(c);
-//fprintf(stderr, "++ Copied inactive replica (#%d).\n", c);
-}
-*/
 static int handle_timed_sync_request (void *);
+static int local_time_sync (void *);
 
 struct sync_plane_struct {
     nmui_Component * component;
     nmui_PlaneSync * planesync;
 };
 
-/** Checkbox - if checked, request that the peer keep us synced;
-  if unchecked, stop keeping synced.
-Currently assumes that only the most recently added peer is
-  "valid";  others are a (small?) memory/network leak.
-*/
+/**
+ * Radio button controlling whether we're publically or privately synched.
+ * Currently assumes that only the most recently added peer is
+ *  "valid";  others are a (small?) memory/network leak.
+ */
+
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
   CollaborationManager * cm = (CollaborationManager *) userdata;
@@ -2027,7 +1972,7 @@ static void handle_synchronize_timed_change (vrpn_int32 value,
   nmui_PlaneSync * plane_sync = cm->planeSync();
   nM_coord_change * handServer = cm->handServer();
 
-fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
+//fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
 
   // First write out the current values of any volatile variables.
   // There is some risk of this doing the wrong thing, since we're
@@ -2038,27 +1983,31 @@ fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
   // ALL of the sync code was written for optimism, and requires some
   // tougher semantics to use centralized serialization and
   // single-shared-state.
-  handle_timed_sync_request(NULL);
 
   switch (value) {
+
     case 0:
+
+      handle_timed_sync_request(NULL);
+
       // stop synchronizing;  use local state (#0)
-fprintf(stderr, "++   ... stopped synchronizing.\n");
+
+//fprintf(stderr, "++   ... stopped synchronizing.\n");
       sync->syncReplica(0);
       plane_sync->queueUpdates();
       graphics->enableCollabHand(VRPN_FALSE);
       handServer->stopSync();
       isSynchronized = VRPN_FALSE;
       break;
-    default:
-      // use shared state (#1)
-fprintf(stderr, "++   ... sent synch request to peer.\n");
 
-      // You'd think that this call to block() wouldn't need to be explicitly
-      // unblocked, since we're going to get a syncComplete message from
-      // the peer, but it does - we need to know what index to unblock
-      // after the syncComplete, which requres an additional message.
-      collaborationTimer.block(collaborationTimer.getListHead());
+    default:
+
+      local_time_sync(NULL);
+
+      // use shared state (#1)
+//fprintf(stderr, "++   ... sent synch request to peer.\n");
+
+      //collaborationTimer.block(collaborationTimer.getListHead());
 
       sync->requestSync();
       sync->d_maintain = VRPN_TRUE;
@@ -2075,7 +2024,7 @@ fprintf(stderr, "++   ... sent synch request to peer.\n");
 
 static void handle_peer_sync_change (void * /*userdata*/, vrpn_bool value) {
 
-fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
+//fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
   if (isSynchronized && value) {  // both synchronized
     graphics->enableCollabHand(VRPN_TRUE);
   } else {
@@ -2084,8 +2033,11 @@ fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
 
 }
 
-/// Linked to button in tcl UI. If pressed, copy the shared state to
-/// the private state.
+/**
+ * Linked to button in tcl UI. If pressed, copy the shared state to
+ * the private state.
+ */
+
 static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
   CollaborationManager * cm = (CollaborationManager *) userdata;
   nmui_Component * sync = cm->uiRoot();
@@ -2101,15 +2053,11 @@ static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
     // for VRPN), so when that arrives we know the sync is complete and
     // we can issue a copyReplica()
 
-    // You'd think that this call to block() wouldn't need to be explicitly
-    // unblocked, since we're going to get a syncComplete message from
-    // the peer, but it does - we need to know what index to unblock
-    // after the syncComplete, which requres an additional message.
-    collaborationTimer.block(collaborationTimer.getListHead());
+    //collaborationTimer.block(collaborationTimer.getListHead());
 
     sync->requestSync();
     sync->d_maintain = VRPN_FALSE;
-fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
+//fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
   } else {
       // get up to date stream time. 
       handle_timed_sync_request(NULL);
@@ -2117,16 +2065,21 @@ fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
       // we are shared, copy to local state immediately.
       // shared state is in the replica from the most recent peer.
       sync->copyFromToReplica(sync->numPeers(), 0);
-fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
+//fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
     plane_sync->acceptUpdates();
     plane_sync->queueUpdates();
 
+    // get up-to-date stream time.
+    local_time_sync(NULL);
   }
 
 }
 
-/// Linked to button in tcl UI. If pressed, copy the private state to
-/// the shared state.
+/**
+ * Linked to button in tcl UI. If pressed, copy the private state to
+ * the shared state.
+ */
+
 static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
   CollaborationManager * cm = (CollaborationManager *) userdata;
   nmui_Component * sync = cm->uiRoot();
@@ -2136,7 +2089,7 @@ static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
       // we are local. We can copy to shared state immediately
       // shared state is in the replica from the most recent peer.
       sync->copyFromToReplica(0, sync->numPeers());
-fprintf(stderr, "++ In handle_copy_to_shared() request sync.\n");
+//fprintf(stderr, "++ In handle_copy_to_shared() request sync.\n");
 
       // we also want to get any planes which might be from the shared state 
       plane_sync->acceptUpdates();
@@ -2148,7 +2101,7 @@ fprintf(stderr, "++ In handle_copy_to_shared() request sync.\n");
       // so copy immediately.
       // shared state is in the replica from the most recent peer.
       sync->copyFromToReplica(0, sync->numPeers());
-fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
+//fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
       // Any planes created in local state will already have been copied to
       // shared state, so no need to sync planes.
 
@@ -2156,15 +2109,16 @@ fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
 
 }
 
-/** Button - if pressed, request immediate sync.
-(If synchronize_stream is checked, this is meaningless.)
-Currently assumes that only the most recently added peer is
-  "valid";  others are a (small?) memory/network leak.
-*/
+/**
+ * Currently assumes that only the most recently added peer is
+ *  "valid";  others are a (small?) memory/network leak.
+ */
 static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
+
   CollaborationManager * cm = (CollaborationManager *) userdata;
   nmui_Component * sync = cm->uiRoot();
   nmui_PlaneSync * plane_sync = cm->planeSync();
+
   int copyFrom = !sync->synchronizedTo();
 
   //// only run once
@@ -2181,21 +2135,17 @@ static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
     // for VRPN), so when that arrives we know the sync is complete and
     // we can issue a copyReplica()
 
-    // You'd think that this call to block() wouldn't need to be explicitly
-    // unblocked, since we're going to get a syncComplete message from
-    // the peer, but it does - we need to know what index to unblock
-    // after the syncComplete, which requres an additional message.
-    collaborationTimer.block(collaborationTimer.getListHead());
+    //collaborationTimer.block(collaborationTimer.getListHead());
 
     sync->requestSync();
     sync->d_maintain = VRPN_FALSE;
-fprintf(stderr, "++ In handle_timed_sync() to %d;  "
-"sent synch request to peer.\n", copyFrom);
+//fprintf(stderr, "++ In handle_timed_sync() to %d;  "
+//"sent synch request to peer.\n", copyFrom);
   } else {
 
     sync->copyReplica(copyFrom);
-fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
-copyFrom);
+//fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
+//copyFrom);
     plane_sync->acceptUpdates();
     plane_sync->queueUpdates();
 
@@ -2210,11 +2160,21 @@ static int handle_timed_sync_request (void *) {
 
   set_stream_time = decoration->elapsedTime;
 
-fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
-"wrote data into replica.\n", decoration->elapsedTime);
+//fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
+//"wrote data into replica.\n", decoration->elapsedTime);
 
   return 0;
 }
+
+static int local_time_sync (void *) {
+  // Set our private replica without transmitting anything over the network.
+
+  set_stream_time.setReplica(0, decoration->elapsedTime);
+
+//fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
+//"wrote data into replica.\n", decoration->elapsedTime);
+}
+
 
 static int handle_timed_sync_complete (void * userdata) {
   CollaborationManager * cm = (CollaborationManager *) userdata;
@@ -2227,8 +2187,8 @@ static int handle_timed_sync_complete (void * userdata) {
   //int useReplica = 1;  // SYNC-ROBUSTNESS
   int useReplica = sync->numPeers();
 
-fprintf(stderr, "++ In handle_timed_sync_complete();  "
-"getting data from replica %d.\n", useReplica);
+//fprintf(stderr, "++ In handle_timed_sync_complete();  "
+//"getting data from replica %d.\n", useReplica);
 
   // Once we have the *latest* state of time-depenedent values,
   // update with that.
@@ -3465,15 +3425,15 @@ static void handle_constraint_mode_change (vrpn_int32 value, void * userdata) {
     fd->setConstraintMode(mode);
     fd->enableConstraint(0);
   }
-fprintf(stderr, "Set spring constraint mode to %s.\n",
-(value == 2) ? "line" : (value == 1) ? "point" : "none");
+//fprintf(stderr, "Set spring constraint mode to %s.\n",
+//(value == 2) ? "line" : (value == 1) ? "point" : "none");
 }
 
 static void handle_constraint_kspring_change (vrpn_float64 value, void * userdata) {
   vrpn_ForceDevice_Remote * fd = (vrpn_ForceDevice_Remote *) userdata;
 
   fd->setConstraintKSpring(value);
-fprintf(stderr, "Set spring constraint strength to %.4f.\n", value);
+//fprintf(stderr, "Set spring constraint strength to %.4f.\n", value);
 }
 
 
@@ -4493,26 +4453,31 @@ void setupSynchronization (CollaborationManager * cm,
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
 
+/* */
   viewColorControls->add((TclNet_string *) dset->colorPlaneName);
   viewColorControls->add((TclNet_string *) dset->colorMapName);
   viewColorControls->add(&color_min);
   viewColorControls->add(&color_max);
   viewColorControls->add(&data_min);
   viewColorControls->add(&data_max);
+/* */
 
   nmui_Component * viewMeasureControls;
   viewMeasureControls = new nmui_Component ("View Measure");
 
+/* */
   viewMeasureControls->add(&measureRedX);
   viewMeasureControls->add(&measureRedY);
   viewMeasureControls->add(&measureGreenX);
   viewMeasureControls->add(&measureGreenY);
   viewMeasureControls->add(&measureBlueX);
   viewMeasureControls->add(&measureBlueY);
+/* */
 
   nmui_Component * viewLightingControls;
   viewLightingControls = new nmui_Component ("View Lighting");
 
+/* */
   viewPlaneControls->add(&tcl_lightDirX);
   viewPlaneControls->add(&tcl_lightDirY);
   viewPlaneControls->add(&tcl_lightDirZ);
@@ -4520,10 +4485,12 @@ void setupSynchronization (CollaborationManager * cm,
   viewColorControls->add(&diffuse);
   viewColorControls->add(&surface_alpha);
   viewColorControls->add(&specular_color);
+/* */
 
   nmui_Component * viewContourControls;
   viewContourControls = new nmui_Component ("View Contour");
 
+/* */
   viewContourControls->add(&texture_scale);
   viewContourControls->add(&contour_width);
   viewContourControls->add(&contour_r);
@@ -4531,10 +4498,12 @@ void setupSynchronization (CollaborationManager * cm,
   viewContourControls->add(&contour_b);
   viewContourControls->add(&contour_changed);
   viewContourControls->add((TclNet_string *) dset->contourPlaneName);
+/* */
 
   nmui_Component * viewGridControls;
   viewGridControls = new nmui_Component ("View Grid");
 
+/* */
   viewGridControls->add(&rulergrid_position_line);
   viewGridControls->add(&rulergrid_orient_line);
   viewGridControls->add(&rulergrid_xoffset);
@@ -4549,6 +4518,7 @@ void setupSynchronization (CollaborationManager * cm,
   viewGridControls->add(&ruler_b);
   viewGridControls->add(&rulergrid_changed);
   viewGridControls->add(&rulergrid_enabled);
+/* */
 
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
@@ -4850,9 +4820,11 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
       } else if (!strcmp(argv[i], "-optimistic")) {
-        istate->useOptimism = VRPN_TRUE;
+        istate->collabMode = 2;
       } else if (!strcmp(argv[i], "-pessimistic")) {
-        istate->useOptimism = VRPN_FALSE;
+        istate->collabMode = 0;
+      } else if (!strcmp(argv[i], "-mpessimistic")) {
+        istate->collabMode = 1;
       } else if (!strcmp(argv[i], "-replayif")) {
         istate->replayInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
@@ -5896,6 +5868,8 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
       alignerUI->setupCallbacks();
     }
 
+    linkMicroscopeToInterface(microscope);
+
   // There is no turning back. If any operations fail, the 
   // calling function will have to recover by calling again with a 
   // simpler istate. 
@@ -6173,7 +6147,7 @@ int main(int argc, char* argv[])
 	delete [] hnbuf;
     }
 
-    if(createNewMicroscope(istate, microscope_connection)) {
+    if (createNewMicroscope(istate, microscope_connection)) {
       display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
       exit(0);
     }
@@ -6305,6 +6279,7 @@ int main(int argc, char* argv[])
   collaborationManager->enableLogging(istate.logInterface);
   collaborationManager->setPeerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
+  collaborationManager->setTimer(&collaborationTimer);
   collaborationManager->initialize(vrpnHandTracker[0], NULL,
                                    handle_peer_sync_change);
 
@@ -6318,7 +6293,8 @@ int main(int argc, char* argv[])
   if (tkenable) {
     // init_Tk_control_panels creates the interpreter and adds most of
     // the Tk widgits
-    init_Tk_control_panels(tcl_script_dir, istate.useOptimism);
+    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
+                           &collaborationTimer);
     set_Tk_command_handler(handleCharacterCommand);
     VERBOSE(1, "done initialising the control panels\n");
   }
@@ -6524,6 +6500,8 @@ int main(int argc, char* argv[])
   World.TSetContents(temp);
  
   initializeInteraction();
+  // did this in createNewMicroscope() but things were NULL then.
+  linkMicroscopeToInterface(microscope);
 
   // Registration - displays images with glX or GLUT depending on V_GLUT
   // flag
@@ -6572,6 +6550,8 @@ gettimeofday(&time1,&zone1);
 gettimeofday(&d_time,&zone1);
 microscope->ResetClock();
 
+  graphicsTimer.start();
+  collaborationTimer.start();
 
 /* 
  * main interactive loop
@@ -6766,9 +6746,12 @@ VERBOSE(1, "Entering main loop");
       } /* end if updt */
 
     // REMOTERENDER
-    // user interface timestamp happens here
 
     graphicsTimer.newTimestep();
+
+    // NANOX
+
+    collaborationTimer.newTimestep();
 
       /* routine for handling all user interaction, including:
        * sdi button box, knob box, phantom button, 
@@ -6936,7 +6919,9 @@ VERBOSE(1, "Entering main loop");
   start = time1.tv_sec * 1000 + time1.tv_usec/1000;
   stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
   interval = stop-start;          /* In milliseconds */
-  /*
+
+  float looplen;
+  float timing;
   printf("Time for %ld loop iterations: %ld seconds\n",n,
         time2.tv_sec-time1.tv_sec);
   printf("Time for %ld display iterations: %ld seconds\n",n_displays,
@@ -6955,7 +6940,10 @@ VERBOSE(1, "Entering main loop");
   printf("---------------\n");
   printf("Graphics Timer:\n");
   graphicsTimer.report();
-  */
+
+  printf("---------------\n");
+  printf("Collaboration Timer:\n");
+  collaborationTimer.report();
 
   if(glenable){
     /* shut down trackers and a/d devices    */

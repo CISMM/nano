@@ -19,6 +19,8 @@ void handle_commit_cancel( vrpn_int32, void *);
 /// Set up synchronization variables with meaningful values.
 
 void initializeInteraction (void);
+void linkMicroscopeToInterface (nmm_Microscope_Remote *);
+
 int clear_polyline( void * userdata );
 
 

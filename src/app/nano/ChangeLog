@@ -1,3 +1,36 @@
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+        * tcl_tk.c (init_Tk_control_panels) : take collaborationTimer as
+        argument and pass to Tclnet_init()
+
+        * microscape.c (local_time_sync) : new function
+        (handle_synchronize_timed_change) : call local_time_sync() (sometimes)
+        (handle_copy_to_private) : call local_time_sync()
+        (createNewMicroscope) : call linkMicroscopeToInterface()
+        (main) : same;  handle & display timings
+
+        * CollaborationManager.C : d_timer, d_myId_svr,
+        d_myId_rem, d_timerSN_type, d_timerSNreply_type : new data members
+        (mainloop) : call sendOurTimer() and respondToPeerTimer()
+        (initialize) : set up VRPN ids, handlers
+        (setPeerName) : same
+        (setTimer) : new function
+        (sendOurTimer) : same
+        (respondToPeerTimer) : same
+        (handle_peerTimer) : same
+        (handle_timerResponse) : same
+
+        * interaction.c : clean up old code & comments
+        (FDOnOffMonitor) : new class
+        (setupHaptics) : use objects on haptic_manager instead of
+        local static objects;  handle feelahead.
+        (doLine) : use FDOnOffMonitor
+        (doFeelLive) : same
+        (doFeelFromGrid) : same;  call setupHaptics()
+        (setupSweepIcon) : new function
+        (linkMicroscopeToInterface) : same
+        (initializeInteraction) : create objects on haptic_manager
+
 2000-09-14  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
 	* nM_coord_change.C (mainloop) : made a call to server_mainloop, killed

@@ -6,8 +6,12 @@
 #include <vrpn_Analog.h>  // for vrpn_ANALOGCB, vrpn_Analog_{Remote,Server}
 
 class vrpn_Connection;  // from <vrpn_Connection.h>
+
+#include <nmb_TimerList.h>  // for nmb_TimerList
+
 class nmui_Component;  // from <nmui_Component.h>
 class nmui_PlaneSync;  // from <nmui_PlaneSync.h>
+
 class nM_coord_change;  // from "nM_coord_change.h"
 
 
@@ -50,6 +54,8 @@ class CollaborationManager {
       ///< What port is our peer listening on?
     void setServerPort (int);
       ///< What port should we listen on?
+
+    void setTimer (nmb_TimerList *);
 
     void initialize (vrpn_Tracker_Remote * handTracker,
                      void * syncChangeData,
@@ -116,6 +122,22 @@ class CollaborationManager {
     char * d_modeServerName;
 
     nmui_Component * d_uiController;
+
+    // for timing collaboration
+
+    nmb_TimerList * d_timer;
+    nmb_TimerList d_peerTimer;
+
+    vrpn_int32 d_myId_svr;
+    vrpn_int32 d_myId_rem;
+    vrpn_int32 d_timerSN_type;
+    vrpn_int32 d_timerSNreply_type;
+
+    void sendOurTimer (void);
+    void respondToPeerTimer (void);
+    static int handle_peerTimer (void *, vrpn_HANDLERPARAM);
+    static int handle_timerResponse (void *, vrpn_HANDLERPARAM);
+
 };
 
 

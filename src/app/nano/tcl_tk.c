@@ -13,12 +13,13 @@
 #include <tk.h>
 
 #include <BCPlane.h>
-#include "Tcl_Linkvar.h"
-#include "Tcl_Netvar.h"
+#include <Tcl_Linkvar.h>
+#include <Tcl_Netvar.h>
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
 #include <nmb_Debug.h>
+#include <nmb_TimerList.h>
 
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
@@ -233,7 +234,8 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 /** Initialize the Tk control panels and connect them up to the variables
  * they will be controlling */
 int	init_Tk_control_panels (const char * tcl_script_dir,
-                                vrpn_bool useOptimism)
+                                int collabMode,
+                                nmb_TimerList * timer)
 {
 	char    command[256];
 	char	cvalue[100];
@@ -396,7 +398,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 
 	/* Initialize the Tclvar variables */
 	VERBOSE(4, "  Calling Tclvar_init()");
-        Tclnet_init(tk_control_interp, useOptimism);
+        Tclnet_init(tk_control_interp, collabMode, timer);
 	if (Tclvar_init(tk_control_interp)) {
 		fprintf(stderr,"Tclvar_init failed.\n");
 		return(-1);

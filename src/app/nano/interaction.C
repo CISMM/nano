@@ -191,23 +191,6 @@ char    *MODE_SOUNDS[] = {      (char *)"fly_mode",
 				(char *)"pick_mode"};
 
 
-/******************************
- *	Force modifications enabled, parameters
- ******************************/
-
-int	plane_line_set = 0;		/**< 1 if plane_line initialized */
-
-
-/******************************
- *      These are the pulse parameters and the information about the
- * current pending pulse request, if any.
- ******************************/
-
-int     pulse_enabled = 0;              /* 1 if pulses are enabled, 0 if not */
-
-/** parameters locking the width in sweep mode (qliu 6/29/95)*/
-//Tclvar_int lock_width("sweep_lock_pressed", 1);
-
 /** parameter locking the tip in sharp tip mode */
 Tclvar_int xy_lock("xy_lock_pressed");
 
@@ -217,16 +200,6 @@ static int	tcl_trigger_just_forced_off = 0;
 static void	handle_trigger_change( vrpn_int32 val, void *userdata );
 
 Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
-
-/**
- * callback function for Commit button in tcl interface.
- **********/
-//void handle_commit_change( vrpn_int32 val, void *userdata);
-
-/**
- * callback function for Cancel commit button in tcl interface.
- **********/
-//void handle_commit_cancel( vrpn_int32 val, void *userdata);
 
 /**
  * callback function for PHANToM reset button in tcl interface.
@@ -244,7 +217,6 @@ static void handle_handTracker_update_rate (vrpn_float64, void *);
 Tclvar_int	tcl_modify_pressed("modify_pressed");
 Tclvar_int	tcl_commit_pressed("commit_pressed", 0 , handle_commit_change);
 int             old_commit_pressed=0;
-//Tclvar_int	tcl_switchlock_pressed("modify_pressed");
 Tclvar_int	tcl_commit_canceled("cancel_commit", 0 , handle_commit_cancel);
 Tclvar_int	tcl_phantom_reset_pressed("reset_phantom", 0, 
 				handle_phantom_reset);
@@ -342,6 +314,77 @@ TclNet_float tcl_wfr_scale
      ("tcl_wfr_scale", 1.0, handle_worldFromRoom_change, NULL);
 
 
+/** @struct FDOnOffMonitor
+ * This code was repeated half-a-dozen-times, but needs three distinct
+ * copies of the variables, so we can't just extract it into functions;
+ * it needs to be in helper objects.
+ */
+
+struct FDOnOffMonitor {
+  FDOnOffMonitor (void);
+
+  void startSurface (void);
+  void stopSurface (void);
+  void startForceField (void);
+  void stopForceField (void);
+
+  vrpn_bool surfaceGoing;
+  vrpn_bool forceFieldGoing;
+};
+
+FDOnOffMonitor::FDOnOffMonitor (void) :
+  surfaceGoing (vrpn_FALSE),
+  forceFieldGoing (vrpn_FALSE) {
+
+}
+
+void FDOnOffMonitor::startSurface (void) {
+
+  if (!config_haptic_enable) {
+    return;
+  }
+
+  if (!forceDevice) {
+    return;
+  }
+
+  if (surfaceGoing) {
+    forceDevice->sendSurface();
+  } else {
+    forceDevice->startSurface();
+    surfaceGoing = vrpn_TRUE;
+  }
+}
+
+void FDOnOffMonitor::stopSurface (void) {
+  if (surfaceGoing && forceDevice) {
+    forceDevice->stopSurface();
+    surfaceGoing = vrpn_FALSE;
+  }
+}
+
+void FDOnOffMonitor::startForceField (void) {
+
+  if (!config_haptic_enable) {
+    return;
+  }
+
+  if (forceDevice) {
+    forceDevice->sendForceField();
+    forceFieldGoing = vrpn_TRUE;
+  }
+}
+
+void FDOnOffMonitor::stopForceField (void) {
+  if (forceFieldGoing && forceDevice) {
+    forceDevice->stopForceField();
+    forceFieldGoing = vrpn_FALSE;
+  }
+}
+
+
+
+
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
   haptic_manager.surfaceFeatures().useLinearFriction(val);
 }
@@ -358,10 +401,10 @@ static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 
   if (vrpnHandTracker[0]) {
     vrpnHandTracker[0]->set_update_rate(v);
-fprintf(stderr, "Set force device update rate to %.5f\n", v);
+//fprintf(stderr, "Set force device update rate to %.5f\n", v);
   } else {
-fprintf(stderr, "No force device, "
-                "so can't force device update rate to %.5f\n", v);
+//fprintf(stderr, "No force device, "
+                //"so can't force device update rate to %.5f\n", v);
   }
 
 }
@@ -451,11 +494,11 @@ static void drawLine (void) {
 	microscope->state.data.inputPoint->getValueByPlaneName
 	(dataset->heightPlaneName->string());
       if (value == NULL) {
-	fprintf(stderr, "handle_commit_change():  "
+	fprintf(stderr, "drawLine():  "
 		"could not get input point!\n");
 	return;
       }
-      printf("handle_commit_change: points in list, doing modify.\n");
+      printf("drawLine: points in list, doing modify.\n");
       microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
     } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
       microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
@@ -475,7 +518,7 @@ static void drawLine (void) {
       microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
     }
 
-    //printf("handle_commit_change: peizo relax done\n");
+    //printf("drawLine: peizo relax done\n");
     // start modification force!
     // We're already in modifcation mode using slow_line_3d
     if (microscope->state.modify.tool != SLOW_LINE_3D) {
@@ -486,7 +529,7 @@ static void drawLine (void) {
     // these calls to sleep should maybe be replaced with a 
     // barrier synch as used in init_slow_line
     sleep(1);
-    //printf("handle_commit_change: in modify mode.\n");
+    //printf("drawLine: in modify mode.\n");
 
     // Slow line tool doesn't do the modification now, it
     // waits for the user to press Play or Step controls.
@@ -509,7 +552,7 @@ static void drawLine (void) {
 					 (currPt->x() - x)) - M_PI_2;
 
     // Draw a line between prevPt and currPt
-    //printf("handle_commit_change: line %f %f to %f %f\n", 
+    //printf("drawLine: line %f %f to %f %f\n", 
     //       x, y, currPt->x(), currPt->y());
     microscope->DrawLine(x, y, currPt->x(), currPt->y());
 
@@ -526,7 +569,7 @@ static void drawLine (void) {
     }
 
     // resume normal scanning operation of AFM
-    printf("handle_commit_change: done modifying, resuming scan.\n");
+    printf("drawLine: done modifying, resuming scan.\n");
 
     microscope->EnableUpdatableQueue(VRPN_TRUE);
 
@@ -695,7 +738,7 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 }
 
 
-static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata.
+static void handle_phantom_reset (vrpn_int32, void *)
 {
   printf("handle phantom reset invoked\n");
     if (tcl_phantom_reset_pressed != 1) return;
@@ -709,29 +752,38 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
 }
 
 void setupHaptics (int mode) {
-  static nmui_HSCanned cannedHaptics;
-  static nmui_HSMeasurePlane measureHaptics(decoration);
-  static nmui_HSLivePlane liveHaptics;
-
-  static nmui_GridFeatures gridStrategy (&cannedHaptics);
-  static nmui_PointFeatures pointStrategy;
-
 
   if (config_haptic_plane) {
-      haptic_manager.setSurface(&measureHaptics);
-      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+    haptic_manager.setSurface(haptic_manager.d_measurePlane);
+    haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+    return;
   }
 
   switch (mode) {
+
     case USER_PLANE_MODE:
-      haptic_manager.setSurface(&cannedHaptics);
-      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(&gridStrategy);
-      break;
-    case USER_LINE_MODE:
-    case USER_PLANEL_MODE:
-      haptic_manager.setSurface(&liveHaptics);
+
+      haptic_manager.setSurface(haptic_manager.d_canned);
       haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
-                             (&pointStrategy);
+               (haptic_manager.d_gridFeatures);
+      break;
+
+    case USER_PLANEL_MODE:
+
+      if (microscope->state.image.tool == FEELAHEAD) {
+        haptic_manager.setSurface(haptic_manager.d_feelAhead);
+        haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+        // TODO:  invent a surface feature strategy!
+        return;
+      } 
+
+      // fall through...
+
+    case USER_LINE_MODE:
+
+      haptic_manager.setSurface(haptic_manager.d_livePlane);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
+                               (haptic_manager.d_pointFeatures);
       break;
 
 
@@ -1247,7 +1299,7 @@ doLight(int whichUser, int userEvent)
   v_xform_type	worldFromPart;
   //v_xform_type	PartFromWorld;
   q_type		q_room;
-  static v_xform_type	oldWorldFromHand;
+  //static v_xform_type	oldWorldFromHand;
   //static q_vec_type	oldLightDir;
 
   q_matrix_type lightDirection;
@@ -1774,8 +1826,7 @@ int doLine(int whichUser, int userEvent)
 {
 	v_xform_type	worldFromHand;
         q_vec_type      clipPos, clipPosNM;
- 	static int	SurfaceGoing = 0;
-	static int      ForceFieldGoing = 0;
+        static FDOnOffMonitor monitor;
         q_matrix_type	hand_mat;
 	q_vec_type	angles;
 	PointType 	TopL, BottomL, TopR, BottomR; // sweepline markers
@@ -1904,11 +1955,6 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
       	      }
 
-		
-		// need this so we can use touch_live_to_plane_fit_to_line
-		// to feel surface later.
-		plane_line_set = 0;
-
 		// update the position of the rubber-band line
 		graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
 		graphics->setRubberSweepLineEnd(TopL, TopR);
@@ -1940,18 +1986,11 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    if ( ((microscope->state.modify.tool == SLOW_LINE_3D) ||
 		  (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) ) &&
 		(tcl_commit_pressed) ) {
+
 	      // Stop using the plane to apply force (?)
-	      if( SurfaceGoing ) {
-		if (forceDevice) {
-		  forceDevice->stopSurface();
-		  SurfaceGoing = 0;
-		}
-	      }
+              monitor.stopSurface();
 	      specify_directZ_force(whichUser);
-	      if(forceDevice && config_haptic_enable) {
-		forceDevice->sendForceField();
-		ForceFieldGoing = 1;
-	      }
+              monitor.startForceField();
 	    }
 	    else {
 	    
@@ -1959,14 +1998,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    // XXX needs new test with new nmm_relaxComp object
 	    //if( microscope->state.relaxComp >= 0 ) {
               touch_surface(whichUser, clipPos);
-              if (forceDevice  && config_haptic_enable) {
-                if (!SurfaceGoing) {
-                  forceDevice->startSurface();
-                  SurfaceGoing = 1;
-                } else {
-                  forceDevice->sendSurface();
-                }
-              }
+              monitor.startSurface();
 	      //}
 	    }
 	    break;
@@ -1979,20 +2011,9 @@ VERBOSE(8, "      doLine:  starting case statement.");
 
 
 		/* don't send a stop surface when not surfacing (?)
-		**/
-		if( SurfaceGoing ) {
-		    if (forceDevice) {
-		    	forceDevice->stopSurface();
-			SurfaceGoing = 0;
-		    }
-		}
-		// added 6/30
-		if( ForceFieldGoing ) {
-		  if (forceDevice) {
-		    forceDevice->stopForceField();
-		    ForceFieldGoing = 0;
-		  }
-		}
+		 */
+                monitor.stopSurface();
+                monitor.stopForceField();
 
 		int list_id;
  		if (microscope->state.modify.style == SWEEP) {
@@ -2160,7 +2181,7 @@ int doPositionScanline(int whichUser, int userEvent)
 int doFeelFromGrid(int whichUser, int userEvent)
 {
         q_vec_type clipPos;
-	static		int	SurfaceGoing = 0;
+        static FDOnOffMonitor monitor;
 	double          aboveSurf;
 
 	BCPlane* plane = dataset->inputGrid->getPlaneByName
@@ -2180,18 +2201,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
         nmui_Util::moveSphere(clipPos, graphics);
 
-    static nmui_HSCanned cannedHaptics;
-    static nmui_HSMeasurePlane measureHaptics (decoration);
-
-    static nmui_GridFeatures strategy (&cannedHaptics);
-
-    if (config_haptic_plane) {
-      haptic_manager.setSurface(&measureHaptics);
-      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
-    } else {
-      haptic_manager.setSurface(&cannedHaptics);
-      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(&strategy);
-    }
+    setupHaptics(USER_PLANE_MODE);
 
 	switch ( userEvent ) 
 	  {
@@ -2201,11 +2211,8 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	       the surface, because the user will get a strong upward force. */
 	    aboveSurf = touch_surface(whichUser, clipPos);
 //fprintf(stderr, "doFeelFromGrid() PRESS %.5f above surface.\n", aboveSurf);
-	    if( !SurfaceGoing && aboveSurf>0) {
-	      if (forceDevice && config_haptic_enable) {
-              	forceDevice->startSurface();
-		SurfaceGoing = 1;
-	      }
+	    if (aboveSurf > 0) {
+              monitor.startSurface();
 	    }
 	    break;
 
@@ -2214,11 +2221,8 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    /* Apply force to the user based on grid */
 	    aboveSurf = touch_surface(whichUser, clipPos);
 //fprintf(stderr, "doFeelFromGrid() HOLD %.5f above surface.\n", aboveSurf);
-	    if (SurfaceGoing || aboveSurf>0) {
-	      if (forceDevice && config_haptic_enable) {
-              	forceDevice->sendSurface();
-		SurfaceGoing = 1;
-	      }
+	    if (monitor.surfaceGoing || (aboveSurf > 0)) {
+              monitor.startSurface();
 	    }
 	    
 	    break;
@@ -2227,12 +2231,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    
 	    /* ArmLib doesn't like a stop surface when it's not surfacing 
 	    **/
-	    if( SurfaceGoing ) {
-	      if (forceDevice) {
-              	forceDevice->stopSurface();
-		SurfaceGoing = 0;
-	      }
-	    }
+            monitor.stopSurface();
 	    
 	    break;
 	    
@@ -2241,6 +2240,49 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	  }
 	
 	return(0);
+}
+
+
+static void setupSweepIcon (int whichUser, q_vec_type clipPos,
+                            BCPlane * plane) {
+  PointType TopL, BottomL, TopR, BottomR;
+  v_xform_type worldFromHand;
+  q_matrix_type	hand_mat;
+  q_vec_type angles;
+  double z_val;
+
+  /* now set up the sweep direction and length, 
+   * based on hand position (hand_mat).
+   */
+
+  v_get_world_from_hand(whichUser, &worldFromHand);
+  q_to_col_matrix(hand_mat, worldFromHand.rotate);
+  q_col_matrix_to_euler( angles, hand_mat );
+  microscope->state.modify.yaw = angles[YAW] + M_PI_2;
+    
+  TopL[X] = BottomL[X] = clipPos[0] +
+      (microscope->state.modify.sweep_width 
+       * cos( microscope->state.modify.yaw ))/2.0;
+  TopL[Y] = BottomL[Y] = clipPos[1] +
+      (microscope->state.modify.sweep_width 
+       * sin( microscope->state.modify.yaw ))/2.0;
+      
+  TopR[X] = BottomR[X] = clipPos[0] -
+      (microscope->state.modify.sweep_width 
+       * cos( microscope->state.modify.yaw ))/2.0;
+  TopR[Y] = BottomR[Y] = clipPos[1] -
+      (microscope->state.modify.sweep_width 
+       * sin( microscope->state.modify.yaw ))/2.0;
+      
+  plane->valueAt( &z_val, clipPos[0], clipPos[1] );
+
+  BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
+
+  TopL[Z] = TopR[Z] = plane->maxAttainableValue() * plane->scale();
+
+  //draw vertical green line representing sweep width.
+  graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
+
 }
 
 /**
@@ -2253,30 +2295,24 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	moves the tip in x, y and z.
  *
  */
-int doFeelLive(int whichUser, int userEvent)  
-{
+int doFeelLive (int whichUser, int userEvent)  {
+  BCPlane * plane;
 
-	PointType 	TopL, BottomL, TopR, BottomR; // sweepline markers
-        q_matrix_type	hand_mat;
-	q_vec_type	angles;
+  // static to allow xy_lock to work properly
+  static q_vec_type clipPos;
+  static q_vec_type clipPosNM;
 
-	v_xform_type	worldFromHand;
-	// static to allow xy_lock to work properly
-        static q_vec_type clipPos;
-        static q_vec_type clipPosNM;
-	static		int	SurfaceGoing = 0;
-	static		int	ForceFieldGoing = 0;
+  static FDOnOffMonitor monitor;
 
-        vrpn_bool nmOK;
+  vrpn_bool nmOK;
 
-	/* if we are not running live, you should not be able
-	   to do this, so put the user into grab mode */
-	if (dataset->inputGrid->readMode() != READ_DEVICE)
-	  {
-	    handleCharacterCommand("G", &dataset->done, 1);
-	    printf("SharpTip mode available only on live data!!!\n");
-	    return 0;
-	  }
+  /* if we are not running live, you should not be able
+     to do this, so put the user into grab mode */
+  if (dataset->inputGrid->readMode() != READ_DEVICE) {
+    handleCharacterCommand("G", &dataset->done, 1);
+    printf("SharpTip mode available only on live data!!!\n");
+    return 0;
+  }
 
   // If we are running live, but we don't have control of the
   // microscope, we can't do this, so put the user into grab mode.
@@ -2287,15 +2323,13 @@ int doFeelLive(int whichUser, int userEvent)
     return 0;
   }
 
-
-	/* Get the input plane and point */
-	BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-	if (plane == NULL)
-	{
-	    fprintf(stderr, "Error in doFeelLive: could not get plane!\n");
-	    return -1;
-	}  
+  // Get the input plane and point
+  plane = dataset->inputGrid->getPlaneByName
+                      (dataset->heightPlaneName->string());
+  if (!plane) {
+    fprintf(stderr, "Error in doFeelLive: could not get plane!\n");
+    return -1;
+  }  
 
    // Get proper name for dataset -- CCWeigle 09/14/99
    // The following lifted from Point_results::getValueByPlaneName()
@@ -2303,9 +2337,9 @@ int doFeelLive(int whichUser, int userEvent)
 
    fullname[sizeof(fullname)-1] = '\0';
    strncpy(fullname, dataset->heightPlaneName->string(), sizeof(fullname)-1);
-   if (NULL == strrchr(fullname, '-'))
-   {
-      fprintf(stderr, "doFeelLive(): problem with plane name %s\n", (char*)dataset->heightPlaneName->string());
+   if (!strrchr(fullname, '-')) {
+      fprintf(stderr, "doFeelLive(): problem with plane name %s\n",
+              (char*)dataset->heightPlaneName->string());
       return -1;
    }
    *strrchr(fullname, '-') = '\0';
@@ -2314,262 +2348,228 @@ int doFeelLive(int whichUser, int userEvent)
    // According to the comments, Channel_selector::Set does everything we need
    // 
 
-   Point_channel_selector *point_selector =
+   Point_channel_selector * point_selector =
          microscope->state.data.point_channels;
 
    if (point_selector->Is_set(fullname) != 1) {
        if (-1 == point_selector->Set(fullname)) {
-	   fprintf(stderr, "doFeelLive(): couldn't activate dataset %s\n", fullname);
+	   fprintf(stderr, "doFeelLive(): couldn't activate dataset %s\n",
+              fullname);
 	   return -1;
        }
-       
-       // no need to update the microscope - done automatically. 
-       //point_selector->Update_microscope(microscope);
    }
-	Point_value *value =
-		microscope->state.data.inputPoint->getValueByPlaneName
-                     (dataset->heightPlaneName->string());
-	if (value == NULL) {
+
+   Point_value * value =
+  	microscope->state.data.inputPoint->getValueByPlaneName
+                      (dataset->heightPlaneName->string());
+   if (value == NULL) {
       fprintf(stderr, "doFeelLive(): could not get value ... this is bad\n");
       return -1;
-	}
+   }
 
 
-	// Find the x,y location of hand in grid space
-	// xy_lock fixes the hand in one position, until it is released
-	if (!xy_lock) {
-	   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
-	      // Constrained freehand only allows motion along a line
-	       nmui_Util::getHandInWorld(whichUser, clipPos);
-	       nmui_Util::clipPositionLineConstraint(plane, clipPos, 
+  // Find the x,y location of hand in grid space
+  // xy_lock fixes the hand in one position, until it is released
+
+  if (!xy_lock) {
+     if (microscope->state.modify.tool == CONSTR_FREEHAND) {
+        // Constrained freehand only allows motion along a line
+         nmui_Util::getHandInWorld(whichUser, clipPos);
+         nmui_Util::clipPositionLineConstraint(plane, clipPos, 
                    microscope->state.modify.stored_points);
-	   } else if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
-	       nmui_Util::getHandInWorld(whichUser, clipPos);
-	       nmui_Util::clipPositionLineConstraint(plane, clipPos, 
+     } else if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
+         nmui_Util::getHandInWorld(whichUser, clipPos);
+         nmui_Util::clipPositionLineConstraint(plane, clipPos, 
                    microscope->state.modify.stored_points,
 		   microscope->state.modify.tool,
 		   microscope->state.modify.constr_xyz_param);
-	   } else {
-	       nmui_Util::getHandInWorld(whichUser, clipPos);
-	       nmui_Util::clipPosition(plane, clipPos);
-	   }
-	} else if (microscope->state.modify.tool = CONSTR_FREEHAND_XYZ) {
-	  nmui_Util::getHandInWorld(whichUser, clipPos);
-	  clipPos[0] = xy_pos[0];
-	  clipPos[1] = xy_pos[1];
+     } else {
+         nmui_Util::getHandInWorld(whichUser, clipPos);
+         nmui_Util::clipPosition(plane, clipPos);
+     }
+  } else if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
+    nmui_Util::getHandInWorld(whichUser, clipPos);
+    clipPos[0] = xy_pos[0];
+    clipPos[1] = xy_pos[1];
+  }
+
+  // Used only for direct Z control - we need to have the Z converted
+  // into NM (divided by plane scale).  If plane scale approaches
+  // zero, nmOK becomes false
+
+  q_vec_copy(clipPosNM, clipPos);
+  nmOK = nmui_Util::convertPositionToNM(plane, clipPosNM);
+
+  // Move the aiming line to the user's hand location
+  decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
+  nmui_Util::moveSphere(clipPos, graphics);
+
+
+  // if the style is sweep, set up additional icon for sweep width
+  if (microscope->state.modify.style == SWEEP) {
+    setupSweepIcon(whichUser, clipPos, plane);
+  }
+
+  switch ( userEvent ) {
+	    
+    case PRESS_EVENT:
+
+#if 0
+      // ASSUMPTION:  we won't have a grab occur until after the
+      // release event, so if we figure out an up vector now it'll
+      // still be valid when we're done.
+      // ASSUMPTION:  [0, 1, 0] in world space is a reasonable
+      // up vector for the plane.  This will, of course, have to
+      // be completely rewritten for uberGraphics.
+
+      // For plane constraint.
+      // TODO:  only do this if the constraint is actually on and
+      // in line mode!
+      // TCH 24 May 1999
+
+      if (forceDevice) {
+        v_xform_type room_from_world;
+        q_vec_type world_up;
+        _float world_upf [3];
+
+        v_x_invert(&room_from_world, &v_world.users.xforms[whichUser]);
+        q_set_vec(world_up, 0.0, 1.0, 0.0);
+        v_x_xform_vector(world_up, &room_from_world, world_up);
+
+        world_upf[0] = world_up[0];
+        world_upf[1] = world_up[1];
+        world_upf[2] = world_up[2];
+        forceDevice->setConstraintLineDirection(world_upf);
+      }
+#endif
+
+      /* Request a reading from the current location,
+       * and wait till tip gets there */
+
+      microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
+
+      break;
+
+    case HOLD_EVENT:
+
+      if (microscope->state.modify.tool == FEELAHEAD) {
+
+        // Feelahead mode IGNORES the commit button;  it never
+        // leaves image mode.
+
+        microscope->TakeSampleSet(clipPos[0], clipPos[1]);
+
+      } else if (!tcl_commit_pressed) { 
+
+        // Commit button is not pressed - we are feeling the surface
+
+        if (old_commit_pressed) { // We were modifying last time
+      	        // this means we should stop using modification force.
+          microscope->ImageMode();
+	  old_commit_pressed = tcl_commit_pressed;
 	}
 
-        // Used only for direct Z control - we need to have the Z converted
-        // into NM (divided by plane scale).  If plane scale approaches
-        // zero, nmOK becomes false
-        q_vec_copy(clipPosNM, clipPos);
-        nmOK = nmui_Util::convertPositionToNM(plane, clipPosNM);
+	/* Request a reading from the current location */
 
-	/* Move the aiming line to the user's hand location */
-        //nmui_Util::moveAimLine(clipPos);
-        decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
-        nmui_Util::moveSphere(clipPos, graphics);
-
-
-	// if the style is sweep, set up additional icon for sweep width
-	if (microscope->state.modify.style == SWEEP) {
-	    /* now set up the sweep direction and length, 
-	     * based on hand position (hand_mat).
-	     */
-	    v_get_world_from_hand(whichUser, &worldFromHand);
-	    q_to_col_matrix(hand_mat, worldFromHand.rotate);
-	    q_col_matrix_to_euler( angles, hand_mat );
-	    microscope->state.modify.yaw = angles[YAW] + M_PI_2;
+	microscope->TakeFeelStep(clipPos[0], clipPos[1]);
 	    
-	    TopL[X] = BottomL[X] = clipPos[0] +
-	      (microscope->state.modify.sweep_width 
-	       * cos( microscope->state.modify.yaw ))/2.0;
-	    TopL[Y] = BottomL[Y] = clipPos[1] +
-	      (microscope->state.modify.sweep_width 
-	       * sin( microscope->state.modify.yaw ))/2.0;
-	    
-	    TopR[X] = BottomR[X] = clipPos[0] -
-	      (microscope->state.modify.sweep_width 
-	       * cos( microscope->state.modify.yaw ))/2.0;
-	    TopR[Y] = BottomR[Y] = clipPos[1] -
-	      (microscope->state.modify.sweep_width 
-	       * sin( microscope->state.modify.yaw ))/2.0;
-	    
-            double z_val;
-            plane->valueAt( &z_val, clipPos[0], clipPos[1] );
-	    BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
+      } else {
 
-	    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
-		  plane->scale();
-	    
-	    //draw vertical green line representing sweep width.
-	    graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
-	}
-	switch ( userEvent ) {
-	    
-	case PRESS_EVENT:
+        // Commit button is pressed - we are modifying the surface
 
-          // ASSUMPTION:  we won't have a grab occur until after the
-          // release event, so if we figure out an up vector now it'll
-          // still be valid when we're done.
-          // ASSUMPTION:  [0, 1, 0] in world space is a reasonable
-          // up vector for the plane.  This will, of course, have to
-          // be completely rewritten for uberGraphics.
-          // For plane constraint.
-          // TODO:  only do this if the constraint is actually on and
-          // in line mode!
-          // TCH 24 May 1999
-
-          if (forceDevice) {
-            v_xform_type room_from_world;
-            q_vec_type world_up;
-            float world_upf [3];
-
-            v_x_invert(&room_from_world, &v_world.users.xforms[whichUser]);
-            q_set_vec(world_up, 0.0, 1.0, 0.0);
-            v_x_xform_vector(world_up, &room_from_world, world_up);
-
-            world_upf[0] = world_up[0];
-            world_upf[1] = world_up[1];
-            world_upf[2] = world_up[2];
-            forceDevice->setConstraintLineDirection(world_upf);
-          }
-
-	/* Request a reading from the current location,
-         * and wait till tip gets there */
-	  microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
-
-	  plane_line_set = 0;
-
-	break;
-
-	case HOLD_EVENT:
-	    /* determine whether we should switch into or out of modify force,
-	     * based on the commit button and our last state */
-
-	if (!tcl_commit_pressed) { 
-	  // Commit button is not pressed - we are feeling the surface
-	    if (old_commit_pressed) { // We were modifying last time
-		// this means we should stop using modification force.
-                microscope->ImageMode();
-		old_commit_pressed = tcl_commit_pressed;
-	    }
-	    /* Request a reading from the current location */
-	    microscope->TakeFeelStep(clipPos[0], clipPos[1]);
-	    
-	} else { // Commit button is pressed - we are modifying the surface
-	    if (!old_commit_pressed) { // We weren't commited last time
+	if (!old_commit_pressed) { // We weren't commited last time
 		// this means we should start using modification force.
-	       microscope->ModifyMode();
-	       old_commit_pressed = tcl_commit_pressed;
-	    }
-
-	    /* Request a reading from the current location, 
-	     * using the current modification style */
-               if ( microscope->state.modify.control == DIRECTZ) {
-                 if (nmOK) {
-                   microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
-                                               clipPosNM[2]);
-                 }
-	       } else {
-                 microscope->TakeModStep(clipPos[0], clipPos[1]);
-	       }
+	  microscope->ModifyMode();
+	  old_commit_pressed = tcl_commit_pressed;
 	}
-	    
-	if (( microscope->state.modify.control == DIRECTZ) &&
-            (tcl_commit_pressed)) {
 
-	    // Stop using the plane to apply force
-	    
-	    if( SurfaceGoing ) {
-		if (forceDevice) {
-		    forceDevice->stopSurface();
-		    SurfaceGoing = 0;
-		}
-	    }
-	    // Start using the forcefield to apply a constant force.
-	    // Apply force to the user based on current measured force 
-	    // XXX needs new test with new nmm_relaxComp object
-	    //if( microscope->state.relaxComp >= 0 ) {
-		specify_directZ_force(whichUser);
-		if (forceDevice && config_haptic_enable) {
-		    forceDevice->sendForceField();
-		    ForceFieldGoing = 1;
-		}
-		//}
-	   
+	/* Request a reading from the current location, 
+	 * using the current modification style */
+
+        if ( microscope->state.modify.control == DIRECTZ) {
+          if (nmOK) {
+            microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
+                                               clipPosNM[2]);
+          }
 	} else {
+          microscope->TakeModStep(clipPos[0], clipPos[1]);
+	}
+      }
+	    
+      if (( microscope->state.modify.control == DIRECTZ) &&
+          (tcl_commit_pressed)) {
 
-          setupHaptics(USER_PLANEL_MODE);
+          // Stop using the plane to apply force
+	    
+          monitor.stopSurface();
+
+          // Start using the forcefield to apply a constant force.
+          // Apply force to the user based on current measured force 
+          // XXX needs new test with new nmm_relaxComp object
+
+          specify_directZ_force(whichUser);
+          monitor.startForceField();
+	   
+      } else {
+
+        setupHaptics(USER_PLANEL_MODE);
 
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
-	  if( !microscope->d_relax_comp.is_ignoring_points() ) {
-              touch_surface(whichUser, clipPos);
-              if (forceDevice  && config_haptic_enable) {
-                if (!SurfaceGoing) {
-                  forceDevice->startSurface();
-                  SurfaceGoing = 1;
-                } else {
-                  forceDevice->sendSurface();
-                }
-              }
-          }
-	}
-	break;
+        if (!microscope->d_relax_comp.is_ignoring_points() ) {
+          touch_surface(whichUser, clipPos);
+          monitor.startSurface();
+        }
+      }
+
+      break;
 	
-	case RELEASE_EVENT:	/* Go back to scanning upon release */
+    case RELEASE_EVENT:	/* Go back to scanning upon release */
 
 	    // Stop applying force.
-	if( SurfaceGoing ) {
-	   if (forceDevice) {
-	   	forceDevice->stopSurface();
-		SurfaceGoing = 0;
-	   }
-	}
-	if( ForceFieldGoing ) {
-	    if (forceDevice) {
-		forceDevice->stopForceField();
-		ForceFieldGoing = 0;
-	    }
-	}
+      monitor.stopSurface();
+      monitor.stopForceField();
 
-	/* turn off the commit button if user releases the trigger. */
-	tcl_commit_pressed = 0;
-	old_commit_pressed = 0;
-	if ((microscope->state.modify.tool == CONSTR_FREEHAND) ||
+      /* turn off the commit button if user releases the trigger. */
+      tcl_commit_pressed = 0;
+      old_commit_pressed = 0;
+      if ((microscope->state.modify.tool == CONSTR_FREEHAND) ||
 	    (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
-	   // Turn off constraint line, if it was on.
-	   if (microscope->state.modify.constr_line_specified) {
-	      microscope->state.modify.constr_line_specified = VRPN_FALSE;
-	   }
-	   // Remove any points from the constraint line list.
-	   Position_list & p = microscope->state.modify.stored_points;
-	   if (!p.empty()) {
-	      // delete stored points (so we don't use them again!)
-	      // get rid of the rubber band line.
-	      //printf("Clearing stored polyline points.\n");
-	       // This gets Done when we enter Image mode.
-	       //graphics->emptyPolyline();
-	      
-	      p.start();
-	      while(p.notDone()) {
-		 //printf("cancel - remove func: %d\n", (p.curr())->iconID());
-		 // get rid of the icons marking the line endpoints
-		 p.del();  //this moves the pointer forward to the next point.
-	      }
-	   }
-	}
-	/* Start image mode and resume previous scan pattern */
-        microscope->ResumeScan();
 
-	break;
+	// Turn off constraint line, if it was on.
+        if (microscope->state.modify.constr_line_specified) {
+          microscope->state.modify.constr_line_specified = VRPN_FALSE;
+        }
 
-	default:
-	    break;
-	}
+        // Remove any points from the constraint line list.
+        Position_list & p = microscope->state.modify.stored_points;
+        if (!p.empty()) {
+          // delete stored points (so we don't use them again!)
+          // get rid of the rubber band line.
+          //printf("Clearing stored polyline points.\n");
+          // This gets Done when we enter Image mode.
+          //graphics->emptyPolyline();
+            
+          p.start();
 
-	return(0);
+          while(p.notDone()) {
+
+      	    //printf("cancel - remove func: %d\n", (p.curr())->iconID());
+      	    // get rid of the icons marking the line endpoints
+      	    p.del();  //this moves the pointer forward to the next point.
+          }
+        }
+      }
+      /* Start image mode and resume previous scan pattern */
+      microscope->ResumeScan();
+
+      break;
+
+    default:
+      break;
+  }
+
+  return(0);
 }
 
 
@@ -2789,6 +2789,26 @@ void initializeInteraction (void) {
   tcl_lightDirZ = lightdir[Z];
 
   updateWorldFromRoom();
+
+  haptic_manager.d_canned = new nmui_HSCanned;
+  haptic_manager.d_measurePlane = new nmui_HSMeasurePlane (decoration);
+  haptic_manager.d_livePlane = new nmui_HSLivePlane;
+  haptic_manager.d_feelAhead = new nmui_HSFeelAhead;
+  haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
+
+  haptic_manager.d_gridFeatures = new nmui_GridFeatures
+                                       (haptic_manager.d_canned);
+  haptic_manager.d_pointFeatures = new nmui_PointFeatures;
+
+}
+
+void linkMicroscopeToInterface (nmm_Microscope_Remote * microscope) {
+
+  if (microscope && haptic_manager.d_feelAhead) {
+    microscope->registerFeeltoHandler
+        (nmui_HSFeelAhead::newPointListReceivedCallback,
+         haptic_manager.d_feelAhead);
+  }
 
 }
 
