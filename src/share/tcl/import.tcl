@@ -1,5 +1,7 @@
 set nmInfo(import_objects) [create_closing_toplevel import_objects "Import Objects" ]
 
+set import_dir ""
+set import_file_label "NONE"
 set import_transx 0
 set import_transy 0
 set import_transz 0
@@ -23,7 +25,15 @@ set nmInfo(basic_options) [$nmInfo(import_objects).basics childsite]
 
 pack $nmInfo(import_objects).basics -side top -fill x
 
-generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
+frame $nmInfo(basic_options).file
+frame $nmInfo(basic_options).file.buttons
+label $nmInfo(basic_options).file.import_file_label -justify left -text \
+	"Current Imported file: $import_file_label"
+
+button $nmInfo(basic_options).file.buttons.import_button -text "Import File" -command open_import_file
+button $nmInfo(basic_options).file.buttons.close_button -text "Close File" -command close_import_file
+
+#generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
 
 frame $nmInfo(basic_options).f1
 frame $nmInfo(basic_options).f2
@@ -42,7 +52,7 @@ generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
      "Z Rotation" real
 generic_entry $nmInfo(basic_options).f3.import_scale import_scale \
      "Scale" real 
-button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
+button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command open_import_file
 
 button $nmInfo(basic_options).f3.set_color \
         -text "Set color" -command {
@@ -57,7 +67,13 @@ button $nmInfo(basic_options).f3.colorsample \
         -command { $nmInfo(basic_options).f3.set_color invoke}
 
 
-pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
+#pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).file -anchor w -fill x
+pack $nmInfo(basic_options).file.import_file_label -anchor w -side left
+pack $nmInfo(basic_options).file.buttons -anchor w -fill x
+pack $nmInfo(basic_options).file.buttons.import_button -anchor nw -side left -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.close_button -anchor nw -padx 1m -pady 1m
+
 pack $nmInfo(basic_options).f1 -side left -fill x
 pack $nmInfo(basic_options).f2 -side left -fill x
 pack $nmInfo(basic_options).f3 -side left -fill x
@@ -73,6 +89,49 @@ pack $nmInfo(basic_options).f3.set_color -side left -padx 1m
 pack $nmInfo(basic_options).f3.colorsample -side left -padx 1m -fill x -expand yes
 
 trace variable import_type w SetupOptions
+
+#
+################################
+# Open an import file. 
+proc open_import_file {} {
+    global modelFile nmInfo import_dir import_file_label
+    set types { {"Wave Front files" ".obj" } 
+                {"MSI files" ".msi" } 
+                {"All files" *} }
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $import_dir \
+            -title "Import a file"]
+    if {$filename != ""} {
+	# setting this variable triggers a callback in C code
+	# which saves the file. 
+        # dialog check whether file exists.
+        set modelFile $filename
+        set import_dir [file dirname $filename]
+
+        regexp -indices {[^/]*$} $modelFile model_ind
+        set m_start [lindex [split $model_ind] 0]
+        set m_end [lindex [split $model_ind] 1]
+    
+        set import_file_label [string range $modelFile $m_start $m_end]
+    } else {
+        set modelFile ""
+        set import_file_label "NONE"
+    }
+    $nmInfo(basic_options).file.import_file_label configure -text \
+	"Current Imported file: $import_file_label"
+}
+
+proc close_import_file {} {
+    global modelFile nmInfo import_file_label
+
+    set modelFile ""
+    set import_file_label "NONE"
+
+    $nmInfo(basic_options).file.import_file_label configure -text \
+	"Current Imported file: $import_file_label"
+
+    destroy $nmInfo(import_objects).options
+}
 
 proc set_import_color {} {
     global import_r import_g import_b import_color_changed import_color

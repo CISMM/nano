@@ -157,6 +157,8 @@ set viz_min_limit 0
 set viz_max_limit 1
 set viz_alpha 0.5
 set viztex_scale 500
+set viz_tex_files {none}
+set viz_tex_dir ""
 
 #Viz choices plane
 iwidgets::Labeledframe $nmInfo(visualizations).viz \
@@ -211,6 +213,11 @@ label $nmInfo(viz_controls).alphalabel -justify left -text \
 generic_entry $nmInfo(viz_controls).viz_alpha viz_alpha "Alpha:" real
 generic_entry $nmInfo(viz_controls).viztex_scale viztex_scale "Texture Scale:" real
 
+generic_optionmenu $nmInfo(viz_controls).viz_tex viz_tex \
+	"Visualization Texture" viz_tex_files
+
+button $nmInfo(viz_controls).viz_tex_button -text "Load Texture" -command open_texture_file
+
 pack $nmInfo(viz_controls).viz_dataset -side top -anchor w
 pack $nmInfo(viz_controls).slidelabel -side top -anchor w
 pack $nmInfo(viz_controls).planemin -side top -anchor w
@@ -220,6 +227,9 @@ pack $nmInfo(viz_controls).viz_max -side top -anchor w
 pack $nmInfo(viz_controls).alphalabel -side top -anchor w
 pack $nmInfo(viz_controls).viz_alpha -side top -anchor w -padx 1m
 pack $nmInfo(viz_controls).viztex_scale -side top -anchor w -padx 1m
+pack $nmInfo(viz_controls).viz_tex -anchor nw -padx 1 -pady 1
+pack $nmInfo(viz_controls).viz_tex_button -anchor nw -padx 1 -pady 1
+
 trace variable viz_min_limit w update_minmax_label
 trace variable viz_max_limit w update_minmax_label
 
@@ -232,6 +242,25 @@ proc update_minmax_label {name el op} {
 
 	$nmInfo(viz_controls).planemax configure -text \
 	"Visualization plane max height $viz_max_limit"
+}
+
+#
+################################
+# Open a texture file. 
+proc open_texture_file {} {
+    global viz_tex_new viz_tex_dir
+    set types { {"PPM files" ".ppm" } 
+                {"All files" *} }
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $viz_tex_dir \
+            -title "Import a file"]
+    if {$filename != ""} {
+	    # setting this variable triggers a callback in C code
+	    # which saves the file. 
+        # dialog check whether file exists.
+        set viz_tex_new $filename
+        set viz_tex_dir [file dirname $filename]
+    }
 }
 
 #
