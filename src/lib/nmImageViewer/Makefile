@@ -1,6 +1,6 @@
 USES_LIBS := nmBase vrpn
 
-USES_EXTERNAL_LIBS := glut
+USES_EXTERNAL_LIBS := glut_UNC
 
 NAUGHTY := 1
 
