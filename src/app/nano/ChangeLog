@@ -1,3 +1,8 @@
+2001-12-04  Andrea Hilchey  <hilchey@evans.cs.unc.edu>
+
+	* microscape.c : additional paramter to call to 
+	shape_analysis.imageAnalyze
+
 2001-11-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* x_graph.c : replaced get_the_interpreter() with 
