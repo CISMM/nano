@@ -431,9 +431,14 @@ pack $drawing_parameters_win.tool.thinpolyline.button \
 
 #     $drawing_parameters_win.tool.select -side top
 
+generic_optionmenu $drawing_parameters_win.canvas_image canvas_image \
+        "Canvas Image" imageNames
+pack $drawing_parameters_win.canvas_image -anchor nw \
+       -padx 3 -pady 3 -side top
+
 button $drawing_parameters_win.clear_drawing -text "Delete Last" -command \
     { set clear_drawing 1 }
-pack $drawing_parameters_win.clear_drawing -side right
+pack $drawing_parameters_win.clear_drawing -anchor sw -side left
 
 #generic_optionmenu $drawing_parameters_win.coordinate_system \
 #     drawing_coordinate_system "Coordinate System" imageNames
@@ -466,7 +471,8 @@ pack $display_parameters_win.main_label -side top
 
 generic_optionmenu $display_parameters_win.current_image current_image \
         "Image" imageNames
-pack $display_parameters_win.current_image -anchor nw -padx 3 -pady 3 -side left
+pack $display_parameters_win.current_image -anchor nw \
+     -padx 3 -pady 3 -side left
 
 set image_color [format #%02x%02x%02x $image_r $image_g $image_b]
 
