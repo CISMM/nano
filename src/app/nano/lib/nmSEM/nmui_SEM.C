@@ -119,6 +119,7 @@ void nms_SEM_ui::handle_acquire_image(vrpn_int32 _newval, void *_userdata)
     nms_SEM_ui *me = (nms_SEM_ui *)_userdata;
     printf("requesting scan\n");
     me->sem->requestScan(0); // clear the pipeline
+    me->sem->setExternalScanControlEnable(1);
     me->sem->requestScan(5); // request a bunch to start with in
 			// order to fill the pipeline between the server
 			// and this program
@@ -339,6 +340,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
                 info.sem->requestScan(1);
             } else {
                 info.sem->requestScan(0);
+                info.sem->setExternalScanControlEnable(0);
             }
             frame_count++;
 	}
