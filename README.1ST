@@ -172,15 +172,26 @@ for compiling:
 11. cd /nsrc/nano/src
     make VC=1 NM_VERBOSE_MAKEFILE=1
 12. The executable should be in C:\nsrc\obj\pc_win32\app\nano
-13. Now, you may want to run this executable. Unfortunately this is complicated
-    by the many DLLs and other external files required by nano.exe while it is
-    running.
-    The simplest way to make sure you have all the necessary DLLs
-    and other files used during runtime is to get the .zip file from the
-    /afs/unc/proj/stm/src/export directory and decompress this into some
-    directory on your pc. Then follow the instructions in the readme file
-    within the .zip file for how to set your environment to let you run.
-    If you are running from the command line, beware that environment 
-    variables may be set automatically when you
-    start up your cygwin shell to something different from what they are
-    in the System Properties (where you will set the new variables).
+13. Running the program:
+
+From your shell, you should be able to run by simply typing nano. If you
+aren't connected to a magellan make sure to supply the -nomagellan argument.
+
+If you want to run the program by double-clicking on it in windows then make 
+sure to set the following in System Properties:
+
+Environment variables to set and sample values:
+
+Under System Variables:
+Add the following to the Path variable just after the
+SystemRoot directories or at least before the cygwin directory: 
+
+C:\nsrc\external\pc_win32\bin
+
+Under User Variables (these values may need to be changed slightly depending
+on your installation):
+
+NM_COLORMAP_DIR = C:\\nsrc/colormaps
+NM_TCL_DIR = C:\\nsrc/nano/src/share/tcl/
+TCL_LIBRARY = C:/nsrc/external/pc_win32/bin/tcl8.2
+TRACKER = null Phantom_desktop
