@@ -33,8 +33,11 @@ class ModFile {
   private:
 
     int d_lastmode;
+    long d_start_mod_time;
     Tcl_Interp * d_interp;
     Point_list d_pointlist;
+
+    void RememberPointList (void);
 
     void ShowModFile (void);
 };

@@ -1,7 +1,5 @@
 #include <math.h>
-#include <Tcl_Linkvar.h>
-#include <tcl.h>
-#include <blt.h>
+#include <blt.h>  // for BLT vector class and functions.
 #if defined (__CYGWIN__) || (linux)
 #include <float.h> // for FLT_MAX
 #endif
@@ -29,7 +27,10 @@ GraphMod::GraphMod (void) :
     d_currentmode (IMAGEMODE),
     d_lastmode (MODMODE),
     d_interp (NULL), 
-    d_first_point (1),
+    d_total_num_points (0),
+    d_num_points_graphed (0),
+    d_max_points ("gm_max_num_points", 10000),
+    d_stride ("gm_stride", 2),
     d_num_scanlines(0),
     d_numscanline_channels(0),
     d_scanlength(0) {
@@ -47,9 +48,10 @@ int GraphMod::EnterModifyMode (void * userdata) {
   char    command[300];
 
   if (me->d_currentmode == MODMODE) {
-    fprintf(stderr, "GraphMod::EnterModifyMode:  "
-                    "Error switching from MODMODE to MODMODE.\n");
-    return -1;
+      // This is OK, sometimes happens when collaborating. 
+//      fprintf(stderr, "GraphMod::EnterModifyMode:  "
+//                      "Error switching from MODMODE to MODMODE.\n");
+    return 0;
   }
 
   if (!graphmod_hasWindow) {
@@ -77,7 +79,8 @@ int GraphMod::EnterImageMode (void * userdata) {
 
   me->d_lastmode = me->d_currentmode;
   me->d_currentmode = IMAGEMODE;
-  me->d_first_point = 1;
+  me->d_total_num_points = 0;
+  me->d_num_points_graphed = 0;
 
   return 0;
 }
@@ -145,9 +148,10 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 		    sprintf(str,"gm_%s_%s%d", (const char *)(*name),
                 	(const char *)(*units), i);
 	           // remove spaces - they are bad for vector names.
-            	   for (k = 0; k < strlen(str); k++)
-                	if (str[k] == ' ' || str[k] == '-')
-                            str[k] = '_';
+		    for (unsigned int m = 0; m < strlen(str); m++){
+                	if (str[m] == ' ' || str[m] == '-')
+                            str[m] = '_';
+		    }
 
 		    sprintf(command, "remove_stripchart_element \"%s\"",
 			str);
@@ -290,9 +294,10 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 		(const char *)(*units), j);
 
             // remove spaces - they are bad for vector names.
-            for (k = 0; k < strlen(str); k++)
-            	if (str[k] == ' ' || str[k] == '-')
-               		str[k] = '_';
+	    for (unsigned int m = 0; m < strlen(str); m++){
+		if (str[m] == ' ' || str[m] == '-')
+		    str[m] = '_';
+	    }
 
 
 //	    printf("adding vector %s\n", str);
@@ -354,7 +359,7 @@ static   long	first_sec,first_usec;
    if (me->d_currentmode != MODMODE)
      return 0;
 
-   if (me->d_first_point) {
+   if (me->d_total_num_points == 0) {
       // Find out how many values are in the first point.  Used for
       // comparison later.  Also find the starting location and time
       // of the first point.
@@ -444,9 +449,10 @@ static   long	first_sec,first_usec;
 		 value->units()->Characters());
 
 	 // remove spaces - they are bad for vector names.
-	 for (int i = 0; i < strlen(str); i++)
+	 for (unsigned int i = 0; i < strlen(str); i++){
 	    if (str[i] == ' ')
 	       str[i] = '_';
+	 }
 
 	 //printf("graphmod : %s\n", str);
 
@@ -468,10 +474,20 @@ static   long	first_sec,first_usec;
 	 TCLEVALCHECK(me->d_interp, command);
       } // for
 
-      me->d_first_point = 0;
+      me->d_total_num_points = 1;
+      me->d_num_points_graphed = 1;
    } else {
       // this isn't the first point, so we can add data to each vector
       // to graph it. 
+
+      me->d_total_num_points++;
+       // If the stride is greater than one, we may skip this point. 
+      // Example: d_stride = 2, graph point 0, 2, 4, 6.... 
+      // point 0 is always graphed as a special case above. 
+      if (((me->d_total_num_points - 1) % me->d_stride) != 0) {
+	  return 0;
+      }
+      me->d_num_points_graphed++;
 
       // Calculate s by accumulating from the start
       s += sqrt( (p->x() - last_x) * (p->x() - last_x) +
@@ -498,28 +514,54 @@ static   long	first_sec,first_usec;
       // update the y surface vector
       sprintf(command, "gm_ysurfvec append %f", p->y());
       TCLEVALCHECK(me->d_interp, command);
-      
+
+      // sanity check on d_max_points
+      if (me->d_max_points < 2) {
+	  me->d_max_points = 2;
+      }
+      // If the data vector has become too long, chop off the  
+      // second element. We leave the first element to indicate
+      // that data has been removed.
+      if (me->d_num_points_graphed > me->d_max_points) {
+	  sprintf(command, "gm_timevec delete 1");
+	  TCLEVALCHECK(me->d_interp, command);
+	  sprintf(command, "gm_svec delete 1");
+	  TCLEVALCHECK(me->d_interp, command);
+	  sprintf(command, "gm_xsurfvec delete 1");
+	  TCLEVALCHECK(me->d_interp, command);
+	  sprintf(command, "gm_ysurfvec delete 1");
+	  TCLEVALCHECK(me->d_interp, command);
+      }
       // plot the next point for each data value
       for (value = p->head(); value != NULL; value = value->next()) {
-	 // make sure we have a vector to put value in.
+	 // make sure we have a vector to put the value in.
 	 sprintf(str,"gm_%s_%s", value->name()->Characters(), 
 		 value->units()->Characters());
 
 	 // remove spaces - they are bad for vector names.
-	 for (int i = 0; i < strlen(str); i++)
+	 for (unsigned int i = 0; i < strlen(str); i++) {
 	    if (str[i] == ' ')
 	       str[i] = '_';
+	 }
 	 
 	 if (!Blt_VectorExists(me->d_interp, str))  {
-	    fprintf(stderr, "GraphMod: extra value %s\n", str,
+	    fprintf(stderr, "GraphMod: extra value %s, %s\n", str,
 		    me->d_interp->result);
 	    break;
 	 }
 	 //Set the value in the vector, so it gets plotted.
 	 sprintf(command, "%s append %12.9g", str, value->value());
 	 TCLEVALCHECK(me->d_interp, command);
+	 // If the data vector has become too long, chop off the
+	 // second element. We leave the first element to indicate
+	 // that data has been removed.
+	 if (me->d_num_points_graphed > me->d_max_points) {
+	     sprintf(command, "%s delete 1", str);
+	     TCLEVALCHECK(me->d_interp, command);
+	 }
       }
-   } // endif (me->d_first_point)
+
+   } // end if-else (me->d_num_points = 0)
    
    return 0;
 }
@@ -527,7 +569,7 @@ static   long	first_sec,first_usec;
 
 void GraphMod::ShowStripchart (const char * ) {
    char command [100];
-   sprintf(command, "show_stripchart_win");
+   sprintf(command, "show.stripchart");
    if (Tcl_Eval(d_interp, command) != TCL_OK) {
       fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
 	      d_interp->result);

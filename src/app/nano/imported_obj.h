@@ -47,28 +47,28 @@ class imported_obj {
     float sphere_colorR_value, sphere_colorG_value, sphere_colorB_value;
 
     //TCL widgets for sliders, buttons, entries, etc. in import_objects window
-    Tclvar_int_with_scale *translate_x;
-    Tclvar_int_with_scale *translate_y;
-    Tclvar_int_with_scale *translate_z;
-    Tclvar_int_with_scale *rotate_x;
-    Tclvar_int_with_scale *rotate_y;
-    Tclvar_int_with_scale *rotate_z;
-    Tclvar_float_with_scale *scale;
+    Tclvar_int *translate_x;
+    Tclvar_int *translate_y;
+    Tclvar_int *translate_z;
+    Tclvar_int *rotate_x;
+    Tclvar_int *rotate_y;
+    Tclvar_int *rotate_z;
+    Tclvar_float *scale;
 
     Tclvar_int *import_mode; //0 is bond mode, 1 is sphere mode
     Tclvar_int *visibility_mode; //0 is hide mode, 1 is show mode
     Tclvar_int *delete_object;
 
     //TCL widgets for sliders, buttons, etc. in View window
-    Tclvar_float_with_scale *bond_width;
-    Tclvar_float_with_scale *sphere_radius;
-    Tclvar_int_with_scale *sphere_tesselation;
-    Tclvar_float_with_scale *bond_colorR;
-    Tclvar_float_with_scale *bond_colorG;
-    Tclvar_float_with_scale *bond_colorB;
-    Tclvar_float_with_scale *sphere_colorR;
-    Tclvar_float_with_scale *sphere_colorG;
-    Tclvar_float_with_scale *sphere_colorB;
+    Tclvar_float *bond_width;
+    Tclvar_float *sphere_radius;
+    Tclvar_int *sphere_tesselation;
+    Tclvar_float *bond_colorR;
+    Tclvar_float *bond_colorG;
+    Tclvar_float *bond_colorB;
+    Tclvar_float *sphere_colorR;
+    Tclvar_float *sphere_colorG;
+    Tclvar_float *sphere_colorB;
 
     static int imported_obj_count; //number of objects created so far
 

@@ -872,10 +872,14 @@ int Microscope::QueryPulseParams (void) {
 
 
 
+void Microscope::setPlaybackLimit (int limit) {
+  d_playbackLimit = limit;
+}
 
 
 int Microscope::HandleReports (void) {
 
+  int packets_played = 0;
   int retval = 0;
   struct timeval skiptime;
   struct timeval last_time;
@@ -896,8 +900,16 @@ int Microscope::HandleReports (void) {
     time_add(d_next_time, skiptime, &d_next_time);
     VERBOSE(5, "   handling packets with HandlePacket()");
 
-    while ((retval = HandlePacket()) == 1)
+    while ((retval = HandlePacket()) == 1) {
       VERBOSE(5, "    another packet...");
+      packets_played++;
+      if ((d_playbackLimit > 0) &&
+          (packets_played >= d_playbackLimit)) {
+//fprintf(stderr, "Played back %d packets;  truncating HandleReports().\n",
+//packets_played);
+        break;
+      }
+    }
 
     if (retval == -1) {
       fprintf(stderr, "Microscope::HandleReports():  "

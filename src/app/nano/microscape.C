@@ -222,6 +222,9 @@ static void handle_constraint_kspring_change (vrpn_float64, void *);
 // Callback for screen capture
 static void handle_screenImageFileName_change(const char *new_value, void *userdata);
 
+static void handle_rulergridOrientLine_change (vrpn_int32, void *);
+static void handle_rulergridPositionLine_change (vrpn_int32, void *);
+
 // VRPN callback functions
 static void	handle_tracker2room_change(void *userdata, 
 					const vrpn_TRACKERTRACKER2ROOMCB info);
@@ -256,9 +259,9 @@ static void handle_load_button_press_change (vrpn_int32, void *);
 // NANOX
 // synchronization UI handlers
 // generic synchronization
-static void handle_synchronize_change (vrpn_int32, void *);
-static void handle_get_sync (vrpn_int32, void *);
-static void handle_lock_sync (vrpn_int32, void *);
+//static void handle_synchronize_change (vrpn_int32, void *);
+//static void handle_get_sync (vrpn_int32, void *);
+//static void handle_lock_sync (vrpn_int32, void *);
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
 static void handle_timed_sync (vrpn_int32, void *);
@@ -312,7 +315,8 @@ static float	alpha_red = 0.0;		// Color of the alpha pattern
 static float	alpha_green = 1.0;
 static float	alpha_blue = 0.0;
 
-
+#ifndef _WIN32
+// only used in the unix version of microscape.
 static	void	update_xdisp_on_plane_change (BCPlane * p,
                                               int x, int y, void *) {
 
@@ -323,7 +327,7 @@ static	void	update_xdisp_on_plane_change (BCPlane * p,
     //XXX Nothing for now
   }
 }
-
+#endif
 
 
 vrpn_Tracker_Remote * vrpnHeadTracker [NUM_USERS];
@@ -354,26 +358,7 @@ vrpn_Analog_Remote *vrpnMode_collab[NUM_USERS];
 vrpn_Analog_Server *vrpnMode_Local;
 
 // These are used for synchronizing with a remote user's streamfile playback.
-//static int s_currentlySyncingRemotely = 0;
-
-//-----------------------------------------------------------------------
-// This is the list of color map files from which mappings can be made.  It
-// should be loaded with the files in the colormap directory, and "CUSTOM".
-
-static nmb_ListOfStrings	colorMapNames;
-
-//-----------------------------------------------------------------------
-// This is a selector that lets the user choose a color map to use.
-
-static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
-static	char	*colorMapDir;
-
-static ColorMap	colorMap;		// Color map currently loaded
-ColorMap	*curColorMap = NULL;	// Pointer to the current color map
-  // used in vrml.C
-
-
-
+static vrpn_bool isSynchronized;
 
 // static can't be decalred for this struct?
 class WellKnownPorts {
@@ -393,33 +378,55 @@ class WellKnownPorts {
 
 const int WellKnownPorts::interfaceLog (4501);
 
-//const int WellKnownPorts::graphicsControl (4507);
 const int WellKnownPorts::graphicsControl (nmg_Graphics::defaultPort);
-      // graphicsControl = nmg_Graphics::defaultPort;
-//const int WellKnownPorts::remoteRenderingData (4508);
 const int WellKnownPorts::remoteRenderingData (nmg_Graphics::defaultPort + 1);
-  // remoteRenderingData = nmg_Graphics::defaultPort + 1;
 
 const int WellKnownPorts::collaboratingPeerServer (4510);
 const int WellKnownPorts::roundTripTime (4581);
 
 
+//-----------------------------------------------------------------------
+// TCL initialization section.
+//-----------------------------------------------------------------------
+
+// Host where the user interface of microscape is running.
+static Tclvar_string my_hostname("my_hostname", "localhost");
+
+//-----------------------------------------------------------------------
+// This is the list of color map files from which mappings can be made.  It
+// should be loaded with the files in the colormap directory, and "CUSTOM".
+
+static Tclvar_list_of_strings	colorMapNames("colorMapNames");
+
+//-----------------------------------------------------------------------
+// This is a string that lets the user choose a color map to use.
+
+static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
+static	char	*colorMapDir;
+
+static ColorMap	colorMap;		// Color map currently loaded
+ColorMap	*curColorMap = NULL;	// Pointer to the current color map
+  // used in vrml.C
 
 
-Tclvar_selector	exportPlaneName("export_plane",".export.planechoice");
-Tclvar_selector	exportFileType("export_filetype",".export.filetypechoice");
-Tclvar_selector newExportFileName("export_filename", NULL);
+
+
+static Tclvar_list_of_strings export_formats("export_formats");
+
+Tclvar_string	exportPlaneName("export_plane","");
+Tclvar_string	exportFileType("export_filetype","");
+Tclvar_string newExportFileName("export_filename", "");
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the data set to map to Z.
-// It includes both a selector to allow choosing the field to map
+// It includes both a string to allow choosing the field to map
 // from and the scale of the mapping.
 
 
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the color to apply to the surface.
-// It includes both a selector to allow choosing the field to map color
+// It includes both a string to allow choosing the field to map color
 // from, the min and max colors, and the min and max values that are
 // mapped to the min and max colors.
 
@@ -439,45 +446,50 @@ TclNet_float	color_slider_max("color_slider_max",1);
 
 // NANOX
 // Streamfile controls
-Tclvar_int_with_scale replay_rate("replay_rate", ".streamfile",
-                        0,30,1, handle_replay_rate_change, NULL);
+TclNet_int replay_rate("stream_replay_rate", 1,
+			 handle_replay_rate_change, NULL);
+
 // Signal that the stream file should be rewound to the beginning
 TclNet_int	rewind_stream("rewind_stream",0,
 			handle_rewind_stream_change, NULL);
 
-TclNet_int set_stream_time ("set_stream_time", (int) NULL,
+// This is the time value to jump to in the stream file. 
+TclNet_int set_stream_time ("set_stream_time", 0);
+// This is a flag (0/1) to say " jump to new time now!"
+TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
 
 #if 1
 // NANOX - XXX
 // Quick method of sharing measure line locations
-TclNet_float measureRedX ("measure red x", 0.0,
+TclNet_float measureRedX ("measure_red_x", 0.0,
                            handle_collab_measure_change, (void *) 0);
-TclNet_float measureRedY ("measure red y", 0.0,
+TclNet_float measureRedY ("measure_red_y", 0.0,
                            handle_collab_measure_change, (void *) 0);
-TclNet_float measureGreenX ("measure green x", 0.0,
+TclNet_float measureGreenX ("measure_green_x", 0.0,
                            handle_collab_measure_change, (void *) 1);
-TclNet_float measureGreenY ("measure green y", 0.0,
+TclNet_float measureGreenY ("measure_green_y", 0.0,
                            handle_collab_measure_change, (void *) 1);
-TclNet_float measureBlueX ("measure blue x", 0.0,
+TclNet_float measureBlueX ("measure_blue_x", 0.0,
                            handle_collab_measure_change, (void *) 2);
-TclNet_float measureBlueY ("measure blue y", 0.0,
+TclNet_float measureBlueY ("measure_blue_y", 0.0,
                            handle_collab_measure_change, (void *) 2);
 #endif
 
 
 // the Tk slider for recovery time
-Tclvar_float_with_scale recovery_time ("recovery_time", ".sliders", 1, 40, 1);
+// XXX What is recovery time for? Adhesion?
+TclNet_float recovery_time ("recovery_time", 1);
 
-// The selector that is used to determine which inputGrid field to use
+// The string that is used to determine which inputGrid field to use
 
 Tclvar_float    compliance_slider_min("compliance_slider_min",0);
 Tclvar_float    compliance_slider_max("compliance_slider_max",0);
 Tclvar_float	compliance_slider_min_limit("compliance_slider_min_limit",0);
 Tclvar_float	compliance_slider_max_limit("compliance_slider_max_limit",1);
 //This section deals with the compliance plane
-Tclvar_selector compliancePlaneName
-               ("compliance_comes_from", ".compliancescale.pickframe");
+Tclvar_string compliancePlaneName
+               ("compliance_comes_from", "");
 
 Tclvar_float    friction_slider_min("friction_slider_min",0);
 Tclvar_float	friction_slider_max("friction_slider_max",1);
@@ -486,9 +498,8 @@ Tclvar_float	friction_slider_min_limit("friction_slider_min_limit",0);
 Tclvar_float	friction_slider_max_limit("friction_slider_max_limit",1);
 
 //This section deals with the friction plane
-Tclvar_selector frictionPlaneName
-               ("friction_comes_from",
-                ".frictionscale.pickframe");
+Tclvar_string frictionPlaneName
+               ("friction_comes_from", "");
 
 Tclvar_float    bump_slider_min("bump_slider_min",0);
 Tclvar_float    bump_slider_max("bump_slider_max",1);
@@ -496,9 +507,8 @@ Tclvar_float    bump_slider_max("bump_slider_max",1);
 Tclvar_float    bump_slider_min_limit("bump_slider_min_limit",0);
 Tclvar_float    bump_slider_max_limit("bump_slider_max_limit",1);
 //This section deals with the bump plane
-Tclvar_selector bumpPlaneName
-               ("bumpsize_comes_from",
-                ".bumpscale.pickframe");
+Tclvar_string bumpPlaneName
+               ("bumpsize_comes_from", "");
 
 Tclvar_float    buzz_slider_min("buzz_slider_min",0);
 Tclvar_float    buzz_slider_max("buzz_slider_max",1);
@@ -506,9 +516,8 @@ Tclvar_float    buzz_slider_max("buzz_slider_max",1);
 Tclvar_float    buzz_slider_min_limit("buzz_slider_min_limit",0);
 Tclvar_float    buzz_slider_max_limit("buzz_slider_max_limit",1);
 //This section deals with the buzz plane
-Tclvar_selector buzzPlaneName
-               ("buzzing_comes_from",
-                ".buzzscale.pickframe");
+Tclvar_string buzzPlaneName
+               ("buzzing_comes_from", "");
 
 Tclvar_float    adhesion_slider_min("adhesion_slider_min",0);
 Tclvar_float	adhesion_slider_max("adhesion_slider_max",1);
@@ -517,17 +526,16 @@ Tclvar_float	adhesion_slider_min_limit("adhesion_slider_min_limit",0);
 Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
 
 //This section deals with the adhesion plane
-Tclvar_selector adhesionPlaneName
-               ("adhesion_comes_from",
-                ".adhesionscale.pickframe");
+Tclvar_string adhesionPlaneName
+               ("adhesion_comes_from", "");
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the data set to map to sound.
-// It includes both a selector to allow choosing the field to map
+// It includes both a string to allow choosing the field to map
 // from and the scale of the mapping.
 
-Tclvar_selector	soundPlaneName("sound_comes_from",".soundscale.pickframe");
-/*Tclvar_float_with_scale	sound_scale("sound_scale",".sound_mapping.slider",1,10,1,NULL,NULL);*/
+Tclvar_string	soundPlaneName("sound_comes_from","");
+/*Tclvar_float sound_scale("sound_scale",1);*/
 
 Tclvar_float sound_slider_min("sound_slider_min",0);
 Tclvar_float sound_slider_max("sound_slider_max",1);
@@ -545,10 +553,12 @@ Tclvar_float sound_slider_max_limit("sound_slider_max_limit",1);
 
 // if on, set the rulergrid position by the red line
 // does not need a callback
-TclNet_int rulergrid_position_line("rulergrid_position_line", 0,NULL, NULL);
+TclNet_int rulergrid_position_line ("rulergrid_position_line", 0,
+                                    handle_rulergridPositionLine_change, NULL);
 // if on, set the rulergrid angle by the green line
 //does not need a callback
-TclNet_int rulergrid_orient_line("rulergrid_orient_line", 0, NULL, NULL);
+TclNet_int rulergrid_orient_line ("rulergrid_orient_line", 0,
+                                  handle_rulergridOrientLine_change, NULL);
 // otherwise set with these sliders
 TclNet_float rulergrid_xoffset ("rulergrid_x", 0);
 TclNet_float rulergrid_yoffset ("rulergrid_y", 0);
@@ -566,10 +576,7 @@ TclNet_int ruler_r ("ruler_r", 255, NULL, NULL);
 TclNet_int ruler_g ("ruler_g", 255, NULL, NULL);
 TclNet_int ruler_b ("ruler_b", 55, NULL, NULL);
 TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
-//double	rulergrid_sin = 0;
-//double	rulergrid_cos = 1;
-Tclvar_int_with_button	rulergrid_enabled
-           ("rulergrid_enabled", ".rulergrid.pickframe.onoff", 0);
+TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 
 //
 // Genetic Textures  -- Alexandra Bokinsky
@@ -590,29 +597,26 @@ Tclvar_int gen_send_data( "gen_send_data", 0, NULL, NULL );
 Tclvar_int gen_tex_activate( "gen_tex_activate", 0, NULL, NULL );
 
 // Enables the GA textues... (toggle button on main tcl window)
-Tclvar_int_with_button	genetic_textures_enabled
-           ("genetic_textures_enabled", ".genetic_texture", 0);
+Tclvar_int genetic_textures_enabled ("genetic_textures_enabled", 0);
 
 
 
 //-----------------------------------------------------------------
 // Enables the realigning textues... (toggle button on main tcl window)
-Tclvar_int_with_button	display_realign_textures
-           ("display_dataset", ".realign_texture.selection", 0);
-Tclvar_int_with_button	realign_textures_enabled
-           ("realign_dataset", ".realign_texture.selection", 0);
-Tclvar_int_with_button	set_realign_center
-           ("set_center", ".realign_texture.selection", 0);
+// XXX This function is not included in the one screen tcl interface.
+Tclvar_int display_realign_textures ("display_dataset", 0);
+Tclvar_int realign_textures_enabled ("realign_dataset", 0);
+Tclvar_int set_realign_center ("set_center", 0);
 
-Tclvar_selector texturePlaneName ("none" );
-Tclvar_selector textureConversionMapName("CUSTOM" );
+Tclvar_string texturePlaneName ("none" );
+Tclvar_string textureConversionMapName("CUSTOM" );
 
 Tclvar_float realign_textures_slider_min_limit("realign_textures_slider_min_limit",0);
 Tclvar_float realign_textures_slider_max_limit("realign_textures_slider_max_limit", 1.0);
 Tclvar_float realign_textures_slider_min("realign_textures_slider_min", 0);
 Tclvar_float realign_textures_slider_max("realign_textures_slider_max", 1.0);
 
-Tclvar_selector	newRealignPlaneName("realignplane_name",NULL);
+Tclvar_string	newRealignPlaneName("realignplane_name","");
 
 TclNet_int shiny ("shiny", 55);
 TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
@@ -630,10 +634,10 @@ Tclvar_float constraint_kspring ("constraint_kspring", 10.0f);
 //-----------------------------------------------------------------------
 // This section deals with an image type for a screen capture
 const char **screenImage_formats_list = ImageType_names;
-nmb_ListOfStrings screenImage_formats;
+Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 
-Tclvar_selector    screenImageFileType("format", ".screenImage.filetype");
-Tclvar_selector newScreenImageFileName("screenImage_filename", NULL);
+Tclvar_string    screenImageFileType("screenImage_format", "");
+Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 
 //-----------------------------------------------------------------
@@ -647,23 +651,22 @@ static PPM * noisePPM = NULL;   // Uniform noise image for spot noise shader
 
 //---------------------
 // Scaling factor for the sphere icon
-Tclvar_float_with_scale sphere_scale
-               ("sphere_scale", ".sphere.slider", 0.01f, 100.0f, 12.5f);
+Tclvar_float sphere_scale ("sphere_scale", 12.5f);
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the contour lines to apply to the surface.
-// It includes a selector to determine when to map them from and a float
+// It includes a string to determine when to map them from and a float
 // value to determine their spacing.
-Tclvar_float_with_scale texture_scale ("texture_spacing",".contour_lines.slider", 0.01,100,10);
+TclNet_float texture_scale ("texture_spacing",10);
 TclNet_float contour_width ("contour_width", 10.0);
-TclNet_int contour_r ("contour_r", 255, NULL, NULL);
-TclNet_int contour_g ("contour_g", 55, NULL, NULL);
-TclNet_int contour_b ("contour_b", 55, NULL, NULL);
+TclNet_int contour_r ("contour_r", 255);
+TclNet_int contour_g ("contour_g", 55);
+TclNet_int contour_b ("contour_b", 55);
 TclNet_int contour_changed ("contour_changed", 0);
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the alpha for the checkerboard pattern.
-// It includes both a selector to allow choosing the field to map alpha
+// It includes both a string to allow choosing the field to map alpha
 // from, the min and max colors, and the min and max values that are
 // mapped to the min and max alphas.
 
@@ -684,8 +687,8 @@ Tclvar_float    x_min_value ("x_min_value", 0);
 Tclvar_float    x_max_value ("x_max_value", 1);
 
 
-// The selector that is used to determine which inputGrid field to use
-Tclvar_selector	xPlaneName ("x_comes_from", ".x_scale.pickframe");
+// The string that is used to determine which inputGrid field to use
+Tclvar_string	xPlaneName ("x_comes_from", "");
 
 //-----------------------------------------------------------------------
 // This is the list of image processing programs available.  It
@@ -702,20 +705,17 @@ static  char    defaultFilterDir[] = "/afs/unc/proj/stm/etc/filters";
 static	char	*procImageDir;
 
 // This is the filter program name.
-Tclvar_selector	procProgName ("pick_program", ".procimage.c1",
-		&procProgNames, "none");
-// The selector that is used to determine which inputGrid field to use
-Tclvar_selector	procPlaneName ("pick_plane", ".procimage.c1");
-Tclvar_selector	procParams ("proc_params",NULL);
+Tclvar_string	procProgName ("pick_program", "");
+// The string that is used to determine which inputGrid field to use
+Tclvar_string	procPlaneName ("pick_plane", "");
+Tclvar_string	procParams ("proc_params","");
 
 // This is the output plane - parent is NULL (see below)
-Tclvar_selector	newFilterPlaneName("filterplane_name",NULL);
+Tclvar_string	newFilterPlaneName("filterplane_name","");
 
 // Float scales to determine the angle and scale for programs that use them
-Tclvar_float_with_scale	procAngle
-                  ("proc_angle", ".procimage.c3", 0.0f, 360.0f, 0.0f);
-Tclvar_float_with_scale	procScale
-                  ("proc_scale", ".procimage.c3", 1.0f, 10.0f, 1.0f);
+Tclvar_float procAngle ("proc_angle", 0.0f);
+Tclvar_float procScale ("proc_scale", 1.0f);
 
 
 // A list of the textures which can be used for the pxfl shader. 
@@ -725,36 +725,32 @@ static  char    defaultTextureDir[] = "/afs/unc/proj/stm/etc/textures";
 static	char	*textureDir;
 
 // A test list of textures. 
-// Tclvar_selector	textureName ("texture_name", ".sliders",
-// 		&textureNames, "off");
+// Tclvar_string	textureName ("texture_name", "");
 
 //----------------------------------------------------------------------
 // This section deals with the creation of new data planes that are
 // derived from other planes.  It provides variables
 // for the name of the new plane and the name of the plane(s) to use
 // for sources.  The names are selected from lists.
-// newDiffPlaneName has NULL parent so that no selector is mapped for it.
-// newAdhPlaneName has NULL parent so that no selector is mapped for it.
-// newFlatPlaneName has NULL parent so that no selector is mapped for it.
-// newLBLFlatPlaneName has NULL parent so that no selector is mapped for it.
 
-// NANOX 24 Jan 00
-TclNet_selector	newFlatPlaneName("flatplane_name",NULL);
+Tclvar_string	newFlatPlaneName("flatplane_name","");
 
 //added 1-9-99 by Amy Henderson
-Tclvar_selector newLBLFlatPlaneName("lblflatplane_name",NULL);
+Tclvar_string newLBLFlatPlaneName("lblflatplane_name","");
 
-Tclvar_selector	sumPlane1Name ("first_plane",".sum_plane.choice");
-Tclvar_selector	sumPlane2Name ("second_plane",".sum_plane.choice");
-Tclvar_float_with_scale	sumScale("sum_scale",".sum_plane.choice", -10,10, -1.0);
-Tclvar_selector	newSumPlaneName ("sumplane_name",NULL);
+Tclvar_string	sumPlane1Name ("first_plane","");
+Tclvar_string	sumPlane2Name ("second_plane","");
+Tclvar_float	sumScale("sum_scale",-1.0);
+Tclvar_string	newSumPlaneName ("sumplane_name","");
 
-Tclvar_selector	adhPlane1Name("first_plane",".adhesion_plane.choice");
-Tclvar_selector	adhPlane2Name("last_plane",".adhesion_plane.choice");
-Tclvar_selector	newAdhPlaneName("adhesionplane_name",NULL);
+Tclvar_string	adhPlane1Name("first_plane","");
+Tclvar_string	adhPlane2Name("last_plane","");
+Tclvar_string	newAdhPlaneName("adhesionplane_name","");
 static	char	lastAdhPlaneName[1000] = "";
 
-Tclvar_float_with_scale	adhNumToAvg("adhesion_average",".sliders", 3,100, 3);
+Tclvar_string newResamplePlaneName("resample_plane_name", "");
+
+Tclvar_float	adhNumToAvg("adhesion_average",3);
 
 
 // Aron Helser Temporary, testing how to save and restore a viewpoint
@@ -784,13 +780,9 @@ Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 
 // Change the number of pulse or scrape markers to show
 
-Tclvar_int_with_scale numMarkersShown
-   ("number_of_markers_shown", ".sliders",
-    0, 2000, 1000);
+Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
 
-Tclvar_int_with_scale markerHeight
-   ("marker_height", ".sliders",
-    0, 500, 0);
+Tclvar_int markerHeight ("marker_height", 100);
 
 
 Tclvar_float global_icon_scale ("global_icon_scale", 0.25);
@@ -814,7 +806,7 @@ RobotControl * robotControl = NULL;
 #endif
 
 // Scales how much normal force is felt when using Direct Z Control
-Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,1, 0.1);
+Tclvar_float directz_force_scale("directz_force_scale", 0.1);
 
 
 // NANOX
@@ -824,10 +816,12 @@ Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,
 // determine which state to use.
 TclNet_int share_sync_state ("share_sync_state", 0);
 TclNet_int copy_inactive_state ("copy_inactive_state", 0);
+TclNet_int copy_to_private_state ("copy_to_private_state", 0);
+TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
 
 //to get the name of the machine where the collaborator is whose hand
 //position we want to track
-TclNet_selector collab_machine_name ("collab_machine_name", "");
+TclNet_string collab_machine_name ("collab_machine_name", "");
 
 
 static vrpn_bool loggingInterface = VRPN_FALSE;
@@ -837,6 +831,12 @@ static timeval loggingTimestamp;
 
 
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
+
+//---------------------------------------------------------------------------
+// Deal with the stride between rows on the grid for tesselation.  This is
+// the step size between one row/column of the display list and the next.
+
+TclNet_int tclstride("tesselation_stride", 1);
 
 
 // END tcl declarations
@@ -967,8 +967,8 @@ Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
 
 enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
        DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING,
-       RENDER_SERVER, RENDER_TEXTURE_SERVER,
-       RENDER_CLIENT, RENDER_TEXTURE_CLIENT };
+       RENDER_SERVER, TEXTURE_SERVER, VIDEO_SERVER,
+       RENDER_CLIENT, TEXTURE_CLIENT, VIDEO_CLIENT };
 
 // A thread structure for multiprocessing.
 // Global so it can be shut down by signal handlers et al.
@@ -1074,9 +1074,10 @@ void shutdown_connections (void) {
   replay_rate.bindConnection(NULL);
   rewind_stream.bindConnection(NULL);
   set_stream_time.bindConnection(NULL);
+  set_stream_time_now.bindConnection(NULL);
 
   microscope->state.stm_z_scale.bindConnection(NULL);
-  ((TclNet_selector *) dataset->heightPlaneName)->bindConnection(NULL);
+  ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
   tcl_wfr_xlate_X.bindConnection(NULL);
   tcl_wfr_xlate_Y.bindConnection(NULL);
   tcl_wfr_xlate_Z.bindConnection(NULL);
@@ -1085,9 +1086,11 @@ void shutdown_connections (void) {
   tcl_wfr_rot_2.bindConnection(NULL);
   tcl_wfr_rot_3.bindConnection(NULL);
   tcl_wfr_scale.bindConnection(NULL);
+  //tcl_wfr_changed.bindConnection(NULL);
+  tclstride.bindConnection(NULL);
 
-  ((TclNet_selector *) dataset->colorPlaneName)->bindConnection(NULL);
-  ((TclNet_selector *) dataset->colorMapName)->bindConnection(NULL);
+  ((TclNet_string *) dataset->colorPlaneName)->bindConnection(NULL);
+  ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
   color_slider_min.bindConnection(NULL);
   color_slider_max.bindConnection(NULL);
 
@@ -1112,7 +1115,7 @@ void shutdown_connections (void) {
   contour_g.bindConnection(NULL);
   contour_b.bindConnection(NULL);
   contour_changed.bindConnection(NULL);
-  ((TclNet_selector *) dataset->contourPlaneName)->bindConnection(NULL);
+  ((TclNet_string *) dataset->contourPlaneName)->bindConnection(NULL);
 
   rulergrid_position_line.bindConnection(NULL);
   rulergrid_orient_line.bindConnection(NULL);
@@ -1129,55 +1132,81 @@ void shutdown_connections (void) {
   rulergrid_changed.bindConnection(NULL);
   rulergrid_enabled.bindConnection(NULL);
 
-  display_realign_textures.bindConnection(NULL);
-
-  newFlatPlaneName.bindConnection(NULL);
+  //display_realign_textures.bindConnection(NULL);
 
   if (interfaceLogConnection) {
     share_sync_state.bindConnection(NULL);
     copy_inactive_state.bindConnection(NULL);
+      copy_to_private_state.bindConnection(NULL);
+      copy_to_shared_state.bindConnection(NULL);
     collab_machine_name.bindConnection(NULL);
   }
-
-
 
   // output stream should be closed by microscope destructor,
   // WHICH WE MUST EXPLICITLY DELETE!
 
-  if (microscope)
+  if (microscope) {
     delete microscope;
-  if (microscope_connection)
+    microscope = NULL;
+  }
+  if (microscope_connection) {
     delete microscope_connection;
+    microscope_connection = NULL;
+  }
 
-  if (shmem_connection)
+  if (shmem_connection) {
     delete shmem_connection;
+    shmem_connection = NULL;
+  }
 
-  if (graphics)
+  if (graphics) {
     delete graphics;
-  if (gi)
+    graphics = NULL;
+  }
+  if (gi) {
     delete gi;
+    gi = NULL;
+  }
 
-  if (rtt_server)
+  if (rtt_server) {
     delete rtt_server;
-  if (rtt_server_connection)
+    rtt_server = NULL;
+  }
+  if (rtt_server_connection) {
     delete rtt_server_connection;
+    rtt_server_connection = NULL;
+  }
 
-  if (monitor_forwarder_connection)
+  if (monitor_forwarder_connection) {
     delete monitor_forwarder_connection;
-  if (collab_forwarder_connection)
+    monitor_forwarder_connection = NULL;
+  }
+  if (collab_forwarder_connection) {
     delete collab_forwarder_connection;
+    collab_forwarder_connection = NULL;
+  }
 
-  if (ohmmeter_connection)
+  if (ohmmeter_connection) {
     delete ohmmeter_connection;
-  if (vicurve_connection)
+    ohmmeter_connection = NULL;
+  }
+  if (vicurve_connection) {
     delete vicurve_connection;
+    vicurve_connection = NULL;
+  }
 
-  if (collaboratingPeerServerConnection)
+  if (collaboratingPeerServerConnection) {
     delete collaboratingPeerServerConnection;
-  if (collaboratingPeerRemoteConnection)
+    collaboratingPeerServerConnection = NULL;
+  }
+  if (collaboratingPeerRemoteConnection) {
     delete collaboratingPeerRemoteConnection;
-  if (interfaceLogConnection)
+    collaboratingPeerRemoteConnection = NULL;
+  }
+  if (interfaceLogConnection) {
     delete interfaceLogConnection;
+    interfaceLogConnection = NULL;
+  }
 
 }
 
@@ -1197,20 +1226,15 @@ void	handle_cntl_c(int which_signal)
 	    reset_raw_term(ttyFD);
 	  }
 
-  shutdown_connections();
+	shutdown_connections();
 
 	if (graphicsServerThread)
 	  graphicsServerThread->kill();  // NOT PORTABLE TO NT!
 
 	exit(0);
 }
-
 //---------------------------------------------------------------------------
-// Deal with the stride between rows on the grid for tesselation.  This is
-// the step size between one row/column of the display list and the next.
-
-Tclvar_int_with_scale tclstride("tesselation_stride", ".sliders", 1,16, 1);
-
+// Deal with changes in the stride between rows on the grid for tesselation.
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -1234,7 +1258,7 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
 //Tcl variable for getting filename containing geometry info for
 //object that we want to import
-Tclvar_selector import_filename ("import_filename", NULL);
+Tclvar_string import_filename ("import_filename", "");
 //Button which signals that we should import the object whose
 //geometry is contained above
 Tclvar_int load_import_file ("load_import_file",0);
@@ -1409,6 +1433,26 @@ static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*
 }
 
 // NANOX
+static void getPeerRemote (const char * hostname) {
+  char buf [256];
+  char sfbuf [1024];
+
+  sprintf(buf, "%s:%d", hostname, WellKnownPorts::collaboratingPeerServer);
+  if (replayingInterface) {
+    sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection =
+      vrpn_get_connection_by_name (sfbuf);
+  } else {
+    sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
+             loggingInterface ? sfbuf : NULL,
+             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
+                        vrpn_LOG_NONE);
+  }
+}
+
 static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * /*userdata*/ )
@@ -1422,7 +1466,7 @@ static void handle_collab_machine_name_change
   }
 
   // Open the remote tracker object to follow the collaborator's hand
-  sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
+  sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath,
           loggingTimestamp.tv_sec);
   if (replayingInterface) {
     sprintf(collab_handTrackerName, "ccs0@file:%s", sfbuf);
@@ -1433,12 +1477,13 @@ static void handle_collab_machine_name_change
     sprintf(collab_ModeName, "Cmode0@%s:%d", new_value,
             WellKnownPorts::collaboratingPeerServer);
 
-    if (loggingInterface) {
-      sprintf(buf, "%s:%d", new_value,
-              WellKnownPorts::collaboratingPeerServer);
-      vrpn_get_connection_by_name (buf, sfbuf,
-                                   vrpn_LOG_INCOMING);
-    }
+    //if (loggingInterface) {
+      //sprintf(buf, "%s:%d", new_value,
+              //WellKnownPorts::collaboratingPeerServer);
+      //vrpn_get_connection_by_name (buf, sfbuf,
+                                   //vrpn_LOG_INCOMING);
+    //}
+    getPeerRemote(new_value);  // make sure logging happens
   }
 
 fprintf(stderr, "peer machine name: %s\n", new_value);
@@ -1464,7 +1509,6 @@ static void handle_collab_machine_name_change2
                     void * userdata)
 {
   nmui_Component * uic = (nmui_Component *) userdata;
-  char sfbuf [1024];
   char hnbuf [256];
   char buf [256];
   vrpn_int32 newConnection_type;
@@ -1475,21 +1519,9 @@ static void handle_collab_machine_name_change2
     return;
   }
 
-  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
-  if (replayingInterface) {
-    sprintf(sfbuf, "file:%s/SharedIFRemLog-%d.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection =
-      vrpn_get_connection_by_name (sfbuf);
-  } else {
-    sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
-             loggingInterface ? sfbuf : NULL,
-             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                        vrpn_LOG_NONE);
-  }
+  getPeerRemote(new_value);
 
+  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
   if (collaboratingPeerRemoteConnection &&
       collaboratingPeerRemoteConnection->doing_okay()) {
 
@@ -1536,8 +1568,6 @@ static void handle_collab_machine_name_change3
                    (const char * new_value,
                     void * userdata)
 {
-  char sfbuf [1024];
-  char buf [256];
   nmui_PlaneSync * ps;
 
   ps = (nmui_PlaneSync *) userdata;
@@ -1549,45 +1579,146 @@ static void handle_collab_machine_name_change3
     return;
   }
 
-  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
-  if (replayingInterface) {
-    sprintf(sfbuf, "file:%s/SharedIFRemLog-%d.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection =
-      vrpn_get_connection_by_name (sfbuf);
-  } else {
-    sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
-             loggingInterface ? sfbuf : NULL,
-             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                        vrpn_LOG_NONE);
-  }
+  getPeerRemote(new_value);
 
-  ps->addPeer(collaboratingPeerRemoteConnection);
+  // plane sync object also needs to know the name of collaborator
+  // to uniquely identify planes created.
+  ps->addPeer(collaboratingPeerRemoteConnection, new_value);
+
+  if (nM_coord_change_server) {
+    nM_coord_change_server->bindConnection(collaboratingPeerRemoteConnection);
+  }
+}
+
+void updateRulergridOffset (void) {
+ if (rulergrid_position_line && rulergrid_enabled) {
+   rulergrid_xoffset = (vrpn_float64) measureRedX;
+   rulergrid_yoffset = (vrpn_float64) measureRedY;
+   graphics->setRulergridOffset(rulergrid_xoffset, rulergrid_yoffset);
+   graphics->causeGridRedraw();
+ }
+}
+
+void updateRulergridAngle (void) {
+ if (rulergrid_orient_line && rulergrid_enabled) {
+   float xdiff;
+   float ydiff;
+   float hyp;
+   xdiff = measureGreenX - rulergrid_xoffset;
+   ydiff = measureGreenY - rulergrid_yoffset;
+   hyp = sqrt(xdiff * xdiff + ydiff * ydiff);
+   if (hyp == 0.0f) { hyp = 1.0f; }
+   if (ydiff >= 0.0f) {
+     // In quadrant 1 or 2
+     rulergrid_angle = acos(xdiff / hyp) * 180.0f / M_PI;
+   } else if (ydiff < 0.0f) {
+     // In quadrant 3 or 4
+     rulergrid_angle = 360 - (acos(xdiff / hyp) * 180.0f / M_PI);
+   }
+   graphics->setRulergridAngle(rulergrid_angle);
+   graphics->causeGridRedraw();
+
+ }
+}
+
+static void handle_rulergridPositionLine_change (vrpn_int32, void *) {
+  updateRulergridOffset();
+  updateRulergridAngle();  // Do we want this?
+}
+
+static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
+  updateRulergridAngle();
 }
 
 
+// Updating both X and Y position of the line at the same time
+// doesn't work - it locks down one coord. This semaphor prevents that. 
+static vrpn_bool ignoreCollabMeasureChange = 0;
+
 // NANOX
+// Line position has changed in tcl (probably due to update from
+// collaborator) so change the position onscreen.
 static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
                                           void * userdata) {
+    // Ignore some changes caused by tcl variables. 
+    if (ignoreCollabMeasureChange) return;
+
   BCPlane * heightPlane = dataset->inputGrid->getPlaneByName
                  (dataset->heightPlaneName->string());
+  if (!heightPlane) {
+    fprintf(stderr, "Couldn't find height plane named %s.\n",
+            dataset->heightPlaneName->string());
+  }
   int whichLine = (int) userdata;   // hack to get the data here
+
   switch (whichLine) {
+
     case 0:
 //fprintf(stderr, "Moving RED line due to Tcl change.\n");
      decoration->red.moveTo(measureRedX, measureRedY, heightPlane);
      // DO NOT doCallbacks()
+     updateRulergridOffset();
      break;
+
     case 1:
 //fprintf(stderr, "Moving GREEN line due to Tcl change.\n");
      decoration->green.moveTo(measureGreenX, measureGreenY, heightPlane);
      // DO NOT doCallbacks()
+     updateRulergridAngle();
      break;
+
     case 2:
 //fprintf(stderr, "Moving BLUE line due to Tcl change.\n");
      decoration->blue.moveTo(measureBlueX, measureBlueY, heightPlane);
+     // DO NOT doCallbacks()
+     break;
+  }
+}
+
+// NANOX
+// If the user changes the measure line positon, update Tcl variables.
+// If we are collaborating, this will update our collaborator.
+// Because we want to set both the X and Y position of the line at 
+// the same time, we explicitly tell the other handler to ignore
+// the change we make to X, and pay attention to the change to Y. 
+
+// doMeasure() in interaction.c triggers handle_collab_measure_move.
+// Through the magic of Tcl_Linkvar/Tcl_Netvar, this will take care of
+// any necessary network synchronization or collaboration, and at the end
+// will call handle_collab_measure_change(), above, which executes the
+// final moveTo() on each nmb_Line and updates rulergrid parameters if
+// necessary.
+
+static void handle_collab_measure_move (float x, float y,
+                                          void * userdata) {
+  int whichLine = (int) userdata;   // hack to get the data here
+
+  // TODO - a message needs to be sent so that this timer
+  // gets unblocked!
+  collaborationTimer.block(collaborationTimer.getListHead());
+
+  switch (whichLine) {
+    case 0:
+//  fprintf(stderr, "Moving RED line , change Tcl .\n");
+	ignoreCollabMeasureChange = VRPN_TRUE;
+	measureRedX = x;
+	ignoreCollabMeasureChange = VRPN_FALSE;
+	measureRedY = y;
+     break;
+    case 1:
+//fprintf(stderr, "Moving GREEN line , change Tcl .\n");
+	ignoreCollabMeasureChange = VRPN_TRUE;
+	measureGreenX = x;
+	ignoreCollabMeasureChange = VRPN_FALSE;
+	measureGreenY = y;
+     // DO NOT doCallbacks()
+     break;
+    case 2:
+//fprintf(stderr, "Moving BLUE line , change Tcl .\n");
+	ignoreCollabMeasureChange = VRPN_TRUE;
+	measureBlueX = x;
+	ignoreCollabMeasureChange = VRPN_FALSE;
+	measureBlueY = y;
      // DO NOT doCallbacks()
      break;
   }
@@ -1599,11 +1730,12 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
 static void handle_rewind_stream_change (vrpn_int32 /*new_value*/, 
 					     void * /*userdata*/)
 {
-  // rewind stream only if variable is set to 1 -> button is pressed.
-  if (rewind_stream) {
-    printf("Restarting stream from the beginning\n");
-    rewind_stream = 0;  // necessary
+    // rewind stream only if variable is set to 1 -> button is pressed.
+    if (rewind_stream != 1) return;
 
+    printf("Restarting stream from the beginning\n");
+
+///*
 #ifdef USE_VRPN_MICROSCOPE
     if (vrpnLogFile)
 	vrpnLogFile->reset();
@@ -1612,20 +1744,22 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
     microscope->RestartStream();
 
 #endif
+//*/
+  //set_stream_time = 0;
     if (ohmmeterLogFile)
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
 
-  }
-  // otherwise do nothing.
+//fprintf(stderr, "Handle_rewind_stream_change setting to 0.\n");
+    rewind_stream = 0;  // necessary
 
 }
 
 
 // NANOX
 // synchronization UI handlers
-
+/* UNUSED
 // Checkbox - if checked, request that the peer keep us synced;
 //   if unchecked, stop keeping synced.
 // Currently assumes that only the most recently added peer is
@@ -1641,7 +1775,9 @@ static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
       break;
     default:
       // use shared state (#1)
-      s = 1;
+      //s = 1;  // SYNC-ROBUSTNESS
+      s = sync->numPeers();
+fprintf(stderr, "Synchronizing with peer #%d.\n", s);
       break;
   }
 
@@ -1657,30 +1793,40 @@ static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
 static void handle_get_sync (vrpn_int32, void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
   int c;
-
   // Christmas sync
   // handles 2-way;  may handle n-way sync
-
   switch (sync->synchronizedTo()) {
     case 0:
       // copy shared state (#1) into local state (#0)
-      c = 1;
+      //c = 1;  // SYNC-ROBUSTNESS
+      c = sync->numPeers();
+fprintf(stderr, "Copying peer #%d.\n", c);
       break;
     default:
       // copy local state (#0) into shared state (#1)
       c = 0;
       break;
   }
-
   sync->copyReplica(c);
 //fprintf(stderr, "++ Copied inactive replica (#%d).\n", c);
 }
-
+*/
 static int handle_timed_sync_request (void *);
 
+struct sync_plane_struct {
+    nmui_Component * component;
+    nmui_PlaneSync * planesync;
+};
+
+// Checkbox - if checked, request that the peer keep us synced;
+//   if unchecked, stop keeping synced.
+// Currently assumes that only the most recently added peer is
+//   "valid";  others are a (small?) memory/network leak.
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
+  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
+  nmui_Component * sync = stuff->component;
+  nmui_PlaneSync * plane_sync = stuff->planesync;
 
 fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
 
@@ -1700,24 +1846,127 @@ fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
       // stop synchronizing;  use local state (#0)
 fprintf(stderr, "++   ... stopped synchronizing.\n");
       sync->syncReplica(0);
+      plane_sync->queueUpdates();
+      graphics->enableCollabHand(VRPN_FALSE);
+      nM_coord_change_server->stopSync();
+      isSynchronized = VRPN_FALSE;
       break;
     default:
       // use shared state (#1)
 fprintf(stderr, "++   ... sent synch request to peer.\n");
+
+      // You'd think that this call to block() wouldn't need to be explicitly
+      // unblocked, since we're going to get a syncComplete message from
+      // the peer, but it does - we need to know what index to unblock
+      // after the syncComplete, which requres an additional message.
+      collaborationTimer.block(collaborationTimer.getListHead());
+
       sync->requestSync();
       sync->d_maintain = VRPN_TRUE;
+      if (nM_coord_change_server->peerIsSynchronized()) {
+        graphics->enableCollabHand(VRPN_TRUE);
+      }
+      nM_coord_change_server->startSync();
+      isSynchronized = VRPN_TRUE;
       // We defer the syncReplica until after the requestSync() completes.
       break;
   } 
 
 }
 
+static void handle_peer_sync_change (void * userdata, vrpn_bool value) {
+
+fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
+  if (isSynchronized && value) {  // both synchronized
+    graphics->enableCollabHand(VRPN_TRUE);
+  } else {
+    graphics->enableCollabHand(VRPN_FALSE);
+  }
+
+}
+
+/* DISABLED until it can be debugged.  */
+// Linked to button in tcl UI. If pressed, copy the shared state to
+// the private state.
+static void handle_copy_to_private (vrpn_int32 value, void * userdata) {
+  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
+  nmui_Component * sync = stuff->component;
+  nmui_PlaneSync * plane_sync = stuff->planesync;
+
+  if (!sync->synchronizedTo()) {
+      // we are local. We need to get current data for shared state.
+
+    // a copyReplica needs to be deferred until the new data arrives
+    // The right way to do this is probably to have a Component's
+    // sync handler pack a "syncComplete" message AFTER all the
+    // callbacks have been triggered (=> the sync messages are marshalled
+    // for VRPN), so when that arrives we know the sync is complete and
+    // we can issue a copyReplica()
+
+    // You'd think that this call to block() wouldn't need to be explicitly
+    // unblocked, since we're going to get a syncComplete message from
+    // the peer, but it does - we need to know what index to unblock
+    // after the syncComplete, which requres an additional message.
+    collaborationTimer.block(collaborationTimer.getListHead());
+
+    sync->requestSync();
+    sync->d_maintain = VRPN_FALSE;
+fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
+  } else {
+      // get up to date stream time. 
+      handle_timed_sync_request(NULL);
+
+      // we are shared, copy to local state immediately.
+      // shared state is in the replica from the most recent peer.
+      sync->copyFromToReplica(sync->numPeers(), 0);
+fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
+    plane_sync->acceptUpdates();
+    plane_sync->queueUpdates();
+
+  }
+
+}
+
+// Linked to button in tcl UI. If pressed, copy the private state to
+// the shared state.
+static void handle_copy_to_shared (vrpn_int32 value, void * userdata) {
+  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
+  nmui_Component * sync = stuff->component;
+  nmui_PlaneSync * plane_sync = stuff->planesync;
+
+  if (!sync->synchronizedTo()) {
+      // we are local. We can copy to shared state immediately
+      // shared state is in the replica from the most recent peer.
+      sync->copyFromToReplica(0, sync->numPeers());
+fprintf(stderr, "++ In handle_copy_to_shared() request sync.\n");
+
+      // we also want to get any planes which might be from the shared state 
+      plane_sync->acceptUpdates();
+      plane_sync->queueUpdates();
+ 
+  } else {
+      // we are shared, want to copy from local
+      // We know the current shared state, because we are shared,
+      // so copy immediately.
+      // shared state is in the replica from the most recent peer.
+      sync->copyFromToReplica(0, sync->numPeers());
+fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
+      // Any planes created in local state will already have been copied to
+      // shared state, so no need to sync planes.
+
+  }
+
+}
+/* */
+
 // Button - if pressed, request immediate sync.
 // (If synchronize_stream is checked, this is meaningless.)
 // Currently assumes that only the most recently added peer is
 //   "valid";  others are a (small?) memory/network leak.
 static void handle_timed_sync (vrpn_int32 value, void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
+  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
+  nmui_Component * sync = stuff->component;
+  nmui_PlaneSync * plane_sync = stuff->planesync;
   int copyFrom = !sync->synchronizedTo();
 
   //// only run once
@@ -1734,6 +1983,12 @@ static void handle_timed_sync (vrpn_int32 value, void * userdata) {
     // for VRPN), so when that arrives we know the sync is complete and
     // we can issue a copyReplica()
 
+    // You'd think that this call to block() wouldn't need to be explicitly
+    // unblocked, since we're going to get a syncComplete message from
+    // the peer, but it does - we need to know what index to unblock
+    // after the syncComplete, which requres an additional message.
+    collaborationTimer.block(collaborationTimer.getListHead());
+
     sync->requestSync();
     sync->d_maintain = VRPN_FALSE;
 fprintf(stderr, "++ In handle_timed_sync() to %d;  "
@@ -1743,9 +1998,10 @@ fprintf(stderr, "++ In handle_timed_sync() to %d;  "
     sync->copyReplica(copyFrom);
 fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
 copyFrom);
+    plane_sync->acceptUpdates();
+    plane_sync->queueUpdates();
 
   }
-
 
 }
 
@@ -1756,19 +2012,22 @@ static int handle_timed_sync_request (void *) {
 
   set_stream_time = decoration->elapsedTime;
 
-fprintf(stderr, "++ In handle_timed_sync_request() at %d seconds;  "
+fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
 "wrote data into replica.\n", decoration->elapsedTime);
 
   return 0;
 }
 
 static int handle_timed_sync_complete (void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
+  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
+  nmui_Component * sync = stuff->component;
+  nmui_PlaneSync * plane_sync = stuff->planesync;
 
   //int useReplica = !sync->synchronizedTo();
   // requestSync() is only called, and so this will only be generated,
   // when we are going to the shared replica.
-  int useReplica = 1;
+  //int useReplica = 1;  // SYNC-ROBUSTNESS
+  int useReplica = sync->numPeers();
 
 fprintf(stderr, "++ In handle_timed_sync_complete();  "
 "getting data from replica %d.\n", useReplica);
@@ -1783,10 +2042,19 @@ fprintf(stderr, "++ In handle_timed_sync_complete();  "
     // seconds (which we could forget).
     handle_timed_sync_request(NULL);
 
+    // Start synchronizing planes and create any planes from 
+    // the new state.
+    plane_sync->acceptUpdates();
     sync->syncReplica(useReplica);
 //fprintf(stderr, "++   ... synched.\n");
   } else {
     sync->copyReplica(useReplica);
+
+    // Create any planes from copied state, but go back to 
+    // queueing new plane creations.
+    plane_sync->acceptUpdates();
+    plane_sync->queueUpdates();
+    
 //fprintf(stderr, "++   ... copied.\n");
   }
 
@@ -1805,23 +2073,35 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
 }
 
 
-//#ifndef USE_VRPN_MICROSCOPE
-static void handle_set_stream_time_change(vrpn_int32 time, void *) {
+static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
+//fprintf(stderr, "handle_set_stream_time_change to %d (flag %d).\n",
+//(vrpn_int32) set_stream_time, (vrpn_int32) set_stream_time_now);
+
+  if (set_stream_time_now == 0) return;
+
   struct timeval newStreamTime;
-  newStreamTime.tv_sec = time;
-  //newStreamTime.tv_usec = time * (10^-6);  // nonsense?
-  newStreamTime.tv_usec = 0L;
+  // BUG BUG BUG
+  // If we're at x.y and set stream time to x.0 we'll replay the
+  // whole stream file?
+  newStreamTime.tv_sec = set_stream_time;
+  newStreamTime.tv_usec = 999999L;
 #ifdef USE_VRPN_MICROSCOPE
-//     if (mVCController)
-//       mVCController->SetStreamToTime(newStreamTime);
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
   }
 #else
   microscope->SetStreamToTime(newStreamTime);
+  // TCH 9 Feb 2000
+  // updt_display() will set stm_new_frame IFF time has elapsed (given
+  // the current rate of playback), but not clear it.
+  // By setting it here we force the next call into the microscope
+  // to read from the stream file, even if playback is paused -
+  // this lets us change time settings while paused.
+  stm_new_frame = VRPN_TRUE;
 #endif
+//fprintf(stderr, "Set stream time to %d.\n", time);
+  set_stream_time_now = 0; 
 }
-//#endif
 
 static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2294,12 +2574,12 @@ static	void	handle_colormap_change (const char *, void * userdata) {
 
 }
 
+// See if the user has given a name to the export plane other
+// than "".  If so, we should export a file and set the value
+// back to "". If there are any errors, report them and leave name alone. 
 static	void	handle_exportFileName_change (const char *, void *)
 {
 
-    // See if the user has given a name to the export plane other
-    // than "".  If so, we should export a file and set the value
-    // back to "". If there are any errors, report them and leave name alone. 
     if (strlen(newExportFileName) > 0) {
       // Find which plane we are going to export.
       nmb_Image *im = dataset->dataImages->getImageByName
@@ -2313,7 +2593,7 @@ static	void	handle_exportFileName_change (const char *, void *)
       // find out which type of file we are writing, and write it.
 
       FILE *file_ptr;
-      // "wb" stands for write binary - so it should work on PC platforms, too. 
+      // "wb" stands for write binary - so it should work on PC platforms, too.
       file_ptr=fopen(newExportFileName.string(),"wb");
       if(file_ptr==NULL){
 	  fprintf(stderr, "handle_exportFileName_change::"
@@ -2332,6 +2612,11 @@ static	void	handle_exportFileName_change (const char *, void *)
     newExportFileName = "";
 }
 
+// Why do we need to do anything here? This just specifies
+// which plane to export if we set newExportPlaneName to something...
+// I see - different planes can have different lists of 
+// export types. So if we change planes, we may need to change
+// the list of export types. 
 static  void    handle_exportPlaneName_change (const char *, void *ud)
 {
     nmb_Dataset *d = (nmb_Dataset *)ud;
@@ -2346,10 +2631,10 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     } 
 
     nmb_ListOfStrings *formatList = im->exportFormatNames();
-    exportFileType.bindList(NULL);
-    exportFileType.bindList(formatList);
+    export_formats.copyList(formatList);
     // check if its okay to leave exportFileType as it was
     // (i.e., if exportFileType is present in the new list)
+    /* optionmenu widget should take care of this...
     for (int i = 0; i < formatList->numEntries(); i++) {
 	if (strcmp((const char *)exportFileType, formatList->entry(i)) == 0) {
 	    return;
@@ -2361,6 +2646,7 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     } else {
 	exportFileType = "none";
     }
+    */
 }
 
 static	void	handle_filterPlaneName_change(const char *, void *) {
@@ -2403,16 +2689,21 @@ static	void	handle_flatPlaneName_change(const char *, void *)
     if (strlen(newFlatPlaneName.string()) > 0) {
 
 	// Create the new one.
-	if (dataset->computeFlattenedPlane(newFlatPlaneName.string(),
+	BCPlane* new_flat_plane = 
+	    dataset->computeFlattenedPlane(newFlatPlaneName.string(),
                                            dataset->heightPlaneName->string(),
  decoration->red.x(), decoration->green.x(), decoration->blue.x(),
- decoration->red.y(), decoration->green.y(), decoration->blue.y())) {
-            printf("Can not create flatten plane %s\n", 
+ decoration->red.y(), decoration->green.y(), decoration->blue.y());
+	if (new_flat_plane == NULL) {
+            fprintf(stderr, "Can not create flatten plane %s\n", 
                              newFlatPlaneName.string());
 
 	// Add the plane into the list of available ones.
 	} else {
-		microscope->state.data.inputPlaneNames.addEntry(newFlatPlaneName);
+	    // Here we DONT just use newFlatPlaneName, because 
+	    // computeFlattenedPlane will change the name,
+	    // to add "from hostname"
+	    microscope->state.data.inputPlaneNames.addEntry(new_flat_plane->name()->Characters());
 	}
 
 	newFlatPlaneName = (const char *) "";
@@ -2954,6 +3245,15 @@ void    handle_unit2sensor_change(void *userdata,
     return;
 }
 
+void handle_phantom_connect (vrpn_Tracker_Remote * handT) {
+
+  if (handT) {
+    handT->request_t2r_xform();
+    handT->request_u2s_xform();
+  }
+
+}
+
 int register_vrpn_phantom_callbacks(void)
 {
     vrpn_Tracker_Remote *handT = vrpnHandTracker[0];
@@ -2987,10 +3287,18 @@ int register_vrpn_phantom_callbacks(void)
                                             handle_unit2sensor_change, hand_sensor);
             handT->register_change_handler((void *)&V_ROOM_FROM_HAND_TRACKER,
                                             handle_tracker2room_change);
-            handT->request_t2r_xform();
-            handT->request_u2s_xform();
+
+       handle_phantom_connect(handT);
+       
     }
     return 0;
+
+}
+
+
+void handle_phantom_reconnect (void *, vrpn_HANDLERPARAM) {
+
+  handle_phantom_connect(vrpnHandTracker[0]);
 
 }
 
@@ -3209,29 +3517,28 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
 
   if (!d || !m) return;
 
-  ((Tclvar_selector *) d->alphaPlaneName)->
-        initializeTcl("alpha_comes_from", ".alphascale.pickframe");
-  d->alphaPlaneName->bindList(&m->state.data.inputPlaneNames);
+  ((Tclvar_string *) d->alphaPlaneName)->
+        initializeTcl("alpha_comes_from");
+  //d->alphaPlaneName->bindList(&m->state.data.inputPlaneNames);
 
-  ((Tclvar_selector *) d->colorMapName)->
-        initializeTcl("color_map", ".colorscale.pickframe");
-  d->colorMapName->bindList(&colorMapNames);
+  ((Tclvar_string *) d->colorMapName)->
+        initializeTcl("color_map");
+  //d->colorMapName->bindList(&colorMapNames);
 
-  ((Tclvar_selector *) d->colorPlaneName)->
-        initializeTcl("color_comes_from", ".colorscale.pickframe");
-  d->colorPlaneName->bindList(&m->state.data.inputPlaneNames);
-  ((Tclvar_selector *) d->colorPlaneName)->addCallback
+  ((Tclvar_string *) d->colorPlaneName)->
+        initializeTcl("color_comes_from");
+  //d->colorPlaneName->bindList(&m->state.data.inputPlaneNames);
+  ((Tclvar_string *) d->colorPlaneName)->addCallback
             (handle_color_dataset_change, m);
 
-  ((Tclvar_selector *) d->contourPlaneName)->
-        initializeTcl("contour_comes_from",
-                      ".contour_lines.choice");
-  d->contourPlaneName->bindList(&m->state.data.inputPlaneNames);
+  ((Tclvar_string *) d->contourPlaneName)->
+        initializeTcl("contour_comes_from");
+  //d->contourPlaneName->bindList(&m->state.data.inputPlaneNames);
 
-  ((Tclvar_selector *) d->heightPlaneName)->
-        initializeTcl("z_comes_from", ".z_mapping.choice");
-  d->heightPlaneName->bindList(&m->state.data.inputPlaneNames);
-  ((Tclvar_selector *) d->heightPlaneName)->addCallback
+  ((Tclvar_string *) d->heightPlaneName)->
+        initializeTcl("z_comes_from");
+  //d->heightPlaneName->bindList(&m->state.data.inputPlaneNames);
+  ((Tclvar_string *) d->heightPlaneName)->addCallback
             (handle_z_dataset_change, m);
 }
 
@@ -3239,11 +3546,11 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
 
-  ((Tclvar_selector *) d->alphaPlaneName)->addCallback
+  ((Tclvar_string *) d->alphaPlaneName)->addCallback
             (handle_alpha_dataset_change, g);
-  ((Tclvar_selector *) d->colorMapName)->addCallback
+  ((Tclvar_string *) d->colorMapName)->addCallback
             (handle_colormap_change, g);
-  ((Tclvar_selector *) d->contourPlaneName)->addCallback
+  ((Tclvar_string *) d->contourPlaneName)->addCallback
             (handle_contour_dataset_change, g);
 }
 
@@ -3251,7 +3558,7 @@ void setupCallbacks (nmb_Dataset *d) {
   // sets up callbacks that have to do with data as opposed to callbacks
   // that affect or refer to some device which produces data
 
-  exportPlaneName.bindList(d->dataImages->imageNameList());
+    //exportPlaneName.bindList(d->dataImages->imageNameList());
   exportPlaneName = "none";
   exportPlaneName.addCallback
 	(handle_exportPlaneName_change, d);
@@ -3260,8 +3567,7 @@ void setupCallbacks (nmb_Dataset *d) {
   // now, the image which is being exported determines what formats it
   // can be exported as, since some format might be appropriate for certain
   // images but not for others depending on the type of data they contain
-  exportFileType.bindList(NULL); // the list is bound when an image is selected
-  // needs the (char *) cast for some reason, or widget doesn't pack.
+  //exportFileType.bindList(NULL); // the list is bound when an image is selected
   exportFileType = "none";
 
   // When newExportFileName is changed, we actually save a file.
@@ -3274,11 +3580,11 @@ void setupCallbacks (nmb_Dataset *d) {
   realign_textures_enabled.addCallback
     (handle_realign_textures_selected_change, NULL);
 
-  texturePlaneName.initializeTcl("texture_comes_from", ".realign_texture.selection");
-  texturePlaneName.bindList(d->dataImages->imageNameList());
+  texturePlaneName.initializeTcl("texture_comes_from");
+  //texturePlaneName.bindList(d->dataImages->imageNameList());
 
-  textureConversionMapName.initializeTcl("texture_conversion_map", ".realign_texture.selection");
-  textureConversionMapName.bindList(&colorMapNames);
+  textureConversionMapName.initializeTcl("texture_conversion_map");
+  //textureConversionMapName.bindList(&colorMapNames);
   // BUG BUG BUG 
   // handle_texture_conversion_map_change takes a nmg_Graphics pointer,
   // not an nmm_Microscope!
@@ -3305,24 +3611,24 @@ void setupCallbacks (Microscope * m) {
   // Moved all of these here since microscope isn't defined at load time
   // so we can't declare all these things statically.
 
-  compliancePlaneName.bindList(&m->state.data.inputPlaneNames);
+  //compliancePlaneName.bindList(&m->state.data.inputPlaneNames);
   compliancePlaneName = "none";
 
 
 
-  frictionPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //frictionPlaneName.bindList(&m->state.data.inputPlaneNames);
   frictionPlaneName = "none";
 
-  bumpPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //bumpPlaneName.bindList(&m->state.data.inputPlaneNames);
   bumpPlaneName = "none";
 
-  buzzPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //buzzPlaneName.bindList(&m->state.data.inputPlaneNames);
   buzzPlaneName = "none";
 
-  adhesionPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //adhesionPlaneName.bindList(&m->state.data.inputPlaneNames);
   adhesionPlaneName = "none";
 
-  soundPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //soundPlaneName.bindList(&m->state.data.inputPlaneNames);
   soundPlaneName = "none";
   soundPlaneName.addCallback
             (handle_sound_dataset_change, m);
@@ -3337,45 +3643,45 @@ void setupCallbacks (Microscope * m) {
 
   // DONE GENETIC TEXTURES
 
-  xPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //xPlaneName.bindList(&m->state.data.inputPlaneNames);
   xPlaneName = "none";
   xPlaneName.addCallback
             (handle_x_dataset_change, NULL);
 
-  procPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //procPlaneName.bindList(&m->state.data.inputPlaneNames);
   procPlaneName = "none";
-  procParams.bindList(&m->state.data.inputPlaneNames);
+  //procParams.bindList(&m->state.data.inputPlaneNames);
   procParams = "";
 
-  newFilterPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //newFilterPlaneName.bindList(&m->state.data.inputPlaneNames);
   newFilterPlaneName = "";
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
 
-  newFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //newFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
             (handle_flatPlaneName_change, NULL);
 
-  newLBLFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //newLBLFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
   newLBLFlatPlaneName = "";
   newLBLFlatPlaneName.addCallback
 	    (handle_lblflatPlaneName_change, NULL); 
 
-  sumPlane1Name.bindList(&m->state.data.inputPlaneNames);
+  //sumPlane1Name.bindList(&m->state.data.inputPlaneNames);
   sumPlane1Name = "none";
-  sumPlane2Name.bindList(&m->state.data.inputPlaneNames);
+  //sumPlane2Name.bindList(&m->state.data.inputPlaneNames);
   sumPlane2Name = "none";
-  newSumPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //newSumPlaneName.bindList(&m->state.data.inputPlaneNames);
   newSumPlaneName = "";
   newSumPlaneName.addCallback
             (handle_sumPlaneName_change, NULL);
 
-  adhPlane1Name.bindList(&m->state.data.inputPlaneNames);
+  //adhPlane1Name.bindList(&m->state.data.inputPlaneNames);
   adhPlane1Name  = "none";
-  adhPlane2Name.bindList(&m->state.data.inputPlaneNames);
+  //adhPlane2Name.bindList(&m->state.data.inputPlaneNames);
   adhPlane2Name  = "none";
-  newAdhPlaneName.bindList(&m->state.data.inputPlaneNames);
+  //newAdhPlaneName.bindList(&m->state.data.inputPlaneNames);
   newAdhPlaneName = "";
   newAdhPlaneName.addCallback
             (handle_adhPlaneName_change, m);
@@ -3536,7 +3842,7 @@ void setupCallbacks (nmg_Graphics * g) {
   // make list of image types for screen captures
   for (int i = 0; i < ImageType_count; i++)
      screenImage_formats.addEntry(screenImage_formats_list[i]);
-  screenImageFileType.bindList(&screenImage_formats);
+  //screenImageFileType.bindList(&screenImage_formats);
   screenImageFileType = (const char *)(screenImage_formats_list[0]);
   // do call back when name chnages
   newScreenImageFileName = (const char *) "";
@@ -3559,10 +3865,16 @@ void setupCallbacks (vrpn_ForceDevice_Remote * p) {
 
 }
 
+void setupCallbacks (nmb_Decoration * d) {
+    if (!d) return;
+    d->red.registerMoveCallback(handle_collab_measure_move, (void *)0);
+    d->green.registerMoveCallback(handle_collab_measure_move, (void *)1);
+    d->blue.registerMoveCallback(handle_collab_measure_move, (void *)2);
+}
+
 // NANOX
 // Tom Hudson, September 1999
 // Sets up synchronization callbacks and nmui_Component/ComponentSync
-
 //#define MIN_SYNC
 
 void setupSynchronization (vrpn_Connection * serverConnection,
@@ -3596,6 +3908,9 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   streamfileControls->add(&replay_rate);
   streamfileControls->add(&rewind_stream);
   streamfileControls->add(&set_stream_time);
+  // Don't want to synchronize this;  TCL sets it when set_stream_time
+  // sync occurs.
+  //streamfileControls->add(&set_stream_time_now);
 
 
   //set_stream_time.d_permitIdempotentChanges = VRPN_TRUE;
@@ -3612,7 +3927,7 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewPlaneControls = new nmui_Component ("View Plane");
 
   viewPlaneControls->add(&m->state.stm_z_scale);
-  viewPlaneControls->add((TclNet_selector *) dset->heightPlaneName);
+  viewPlaneControls->add((TclNet_string *) dset->heightPlaneName);
   viewPlaneControls->add(&tcl_wfr_xlate_X);
   viewPlaneControls->add(&tcl_wfr_xlate_Y);
   viewPlaneControls->add(&tcl_wfr_xlate_Z);
@@ -3621,12 +3936,14 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewPlaneControls->add(&tcl_wfr_rot_2);
   viewPlaneControls->add(&tcl_wfr_rot_3);
   viewPlaneControls->add(&tcl_wfr_scale);
+  //viewPlaneControls->add(&tcl_wfr_changed);
+  viewPlaneControls->add(&tclstride);
 
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
 
-  viewColorControls->add((TclNet_selector *) dset->colorPlaneName);
-  viewColorControls->add((TclNet_selector *) dset->colorMapName);
+  viewColorControls->add((TclNet_string *) dset->colorPlaneName);
+  viewColorControls->add((TclNet_string *) dset->colorMapName);
   viewColorControls->add(&color_slider_min);
   viewColorControls->add(&color_slider_max);
 
@@ -3660,7 +3977,7 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewContourControls->add(&contour_g);
   viewContourControls->add(&contour_b);
   viewContourControls->add(&contour_changed);
-  viewContourControls->add((TclNet_selector *) dset->contourPlaneName);
+  viewContourControls->add((TclNet_string *) dset->contourPlaneName);
 
   nmui_Component * viewGridControls;
   viewGridControls = new nmui_Component ("View Grid");
@@ -3690,8 +4007,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   //nmui_Component * derivedPlaneControls;
   //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
 
-  //derivedPlaneControls->add(&newFlatPlaneName);
-
   // Christmas sync
 
   nmui_Component * rootUIControl;
@@ -3700,7 +4015,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   //rootUIControl->add(derivedPlaneControls);
   rootUIControl->add(viewControls);
   rootUIControl->add(streamfileControls);
-
   rootUIControl->bindConnection(serverConnection);
 
   if (logConnection) {
@@ -3711,18 +4025,37 @@ void setupSynchronization (vrpn_Connection * serverConnection,
 
     share_sync_state.bindLogConnection(logConnection);
     copy_inactive_state.bindLogConnection(logConnection);
+      copy_to_private_state.bindLogConnection(logConnection);
+      copy_to_shared_state.bindLogConnection(logConnection);
     collab_machine_name.bindLogConnection(logConnection);
   }
 
   // User Interface to synchronization
+
+  // NANOX FLAT
+  // Set up a utility class to make sure derived planes are synchronized
+  // between all replicas.
+
+  nmui_PlaneSync * ps;
+
+  ps = new nmui_PlaneSync (dset, &(m->state.data), serverConnection);
+
+  sync_plane_struct * sync_userdata = new sync_plane_struct;
+  sync_userdata->component = rootUIControl;
+  sync_userdata->planesync = ps;
+
   // Since streamfileControls are timed, the toplevel MUST use
   // the timed callbacks.  Oops.  Took an hour or more to find,
   // that one.
-
   share_sync_state.addCallback
-      (handle_synchronize_timed_change, rootUIControl);
+      (handle_synchronize_timed_change, sync_userdata);
   copy_inactive_state.addCallback
-      (handle_timed_sync, rootUIControl);
+      (handle_timed_sync, sync_userdata);
+
+    copy_to_private_state.addCallback
+        (handle_copy_to_private, sync_userdata);
+    copy_to_shared_state.addCallback
+        (handle_copy_to_shared, sync_userdata);
 
   // need to pass rootUIControl to handle_timed_sync_complete
   // so that it sees d_maintain as TRUE!
@@ -3730,7 +4063,7 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   streamfileControls->registerSyncRequestHandler
           (handle_timed_sync_request, streamfileControls);
   streamfileControls->registerSyncCompleteHandler
-          (handle_timed_sync_complete, rootUIControl);
+          (handle_timed_sync_complete, sync_userdata);
 
 
 
@@ -3744,13 +4077,7 @@ void setupSynchronization (vrpn_Connection * serverConnection,
 
 
   // NANOX FLAT
-  // Set up a utility class to make sure derived planes are synchronized
-  // between all replicas.
-
-  nmui_PlaneSync * ps;
-
-  ps = new nmui_PlaneSync (dset, serverConnection);
-
+  // make sure flat plane utility class knows if collaborator changes.
   collab_machine_name.addCallback
         (handle_collab_machine_name_change3, ps);
 
@@ -3800,6 +4127,11 @@ struct MicroscapeInitializationState {
   char logPath [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
+
+  // control synchronization method for collaboration
+  vrpn_bool useOptimism;
+
+  int packetlimit;
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -3822,7 +4154,9 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   writingRemoteStream (0),
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
-  replayInterface (VRPN_FALSE)
+  replayInterface (VRPN_FALSE),
+  useOptimism (VRPN_FALSE),
+  packetlimit (0)
 {
 
 }
@@ -3962,11 +4296,18 @@ void ParseArgs (int argc, char ** argv,
         istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
 	if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = RENDER_CLIENT;
       } else if (!strcmp(argv[i], "-trenderserver")) {
-        istate->graphics_mode = RENDER_TEXTURE_SERVER;
+        istate->graphics_mode = TEXTURE_SERVER;
       } else if (!strcmp(argv[i], "-trenderclient")) {
 	if (++i >= argc) Usage(argv[0]);
-        istate->graphics_mode = RENDER_TEXTURE_CLIENT;
+        istate->graphics_mode = TEXTURE_CLIENT;
+        strncpy(istate->graphicsHost, argv[i], 256);
+      } else if (!strcmp(argv[i], "-vrenderserver")) {
+        istate->graphics_mode = VIDEO_SERVER;
+      } else if (!strcmp(argv[i], "-vrenderclient")) {
+	if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = VIDEO_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4009,6 +4350,11 @@ void ParseArgs (int argc, char ** argv,
         istate->logInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->logPath, argv[i]);
+      } else if (!strcmp(argv[i], "-packetlimit")) {
+        if (++i >= argc) Usage(argv[0]);
+        istate->packetlimit = atoi(argv[i]);
+      } else if (!strcmp(argv[i], "-optimistic")) {
+        istate->useOptimism = VRPN_TRUE;
       } else if (!strcmp(argv[i], "-replayif")) {
         istate->replayInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
@@ -4263,8 +4609,11 @@ void Usage(char* s)
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] [-ugraphics]\n");
   fprintf(stderr, "       [-monitor port] [-collaborate port] [-peer name]\n");
-  fprintf(stderr, "       [-renderserver] [-renderclient host] [-logif path]\n");
-  fprintf(stderr, "       [-replayif path]\n");
+  fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
+  fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
+  fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n");
+  fprintf(stderr, "       [-logif path] [-replayif path] [-packetlimit n]\n");
+  fprintf(stderr, "       [-optimistic]\n");
   fprintf(stderr, "       \n");
   //fprintf(stderr, "       -poly: Display poligonal surface (default)\n");
   //fprintf(stderr, "       -sphere: Display as spheres\n");
@@ -4350,17 +4699,35 @@ void Usage(char* s)
   fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
                          "from the microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -peer:  connect to named collaborative peer.\n");
+
   fprintf(stderr, "       -renderserver:  start up as a server for "
                           "remote rendering.\n");
   fprintf(stderr, "       -renderclient:  start up as a client for "
                           "remote rendering,\n");
   fprintf(stderr, "       connected to the named host.\n");
+
+  fprintf(stderr, "       -trenderserver:  start up as a server for "
+                          "remote rendering.\n");
+  fprintf(stderr, "       -trenderclient:  start up as a client for "
+                          "remote rendering,\n");
+  fprintf(stderr, "       connected to the named host.\n");
+
+  fprintf(stderr, "       -vrenderserver:  start up as a server for "
+                          "remote rendering.\n");
+  fprintf(stderr, "       -vrenderclient:  start up as a client for "
+                          "remote rendering,\n");
+  fprintf(stderr, "       connected to the named host.\n");
+
   fprintf(stderr, "       -logif path:  open up stream files in specified "
                           "directory to log all use of\n"
                   "       (collaborative) interface.\n");
   fprintf(stderr, "       -replayif path:  replay the interface (\"movie "
                           "mode\") from stream files in the\n"
                   "       specified directory.\n");
+  fprintf(stderr, "       -packetlimit n:  while replaying stream files "
+                          "play no more than n packets\n"
+                  "       before refreshing graphics (0 to disable).\n");
+  fprintf(stderr, "       -optimistic:  use optimistic concurrency control.\n");
 
   exit(-1);
 }
@@ -4756,8 +5123,11 @@ int main(int argc, char* argv[])
     while (!monitor_forwarder_connection->connected())
       monitor_forwarder_connection->mainloop();
 
-    if (sname)
+    if (sname) {
       delete [] sname;
+      sname = NULL;
+    }
+    
   }
   if (istate.collabPort != -1) {
 
@@ -4796,8 +5166,10 @@ int main(int argc, char* argv[])
     while (!collab_forwarder_connection->connected())
       collab_forwarder_connection->mainloop();
 
-    if (sname)
+    if (sname) {
       delete [] sname;
+      sname = NULL;
+    }
   }
     }
 
@@ -4827,11 +5199,18 @@ int main(int argc, char* argv[])
       exit(0);
     }
     */
+
+    if (vrpnLogFile) {
+      vrpnLogFile->limit_messages_played_back(istate.packetlimit);
+    }
+
 #else
 
     fprintf(stderr, "About to init microscope\n");
     microscope = new Microscope (istate.afm, decoration->rateOfTime);
     fprintf(stderr, "Microscope initialized\n");
+
+    microscope->setPlaybackLimit(istate.packetlimit);  // HACK TCH 15 Feb 2000
 
 #endif
 
@@ -4840,6 +5219,23 @@ int main(int argc, char* argv[])
     debug.turnOff();
     fprintf(stderr, "XXX -- TURNING OFF DEBUGGING INFO!!!!\n");
 #endif
+
+    // Must get hostname before initializing nmb_Dataset, but
+    // should do it after VRPN starts, I think.
+    char * hnbuf = new char[256];
+    if (gethostname(hnbuf, 256)) {
+	// get host failed! Try environment variable instead
+	delete [] hnbuf;
+	if ((hnbuf = getenv("HOSTNAME")) != NULL){
+	    // this is a global tclvar_String, so we can see it in tcl.
+	    my_hostname = hnbuf;
+	    // maybe use COMPUTERNAME?
+	}
+    } else {
+	// this is a global tclvar_String, so we can see it in tcl.
+	my_hostname = hnbuf;
+	delete [] hnbuf;
+    }
 
     VERBOSE(1, "Creating grids");
     char wtl_buffer[1000];
@@ -4855,7 +5251,8 @@ int main(int argc, char* argv[])
                                istate.num_stm_files, 
                                (const char **) istate.image_file_names,
                                istate.num_image_files,
-                               allocate_TclNet_selector);
+			       (const char *)my_hostname,
+                               allocate_TclNet_string);
 
     VERBOSE(1, "Created dataset");
 
@@ -4891,7 +5288,7 @@ int main(int argc, char* argv[])
     VERBOSE(1, "Setup dataset callbacks");
     setupCallbacks(microscope);
     VERBOSE(1, "Setup microscope callbacks");
-
+    setupCallbacks(decoration);
     // log modifications into a file
 
     ModFile * modfile = new ModFile;
@@ -4992,11 +5389,12 @@ int main(int argc, char* argv[])
                    (dataset, minC, maxC, renderServerOutputConnection,
                     nmg_Graphics::VERTEX_COLORS,
                     nmg_Graphics::VERTEX_DEPTH,
+                    nmg_Graphics::ORTHO_PROJECTION,
                     100, 100, rulerPPMName, renderServerControlConnection);
 
         break;
 
-      case RENDER_TEXTURE_SERVER:
+      case TEXTURE_SERVER:
         fprintf(stderr, "Starting up as a texture rendering server "
                 "(orthographic projection).\n"
                 "    THIS MODE IS FOR TESTING ONLY.\n");
@@ -5014,6 +5412,30 @@ int main(int argc, char* argv[])
                    (dataset, minC, maxC, renderServerOutputConnection,
                     nmg_Graphics::SUPERSAMPLED_COLORS,
                     nmg_Graphics::NO_DEPTH,
+                    nmg_Graphics::ORTHO_PROJECTION,
+                    512, 512, rulerPPMName, renderServerControlConnection);
+
+        break;
+
+      case VIDEO_SERVER:
+        fprintf(stderr, "Starting up as a video rendering server "
+                "(perspective projection).\n"
+                "    THIS MODE IS FOR TESTING ONLY.\n");
+
+        renderServerOutputConnection =
+                new vrpn_Synchronized_Connection
+                          (WellKnownPorts::remoteRenderingData);
+
+        //renderServerControlConnection = renderServerOutputConnection;
+        renderServerControlConnection = 
+                new vrpn_Synchronized_Connection
+                            (WellKnownPorts::graphicsControl);
+
+        graphics = new nmg_Graphics_RenderServer
+                   (dataset, minC, maxC, renderServerOutputConnection,
+                    nmg_Graphics::SUPERSAMPLED_COLORS,
+                    nmg_Graphics::NO_DEPTH,
+                    nmg_Graphics::PERSPECTIVE_PROJECTION,
                     512, 512, rulerPPMName, renderServerControlConnection);
 
         break;
@@ -5044,6 +5466,7 @@ int main(int argc, char* argv[])
         graphics = new nmg_Graphics_RenderClient
              (dataset, minC, maxC, renderClientInputConnection,
               nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
+              nmg_Graphics::ORTHO_PROJECTION,
               100, 100,
               renderServerControlConnection, &graphicsTimer);
 
@@ -5051,7 +5474,7 @@ int main(int argc, char* argv[])
 
         break;
 
-      case RENDER_TEXTURE_CLIENT:
+      case TEXTURE_CLIENT:
         fprintf(stderr, "Starting up as a texture rendering client "
                 "(expecting peer rendering server %d to supply images).\n",
                 istate.graphicsHost);
@@ -5077,9 +5500,45 @@ int main(int argc, char* argv[])
         graphics = new nmg_Graphics_RenderClient
              (dataset, minC, maxC, renderClientInputConnection,
               nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
+              nmg_Graphics::ORTHO_PROJECTION,
               512, 512, renderServerControlConnection, &graphicsTimer);
 
         graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+        break;
+
+      case VIDEO_CLIENT:
+        fprintf(stderr, "Starting up as a video rendering client "
+                "(expecting peer rendering server %d to supply images).\n",
+                istate.graphicsHost);
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                WellKnownPorts::remoteRenderingData);
+        renderClientInputConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                WellKnownPorts::graphicsControl);
+        renderServerControlConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
+
+        // By having graphics send on renderServerControlConnection
+        // and gi listen on it, graphics effectively sends commands
+        // to BOTH the RenderClient and the RenderServer;
+        // each will execute those it needs to.
+
+        // TODO
+        graphics = new nmg_Graphics_RenderClient
+             (dataset, minC, maxC, renderClientInputConnection,
+              nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
+              nmg_Graphics::PERSPECTIVE_PROJECTION,
+              512, 512, renderServerControlConnection, &graphicsTimer);
+
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+        ((nmg_Graphics_Timer *) graphics)->timeViewpointChanges(VRPN_TRUE);
 
         break;
 
@@ -5188,7 +5647,7 @@ int main(int argc, char* argv[])
   char sfbuf [1024];
 
   if (istate.replayInterface) {
-    sprintf(sfbuf, "file:%s/SharedIFSvrLog-%d.stream", istate.logPath,
+    sprintf(sfbuf, "file:%s/SharedIFSvrLog-%ld.stream", istate.logPath,
             istate.logTimestamp.tv_sec);
     collaboratingPeerServerConnection = 
       vrpn_get_connection_by_name (sfbuf);
@@ -5198,7 +5657,7 @@ int main(int argc, char* argv[])
     // timestamp, taken right here.
     gettimeofday(&loggingTimestamp, NULL);
 
-    sprintf(sfbuf, "%s/SharedIFSvrLog-%d.stream", istate.logPath,
+    sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", istate.logPath,
             loggingTimestamp.tv_sec);
     collaboratingPeerServerConnection = 
   	new vrpn_Synchronized_Connection
@@ -5226,14 +5685,14 @@ int main(int argc, char* argv[])
   }
 
   if (replayingInterface) {
-    sprintf(sfbuf, "file:%s/PrivateIFLog-%d.stream", loggingPath,
+    sprintf(sfbuf, "file:%s/PrivateIFLog-%ld.stream", loggingPath,
             loggingTimestamp.tv_sec);
     interfaceLogConnection = vrpn_get_connection_by_name (sfbuf);
   } else if (loggingInterface) {
-    sprintf(sfbuf, "%s/PrivateIFLog-%d.stream", loggingPath,
+    sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", loggingPath,
             loggingTimestamp.tv_sec);
     interfaceLogConnection = new vrpn_Synchronized_Connection
-            (4501, sfbuf, vrpn_LOG_OUTGOING);
+            (WellKnownPorts::interfaceLog, sfbuf, vrpn_LOG_OUTGOING);
     if (!interfaceLogConnection->doing_okay()) {
       fprintf(stderr, "ERROR:  Couldn't open log file.\n");
       //shutdown_connections();
@@ -5243,15 +5702,15 @@ int main(int argc, char* argv[])
 
   if (collaboratingPeerServerConnection) {
 printf("got collaboratingPeerServerConnection\n");
-    if (vrpnHandTracker[0]) {
       nM_coord_change_server = 
     	  new nM_coord_change (nM_coord_change_server_name,
                                vrpnHandTracker[0],
       	                       (vrpn_Synchronized_Connection *)
                                    collaboratingPeerServerConnection);
 printf("nM_coord_change_server initialized\n");
-    }
 
+    nM_coord_change_server->registerPeerSyncChangeHandler
+         (handle_peer_sync_change, NULL);
     // Set up the server to share the mode
     vrpnMode_Local = new vrpn_Analog_Server( local_ModeName,
 		collaboratingPeerServerConnection );
@@ -5272,7 +5731,7 @@ printf("nM_coord_change_server initialized\n");
     if(tkenable) {
       // init_Tk_control_panels creates the interpreter and adds most of
       // the Tk widgits
-      init_Tk_control_panels(tcl_script_dir);
+      init_Tk_control_panels(tcl_script_dir, istate.useOptimism);
       set_Tk_command_handler(handleCharacterCommand);
       VERBOSE(1, "done initialising the control panels\n");
     }
@@ -5794,7 +6253,7 @@ VERBOSE(1, "Entering main loop");
 
 #ifdef	PROJECTIVE_TEXTURE
     if (aligner_ui) {
-       aligner_ui->mainloop();
+      aligner_ui->mainloop();
     }
 
   #ifdef NANO_WITH_ROBOT
@@ -5890,13 +6349,31 @@ VERBOSE(1, "Entering main loop");
   if(glenable){
     /* shut down trackers and a/d devices    */
     for ( i = 0; i < NUM_USERS; i++ ) {
-      if (vrpnHandTracker[i]) delete vrpnHandTracker[i];
-      if (vrpnHeadTracker[i]) delete vrpnHeadTracker[i];
+      if (vrpnHandTracker[i]) {
+	  delete vrpnHandTracker[i];
+	  vrpnHandTracker[i] = NULL;
+      }
+      if (vrpnHeadTracker[i]) {
+	  delete vrpnHeadTracker[i];
+	  vrpnHeadTracker[i] = NULL;
+      }
     }
-    if (phantButton) delete phantButton;
-    if (forceDevice) delete forceDevice;
-    if (buttonBox) delete buttonBox;
-    if (dialBox) delete dialBox;
+    if (phantButton) {
+	delete phantButton;
+	phantButton = NULL;
+    }
+    if (forceDevice) {
+	delete forceDevice;
+	forceDevice = NULL;
+    }
+    if (buttonBox) {
+	delete buttonBox;
+	buttonBox = NULL;
+    }
+    if (dialBox) {
+	delete dialBox;
+	dialBox = NULL;
+    }
   }
 
 // Turn the screen saver back on if we're using the SGI and openGL.
@@ -6433,7 +6910,7 @@ int handleMouseEvents (nmb_TimerList * timer)
 
       case ButtonPress:
 	  
-fprintf(stderr, "handleMouseEvent() got ButtonPress.\n");
+//fprintf(stderr, "handleMouseEvent() got ButtonPress.\n");
           timer->activate(timer->getListHead());
 
 	  qvtemp[Q_X]=event.xbutton.x;
@@ -6592,7 +7069,7 @@ fprintf(stderr, "handleMouseEvent() got ButtonPress.\n");
 
 	  if ( mode == M_ROTATE ){
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    // Texture Realignment
@@ -6634,7 +7111,7 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 
 	  else if ( mode == M_ZOOM ){
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    // Texture Realignment
@@ -6657,7 +7134,7 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 
 	  else if ( mode == M_TRANSLATE ) {
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    // Texture Realignment
@@ -6682,7 +7159,7 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 	  
 	  else if ( mode == M_SCALE ){
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    // Texture Realignment
@@ -6693,7 +7170,7 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 	  
 	  else if ( mode == M_SHEAR ) {
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    // Texture Realignment
@@ -6710,7 +7187,7 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 	else if ( user_mode[0] == USER_LIGHT_MODE ) {
 	  if ( mode == M_TRANSLATE ){
 
-fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
+//fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
 	    deltay = event.xmotion.y - starty;
@@ -7013,7 +7490,7 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
     float mid_x, mid_y, mid_z;
 
 /*MODIFIED DANIEL ROHRER*/
-    double len_x = fabs(plane->maxX()- plane->minX());
+    //double len_x = fabs(plane->maxX()- plane->minX());
     double len_y = fabs(plane->maxY() - plane->minY());
 
 //     printf("max_x:  %lf\tmin_x:  %lf\nmax_y:  %lf\tmin_y:  %lf\n", 
@@ -7201,59 +7678,25 @@ void center (void) {
   graphics->resetLightDirection();
 
   v_xform_type lock;
-  //q_vec_type lock_userpos; 
-  //q_type lock_userrot;
-  //double lock_userscale;
   
   // find the transforms to take us to the centered view
-  //find_center_xforms(&lock_userpos, &lock_userrot, &lock_userscale);
   find_center_xforms(&lock.xlate, &lock.rotate, &lock.scale);
   
   /* Copy the new values to the world xform for user 0 */
   printf("Setting head xlate to (%f, %f, %f)\n",
-        //lock_userpos[V_X], lock_userpos[V_Y], lock_userpos[V_Z]);
         lock.xlate[V_X], lock.xlate[V_Y], lock.xlate[V_Z]);
-
-  //v_world.users.xforms[0].xlate[V_X] = lock_userpos[V_X];
-  //v_world.users.xforms[0].xlate[V_Y] = lock_userpos[V_Y];
-  //v_world.users.xforms[0].xlate[V_Z] = lock_userpos[V_Z];
-  //cerr << "L: " << lock_userpos[V_X] << " " << lock_userpos[V_Y] << " " << lock_userpos[V_Z] << "\n";
 
 /*XXX Center causes seg fault on nWC after the resize has happened
   if the rotation sets are done under Linux.  It does not fail if they
   are not done.  If you go into grab mode to clear the resize lines
   before centering, then all works well. */
-//   printf("Head rotation was (%lf, %lf, %lf: %lf)\n",
-//         v_world.users.xforms[0].rotate[V_X],
-//         v_world.users.xforms[0].rotate[V_Y],
-//         v_world.users.xforms[0].rotate[V_Z],
-//         v_world.users.xforms[0].rotate[V_W]);
-  //printf("Setting head rotate to (%f, %f, %f: %f)\n",
-        //lock_userrot[V_X], lock_userrot[V_Y], lock_userrot[V_Z],
-        //lock_userrot[V_W]);
   printf("Setting head rotate to (%f, %f, %f: %f)\n",
         lock.rotate[V_X], lock.rotate[V_Y], lock.rotate[V_Z],
         lock.rotate[V_W]);
 
-  //v_world.users.xforms[0].rotate[V_X] = lock_userrot[V_X];
-  //v_world.users.xforms[0].rotate[V_Y] = lock_userrot[V_Y];
-  //v_world.users.xforms[0].rotate[V_Z] = lock_userrot[V_Z];
-  //v_world.users.xforms[0].rotate[V_W] = lock_userrot[V_W];
-
-  //printf("Setting head scale to %f\n", lock_userscale);
   printf("Setting head scale to %f\n", lock.scale);
 
-  //v_world.users.xforms[0].scale = lock_userscale;
-
   updateWorldFromRoom(&lock);
-
-
-//UGRAPHICS NOTE:: THIS IS A TEMPORARY HACK TO MAKE THE UGRAPHICS OBJECTS APPEAR IN FRONT
-//OF THE USER
-//  World.TGetContents().GetLocalXform().SetTranslate(lock_userpos);
-//  World.TGetContents().GetLocalXform().SetScale(lock_userscale);
-//  cerr << World.TGetContents().GetLocalXform();
-
 }
 
 

@@ -11,12 +11,13 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
            vrpn_Connection * inputConnection,
            RemoteColorMode cMode,
            RemoteDepthMode dMode,
+           RemoteProjectionMode pMode,
            int xsize, int ysize,
            vrpn_Connection * controlConnection,
            nmb_TimerList * timer) :
     nmg_Graphics_Remote (controlConnection),
     d_implementation (data, minColor, maxColor, inputConnection,
-                      cMode, dMode, timer, xsize, ysize),
+                      cMode, dMode, pMode, timer, xsize, ysize),
     d_timer (timer) {
 
   // HACK
@@ -65,7 +66,7 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
   char * mptr;
   timeval now;
   vrpn_int32 sn;
-  int msglen;
+  vrpn_int32 msglen;
 
   if (!d_timer) {
     fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer:  no timer!\n");
@@ -257,5 +258,13 @@ void nmg_Graphics_RenderClient::sendGeneticTexturesData (int a, char ** b) {
   blockTimer();
   nmg_Graphics_Remote::sendGeneticTexturesData (a, b);
 }
+
+// virtual
+void nmg_Graphics_RenderClient::setViewTransform (v_xform_type x) {
+  blockTimer();
+  nmg_Graphics_Remote::setViewTransform (x);
+  d_implementation.setViewTransform(x);
+}
+
 
 

@@ -178,7 +178,7 @@ extern  TclNet_float            color_slider_min, color_slider_max;
 extern  Tclvar_float            compliance_slider_min_limit;
 extern  Tclvar_float            compliance_slider_max_limit;
 extern  Tclvar_float            compliance_slider_min,compliance_slider_max;
-extern  Tclvar_selector         compliancePlaneName;
+extern  Tclvar_string         compliancePlaneName;
 
 
 
@@ -187,28 +187,28 @@ extern  Tclvar_selector         compliancePlaneName;
 extern  Tclvar_float            friction_slider_min_limit;
 extern  Tclvar_float            friction_slider_max_limit;
 extern  Tclvar_float            friction_slider_min, friction_slider_max;
-extern  Tclvar_selector         frictionPlaneName;
+extern  Tclvar_string         frictionPlaneName;
 
 //--------------------------------------------------------------------------
 //These select the plane to map bump size from and the scale of the mapping.
 extern  Tclvar_float            bump_slider_min_limit;
 extern  Tclvar_float            bump_slider_max_limit;
 extern  Tclvar_float            bump_slider_min, bump_slider_max;
-extern  Tclvar_selector         bumpPlaneName;
+extern  Tclvar_string         bumpPlaneName;
 
 //--------------------------------------------------------------------------
 //These select the plane to map buzz amplitude from and the scale of the mapping
 extern  Tclvar_float            buzz_slider_min_limit;
 extern  Tclvar_float            buzz_slider_max_limit;
 extern  Tclvar_float            buzz_slider_min, buzz_slider_max;
-extern  Tclvar_selector         buzzPlaneName;
+extern  Tclvar_string         buzzPlaneName;
 
 //--------------------------------------------------------------------------
 //These select the plane to map friction from and teh scale of the mapping.
 extern  Tclvar_float            adhesion_slider_min_limit;
 extern  Tclvar_float            adhesion_slider_max_limit;
 extern  Tclvar_float            adhesion_slider_min, adhesion_slider_max;
-extern  Tclvar_selector         adhesionPlaneName;
+extern  Tclvar_string         adhesionPlaneName;
 
 
 //--------------------------------------------------------------------------
@@ -216,7 +216,7 @@ extern  Tclvar_selector         adhesionPlaneName;
 extern Tclvar_float              sound_slider_min_limit;
 extern Tclvar_float              sound_slider_max_limit;
 extern Tclvar_float              sound_slider_min, sound_slider_max;
-extern Tclvar_selector           soundPlaneName;
+extern Tclvar_string           soundPlaneName;
 
 
 //---------------------------------------------------------------------------
@@ -227,7 +227,7 @@ extern  TclNet_int rulergrid_orient_line;
 extern  TclNet_float rulergrid_xoffset;
 extern  TclNet_float rulergrid_yoffset;
 extern  TclNet_float rulergrid_angle;
-extern	Tclvar_int_with_button rulergrid_enabled;
+extern	TclNet_int rulergrid_enabled;
 
 //---------------------------------------------------------------------------
 // These select the plane to map alpha from and the scale of the mapping. 
@@ -241,11 +241,11 @@ extern  Tclvar_float            alpha_slider_min, alpha_slider_max;
 extern  Tclvar_float            x_min_value;
 extern  Tclvar_float            x_max_value;
 extern  Tclvar_float            x_min_scale, alpha_max_scale;
-extern  Tclvar_selector         xPlaneName;
+extern  Tclvar_string         xPlaneName;
 
 //---------------------------------------------------------------------------
 // The scale factor for force applied in Direct Z Control
-extern  Tclvar_float_with_scale            directz_force_scale;
+extern  Tclvar_float           directz_force_scale;
 
 
 /*********

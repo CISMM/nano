@@ -81,6 +81,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setHatchMapName");
   d_setIconScale_type =
     c->register_message_type("nmg Graphics setIconScale");
+  d_enableCollabHand_type =
+    c->register_message_type("nmg Graphics enableCollabHand");
   d_setCollabHandPos_type =
     c->register_message_type("nmg Graphics setCollabHandPos");
   d_setCollabMode_type =
@@ -196,6 +198,9 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setTextureTransform");
   d_enableRegistration_type =
     c->register_message_type("nmg Graphics enableRegistration");
+
+  d_setViewTransform_type =
+    c->register_message_type("nmg Graphics setViewTransform");
 
    // For screen capture
   d_createScreenImage_type =
@@ -796,6 +801,33 @@ int nmg_Graphics::decode_setIconScale
   return 0;
 }
 
+char * nmg_Graphics::encode_enableCollabHand (int * len, vrpn_bool on) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+ 
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_enableCollabHand:  "
+            "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, on);
+  }
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_enableCollabHand (const char * buf, vrpn_bool * on) {
+  if (!buf || !on) return -1;
+  CHECK(nmb_Util::Unbuffer(&buf, on));
+  return 0;
+}
+
 //set the position and orientation of the icon following the collaborator's
 //hand position
 char * nmg_Graphics::encode_setCollabHandPos(int * len, double pos[],
@@ -831,7 +863,7 @@ char * nmg_Graphics::encode_setCollabHandPos(int * len, double pos[],
 int nmg_Graphics::decode_setCollabHandPos(const char * buf, double pos[3],
 					  double quat[4])
 {
-  if (!buf || !pos) return -1;
+  if (!buf || !pos || !quat) return -1;
   CHECK(nmb_Util::Unbuffer(&buf, &pos[0]));
   CHECK(nmb_Util::Unbuffer(&buf, &pos[1]));
   CHECK(nmb_Util::Unbuffer(&buf, &pos[2]));
@@ -1494,7 +1526,6 @@ char * nmg_Graphics::encode_setTextureMode
 			"Got illegal texture transform mode %d.  "
 			"Sending RULERGRID_COORD instead.\n", xm);
 	nmb_Util::Buffer(&mptr, &mlen, 0); break;
-	break;
     }
   }
 
@@ -2361,6 +2392,54 @@ int nmg_Graphics::decode_textureTransform(const char *buf, double *xform)
   return 0;
 }
 
+char * nmg_Graphics::encode_setViewTransform (
+     int             * len,
+     v_xform_type xform) {
+//fprintf(stderr,"encode_setViewTransform\n");
+  char *msgbuf = NULL;
+  char *mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 8 * sizeof(double);
+  msgbuf = new char[*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setViewTransform:  "
+                    "Out of memory!\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[0]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[1]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[2]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[0]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[1]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[2]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[3]);
+    nmb_Util::Buffer(&mptr, &mlen, xform.scale);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setViewTransform (const char  * buf,
+                                           v_xform_type * xform) {
+//fprintf(stderr,"decode_setViewTransform\n");
+  const char *bptr = buf;
+  if (!buf || !xform) return -1;
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[0]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[1]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[2]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[0]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[1]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[2]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[3]));
+  CHECK(nmb_Util::Unbuffer(&bptr, &xform->scale));
+  return 0;
+}
+
 // Start screen capture network code
 
 char *nmg_Graphics::encode_createScreenImage
@@ -2370,7 +2449,7 @@ char *nmg_Graphics::encode_createScreenImage
    const ImageType  type
 )
 {
-   fprintf(stderr,"encode_createScreenImage\n");
+//fprintf(stderr,"encode_createScreenImage\n");
    char *msgbuf = NULL;
    char *mptr;
    int mlen;
@@ -2402,14 +2481,14 @@ int nmg_Graphics::decode_createScreenImage
    ImageType   *type
 )
 {
-   fprintf(stderr,"decode_createScreenImage\n");
+//fprintf(stderr,"decode_createScreenImage\n");
    const char *bptr = buf;
    int temp;
    if (!buf || !(*filename) || !type) return -1;
    CHECK(nmb_Util::Unbuffer(&bptr, *filename, 512));
-   fprintf(stderr, "Filename: %s\n", *filename);
+//fprintf(stderr, "Filename: %s\n", *filename);
    CHECK(nmb_Util::Unbuffer(&bptr, &temp));
-   fprintf(stderr, "Type: %d\n", temp);
+//fprintf(stderr, "Type: %d\n", temp);
    *type = (ImageType)(temp);
    return 0;
 }

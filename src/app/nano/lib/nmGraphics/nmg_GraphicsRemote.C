@@ -636,6 +636,27 @@ void nmg_Graphics_Remote::setIconScale (float scale) {
     delete [] msgbuf;
 }
 
+void nmg_Graphics_Remote::enableCollabHand (vrpn_bool on) {
+  struct timeval now;
+  char *msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_enableCollabHand(&len, on);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_enableCollabHand_type,
+                                       d_myId, msgbuf,
+                                        vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::enableCollabHand:  "
+              "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
 void nmg_Graphics_Remote::setCollabHandPos (double pos[], double quat[])
 {
   struct timeval now;
@@ -1782,6 +1803,27 @@ void nmg_Graphics_Remote::positionSphere (float x, float y, float z) {
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::positionSphere:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::setViewTransform (v_xform_type xform) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_setViewTransform(&len, xform);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now,
+                           d_setViewTransform_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setViewTransform:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

@@ -4,6 +4,8 @@
 #include <string.h>  // for strlen()
 #include <stdio.h>
 
+#include <nmb_Globals.h> // for decoration
+#include <nmb_Decoration.h>  //for decoration->elapsedTime
 #include "ModFile.h"
 
 static const int IMAGEMODE = 0;
@@ -19,7 +21,8 @@ extern Tcl_Interp * get_the_interpreter (void);
 
 
 
-Tclvar_int modfile_hasWindow ("modfile_hasWindow", 0); // it won't work the other way unless
+Tclvar_int modfile_hasWindow ("modfile_hasWindow", 0); 
+                                // it won't work the other way unless
 				// we correctly link the Tcl variable with
 				// the C variable - AAS
 //static int modfile_hasWindow = 0;
@@ -42,6 +45,7 @@ int ModFile::EnterModifyMode (void * userdata) {
 
   //fprintf(stderr, "ModFile::EnterModifyMode().\n");
   me->d_lastmode = MODMODE;
+  me->d_start_mod_time = decoration->elapsedTime;
 
   return 0;
 }
@@ -59,6 +63,8 @@ int ModFile::EnterImageMode (void * userdata) {
   }
   me->d_pointlist.writeToTclWindow(me->d_interp);
   me->d_pointlist.clear();
+
+  me->RememberPointList();
 
   me->d_lastmode = IMAGEMODE;
 
@@ -78,12 +84,17 @@ int ModFile::ReceiveNewPoint (void * userdata, const Point_results * _p) {
 }
 
 void ModFile::ShowModFile (void) {
+    /*
    char command [100];
    sprintf(command, "show_mod_win");
-   if (Tcl_Eval(d_interp, command) != TCL_OK) {
-      fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	      d_interp->result);
-   }	
+   TCLEVALCHECK2(d_interp, command);
+    */
 }
 
+void ModFile::RememberPointList (void) {
+   char command [100];
+   // This command includes a timestamp so we know which mod it is. 
+   sprintf(command, "remember_mod_data %ld", d_start_mod_time);
+   TCLEVALCHECK2(d_interp, command);
+}
 

@@ -112,19 +112,19 @@ imported_obj::imported_obj(){
   //set up widgets for import_objects window and import mode 
   sprintf(widget_name, "translate_x%d",imported_obj_count);
   sprintf(page_name, "$pages(%d).pageframe", imported_obj_count);
-  translate_x = new Tclvar_int_with_scale(widget_name, page_name,-4000,4000,0);
+  translate_x = new Tclvar_int(widget_name, 0);
   sprintf(widget_name, "translate_y%d", imported_obj_count);
-  translate_y = new Tclvar_int_with_scale(widget_name, page_name,-4000,4000,0);
+  translate_y = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "translate_z%d", imported_obj_count);
-  translate_z = new Tclvar_int_with_scale(widget_name, page_name,-4000,4000,0);
+  translate_z = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "rotate_x%d", imported_obj_count);
-  rotate_x = new Tclvar_int_with_scale(widget_name, page_name,-180,180,0);
+  rotate_x = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "rotate_y%d", imported_obj_count);
-  rotate_y = new Tclvar_int_with_scale(widget_name, page_name,-180,180,0);
+  rotate_y = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "rotate_z%d", imported_obj_count);
-  rotate_z = new Tclvar_int_with_scale(widget_name, page_name,-180,180,0);
+  rotate_z = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "scale%d", imported_obj_count);
-  scale = new Tclvar_float_with_scale(widget_name, page_name, 0.001, 50, 20);
+  scale = new Tclvar_float(widget_name, 20);
   sprintf(widget_name, "import_mode(%d)",imported_obj_count);
   import_mode = new Tclvar_int(widget_name,0);
   sprintf(widget_name, "visibility_mode(%d)",imported_obj_count);
@@ -137,13 +137,13 @@ imported_obj::imported_obj(){
   //bond mode, which we assume that we start out in
   sprintf(view_name, "$viewobj(%d).viewframe", imported_obj_count);
   sprintf(widget_name, "bond_width%d",imported_obj_count);
-  bond_width = new Tclvar_float_with_scale(widget_name, view_name,0.01,100.0,1.0);
+  bond_width = new Tclvar_float(widget_name,1.0);
   sprintf(widget_name, "bond_colorR%d",imported_obj_count);
-  bond_colorR = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,0.0);
+  bond_colorR = new Tclvar_float(widget_name,0.0);
   sprintf(widget_name, "bond_colorG%d",imported_obj_count);
-  bond_colorG = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,0.0);
+  bond_colorG = new Tclvar_float(widget_name,0.0);
   sprintf(widget_name, "bond_colorB%d",imported_obj_count);
-  bond_colorB = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,1.0);
+  bond_colorB = new Tclvar_float(widget_name,1.0);
   set_tcl_change_callback();
 
   next = NULL;
@@ -380,21 +380,26 @@ void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/,
     me->import_mode_value = 0;
   if (me->import_mode_value == 0){ //we are now in bond mode
     delete me->sphere_radius;
+    me->sphere_radius = NULL;
     delete me->sphere_tesselation;
+    me->sphere_tesselation = NULL;
     delete me->sphere_colorR;
+    me->sphere_colorR = NULL;
     delete me->sphere_colorG;
+    me->sphere_colorG = NULL;
     delete me->sphere_colorB;
+    me->sphere_colorB = NULL;
 
     //make new bond widgets    
     sprintf(view_name, "$viewobj(%d).viewframe",me->object_number);
     sprintf(widget_name, "bond_width%d",me->object_number);
-    me->bond_width = new Tclvar_float_with_scale(widget_name, view_name,0.01,100.0,me->bond_width_value);
+    me->bond_width = new Tclvar_float(widget_name, me->bond_width_value);
     sprintf(widget_name, "bond_colorR%d",me->object_number);
-    me->bond_colorR = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->bond_colorR_value);
+    me->bond_colorR = new Tclvar_float(widget_name, me->bond_colorR_value);
     sprintf(widget_name, "bond_colorG%d",me->object_number);
-    me->bond_colorG = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->bond_colorG_value);
+    me->bond_colorG = new Tclvar_float(widget_name, me->bond_colorG_value);
     sprintf(widget_name, "bond_colorB%d",me->object_number);
-    me->bond_colorB = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->bond_colorB_value);
+    me->bond_colorB = new Tclvar_float(widget_name, me->bond_colorB_value);
     //set up bond callbacks
     me->bond_width->addCallback(handle_bond_width_change,me);
     me->bond_colorR->addCallback(handle_bond_colorR_change,me);
@@ -405,21 +410,25 @@ void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/,
   }  
   else { //we are now in sphere mode
     delete me->bond_width;
+    me->bond_width = NULL;
     delete me->bond_colorR;
+    me->bond_colorR = NULL;
     delete me->bond_colorG;
+    me->bond_colorG = NULL;
     delete me->bond_colorB;
+    me->bond_colorB = NULL;
     //make sphere widgets
     sprintf(view_name, "$viewobj(%d).viewframe",me->object_number);
     sprintf(widget_name, "sphere_radius%d",me->object_number);
-    me->sphere_radius = new Tclvar_float_with_scale(widget_name, view_name,.01,100,me->sphere_radius_value);
+    me->sphere_radius = new Tclvar_float(widget_name, me->sphere_radius_value);
     sprintf(widget_name, "sphere_tesselation%d",me->object_number);
-    me->sphere_tesselation = new Tclvar_int_with_scale(widget_name, view_name,0,100,me->sphere_tesselation_value);
+    me->sphere_tesselation = new Tclvar_int(widget_name, me->sphere_tesselation_value);
     sprintf(widget_name, "sphere_colorR%d",me->object_number);
-    me->sphere_colorR = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->sphere_colorR_value);
+    me->sphere_colorR = new Tclvar_float(widget_name, me->sphere_colorR_value);
     sprintf(widget_name, "sphere_colorG%d",me->object_number);
-    me->sphere_colorG = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->sphere_colorG_value);
+    me->sphere_colorG = new Tclvar_float(widget_name, me->sphere_colorG_value);
     sprintf(widget_name, "sphere_colorB%d",me->object_number);
-    me->sphere_colorB = new Tclvar_float_with_scale(widget_name, view_name,0.0,1.0,me->sphere_colorB_value);
+    me->sphere_colorB = new Tclvar_float(widget_name, me->sphere_colorB_value);
     me->sphere_radius->addCallback(handle_sphere_radius_change,me);
     me->sphere_tesselation->addCallback(handle_sphere_tesselation_change,me);
     //set up sphere callbacks
@@ -581,6 +590,9 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
       else{ 
         cerr << "Memory fault\n"; kill(getpid(),SIGINT);
         delete imported_obj_list_head;
+	imported_obj_list_head = NULL;
+	/* This can't possibly be right - if we delete it, we can't
+	   reference it! I'm taking it out!!! */
         imported_obj_list_head->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
         imported_obj_list_head->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
         imported_obj_list_head->GetURPoly()->LoadGeometry(filename);
@@ -604,6 +616,7 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
       else{
         cerr <<"Memory fault\n"; kill(getpid(), SIGINT);
         delete imported_obj_list_tail;
+	imported_obj_list_tail = NULL;
       }
     }
   }

@@ -46,8 +46,11 @@ d_connection (connection)
 
   }
 
-  if (servicename)
+  if (servicename) {
     delete [] servicename;
+    servicename = NULL;
+  }
+
 }
 
 char * vrpn_GPIBDevice::encode_Device (vrpn_int32 * len, vrpn_int32 board_index,

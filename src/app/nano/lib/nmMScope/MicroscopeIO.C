@@ -454,11 +454,13 @@ int MicroscopeIO::GetPacketFromStream (char * _buf,
                                        vrpn_bool & _updateStreamTime) {
 
   int retval;
+  extern vrpn_bool stm_new_frame;  // from updt_display.c
 
   VERBOSE(5,"      Checking for packet from stream (before knob check)");
 
   /* If the read rate is zero, do not read anything */
-  if (decoration->rateOfTime == 0) {
+  // UNLESS we're being forced to read a new frame
+  if ((decoration->rateOfTime == 0) && !stm_new_frame) {
     VERBOSE(5,"      Stream rate 0");
     return 0;
   } else {

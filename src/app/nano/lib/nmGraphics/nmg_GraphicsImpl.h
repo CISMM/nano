@@ -67,6 +67,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setIconScale (float);
 
+    virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos (double [3], double [4]);
     virtual void setCollabMode (int);
 
@@ -149,6 +150,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void positionSweepLine (const PointType, const PointType);
     virtual void positionSphere (float, float, float);
 
+    virtual void setViewTransform (v_xform_type);
     virtual void createScreenImage(const char *filename, const ImageType type);
 
     // ACCESSORS
@@ -193,7 +195,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     nmb_Dataset * d_dataset;
 
-    void getLatestChange (int * minX, int * maxX, int * minY, int * maxY);
+    void getLatestGridChange (int * minX, int * maxX, int * minY, int * maxY);
 
   private:
 
@@ -261,6 +263,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_positionRubberCorner (void *, vrpn_HANDLERPARAM);
     static int handle_positionSweepLine (void *, vrpn_HANDLERPARAM);
     static int handle_positionSphere (void *, vrpn_HANDLERPARAM);
+    static int handle_enableCollabHand (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabHandPos (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabMode (void *, vrpn_HANDLERPARAM);
 
@@ -287,6 +290,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 //  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);
   static int handle_setTextureTransform (void *, vrpn_HANDLERPARAM);
 
+  static int handle_setViewTransform (void *, vrpn_HANDLERPARAM);
   static int handle_createScreenImage(void *, vrpn_HANDLERPARAM);
 };
 

@@ -30,9 +30,9 @@ class AlignerUI {
   private:
 
 	// control panel variables
-	Tclvar_selector datasetRegistrationPlaneName3D;
-	Tclvar_selector datasetRegistrationPlaneName2D;
-	Tclvar_selector newResamplePlaneName;
+	Tclvar_string datasetRegistrationPlaneName3D;
+	Tclvar_string datasetRegistrationPlaneName2D;
+	Tclvar_string newResamplePlaneName;
 	Tclvar_int datasetRegistrationEnabled;
 	Tclvar_int datasetRegistrationNeeded;
 	Tclvar_int datasetRegistrationRotate3DEnabled;
@@ -62,7 +62,7 @@ class AlignerUI {
 				// including references to AFM or
 				// SEM data if it exists,
 				// contains reference to string list 
-				// variable displayed by the selectors
+				// variable displayed by the strings
 				// datasetRegistrationPlaneName3D,
 				// datasetRegistrationPlaneName2D so that
 				// changes here are reflected in the

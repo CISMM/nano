@@ -62,13 +62,13 @@ class Ohmmeter {
     Tclvar_checklist *ohmmeter_enable_checkbox;
     Tclvar_checklist *channel_enable_checklist;
     Tclvar_checklist *auto_range_checklist;
-    Tclvar_selector *channel_select;
+    Tclvar_string *channel_select;
     nmb_ListOfStrings *list_of_channel_names;
 
     // controls for each ohmmeter channel
     nmb_ListOfStrings *list_of_voltages, *list_of_ranges, *list_of_filters;
-    Tclvar_selector *voltage_select, *range_select, *filter_select;
-    Tclvar_float_with_scale *avrgtime_slider;
+    Tclvar_string *voltage_select, *range_select, *filter_select;
+    Tclvar_float *avrgtime_slider;
 
     // displays of data:
     char ohm_status_message[128];

@@ -98,6 +98,7 @@ extern int g_maxChangedY;
 //to keep track of position and orientation of collaborator's hand
 extern double g_collabHandPos[3];
 extern double g_collabHandQuat[4];
+extern int g_position_collab_hand;
 extern int g_draw_collab_hand;
 extern int make_collab_hand_icon(double pos[], double quat[], vrpn_int32 mode);
 extern vrpn_int32 g_collabMode;

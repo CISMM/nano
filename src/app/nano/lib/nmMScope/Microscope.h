@@ -303,6 +303,9 @@ class Microscope : public nmm_Microscope {
                                         const Scanline_results *),
                                   void *userdata);
 
+    // Limit # packets (messages) played back per call to HandleReports()
+    void setPlaybackLimit (int);
+
   protected:
 
         // Added by Tiger       moved from nmm_Microscope.h
@@ -464,6 +467,9 @@ class Microscope : public nmm_Microscope {
     void RcvFakeSendTimestamp (const struct timeval);
     void RcvUdpSeqNum (const long);
 
+
+    // limit # packets played back per call to HandleReports()
+    int d_playbackLimit;
 
 
 

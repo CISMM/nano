@@ -22,19 +22,13 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 
     virtual ~nmg_Graphics_Timer (void);
 
-  protected:
+    // NEW MANIPULATORS
 
-    nmg_Graphics * d_imp;
+    void timeViewpointChanges (vrpn_bool);
 
-    void activateTimer (void);
-
-    nmb_TimerList * d_timer;
-
-  public:
+    // INHERITED MANIPULATORS
 
     virtual void mainloop (void);
-
-    // MANIPULATORS
 
     virtual void resizeViewport(int width, int height);
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
@@ -67,6 +61,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setContourPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
     virtual void setIconScale (float);
+    virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos(double [3], double [4]);
     virtual void setCollabMode(int);
     virtual void setMinColor (const double [3]);
@@ -126,6 +121,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void positionSphere (float x, float y, float z);
     virtual void createScreenImage (const char * filename,
                                     const ImageType type);
+    virtual void setViewTransform (v_xform_type);
 
 
     virtual void getLightDirection (q_vec_type *) const;
@@ -133,6 +129,16 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual int getSpecularity (void) const;
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
+
+  protected:
+
+    vrpn_bool d_timingViewpointChanges;
+
+    nmg_Graphics * d_imp;
+
+    void activateTimer (void);
+
+    nmb_TimerList * d_timer;
 
 };
 

@@ -72,18 +72,19 @@ static Measure_Data calculate (const PointType red_pos,
   br[X] = blue_pos[X] - red_pos[X];
   br[Y] = blue_pos[Y] - red_pos[Y];
 
-  data.rgDxy = sqrt( rg[X]*rg[X] + rg[Y]*rg[Y]);
-  data.gbDxy = sqrt( gb[X]*gb[X] + gb[Y]*gb[Y]);
-  data.brDxy = sqrt( br[X]*br[X] + br[Y]*br[Y]);
+  data.rgDxy = sqrt(rg[X]*rg[X] + rg[Y]*rg[Y]);
+  data.gbDxy = sqrt(gb[X]*gb[X] + gb[Y]*gb[Y]);
+  data.brDxy = sqrt(br[X]*br[X] + br[Y]*br[Y]);
 
-//If any of the two points overlap, angles are set to 0
-  if(data.rgDxy==0 || data.gbDxy==0 || data.brDxy==0 ) {
-      data.rgbAngle = 0;
-      data.gbrAngle = 0;
-      data.brgAngle = 0;
-  }
+  if ((data.rgDxy == 0) || (data.gbDxy == 0) || (data.brDxy == 0)) {
 
-  else {
+    //If any of the two points overlap, angles are set to 0
+    data.rgbAngle = 0;
+    data.gbrAngle = 0;
+    data.brgAngle = 0;
+
+  } else {
+
       rgb_dot = -(rg[X]*gb[X] + rg[Y]*gb[Y]);
       data.rgbAngle = acos(rgb_dot/data.rgDxy/data.gbDxy) * 180 / M_PI;
 
@@ -122,13 +123,14 @@ int scale_display (void * data) {
 
   BCPlane * plane = g_inputGrid->getPlaneByName
               (g_heightPlaneName);
-  if (plane == NULL)
+  if (plane == NULL) {
       fprintf(stderr, "Error in scale_display: could not get plane!\n");
-  else
+  } else {
       scale = plane->scale();
-  sprintf(message,"Z is from %s (%s), scale is %g",
-        g_heightPlaneName,
-        plane->units()->Characters(), scale);
+    sprintf(message,"Z is from %s (%s), scale is %g",
+          g_heightPlaneName,
+          plane->units()->Characters(), scale);
+  }
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef FLOW
   drawStringInFont(myfont, message);
@@ -250,17 +252,17 @@ int rate_display (void *) {
 
   switch (g_inputGrid->readMode()) {
     case READ_DEVICE:
-      sprintf(message, "Live at (%5d)", decoration->elapsedTime);
+      sprintf(message, "Live (%5ld sec)", decoration->elapsedTime);
       break;
     case READ_STREAM:
       if (decoration->rateOfTime > 1)
-        sprintf(message, "Replay:  %d times the original rate at (%5d)",
+        sprintf(message, "Play %dx (%5ld sec)",
                 decoration->rateOfTime, decoration->elapsedTime);
       else if (decoration->rateOfTime == 1)
-        sprintf(message, "Replay: same as the original rate at (%5d)",
+        sprintf(message, "Play (%5ld sec)",
 			decoration->elapsedTime);
       else
-        sprintf(message, "Replay: Freeze-frame at (%5d)",
+        sprintf(message, "Pause (%5ld sec)",
 			decoration->elapsedTime);
       break;
     case READ_FILE: 
@@ -392,13 +394,13 @@ int mode_display (void *) {
      //case USER_SWEEP_MODE:       message = (char *)"Sweep Mode";          break;
      //case USER_BLUNT_TIP_MODE:   message = (char *)"Blunt Tip Mode";      break;
      //case USER_COMB_MODE:        message = (char *)"Comb Mode";           break;
-  case USER_PLANE_MODE:       message = (char *)"Feel From Grid Mode"; break;
-  case USER_PLANEL_MODE:      message = (char *)"Feel & Prepare to Modify Mode"; break;
+  case USER_PLANE_MODE:       message = (char *)"Touch Grid Mode"; break;
+  case USER_PLANEL_MODE:      message = (char *)"Touch & Prepare to Modify Mode"; break;
   case USER_SCALE_UP_MODE:    message = (char *)"Scale Up Mode";       break;
   case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Down Mode";     break;
   case USER_SERVO_MODE:       message = (char *)"Select Mode";         break;
-  case USER_GRAB_MODE:        message = (char *)"World Grab Mode";     break;
-  case USER_MEAS_MOVE_MODE:   message = (char *)"Measure Grid Grab Mode"; break;
+  case USER_GRAB_MODE:        message = (char *)"Grab Mode";     break;
+  case USER_MEAS_MOVE_MODE:   message = (char *)"Measure Line Mode"; break;
   case USER_CENTER_TEXTURE_MODE:
 			      message = (char *)"Center Texture Mode"; break;
   case USER_SCANLINE_MODE:    message = (char *)"LineScan Mode"; break;
@@ -445,14 +447,14 @@ int measure_display (void *) {
    // mysteriously here.
 
    measure_data.rgDz =
-         plane->valueAt(decoration->red.x(), decoration->red.y()) -
-         plane->valueAt(decoration->green.x(), decoration->green.y());
+         decoration->red.getIntercept(plane) -
+         decoration->green.getIntercept(plane);
    measure_data.gbDz =
-         plane->valueAt(decoration->green.x(), decoration->green.y()) -
-         plane->valueAt(decoration->blue.x(), decoration->blue.y());
+         decoration->green.getIntercept(plane) -
+         decoration->blue.getIntercept(plane);
    measure_data.brDz =
-         plane->valueAt(decoration->blue.x(), decoration->blue.y()) -
-         plane->valueAt(decoration->red.x(), decoration->red.y());
+         decoration->blue.getIntercept(plane) -
+         decoration->red.getIntercept(plane);
 
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
@@ -476,14 +478,14 @@ int measure_display (void *) {
    glColor3f(1.0f, 1.0f, 1.0f);
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
-   sprintf(message,"Dxy=%g",measure_data.rgDxy);
+   sprintf(message,"Dxy=%.5g",measure_data.rgDxy);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
    glTranslatef(0.0f, -0.023f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
-   sprintf(message,"Dz =%g",measure_data.rgDz);
+   sprintf(message,"Dz =%.5g",measure_data.rgDz);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
@@ -501,14 +503,14 @@ int measure_display (void *) {
    glColor3f(1.0f, 1.0f, 1.0f);
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
-   sprintf(message,"Dxy=%g",measure_data.gbDxy);
+   sprintf(message,"Dxy=%.5g",measure_data.gbDxy);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
    glTranslatef(0.0f, -0.023f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
-   sprintf(message,"Dz =%g",measure_data.gbDz);
+   sprintf(message,"Dz =%.5g",measure_data.gbDz);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
@@ -527,14 +529,14 @@ int measure_display (void *) {
    glColor3f(1.0f, 1.0f, 1.0f);
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
-   sprintf(message,"Dxy=%g",measure_data.brDxy);
+   sprintf(message,"Dxy=%.5g",measure_data.brDxy);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
    glTranslatef(0.0f,-0.023f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
-   sprintf(message,"Dz =%g",measure_data.brDz);
+   sprintf(message,"Dz =%.5g",measure_data.brDz);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
@@ -555,14 +557,14 @@ int measure_display (void *) {
    glColor3f(1.0f,1.0f,1.0f);
    glTranslatef(-0.321f,-0.059f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
-   sprintf(message,"Angle: %g",measure_data.rgbAngle);
+   sprintf(message,"Angle: %.4g",measure_data.rgbAngle);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
    glTranslatef(0.190f,0.0f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
-   sprintf(message,"%g",measure_data.gbrAngle);
+   sprintf(message,"%.4g",measure_data.gbrAngle);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif

@@ -20,6 +20,7 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
                          vrpn_Connection * inputConnection,
                          RemoteColorMode cMode,
                          RemoteDepthMode dMode,
+                         RemoteProjectionMode pMode,
                          int xsize, int ysize,
                          vrpn_Connection * controlConnection,
                          nmb_TimerList * timer = NULL);
@@ -63,6 +64,8 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setTextureMode (TextureMode, TextureTransformMode);
     virtual void setTextureScale (float);
     virtual void sendGeneticTexturesData (int, char **);
+
+    virtual void setViewTransform (v_xform_type);
 
   protected:
 

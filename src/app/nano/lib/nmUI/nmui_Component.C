@@ -18,11 +18,11 @@ nmui_Component::nmui_Component
                    (char name [30],
                     TclNet_int ** ilist, int numI,
                     TclNet_float ** flist, int numF,
-                    TclNet_selector ** sellist, int numSel) :
+                    TclNet_string ** stringlist, int numstring) :
     d_maintain (VRPN_FALSE),
     d_numInts (numI),
     d_numFloats (numF),
-    d_numSelectors (numSel),
+    d_numStrings (numstring),
     d_numComponents (0),
     d_synchronizedTo (0),
     d_numPeers (0),
@@ -49,8 +49,8 @@ nmui_Component::nmui_Component
   for (i = 0; i < numF; i++) {
     add(flist[i]);
   }
-  for (i = 0; i < numSel; i++) {
-    add(sellist[i]);
+  for (i = 0; i < numstring; i++) {
+    add(stringlist[i]);
   }
 
 }
@@ -110,15 +110,15 @@ void nmui_Component::add (TclNet_float * newLinkvar) {
 }
 
 
-void nmui_Component::add (TclNet_selector * newLinkvar) {
-  if (d_numSelectors >= NMUI_COMPONENT_MAX_SIZE) {
+void nmui_Component::add (TclNet_string * newLinkvar) {
+  if (d_numStrings >= NMUI_COMPONENT_MAX_SIZE) {
     fprintf(stderr, "nmui_Component::add:  "
                     "Too many linkvars in component.\n");
     return;
   }
 
-  d_selectors[d_numSelectors] = newLinkvar;
-  d_numSelectors++;
+  d_strings[d_numStrings] = newLinkvar;
+  d_numStrings++;
 }
 
 
@@ -146,8 +146,8 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
   for (i = 0; i < d_numFloats; i++) {
     d_floats[i]->bindConnection(c);
   }
-  for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->bindConnection(c);
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->bindConnection(c);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->bindConnection(c);
@@ -174,8 +174,8 @@ void nmui_Component::bindLogConnection (vrpn_Connection * c) {
   for (i = 0; i < d_numFloats; i++) {
     d_floats[i]->bindLogConnection(c);
   }
-  for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->bindLogConnection(c);
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->bindLogConnection(c);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->bindLogConnection(c);
@@ -192,8 +192,8 @@ void nmui_Component::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   for (i = 0; i < d_numFloats; i++) {
     d_floats[i]->addPeer(c, serialize);
   }
-  for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->addPeer(c, serialize);
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->addPeer(c, serialize);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->addPeer(c, serialize);
@@ -215,12 +215,31 @@ void nmui_Component::copyReplica (int whichReplica) {
   for (i = 0; i < d_numFloats; i++) {
     d_floats[i]->copyReplica(whichReplica);
   }
-  for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->copyReplica(whichReplica);
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->copyReplica(whichReplica);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->copyReplica(whichReplica);
   }
+}
+
+void nmui_Component::copyFromToReplica (int sourceReplica, int destReplica) {
+/* */
+  int i;
+
+  for (i = 0; i < d_numInts; i++) {
+    d_ints[i]->copyFromToReplica(sourceReplica, destReplica);
+  }
+  for (i = 0; i < d_numFloats; i++) {
+    d_floats[i]->copyFromToReplica(sourceReplica, destReplica);
+  }
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->copyFromToReplica(sourceReplica, destReplica);
+  }
+  for (i = 0; i < d_numComponents; i++) {
+    d_components[i]->copyFromToReplica(sourceReplica, destReplica);
+  }
+/* */
 }
 
 void nmui_Component::syncReplica (int whichReplica) {
@@ -232,8 +251,8 @@ void nmui_Component::syncReplica (int whichReplica) {
   for (i = 0; i < d_numFloats; i++) {
     d_floats[i]->syncReplica(whichReplica);
   }
-  for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->syncReplica(whichReplica);
+  for (i = 0; i < d_numStrings; i++) {
+    d_strings[i]->syncReplica(whichReplica);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->syncReplica(whichReplica);

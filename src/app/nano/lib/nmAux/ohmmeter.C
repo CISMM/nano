@@ -6,7 +6,7 @@
 #include "math.h"
 
 #ifndef OHMMETER_PROGRAM	// stuff for integrating with microscape as
-							// opposed to the separate ohmmeter program
+				// opposed to the separate ohmmeter program
 #include <nmm_Globals.h>
 #ifndef USE_VRPN_MICROSCOPE // #ifndef #else #endif Added by Tiger
 #include <Microscope.h>
@@ -436,11 +436,9 @@ Ohmmeter::Ohmmeter (Tcl_Interp * the_tcl_interp,
     auto_range_checklist->Add_checkbox("autorange", 0);
     auto_range_checklist->addCallback(handle_autorange_change,this);
 
-    // channel selector
-    sprintf(command2, ".french_ohmmeter");
+    // channel string
     sprintf(command, "channel_settings_for");
-    channel_select = new Tclvar_selector(command, command2,
-                       list_of_channel_names, channel_strings[0]);
+    channel_select = new Tclvar_string(command, channel_strings[0]);
     channel_select->addCallback(handle_channel_select_change, this);
     current_channel = 0;
 
@@ -480,21 +478,16 @@ Ohmmeter::Ohmmeter (Tcl_Interp * the_tcl_interp,
     // create pulldown menus for measurement voltage setting,
     // range setting and filter setting
 
-    sprintf(command2, ".french_ohmmeter.settings");
-
     sprintf(command, "measurement_voltage");
-    voltage_select = new Tclvar_selector(command, command2, list_of_voltages,
-					voltage_strings[0]);
+    voltage_select = new Tclvar_string(command, voltage_strings[0]);
     voltage_select->addCallback(handle_voltage_select_change, this);
 
     sprintf(command, "measurement_range_ohms");
-    range_select = new Tclvar_selector(command, command2, list_of_ranges,
-					range_strings[0]);
+    range_select = new Tclvar_string(command, range_strings[0]);
     range_select->addCallback(handle_range_select_change, this);
 
     sprintf(command, "filter_sec");
-    filter_select = new Tclvar_selector(command, command2, list_of_filters,
-					filter_strings[0]);
+    filter_select = new Tclvar_string(command, filter_strings[0]);
     filter_select->addCallback(handle_filter_select_change, this);
 
 /*    sprintf(command, "averaging_time");
@@ -572,6 +565,18 @@ Ohmmeter::Ohmmeter (Tcl_Interp * the_tcl_interp,
 }
 
 Ohmmeter::~Ohmmeter(void){
+  if (ohmmeter_enable_checkbox) delete ohmmeter_enable_checkbox;
+  if (channel_enable_checklist) delete channel_enable_checklist;
+  if (auto_range_checklist) delete auto_range_checklist;
+  if (channel_select) delete channel_select;
+  if (list_of_channel_names) delete list_of_channel_names;
+  if (list_of_voltages) delete list_of_voltages;
+  if (list_of_ranges) delete list_of_ranges;
+  if (list_of_filters) delete list_of_filters;
+  if (voltage_select) delete voltage_select;
+  if (range_select) delete range_select;
+  if (filter_select) delete filter_select;
+  if (avrgtime_slider) delete avrgtime_slider;
 /*    delete list_of_voltages;
     delete list_of_ranges;
     delete list_of_filters;

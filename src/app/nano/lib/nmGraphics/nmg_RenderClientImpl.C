@@ -6,10 +6,447 @@
 #include <BCPlane.h>
 #include <nmb_TimerList.h>
 
+#include <GL/glu.h>  // for gluErrorString
+
 #include "graphics_globals.h"  // for g_PRERENDERED_COLORS
 #include "spm_gl.h"  // for init_vertexArray()
 
 #include "graphics.h"  // for buildRemoteRenderedTexture
+
+class nmg_RCIStrategy {
+
+  public:
+
+    nmg_RCIStrategy (nmg_Graphics_RenderClient_Implementation *,
+                     vrpn_int32 xsize, vrpn_int32 ysize);
+    virtual ~nmg_RCIStrategy (void) = 0;
+
+    virtual void mainloop (void);
+      /**< Default implementation calls d_inputConnection->mainloop()
+       * and nmg_Graphics_Implementation::mainloop
+       */
+
+    virtual void initializeTextures (void);
+      /**< Default implementation does nothing. */
+
+    virtual void handlePixelData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const char * buffer);
+      /**< Default implementation does nothing. */
+
+    virtual void handleDepthData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const vrpn_float64 * buffer);
+      /**< Default implementation does nothing. */
+
+  protected:
+
+    nmg_Graphics_RenderClient_Implementation * d_imp;
+
+    vrpn_int32 d_screenSizeX;
+    vrpn_int32 d_screenSizeY;
+
+
+};
+
+
+
+/** \class nmg_RCIS_Mesh
+ * Gets pixel and depth data over the network and stores it in a BCGrid,
+ * reconstructing the original vertex-colored polygon mesh.
+ * \warning Doesn't handle depth properly (really an encoding fault at the
+ * sender, or at least one we mean to fix by changing encoding at the sender
+ * from Z-buffer-value-read to true Z).
+ */
+
+class nmg_RCIS_Mesh : public nmg_RCIStrategy {
+
+  public:
+
+    nmg_RCIS_Mesh (nmg_Graphics_RenderClient_Implementation *,
+                     vrpn_int32 xsize, vrpn_int32 ysize);
+    virtual ~nmg_RCIS_Mesh (void);
+
+    virtual void handlePixelData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const char * buffer);
+    virtual void handleDepthData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const vrpn_float64 * buffer);
+
+
+};
+
+
+
+/** \class nmg_RCIS_TextureBase
+ * Base class for strategies that represent the pixel data received over the
+ * network as a flat array of characters in remote_data (global declared
+ * in graphics_globals.h).
+ */
+
+class nmg_RCIS_TextureBase : public nmg_RCIStrategy {
+
+  public:
+
+    nmg_RCIS_TextureBase (nmg_Graphics_RenderClient_Implementation *,
+                     vrpn_int32 xsize, vrpn_int32 ysize);
+    virtual ~nmg_RCIS_TextureBase (void) = 0;
+
+    virtual void initializeTextures (void);
+
+    virtual void handlePixelData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const char * buffer);
+
+  protected:
+
+    vrpn_bool d_textureChanged;
+};
+
+
+
+/** \class nmg_RCIS_Texture
+ * Gets a texture of the parallel-projected surface over the network
+ * and displays it on the underlying mesh.
+ */
+
+class nmg_RCIS_Texture : public nmg_RCIS_TextureBase {
+
+  public:
+
+    nmg_RCIS_Texture (nmg_Graphics_RenderClient_Implementation *,
+                     vrpn_int32 xsize, vrpn_int32 ysize);
+    virtual ~nmg_RCIS_Texture (void);
+
+    virtual void mainloop (void);
+      /**< Rebuilds texture if necessary;  sets up texture transform matrix. */
+    virtual void initializeTextures (void);
+
+};
+
+
+
+/** \class nmg_RCIS_Video
+ * Gets an exact screen capture over the network and blits it onto the
+ * screen.
+ */
+
+class nmg_RCIS_Video : public nmg_RCIS_TextureBase {
+
+  public:
+
+    nmg_RCIS_Video (nmg_Graphics_RenderClient_Implementation *,
+                     vrpn_int32 xsize, vrpn_int32 ysize);
+    virtual ~nmg_RCIS_Video (void);
+
+    virtual void mainloop (void);
+      /**< Writes the texture into the window as a block of pixels;
+       * doesn't call nmg_Graphics_Implementation::mainloop().
+       */
+
+};
+
+
+
+
+
+
+
+nmg_RCIStrategy::nmg_RCIStrategy
+        (nmg_Graphics_RenderClient_Implementation * imp,
+                     vrpn_int32 xsize, vrpn_int32 ysize) :
+    d_imp (imp),
+    d_screenSizeX (xsize),
+    d_screenSizeY (ysize) {
+
+}
+
+// virtual
+nmg_RCIStrategy::~nmg_RCIStrategy (void) {
+
+}
+
+// virtual
+void nmg_RCIStrategy::mainloop (void) {
+
+  d_imp->inputConnection()->mainloop();
+  d_imp->nmg_Graphics_Implementation::mainloop();
+
+}
+
+// virtual
+void nmg_RCIStrategy::initializeTextures (void) {
+
+  // do nothing
+
+}
+
+// virtual
+void nmg_RCIStrategy::handlePixelData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const char * buffer) {
+
+      // Default implementation does nothing. 
+
+}
+
+// virtual
+void nmg_RCIStrategy::handleDepthData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const vrpn_float64 * buffer) {
+
+      // Default implementation does nothing.
+
+}
+
+
+
+
+
+
+
+nmg_RCIS_Mesh::nmg_RCIS_Mesh (nmg_Graphics_RenderClient_Implementation * imp,
+                              vrpn_int32 xsize, vrpn_int32 ysize) :
+    nmg_RCIStrategy (imp, xsize, ysize) {
+
+}
+
+// virtual
+nmg_RCIS_Mesh::~nmg_RCIS_Mesh (void) {
+
+}
+
+// virtual
+void nmg_RCIS_Mesh::handlePixelData (vrpn_int32 nx, vrpn_int32 ny,
+                                     vrpn_int32 dx, vrpn_int32 dy,
+                                     vrpn_int32 pixelCount,
+                                     const char * buffer) {
+
+  BCPlane * red;
+  BCPlane * green;
+  BCPlane * blue;
+
+  vrpn_int32 i;
+  vrpn_int32 l;
+
+  red = d_imp->renderingGrid()->getPlaneByName("prerendered red");
+  green = d_imp->renderingGrid()->getPlaneByName("prerendered green");
+  blue = d_imp->renderingGrid()->getPlaneByName("prerendered blue");
+
+  for (l = 0, i = 0; i < pixelCount; i++) {
+    red->setValue(nx, ny, buffer[l++] / 255.0f);
+    green->setValue(nx, ny, buffer[l++] / 255.0f);
+    blue->setValue(nx, ny, buffer[l++] / 255.0f);
+
+    d_imp->rangeOfChange.AddPoint(nx, ny);
+
+    nx += dx;
+    ny += dy;
+  }
+}
+
+// virtual
+void nmg_RCIS_Mesh::handleDepthData (vrpn_int32 nx, vrpn_int32 ny,
+                                     vrpn_int32 dx, vrpn_int32 dy,
+                                     vrpn_int32 pixelCount,
+                                     const vrpn_float64 * buffer) {
+  BCPlane * height;
+  vrpn_int32 i;
+
+  height = d_imp->renderingGrid()->getPlaneByName("captured depth");
+
+  for (i = 0; i < pixelCount; i++) {
+    height->setValue(nx, ny, buffer[i]);
+
+    d_imp->rangeOfChange.AddPoint(nx, ny);
+
+    nx += dx;
+    ny += dy;
+  }
+}
+
+
+
+nmg_RCIS_TextureBase::nmg_RCIS_TextureBase
+                    (nmg_Graphics_RenderClient_Implementation * imp,
+                     vrpn_int32 xsize, vrpn_int32 ysize) :
+   nmg_RCIStrategy (imp, xsize, ysize),
+   d_textureChanged (VRPN_FALSE) {
+
+}
+
+// virtual
+nmg_RCIS_TextureBase::~nmg_RCIS_TextureBase (void) {
+
+  if (remote_data) {
+    delete [] remote_data;
+  }
+}
+
+// virtual
+void nmg_RCIS_TextureBase::initializeTextures (void) {
+
+  int i;
+
+  remote_data = new GLubyte [d_screenSizeX * d_screenSizeY * 4];
+  if (!remote_data) {
+    fprintf(stderr, "nmg_Graphics_RenderClient_Implementation::"
+                    "initializeTextures:  Out of memory.\n");
+    return;
+  }
+
+  for (i = 0; i < d_screenSizeX * d_screenSizeY * 4; i++) {
+    remote_data[i] = i * 255 / d_screenSizeX / d_screenSizeY / 4;
+  }
+}
+
+// virtual
+void nmg_RCIS_TextureBase::handlePixelData (vrpn_int32 x, vrpn_int32 y,
+                                  vrpn_int32 dx, vrpn_int32 dy,
+                                  vrpn_int32 pixelCount,
+                                  const char * buffer) {
+
+  // BUG - assumes dx 1, dy 0 or vice-versa or something
+
+  vrpn_int32 i;
+  vrpn_int32 k;
+  vrpn_int32 l;
+
+  k = (y * d_screenSizeX + x) * 4;
+  for (l = 0, i = 0; i < pixelCount; i++) {
+    remote_data[k++] = buffer[l++];
+    remote_data[k++] = buffer[l++];
+    remote_data[k++] = buffer[l++];
+    remote_data[k++] = 255;
+  }
+
+  d_textureChanged = VRPN_TRUE;
+}
+
+
+
+nmg_RCIS_Texture::nmg_RCIS_Texture
+        (nmg_Graphics_RenderClient_Implementation * imp,
+                              vrpn_int32 xsize, vrpn_int32 ysize) :
+    nmg_RCIS_TextureBase (imp, xsize, ysize) {
+
+}
+
+// virtual
+nmg_RCIS_Texture::~nmg_RCIS_Texture (void) {
+
+}
+
+
+// virtual
+void nmg_RCIS_Texture::mainloop (void) {
+
+fprintf(stderr, "Texture mainloop.\n");
+
+  if (d_textureChanged) {
+    buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY, remote_data);
+    d_textureChanged = VRPN_FALSE;
+  }
+  // hack - overloading genetic texture coordinate handling
+  float dx = d_imp->dataset()->inputGrid->maxX() -
+             d_imp->dataset()->inputGrid->minX();
+  float dy = d_imp->dataset()->inputGrid->maxY() -
+             d_imp->dataset()->inputGrid->minY();
+  g_texture_transform[0] = 1.0 / dx;
+  g_texture_transform[1] = 0.0;
+  g_texture_transform[2] = 0.0;
+  g_texture_transform[3] = 0.0;
+  g_texture_transform[4] = 0.0;
+  g_texture_transform[5] = 1.0 / dy;
+  g_texture_transform[6] = 0.0;
+  g_texture_transform[7] = 0.0;
+  g_texture_transform[8] = 0.0;
+  g_texture_transform[9] = 0.0;
+  g_texture_transform[10] = 1.0;
+  g_texture_transform[11] = 0.0;
+  g_texture_transform[12] = -d_imp->dataset()->inputGrid->minX() / dx;
+  g_texture_transform[13] = -d_imp->dataset()->inputGrid->minY() / dy;
+  g_texture_transform[14] = 0.0;
+  g_texture_transform[15] = 1.0;
+
+  // Can't call setTextureMode() every frame because that calls
+  // causeGridRedraw(), which regenerates the grid.
+  g_texture_mode = GL_TEXTURE_2D;
+  g_texture_displayed = nmg_Graphics::REMOTE_DATA;
+  g_texture_transform_mode = nmg_Graphics::REGISTRATION_COORD;
+
+  nmg_RCIStrategy::mainloop();
+
+}
+
+
+// virtual
+void nmg_RCIS_Texture::initializeTextures (void) {
+
+  nmg_RCIS_TextureBase::initializeTextures();
+
+  buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY,
+                             remote_data);
+
+}
+
+
+
+
+
+
+nmg_RCIS_Video::nmg_RCIS_Video (nmg_Graphics_RenderClient_Implementation * imp,
+                     vrpn_int32 xsize, vrpn_int32 ysize) :
+    nmg_RCIS_TextureBase (imp, xsize, ysize) {
+
+}
+
+// virtual
+nmg_RCIS_Video::~nmg_RCIS_Video (void) {
+
+}
+
+
+// virtual
+void nmg_RCIS_Video::mainloop (void) {
+
+  GLenum i;
+
+fprintf(stderr, "Video mainloop.\n");
+
+  v_gl_set_context_to_vlib_window();
+
+  // blit remote_data onto the screen
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  glDrawPixels(d_screenSizeX, d_screenSizeY, GL_RGB, GL_UNSIGNED_BYTE,
+               remote_data);
+
+  while ((i = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "  %s\n", gluErrorString(i));
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 nmg_Graphics_RenderClient_Implementation::
@@ -20,24 +457,21 @@ nmg_Graphics_RenderClient_Implementation
                        vrpn_Connection * inputConnection,
                        RemoteColorMode cMode,
                        RemoteDepthMode dMode,
+                       RemoteProjectionMode pMode,
                        nmb_TimerList * timer,
                        int xsize, int ysize) :
     nmg_Graphics_Implementation (data, minColor, maxColor, NULL, NULL),
-    d_colorMode (cMode),
-    d_depthMode (dMode),
     rangeOfChange (d_renderingGrid),
-    d_pixelBuffer (new unsigned char [xsize * ysize * 3]),
-    d_depthBuffer (new float [xsize * ysize]),
-    d_screenSizeX (xsize),
-    d_screenSizeY (ysize),
+    //d_pixelBuffer (new unsigned char [xsize * ysize * 3]),
+    //d_depthBuffer (new float [xsize * ysize]),
     //d_renderingGrid (xsize, ysize, 0, xsize - 1, 0, ysize - 1),
     d_renderingGrid (new BCGrid (xsize, ysize, data->inputGrid->minX(),
                                    data->inputGrid->maxX(),
                                    data->inputGrid->minY(),
                                    data->inputGrid->maxY())),
     d_inputConnection (inputConnection),
-    d_remoteTextureChanged (VRPN_FALSE),
-    d_timer (timer) {
+    d_timer (timer),
+    d_strategy (NULL) {
 
 
   d_myId = inputConnection->register_sender("nmg Graphics Renderer");
@@ -85,7 +519,19 @@ nmg_Graphics_RenderClient_Implementation
 
   d_dataset->inputGrid->registerMinMaxCallback(getNewBounds, this);
 
-  initializeTextures();
+  if ((cMode == VERTEX_COLORS) && (dMode == VERTEX_DEPTH)) {
+    d_strategy = new nmg_RCIS_Mesh (this, xsize, ysize);
+  } else if ((cMode == SUPERSAMPLED_COLORS) && (dMode == NO_DEPTH)) {
+    if (pMode == ORTHO_PROJECTION) {
+      d_strategy = new nmg_RCIS_Texture (this, xsize, ysize);
+    } else if (pMode == PERSPECTIVE_PROJECTION) {
+      d_strategy = new nmg_RCIS_Video (this, xsize, ysize);
+    }
+  }
+
+  if (d_strategy) {
+    d_strategy->initializeTextures();
+  }
 
   setTextureMode(REMOTE_DATA, REGISTRATION_COORD);
 
@@ -97,89 +543,36 @@ nmg_Graphics_RenderClient_Implementation
 nmg_Graphics_RenderClient_Implementation::
 ~nmg_Graphics_RenderClient_Implementation (void) {
 
-  if (remote_data) {
-    delete [] remote_data;
+  if (d_strategy) {
+    delete d_strategy;
   }
-
 }
 
 // virtual
 void nmg_Graphics_RenderClient_Implementation::mainloop (void) {
 
-  if (d_colorMode == SUPERSAMPLED_COLORS) {
-    if (d_remoteTextureChanged) {
-      buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY, remote_data);
-      d_remoteTextureChanged = VRPN_FALSE;
-    }
-    // hack - overloading genetic texture coordinate handling
-    float dx = d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX();
-    float dy = d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY();
-    g_texture_transform[0] = 1.0 / dx;
-    g_texture_transform[1] = 0.0;
-    g_texture_transform[2] = 0.0;
-    g_texture_transform[3] = 0.0;
-    g_texture_transform[4] = 0.0;
-    g_texture_transform[5] = 1.0 / dy;
-    g_texture_transform[6] = 0.0;
-    g_texture_transform[7] = 0.0;
-    g_texture_transform[8] = 0.0;
-    g_texture_transform[9] = 0.0;
-    g_texture_transform[10] = 1.0;
-    g_texture_transform[11] = 0.0;
-    g_texture_transform[12] = -d_dataset->inputGrid->minX() / dx;
-    g_texture_transform[13] = -d_dataset->inputGrid->minY() / dy;
-    g_texture_transform[14] = 0.0;
-    g_texture_transform[15] = 1.0;
-    // can't call setTextureMode() every frame because that calls
-    // causeGridRedraw(), which regenerates the grid.
-    //setTextureMode(REMOTE_DATA, REGISTRATION_COORD);
-//fprintf(stderr, "In RCI mainloop.\n");
-    g_texture_mode = GL_TEXTURE_2D;
-    g_texture_displayed = REMOTE_DATA;
-    g_texture_transform_mode = REGISTRATION_COORD;
+  if (d_strategy) {
+    d_strategy->mainloop();
   }
 
-  nmg_Graphics_Implementation::mainloop();
+}
 
-  d_inputConnection->mainloop();
+vrpn_Connection * nmg_Graphics_RenderClient_Implementation::inputConnection
+        (void) {
+  return d_inputConnection;
+}
 
+BCGrid * nmg_Graphics_RenderClient_Implementation::renderingGrid (void) {
+  return d_renderingGrid;
+}
+
+nmb_Dataset * nmg_Graphics_RenderClient_Implementation::dataset (void) {
+  return d_dataset;
 }
 
 
 // PROTECTED
 
-
-// initializeTextures() is called in the nmg_Graphics_Implementation
-// constructor, before our constructor has executed, so the original
-// version is called instead of this one since the vtable hasn't been
-// set up.  We call this one explicitly in our constructor.
-
-// virtual
-void nmg_Graphics_RenderClient_Implementation::initializeTextures (void) {
-  long i;
-
-  //nmg_Graphics_Implementation::initializeTextures();
-
-#if defined(sgi) || defined(FLOW) || defined (__CYGWIN__)
-
-  if (d_colorMode == SUPERSAMPLED_COLORS) {
-    remote_data = new GLubyte [d_screenSizeX * d_screenSizeY * 4];
-    if (!remote_data) {
-      fprintf(stderr, "nmg_Graphics_RenderClient_Implementation::"
-                      "initializeTextures:  Out of memory.\n");
-      return;
-    }
-
-    for (i = 0; i < d_screenSizeX * d_screenSizeY * 4; i++) {
-      remote_data[i] = i * 255 / d_screenSizeX / d_screenSizeY / 4;
-    }
-
-    buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY,
-                               remote_data);
-  }
-
-#endif
-}
 
 // static
 int nmg_Graphics_RenderClient_Implementation::handle_pixelData
@@ -187,21 +580,12 @@ int nmg_Graphics_RenderClient_Implementation::handle_pixelData
                                                   vrpn_HANDLERPARAM p) {
   nmg_Graphics_RenderClient_Implementation * gp =
           (nmg_Graphics_RenderClient_Implementation *) userdata;
-  BCPlane * red;
-  BCPlane * green;
-  BCPlane * blue;
   const char * bp = p.buffer;
-  char lb [3072];  // HACK - can't handle lines over 1024 pixels long
+  //char lb [3072];  // HACK - can't handle lines over 1024 pixels long
 
   vrpn_int32 x, y, dx, dy;
   vrpn_int32 lineCount, fieldCount;
   vrpn_int32 sec, usec;
-
-  vrpn_int32 i;
-  vrpn_int32 k;
-  vrpn_int32 l;
-  int nx, ny;
-  char r, g, b;
 
   vrpn_unbuffer(&bp, &x);
   vrpn_unbuffer(&bp, &y);
@@ -212,49 +596,11 @@ int nmg_Graphics_RenderClient_Implementation::handle_pixelData
   vrpn_unbuffer(&bp, &sec);
   vrpn_unbuffer(&bp, &usec);
 
-  red = gp->d_renderingGrid->getPlaneByName("prerendered red");
-  green = gp->d_renderingGrid->getPlaneByName("prerendered green");
-  blue = gp->d_renderingGrid->getPlaneByName("prerendered blue");
+  //vrpn_unbuffer(&bp, lb, (vrpn_uint32) lineCount * 3);
 
-  vrpn_unbuffer(&bp, lb, (vrpn_uint32) lineCount * 3);
-
-  if (gp->d_colorMode == VERTEX_COLORS) {
-    nx = x;
-    ny = y;
-    for (l = 0, i = 0; i < lineCount; i++) {
-      red->setValue(nx, ny, lb[l++] / 255.0f);
-      green->setValue(nx, ny, lb[l++] / 255.0f);
-      blue->setValue(nx, ny, lb[l++] / 255.0f);
-
-      gp->rangeOfChange.AddPoint(nx, ny);
-
-      nx += dx;
-      ny += dy;
-    }
-  } else if (gp->d_colorMode == SUPERSAMPLED_COLORS) {
-    k = (y * gp->d_screenSizeX + x) * 4;
-    for (l = 0, i = 0; i < lineCount; i++) {
-      remote_data[k++] = lb[l++];
-      remote_data[k++] = lb[l++];
-      remote_data[k++] = lb[l++];
-      remote_data[k++] = 255;
-    }
-
-    gp->d_remoteTextureChanged = VRPN_TRUE;
+  if (gp->d_strategy) {
+    gp->d_strategy->handlePixelData(x, y, dx, dy, lineCount, bp);
   }
-
-//fprintf(stderr, "Got pixel data at %d, %d.\n", x, y);
-//if (!(y % 10)) {
-//fprintf(stderr, "handle_pixelData() from %d, %d:\n", x, y);
-//fprintf(stderr, "into planes %ld, %ld, %ld:\n", red, green, blue);
-//for (i = 0; i < lineCount; i += 10) {
-//fprintf(stderr, " (%.2f %.2f %.2f)",
-//red->value(x + dx * i, y + dy * i),
-//green->value(x + dx * i, y + dy * i),
-//blue->value(x + dx * i, y + dy * i));
-//}
-//fprintf(stderr, "\n");
-//}
 
   return 0;
 }
@@ -265,7 +611,6 @@ int nmg_Graphics_RenderClient_Implementation::handle_depthData
                                                   vrpn_HANDLERPARAM p) {
   nmg_Graphics_RenderClient_Implementation * gp =
            (nmg_Graphics_RenderClient_Implementation *) userdata;
-  BCPlane * height;
   const char * bp = p.buffer;
 
   vrpn_int32 x, y, dx, dy;
@@ -273,10 +618,8 @@ int nmg_Graphics_RenderClient_Implementation::handle_depthData
   vrpn_int32 sec, usec;
 
   vrpn_int32 i;
-  //vrpn_int32 l;
 
-  vrpn_float64 z;
-  int nx, ny;
+  vrpn_float64 z [1024];  // HACK - can't handle lines over 1024 pixels long
 
   vrpn_unbuffer(&bp, &x);
   vrpn_unbuffer(&bp, &y);
@@ -287,18 +630,18 @@ int nmg_Graphics_RenderClient_Implementation::handle_depthData
   vrpn_unbuffer(&bp, &sec);
   vrpn_unbuffer(&bp, &usec);
 
-  height = gp->d_renderingGrid->getPlaneByName("captured depth");
+  // It would be more efficient to push this unbuffer down into
+  // handleDepthData(), so that implementations that didn't care about
+  // depth data wouldn't spend any time rerepresenting and copying it,
+  // but if the server type properly matches the client type only those
+  // clients who care about depth data will get any.
 
-  nx = x;
-  ny = y;
   for (i = 0; i < lineCount; i++) {
-    vrpn_unbuffer(&bp, &z);  // Z
-    height->setValue(nx, ny, z);
+    vrpn_unbuffer(&bp, &z[i]);
+  }
 
-    gp->rangeOfChange.AddPoint(nx, ny);
-
-    nx += dx;
-    ny += dy;
+  if (gp->d_strategy) {
+    gp->d_strategy->handleDepthData(x, y, dx, dy, lineCount, z);
   }
 
   return 0;
@@ -331,7 +674,7 @@ int nmg_Graphics_RenderClient_Implementation::handle_timerSN
   vrpn_unbuffer(&bp, &sn);
   gp->d_timer->unblock(sn);
 
-fprintf(stderr, "Unblocked timestamp #%d.\n", sn);
+//fprintf(stderr, "Unblocked timestamp #%d.\n", sn);
 
   return 0;
 }

@@ -936,10 +936,10 @@ int draw_world (int) {
     decoration->trueTipLocation_changed = 0;
   }
 
-  if (g_draw_collab_hand) {
+  if (g_position_collab_hand) {
 	make_collab_hand_icon(g_collabHandPos, g_collabHandQuat,
 		g_collabMode);
-	g_draw_collab_hand = 0;
+    g_position_collab_hand = 0;
   }	
 
 #ifndef FLOW  

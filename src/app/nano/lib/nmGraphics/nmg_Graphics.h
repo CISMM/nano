@@ -19,6 +19,62 @@ class nmb_Dataset;  // from nmb_Dataset.h
 
 class vrpn_Connection;  // from vrpn_Connection.h
 
+/** \class nmg_Graphics
+ * Abstract base class that defines graphics interface for a nanoManipulator
+ * display.
+ * Also includes all utility functions needed to drive this display across
+ * a VRPN connection.  (Design note:  we ought to break those off onto
+ * a separate class that we can reuse by composition instead of inheritance;
+ * that will make multiple inheritance within this hierarchy much cleaner.)
+ *
+ * To extend nmg_Graphics with a function foo (bar), you need to write
+ * all the following (and provide implementations;  everything except
+ * nmg_Graphics_Implementation::foo() should be obvious from the similar
+ * functions, and nmg_Graphics_Implementation::foo() is where you actually
+ * add your new function):
+ *
+ * nmg_Graphics.h
+ *  public:
+ *    virtual void nmg_Graphics::foo (bar) = 0;
+ *  protected:
+ *    int d_foo_type;
+ *    char * nmg_Graphics::encode_foo (int *, bar)
+ *    int nmg_Graphics::decode_foo (const char *, bar *)
+ *
+ * nmg_GraphicsRemote.h and any other remote subclasses
+ *  public:
+ *    virtual void nmg_Graphics_Remote::foo (bar);
+ *
+ * nmg_GraphicsImpl.h and any other implementation subclasses
+ *  public:
+ *    virtual void nmg_Graphics_Implementation::foo (bar);
+ *  protected:
+ *    static int handle_foo (void *, vrpn_HANDLERPARAM);
+ *
+ * You will also need to modify the following:
+ *
+ *    nmg_Graphics::nmg_Graphics (vrpn_Connection *, const char *)
+ *      d_foo_type = c->register_message_type("nmg Graphics foo");
+ *
+ *    nmg_Graphics_Implementation::nmg_Graphics_Implementation
+ *      connection->register_handler(d_foo_type, handle_foo, this,
+ *                                   vrpn_ANY_SENDER);
+ *
+ * (Design note:  I wish there was a way to have this base class abstract
+ * and not require that every function be implemented in every child, since
+ * that makes adding a function to this interface very heavy-weight, and
+ * we want the interface to be easy to extend.  Probably the best thing
+ * to do would be to make only the destructor abstract, but leave everything
+ * else without a default implementation.)
+ *
+ * 19 Feb 2000
+ *   New member functions are being added non-abstractly to simplify
+ * extension (at the expense of losing compile-time detection of when
+ * you haven't done the extension for all the subclasses - which most
+ * people don't care about).
+ */
+
+
 class nmg_Graphics {
 
   public:
@@ -39,6 +95,7 @@ class nmg_Graphics {
 
     enum RemoteDepthMode { NO_DEPTH, VERTEX_DEPTH };
 
+    enum RemoteProjectionMode { ORTHO_PROJECTION, PERSPECTIVE_PROJECTION };
 
 
     nmg_Graphics (vrpn_Connection *, const char * name);
@@ -49,6 +106,9 @@ class nmg_Graphics {
     virtual void mainloop (void) = 0;
 
     // MANIPULATORS
+
+    //  ALL MANIPULATORS MUST NOT BE IMPLEMENTED IN THIS CLASS!
+
     virtual void resizeViewport(int width, int height) = 0;
       // changes the size of the display window (actually this only
       // handles changing the way the world is drawn into the display
@@ -146,6 +206,7 @@ class nmg_Graphics {
     virtual void setIconScale (float) = 0;
       // Scale the 3D icons.
 
+    virtual void enableCollabHand (vrpn_bool on) = 0;
     virtual void setCollabHandPos(double [3], double [4]) = 0;
       //for setting position and rotation of icon for collaborator's hand
       //icon
@@ -277,6 +338,11 @@ class nmg_Graphics {
                                     const PointType bottom) = 0;
     virtual void positionSphere (float x, float y, float z) = 0;
 
+    virtual void setViewTransform (v_xform_type) = 0;
+      /**< Specifies the view transform (in a vlib implementation,
+       *  this is v_world.users.xforms[0]).
+       */
+
     // Screen capture
     virtual void createScreenImage
     (
@@ -372,6 +438,7 @@ class nmg_Graphics {
     vrpn_int32 d_positionSphere_type;
 
     //type for collaborator's hand position/orientation
+    vrpn_int32 d_enableCollabHand_type;
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
 
@@ -397,6 +464,7 @@ class nmg_Graphics {
 
     vrpn_int32 d_setScanlineEndpoints_type;
     vrpn_int32 d_displayScanlinePosition_type;
+    vrpn_int32 d_setViewTransform_type;
 
     //Screen capture
     vrpn_int32 d_createScreenImage_type;
@@ -542,6 +610,8 @@ class nmg_Graphics {
     int decode_positionSphere (const char * buf, float *, float *, float *);
 
     // for shared hand pointers
+    char * encode_enableCollabHand (int * len, vrpn_bool);
+    int decode_enableCollabHand (const char *buf, vrpn_bool *);
     char * encode_setCollabHandPos (int * len, double [3], double [4]);
     int decode_setCollabHandPos (const char *buf, double [3], double [4]);
     char * encode_setCollabMode (int * len, int);
@@ -579,6 +649,9 @@ class nmg_Graphics {
 
     char *encode_textureTransform(int *len, double *);
     int decode_textureTransform(const char *buf, double *);
+
+    char * encode_setViewTransform (int * len, v_xform_type);
+    int decode_setViewTransform (const char * buf, v_xform_type *);
 
     char *encode_createScreenImage
     (

@@ -40,8 +40,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD) {
 
-fprintf(stderr,
-        "In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
+//fprintf(stderr,
+        //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
   nmb_PlaneSelection planes; planes.lookup(data);
   int i;
@@ -353,6 +353,9 @@ fprintf(stderr,
   connection->register_handler(d_positionSphere_type,
                                handle_positionSphere,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_enableCollabHand_type,
+			       handle_enableCollabHand,
+			       this, vrpn_ANY_SENDER);
   connection->register_handler(d_setCollabHandPos_type,
 			       handle_setCollabHandPos,
 			       this, vrpn_ANY_SENDER);
@@ -413,6 +416,9 @@ fprintf(stderr,
 */
   connection->register_handler( d_setTextureTransform_type,
 				handle_setTextureTransform,
+				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_setViewTransform_type,
+				handle_setViewTransform,
 				this, vrpn_ANY_SENDER);
   connection->register_handler( d_createScreenImage_type,
 				handle_createScreenImage,
@@ -494,7 +500,7 @@ void nmg_Graphics_Implementation::mainloop (void) {
 
 // functions to replace code in microscape.c - AAS
 void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
-fprintf(stderr, "nmg_Graphics_Implementation::resizeViewport().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::resizeViewport().\n");
   v_display_type *displayPtr;
   v_viewport_type *windowPtr;
 
@@ -511,7 +517,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::resizeViewport().\n");
 void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
         q_vec_type &ul, q_vec_type &ur)
 {
-fprintf(stderr, "nmg_Graphics_Implementation::getDisplayPosition().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getDisplayPosition().\n");
     q_vec_copy(ll,
         v_display_table[d_displayIndexList[0]].viewports[0].screenLowerLeft);
     q_vec_copy(ul,
@@ -519,8 +525,8 @@ fprintf(stderr, "nmg_Graphics_Implementation::getDisplayPosition().\n");
     q_vec_copy(ur,
         v_display_table[d_displayIndexList[0]].viewports[0].screenUpperRight);
 // DEBUG
-//   fprintf(stderr, "g>DEBUG nmg_Graphics_Impl::getDisplayPosition, \
-//   ll %f %f %f ul %f %f %f ur %f %f %f\n",
+//   fprintf(stderr, "g>DEBUG nmg_Graphics_Impl::getDisplayPosition "
+//   "ll %f %f %f ul %f %f %f ur %f %f %f\n",
 // 	  ll[0], ll[1], ll[2], 
 // 	  ul[0], ul[1], ul[2], 
 // 	  ur[0], ur[1], ur[2]);
@@ -528,7 +534,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::getDisplayPosition().\n");
 // end functions to replace stuff in microscape.c
 
 void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
-fprintf(stderr, "nmg_Graphics_Implementation::loadRulergridImage().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::loadRulergridImage().\n");
   if (!name) {
     return;
   }
@@ -656,7 +662,7 @@ _______________________________********************/
 
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
-fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
 
   BCPlane * plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
 
@@ -669,7 +675,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
 }
 
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
-fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 
   // Rebuilds the texture coordinate array:
   nmb_PlaneSelection planes;  planes.lookup(dataset);
@@ -684,22 +690,22 @@ fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 }
 
 void nmg_Graphics_Implementation::enableChartjunk (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
   g_config_chartjunk = on;
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableFilledPolygons().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::enableFilledPolygons().\n");
   g_config_filled_polygons = on;
 }
 
 void nmg_Graphics_Implementation::enableSmoothShading (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableSmoothShading().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::enableSmoothShading().\n");
   g_config_smooth_shading = on;
 }
 
 void nmg_Graphics_Implementation::enableTrueTip (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableTrueTip().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::enableTrueTip().\n");
   g_config_trueTip = on;
   fprintf(stderr, "Set g_config_trueTip to %d.\n", on);
 }
@@ -709,13 +715,13 @@ fprintf(stderr, "nmg_Graphics_Implementation::enableTrueTip().\n");
 
 void nmg_Graphics_Implementation::setAdhesionSliderRange (float low,
                                                           float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setAdhesionSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setAdhesionSliderRange().\n");
   g_adhesion_slider_min = low;
   g_adhesion_slider_max = high;
 }
 
 void nmg_Graphics_Implementation::setAlphaColor (float r, float g, float b) {
-fprintf(stderr, "nmg_Graphics_Implementation::setAlphaColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setAlphaColor().\n");
   g_alpha_r = r;
   g_alpha_g = g;
   g_alpha_b = b;
@@ -724,14 +730,14 @@ fprintf(stderr, "nmg_Graphics_Implementation::setAlphaColor().\n");
 }
 
 void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setAlphaSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setAlphaSliderRange().\n");
   g_alpha_slider_min = low;
   g_alpha_slider_max = high;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setBumpMapName (const char * name) {
-fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 
   BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
@@ -790,7 +796,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 }
 
 void nmg_Graphics_Implementation::setColorMapDirectory (const char * dir) {
-fprintf(stderr, "nmg_Graphics_Implementation::setColorMapDirectory().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setColorMapDirectory().\n");
   if (g_colorMapDir) {
     delete [] g_colorMapDir;
   }
@@ -804,7 +810,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setColorMapDirectory().\n");
 }
 
 void nmg_Graphics_Implementation::setTextureDirectory (const char * dir) {
-fprintf(stderr, "nmg_Graphics_Implementation::setTextureDirectory().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setTextureDirectory().\n");
   if (g_textureDir) {
     delete [] g_textureDir;
   }
@@ -817,7 +823,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setTextureDirectory().\n");
 }
 
 void nmg_Graphics_Implementation::setColorMapName (const char * name) {
-fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
 
   // If CUSTOM is selected, set the color map pointer to
   // NULL so that the gl code will go back to using the old
@@ -834,21 +840,21 @@ fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
 }
 
 void nmg_Graphics_Implementation::setColorSliderRange (float low, float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setColorSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setColorSliderRange().\n");
   g_color_slider_min = low;
   g_color_slider_max = high;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setComplianceSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setComplianceSliderRange().\n");
   g_compliance_slider_min = low;
   g_compliance_slider_max = high;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setContourColor (int r, int g, int b) {
-fprintf(stderr, "nmg_Graphics_Implementation::setContourColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setContourColor().\n");
   g_contour_r = r;
   g_contour_g = g;
   g_contour_b = b;
@@ -858,7 +864,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setContourColor().\n");
 
 void nmg_Graphics_Implementation::setFrictionSliderRange (float low,
                                                           float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setFrictionSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setFrictionSliderRange().\n");
   g_friction_slider_min = low;
   g_friction_slider_max = high;
   causeGridRedraw();
@@ -866,7 +872,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setFrictionSliderRange().\n");
 
 void nmg_Graphics_Implementation::setBumpSliderRange (float low,
                                                           float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setBumpSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setBumpSliderRange().\n");
   g_bump_slider_min = low;
   g_bump_slider_max = high;
   causeGridRedraw();
@@ -874,42 +880,48 @@ fprintf(stderr, "nmg_Graphics_Implementation::setBumpSliderRange().\n");
 
 void nmg_Graphics_Implementation::setBuzzSliderRange (float low,
                                                           float high) {
-fprintf(stderr, "nmg_Graphics_Implementation::setBuzzSliderRange().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setBuzzSliderRange().\n");
   g_buzz_slider_min = low;
   g_buzz_slider_max = high;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setHandColor (int c) {
-fprintf(stderr, "nmg_Graphics_Implementation::setHandColor().\n");
+    //fprintf(stderr, "nmg_Graphics_Implementation::setHandColor().\n");
   g_hand_color = c;
 }
 
 void nmg_Graphics_Implementation::setIconScale (float scale) {
-fprintf(stderr, "nmg_Graphics_Implementation::setIconScale().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setIconScale().\n");
   g_icon_scale = scale;
+}
+
+void nmg_Graphics_Implementation::enableCollabHand (vrpn_bool on) {
+  ::enableCollabHand(on);  // from globjects.c
+  g_draw_collab_hand = on;
 }
 
 void nmg_Graphics_Implementation::setCollabHandPos(double pos[], double quat[])
 {
-fprintf(stderr, "nmg_Graphics_Implementation::setCollabHandPos().\n");
+    //fprintf(stderr, "nmg_Graphics_Implementation::setCollabHandPos().\n");
   int i;
   for (i = 0; i < 3; i++) {
     g_collabHandPos[i] = pos[i];
     g_collabHandQuat[i] = quat[i];
   }
   g_collabHandQuat[3] = quat[3];
-  g_draw_collab_hand = 1;
+
+  g_position_collab_hand = 1;
 }
 
 void nmg_Graphics_Implementation::setCollabMode(int mode)
 {
-fprintf(stderr, "nmg_Graphics_Implementation::setCollabMode().\n");
+    //fprintf(stderr, "nmg_Graphics_Implementation::setCollabMode().\n");
   g_collabMode = mode;
 }
 
 void nmg_Graphics_Implementation::setHatchMapName (const char * name) {
-fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
 
   BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
@@ -991,24 +1003,24 @@ void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
 
 
 void nmg_Graphics_Implementation::setContourWidth (float x) {
-fprintf(stderr, "nmg_Graphics_Implementation::setContourWidth().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setContourWidth().\n");
   g_contour_width = x;
   buildContourTexture();
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setMinColor (const double c [4]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
   memcpy(g_minColor, c, 3 * sizeof(double));
 }
 
 void nmg_Graphics_Implementation::setMaxColor (const double c [4]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
   memcpy(g_maxColor, c, 3 * sizeof(double));
 }
 
 void nmg_Graphics_Implementation::setMinColor (const int c [4]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
   g_minColor[0] = c[0] / 255.0;
   g_minColor[1] = c[1] / 255.0;
   g_minColor[2] = c[2] / 255.0;
@@ -1017,7 +1029,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
 }
 
 void nmg_Graphics_Implementation::setMaxColor (const int c [4]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
   g_maxColor[0] = c[0] / 255.0;
   g_maxColor[1] = c[1] / 255.0;
   g_maxColor[2] = c[2] / 255.0;
@@ -1026,7 +1038,7 @@ fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
 }
 
 void nmg_Graphics_Implementation::setPatternMapName (const char * name) {
-fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
 
   BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
@@ -1795,14 +1807,14 @@ void nmg_Graphics_Implementation::setTextureTransform(double *xform){
 
 
 void nmg_Graphics_Implementation::setRulergridAngle (float v) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
   g_rulergrid_sin = sin(-v / 180.0 * M_PI);
   g_rulergrid_cos = cos(-v / 180.0 * M_PI);
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridColor().\n");
   g_ruler_r = r;
   g_ruler_g = g;
   g_ruler_b = b;
@@ -1818,14 +1830,14 @@ fprintf(stderr, "nmg_Graphics_Implementation::setRulergridColor().\n");
 }
 
 void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOffset().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOffset().\n");
   g_rulergrid_xoffset = x;
   g_rulergrid_yoffset = y;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOpacity().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOpacity().\n");
   g_ruler_opacity = alpha;
 
   // if they've specified a ruler image, keep that instead of replacing
@@ -1839,13 +1851,13 @@ fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOpacity().\n");
 }
 
 void nmg_Graphics_Implementation::setRulergridScale (float s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridScale().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridScale().\n");
   g_rulergrid_scale = s;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRulergridWidths().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRulergridWidths().\n");
   g_ruler_width_x = x;
   g_ruler_width_y = y;
 
@@ -1861,37 +1873,37 @@ fprintf(stderr, "nmg_Graphics_Implementation::setRulergridWidths().\n");
 }
 
 void nmg_Graphics_Implementation::setSpecularity (int s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setSpecularity().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setSpecularity().\n");
   g_shiny = s;
   causeGridRedraw();
 }
 
 
 void nmg_Graphics_Implementation::setDiffusePercent (float d) {
-fprintf(stderr, "nmg_Graphics_Implementation::setDiffusePercent().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setDiffusePercent().\n");
   g_diffuse = d;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSurfaceAlpha (float a) {
-fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceAlpha().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceAlpha().\n");
   g_surface_alpha = a;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSpecularColor (float s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setSpecularColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setSpecularColor().\n");
   g_specular_color = s;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSphereScale (float s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setSphereScale().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setSphereScale().\n");
   g_sphere_scale = s;
 }
 
 void nmg_Graphics_Implementation::setTesselationStride (int s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride(%d).\n", s);
+//fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride(%d).\n", s);
 
   g_stride = s;
 
@@ -2029,69 +2041,69 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 }
 
 void nmg_Graphics_Implementation::setTextureScale (float f) {
-fprintf(stderr, "nmg_Graphics_Implementation::setTextureScale().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setTextureScale().\n");
   g_texture_scale = f;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setTrueTipScale (float f) {
-fprintf(stderr, "nmg_Graphics_Implementation::setTrueTipScale().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setTrueTipScale().\n");
   g_trueTipScale = f;
 }
 
 
 void nmg_Graphics_Implementation::setUserMode (int oldMode, int newMode,
                                                int style) {
-fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
   clear_world_modechange(oldMode);
   init_world_modechange(newMode, style);
 }
 
 
 void nmg_Graphics_Implementation::setLightDirection (q_vec_type & v) {
-fprintf(stderr, "nmg_Graphics_Implementation::setLightDirection().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setLightDirection().\n");
   ::setLightDirection(v);
 }
 
 void nmg_Graphics_Implementation::resetLightDirection (void) {
-fprintf(stderr, "nmg_Graphics_Implementation::resetLightDirection().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::resetLightDirection().\n");
   ::resetLightDirection();
 }
 
 
 int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
-fprintf(stderr, "nmg_Graphics_Implementation::addPolylinePoint().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::addPolylinePoint().\n");
 
   return make_rubber_line_point(point, g_positionList);
 }
 
 void nmg_Graphics_Implementation::emptyPolyline (void) {
-fprintf(stderr, "nmg_Graphics_Implementation::emptyPolyline().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::emptyPolyline().\n");
 
   empty_rubber_line(g_positionList);
 
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (float p0, float p1) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
   g_rubberPt[0] = p0;
   g_rubberPt[1] = p1;
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (float p2, float p3 ) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
   g_rubberPt[2] = p2;
   g_rubberPt[3] = p3;
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (const float p [2]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
   g_rubberPt[0] = p[0];
   g_rubberPt[1] = p[1];
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
-fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
   g_rubberPt[2] = p[0];
   g_rubberPt[3] = p[1];
 }
@@ -2099,41 +2111,54 @@ fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
 
 void nmg_Graphics_Implementation::setScanlineEndpoints(const float p0[3],
 		const float p1[3]){
-fprintf(stderr, "nmg_Graphics_Implementation::setScanlineEndpoints().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setScanlineEndpoints().\n");
   g_scanlinePt[0] = p0[0]; g_scanlinePt[1] = p0[1]; g_scanlinePt[2] = p0[2];
   g_scanlinePt[3] = p1[0]; g_scanlinePt[4] = p1[1]; g_scanlinePt[5] = p1[2];
 }
 
 void nmg_Graphics_Implementation::displayScanlinePosition(const int enable)
 {
-fprintf(stderr, "nmg_Graphics_Implementation::displayScanlinePosition().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::displayScanlinePosition().\n");
     enableScanlinePositionDisplay(enable);
 }
 
 void nmg_Graphics_Implementation::positionAimLine (const PointType top,
                                                    const PointType bottom) {
-fprintf(stderr, "nmg_Graphics_Implementation::positionAimLine().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::positionAimLine().\n");
   make_aim(top, bottom);
 }
 
 void nmg_Graphics_Implementation::positionRubberCorner
     (float minx, float miny, float maxx, float maxy) {
-fprintf(stderr, "nmg_Graphics_Implementation::positionRubberCorner().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::positionRubberCorner().\n");
   make_rubber_corner(minx, miny, maxx, maxy);
 }
 
 void nmg_Graphics_Implementation::positionSweepLine (const PointType top,
                                                      const PointType bottom) {
-fprintf(stderr, "nmg_Graphics_Implementation::positionSweepLine().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::positionSweepLine().\n");
   make_sweep(top, bottom);
 }
 
 void nmg_Graphics_Implementation::positionSphere (float x, float y, float z) {
-fprintf(stderr, "nmg_Graphics_Implementation::positionSphere().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::positionSphere().\n");
   position_sphere(x, y, z);
 }
 
 
+
+void nmg_Graphics_Implementation::setViewTransform (v_xform_type xform) {
+
+  v_world.users.xforms[0].xlate[0] = xform.xlate[0];
+  v_world.users.xforms[0].xlate[1] = xform.xlate[1];
+  v_world.users.xforms[0].xlate[2] = xform.xlate[2];
+  v_world.users.xforms[0].rotate[0] = xform.rotate[0];
+  v_world.users.xforms[0].rotate[1] = xform.rotate[1];
+  v_world.users.xforms[0].rotate[2] = xform.rotate[2];
+  v_world.users.xforms[0].rotate[3] = xform.rotate[3];
+  v_world.users.xforms[0].scale = xform.scale;
+
+}
 
 void nmg_Graphics_Implementation::createScreenImage
 (
@@ -2142,7 +2167,6 @@ void nmg_Graphics_Implementation::createScreenImage
 )
 {
    fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
-
   int w, h;
   unsigned char * pixels = NULL;
 
@@ -2166,17 +2190,17 @@ void nmg_Graphics_Implementation::createScreenImage
 }
 
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
-fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
   ::getLightDirection(v);
 }
 
 int nmg_Graphics_Implementation::getHandColor (void) const {
-fprintf(stderr, "nmg_Graphics_Implementation::getHandColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getHandColor().\n");
   return g_hand_color;
 }
 
 int nmg_Graphics_Implementation::getSpecularity (void) const {
-fprintf(stderr, "nmg_Graphics_Implementation::getSpecularity().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getSpecularity().\n");
   return g_shiny;
 }
 
@@ -2187,12 +2211,12 @@ float nmg_Graphics_Implementation::getDiffusePercent (void) const {
 */
 
 const double * nmg_Graphics_Implementation::getMinColor (void) const {
-fprintf(stderr, "nmg_Graphics_Implementation::getMinColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getMinColor().\n");
   return g_minColor;
 }
 
 const double * nmg_Graphics_Implementation::getMaxColor (void) const {
-fprintf(stderr, "nmg_Graphics_Implementation::getMaxColor().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::getMaxColor().\n");
   return g_maxColor;
 }
 
@@ -2209,7 +2233,7 @@ nmg_Graphics_Implementation::TextureMode
 #endif
 
 void nmg_Graphics_Implementation::initDisplays (void) {
-fprintf(stderr, "nmg_Graphics_Implementation::initDisplays().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::initDisplays().\n");
   int i;
 
   /*
@@ -2252,10 +2276,10 @@ void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
 
   if (captureBack) {
     glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
-fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  BACK BUFFER.\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  BACK BUFFER.\n");
   } else {
     glReadBuffer(GL_FRONT);
-fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  FRONT BUFFER.\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  FRONT BUFFER.\n");
   }
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
@@ -2305,7 +2329,7 @@ void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
 
 }
 
-void nmg_Graphics_Implementation::getLatestChange (int * minX, int * maxX,
+void nmg_Graphics_Implementation::getLatestGridChange (int * minX, int * maxX,
                                                    int * minY, int * maxY) {
   *minX = g_minChangedX;
   *maxX = g_maxChangedX;
@@ -2560,6 +2584,18 @@ int nmg_Graphics_Implementation::handle_setHandColor
 
   CHECK(it->decode_setHandColor(p.buffer, &color));
   it->setHandColor(color);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_enableCollabHand
+                                 (void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+  vrpn_bool on;
+
+  CHECK(it->decode_enableCollabHand(p.buffer, &on));
+  it->enableCollabHand(on);
   return 0;
 }
 
@@ -3317,6 +3353,16 @@ int nmg_Graphics_Implementation::handle_setTextureTransform (void *userdata,
   return 0;
 }
 
+
+// static
+int nmg_Graphics_Implementation::handle_setViewTransform
+               (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
+  v_xform_type xform;
+  it->decode_setViewTransform(p.buffer, &xform);
+  it->setViewTransform(xform);
+  return 0;
+}
 
 
 //

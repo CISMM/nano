@@ -49,7 +49,11 @@ int g_hand_color;  // XXX no initial value
 
 float g_icon_scale = 0.25f;
 
+// position:  has it moved?  do we need to generate a new display list
+// for it?
+// draw:  should we draw the display list at all?
 //to keep track of collaborator's hand position/orientation
+int g_position_collab_hand = 0;
 int g_draw_collab_hand = 0;
 double g_collabHandPos[3];  //no initial value
 double g_collabHandQuat[4];  //no initial value

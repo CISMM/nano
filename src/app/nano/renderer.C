@@ -109,19 +109,31 @@ void handle_interrupt (int) {
 
   fprintf(stderr, "Got an interrupt...\n");
 
-  if (graphics)
+  if (graphics) {
     delete graphics;
-  if (microscope)
+    graphics = NULL;
+  }
+  if (microscope){
     delete microscope;
-  if (dataset)
+    microscope = NULL;
+  }
+  if (dataset){
     delete dataset;
-  if (decoration)
+    dataset = NULL;
+  }
+  if (decoration){
     delete decoration;
+    decoration = NULL;
+  }
 
-  if (microscope_connection)
+  if (microscope_connection){
     delete microscope_connection;
-  if (graphics_connection)
+    microscope_connection = NULL;
+  }
+  if (graphics_connection){
     delete graphics_connection;
+    graphics_connection = NULL;
+  }
 
   fprintf(stderr, "Shut down.\n");
 

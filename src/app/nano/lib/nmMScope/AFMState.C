@@ -318,10 +318,12 @@ void AFMScanlineState::moveScanlineRelative(float dist_fast_dir,
 
 AFMDataset::AFMDataset (void) :
     inputPoint (NULL),
-    inputPlaneNames (),
-    inputValueNames (),
+    fc_inputPoint(NULL),
+    inputPlaneNames ("inputPlaneNames"),
+    inputPointNames ("inputPointNames"),
     scan_channels (NULL),
-    point_channels (NULL) {
+    point_channels (NULL),
+    forcecurve_channels(NULL) {
 
 //fprintf(stderr, "AFMDatasetState constructor\n");
 
@@ -329,7 +331,12 @@ AFMDataset::AFMDataset (void) :
 
 // Destructor only here to keep the HP compilers happy.
 AFMDataset::~AFMDataset (void) {
-
+    if (inputPoint) delete inputPoint;
+    if (fc_inputPoint) delete fc_inputPoint;
+    // for some reason I haven't tracked down, these call a segfault. 
+    //if (scan_channels) delete scan_channels;
+    //if (point_channels) delete point_channels;
+    //if (forcecurve_channels) delete forcecurve_channels;
 }
 
 
@@ -378,7 +385,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
 
     MaxSafeMove (i.MaxSafeMove),
 
-    stm_z_scale ("z_scale", ".z_mapping.slider", 0, 10, i.stm_z_scale),
+    stm_z_scale ("z_scale", i.stm_z_scale),
 
     do_raster    (VRPN_TRUE),
     do_y_fastest (VRPN_FALSE),
@@ -393,7 +400,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     //done (VRPN_FALSE),
     acquisitionMode(IMAGE),
 
-    slowScanEnabled ("slowScan", ".sliders", 1),
+    slowScanEnabled ("slowScan", 1),
     cannedLineVisible (VRPN_FALSE),
     cannedLineToggle (0),
 
@@ -494,8 +501,8 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   fc_inputPoint = new Point_results;
 
   inputPlaneNames.addEntry("none");
-  inputValueNames.addEntry("none");
-  fc_inputValueNames.addEntry("none");
+  inputPointNames.addEntry("none");
+  fc_inputPointNames.addEntry("none");
 
 
   // Add every plane in the input grid list into the possible ones
@@ -503,7 +510,7 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   p = dataset->inputGrid->head();
   while (p) {
     inputPlaneNames.addEntry(p->name()->Characters());
-    inputValueNames.addEntry(p->name()->Characters());
+    inputPointNames.addEntry(p->name()->Characters());
     p = p->next();
   }
 
@@ -517,13 +524,11 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
                                              &inputPlaneNames,
                                              dataset);
   point_channels = new Point_channel_selector (inputPoint,
-                                               &inputValueNames,
+                                               &inputPointNames,
 						dataset);
   forcecurve_channels = new ForceCurve_channel_selector (fc_inputPoint,
-						&fc_inputValueNames, dataset);
+						&fc_inputPointNames, dataset);
 
   return 0;
 }
-
-
 

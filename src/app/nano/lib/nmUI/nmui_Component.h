@@ -14,7 +14,7 @@
 
 class TclNet_int;  // from <Tcl_Netvar.h>
 class TclNet_float;
-class TclNet_selector;
+class TclNet_string;
 
 class vrpn_Connection;  // from <vrpn_Connection.h>
 
@@ -34,6 +34,34 @@ typedef int (* nmui_LockHandler) (void * userdata);
 // deep misassumptions buried in the code around addPeer() that
 // probably have roots down into Tcl_Netvar.
 
+/**
+ * Synchronization hierarchy of Tcl_Netvars and support functions.
+ * nmui_Component builds a hierarchy of Tcl_Netvars that can be
+ * synchronized en masse or at finer granularity.  Its syncRequest()
+ * and registerSync*Handler() functions provide support for updating
+ * variables with semantics not correctly synchronized by standard
+ * Tcl_Netvar behavior (example:  clocks).  Has some support for
+ * vrpn's deferred connection and automatic reconnection, although
+ * this is messy (because it depends on Netvar's addPeer(), which
+ * is quite messy).
+ *
+ * Most processes write any changes into their TclNet objects,
+ * so a remote Component that wants to sync will have a copy of
+ * the current state in its replicas in those objects.  However,
+ * some of the "simplest" processes that we want to synchronize
+ * are not entirely user-controlled but instead change as a function
+ * of time.  So, when a user requests synchronization copying the
+ * current value of the appropriate replica is the *wrong* thing
+ * to do.  Instead we send a syncRequest message, and a
+ * syncRequestHandler on the remote machine can trigger updates
+ * of the relevant TclNet objects to their proper current values.
+ *
+ *   Machine A calls requestSync()
+ *   Machine B's SyncRequestHandlers are called()
+ *   all updates from the SyncRequestHandlers arrive on machine A
+ *   Machine A's SyncCompleteHandlers are called()
+ */
+
 class nmui_Component {
 
   public:
@@ -43,7 +71,7 @@ class nmui_Component {
     nmui_Component (char name [30],
                     TclNet_int ** = NULL, int = 0,
                     TclNet_float ** = NULL, int = 0,
-                    TclNet_selector ** = NULL, int = 0);
+                    TclNet_string ** = NULL, int = 0);
 
     virtual ~nmui_Component (void);
 
@@ -52,68 +80,89 @@ class nmui_Component {
     const char * name (void) const;
 
     int numPeers (void) const;
-      // Returns the number of peers we're sharing state with.
+      /**< Returns the number of peers we're sharing state with. */
 
     int synchronizedTo (void) const;
-      // Returns 0 if not synchronized to anybody else,
-      // nonzero if synchronized to a shared state copy.
-      // Current implementation only has 1 shared state, so
-      // *should* only return 0 or 1, but may not if addPeer()
-      // is called multiple times (by the user typing in multiple
-      // values for collab_machine_name in the Tcl interface).
+      /**<
+       * Returns 0 if not synchronized to anybody else,
+       * nonzero if synchronized to a shared state copy.
+       * Current implementation only has 1 shared state, so
+       * *should* only return 0 or 1, but may not if addPeer()
+       * is called multiple times (by the user typing in multiple
+       * values for collab_machine_name in the Tcl interface), or
+       * the peer going down and coming back up multiple times.
+       */
 
     vrpn_bool isLockedRemotely (void) const;
+      /**<
+       * Returns VRPN_TRUE if the hierarchy of Netvars rooted at
+       * this component is locked by some other process.
+       * Used for locking, which is not fully implemented.
+       */
+
     vrpn_bool holdsRemoteLocks (void) const;
-      // Used for locking, which is not fully implemented.
+      /**<
+       * Returns VRPN_TRUE if the hierarchy of Netvars rooted at
+       * this component is locked by this process so that other
+       * processes can't write into any of the Netvars involved.
+       * Used for locking, which is not fully implemented.
+       */
 
     // MANIPULATORS
 
     void add (TclNet_int *);
+      /**< Adds a netvar to the hierarchy under this component. */
     void add (TclNet_float *);
-    void add (TclNet_selector *);
+      /**< Adds a netvar to the hierarchy under this component. */
+    void add (TclNet_string *);
+      /**< Adds a netvar to the hierarchy under this component. */
     void add (nmui_Component *);
-      // Adds a netvar or component to the list of objects
-      // maintained by this component.  Everything in this
-      // list will be copied or synchronized when copyReplica()
-      // or syncReplica() is called.
-      // HACK:  these are fixed-size arrays.
+      /**< Adds a component to the hierarchy under this component.  */
 
     void bindConnection (vrpn_Connection *);
-      // Specifies the vrpn_Connection which is our SERVER
-      // to be connected to by our peer.
+      /**<
+       * Specifies the vrpn_Connection which is our SERVER
+       * to be connected to by our peer.
+       */
+
     void bindLogConnection (vrpn_Connection *);
-      // Specifies a vrpn_Connection to log private events to.
+      /**<
+       * Specifies a vrpn_Connection to log private events to.
+       */
+
     void addPeer (vrpn_Connection *, vrpn_bool serialize);
-      // Specifies the vrpn_Connection which is our REMOTE
-      // which is connected to our peer's server.
+      /**<
+       * Specifies the vrpn_Connection which is our REMOTE,
+       * connected to our peer's server.
+       * Messy interface to a messy function (Tcl_Netvar::addPeer());
+       * this could be profitably redesigned.
+       */
 
     void copyReplica (int whichReplica);
-      // Copies the state of <whichReplica> over the current state.
+      /**<
+       * Copies the state of <whichReplica> over the current state
+       * of all netvars below this one in the hierarchy.
+       */
+
+    void copyFromToReplica (int sourceReplica, int destReplica);
+      /**< 
+       * Copy the state of the source replica to the destination replica.
+       */
+
     void syncReplica (int whichReplica);
-      // Makes <whichReplica> be the current state.
+      /**<
+       * Makes all netvars below this one in the hierarchy use
+       * <whichReplica> as their current state.
+       */
 
     void requestSync (void);
-      // Request that a peer send us all the information we need
-      // to correctly sync or copy replicas (see below).
+      /**<
+       * Request that a peer send us all the information we need
+       * to correctly sync or copy replicas (see below).
+       */
+
     void registerSyncRequestHandler (nmui_SyncRequestHandler, void *);
     void registerSyncCompleteHandler (nmui_SyncCompleteHandler, void *);
-      // Must not be called before bindConnection()
-
-      // Most processes write any changes into their TclNet objects,
-      // so a remote Component that wants to sync will have a copy of
-      // the current state in its replicas in those objects.  However,
-      // some of the "simplest" processes that we want to synchronize
-      // are not entirely user-controlled but instead change as a function
-      // of time.  So, when a user requests synchronization copying the
-      // current value of the appropriate replica is the *wrong* thing
-      // to do.  Instead we send a syncRequest message, and a
-      // syncRequestHandler on the remote machine can trigger updates
-      // of the relevant TclNet objects to their proper current values.
-
-    // Machine A calls requestSync()
-    // Machine B's SyncRequestHandlers are called()
-    // all updates from the SyncRequestHandlers arrive on machine A
-    // Machine A's SyncCompleteHandlers are called()
 
     vrpn_bool d_maintain;
       // Controls behavior of handle_syncComplete().
@@ -126,15 +175,19 @@ class nmui_Component {
       // presses of sync and copy, but that might not hurt anything.
 
     static int handle_reconnect (void *, vrpn_HANDLERPARAM);
-      // re-registers type and sender ids.  You will probably
-      // want to have this as a callback for vrpn_got_connection
-      // on connections you addPeer().
-      // HACK:  assumes there's only been one peer added that
-      // could be outstanding.
+      /**<
+       * Re-registers type and sender ids.
+       * You will probably want to have this as a callback for
+       * vrpn_got_connection on connections you addPeer().
+       * HACK:  assumes there's only been one peer added that
+       * could be outstanding.
+       */
 
     void initializeConnection (vrpn_Connection *);
-      // to be called on a connection on which we should recieve
-      // and respond to synchronization requests
+      /**<
+       * (OBSOLETE) Function that must be called on a connection on which
+       * we should recieve and respond to synchronization requests.
+       */
 
   protected:
 
@@ -146,8 +199,8 @@ class nmui_Component {
     TclNet_int * d_ints [NMUI_COMPONENT_MAX_SIZE];
     int d_numFloats;
     TclNet_float * d_floats [NMUI_COMPONENT_MAX_SIZE];
-    int d_numSelectors;
-    TclNet_selector * d_selectors [NMUI_COMPONENT_MAX_SIZE];
+    int d_numStrings;
+    TclNet_string * d_strings [NMUI_COMPONENT_MAX_SIZE];
     int d_numComponents;
     nmui_Component * d_components [NMUI_COMPONENT_MAX_SIZE];
 

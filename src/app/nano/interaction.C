@@ -57,11 +57,8 @@
 #include <nmg_Globals.h>
 
 #include <nmui_Util.h>
-//#include <nmui_IFMode.h>
-//#include <nmui_IFMode_FeelFromGrid.h>
-//#include <nmui_IFMode_Fly.h>
-//#include <nmui_IFMode_Light.h>
-//#include <nmui_IFMode_Scale.h>
+
+#include <nmui_HapticSurface.h>
 
 #include "normal.h"
 #include "relax.h"
@@ -1210,7 +1207,10 @@ doLight(int whichUser, int userEvent)
 
 	/* position the light where the top of the user's hand is */
 
-        graphics->setLightDirection(lightdir);
+        // NANOX
+        // Don't do anything until the network confirms this move
+        // to us - in handle_lightDir_change below.
+        //graphics->setLightDirection(lightdir);
 
         // NANOX
         tcl_lightDirX = lightdir[X];
@@ -1611,6 +1611,9 @@ void specify_surface_adhesion(int x, int y)
 
 
 /*****************************************************************************
+  modified Feb 2000 by Tom Hudson
+              - Uses nmui_HapticSurface
+
   modified 10/14/99 by Russ Taylor
 	- Check for haptic enable/disable and don't display if not
 	- Check for haptic feel from flat
@@ -1625,10 +1628,11 @@ void specify_surface_adhesion(int x, int y)
 	      - Uses info from grid only to compute mag and direction.
  *****************************************************************************/
 
-double touch_canned_from_plane(int whichUser, q_vec_type handpos)
-{
-  double x = handpos[X];
-  double y = handpos[Y];
+double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
+
+  static nmui_HSCanned haptics (dataset);
+  q_vec_type n;
+  double d;
 
   // If the user has selected feel_from_flat, then call that routine
   // instead.
@@ -1636,119 +1640,29 @@ double touch_canned_from_plane(int whichUser, q_vec_type handpos)
 	return touch_flat_from_measurelines(whichUser, handpos);
   }
 
-  BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-  if (plane == NULL)
-  {
-      fprintf(stderr,
-	"Error in touch_canned_from_plane: could not get plane!\n");
-      return -1;
+  haptics.setLocation(handpos);
+  haptics.update();
+
+  if (forceDevice) {
+    haptics.getOutputPlane(n, &d);
+    forceDevice->set_plane(n[0], n[1], n[2], d);
   }
 
-  double	rx = ( (x - plane->minX())
-		  / (plane->maxX()- plane->minX())*(plane->numX()-1) );
-  double	ry = ( (y - plane->minY())
-		  / (plane->maxY()- plane->minY())*(plane->numY()-1) );
-  int		ix = (int)rx;
-  int		iy = (int)ry;
-  double	a = rx - ix;
-  double	b = ry - iy;
-  q_vec_type	pnorm;
-  q_vec_type	point;
-  v_xform_type	WorldFromTracker, TrackerFromWorld;
-  VectorType	Norm00, Norm01, Norm10, Norm11;
-  double	z;
-  double	d;
+  specify_surface_compliance(haptics.getGridX(), haptics.getGridY());
+  specify_surface_friction(haptics.getGridX(), haptics.getGridY());
+  specify_surface_bumpsize(haptics.getGridX(), haptics.getGridY());
+  specify_surface_buzzamplitude(haptics.getGridX(), haptics.getGridY());
 
-  int zero_xnorm = 0, zero_ynorm = 0;
+  // Return signed distance above plane (plane in world space).
 
-  point[X] = x;
-  point[Y] = y;
-
-  if (ix >= (plane->numX()-1)) {
-    ix = plane->numX()-2;
-    zero_xnorm = 1;
-    point[X] = ix*(plane->maxX()-plane->minX())*(plane->numX()-1)+plane->minX();
-  }
-  if (iy >= (plane->numY()-1)) {
-    iy = plane->numY()-2;
-    zero_ynorm = 1;
-    point[Y] = iy*(plane->maxY()-plane->minY())*(plane->numY()-1)+plane->minY();
-  }
-  if (ix <= 0){
-    ix = 0;
-    zero_xnorm = 1;
-    point[X] = ix*(plane->maxX()-plane->minX())*(plane->numX()-1)+plane->minX();
-  }
-  if (iy <= 0){
-    iy = 0;
-    zero_ynorm = 1;
-    point[Y] = iy*(plane->maxY()-plane->minY())*(plane->numY()-1)+plane->minY();
-  }
-
-  z = plane->scaledValue(ix,   iy  )*(1-a)*(1-b)
-    + plane->scaledValue(ix+1, iy  )*(  a)*(1-b)
-    + plane->scaledValue(ix,   iy+1)*(1-a)*(  b)
-    + plane->scaledValue(ix+1, iy+1)*(  a)*(  b);
-
-  point[Z] = z;
-
-  Compute_Norm(ix,iy,Norm00, plane);
-  Compute_Norm(ix+1,iy,Norm10, plane);
-  Compute_Norm(ix+1,iy+1,Norm11, plane);
-  Compute_Norm(ix,iy+1,Norm01, plane);
-
-  VectorScale(Norm00,(1-a)*(1-b));
-  VectorCopy(pnorm,Norm00);
-  VectorScale(Norm10,(  a)*(1-b));
-  VectorAdd(pnorm,Norm10,pnorm);
-  VectorScale(Norm01,(1-a)*(  b));
-  VectorAdd(pnorm,Norm01,pnorm);
-  VectorScale(Norm11,(  a)*(  b));
-  VectorAdd(pnorm,Norm11,pnorm);
-
-  if (zero_xnorm) pnorm[X] = 0;
-  if (zero_ynorm) pnorm[Y] = 0;
-
-  /* Rotate, Xlate and scale point from world space to ARM space.
-  ** The normal direction just needs rotating.
-  **/
-  v_x_compose(&WorldFromTracker,
-	  &v_world.users.xforms[whichUser],
-	  &v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER]);
-
-  v_x_invert(&TrackerFromWorld, &WorldFromTracker);
-
-  v_x_xform_vector( point, &TrackerFromWorld, point );
-
-  q_xform(pnorm, TrackerFromWorld.rotate, pnorm);
-
-  VectorNormalize(pnorm);
-
-  d = -( pnorm[X]*point[X]+pnorm[Y]*point[Y]+pnorm[Z]*point[Z] );
-
-
-  //set plane equation
-
-  if (forceDevice) forceDevice->set_plane(pnorm[X],pnorm[Y],pnorm[Z],d);
-
-  specify_surface_compliance(ix,iy);
-  specify_surface_friction(ix, iy);
-  specify_surface_bumpsize(ix,iy);
-  specify_surface_buzzamplitude(ix,iy);
-
-  // Compute and return signed distance above plane (plane in world space)
-  // This is the dot product of the vector from the plane's point to the
-  // hand location and the plane's unit normal vector.
-
-  q_vec_type	  p_to_h;
-  v_x_xform_vector( handpos, &TrackerFromWorld, handpos );
-  q_vec_subtract( p_to_h, handpos, point );
-  return q_vec_dot_product( p_to_h, pnorm );
+  return haptics.distanceFromSurface();
 }
 
 
 /*****************************************************************************
+  modified Feb 2000 by Tom Hudson
+              - Uses nmui_HapticSurface
+
   created 10/14/99 by Russ Taylor.
 	      -	Returns the signed distance of the user's hand position
 		above the plane.
@@ -1771,99 +1685,28 @@ double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
   // Get the height plane, which we'll use to find the height at the
   // locations of the measure lines
 
-  BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-  if (plane == NULL)
-  {
-      fprintf(stderr,
-	"Error in touch_flat_from_measurelines: could not get plane!\n");
-      return -1;
-  }
+  static nmui_HSMeasurePlane haptics (dataset, decoration);
+  q_vec_type n;
+  double d;
 
-  //---------------------------------------------------------------------
-  // Find the location of the three measure lines (where they
-  // intersect with the plane we are feeling on).
-
-  q_vec_type	red, green, blue;
-
-  red[X] = decoration->red.x();
-  red[Y] = decoration->red.y();
-  red[Z] = plane->valueAt(red[X], red[Y]) * plane->scale();
-
-  green[X] = decoration->green.x();
-  green[Y] = decoration->green.y();
-  green[Z] = plane->valueAt(green[X], green[Y]) * plane->scale();
-
-  blue[X] = decoration->blue.x();
-  blue[Y] = decoration->blue.y();
-  blue[Z] = plane->valueAt(blue[X], blue[Y]) * plane->scale();
-
-  //---------------------------------------------------------------------
-  // Pick one of the points (red) as the plane origin, then find the
-  // normal using cross-products for the vectors to the other two
-  // points. Make sure we get the up-pointing normal.
-
-  q_vec_type	point;
-  q_vec_type	r_to_g, r_to_b;
-  q_vec_type	pnorm;
-
-  point[X] = red[X];
-  point[Y] = red[Y];
-  point[Z] = red[Z];
-
-  q_vec_subtract( r_to_g, green, red );
-  q_vec_subtract( r_to_b, blue, red );
-  if ((q_vec_magnitude( r_to_g ) == 0.0) || (q_vec_magnitude( r_to_b ) == 0.0)){
-	fprintf(stderr,"Error in touch_flat_from_measurelines: "
-		"red, green or blue measure lines are overlapping\n");
-	return -1;
-  }
-  q_vec_cross_product( pnorm, r_to_g, r_to_b );
-  if (pnorm[Z] < 0) {	// Flip it over if it is pointing down
-	q_vec_scale( pnorm, -1.0, pnorm );
-  }
-
-  //---------------------------------------------------------------------
-  // Rotate, Xlate and scale point from world space to ARM space.
-  // The normal direction just needs rotating. Compute the plane
-  // equation that corresponds to the given point and normal.
-
-  v_xform_type	WorldFromTracker, TrackerFromWorld;
-  double	d;
-
-  v_x_compose(&WorldFromTracker,
-	  &v_world.users.xforms[whichUser],
-	  &v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER]);
-
-  v_x_invert(&TrackerFromWorld, &WorldFromTracker);
-
-  v_x_xform_vector( point, &TrackerFromWorld, point );
-
-  q_xform(pnorm, TrackerFromWorld.rotate, pnorm);
-
-  VectorNormalize(pnorm);
-
-  d = -( pnorm[X]*point[X]+pnorm[Y]*point[Y]+pnorm[Z]*point[Z] );
-
-  //---------------------------------------------------------------------
-  // Set plane equation.
+  haptics.setLocation(handpos);
+  haptics.update();
 
   if (forceDevice) {
-	forceDevice->set_plane(pnorm[X],pnorm[Y],pnorm[Z],d);
+    haptics.getOutputPlane(n, &d);
+    forceDevice->set_plane(n[0], n[1], n[2], d);
   }
 
-  // Compute and return signed distance above plane (plane in world space)
-  // This is the dot product of the vector from the plane's point to the
-  // hand location and the plane's unit normal vector.
+  // Return signed distance above plane (plane in world space).
 
-  q_vec_type	  p_to_h;
-  v_x_xform_vector( handpos, &TrackerFromWorld, handpos );
-  q_vec_subtract( p_to_h, handpos, point );
-  return q_vec_dot_product( p_to_h, pnorm );
+  return haptics.distanceFromSurface();
 }
 
 /*****************************************************************************
  *
+  modified Feb 2000 by Tom Hudson
+              - Uses nmui_HapticSurface
+
   modified 10/14/99 by Russ Taylor
 	- Check for haptic enable/disable and don't display if not
 	- Check for haptic feel from flat
@@ -1883,97 +1726,23 @@ double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
 
 double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 {
+  static nmui_HSLivePlane haptics (dataset, microscope);
+  q_vec_type n;
+  double d;
+
   // If the user has selected feel_from_flat, then call that routine
   // instead.
   if (config_haptic_plane) {
 	return touch_flat_from_measurelines(whichUser, handpos);
   }
 
-     q_vec_type		        pnorm;
-     q_vec_type		        point;
-     static q_vec_type		up = { 0.0, 0.0, 1.0 };
-     q_vec_type		        at;
-     static q_vec_type	        last_point;
-     static q_vec_type	        last_pnorm;
-     v_xform_type               WorldFromTracker, TrackerFromWorld;
-     double			d;
+  haptics.setLocation(handpos);
+  haptics.update();
 
-     point[X] = microscope->state.data.inputPoint->x();
-     point[Y] = microscope->state.data.inputPoint->y();
+  if (forceDevice) {
 
-     // Scale the Z value by the scale factor of the currently-displayed
-     // data set.  XXX This assumes that the one mapped to height display is
-     // also mapped in touch mode, and that mapping for this has been
-     // set up.
-     BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-     Point_value *value =
-	microscope->state.data.inputPoint->getValueByPlaneName
-                     (dataset->heightPlaneName->string());
-
-     if (plane == NULL) {
-	 fprintf(stderr,
-	"Error in touch_live_to_plane_fit_to_line: could not get plane!\n");
-	 return -1;
-     }
-     if (value == NULL) {
-	 fprintf(stderr,
-	"Error in touch_live_to_plane_fit_to_line: could not get value!\n");
-	 return -1;
-     }
-
-     point[Z] = value->value()*plane->scale();
-
-     /* start off with the force normal assumed straight up
-     **/
-     if( !plane_line_set ) {
-	 q_vec_copy( last_pnorm, up );
-	 q_vec_copy( last_point, point );
-	 }
-
-     q_vec_copy( pnorm, last_pnorm );
-
-     /* don't let the reuse of variables fool you. the normal is:
-     **	norm = ((p-last_p)X(0,0,1))X(p-last_p).
-     ** if we don't have a last point or haven't moved, leave the
-     ** normal direction alone.
-     **/
-     if( plane_line_set ) {
-	 q_vec_subtract( at, point, last_point );
-	 if( 10.0 < ( at[X]*at[X]+
-		     at[Y]*at[Y] ) ) {
-	     q_vec_cross_product( pnorm, at, up );
-	     q_vec_cross_product( pnorm, pnorm, at );
-	     q_vec_copy( last_point, point );
-	     }
-	 }
-
-     VectorNormalize(pnorm);
-
-     q_vec_copy( last_pnorm, pnorm );
-     plane_line_set = 1;
-
-     /* got x,y,z, and norm in microscope space, XForm into ARM space
-     **/
-
-     /* Rotate, Xlate and scale point from world space to ARM space.
-     ** The normal direction just needs rotating.
-     **/
-     v_x_compose(&WorldFromTracker,
-	     &v_world.users.xforms[whichUser],
-	     &v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER]);
-
-     v_x_invert(&TrackerFromWorld, &WorldFromTracker);
-
-     v_x_xform_vector( point, &TrackerFromWorld, point );
-
-     q_xform(pnorm, TrackerFromWorld.rotate, pnorm);
-
-     d = -( pnorm[X]*point[X]+pnorm[Y]*point[Y]+pnorm[Z]*point[Z] );
-
-    if (!forceDevice) return 0;
-
-    forceDevice->set_plane(pnorm[X],pnorm[Y],pnorm[Z],d);
+    haptics.getOutputPlane(n, &d);
+    forceDevice->set_plane(n[0], n[1], n[2], d);
       
     forceDevice->setSurfaceKspring(Arm_knobs[FORCE_KNOB]*(MAX_K-MIN_K)+MIN_K);
     specify_point_friction();
@@ -1981,17 +1750,11 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
     specify_point_bumpsize();
     specify_point_buzzamplitude();
 
-     /* Send the plane to the haptic server */
-     forceDevice->sendSurface();
+    /* Send the plane to the haptic server */
+    forceDevice->sendSurface();
+  }
 
-     // Compute and return signed distance above plane (plane in world space)
-     // This is the dot product of the vector from the plane's point to the
-     // hand location and the plane's unit normal vector.
-
-     q_vec_type	  p_to_h;
-     v_x_xform_vector( handpos, &TrackerFromWorld, handpos );
-     q_vec_subtract( p_to_h, handpos, point );
-     return q_vec_dot_product( p_to_h, pnorm );
+  return haptics.distanceFromSurface();
 }
 
 /*****************************************************************************
@@ -2470,7 +2233,6 @@ int doMeasure(int whichUser, int userEvent)
 	/* Set its height based on data at this point */
         nmui_Util::clipPosition(whichUser, clipPos);
 
-
 //fprintf(stderr, "doMeasure:  hpn %s.\n", dataset->heightPlaneName->string());
         BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
@@ -2484,18 +2246,21 @@ int doMeasure(int whichUser, int userEvent)
         decoration->green.normalize(plane);
         decoration->blue.normalize(plane);
 
+        // Speed may be pointless here, but we were doing three sqrt(),
+        // which are completely unnecessary, since sqrt() preserves
+        // ordering.
 
-        rdxy = sqrt( (clipPos[0] - decoration->red.x()) *
+        rdxy = ( (clipPos[0] - decoration->red.x()) *
                      (clipPos[0] - decoration->red.x()) +
                      (clipPos[1] - decoration->red.y()) *
                      (clipPos[1] - decoration->red.y()) );
           
-        gdxy = sqrt( (clipPos[0] - decoration->green.x()) *
+        gdxy = ( (clipPos[0] - decoration->green.x()) *
                      (clipPos[0] - decoration->green.x()) +
                      (clipPos[1] - decoration->green.y()) *
                      (clipPos[1] - decoration->green.y()) );
          
-        bdxy = sqrt( (clipPos[0] - decoration->blue.x()) *
+        bdxy = ( (clipPos[0] - decoration->blue.x()) *
                      (clipPos[0] - decoration->blue.x()) +
                      (clipPos[1] - decoration->blue.y()) *
                      (clipPos[1] - decoration->blue.y()) );
@@ -2508,73 +2273,26 @@ int doMeasure(int whichUser, int userEvent)
                graphics->setHandColor(GREEN);
         }
 
+        // NANOX
+        // Don't call moveTo() - instead, just call doCallbacks().
+        // That will send the changes through Tcl, which will do
+        // network synchronization if necessary, and the Tcl callbacks
+        // will finally call moveTo().
+
         switch(userEvent) {
         
 	   case PRESS_EVENT: hold_color = graphics->getHandColor();
            case HOLD_EVENT: 
 	     ishold =1;
-	     if(hold_color == RED) { 
-               decoration->red.moveTo(clipPos[0], clipPos[1], plane);
-               decoration->red.doCallbacks();
+	     if (hold_color == RED) { 
+               decoration->red.doCallbacks(clipPos[0], clipPos[1], plane);
 	     }
-	     else if(hold_color == GREEN) {
-               decoration->green.moveTo(clipPos[0], clipPos[1], plane);
-               decoration->green.doCallbacks();
+	     else if (hold_color == GREEN) {
+               decoration->green.doCallbacks(clipPos[0], clipPos[1], plane);
 	     }
-	     else if(hold_color == BLUE){
-               decoration->blue.moveTo(clipPos[0], clipPos[1], plane);
-               decoration->blue.doCallbacks();
+	     else if (hold_color == BLUE){
+               decoration->blue.doCallbacks(clipPos[0], clipPos[1], plane);
 	     }
-	     //if the rulergrid position is being set
-	     if (rulergrid_position_line == 1 && rulergrid_enabled == 1 &&
-		 hold_color == RED)
-	       {
-		 rulergrid_xoffset = decoration->red.x();
-		 rulergrid_yoffset = decoration->red.y();
-	       }
-	     //if the rulergrid orientation is being set
-	     if (rulergrid_orient_line == 1 && rulergrid_enabled == 1 &&
-		 hold_color == GREEN)
-	       {
-		 float xdiff = decoration->green.x() - rulergrid_xoffset;
-		 float ydiff = decoration->green.y() - rulergrid_yoffset;
-		 //hypotenuse
-		 float hyp = sqrt(xdiff*xdiff + ydiff*ydiff);
-		 //make sure you never divide by zero
-		 //will happen if red and green line are at the same position
-		 //dope!!!
-		 if (hyp == 0)
-		   hyp = 1;
-		 //be careful about the quadrants for sin and cos
-		 //rulergrid_angle sets the angle for the Tcl variable
-		 if (ydiff >= 0)
-		   {
-		     //in quadrant 1 or 2
-		     rulergrid_angle = acos(xdiff/hyp)*180/M_PI;
-		     graphics->setRulergridAngle(rulergrid_angle);
-		     //printf("sin %f cos %f angle %f\n", rulergrid_sin, 
-		     //    rulergrid_cos, acos(xdiff/hyp)*180/M_PI);
-		   }
-		 else if (xdiff < 0 && ydiff < 0)
-		   {
-		     //in quadrant 3
-		     rulergrid_angle = 360 - (acos(xdiff/hyp)*180/M_PI);
-		     graphics->setRulergridAngle(rulergrid_angle);
-		     //printf("sin %f cos %f angle %f\n", rulergrid_sin, 
-		     //    rulergrid_cos, 360 - acos(xdiff/hyp)*180/M_PI);
-		   }
-		 else if (xdiff >= 0 && ydiff < 0)
-		   {
-		     // quadrant 4
-		     rulergrid_angle = 360 - (acos(xdiff/hyp)*180/M_PI);
-		     graphics->setRulergridAngle(rulergrid_angle);
-		     //printf("sin %f cos %f angle %f\n", rulergrid_sin, 
-		     //    rulergrid_cos, 360 - acos(xdiff/hyp)*180/M_PI);
-		   }
-
-		 //cause the whole surface to redraw
-		 cause_grid_redraw(0.0, NULL);		 
-	       }
 	     break;
 	   case RELEASE_EVENT:
 	     ishold =0;
@@ -3168,7 +2886,9 @@ int doFeelLive(int whichUser, int userEvent)
 	       }
 	}
 	    
-	if (( microscope->state.modify.control == DIRECTZ)&&(tcl_commit_pressed)) {
+	if (( microscope->state.modify.control == DIRECTZ) &&
+            (tcl_commit_pressed)) {
+
 	    // Stop using the plane to apply force
 	    
 	    if( SurfaceGoing ) {
@@ -3487,13 +3207,25 @@ void initializeInteraction (void) {
 //(vrpn_float64) tcl_wfr_scale);
 }
 
-static int lock_xform = 0;
+
+// These two functions work together to make sure that all changes
+// of the world-room transform work properly with collaboration.
+// Everything that used to write v_world.users.xforms[0] instead
+// calls updateWorldFromRoom(), which triggers Tcl_Netvar updates.
+// If we're using a centralized serializer and we're not it, we
+// then send that message out over the network;  on some future
+// frame it'll come back to us & update then through the same
+// path as non-centralized or non-serialized:
+// handle_worldFromRoom_change(), which actually writes into
+// v_world.users.xforms[0]
+
+//static int lock_xform = 0;
 
 void updateWorldFromRoom (v_xform_type * t) {
 
   graphicsTimer.activate(graphicsTimer.getListHead());
 
-  lock_xform = 1;
+  //lock_xform = 1;
 
   if (!t) {
     t = &v_world.users.xforms[0];
@@ -3507,7 +3239,7 @@ void updateWorldFromRoom (v_xform_type * t) {
   tcl_wfr_rot_2 = t->rotate[2];
   tcl_wfr_rot_3 = t->rotate[3];
 
-  lock_xform = 0;
+  //lock_xform = 0;
   // Only trigger vlib things once, on the last assignment.
 
   tcl_wfr_scale = t->scale;
@@ -3526,20 +3258,53 @@ void updateWorldFromRoom (v_xform_type * t) {
 
 // NANOX
 void handle_worldFromRoom_change (vrpn_float64, void *) {
-//#if 0
-  if (lock_xform) {
-    return;
-  }
+  //if (lock_xform) {
+    //return;
+  //}
 
-  v_world.users.xforms[0].xlate[0] = tcl_wfr_xlate_X;
-  v_world.users.xforms[0].xlate[1] = tcl_wfr_xlate_Y;
-  v_world.users.xforms[0].xlate[2] = tcl_wfr_xlate_Z;
-  v_world.users.xforms[0].rotate[0] = tcl_wfr_rot_0;
-  v_world.users.xforms[0].rotate[1] = tcl_wfr_rot_1;
-  v_world.users.xforms[0].rotate[2] = tcl_wfr_rot_2;
-  v_world.users.xforms[0].rotate[3] = tcl_wfr_rot_3;
-  v_world.users.xforms[0].scale = tcl_wfr_scale;
-//#endif
+  //if (!value) {
+    //return;
+  //}
+
+  // We'd like to only send this message once per frame,
+  // but a naive implementation (i.e. this one) will send it
+  // 8 times per frame - every time ONE of the TCL variables changes.
+  // We can't reenable the flag that only generates this message
+  // once, since that fails if we don't allow idempotent changes
+  // to the tclvar it's limited to;  another option would be to
+  // set a flag here and check it once per frame somewhere in mainloop
+  // (right before calling nmg_Graphics::mainloop(), one supposes).
+  // The only-one-once flag would also not do anything for the collaborative
+  // case, since there will be eight calls to updateWorldFromRoom() generated
+  // by the eight separate messages.  Another argument for coarse-grained
+  // distributed shared objects instead of fine-grained.  The counterargument
+  // is to start off fine-grained and flexible, then as the system "sets"
+  // convert to coarse-grained where necessary for performance;
+  // vrpn_SharedObject doesn't have any way of doing composites or any
+  // decent migration path to coarse-grained YET.
+
+  v_xform_type xform;
+
+  xform.xlate[0] = tcl_wfr_xlate_X;
+  xform.xlate[1] = tcl_wfr_xlate_Y;
+  xform.xlate[2] = tcl_wfr_xlate_Z;
+  xform.rotate[0] = tcl_wfr_rot_0;
+  xform.rotate[1] = tcl_wfr_rot_1;
+  xform.rotate[2] = tcl_wfr_rot_2;
+  xform.rotate[3] = tcl_wfr_rot_3;
+  xform.scale = tcl_wfr_scale;
+
+  graphics->setViewTransform(xform);
+
+  //v_world.users.xforms[0].xlate[0] = tcl_wfr_xlate_X;
+  //v_world.users.xforms[0].xlate[1] = tcl_wfr_xlate_Y;
+  //v_world.users.xforms[0].xlate[2] = tcl_wfr_xlate_Z;
+  //v_world.users.xforms[0].rotate[0] = tcl_wfr_rot_0;
+  //v_world.users.xforms[0].rotate[1] = tcl_wfr_rot_1;
+  //v_world.users.xforms[0].rotate[2] = tcl_wfr_rot_2;
+  //v_world.users.xforms[0].rotate[3] = tcl_wfr_rot_3;
+  //v_world.users.xforms[0].scale = tcl_wfr_scale;
+
 //fprintf(stderr, "Set VLIB world xlate to:  (%.5f %.5f %.5f)\n",
 //(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
 //(vrpn_float64) tcl_wfr_xlate_Z);
@@ -3548,6 +3313,8 @@ void handle_worldFromRoom_change (vrpn_float64, void *) {
 //(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
 //fprintf(stderr, "Set VLIB world scale to %.5f\n",
 //(vrpn_float64) tcl_wfr_scale);
+
+  //tcl_wfr_changed = 0;
 }
 
 /*============================================================================

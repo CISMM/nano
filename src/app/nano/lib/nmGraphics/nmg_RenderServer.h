@@ -7,6 +7,8 @@
 
 #include "nmg_GraphicsImpl.h"
 
+// The comment below is incorrect;  this class has been greatly generalized.
+
 // A RenderServer is an implementation of nmg_Graphics that renders
 // a microscope heightPlane in parallel projection at a user-defined
 // resolution, then captures the image and depth map of that
@@ -20,6 +22,11 @@
 //      to avoid interpolation artifacts this should be the grid size
 //      or an even multiple thereof.)
 
+class nmg_RenderServer_ViewStrategy;
+class nmg_RenderServer_Strategy;
+
+
+
 class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
 
   public:
@@ -30,6 +37,7 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
                        vrpn_Connection * outputConnection,
                        RemoteColorMode cMode,
                        RemoteDepthMode dMode,
+                       RemoteProjectionMode pMode,
                        int xsize = 32, int ysize = 32,
                        const char * rulergridName = NULL,
                        vrpn_Connection * commandsFromUser = NULL);
@@ -43,19 +51,37 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     virtual void resizeViewport (int width, int height);
       // Does nothing - mustn't resize this viewport!
 
-    // TODO:  figure out proper view matrix for ortho crt mode
-
     // All other functions inherited from nmg_Graphics_Implementation.
 
-  protected:
+  // Functions for use by strategies
 
-    void sendPixelData (void);
-    void sendDepthData (void);
+    vrpn_int32 screenSizeX (void) const;
+    vrpn_int32 screenSizeY (void) const;
+
+    void screenCapture (void);
+    void depthCapture (void);
+
     void sendPartialPixelData (int minx, int maxx, int miny, int maxy);
     void sendPartialDepthData (int minx, int maxx, int miny, int maxy);
 
-    RemoteColorMode d_colorMode;
-    RemoteDepthMode d_depthMode;
+  protected:
+
+    void computeScreenChange (int * minx, int * maxx, int * miny, int * maxy);
+      /**<
+       * Computes the portion of the screen that's changed in the current
+       * frame, overriding it if d_sendEntireScreen or
+       * d_alwaysSendEntireScreen are set.
+       */
+
+    void clearWaitingTimestamps (void);
+      /**<
+       * Send the serial numbers of all timestamps that were waiting for
+       * this update back to our client so that graphics time is correctly
+       * tracked.
+       */
+
+    //RemoteColorMode d_colorMode;
+    //RemoteDepthMode d_depthMode;
 
     unsigned char * d_pixelBuffer;
     float * d_depthBuffer;
@@ -83,7 +109,9 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     nmb_TimerList d_timerList;
 
     vrpn_bool d_sendEntireScreen;  // on next rerender
-    vrpn_bool d_alwaysSendEntireScreen;
+
+    nmg_RenderServer_Strategy * d_strategy;
+    nmg_RenderServer_ViewStrategy * d_viewStrategy;
 
   private:
 

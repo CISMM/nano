@@ -60,6 +60,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setIconScale (float);
 
+    virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos (double [3], double [4]);
     virtual void setCollabMode (int);
 
@@ -137,6 +138,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void positionRubberCorner (float, float, float, float);
     virtual void positionSweepLine (const PointType, const PointType);
     virtual void positionSphere (float, float, float);
+
+    virtual void setViewTransform (v_xform_type);
 
     virtual void createScreenImage(const char *filename, const ImageType type);
 

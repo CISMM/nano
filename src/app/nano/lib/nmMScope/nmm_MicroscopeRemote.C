@@ -3635,8 +3635,6 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
   BCPlane * p;
   long x, y;
 
-  //static PointType red_bot, blue_bot, green_bot;
-
   heightPlane = d_dataset->inputGrid->getPlaneByName
                    (d_dataset->heightPlaneName->string());
 
@@ -3672,7 +3670,6 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
       for (y = 0; y < p->numY(); y++)
         p->setValue(x, y, 0);
 
-  //region_changed = 1;  // global from openGL.c
   d_decoration->selectedRegion_changed = 1;
 
   fprintf(stderr, "mm_Microscope_Remote::RcvSetRegionC\n\
@@ -3682,42 +3679,17 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
 
   // red_top et al. are globals from interaction.c
   VERBOSE(5,"        Making tops in region change");
-  //d_decoration->red_top[X] = d_decoration->red_bot[X] = heightPlane->minX();
-  //d_decoration->red_top[Y] = d_decoration->red_bot[Y] = heightPlane->minY();
-  //d_decoration->red_top[Z] = d_decoration->green_top[Z] =
-                             //d_decoration->blue_top[Z] =
-               //heightPlane->maxAttainableValue() * heightPlane->scale();
-  //d_decoration->red_bot[Z] = d_decoration->green_bot[Z] =
-                             //d_decoration->blue_bot[Z] =
-               //heightPlane->minAttainableValue() * heightPlane->scale();
-  //d_decoration->green_top[X] = d_decoration->green_bot[X] = heightPlane->maxX();
-  //d_decoration->green_top[Y] = d_decoration->green_bot[Y] = heightPlane->minY();
-  //d_decoration->blue_top[X] = d_decoration->blue_bot[X] = heightPlane->maxX();
-  //d_decoration->blue_top[Y] = d_decoration->blue_bot[Y] = heightPlane->maxY();
-  //d_decoration->red_changed = 1;
-  //d_decoration->green_changed = 1;
-  //d_decoration->blue_changed = 1;
 
-  d_decoration->red.moveTo(heightPlane->minX(), heightPlane->minY(),
+  d_decoration->red.doCallbacks(heightPlane->minX(), heightPlane->minY(),
                             heightPlane);
-  d_decoration->red.doCallbacks();
-  d_decoration->green.moveTo(heightPlane->maxX(), heightPlane->minY(),
-                              heightPlane);
-  d_decoration->green.doCallbacks();
-  d_decoration->blue.moveTo(heightPlane->maxX(), heightPlane->maxY(),
-                             heightPlane);
-  d_decoration->blue.doCallbacks();
+  d_decoration->green.doCallbacks(heightPlane->maxX(), heightPlane->minY(),
+                            heightPlane);
+  d_decoration->blue.doCallbacks(heightPlane->maxX(), heightPlane->maxY(),
+                            heightPlane);
 
-
-
-  //if (glenable) {
-    VERBOSE(5,"        Making lines in region change");
-    //make_red_line(red_top, red_bot);
-    //make_green_line(green_top, green_bot);
-    //make_blue_line(blue_top, blue_bot);
-  //}
-    //fprintf(stderr, "region set complete\n");
   state.SetDefaultScanlineForRegion(d_dataset);
+
+//fprintf(stderr, "region set complete\n");
 }
 
 void nmm_Microscope_Remote::RcvResistanceFailure (const long _meter) {

@@ -2,15 +2,15 @@
 #include "alignerUI.h"
 
 // from microscape.c - It doesn't make sense to replicate the tcl and c code
-// that is linked with this selector in order to get these controls since
+// that is linked with this string in order to get these controls since
 // realign_textures and registration are mutually exclusive
-extern Tclvar_selector texturePlaneName;
+extern Tclvar_string texturePlaneName;
 
 AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
     Tcl_Interp *tcl_interp, const char *tcl_script_dir):
 	datasetRegistrationPlaneName3D("none"),
 	datasetRegistrationPlaneName2D("none"),
-	newResamplePlaneName("reg(resample_plane_name)", NULL),
+	newResamplePlaneName("reg(resample_plane_name)", ""),
 	datasetRegistrationEnabled("reg_window_open", 0),
 	datasetRegistrationNeeded("reg(registration_needed)", 0),
 	datasetRegistrationRotate3DEnabled("reg(rotate3D_enable)", 0),
@@ -30,23 +30,23 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
     printf("creating the aligner\n");
 
     /* Load the Tcl script that handles main interface window */
-    sprintf(command, "source %s%s",tcl_script_dir, ALIGNER_TCL_FILE);
+    /*
+    sprintf(command, "source %s/%s",tcl_script_dir, ALIGNER_TCL_FILE);
     printf("evaluating %s\n", command);
     TCLEVALCHECK2(tcl_interp, command);
     fprintf(stderr, "done evaluating\n");
-
+    */
 	char *reg_win_names[2] = {"registration:topography",
 				"registration:texture"};
 	ce = new CorrespondenceEditor(num_image_windows, reg_win_names);
 	aligner = new Aligner(num_image_windows);
 
 	datasetRegistrationPlaneName3D.initializeTcl
-		("topography_data", "$reg_widgets(reg_frame).selection3D");
-	datasetRegistrationPlaneName3D.bindList(images->imageNameList());
+		("topography_data");
+	//datasetRegistrationPlaneName3D.bindList(images->imageNameList());
 	datasetRegistrationPlaneName2D.initializeTcl
-		("texture_data", "$reg_widgets(reg_frame).selection2D");
-	datasetRegistrationPlaneName2D.bindList(images->imageNameList());
-
+		("texture_data");
+	//datasetRegistrationPlaneName2D.bindList(images->imageNameList());
 
 	datasetRegistrationEnabled.addCallback
 		(handle_registration_enabled_change, (void *)this);
@@ -61,7 +61,7 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
         textureDisplayEnabled.addCallback
 		(handle_texture_display_change, (void *)this);
 
-	newResamplePlaneName.bindList(images->imageNameList());
+	//newResamplePlaneName.bindList(images->imageNameList());
 	newResamplePlaneName = "";
 	newResamplePlaneName.addCallback
 		(handle_resamplePlaneName_change, (void *)this);
@@ -78,7 +78,7 @@ AlignerUI::~AlignerUI()
 
 int AlignerUI::addImage(nmb_Image *im) {
 	// adds image to nmb_ImageList --> adds entry to nmb_ListOfStrings -->
-	// updates selectors which were bound to this list in constructor
+	// updates strings which were bound to this list in constructor
 	return images->addImage(im);
 }
 

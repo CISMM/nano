@@ -21,6 +21,7 @@ extern int init_world_modechange (int mode, int style);
 extern int make_sweep (const float a [], const float b []);
 extern int make_rubber_corner ( float, float, float, float);
 extern void position_sphere (float, float, float);
+extern void enableCollabHand (int);
 extern void enableScanlinePositionDisplay(const int);
 
 extern int make_rubber_line_point (const float [2][3],

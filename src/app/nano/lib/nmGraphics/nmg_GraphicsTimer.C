@@ -3,6 +3,7 @@
 nmg_Graphics_Timer::nmg_Graphics_Timer (nmg_Graphics * imp,
                                         nmb_TimerList * timer) :
   nmg_Graphics (NULL, ""),
+  d_timingViewpointChanges (VRPN_FALSE),
   d_imp (imp),
   d_timer (timer) {
 
@@ -21,6 +22,10 @@ void nmg_Graphics_Timer::activateTimer (void) {
   }
 }
 
+
+void nmg_Graphics_Timer::timeViewpointChanges (vrpn_bool x) {
+  d_timingViewpointChanges = x;
+}
 
 
 
@@ -156,6 +161,11 @@ void nmg_Graphics_Timer::setHandColor (int c) {
 void nmg_Graphics_Timer::setIconScale (float scale) {
   activateTimer();
   d_imp->setIconScale(scale);
+}
+
+void nmg_Graphics_Timer::enableCollabHand (vrpn_bool on) {
+  activateTimer();
+  d_imp->enableCollabHand(on);
 }
 
 void nmg_Graphics_Timer::setCollabHandPos(double pos[], double quat[])
@@ -375,6 +385,9 @@ void nmg_Graphics_Timer::setTextureMode (TextureMode m,
 	TextureTransformMode xm) {
   activateTimer();
   d_imp->setTextureMode(m, xm);
+  // EXTRA-SPECIAL STUFF - There's a default (nonvirtual)
+  // implementation on nmg_Graphics that we can't intercept.
+  d_textureMode = m;
 }
 
 void nmg_Graphics_Timer::setTextureScale (float f) {
@@ -408,7 +421,7 @@ void nmg_Graphics_Timer::resetLightDirection (void) {
 
 int nmg_Graphics_Timer::addPolylinePoint (const float point [2][3]) {
   activateTimer();
-  d_imp->addPolylinePoint(point);
+  return d_imp->addPolylinePoint(point);
 }
 
 void nmg_Graphics_Timer::emptyPolyline (void) {
@@ -479,6 +492,13 @@ void nmg_Graphics_Timer::createScreenImage
 {
   activateTimer();
   d_imp->createScreenImage(filename, type);
+}
+
+void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {
+  if (d_timingViewpointChanges) {
+    activateTimer();
+  }
+  d_imp->setViewTransform(x);
 }
 
 

@@ -472,6 +472,7 @@ int nma_Keithley2400::unregister_result_handler(void *userdata,
     // Remove the entry from the list
     *snitch = victim->next;
     delete victim;
+    victim = NULL;
     
     return 0;
 

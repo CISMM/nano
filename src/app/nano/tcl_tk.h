@@ -5,7 +5,8 @@
 
 class Tcl_Interp;  // from <tcl.h>
 
-extern int init_Tk_control_panels (const char * tcl_script_dir);
+extern int init_Tk_control_panels (const char * tcl_script_dir,
+                                   vrpn_bool useOptimism);
 extern int poll_Tk_control_panels (void);
 
 extern void set_Tk_command_handler (void (*) (char *, vrpn_bool *, int));

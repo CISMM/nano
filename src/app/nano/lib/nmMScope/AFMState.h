@@ -308,14 +308,14 @@ class AFMDataset {
 
       // last point accessed by this microscope and all data values there
 
-    nmb_ListOfStrings inputPlaneNames;
+    Tclvar_list_of_strings inputPlaneNames;
       // lists the names of all planes of data
       // should be part of user interface?
 
-    nmb_ListOfStrings inputValueNames;
+    Tclvar_list_of_strings inputPointNames;
       // should be part of user interface?
 
-    nmb_ListOfStrings fc_inputValueNames;
+    Tclvar_list_of_strings fc_inputPointNames;
       // should be part of user interface?
 
     Scan_channel_selector * scan_channels;
@@ -383,7 +383,7 @@ struct AFMState {
   float MaxSafeMove;             // fastest speed (nm/ms) that feedback
                                  //   can keep up with
 
-  Tclvar_float_with_scale stm_z_scale;
+  TclNet_float stm_z_scale;
 
   // parameters for direction of scan
   vrpn_bool do_raster;
@@ -401,7 +401,7 @@ struct AFMState {
 
   int acquisitionMode;// replaces inModifyMode which replaced doing_modify_mode
 
-  Tclvar_int_with_button slowScanEnabled;
+  Tclvar_int slowScanEnabled;
   vrpn_bool cannedLineVisible;
   int cannedLineToggle;
 

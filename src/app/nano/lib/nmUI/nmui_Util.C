@@ -7,7 +7,7 @@
 
 #include <nmb_Globals.h>  // for dataset
 #include <nmb_Dataset.h>
-#include <nmb_Selector.h>
+#include <nmb_String.h>
 #include <nmg_Globals.h>  // for graphics
 #include <nmg_Graphics.h>
 

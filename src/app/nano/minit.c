@@ -56,14 +56,17 @@ static void handle_config_fp_change (vrpn_int32, void *);
 static void handle_config_ss_change (vrpn_int32, void *);
 static void handle_config_cj_change (vrpn_int32, void *);
 
+extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
+
+
 //-----------------------------------------------------------------------
 // Configure triangle-display methods
-Tclvar_int_with_button	config_filled_polygons
-     ("Filled_triangles", ".sliders", 1, handle_config_fp_change, NULL);
-Tclvar_int_with_button	config_smooth_shading
-     ("Smooth_shading", ".sliders", 1, handle_config_ss_change, NULL);
-Tclvar_int_with_button	config_chartjunk
-     ("Chart_junk", ".screenImage", 1, handle_config_cj_change, NULL);
+Tclvar_int config_filled_polygons
+     ("filled_triangles", 1, handle_config_fp_change, NULL);
+Tclvar_int config_smooth_shading
+     ("smooth_shading",  1, handle_config_ss_change, NULL);
+Tclvar_int config_chartjunk
+     ("chart_junk",  1, handle_config_cj_change, NULL);
 
 // MOVED to graphics.C
 //GLfloat l0_position[4] = { 0.0, 1.0, 0.0, 0.0 };
@@ -233,10 +236,14 @@ phantom_init()
           c = vrpnHandTracker[0]->connectionPtr();
 	if (c == NULL) return -1;
 
-        long dropped_conn_id =
+        vrpn_int32 dropped_conn_id =
                         c->register_message_type(vrpn_dropped_connection);
         c->register_handler(dropped_conn_id, handle_phantom_conn_dropped,
                 NULL);
+
+        vrpn_int32 new_conn_id =
+                        c->register_message_type(vrpn_got_connection);
+        c->register_handler(new_conn_id, handle_phantom_reconnect, NULL);
     }
     else {
         vrpnHandTracker[0] = NULL;

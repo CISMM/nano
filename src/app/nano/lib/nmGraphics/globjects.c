@@ -13,7 +13,7 @@
 #include <nmb_Dataset.h>
 #include <nmb_Types.h>
 #include <nmb_Globals.h>
-#include <nmb_Selector.h>
+#include <nmb_String.h>
 
 #include <quat.h>
 
@@ -99,6 +99,8 @@ static int trueTip_id;
 static int sphere_id;
 
 static int scanline_id;
+
+static int collabHand_id;
 
 // nonzero if we're using a CRT and should play with the definition of
 // screen space
@@ -218,6 +220,12 @@ int clear_world_modechange(int mode)
   removeFunctionFromFunclist(&v_hand,hand_id);
   removeFunctionFromFunclist(&vir_world,sphere_id);  
 
+  /* The other user's hand doesn't depend on what your hand is doing...
+  if (!g_draw_collab_hand) {
+    removeFunctionFromFunclist(&vir_world, collabHand_id);
+  }
+  */
+
   return(0);
 }
 
@@ -320,10 +328,24 @@ int init_world_modechange(int mode, int style)
 		(void *)g_scanlinePt, "scanline_indicator");
   }
 
-  addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
-				"draw_list(collab_hand_struct)");
-
+  /* The other user's hand doesn't depend on what your hand is doing...
+  if (g_draw_collab_hand) {
+    collabHand_id =
+        addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
+			      "draw_list(collab_hand_struct)");
+  }
+  */
   return 0;
+}
+
+void enableCollabHand (int enable) {
+  if (enable) {
+    collabHand_id =
+        addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
+			      "draw_list(collab_hand_struct)");
+  } else {
+    removeFunctionFromFunclist(&vir_world, collabHand_id);
+  }
 }
 
 // function to toggle display of the scanline position icon:
@@ -648,22 +670,22 @@ static int make_cone ()
 
 static char     *MODE_NAMES[] = {
                         "fly",
-                        "grab world",
+                        "grab",
                         "scale up",
                         "scale down",
                         "servo",
                         "pulse",
-                        "measure move",
+                        "measure line",
                         "line",
                         "sweep",
                         "measure",
-                        "adjust light",
-                        "Touch",
-                        "Touch live",
+                        "position light",
+                        "touch",
+                        "touch live",
                         "blunt tip",
                         "comb",
                         "center texture",
-                        "Line scan" };
+                        "line scan" };
 
 int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
   double rot_mat[16];
@@ -674,7 +696,7 @@ int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
   glDeleteLists(collab_hand_struct, 1);
   collab_hand_struct = glGenLists(1);
   glNewList(collab_hand_struct, GL_COMPILE);
-    glColor3f(1.0, 1.0, 1.0);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
     glRasterPos3d(pos[0], pos[1], pos[2]);
     drawStringInFont(myfont, MODE_NAMES[mode]);
     glTranslated(pos[0], pos[1], pos[2]);
@@ -1874,8 +1896,6 @@ int replaceDefaultObjects(void)
     addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
                           "draw_list(blue_line_struct)");
   }
-  addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
-			"draw_list(collab_hand_struct)");
 
   marker_type *marker_node = marker_list;
   while (marker_node != NULL) {

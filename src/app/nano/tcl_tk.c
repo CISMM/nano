@@ -221,7 +221,8 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 /* Initialize the Tk control panels and connect them up to the variables
  * they will be controlling */
 
-int	init_Tk_control_panels (const char * tcl_script_dir)
+int	init_Tk_control_panels (const char * tcl_script_dir,
+                                vrpn_bool useOptimism)
 {
 	char    command[256];
 	char	cvalue[100];
@@ -378,7 +379,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir)
 
 	/* Initialize the Tclvar variables */
 	VERBOSE(4, "  Calling Tclvar_init()");
-        Tclnet_init(tk_control_interp);
+        Tclnet_init(tk_control_interp, useOptimism);
 	if (Tclvar_init(tk_control_interp)) {
 		fprintf(stderr,"Tclvar_init failed.\n");
 		return(-1);
