@@ -6929,6 +6929,13 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     if( microscope ) 
       teardownMicroscopeSynchronization(collaborationManager, microscope);
   }
+  if( keithley2400_ui && microscope )
+  {
+      microscope->unregisterModifyModeHandler( nma_Keithley2400_ui::EnterModifyMode, 
+                                             keithley2400_ui );
+      microscope->unregisterImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
+                                            keithley2400_ui );
+  }
 
     // Must get hostname before initializing nmb_Dataset, but
     // should do it after VRPN starts, I think.
@@ -7119,6 +7126,15 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     created_region = false;
 
     if (microscope) microscope->requestMutex();
+
+    if( microscope && keithley2400_ui )
+    {
+      microscope->registerModifyModeHandler( nma_Keithley2400_ui::EnterModifyMode, 
+                                             keithley2400_ui);
+      microscope->registerImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
+                                            keithley2400_ui);
+    }
+    
 
     return 0;
 }
@@ -7915,19 +7931,20 @@ int main (int argc, char* argv[])
 						     tcl_script_dir, 
 						     "vi_curve@dummyname.com", 
 						     vicurve_connection);
-
-	  // Allow the Keithley to take IV curves when we are doing a
-	  // modification - start when we enter modify mode, and stop
-	  // when we start imaging again.
-	  microscope->registerModifyModeHandler(
-						nma_Keithley2400_ui::EnterModifyMode, 
-						keithley2400_ui);
-	  microscope->registerImageModeHandler(
-					       nma_Keithley2400_ui::EnterImageMode, 
-					       keithley2400_ui);
-	} else {
-	  keithley2400_ui = NULL;
-	}
+          
+          // Allow the Keithley to take IV curves when we are doing a
+          // modification - start when we enter modify mode, and stop
+          // when we start imaging again.
+          if (microscope)
+          {
+            microscope->registerModifyModeHandler( nma_Keithley2400_ui::EnterModifyMode, 
+                                                   keithley2400_ui);
+            microscope->registerImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
+                                                  keithley2400_ui);
+          }
+        } else {
+          keithley2400_ui = NULL;
+        }
       }
     }
   }
