@@ -344,6 +344,7 @@ nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
 
 fprintf(stderr,
         "In nmg_Graphics_RenderServer::nmg_Graphics_RenderServer()\n");
+fprintf(stderr, "  screen is %d x %d.\n", xsize, ysize);
 
   // Pixel and depth buffers will be allocated the first time screenCapture()/
   // depthCapture() are called, and reused thereafter.
@@ -603,6 +604,10 @@ void nmg_Graphics_RenderServer::computeScreenChange
   }
 
   if (d_sendEntireScreen || d_viewStrategy->alwaysSendEntireScreen()) {
+
+//fprintf(stderr, "  -- sending entire screen:  0, %d x 0, %d.\n",
+//d_screenSizeX - 1, d_screenSizeY - 1);
+
     d_sendEntireScreen = VRPN_FALSE;
     *minx = 0;
     *maxx = d_screenSizeX - 1;
@@ -625,10 +630,18 @@ void nmg_Graphics_RenderServer::computeScreenChange
 //gridToScreenX, gridToScreenY);
 //fprintf(stderr, "Original range of change is X [%d - %d] by Y [%d - %d].\n",
 //minx, maxx, miny, maxy);
+
+//fprintf(stderr, " -- changed grid is %d, %d x %d, %d.\n",
+//*minx, *maxx, *miny, *maxy);
+
   *minx = (int)(MAX(0, *minx * gridToScreenX));
-  *maxx = (int)(MIN(d_screenSizeX - 1, *maxx * gridToScreenX + 1));
+  *maxx = (int)(MIN(d_screenSizeX - 1, (*maxx + 1) * gridToScreenX));
   *miny = (int)(MAX(0, *miny * gridToScreenY));
-  *maxy = (int)(MIN(d_screenSizeY - 1, *maxy * gridToScreenY + 1));
+  *maxy = (int)(MIN(d_screenSizeY - 1, (*maxy + 1) * gridToScreenY));
+
+//fprintf(stderr, " -- changed screen is %d, %d x %d, %d.\n",
+//*minx, *maxx, *miny, *maxy);
+
 }
 
 

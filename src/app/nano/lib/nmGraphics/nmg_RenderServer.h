@@ -67,21 +67,14 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
   protected:
 
     void computeScreenChange (int * minx, int * maxx, int * miny, int * maxy);
-      /**<
-       * Computes the portion of the screen that's changed in the current
-       * frame, overriding it if d_sendEntireScreen or
-       * d_alwaysSendEntireScreen are set.
-       */
+      ///< Computes the portion of the screen that has changed in the current
+      ///< frame, overriding the computation if d_sendEntireScreen or
+      ///< d_viewStrategy->alwaysSendEntireScreen() are true.
 
     void clearWaitingTimestamps (void);
-      /**<
-       * Send the serial numbers of all timestamps that were waiting for
-       * this update back to our client so that graphics time is correctly
-       * tracked.
-       */
-
-    //RemoteColorMode d_colorMode;
-    //RemoteDepthMode d_depthMode;
+      ///< Send the serial numbers of all timestamps that were waiting for
+      ///< this update back to our client so that graphics time is correctly
+      ///< tracked.
 
     unsigned char * d_pixelBuffer;
     float * d_depthBuffer;
