@@ -2783,7 +2783,7 @@ static void handle_openStaticFilename_change (const char *, void *)
 //	if (state->config_enableUber) {
     scale /= dataset->inputGrid->maxX();
 	scale = 1.0 / scale;
-	World.Do(&URender::Scale, &scale);
+	World.Do(&URender::ChangeStaticFile, &scale);
 //}
     
     openStaticFilename = "";
