@@ -5004,6 +5004,7 @@ void teardownSynchronization(CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_mode));
     paramControls->remove(&(m->state.modify.new_control));
     paramControls->remove(&(m->state.modify.new_style));
+    paramControls->remove(&(m->state.modify.new_tool));
     paramControls->remove(&m->state.modify.new_constr_xyz_param);
     paramControls->remove(&m->state.modify.new_optimize_now_param);
     paramControls->remove(&(m->state.modify.new_setpoint));
@@ -5271,6 +5272,7 @@ void setupSynchronization (CollaborationManager * cm,
   paramControls->add(&m->state.modify.new_mode);
   paramControls->add(&m->state.modify.new_control);
   paramControls->add(&m->state.modify.new_style);
+  paramControls->add(&m->state.modify.new_tool);
   paramControls->add(&m->state.modify.new_constr_xyz_param);
   paramControls->add(&m->state.modify.new_optimize_now_param);
   paramControls->add(&m->state.modify.new_setpoint);
