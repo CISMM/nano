@@ -8,7 +8,7 @@
 
 #include <BCPlane.h>  // needed by normal.h
 
-#include "normal.h"  // BUG - replace with quatlib!
+#include <normal.h>  // BUG - replace with quatlib!
 
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
@@ -16,8 +16,9 @@
 #include <nmm_MicroscopeRemote.h>
 #include <nmm_Sample.h>
 
-#include "microscape.h"  // for directz_force_scale
+#include <microscape.h>  // for directz_force_scale
 
+#include <nmg_Graphics.h>  // for FeelGrid diagnostics
 
 nmui_HapticSurface::nmui_HapticSurface (void) :
     d_distanceFromPlane (0.0) {
@@ -552,9 +553,10 @@ void nmui_HSWarpedPlane::setMicroscopeRTTEstimate (double t) {
 
 
 
-nmui_HSFeelAhead::nmui_HSFeelAhead (void) :
+nmui_HSFeelAhead::nmui_HSFeelAhead (nmg_Graphics * g) :
     d_device (NULL),
-    d_microscope (NULL) {
+    d_microscope (NULL),
+    d_graphics (g) {
 
   // Set up default sampling algorithm
   d_sampleAlgorithm.numx = 5;
@@ -614,6 +616,9 @@ void nmui_HSFeelAhead::sendForceUpdate (vrpn_ForceDevice_Remote * d) {
 
 
 void nmui_HSFeelAhead::updateModel (void) {
+
+  static q_vec_type vertices [100];
+
   Point_list * l;
   const Point_results * p, * p0, * p1, * p2;
   vrpn_int32 xside, yside, start;
@@ -638,11 +643,6 @@ void nmui_HSFeelAhead::updateModel (void) {
 
   // Send the vertices
 
-  // BUG
-  // Besides the fact that these things are all coming through with
-  // a z of -1, this is in nano coordinates - we need to translate into
-  // Phantom coordinates (?)
-
   l = &d_microscope->state.data.receivedPointList;
   xside = d_microscope->state.data.receivedAlgorithm.numx;
   yside = d_microscope->state.data.receivedAlgorithm.numy;
@@ -655,6 +655,8 @@ void nmui_HSFeelAhead::updateModel (void) {
             xside, yside);
     return;
   }
+
+  d_device->clearTrimesh();
   for (i = 0; i < l->numEntries(); i++) {
     q_vec_type qm, qph;
     p = l->entry(i);
@@ -667,9 +669,9 @@ void nmui_HSFeelAhead::updateModel (void) {
     qm[1] = p->y();
     qm[2] = p->z();
     pointToTrackerFromWorld(qph, qm);
-//fprintf(stderr, " mx %.2f %.2f %.2f, px %.5f %.5f %.5f\n",
-//qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
-    d_device->setVertex(i, qm[0], qm[1], qm[2]);
+fprintf(stderr, " mx %.2f %.2f %.2f, px %.5f %.5f %.5f\n",
+qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
+    d_device->setVertex(i, qph[0], qph[1], qph[2]);
   }
 
   // Find out the dimensions of the grid sent.  Note that x and y are
@@ -683,6 +685,7 @@ void nmui_HSFeelAhead::updateModel (void) {
   // | / | / | / | / |  triangles 0 / 1 | 2 / 3 | 4 / 5 | 6 / 7
   // 5 - 6 - 7 - 8 - 9
   // ...
+  // Don't really consistently know handedness of all this...
 
   // border conditions
   if ((xside <= 1) || (yside <= 1)) {
@@ -697,9 +700,14 @@ void nmui_HSFeelAhead::updateModel (void) {
       d_device->setTriangle(k++, start + j, start + j + 1, start + j + xside);
       d_device->setTriangle(k++, start + j + 1, start + j + xside + 1,
                             start + j + xside);
+      // swapped order 15 Dec 2001, to no apparent effect...
+      // below is (believed) right-handed, above left-handed
+      d_device->setTriangle(k++, start + j, start + j + xside, start + j + 1);
+      d_device->setTriangle(k++, start + j + 1, start + j + xside,
+                            start + j + xside + 1);
 //p0 = l->entry(start + j);
-//p1 = l->entry(start + j + 1);
-//p2 = l->entry(start + j + xside);
+//p1 = l->entry(start + j + xside);
+//p2 = l->entry(start + j + 1);
 //fprintf(stderr, "    <%.2f %.2f %.2f> <%.2f %.2f %.2f> <%.2f %.2f %.2f>\n",
 //p0->x(), p0->y(), p0->z(), p1->x(), p1->y(), p1->z(),
 //p2->x(), p2->y(), p2->z());
@@ -709,6 +717,22 @@ void nmui_HSFeelAhead::updateModel (void) {
   // Make the Phantom pay attention to what we've just done.
 
   d_device->updateTrimeshChanges();
+
+  // Dec 2001
+  // Draw a grid on-screen so we can see if this is where it ought
+  // to be.  (This uses microscope coordinates, not phantom coords,
+  // but it's one more point in the process that we can verify.)
+  // Hacked, of course.
+  
+  for (i = 0; i < l->numEntries(); i++) {
+     vertices[i][0] = l->entry(i)->x();
+     vertices[i][1] = l->entry(i)->y();
+     vertices[i][2] = l->entry(i)->z();
+  }
+
+  if (d_graphics) {
+    d_graphics->setFeelGrid(xside, yside, vertices);
+  }
 
 }
 

@@ -11,6 +11,7 @@ class nmb_Decoration;  // from <nmb_Decoration.h>
 
 class Microscope;  // from <Microscope.h>
 class nmm_Microscope_Remote;  // from <nmm_MicroscopeRemote.h>
+class nmg_Graphics;
 #include <nmm_Sample.h>
 
 class nmui_HapticSurface {
@@ -242,7 +243,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSFeelAhead (void);
+    nmui_HSFeelAhead (nmg_Graphics * = NULL);
       ///< Set of point results used is
       ///< microscope->state.data.receivedPointList.
 
@@ -270,6 +271,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
     vrpn_ForceDevice_Remote * d_device;
     nmm_Microscope_Remote * d_microscope;
+    nmg_Graphics * d_graphics;
 
     nmm_Sample d_sampleAlgorithm;
 
