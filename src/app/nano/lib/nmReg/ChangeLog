@@ -1,3 +1,12 @@
+2002-01-23  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_RegistrationUI.C (handle_registrationImage2D_change): Don't
+	execute if reg window is not open. 
+	(handle_registrationImage3D_change): same
+	(handle_registrationEnabled_change): Call above handlers when
+	window opened. Combined changes make loading static files faster,
+	slows down opening reg window. Good UI tradeoff. 
+
 2002-01-21  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_Util.C (addImage): made this not add the intensities if
