@@ -110,6 +110,10 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     return;
   }
 
+  markTypeAsSafe(d_QueryScanRange_type);
+  markTypeAsSafe(d_QueryStdDevParams_type);
+  markTypeAsSafe(d_QueryPulseParams_type);
+
   d_connection->register_handler(d_VoltsourceEnabled_type,
                                  handle_VoltsourceEnabled,
                                  this);
@@ -3016,8 +3020,9 @@ int nmm_Microscope_Remote::RcvGotConnection2()
 {
 
 /*
-Can't do this until we have the mutex
-    //printf("nmm_Microscope_Remote::RcvGotConnection2()\n");
+  //printf("nmm_Microscope_Remote::RcvGotConnection2()\n");
+
+  Can't do this until we have the mutex
   // Send off the relaxation parameters (if any)
   if (d_relax_comp.is_enabled()) {
       CHECK(SetRelax(state.stmRxTmin, state.stmRxTsep));
@@ -3025,19 +3030,18 @@ Can't do this until we have the mutex
       CHECK(SetRelax(0, 0));
   }
 
-
-  // Ask it for the scan range in x, y, and z.
-  // When this is read back, Z will be used to set min_z and max_z.
-  CHECK(QueryScanRange());
-
-
   Can't do this until we have the mutex
   // Start scanning the surface
   CHECK(ResumeFullScan());
 
+  Can't do this until we have the mutex
   // Tell AFM to scan forward and backward, or just forward.
   CHECK(SetScanStyle());
 */
+
+  // Ask it for the scan range in x, y, and z.
+  // When this is read back, Z will be used to set min_z and max_z.
+  CHECK(QueryScanRange());
 
   return 0;
 }
