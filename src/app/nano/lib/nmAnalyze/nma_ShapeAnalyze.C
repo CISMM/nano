@@ -168,7 +168,7 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 			  d_desiredFilename, d_cntRec->cnt_image_Msk);
 		  //this code tests the function UpdateDataArray
 		  //fill in array
-		  double * d_cntMask = new double[512.0];
+		  double * d_cntMask = new double[512];
 		  for(int y = 0; y <= 512 - 1; y++) {
 			  for( int x = 0; x <= 512 - 1; x++){
 						if(y%2 == 0){
