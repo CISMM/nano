@@ -152,15 +152,16 @@ void nm_TipDisplayControls::sendFiducial()
   } else {
     fprintf(stderr, "nm_TipDisplayControls::sendFiducial: Error, no AFM\n");
   }
-  double fiducialX, fiducialY, fiducialZ;
+  vrpn_float32 fiducialX, fiducialY, fiducialZ;
   fiducialX = (d_tipModel.d_pos[0]-minX)/scanWidthX_nm;
   fiducialY = (d_tipModel.d_pos[1]-minY)/scanWidthY_nm;
   fiducialZ = d_tipModel.d_pos[2];
   if (d_aligner) {
     printf("Sending tip location as fiducial: (%g,%g): %g nm\n",
           fiducialX, fiducialY, fiducialZ);
-    d_aligner->sendFiducial(fiducialX, fiducialY, fiducialZ,
-                            fiducialX, fiducialY, fiducialZ);
+    d_aligner->sendFiducial(vrpn_FALSE, 1, 
+                            &fiducialX, &fiducialY, &fiducialZ,
+                            &fiducialX, &fiducialY, &fiducialZ);
   } else {
     fprintf(stderr, "nm_TipDisplayControls::sendFiducial: Error, no aligner\n");
   }
