@@ -1,3 +1,8 @@
+2003-07-03  David Jack  <jackd@cs.unc.edu>
+	* microscape.C (handle_screenImageFileName_change): Now checks to
+	see if we're in workbench mode; if so, saves two images instead of
+	one (one for each eye) using nmg_Graphics::createStereoScreenImages
+
 2003-05-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nano.dsp:  link to Ghost40.lib

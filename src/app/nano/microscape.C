@@ -4461,9 +4461,14 @@ static void handle_screenImageFileName_change (const char *, void *userdata)
 	decoration->drawScanLine = 0;
 	graphics->mainloop();
 	decoration->drawScanLine = 1;
-	
-	g->createScreenImage(newScreenImageFileName.string(), 
-			     screenImageFileType.string() );
+        char *envir = getenv("V_DISPLAY");
+        if (strstr(envir, "workbench") != NULL) {
+          g->createStereoScreenImages( newScreenImageFileName.string(),
+                                       screenImageFileType.string() );
+        } else {
+	  g->createScreenImage(newScreenImageFileName.string(), 
+			       screenImageFileType.string() );
+        }
 	gettimeofday(&end, NULL);
       }
     }
