@@ -4485,22 +4485,23 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->logTimestamp.tv_sec = atoi(argv[i]);
       } else if (strcmp(argv[i], "-perf") == 0) {
-        fprintf(stderr, "Warning: -std obsolete.\n");
+        fprintf(stderr, "Warning: -perf obsolete.\n");
         //perf_mode = 1;
       } else if (strcmp (argv[i], "-recv") == 0) {
         // clark -- use NANO_RECV_TIMESTAMPs for playback times
         istate->afm.useRecvTime = VRPN_TRUE;
       } else if (strcmp(argv[i], "-relax") == 0) {
         istate->afm.doRelaxComp = 1;
+      } else if (strcmp(argv[i], "-norelax") == 0) {
+        istate->afm.doRelaxComp = 0;
       } else if (strcmp(argv[i], "-relax_up_also") == 0) {
-        fprintf(stderr, "Warning: -std obsolete.\n");
-	  printf("Warning: -relax_up_also obsolete in nM\n");
+        fprintf(stderr, "Warning: -relax_up_also obsolete.\n");
         istate->afm.doRelaxUp = 1;
       } else if (strcmp(argv[i], "-showcps") == 0) {
-        fprintf(stderr, "Warning: -std obsolete.\n");
+        fprintf(stderr, "Warning: -showcps obsolete.\n");
         //show_cpanels = 1;
       } else if (strcmp(argv[i], "-showgrid") == 0) {
-        fprintf(stderr, "Warning: -std obsolete.\n");
+        fprintf(stderr, "Warning: -showgrid obsolete.\n");
         //show_grid = 1;
       } else if (strcmp(argv[i], "-splat") == 0) {
         istate->afm.doSplat = 1;
@@ -4522,9 +4523,6 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-z") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.stm_z_scale = atof(argv[i]);
-
-
-
 
       } else if (strcmp(argv[i], "-fmods") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4724,7 +4722,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-fmods max min (Setpt V)] " );
   fprintf(stderr, "       [-fimgs max min (DrAmp V) setpt (V)]\n" );
   fprintf(stderr, "       [-color hr hg hb lr lg lb]\n" );
-  fprintf(stderr, "       [-relax] [-minsep tmin tsep] \n");
+  fprintf(stderr, "       [-relax] [-norelax] [-minsep tmin tsep] \n");
   fprintf(stderr, "       [-splat] [-gl] [-nographics]\n" );
   fprintf(stderr, "       [-disp period(ms)] [-mb3]\n" );
   fprintf(stderr, "       [-draw_when_centered] [-rulerimage file.ppm]\n");
@@ -4763,6 +4761,7 @@ void Usage(char* s)
   fprintf(stderr, "                (Default what scanner has, units are nm)\n");
   fprintf(stderr, "       -keybd: Turn on keyboard options\n");
   fprintf(stderr, "       -relax: Perform relaxation compensation\n");
+  fprintf(stderr, "       -norelax: Don't perform relaxation compensation\n");
   fprintf(stderr, "       -minsep: min time and seperation after trans\n");
   fprintf(stderr, "       -splat: Splat incoming data into grid\n");
   fprintf(stderr, "       -disp: Don't display less than period ms apart (0)\n");
@@ -5972,6 +5971,10 @@ int main(int argc, char* argv[])
             }
         }
     }
+
+    // Set the startup replay rate on all devices, AFM, ohmmeter, vi_curve.
+    // decoration->rateOfTime should be set correctly from the command line.
+    handle_replay_rate_change (decoration->rateOfTime, NULL);
 
 
   #ifdef NANO_WITH_ROBOT

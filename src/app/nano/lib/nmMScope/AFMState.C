@@ -60,7 +60,7 @@ AFMModifyInitializationState::AFMModifyInitializationState (void) :
   style (SHARP),
   setpoint (0.0),
   setpoint_min (0.0),
-  setpoint_max (1.0),
+  setpoint_max (25.0),
   amplitude (1.0),
   amplitude_min (0.0),
   amplitude_max (1.0),
@@ -357,7 +357,7 @@ AFMInitializationState::AFMInitializationState (void) :
 
   stm_z_scale (1.0f),
 
-  doRelaxComp (VRPN_FALSE),
+  doRelaxComp (VRPN_TRUE),
   doRelaxUp (VRPN_FALSE),
   doDriftComp (VRPN_FALSE),
   doSplat (VRPN_FALSE),
@@ -366,8 +366,8 @@ AFMInitializationState::AFMInitializationState (void) :
   allowdup (VRPN_FALSE),
   useRecvTime (VRPN_FALSE),
 
-  stmRxTmin (0),
-  stmRxTsep (0),
+  stmRxTmin (500),
+  stmRxTsep (500),
 
   MaxSafeMove (100.0f),
   ModSubWinSz (15),
