@@ -1,3 +1,8 @@
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* vrpn_Ohmmeter.C (get_measurement_report):  explicit cast to
+	disambiguate instances of pow.
+
 2002-03-01  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nma_Keithley2400_ui.C (handle_connect_and_init):  send "clear" when

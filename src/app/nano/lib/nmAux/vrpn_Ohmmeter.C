@@ -411,7 +411,7 @@ void vrpn_Ohmmeter_Server::mainloop(void) {
 
 void vrpn_Ohmmeter_Server::get_measurement_report(void) {
     resistance[channel] = ((double)rand()/(double)RAND_MAX)*
-                           5.0*pow(10, chan_data[channel].range);
+                           5.0*pow( (float) 10, chan_data[channel].range);
     error[channel] = 0;
     status[channel] = MEASURING;
 }
