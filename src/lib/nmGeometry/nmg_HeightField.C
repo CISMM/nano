@@ -2,17 +2,24 @@
 #include "nmg_Plane.h"
 #include "PPM.h"
 
-nmg_HeightField::nmg_HeightField(nmb_Image *image, double sideLength,
+nmg_HeightField::nmg_HeightField(nmb_Image *image,
+								 double minX, double minY,
+								 double maxX, double maxY,
                                double zScale) 
 {
   d_memoryUsed = 0;
   d_numX = image->width();
   d_numY = image->height();
-  d_sizeX = sideLength*(d_numX-1);
-  d_sizeY = sideLength*(d_numY-1);
+  d_sizeX = maxX - minX;
+  d_sizeY = maxY - minY;
   d_verbosity = 0;
-  d_deltaX = sideLength;
-  d_deltaY = sideLength;
+  d_deltaX = d_sizeX/(double)(d_numX-1);
+  d_deltaY = d_sizeY/(double)(d_numY-1);
+  d_minX = minX;
+  d_minY = minY;
+  d_maxX = maxX;
+  d_maxY = maxY;
+
   doBasicInitialization();
 
   float min, max, value;
@@ -48,14 +55,16 @@ nmg_HeightField::nmg_HeightField(nmb_Image *image, double sideLength,
 }
 
 nmg_HeightField::nmg_HeightField(int num_x, int num_y, 
-                               double sideLength):
-  d_numX(num_x), d_numY(num_y), d_sizeX(sideLength*(num_x-1)), 
-  d_sizeY(sideLength*(num_y-1)),
+                                double minX, double minY,
+							    double maxX, double maxY):
+  d_numX(num_x), d_numY(num_y), d_sizeX(maxX - minX), 
+  d_sizeY(maxY - minY), d_minX(minX), d_minY(minY), 
+  d_maxX(maxX), d_maxY(maxY),
   d_verbosity(0)
 {
   d_memoryUsed = 0;
-  d_deltaX = sideLength;
-  d_deltaY = sideLength;
+  d_deltaX = d_sizeX/(double)(d_numX-1);
+  d_deltaY = d_sizeY/(double)(d_numY-1);
   doBasicInitialization();
   rebuildTriangles();
 }
@@ -68,6 +77,22 @@ nmg_HeightField::nmg_HeightField(nmg_HeightField *surface,
   d_verbosity(0), 
   d_deltaX(surface->d_deltaX), d_deltaY(surface->d_deltaY)
 {
+  d_minX = surface->d_minX + i_min*d_deltaX;
+  d_minY = surface->d_minY + j_min*d_deltaY;
+  d_maxX = d_minX + d_sizeX;
+  d_maxY = d_minY + d_sizeY;
+  if (i_max == d_numX-1) {
+	d_maxX = surface->d_maxX;
+	if (i_min == 0) {
+		d_sizeX = surface->d_sizeX;
+	}
+  }
+  if (j_max == d_numY-1) {
+    d_maxY = surface->d_maxY;
+	if (j_min == 0) {
+		d_sizeY = surface->d_sizeY;
+	}
+  }
   d_memoryUsed = 0;
   doBasicInitialization();
   int i, j;
@@ -102,9 +127,6 @@ void nmg_HeightField::doBasicInitialization()
   d_numPoints = d_numX*d_numY;
   d_numTriangles = 2*(d_numX-1)*(d_numY-1);
 
-  d_centerX = 0;
-  d_centerY = 0;
-
   d_x = new double[d_numX];
   d_y = new double[d_numY];
   d_points = new nmg_Point_3d[d_numPoints];
@@ -124,16 +146,18 @@ void nmg_HeightField::doBasicInitialization()
   }
   int i, j;
 
-  double x = -d_centerX;//-0.5*d_sizeX;
+  double x = d_minX;
   for (i = 0; i < d_numX; i++) {
     d_x[i] = x;
     x += d_deltaX;
   }
-  double y = -d_centerY;//-0.5*d_sizeY;
+  d_x[d_numX-1] = d_maxX;
+  double y = d_minY;
   for (j = 0; j < d_numY; j++) {
     d_y[j] = y;
     y += d_deltaY;
   }
+  d_y[d_numY-1] = d_maxY;
 
   int pointIndex;
   for (i = 0; i < d_numX; i++) {
@@ -331,7 +355,7 @@ double nmg_HeightField::minHeightForSubregion(nmg_Plane &referencePlane,
   if (z_diff < minHeight) minHeight = z_diff;
 
   // check intersection of vertical edges with horizontal subregion edges
-  x = -d_centerX+minSqIndexX*d_deltaX;
+  x = d_minX+minSqIndexX*d_deltaX;
   for (i = minSqIndexX; i <= maxSqIndexX; i++) {
     z_surf = height(x, minY);
     z_plane = referencePlane.z(x, minY);
@@ -347,7 +371,7 @@ double nmg_HeightField::minHeightForSubregion(nmg_Plane &referencePlane,
   }
   
   // check intersection of horizontal edges with vertical subregion edges
-  y = -d_centerY+minSqIndexY*d_deltaY;
+  y = d_minY+minSqIndexY*d_deltaY;
   for (j = minSqIndexY; j <= maxSqIndexY; j++) {
     z_surf = height(minX, y);
     z_plane = referencePlane.z(minX, y);
@@ -363,9 +387,9 @@ double nmg_HeightField::minHeightForSubregion(nmg_Plane &referencePlane,
   }
 
   // check vertices contained in the subregion
-  x = -d_centerX+minSqIndexX*d_deltaX;
+  x = d_minX+minSqIndexX*d_deltaX;
   for (i = minSqIndexX; i <= maxSqIndexX; i++) {
-    y = -d_centerY+minSqIndexY*d_deltaY;
+    y = d_minY+minSqIndexY*d_deltaY;
     for (j = minSqIndexY; j <= maxSqIndexY; j++) {
       z_surf = get(i, j);
       z_plane = referencePlane.z(x, y);
@@ -437,10 +461,10 @@ bool nmg_HeightField::intersectsRaySegment(nmg_RaySegment &raySegment,
   // this function and that returned no rejection then take the values
   // calculated in that function to save time
   if (mayIntersectRaySegmentJustCalled) {
-    rx0 = (start.x+d_centerX)/d_deltaX;
-    ry0 = (start.y+d_centerY)/d_deltaY;
-    rx1 = (end.x+d_centerX)/d_deltaX;
-    ry1 = (end.y+d_centerY)/d_deltaY;
+    rx0 = (start.x-d_minX)/d_deltaX;
+    ry0 = (start.y-d_minY)/d_deltaY;
+    rx1 = (end.x-d_minX)/d_deltaX;
+    ry1 = (end.y-d_minY)/d_deltaY;
 
     x0 = (int)(rx0);
     y0 = (int)(ry0);
@@ -449,10 +473,10 @@ bool nmg_HeightField::intersectsRaySegment(nmg_RaySegment &raySegment,
   } else { // do all the quick rejection stuff in here
     if (start.z < d_minHeight && end.z < d_minHeight) return false;
 
-    rx0 = (start.x+d_centerX)/d_deltaX;
-    ry0 = (start.y+d_centerY)/d_deltaY;
-    rx1 = (end.x+d_centerX)/d_deltaX;
-    ry1 = (end.y+d_centerY)/d_deltaY;
+    rx0 = (start.x-d_minX)/d_deltaX;
+    ry0 = (start.y-d_minY)/d_deltaY;
+    rx1 = (end.x-d_minX)/d_deltaX;
+    ry1 = (end.y-d_minY)/d_deltaY;
 
     x0 = (int)(rx0);
     y0 = (int)(ry0);
@@ -674,25 +698,25 @@ bool nmg_HeightField::intersectsRay(nmg_Ray &ray, bool startingInside,
 
   // if the ray starts outside the grid then find where it first
   // enters the grid if at all
-  if (start.x < -d_centerX || start.x > (d_sizeX-d_centerX) || 
-      start.y < -d_centerY || start.y > (d_sizeY-d_centerY)) {
+  if (start.x < d_minX || start.x > d_maxX || 
+      start.y < d_minY || start.y > d_maxY) {
     double minT2, testT;
     double x_isect, y_isect;
     bool foundIntersection = false;
     // x = start.x + dir.x*t;
     // y = start.y + dir.y*t;
     if (dir.x != 0) {
-      // find intersection with x = -d_centerX
-      testT = (-d_centerX - start.x)/dir.x;
+      // find intersection with x = d_minX
+      testT = (d_minX - start.x)/dir.x;
       y_isect = start.y + dir.y*testT;
-      if (y_isect >= -d_centerY && y_isect <= (d_sizeY-d_centerY) && testT >= 0) {
+      if (y_isect >= d_minY && y_isect <= d_maxY && testT >= 0) {
         minT2 = testT;
         foundIntersection = true;
       }
-      // find intersection with x = d_sizeX-d_centerX
-      testT = (d_sizeX-d_centerX - start.x)/dir.x;
+      // find intersection with x = d_maxX
+      testT = (d_maxX - start.x)/dir.x;
       y_isect = start.y + dir.y*testT;
-      if (y_isect >= -d_centerY && y_isect <= (d_sizeY-d_centerY) && testT >= 0) {
+      if (y_isect >= d_minY && y_isect <= d_maxY && testT >= 0) {
         if (foundIntersection) {
           if (testT < minT2) {
             minT2 = testT;
@@ -704,10 +728,10 @@ bool nmg_HeightField::intersectsRay(nmg_Ray &ray, bool startingInside,
       }
     }
     if (dir.y != 0) {
-      // find intersection with y = -d_centerY
-      testT = (-d_centerY - start.y)/dir.y;
+      // find intersection with y = d_minY
+      testT = (d_minY - start.y)/dir.y;
       x_isect = start.x + dir.x*testT;
-      if (x_isect >= -d_centerX && x_isect <= (d_sizeX-d_centerX) && testT >= 0) {
+      if (x_isect >= d_minX && x_isect <= d_maxX && testT >= 0) {
         if (foundIntersection) {
           if (testT < minT2) {
             minT2 = testT;
@@ -717,10 +741,10 @@ bool nmg_HeightField::intersectsRay(nmg_Ray &ray, bool startingInside,
           foundIntersection = true;
         }
       }
-      // find intersection with y = d_sizeY - d_centerY
-      testT = (d_sizeY - d_centerY - start.y)/dir.y;
+      // find intersection with y = d_maxY
+      testT = (d_maxY - start.y)/dir.y;
       x_isect = start.x + dir.x*testT;
-      if (x_isect >= -d_centerX && x_isect <= (d_sizeX-d_centerX) && testT >= 0) {
+      if (x_isect >= d_minX && x_isect <= (d_maxX) && testT >= 0) {
         if (foundIntersection) {
           if (testT < minT2) {
             minT2 = testT;
@@ -748,16 +772,16 @@ bool nmg_HeightField::intersectsRay(nmg_Ray &ray, bool startingInside,
   int x0, y0; // start square index
 
   // real-valued grid coordinates for start position
-  rx0 = (start.x+d_centerX)/d_deltaX;
-  ry0 = (start.y+d_centerY)/d_deltaY;
+  rx0 = (start.x-d_minX)/d_deltaX;
+  ry0 = (start.y-d_minY)/d_deltaY;
 
   x0 = (int)floor(rx0);
   y0 = (int)floor(ry0);
 
   int minXindex, maxXindex, minYindex, maxYindex;
   double minX, maxX, minY, maxY;
-  minX = x0*d_deltaX-d_centerX; maxX = minX + d_deltaX;
-  minY = y0*d_deltaY-d_centerY; maxY = minY + d_deltaY;
+  minX = x0*d_deltaX+d_minX; maxX = minX + d_deltaX;
+  minY = y0*d_deltaY+d_minY; maxY = minY + d_deltaY;
 
   minXindex = x0; maxXindex = x0;
   minYindex = y0; maxYindex = y0;

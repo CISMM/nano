@@ -11,9 +11,10 @@
 
 class nmg_HeightField {
  public:
-  nmg_HeightField(nmb_Image *image, double sideLength,
-                               double zScale);
-  nmg_HeightField(int num_x, int num_y, double sideLength);
+  nmg_HeightField(nmb_Image *image, double minX, double minY,
+	  double maxX, double maxY, double zScale);
+  nmg_HeightField(int num_x, int num_y, double minX, double minY,
+	  double maxX, double maxY);
   nmg_HeightField(nmg_HeightField *surface,
                  int i_min, int j_min, int i_max, int j_max);
   nmg_HeightField(const nmg_HeightField &surface);
@@ -62,10 +63,10 @@ class nmg_HeightField {
   double deltaX() {return d_deltaX;}
   double deltaY() {return d_deltaY;}
 
-  double minX() { return -d_centerX;}
-  double maxX() { return d_sizeX-d_centerX;}
-  double minY() { return -d_centerY;}
-  double maxY() { return d_sizeY-d_centerY;}
+  double minX() { return d_minX;}
+  double maxX() { return d_maxX;}
+  double minY() { return d_minY;}
+  double maxY() { return d_maxY;}
 
  protected:
   inline void computeSquareIndex(double x, double y,
@@ -95,6 +96,8 @@ class nmg_HeightField {
   double d_deltaX;
   double d_deltaY;
   double d_diagonalSlope;
+  double d_minX, d_minY;
+  double d_maxX, d_maxY;
 
   double *d_x;
   double *d_y;
@@ -110,10 +113,6 @@ class nmg_HeightField {
   double d_minHeight;
  
   int d_verbosity;
-
-  double d_centerX;
-  double d_centerY;
-
 };
 
 //inline 
@@ -126,8 +125,8 @@ int nmg_HeightField::getSurfaceRegionID(double x, double y)
 bool nmg_HeightField::correctSurfaceRegionID(double x, double y, int regionID)
 {
   if (regionID == -1) {
-    if (x > (d_sizeX-d_centerX) || x < -d_centerX ||
-        y > (d_sizeY-d_centerY) || y < -d_centerY) {
+    if (x > (d_maxX) || x < d_minX ||
+        y > (d_maxY) || y < d_minY) {
       return true;
     } else {
       return false;
@@ -180,14 +179,14 @@ double nmg_HeightField::heightAboveSurface(nmg_Point point, int regionID)
 void nmg_HeightField::computeSquareIndex(double x, double y, 
                                         int &sqXindex, int &sqYindex)
 {
-  if (x > (d_sizeX-d_centerX) || x < -d_centerX ||
-      y > (d_sizeY-d_centerY) || y < -d_centerY) {
+  if (x > (d_maxX) || x < d_minX ||
+      y > (d_maxY) || y < d_minY) {
     sqXindex = -1;
     sqYindex = -1;
   } else {
     double numDeltaX, numDeltaY;
-    numDeltaX = (x + d_centerX)/d_deltaX;
-    numDeltaY = (y + d_centerY)/d_deltaY;
+    numDeltaX = (x - d_minX)/d_deltaX;
+    numDeltaY = (y - d_minY)/d_deltaY;
     sqXindex = (int)(numDeltaX);
     if (sqXindex == d_numX-1) sqXindex = d_numX-2;
     sqYindex = (int)(numDeltaY);
@@ -200,14 +199,14 @@ void nmg_HeightField::computeSquareIndex(double x, double y,
                                         int &sqXindex, int &sqYindex, 
                                         double &xfract, double &yfract)
 {
-  if (x > (d_sizeX-d_centerX) || x < -d_centerX ||
-      y > (d_sizeY-d_centerY) || y < -d_centerY) {
+  if (x > (d_maxX) || x < d_minX ||
+      y > (d_maxY) || y < d_minY) {
     sqXindex = -1;
     sqYindex = -1;
   } else {
     double numDeltaX, numDeltaY;
-    numDeltaX = (x + d_centerX)/d_deltaX;
-    numDeltaY = (y + d_centerY)/d_deltaY;
+    numDeltaX = (x - d_minX)/d_deltaX;
+    numDeltaY = (y - d_minY)/d_deltaY;
     sqXindex = (int)(numDeltaX);
     if (sqXindex == d_numX-1) {
       sqXindex = d_numX-2;
@@ -230,8 +229,8 @@ void nmg_HeightField::computeSquareIndex(double x, double y,
 int nmg_HeightField::computeTriangleIndex(double x, double y, int sqX, int sqY)
 {
   int result = 2*(sqX+sqY*(d_numX-1));
-  double minX = sqX*d_deltaX-d_centerX;
-  double minY = sqY*d_deltaY-d_centerY;
+  double minX = sqX*d_deltaX+d_minX;
+  double minY = sqY*d_deltaY+d_minY;
   double b = minX + minY + d_deltaY;
   if (-d_diagonalSlope*x + b < y) {
     result++;
@@ -326,10 +325,10 @@ bool nmg_HeightField::mayIntersectRaySegment(nmg_Point start, nmg_Point end)
 {
   if (start.z < d_minHeight && end.z < d_minHeight) return false;
 
-  double rx0 = (start.x+d_centerX)/d_deltaX;
-  double ry0 = (start.y+d_centerY)/d_deltaY;
-  double rx1 = (end.x+d_centerX)/d_deltaX;
-  double ry1 = (end.y+d_centerY)/d_deltaY;
+  double rx0 = (start.x-d_minX)/d_deltaX;
+  double ry0 = (start.y-d_minY)/d_deltaY;
+  double rx1 = (end.x-d_minX)/d_deltaX;
+  double ry1 = (end.y-d_minY)/d_deltaY;
 
   int x0 = (int)(rx0);
   int y0 = (int)(ry0);
