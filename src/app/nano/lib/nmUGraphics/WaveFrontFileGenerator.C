@@ -5,7 +5,7 @@
 #include <vector>
 
 #ifdef sgi
-using std::vector
+using std::vector;
 #endif
 
 
