@@ -89,17 +89,34 @@ void get_z_buffer_values() {
 //returns the volume total for all the objects in the plane, in the units of the objects entered
 double find_volume(){
 
+  double avgHeight = 0.0;
+  double sumHeight = 0.0;
+  double maxHeight = 0.0;
+
   Volume = 0;
   double onePixelArea = pow(((double)numberUnits_onedim/(double)numberPixels_onedim),2);
-
+  int numberPixelsInSample = 0;
+  
   for(int j= 0; j<scanResolution; j++){
     for(int i=0; i<scanResolution; i++){
       Volume += (zDistance[j][i] * onePixelArea);
 	  //= sum(zDistance[j][i])/(128*128) * onePixelArea * (128*128)
 	  //= avg. pixel height * pixel area * number of pixels
 	  //= avg. volume/pixel * number pixels = total volume
+		
+	  if(zDistance[j][i] > 0){
+		numberPixelsInSample++;
+		sumHeight += zDistance[j][i];
+		if(zDistance[j][i] > maxHeight)	maxHeight = zDistance[j][i];
+	  }
     }
   }
+
+  avgHeight = sumHeight/double(numberPixelsInSample);
+  cout << "Average Height = " << avgHeight << endl;
+  cout << "Max Height = " << maxHeight << endl;
+
+
   return Volume;
 }
 
@@ -177,15 +194,12 @@ void  imageScanDepthRender()  {
       // go down by tip radius
       glTranslatef( 0., 0., -tip.spTip->r);  
       if (uncertainty_mode) {
-	ob[i]->uncert_afm_sphere_tip(*(tip.spTip));
+		ob[i]->uncert_afm_sphere_tip(*(tip.spTip));
       }
       else {
-	ob[i]->afm_sphere_tip(*(tip.spTip));
+		ob[i]->afm_sphere_tip(*(tip.spTip));
       }
-
       glPopMatrix();
-
-
       break;
     case INV_CONE_SPHERE_TIP :
       glPushMatrix();
@@ -193,16 +207,16 @@ void  imageScanDepthRender()  {
       glTranslatef( 0., 0., -tip.icsTip->r);  
 
       if (uncertainty_mode) {
-	ob[i]->uncert_afm_inv_cone_sphere_tip(*(tip.icsTip));
+		ob[i]->uncert_afm_inv_cone_sphere_tip(*(tip.icsTip));
       }
       else {
-	ob[i]->afm_inv_cone_sphere_tip(*(tip.icsTip));
-      }
+		ob[i]->afm_inv_cone_sphere_tip(*(tip.icsTip));
+	  }
 
       glPopMatrix();
       break;
     }
-    }
+   }
 
   glFinish();
 

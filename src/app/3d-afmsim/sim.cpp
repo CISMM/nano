@@ -110,7 +110,7 @@ int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
 
-void	Usage(char *progname)
+void Usage(char *progname)
 {
     cerr << "See README file for usage instructions." << endl; 
     exit(-1);
