@@ -796,8 +796,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
     d_dimensionUnknown = vrpn_FALSE;
     d_DAC_scale = p->tm_scale;
     d_DAC_offset = p->tm_offset;
-    d_acquisitionDistX = plane->numX();
-    d_acquisitionDistY = plane->numY();
+    d_acquisitionDistX = plane->maxX()-plane->minX();
+    d_acquisitionDistY = plane->maxY()-plane->minY();
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
@@ -839,8 +839,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
     d_dimensionUnknown = vrpn_FALSE;
     d_DAC_scale = plane->tm_scale;
     d_DAC_offset = plane->tm_offset;
-    d_acquisitionDistX = plane->numX();
-    d_acquisitionDistY = plane->numY();
+    d_acquisitionDistX = plane->maxX()-plane->minX();
+    d_acquisitionDistY = plane->maxY()-plane->minY();
 }
 
 

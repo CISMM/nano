@@ -1,3 +1,10 @@
+2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C (nmb_ImageGrid::nmb_ImageGrid): changed constructor
+	to use the actual world dimensions of the image when available instead
+	of the resolution to set d_acquisitionDistX,Y - this makes the
+	angle of projection for projective textures get set correctly
+
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
 	* BCPlane.[Ch] (valueDAC, setValueDAC): functions to access AFM data
