@@ -697,7 +697,7 @@ proc flip_mod_style {mod_style element op} {
 proc flip_mod_tool {mod_tool element op} {
     global nmInfo
     global mod_line_list mod_slow_line_list
-    global fspady
+    global fspady newmodifyp_style
 
     upvar $mod_tool k
 
@@ -707,6 +707,9 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $plist {pack forget $widg} 
         # Hide the controls for slow_line tool
         hide.modify_live
+        # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -714,19 +717,32 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
         # Hide the controls for slow_line tool
         hide.modify_live
+        # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==2} {
 	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
-    } elseif {$k==3} {
+         # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
+   } elseif {$k==3} {
 	# selected slow line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
         # Show the controls for slow_line tool
         show.modify_live
+        # Don't allow selection of styles that don't work with slow_line
+        if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
+            # Can't do sweep or sewing, set to sharp
+            set newmodifyp_style 0
+        }
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     }
 }
 

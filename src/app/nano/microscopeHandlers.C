@@ -30,6 +30,10 @@
 #define	Z	(2)
 #endif
 
+#ifndef M_PI
+#define M_PI 3.141592653589793238
+#define M_PI_2		1.57079632679489661923
+#endif
 
 void setupStateCallbacks (nmm_Microscope_Remote * ms) {
 
@@ -1198,6 +1202,9 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
     float x2 =  microscope->state.modify.slow_line_currPt->x();
     float y2 =  microscope->state.modify.slow_line_currPt->y();
     
+    // Set yaw so if we sweep it will be perpendicular to the slow-line path. 
+    microscope->state.modify.yaw = atan2((y2 - y1), (x2 - x1)) - M_PI_2;
+
     float x = x2*(microscope->state.modify.slow_line_position_param) +
               x1*(1.0-microscope->state.modify.slow_line_position_param);
     float y = y2*(microscope->state.modify.slow_line_position_param) +

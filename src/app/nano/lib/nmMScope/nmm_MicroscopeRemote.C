@@ -67,6 +67,7 @@
 
 #ifndef M_PI
 #define M_PI 3.141592653589793238
+#define M_PI_2		1.57079632679489661923
 #endif
 
 // from nmm_Microscope.h
@@ -4633,6 +4634,10 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
               x1*(1.0-me->state.modify.slow_line_position_param);
       float y = y2*(me->state.modify.slow_line_position_param) +
               y1*(1.0-me->state.modify.slow_line_position_param);
+
+      // Set yaw so if we sweep it will be perpendicular to the slow-line path. 
+      me->state.modify.yaw = atan2((y2 - y1), (x2 - x1)) - M_PI_2;
+
 //      printf("sending first point request of slow line mode\n");
       me->state.modify.slow_line_relax_done = VRPN_TRUE;
       me->TakeModStep(x,y);
