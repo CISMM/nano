@@ -170,8 +170,10 @@ UTree Textures;
 
 static const char * import_filename_string;
    ///<the filename containing the geometry of the object we want to import
+/*
 static imported_obj_list* object_list = NULL; 
    ///<a linked list of imported_objs
+*/
 
 /*********** UGRAPHICS *******************/
 
@@ -812,7 +814,6 @@ static void handle_guardedscan_guarddepth(vrpn_float64, void* a_pObject);
 Tclvar_float guarded_plane_depth("imagep_guarddepth", 0.0f);
 Tclvar_int guarded_plane_acquire("guardedscan_plane_acquire", 0);
 
-static vrpn_bool g_syncPending = VRPN_FALSE;
  
 //-----------------------------------------------------------------------
 #if 0
@@ -2170,7 +2171,7 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   // BUG BUG BUG
   // If we're at x.y and set stream time to x.0 we'll replay the
   // whole stream file?
-  newStreamTime.tv_sec = set_stream_time;
+  newStreamTime.tv_sec = (long) set_stream_time;
   newStreamTime.tv_usec = 999999L;
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
@@ -3097,18 +3098,19 @@ static void handle_flatPlaneName_change(const char *, void *)
   if( strlen(newFlatPlaneName.string() ) <= 0 )
     return;
   
-  nmb_FlattenedPlane* flatPlane = NULL;
   try
     {
-      flatPlane = new nmb_FlattenedPlane(  dataset->heightPlaneName->string(),
-					   newFlatPlaneName.string(), 
-					   decoration->red.x(),
-					   decoration->green.x(),
-					   decoration->blue.x(),
-					   decoration->red.y(),
-					   decoration->green.y(),
-					   decoration->blue.y(),
-					   dataset );
+      // this looks strange b/c the constructor adds the new plane to
+      // dataset.
+      new nmb_FlattenedPlane(  dataset->heightPlaneName->string(),
+			       newFlatPlaneName.string(), 
+			       decoration->red.x(),
+			       decoration->green.x(),
+			       decoration->blue.x(),
+			       decoration->red.y(),
+			       decoration->green.y(),
+			       decoration->blue.y(),
+			       dataset );
     }
   catch( nmb_CalculatedPlaneCreationException e )
     {
@@ -3131,13 +3133,13 @@ static void handle_lblflatPlaneName_change(const char *, void *)
     return;
   
   // Create the new one.  
-  nmb_LBLFlattenedPlane* flatPlane = NULL;
   try
     {
-      flatPlane 
-	= new nmb_LBLFlattenedPlane(  dataset->heightPlaneName->string(),
-				      newLBLFlatPlaneName.string(), 
-				      dataset );
+      // this looks strange b/c the constructor adds the new plane to
+      // dataset.
+      new nmb_LBLFlattenedPlane(  dataset->heightPlaneName->string(),
+				  newLBLFlatPlaneName.string(), 
+				  dataset );
     }
   catch( nmb_CalculatedPlaneCreationException e )
     {
@@ -3158,15 +3160,17 @@ static void handle_sumPlaneName_change(const char *, void *)
 {
   if( strlen( newSumPlaneName.string( ) ) <= 0 )
     return;
+
   // Create the new one from the sums.
-  nmb_SummedPlane* newSumPlane = NULL;
   try
     {
-      newSumPlane = new nmb_SummedPlane( sumPlane1Name.string(),
-					 sumPlane2Name.string(),
-					 sumScale,
-					 newSumPlaneName.string(),
-					 dataset );
+      // this looks strange b/c the constructor adds the new plane to
+      // dataset.
+      new nmb_SummedPlane( sumPlane1Name.string(),
+			   sumPlane2Name.string(),
+			   sumScale,
+			   newSumPlaneName.string(),
+			   dataset );
     }
   catch( nmb_CalculatedPlaneCreationException e )
     {
@@ -3176,7 +3180,8 @@ static void handle_sumPlaneName_change(const char *, void *)
     }
     
   newSumPlaneName = (const char*) "";
-}
+} // end handle_sumPlaneName_change
+
 
 /** See if the user has given a name to the adhesion plane other
  than "".  If so, we should create a new plane and set the value
@@ -4068,12 +4073,13 @@ void handle_guardedscan_guarddepth(vrpn_float64 a_fDepth, void* a_pObject)
 
 void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
 {
-  a_nVal;
+  a_nVal = a_nVal;
   nmm_Microscope_Remote* pMe = (nmm_Microscope_Remote*)a_pObject;
   
   if(pMe == NULL) {
     // No object pointer... bail...
-    printf("microscape.c::handle_guardedscan_planeacquire bailed: no object pointer.\n");
+    printf("microscape.c::handle_guardedscan_planeacquire bailed: "
+	   "no object pointer.\n");
     return;
   }
 
@@ -4081,7 +4087,9 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
   aGS.AcquirePlane();
 
   printf("Plane acquired.\n");
-  aGS.GetNormal(pMe->state.guardedscan.fNormalX, pMe->state.guardedscan.fNormalY, pMe->state.guardedscan.fNormalZ);
+  aGS.GetNormal(pMe->state.guardedscan.fNormalX, 
+		pMe->state.guardedscan.fNormalY, 
+		pMe->state.guardedscan.fNormalZ);
   pMe->state.guardedscan.fPlaneD = aGS.GetPlaneDistance();
 
   printf(" guard depth is now=%lf\n", pMe->state.guardedscan.fGuardDepth);
