@@ -9,6 +9,13 @@ THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
 OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS),$(THIS_DIR))
 
+DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
+ifneq ($(DIR),true)
+   DUMMY := $(shell mkdir -p $(FULL_OBJECT_DIR))
+   DUMMY += $(shell $(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS))
+   DUMMY += $(shell mkdir -p $(OBJECT_DIR))
+endif
+
 ###############################################################################
 #
 # Got more CFLAGS?
@@ -16,25 +23,6 @@ OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS),$(THIS_DIR))
 
 ifdef EXTRA_CFLAGS
    CFLAGS += $(EXTRA_CFLAGS)
-endif
-
-##############################################################################
-#
-# Expand the uses libs stuff
-#
-
-ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
-   ifdef USES_LIBS
-      USES_LIBS_TMP := $(foreach lib,$(USES_LIBS),\
-      $(shell $(SEARCH_PROG) $(HW_OS) $(lib) $(SEARCH_PATH)))
-      USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
-      USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
-      LIBS          := $(addprefix -l,$(USES_LIBS)) $(LIBS)
-   endif
-
-   ifdef NAUGHTY
-      USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
-   endif
 endif
 
 ###############################################################################
@@ -48,7 +36,7 @@ endif
 
 ifndef APP_SRC
    APP_SRC := $(foreach suffix,$(SRC_SUFFIXES),$(wildcard *$(suffix)))
-   APP_SRC := $(filter-out $(EXCLUDE_SRC),$(APP_SRC)))
+   APP_SRC := $(filter-out $(EXCLUDE_SRC),$(APP_SRC))
 endif
 
 ifndef APP_OBJ
@@ -73,7 +61,7 @@ endif
 default: $(OBJECT_DIR) $(APP_EXEC)
 
 .PHONY: all
-#all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
+all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
 
 .PHONY: clean
 clean: 
@@ -96,15 +84,17 @@ $(OBJECT_DIR):
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.cc
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.C
-	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(APP_EXEC): $(APP_OBJ)
-	$(CC) $(CFLAGS) $(DEFINES) -o $@ $^ $(USES_LIBS_LD) $(LOAD_FLAGS) $(LIBS)
+	$(CC) $(CFLAGS) $(DEFINES) -o $@ $^ $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DEP_LIBS_LIB) $(LIBS)
 
-
+ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+   include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
+endif

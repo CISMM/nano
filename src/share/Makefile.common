@@ -86,9 +86,9 @@ endif
 # This works on cygwin as long as MY_NANO_OBJ_DIR is a local drive.
 # You do compile that way don't you?
 ifeq ($(HW_OS),pc_cygwin)
-   LINK = -ln -f -n -s
+   LINK = ln -f -n -s
 else
-   LINK = -ln -f -s
+   LINK = ln -f -s
 endif
 
 ##########################
@@ -177,8 +177,9 @@ ifndef MY_NANO_SRC_DIR
    MY_NANO_SRC_DIR := $(shell echo $(shell $(PWD_COMMAND)) | perl -pe "s|/nano/src(?!.*/nano/src/).*||;")
 endif
 
-TOP_LEVEL_DIR     := $(MY_NANO_SRC_DIR)/nano
-TOP_LEVEL_SRC_DIR := $(TOP_LEVEL_DIR)/src
+TOP_LEVEL_DIR      := $(MY_NANO_SRC_DIR)/nano
+TOP_LEVEL_SRC_DIR  := $(TOP_LEVEL_DIR)/src
+TOP_LEVEL_MAKE_DIR := $(TOP_LEVEL_SRC_DIR)/share
 
 ifndef MY_NANO_OBJ_DIR
    ifeq ($(HW_OS),pc_cygwin)
@@ -413,6 +414,7 @@ export CC
 export TOP_LEVEL_DIR
 export TOP_LEVEL_SRC_DIR
 export TOP_LEVEL_OBJ_DIR
+export TOP_LEVEL_MAKE_DIR
 
 export SEARCH_PATH
 export SEARCH_PROG

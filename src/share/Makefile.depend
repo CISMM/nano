@@ -1,33 +1,42 @@
-include .depend
+MAKEFILE_DEPEND := $(OBJECT_DIR)/.depend
+
+ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
+   DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)
+else
+   -include $(MAKEFILE_DEPEND)
+endif
+
+SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
+
+##############################################################################
+#
+# Expand the uses libs stuff
+#
+
+DEPEND := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
+ifneq ($(DEPEND),true)
+   ifdef USES_LIBS
+      USES_LIBS_TMP := $(foreach lib,$(USES_LIBS),$(shell $(SEARCH_PROG) $(HW_OS) $(lib) $(SEARCH_PATH)))
+      USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
+      USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
+      USES_LIBS_LIB := $(addprefix -l,$(USES_LIBS))
+   endif
+
+   ifdef NAUGHTY
+      USES_LIBS_INC += -I$(TOP_LEVEL_SRC_DIR)/app/nano
+   endif
+endif
 
 .PHONY: depend
-depend:
-        -$(MVF) .depend .depend-old
-        $(MAKE) .depend
-.depend:
-        @echo ----------------------------------------------------------------
-        @echo -- Making dependency file.  If you add files to the makefile,
-        @echo -- or add/remove includes from a .h or .C file, then you should
-        @echo -- remake the dependency file by typing \"$(MAKE) depend\"
-        @echo ----------------------------------------------------------------
-ifeq ($(HW_OS),hp700_hpux10)
-        @echo -- $(HW_OS): Using g++ since HP CC does not understand -M
-        @echo -- if this causes an error, then delete .depend and type
-        @echo -- \"touch .depend\" to create an empty file
-        @echo ----------------------------------------------------------------
-        $(SHELL) -ec 'g++ -MM $(CFLAGS) $(LIB_FILES) \
-            | sed '\''s/\(.*\.o[ ]*:[ ]*\)/$(OBJECT_DIR)\/\1/g'\'' > .depend'
-else
-  ifeq ($(HW_OS),hp_flow_aCC)
-        @echo -- $(HW_OS): Using g++ since HP aCC does not understand -M
-        @echo -- if this causes an error, then delete .depend and type
-        @echo -- \"touch .depend\" to create an empty file
-        @echo ----------------------------------------------------------------
-        $(SHELL) -ec 'g++ -MM $(CFLAGS) $(LIB_FILES) \
-            | sed '\''s/\(.*\.o[ ]*:[ ]*\)/$(OBJECT_DIR)\/\1/g'\'' > .depend'
-  else
-        $(SHELL) -ec '$(CC) -M $(CFLAGS) $(LIB_FILES) \
-            | sed '\''s/\(.*\.o[ ]*:[ ]*\)/$(OBJECT_DIR)\/\1/g'\'' > .depend'
-  endif
-endif
-        @echo ----------------------------------------------------------------
+depend: $(OBJECT_DIR) $(MAKEFILE_DEPEND)
+
+$(MAKEFILE_DEPEND):
+	@echo ----------------------------------------------------------------
+	@echo -- Making dependency file.  If you add files to the makefile,
+	@echo -- or add/remove includes from a .h or .C file, then you should
+	@echo -- remake the dependency file by typing \"$(MAKE) depend\"
+	@echo ----------------------------------------------------------------
+	$(shell $(CC) -M $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" > $(MAKEFILE_DEPEND))
+	$(shell echo DEP_LIBS_INC := $(USES_LIBS_INC) >> $(MAKEFILE_DEPEND))
+	$(shell echo DEP_LIBS_LD := $(USES_LIBS_LD) >> $(MAKEFILE_DEPEND))
+	$(shell echo DEP_LIBS_LIB := $(USES_LIBS_LIB) >> $(MAKEFILE_DEPEND))

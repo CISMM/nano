@@ -19,7 +19,7 @@ OBJ1=obj/$HW_OS/$LIB1
 SRC2=src/$LIB2
 OBJ2=obj/$HW_OS/$LIB2
 
-echo 1>&2 "Looking for lib$TARGET.a ..."
+#echo 1>&2 "Looking for lib$TARGET.a ..."
 
 if test -e "$OBJECTS/$LIB1/lib$TARGET.a"; then
    echo 1>&2 "Found lib$TARGET.a in $OBJECTS/$LIB1";
@@ -53,9 +53,9 @@ for path in $* ; do
    fi
 done
 
-echo 1>&2 "Failed to locate lib$TARGET.a ... perhaps it has not been compiled?"
+#echo 1>&2 "Failed to locate lib$TARGET.a ... perhaps it has not been compiled?"
 
-echo 1>&2 "Looking for $TARGET directory ..."
+#echo 1>&2 "Looking for $TARGET directory ..."
 
 for path in $* ; do
    if test -d "$path/$TARGET/" ; then
