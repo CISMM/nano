@@ -1,3 +1,8 @@
+2004-04-26  Russell M. Taylor II <taylorr@cs.unc.edu>
+
+	* afmsim.dsp : Making it compile with today's libraries.
+	* nmm_Microscope_Simulator : Reducing compiler complaints.
+
 2002-06-13  Russell M. Taylor II <taylorr@cs.unc.edu>
 
 	* surface.C : Changed to compile under new version of nmBase on

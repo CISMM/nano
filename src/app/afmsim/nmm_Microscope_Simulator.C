@@ -937,13 +937,13 @@ RcvScanWindow( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 int nmm_Microscope_Simulator::
-RcvScanPoint( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvScanPoint( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 int nmm_Microscope_Simulator::
-RcvIdle( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvIdle( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -973,7 +973,7 @@ RcvSetStdDevParams( void *, vrpn_HANDLERPARAM  )
 }
 
 int nmm_Microscope_Simulator::
-RcvQStdDevParams( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvQStdDevParams( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -986,14 +986,14 @@ RcvSetScanStyle( void *, vrpn_HANDLERPARAM  )
 }
 
 int nmm_Microscope_Simulator::
-RcvSetContactForce( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvSetContactForce( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
 	// XXX haven't implemented yet
   return 0;
 }
 
 int nmm_Microscope_Simulator::
-RcvQContactForce( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvQContactForce( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
 	// XXX haven't implemented yet
   return 0;
@@ -1044,7 +1044,7 @@ RcvScanPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 int nmm_Microscope_Simulator::
-RcvSampleApproachNM( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvSampleApproachNM( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -1144,8 +1144,6 @@ int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
   nmm_Microscope_Simulator * tmn = (nmm_Microscope_Simulator *) userdata;
   const char * bufptr = p.buffer;
   vrpn_float32 x, y;
-  vrpn_int32 a, b;
-  vrpn_float32 c, d, e;
   int retval;
 
   retval = tmn->decode_BeginFeelTo(&bufptr, &x, &y);
@@ -1210,25 +1208,25 @@ RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 int nmm_Microscope_Simulator::
-RcvMeasureResist( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvMeasureResist( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 int nmm_Microscope_Simulator::
-RcvZigPointNM( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvZigPointNM( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 int nmm_Microscope_Simulator::
-RcvSnapShot( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvSnapShot( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
 
 int nmm_Microscope_Simulator::
-RcvSnapCancel( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvSnapCancel( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -1418,7 +1416,7 @@ RcvSetRegAndAngle( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 int nmm_Microscope_Simulator::
-RcvClientPacketTimestamp( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvClientPacketTimestamp( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -1469,7 +1467,7 @@ RcvSweepArc( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 int nmm_Microscope_Simulator::
-RcvClientHello( void */*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
+RcvClientHello( void * /*_userdata*/, vrpn_HANDLERPARAM /*_p*/ )
 {
   return 0;
 }
@@ -1770,7 +1768,7 @@ stm_set_region_nm_gradual( const char *bufptr )
 
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
-spm_set_region_angle_gradual( const char */*bufptr*/ )
+spm_set_region_angle_gradual( const char * /*bufptr*/ )
 /********************************************************************
  * This procedure is equivalent to stm_set_region_nm except that
  * the new region is not set at one time but gradually moved.
@@ -2122,7 +2120,7 @@ spm_set_relax( const char *bufptr )
 }
 
 int nmm_Microscope_Simulator::
-spm_blunt_point_nm( const char */*bufptr*/ )
+spm_blunt_point_nm( const char * /*bufptr*/ )
 {
 /*****************************************************************
  * Sample height at three points around (x,y) forming an equilateral
@@ -2377,7 +2375,7 @@ afm_tapping_mode( const char *bufptr )
 
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
-spm_echo( const char */*bufptr*/ )
+spm_echo( const char * /*bufptr*/ )
 {
 /***************************************************************************
  * spm_echo simply unbuffers a long that describes the number of 4 byte
