@@ -78,8 +78,8 @@ const int EDAX_EDS_CROSS_PORT =(8);
 const int EDAX_BITINPUT2 =(9);
 
 // for SgSetMaxSpan:
-const int EDAX_DEFAULT_MAX_X_SPAN =(4096);//(65536);
-const int EDAX_DEFAULT_MAX_Y_SPAN =(3200);//(51200);
+const int EDAX_DEFAULT_MAX_X_SPAN = (65536);//(4096) or (65536)
+const int EDAX_DEFAULT_MAX_Y_SPAN = (51200);//(3200) or (51200)
 
 // for SetupSgColl, but affects scan generator settings too
 const int EDAX_NUM_SCAN_MATRICES =(7);
