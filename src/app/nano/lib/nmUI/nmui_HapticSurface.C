@@ -88,7 +88,7 @@ void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
     static q_vec_type vertices [50];
     
     vrpn_int32 xside, yside;
-    vrpn_int32 i, j, k;
+    vrpn_int32 i, j;
     
     BCPlane * plane = dataset->inputGrid->getPlaneByName
         (dataset->heightPlaneName->string());
