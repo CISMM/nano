@@ -225,128 +225,128 @@ class nmm_Microscope_Simulator: public nmm_Microscope
 
 
 
-     float  	stm_nmeters_per_second;
-     float  	stm_max_move;
+     vrpn_float32  	stm_nmeters_per_second;
+     vrpn_float32  	stm_max_move;
 
-     long	stm_grid_num_x;
-     long	stm_grid_num_y;
-     long 	stm_window_xmin;
-     long	stm_window_ymin;
-     long	stm_window_xmax;
-     long	stm_window_ymax;
+     vrpn_int32	stm_grid_num_x;
+     vrpn_int32	stm_grid_num_y;
+     vrpn_int32 	stm_window_xmin;
+     vrpn_int32	stm_window_ymin;
+     vrpn_int32	stm_window_xmax;
+     vrpn_int32	stm_window_ymax;
 
-     float	stm_region_xmin;
-     float 	stm_region_ymin;
-     float	stm_region_xmax;
-     float	stm_region_ymax;
-     float	stm_region_angle;
+     vrpn_float32	stm_region_xmin;
+     vrpn_float32 	stm_region_ymin;
+     vrpn_float32	stm_region_xmax;
+     vrpn_float32	stm_region_ymax;
+     vrpn_float32	stm_region_angle;
 
 /*****************************************************************
  *   startup settings	// XXX do I still need them?
  *****************************************************************/
-     float 	startup_p;
-     float 	startup_i;
-     float 	startup_d;
-     float 	startup_setpoint;
-     float 	startup_scanrate;
-     float 	startup_scanmode;
+     vrpn_float32 	startup_p;
+     vrpn_float32 	startup_i;
+     vrpn_float32 	startup_d;
+     vrpn_float32 	startup_setpoint;
+     vrpn_float32 	startup_scanrate;
+     vrpn_float32 	startup_scanmode;
 
 /*****************************************************************
  *   Sewing machine mode
  *****************************************************************/
-     float 	afm_sm_set_point;
+     vrpn_float32 	afm_sm_set_point;
      unsigned int afm_sm_bot_delay;  //in 0.1 milli-seconds
      unsigned int afm_sm_top_delay;  //in 0.1 milli-seconds
-     float 	afm_sm_pull_dist;
-     float 	afm_sm_move_dist;
-     float 	afm_sm_rate;         // in nM per second
-     float 	afm_sm_max_close_nm; // the max dist to punch regarless
+     vrpn_float32 	afm_sm_pull_dist;
+     vrpn_float32 	afm_sm_move_dist;
+     vrpn_float32 	afm_sm_rate;         // in nM per second
+     vrpn_float32 	afm_sm_max_close_nm; // the max dist to punch regarless
 				     // of the set point.
 
-     float 	afm_last_punch_x;
-     float 	afm_last_punch_y;
-     float 	afm_prev_point_x;
-     float 	afm_prev_point_y;
+     vrpn_float32 	afm_last_punch_x;
+     vrpn_float32 	afm_last_punch_y;
+     vrpn_float32 	afm_prev_point_x;
+     vrpn_float32 	afm_prev_point_y;
 
-     float 	IS_scale;   // Internal Sensor scale
-     float 	IS_offset;  // Internal Sensor offset
+     vrpn_float32 	IS_scale;   // Internal Sensor scale
+     vrpn_float32 	IS_offset;  // Internal Sensor offset
 
      vrpn_bool 	afm_first_punch;
-     float 	afm_first_punch_distance;
+     vrpn_float32 	afm_first_punch_distance;
 
      unsigned int num_punch;
 
 /*****************************************************************
  *   Force curve mode
  *****************************************************************/
-     float 	spm_last_fc_x;
-     float 	spm_last_fc_y;
-     float 	spm_fc_move_dist;
-     float 	spm_fc_start_delay;
-     float 	spm_fc_z_start;
-     float 	spm_fc_z_end;
-     float 	spm_fc_z_pullback;
-     float 	spm_fc_force_limit;
-     long 	spm_fc_num_layers;
-     long 	spm_fc_num_halfcycles;
+     vrpn_float32 	spm_last_fc_x;
+     vrpn_float32 	spm_last_fc_y;
+     vrpn_float32 	spm_fc_move_dist;
+     vrpn_float32 	spm_fc_start_delay;
+     vrpn_float32 	spm_fc_z_start;
+     vrpn_float32 	spm_fc_z_end;
+     vrpn_float32 	spm_fc_z_pullback;
+     vrpn_float32 	spm_fc_force_limit;
+     vrpn_int32 	spm_fc_num_layers;
+     vrpn_int32 	spm_fc_num_halfcycles;
 
 //*****************************************************************
 //* Set region gradual : Changing the region gradually
 //*****************************************************************
-     float  	stm_region_xmin_work;
-     float  	stm_region_ymin_work;
-     float  	stm_region_xmax_work;
-     float  	stm_region_ymax_work;
-     float  	stm_region_xmin_unit;
-     float  	stm_region_ymin_unit;
-     float  	stm_region_xmax_unit;
-     float  	stm_region_ymax_unit;
-     float  	stm_region_xmin_actual;
-     float  	stm_region_ymin_actual;
-     float  	stm_region_xmax_actual;
-     float  	stm_region_ymax_actual;
+     vrpn_float32  	stm_region_xmin_work;
+     vrpn_float32  	stm_region_ymin_work;
+     vrpn_float32  	stm_region_xmax_work;
+     vrpn_float32  	stm_region_ymax_work;
+     vrpn_float32  	stm_region_xmin_unit;
+     vrpn_float32  	stm_region_ymin_unit;
+     vrpn_float32  	stm_region_xmax_unit;
+     vrpn_float32  	stm_region_ymax_unit;
+     vrpn_float32  	stm_region_xmin_actual;
+     vrpn_float32  	stm_region_ymin_actual;
+     vrpn_float32  	stm_region_xmax_actual;
+     vrpn_float32  	stm_region_ymax_actual;
 
      int    	isrStep;
      vrpn_bool   	SetRegionReceived;
      vrpn_bool   	ReportAngle;
 //******************************************************************
 
-     long	stm_current_mode;
+     vrpn_int32	stm_current_mode;
 
-     float	stm_current_x;		// Where we are right now
-     float	stm_current_y;		//
+     vrpn_float32	stm_current_x;		// Where we are right now
+     vrpn_float32	stm_current_y;		//
 
-     float	stm_desired_x;		// Where we are seeking to be
-     float	stm_desired_y;		//
+     vrpn_float32	stm_desired_x;		// Where we are seeking to be
+     vrpn_float32	stm_desired_y;		//
 
-     float	stm_desired_approach;	// Desired approach location, nm
-     float	stm_coarse_z;		// Coarse Z position
+     vrpn_float32	stm_desired_approach;	// Desired approach location, nm
+     vrpn_float32	stm_coarse_z;		// Coarse Z position
 
-     long	stm_scan_style;		// Style of scanning
-     long	stm_scan_x;		// Where the area scan is right now
-     long 	stm_scan_y;
-     long 	stm_scan_dx;		// Current direction of scan
-     long 	stm_scan_dy;
+     vrpn_int32	stm_scan_style;		// Style of scanning
+     vrpn_int32	stm_scan_x;		// Where the area scan is right now
+     vrpn_int32 	stm_scan_y;
+     vrpn_int32 	stm_scan_dx;		// Current direction of scan
+     vrpn_int32 	stm_scan_dy;
 
-     long	StdDelay, StPtDelay;
+     vrpn_int32	StdDelay, StPtDelay;
 
 // These are default settings for the system contact force
-     long	fmods_enabled;		// Is cotact force control available?
+     vrpn_int32	fmods_enabled;		// Is cotact force control available?
 
      struct timeval sewing_start_time;
 
 // Default values for delays after changing contact force before return to scan
-     long	RelaxDelay;
+     vrpn_int32	RelaxDelay;
 
-     long	stm_num_samples;	// Number of A/D samples to read
-     float	stm_sample_freq;	// Sample at 160kHz
+     vrpn_int32	stm_num_samples;	// Number of A/D samples to read
+     vrpn_float32	stm_sample_freq;	// Sample at 160kHz
 
-     float  	fDACtoWorld, fDACtoWorldZero;
+     vrpn_float32  	fDACtoWorld, fDACtoWorldZero;
 
      int    	force_mode;
 
      int	afm_mode;
-     float  	spm_driveamp_set_last; 	// Tracks the currently-set drive
+     vrpn_float32  	spm_driveamp_set_last; 	// Tracks the currently-set drive
 				     	// amplitude in the dialog box
 
      int    	ADC1held, ADC2held;     // 1 if currenlty holding ADC

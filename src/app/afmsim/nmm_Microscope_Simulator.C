@@ -1958,7 +1958,7 @@ spm_set_relax( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long tmp_long;
+  vrpn_int32 tmp_long;
 
   ServerOutputAdd( 2, "spm_set_relax: set relax delays cmd rcvd" );
 
@@ -2022,7 +2022,7 @@ spm_request_scan_datasets( const char* bufptr )
 
   int i;
   char name[64];
-  long numsets;
+  vrpn_int32 numsets;
 
   ServerOutputAdd( 2, "spm_request_scan_datasets: request data sets cmd rcvd");
 
@@ -2073,8 +2073,8 @@ spm_request_point_datasets( const char *bufptr )
 
   int i;
   char name[64];
-  long numsets;
-  long num_samples;
+  vrpn_int32 numsets;
+  vrpn_int32 num_samples;
 //  numsets = 1;		// Added by JakeK
 
   ServerOutputAdd(2, "spm_request_point_datasets: request data sets cmd rcvd");
@@ -2277,8 +2277,8 @@ spm_enable_voltsource( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long device_num;
-  float voltage;
+  vrpn_int32 device_num;
+  vrpn_float32 voltage;
 
   if (decode_EnableVoltsource(&bufptr, &device_num, &voltage) == -1) {
      ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_enable_voltsource: bad parameters passed to spm_enable_voltsource");
@@ -2314,7 +2314,7 @@ spm_disable_voltsource( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long device_num = 0;
+  vrpn_int32 device_num = 0;
 
   if (decode_DisableVoltsource(&bufptr, &device_num) == -1) {
      ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_disable_voltsource: bad parameters passed to spm_disable_voltsource");
@@ -2353,7 +2353,7 @@ spm_enable_amp( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long device_num, gain_mode;
+  vrpn_int32 device_num, gain_mode;
   float offset, percent_offset;
 
   if (decode_EnableAmp(&bufptr, &device_num, &offset,
@@ -2392,7 +2392,7 @@ spm_disable_amp( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long device_num = 0;
+  vrpn_int32 device_num = 0;
 
   if (decode_DisableAmp(&bufptr, &device_num) == -1) {
      ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_disable_amp: bad parameters passed to spm_disable_amp");
@@ -2430,7 +2430,7 @@ spm_set_slow_scan( const char *bufptr )
   char * msgbuf;
   int retval;
 
-  long slow_scan;
+  vrpn_int32 slow_scan;
   //  int state;
 
   if (decode_SetSlowScan(&bufptr, &slow_scan) == -1) {
@@ -2478,9 +2478,9 @@ spm_sharp_line( const char *bufptr )
  * the end point.
  **************************************************************************/
 
-  float   startx, starty;
-  float   endx,endy;
-  float   spacing;			// Distance between samples.
+  vrpn_float32   startx, starty;
+  vrpn_float32   endx,endy;
+  vrpn_float32   spacing;			// Distance between samples.
 
 	// Read the parameters
   if (decode_DrawSharpLine(&bufptr, &startx, &starty,
