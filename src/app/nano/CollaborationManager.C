@@ -58,7 +58,7 @@ static
 vrpn_Connection * getPeerReplay (const char * loggingPath, int timestamp) {
   char sfbuf [1024];
 
-  sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
+  sprintf(sfbuf, "file://%s/SharedIFRemLog-%ld.stream", loggingPath,
           timestamp); 
 
   collabVerbose(1, "Collaboration Manager:  "
@@ -92,7 +92,7 @@ static
 vrpn_Connection * getServerReplay (const char * loggingPath, int timestamp) {
   char sfbuf [1024];
 
-  sprintf(sfbuf, "file:%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp);
+  sprintf(sfbuf, "file://%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp);
   return vrpn_get_connection_by_name (sfbuf);
 }
 
@@ -310,7 +310,7 @@ void CollaborationManager::initialize
 
   if (d_replay) {
 
-    sprintf(sfbuf, "file:%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
+    sprintf(sfbuf, "file://%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
 
     d_peerServer = getServerReplay (d_logPath, d_logTime);
 
@@ -459,8 +459,8 @@ void CollaborationManager::setPeerName
 
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", d_logPath, d_logTime);
   if (d_replay) {
-    sprintf(peerHandName, "handCoordinateServer0@file:%s", sfbuf);
-    sprintf(peerModeName, "userModeServer0@file:%s", sfbuf);
+    sprintf(peerHandName, "handCoordinateServer0@file://%s", sfbuf);
+    sprintf(peerModeName, "userModeServer0@file://%s", sfbuf);
   } else {
     sprintf(peerHandName, "handCoordinateServer0@%s:%d", newName, d_peerPort);
     sprintf(peerModeName, "userModeServer0@%s:%d", newName, d_peerPort);

@@ -6912,7 +6912,7 @@ int main (int argc, char* argv[])
     // DEBUG pause program to attach debugger. 
     //cin.get();
 
-    initMagick(*argv);
+    nmb_ImgMagick::initMagick(*argv);
 
     decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
@@ -7156,7 +7156,6 @@ int main (int argc, char* argv[])
 	    display_warning_dialog( "Both input stream and microscope "
                                     "device specified, using input stream");
 	}
-	//sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
         openStreamFilename = istate.afm.inputStreamName;
         // Open the streamfile. 
         handle_openStreamFilename_change(NULL, (void *)&istate);

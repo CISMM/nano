@@ -101,7 +101,7 @@ void parseArguments(int argc, char **argv){
 			if (++i >= argc) usage(argv[0]);
 			isReadingStreamFile = 1;
 			device_name = new char[14 + strlen(argv[i])+1];
-			sprintf(device_name,"file:%s", argv[i]);
+			sprintf(device_name,"file://%s", argv[i]);
 		}
 		else
 			usage(argv[0]);

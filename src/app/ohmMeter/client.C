@@ -159,7 +159,7 @@ void parseArguments(int argc, char **argv){
 			if (++i >= argc) usage(argv[0]);
 			isReadingStreamFile = 1;
 			ohmmeter_device_name = new char[14 + strlen(argv[i])+1];
-			sprintf(ohmmeter_device_name,"Ohmmeter@file:%s", argv[i]);
+			sprintf(ohmmeter_device_name,"Ohmmeter@file://%s", argv[i]);
 		}
 		else
 			usage(argv[0]);

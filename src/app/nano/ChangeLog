@@ -1,3 +1,12 @@
+2001-07-27  Aron Helser  <helser@cs.unc.edu>
+
+
+	* CollaborationManager.C: VRPN streamfiles should always begin
+	"file://" so they form proper URLs with WinNT network
+	directories. 
+	* microscape.c (main): same. Fix initMagick ->
+	nmb_ImgMagick::initMagick. 
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c: Moved many tclvars related to colormaps into

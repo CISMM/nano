@@ -178,7 +178,7 @@ void parseArguments(int argc, char **argv){
 			if (++i >= argc) usage(argv[0]);
 			isReadingStreamFile = 1;
 			vi_device_name = new char[14 + strlen(argv[i])+1];
-			sprintf(vi_device_name,"vi_curve@file:%s", argv[i]);
+			sprintf(vi_device_name,"vi_curve@file://%s", argv[i]);
 		}
 		else
 			usage(argv[0]);
