@@ -8,10 +8,13 @@
 
 char *nm_TipDisplayControls::s_renderName = "AFM Tip";
 
-nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *scope):
+nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *scope,
+                                             nmr_Registration_Proxy *aligner):
   d_AFM(NULL),
+  d_aligner(aligner),
   d_enableDisplay("tip_display_enable", 0),
   d_enableTexture("tip_display_texture_enable", 0),
+  d_sendFiducialRequested("send_fiducial_requested", 0),
   d_tipModel(),
   d_tipRenderer(&d_tipModel)
 {
@@ -19,6 +22,7 @@ nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *scope):
   World.TAddNode(&d_tipRenderer, s_renderName);
   d_enableDisplay.addCallback(handleEnableDisplayChange, this);
   d_enableTexture.addCallback(handleEnableTextureChange, this);
+  d_sendFiducialRequested.addCallback(handleSendFiducialRequested, this);
 }
 
 nm_TipDisplayControls::~nm_TipDisplayControls()
@@ -39,6 +43,16 @@ void nm_TipDisplayControls::handleEnableTextureChange (vrpn_int32 newval,
 {
   nm_TipDisplayControls *me = (nm_TipDisplayControls *)userdata;
   me->setTextureEnable(newval);
+}
+
+void nm_TipDisplayControls::handleSendFiducialRequested (vrpn_int32 newval,
+                                                         void *userdata)
+{
+  nm_TipDisplayControls *me = (nm_TipDisplayControls *)userdata;
+  if (newval) {
+    me->sendFiducial();
+    me->d_sendFiducialRequested = 0;
+  }
 }
 
 // non-static
@@ -77,6 +91,29 @@ void nm_TipDisplayControls::setTextureEnable(int enable)
     d_tipRenderer.setTextureEnable(true); 
   } else {
     d_tipRenderer.setTextureEnable(false);
+  }
+}
+
+void nm_TipDisplayControls::sendFiducial()
+{
+  double scanWidthX_nm = 1.0, scanWidthY_nm = 1.0;
+  if (d_AFM) {
+    scanWidthX_nm = d_AFM->state.xMax - d_AFM->state.xMin;
+    scanWidthY_nm = d_AFM->state.yMax - d_AFM->state.yMin;
+  } else {
+    fprintf(stderr, "nm_TipDisplayControls::sendFiducial: Error, no AFM\n");
+  }
+  double fiducialX, fiducialY, fiducialZ;
+  fiducialX = d_tipModel.d_pos[0]/scanWidthX_nm;
+  fiducialY = d_tipModel.d_pos[1]/scanWidthY_nm;
+  fiducialZ = d_tipModel.d_pos[2];
+  if (d_aligner) {
+    printf("Sending tip location as fiducial: (%g,%g): %g nm\n",
+          fiducialX, fiducialY, fiducialZ);
+    d_aligner->sendFiducial(fiducialX, fiducialY, fiducialZ,
+                            fiducialX, fiducialY, fiducialZ);
+  } else {
+    fprintf(stderr, "nm_TipDisplayControls::sendFiducial: Error, no aligner\n");
   }
 }
 

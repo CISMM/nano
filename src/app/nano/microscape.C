@@ -8114,7 +8114,7 @@ int main (int argc, char* argv[])
     }
   }
  
-  tipDisplayUI = new nm_TipDisplayControls(microscope);
+  tipDisplayUI = new nm_TipDisplayControls(microscope, aligner);
  
   VERBOSE(1, "Before Keithley 2400/VI Curve initialization");
   if ( tkenable ) {

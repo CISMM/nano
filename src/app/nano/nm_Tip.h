@@ -28,6 +28,8 @@
 #include <UTree.h>
 #include <URender.h>
 
+#include <nmr_Registration_Proxy.h>
+
 #include <nmm_MicroscopeRemote.h>
 
 #include <GL/glut_UNC.h>
@@ -37,6 +39,7 @@
 */
 class nm_TipModel {
  friend class nm_TipRenderer;
+ friend class nm_TipDisplayControls;
  public:
   nm_TipModel();
   ~nm_TipModel();
@@ -102,22 +105,27 @@ class nm_TipRenderer : public URender {
 class nm_TipDisplayControls {
  public:
   // installs nm_TipRenderer object
-  nm_TipDisplayControls(nmm_Microscope_Remote *scope = NULL);
+  nm_TipDisplayControls(nmm_Microscope_Remote *scope = NULL,
+                        nmr_Registration_Proxy *aligner = NULL);
   // removes nm_TipRenderer object from UGraphics rendering tree
   ~nm_TipDisplayControls();
   void setSPM(nmm_Microscope_Remote *scope);
   void setDisplayEnable(int enable);
   void setTextureEnable(int enable);
+  void sendFiducial();
 
  private:
   int pointDataHandler(const Point_results *pr);
   static int pointDataHandler(void *ud, const Point_results *pr);
   static void handleEnableDisplayChange(vrpn_int32 newval, void *userdata);
   static void handleEnableTextureChange(vrpn_int32 newval, void *userdata);
+  static void handleSendFiducialRequested(vrpn_int32 newval, void *userdata);
 
   // control panel variables
   Tclvar_int d_enableDisplay;
   Tclvar_int d_enableTexture;
+
+  Tclvar_int d_sendFiducialRequested;
 
   // data for tip model and graphics display
   nm_TipModel d_tipModel;
@@ -126,6 +134,10 @@ class nm_TipDisplayControls {
 
   // AFM
   nmm_Microscope_Remote *d_AFM;
+  
+  // aligner so we can send tip locations to it for alignment with an
+  // an SEM image of the tip
+  nmr_Registration_Proxy *d_aligner;
 };
 
 #endif
