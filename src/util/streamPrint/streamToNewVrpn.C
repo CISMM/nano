@@ -491,7 +491,7 @@ int	translate_packet(stm_stream *instream)
 
     case SPM_REPORT_SLOW_SCAN:
       stm_unbuffer_int (&bufptr, &iscrap);
-      printf("SPM_REPORT_SLOW_SCAN (%d) =>", iscrap)
+      printf("SPM_REPORT_SLOW_SCAN (%d) =>", iscrap);
       if (iscrap) {
         connection->pack_message(10000 - vbuflen, now, SlowScanPause_type,
                                  myId, vrpnbuffer, vrpn_CONNECTION_RELIABLE);
