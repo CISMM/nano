@@ -272,7 +272,7 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_3D()
   transformSolver(SEMfromRotatedModel2DMatrix, &error, 
             rotatedSurfaceFeaturePoints, s_surfaceFeature_modelIndex,
             s_surfaceFeature_SEMIndex, 
-            NMR_2D2D_AFFINE);//_Z_UNIFORMSCALING_Z_TRANSLATE);
+            NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
   // compose the 2D affine part with the pre-rotation part
   double tempMatrix[16];
   nmb_TransformMatrix44 preRotation44;
