@@ -1,3 +1,7 @@
+2001-03-14  Jason Clark  <jclark@cs.unc.edu>
+
+	* spm_gl.c (spm_x_strip_masked): Fixed memory stomping bug in rare cases.
+
 2001-03-13  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmg_Visualization.C: See below

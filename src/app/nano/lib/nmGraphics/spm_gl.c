@@ -25,6 +25,7 @@
 #include	<string.h>
 #include	<stdlib.h>  // malloc
 #include	<math.h>
+#include <assert.h>
 
 #include <colormap.h>
 #include <nmb_PlaneSelection.h>
@@ -743,7 +744,7 @@ int     x,y;
     }
     
     // Make sure they asked for a legal strip (in range and on stride)
-    if ((which < 0) || (which >= planes.height->numY() - 1)) {
+    if ((which < 0) || (which >= planes.height->numX() - 1)) {
         fprintf(stderr, "Strip %d is outside plane.\n", which);
         return(-1);
     }
@@ -763,15 +764,15 @@ int     x,y;
     
     int number_of_strips = 0;
     bool skipping = false;
-    int *x_array = new int[planes.height->numX() * 2];
-    int *y_array = new int[planes.height->numX() * 2];
+    int *x_array = new int[planes.height->numY() * 3];
+    int *y_array = new int[planes.height->numY() * 3];
     i = 0;
     
     x = which + g_stride;
     y = 0;
 	//Is the current quad partially masked?
     bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                              planes.mask->value(x - g_stride,y) <= 0 ||
+                              planes.mask->value(x-g_stride,y) <= 0 ||
                               planes.mask->value(x,y+g_stride) <= 0 ||
                               planes.mask->value(x-g_stride,y+g_stride) <= 0);
     if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
@@ -786,12 +787,12 @@ int     x,y;
     }
     for (y = g_stride; y < planes.height->numX() - g_stride; y += g_stride) {   // Left->right
         quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                             planes.mask->value(x - g_stride,y) <= 0 ||
+                             planes.mask->value(x-g_stride,y) <= 0 ||
                              planes.mask->value(x,y+g_stride) <= 0 ||
                              planes.mask->value(x-g_stride,y+g_stride) <= 0);
         if (!skipping) {
-            x_array[i] = x; x_array[i+1] = x;
-            y_array[i] = y; y_array[i+1] = y - g_stride;
+            x_array[i] = x; x_array[i+1] = x - g_stride;
+            y_array[i] = y; y_array[i+1] = y;
             i+=2;
             if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
                 (g_mask == INVERT_MASK && !quad_partial_mask))
@@ -808,8 +809,8 @@ int     x,y;
                 (g_mask == ENABLE_MASK && !quad_partial_mask))
             {
                 skipping = false;
-                x_array[i] = x; x_array[i+1] = x;
-                y_array[i] = y; y_array[i+1] = y - g_stride;
+                x_array[i] = x; x_array[i+1] = x - g_stride;
+                y_array[i] = y; y_array[i+1] = y;
                 i+=2;
             }
         }
@@ -817,7 +818,7 @@ int     x,y;
     
     if (!skipping) {
         x_array[i] = x; x_array[i+1] = x;
-        y_array[i] = y; y_array[i+1] = y - g_stride;
+        y_array[i] = y; y_array[i+1] = y;
         i+=2;
         number_of_strips++;
     }
@@ -827,45 +828,52 @@ int     x,y;
     
     int max = i;
     int count = 0;
-    int *vert_counts = new int[number_of_strips];
-    number_of_strips = 0;
+    int *vert_counts;
+    int strip_i = 0;
     int vert = 0;
-    for (i = 0; i < max; i++) {
-        x = x_array[i];
-        y = y_array[i];
-        if (x == -1 && y == -1) {
-            if (g_VERTEX_ARRAY) {
-                vert_counts[number_of_strips] = count;
-                count = 0;
-                number_of_strips++;
+
+    if (number_of_strips > 0) {
+        vert_counts = new int[number_of_strips];
+
+        for (i = 0; i < max; i++) {
+            x = x_array[i];
+            y = y_array[i];
+            if (x == -1 && y == -1) {
+                if (g_VERTEX_ARRAY) {
+                    vert_counts[strip_i] = count;
+                    count = 0;
+                    strip_i++;
+                }
+                else {
+                    glEnd();
+                    glBegin(GL_TRIANGLE_STRIP);
+                }
             }
             else {
-                glEnd();
-                glBegin(GL_TRIANGLE_STRIP);
+                if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                    fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
+                    return(-1);
+                }
+                vert++;
+                count++;
             }
+        }
+    
+        if (g_VERTEX_ARRAY) {
+            vert_counts[strip_i] = count;
+            specify_vertexArray(vertexArray, vert_counts, number_of_strips);
         }
         else {
-            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
-                fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
-                return(-1);
-            }
-            vert++;
-            count++;
+            glEnd();
+            VERBOSE(20, "          glEnd()");
         }
-    }
     
-    if (g_VERTEX_ARRAY) {
-        vert_counts[number_of_strips] = count;
-        specify_vertexArray(vertexArray, vert_counts, number_of_strips+1);
-    }
-    else {
-        glEnd();
-        VERBOSE(20, "          glEnd()");
+        delete [] vert_counts;
     }
     
     delete [] x_array;
     delete [] y_array;
-    
+
     return 0;
 }
 
@@ -954,9 +962,9 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
     
     int number_of_strips = 0;
     bool skipping = false;
-    int *x_array = new int[planes.height->numX() * 2];
-    int *y_array = new int[planes.height->numX() * 2];
-    i = 0;
+    int *x_array = new int[planes.height->numX() * 3];  //Multiplying by 3 is more space than needed
+    int *y_array = new int[planes.height->numX() * 3];  //but it's simple and we can need some
+    i = 0;                                              //unknown amount more than 2 if g_stride is 1
     
     x = 0;
     y = which + g_stride;
@@ -1005,7 +1013,7 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
             }
         }
     }
-    
+
     if (!skipping) {
         x_array[i] = x; x_array[i+1] = x;
         y_array[i] = y; y_array[i+1] = y - g_stride;
@@ -1015,48 +1023,56 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
     else {
         i--;
     }
-    
+
     int max = i;
     int count = 0;
-    int *vert_counts = new int[number_of_strips];
-    number_of_strips = 0;
+    int *vert_counts;
+    int strip_i = 0;
     int vert = 0;
-    for (i = 0; i < max; i++) {
-        x = x_array[i];
-        y = y_array[i];
-        if (x == -1 && y == -1) {
-            if (g_VERTEX_ARRAY) {
-                vert_counts[number_of_strips] = count;
-                count = 0;
-                number_of_strips++;
+
+    if (number_of_strips > 0) {
+        vert_counts = new int[number_of_strips];
+
+        for (i = 0; i < max; i++) {
+            x = x_array[i];
+            y = y_array[i];
+            if (x == -1 && y == -1) {
+                if (g_VERTEX_ARRAY) {
+                    vert_counts[strip_i] = count;
+                    count = 0;
+                    strip_i++;
+                }
+                else {
+                    glEnd();
+                    glBegin(GL_TRIANGLE_STRIP);
+                }
             }
             else {
-                glEnd();
-                glBegin(GL_TRIANGLE_STRIP);
+                if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                    fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
+                    return(-1);
+                }
+                vert++;
+                count++;
             }
+        }
+        
+        if (g_VERTEX_ARRAY) {
+            vert_counts[strip_i] = count;
+            specify_vertexArray(vertexArray, vert_counts, number_of_strips);
         }
         else {
-            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
-                fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
-                return(-1);
-            }
-            vert++;
-            count++;
+            glEnd();
+            VERBOSE(20, "          glEnd()");
         }
+        
+        
+        delete [] vert_counts;
     }
-    
-    if (g_VERTEX_ARRAY) {
-        vert_counts[number_of_strips] = count;
-        specify_vertexArray(vertexArray, vert_counts, number_of_strips+1);
-    }
-    else {
-        glEnd();
-        VERBOSE(20, "          glEnd()");
-    }
-    
-    delete [] x_array;
+
     delete [] y_array;
-    
+    delete [] x_array;
+
     return 0;
 }
 
