@@ -2937,7 +2937,7 @@ void    handle_bump_dataset_change(const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
-               (frictionPlaneName.string());
+    (bumpPlaneName.string());
 
         if (plane != NULL) {
                 bump_slider_min_limit = plane->minAttainableValue();
@@ -3829,6 +3829,9 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_friction_dataset_change, g);
   compliancePlaneName.addCallback
             (handle_compliance_dataset_change, g);
+  bumpPlaneName.addCallback(handle_bump_dataset_change, g);
+  buzzPlaneName.addCallback(handle_buzz_dataset_change, g);
+  
 
   // Latency compensation - Tom Hudson
 
