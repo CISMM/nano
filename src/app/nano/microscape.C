@@ -6047,9 +6047,22 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
         // default for Nano is crt display
         _putenv("V_DISPLAY=crt");
     }
-    if (getenv("V_SCREEN_DIM_PXFL") == NULL) {
         // default for Nano for 1280x1024 screen
-        _putenv("V_SCREEN_DIM_PXFL=1056 772");
+    int s_width = 1280, s_height = 1024;
+#ifdef V_GLUT
+    if (glutGet( GLUT_SCREEN_WIDTH )) {
+        s_width = glutGet( GLUT_SCREEN_WIDTH );
+    } 
+    if (glutGet( GLUT_SCREEN_HEIGHT)) {
+        s_height = glutGet( GLUT_SCREEN_HEIGHT);
+    }
+#endif
+    if (getenv("V_SCREEN_DIM_PXFL") == NULL) {
+        char env_str[200];
+        // Magic numbers make all the borders come out right in Windows.
+        sprintf(env_str, "V_SCREEN_DIM_PXFL=%d %d", 
+                s_width - 224, s_height - 252);
+        _putenv(env_str);
     }
     if (getenv("V_SCREEN_OFFSET") == NULL) {
         // default for Nano for 1280x1024 screen

@@ -91,7 +91,7 @@ proc choose_logfile { } {
                 {"Lab Notebook files" ".nm" } 
                 {"All files" *} }
     set filename [tk_getSaveFile -filetypes $types \
-            -initialfile "log.nms" -initialdir $fileinfo(save_dir)\
+            -initialfile "log_[clock format [clock seconds] -format %d-%b-%y].nms" -initialdir $fileinfo(save_dir)\
             -title "Choose a lab notebook file"]
     if {$filename != ""} {
         # No error checking here - do that below 
