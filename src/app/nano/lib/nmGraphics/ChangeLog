@@ -1,3 +1,20 @@
+2001-02-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmg_Visualization.C : add new VERBOSE messages.
+
+	* graphics_globals.h (g_config_enableUber) : new variable.
+	* graphics_globals.c (g_config_enableUber) : same;  defaults to 1.
+	* openGL.c : move Ubergraphics #includes and extern
+	declaration of UTree World to top of file.
+	(draw_world) : check value of g_config_enableUber before
+	executing World.Do(&URender::Render).
+	* nmg_GraphicsImpl.h (enableUber) : new function.
+	* nmg_GraphicsImpl.C (enableUber) : same.
+	(nmg_Graphics_Implementation::nmg_Graphics_Implementation) :
+	delete dead code.
+	
+
+
 2001-02-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* graphics.h (getViewportSize) : new function.

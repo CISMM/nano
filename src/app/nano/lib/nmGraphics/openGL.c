@@ -35,6 +35,11 @@
 #include <nmb_Interval.h>
 #include <nmb_Line.h>
 
+// UGRAPHICS GLOBAL DEFINED IN MICROSCAPE.C
+#include <UTree.h>
+#include <URender.h>
+extern UTree World;
+
 #include	"nmg_Graphics.h" // for enums
 #include    "nmg_Visualization.h"
 #include	"openGL.h"
@@ -522,10 +527,6 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
   return(0);
 }
 
-//UGRAPHICS GLOBAL DEFINED IN MICROSCAPE.C
-#include "UTree.h"
-#include "URender.h"
-extern UTree World;
 int draw_world (int) {
 
   v_gl_set_context_to_vlib_window(); 
@@ -535,7 +536,9 @@ int draw_world (int) {
 
   //UGRAPHICS CALL TO DRAW THE WORLD  -- ASSUMING THAT VLIB HAS IT IN WORLD SPACE
   //WHEN I HIT THIS POINT
-  World.Do(&URender::Render);
+  if (g_config_enableUber) {
+    World.Do(&URender::Render);
+  }
 
   /********************************************************************/
   // End Ubergraphics

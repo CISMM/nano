@@ -87,6 +87,7 @@ extern int g_config_planeonly;
 extern int g_config_filled_polygons;
 extern int g_config_smooth_shading;
 extern int g_config_trueTip;
+extern int g_config_enableUber;
 
 extern int g_contour_r;
 extern int g_contour_g;
@@ -108,6 +109,7 @@ extern int g_hand_color;
 
 extern float g_icon_scale;
 
+
 extern double g_minColor [4];
 extern double g_maxColor [4];
 
@@ -117,8 +119,8 @@ extern int g_minChangedY;
 extern int g_maxChangedY;
 
 //to keep track of position and orientation of collaborator's hand
-extern double g_collabHandPos[3];
-extern double g_collabHandQuat[4];
+extern double g_collabHandPos [3];
+extern double g_collabHandQuat [4];
 extern int g_position_collab_hand;
 extern int g_draw_collab_hand;
 extern int make_collab_hand_icon(double pos[], double quat[], vrpn_int32 mode);

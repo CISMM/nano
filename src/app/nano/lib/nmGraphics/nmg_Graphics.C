@@ -50,6 +50,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics enableFilledPolygons");
   d_enableSmoothShading_type =
     c->register_message_type("nmg Graphics enableSmoothShading");
+  //d_enableUber_type =
+    //c->register_message_type("nmg Graphics enableUber");
   d_enableTrueTip_type =
     c->register_message_type("nmg Graphics enableTrueTip");
   d_setAdhesionSliderRange_type =
@@ -376,6 +378,38 @@ int nmg_Graphics::decode_enableSmoothShading (const char * buf,
   CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
+
+/*
+char * nmg_Graphics::encode_enableUber
+                     (int * len, int value) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(int);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_enableUber:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, value);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_enableUber (const char * buf,
+                                               int * value) {
+  if (!buf || !value) return -1;
+  CHECK(vrpn_unbuffer(&buf, value));
+  return 0;
+}
+*/
 
 char * nmg_Graphics::encode_enableTrueTip
                      (int * len, int value) {

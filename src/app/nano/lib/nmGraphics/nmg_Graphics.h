@@ -149,6 +149,9 @@ class nmg_Graphics {
       // Controls smooth shading of surface.  Turn off to show faceting
       // for demos.
 
+    //virtual void enableUber (int on) = 0;
+      // Controls execution of UberGraphics addins.  Turn off for
+      // multiprocessing (on PCs).
     virtual void enableTrueTip (int on) = 0;
       // Controls latency compensation technique:  displaying second
       // tip image.
@@ -415,6 +418,7 @@ class nmg_Graphics {
     vrpn_int32 d_enableChartjunk_type;
     vrpn_int32 d_enableFilledPolygons_type;
     vrpn_int32 d_enableSmoothShading_type;
+    //vrpn_int32 d_enableUber_type;
     vrpn_int32 d_enableTrueTip_type;
     vrpn_int32 d_setAdhesionSliderRange_type;
     vrpn_int32 d_setAlphaColor_type;
@@ -540,6 +544,8 @@ class nmg_Graphics {
     int decode_enableFilledPolygons (const char * buf, int *);
     char * encode_enableSmoothShading (int * len, int);
     int decode_enableSmoothShading (const char * buf, int *);
+    //char * encode_enableUber (int * len, int);
+    //int decode_enableUber (const char * buf, int *);
     char * encode_enableTrueTip (int * len, int);
     int decode_enableTrueTip (const char * buf, int *);
     char * encode_setAdhesionSliderRange (int * len, float low, float hi);

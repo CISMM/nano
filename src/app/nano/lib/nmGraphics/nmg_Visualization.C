@@ -682,6 +682,8 @@ rebuildGrid()
 	//ensureMaskPlane(planes);
 	//ensureTransparentPlane(planes);
     
+    VERBOSE(6, "nmg_Viz_Opaque::rebuildGrid()");
+
     if (build_grid_display_lists(planes,display_lists_in_x, &d_list_base[0], 
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
                                  g_maxColor, d_vertexPtr[0])) {
@@ -825,6 +827,8 @@ rebuildGrid()
     buildTransparentPlane(planes);
     g_mask = ENABLE_MASK;
         
+    VERBOSE(6, "nmg_Viz_Transparent::rebuildGrid()");
+
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
                                  g_maxColor, d_vertexPtr[0])) {
@@ -1001,6 +1005,8 @@ rebuildGrid()
     buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
     
+    VERBOSE(6, "nmg_Viz_WireFrame::rebuildGrid()");
+
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
                                  g_maxColor, d_vertexPtr[0])) 
@@ -1226,6 +1232,8 @@ rebuildGrid()
     buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
     
+    VERBOSE(6, "nmg_Viz_OpaqueTexture::rebuildGrid()");
+
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[0],
                                  &d_num_lists[0], d_num_lists[0], g_minColor,
                                  g_maxColor, d_vertexPtr[0])) 

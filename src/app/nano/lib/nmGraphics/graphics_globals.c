@@ -48,6 +48,7 @@ int g_config_planeonly = 0;
 int g_config_filled_polygons = 1;
 int g_config_smooth_shading = 1;
 int g_config_trueTip = 0;
+int g_config_enableUber = 1;
 
 float g_compliance_slider_min = 0.0f;
 float g_compliance_slider_max = 1.0f;

@@ -153,15 +153,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     // Initialize the various visualizations, then point the global at  //
     // the default							//
     //////////////////////////////////////////////////////////////////////
-    /*
-	viz_set[0] = new nmg_Viz_Opaque(dataset);
-    viz_set[1] = new nmg_Viz_Transparent(dataset);
-    viz_set[2] = new nmg_Viz_WireFrame(dataset);
-    viz_set[3] = new nmg_Viz_OpaqueTexture(dataset);
-	    
-    visualization = viz_set[0];
-	*/
-	visualization = create_new_visualization(0, dataset);
+    visualization = create_new_visualization(0, dataset);
     
     //////////////////////////////////////////////////////////////////////
     // Build the display lists we'll need to draw the data, etc		//
@@ -221,28 +213,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 		// shader initialization depends on texture ids
 
 
-///Moved by Jason on 12/8/00 to openGL.c
-/*
-  const GLubyte * exten;
-  exten = glGetString(GL_EXTENSIONS);
-
-#if ( defined(linux) || defined(hpux) || defined(_WIN32) )
-  // RMT The accelerated X server seems to be telling us that we have
-  // vertex arrays, but then they are not drawn; ditto for MesaGL on
-  // HPUX
-  g_VERTEX_ARRAY = 0;
-#else
-  g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
-#endif
-  g_VERTEX_ARRAY = 1;
-*/
-
-//    if (g_VERTEX_ARRAY) {
-//      fprintf(stderr,"Vertex Array extension used.\n");
-//    } else {
-//       fprintf(stderr,"Vertex Array extension not supported.\n");
-//    }
-
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
   if (!visualization->initVertexArrays(grid_size_x, grid_size_y) ) {
@@ -250,23 +220,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
       exit(0);
   }
 
-  /* Build display lists for surface scanning in X fastest, since
-   * that is the way the SPM will start scanning.
-   * There is one list for each row of data points except for
-   * the last.  Since these are for rows scanning in X fastest,
-   * we have one per Y index. */
-  
-
-  //This code is now commented out, as it is done in the constructor
-  //of the visualization class
-  /*
-   nmb_PlaneSelection planes; planes.lookup(data);
-   if (build_grid_display_lists(planes, 1, &grid_list_base,
-                                &num_grid_lists, g_minColor, g_maxColor)) {
-     fprintf(stderr,"ERROR: Could not build grid display lists\n");
-     d_dataset->done = 1;
-   }
-  */
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
@@ -277,7 +230,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     (dataset->heightPlaneName->string());
   decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
   init_world_modechange( g_user_mode, 0, 0 );
-
 
   if (!connection) return;
 
@@ -305,6 +257,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_enableSmoothShading_type,
                                handle_enableSmoothShading,
                                this, vrpn_ANY_SENDER);
+/*
+  connection->register_handler(d_enableUber_type,
+                               handle_enableUber,
+                               this, vrpn_ANY_SENDER);
+*/
   connection->register_handler(d_enableTrueTip_type,
                                handle_enableTrueTip,
                                this, vrpn_ANY_SENDER);
@@ -369,20 +326,20 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                handle_setContourPlaneName,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setOpacityPlaneName_type,
-							   handle_setOpacityPlaneName,
-							   this, vrpn_ANY_SENDER);
+			   handle_setOpacityPlaneName,
+			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setHeightPlaneName_type,
                                handle_setHeightPlaneName,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMaskPlaneName_type,
-							   handle_setMaskPlaneName,
-							   this, vrpn_ANY_SENDER);
+			   handle_setMaskPlaneName,
+			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setTransparentPlaneName_type,
-							   handle_setTransparentPlaneName,
-							   this, vrpn_ANY_SENDER);
+			   handle_setTransparentPlaneName,
+			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setVizPlaneName_type,
-							   handle_setVizPlaneName,
-							   this, vrpn_ANY_SENDER);
+			   handle_setVizPlaneName,
+			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMinColor_type,
                                handle_setMinColor,
                                this, vrpn_ANY_SENDER);
@@ -1049,6 +1006,11 @@ void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
 void nmg_Graphics_Implementation::enableSmoothShading (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableSmoothShading().\n");
   g_config_smooth_shading = on;
+}
+
+void nmg_Graphics_Implementation::enableUber (int on) {
+//fprintf(stderr, "nmg_Graphics_Implementation::enableUber(%d).\n", on);
+  g_config_enableUber = on;
 }
 
 void nmg_Graphics_Implementation::enableTrueTip (int on) {
@@ -3006,6 +2968,20 @@ int nmg_Graphics_Implementation::handle_enableSmoothShading
 
   return 0;
 }
+
+/*
+// static
+int nmg_Graphics_Implementation::handle_enableUber
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int value;
+
+  CHECKF(it->decode_enableUber(p.buffer, &value), "handle_enableUber");
+  it->enableUber(value);
+
+  return 0;
+}
+*/
 
 // static
 int nmg_Graphics_Implementation::handle_enableTrueTip

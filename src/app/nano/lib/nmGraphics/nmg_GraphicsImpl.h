@@ -43,6 +43,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);
     virtual void enableSmoothShading (int);
+    virtual void enableUber (int);
     virtual void enableTrueTip (int);
 
     virtual void setAdhesionSliderRange (float low, float hi);
