@@ -1994,7 +1994,6 @@ int make_rubber_line_point (
 					    (void *) rubber_corner_point,
 					    "my_rubber_line");
 	    p->insert( rubber_point[0], rubber_point[1], list_id);
-	    printf( "       ALEXANDRA saving connecting point %d\n", index );
 
 	    g_rubberSweepPtsSave[index][0] = g_rubberSweepPts[index][2];
 	    g_rubberSweepPtsSave[index][1] = g_rubberSweepPts[index][3];

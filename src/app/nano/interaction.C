@@ -480,15 +480,22 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 		    microscope->state.modify.yaw =
                            atan2((currPt->y() - y),
 				 (currPt->x() - x)) - M_PI_2;
-		    //  Following ensures that the turn is through the min angle:
-		    if ( fabs( oldyaw - microscope->state.modify.yaw) > M_PI_2 ) {
-			if ( oldyaw > microscope->state.modify.yaw ) {
-			    oldyaw -= M_PI;
-			} else {
-			    microscope->state.modify.yaw -= M_PI;
-			}
+		    if ( microscope->state.modify.yaw < 0 )
+		      microscope->state.modify.yaw += (2*M_PI);
+		    if ( oldyaw < 0 )
+		      oldyaw += (2*M_PI);
+		    if ( (oldyaw - microscope->state.modify.yaw) > M_PI) {
+		      microscope->DrawArc(x,y, oldyaw - (2*M_PI),
+					  microscope->state.modify.yaw);
 		    }
-                    microscope->DrawArc(x,y, oldyaw, microscope->state.modify.yaw);
+		    else if ( (microscope->state.modify.yaw - oldyaw) > M_PI) {
+		      microscope->DrawArc(x,y, oldyaw,
+					  microscope->state.modify.yaw - (2*M_PI));
+		    }
+		    else {
+		      microscope->DrawArc(x,y, oldyaw,
+					  microscope->state.modify.yaw);
+		    }
 		}
 		// Draw a line between prevPt and currPt
 		// Wait until we get the report before we send the next line
@@ -967,34 +974,11 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     **
     ** Center command is a special case
     **/
-    if( PRESS_EVENT == eventList[CENT_BT] ) {
+    if( PRESS_EVENT == eventList[CENTER_BT] ) {
       if (timer) { timer->activate(timer->getListHead()); }
       center();
     }
 
-    /* Clear pulses
-	**/
-    if(PRESS_EVENT == eventList[CLEAR_BT] ) {
-      if (timer) { timer->activate(timer->getListHead()); }
-      handleCharacterCommand("C", &dataset->done, 1);
-    }
-
-    /* Select All (maximum scan range)
-	**/
-    if(PRESS_EVENT == eventList[ALL_BT] ) {
-      if (timer) { timer->activate(timer->getListHead()); }
-      handleCharacterCommand("A", &dataset->done, 1);
-    }
-
-    /* code dealing with locking the sweep width (qliu 6/29/95)*/
-    /*
-      if(PRESS_EVENT == eventList[LOCK_BT] ) {
-      lock_width=1;	
-      }
-      if(RELEASE_EVENT == eventList[LOCK_BT] ) {
-      lock_width=0;
-      }
-    */        
     /* code dealing with locking the tip in sharp tip mode */
     /* locks the tip in one place so you can take repeated measurements */
     if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
@@ -1017,29 +1001,10 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       // causes "handle_commit_cancel" to be called
       tcl_commit_canceled = !tcl_commit_canceled; 
     }
-    if( PRESS_EVENT == eventList[PH_RSET_BT] ) {
-      // causes "handle_phantom_reset" to be called
-      tcl_phantom_reset_pressed = 1;
-    }
-    // testing for the remaining buttons on the button box.
-    if( PRESS_EVENT == eventList[NULL1_BT] )
-      printf("NULL1 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL2_BT] ) 
-      printf("NULL2 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL3_BT] ) 
-      printf("NULL3 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL4_BT] ) 
-      printf("NULL4 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL5_BT] ) 
-      printf("NULL5 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL6_BT] )
-      printf("NULL6 from button box.\n");
-    if( PRESS_EVENT == eventList[NULL7_BT] ) 
-      printf("NULL7 from button box.\n");
-	    
-	/* see if the user changed modes using a button
-	**/
+
+    // see if the user changed modes using a button
     mode_change |= butt_mode(eventList, user_mode+user);
+
     // also check to see if the modify style has changed -
     // can affect hand icon as well.
     if (user_mode[user] == USER_PLANEL_MODE) {

@@ -3723,8 +3723,6 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
         else if (grid_y > d_mod_window_max_y) 
             d_mod_window_max_y = (vrpn_int32)grid_y;
      }
-     printf("mod window updated: %d,%d,%d,%d\n", d_mod_window_min_x,
-		d_mod_window_min_y, d_mod_window_max_x, d_mod_window_max_y);
   }
 }
 
