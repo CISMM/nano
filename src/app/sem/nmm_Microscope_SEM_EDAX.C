@@ -1,9 +1,11 @@
 #include <vrpn_Connection.h>
 #include "nmm_Microscope_SEM_EDAX.h"
 #include "nmm_EDAX.h"
+#include "nmb_Image.h"
 #include <stdlib.h>
 #include <string.h>
 
+#define UCHAR_PIXEL
 //#define VIRTUAL_SEM
 
 #ifndef VIRTUAL_SEM
@@ -51,10 +53,10 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 
   initializeParameterDefaults();
   // create buffer in which to store data
-#ifdef _WIN32
-  d_scanBuffer = new UCHAR[d_resolution_x*d_resolution_y];
-#else
+#ifdef UCHAR_PIXEL
   d_scanBuffer = new vrpn_uint8[d_resolution_x*d_resolution_y];
+#else
+  d_scanBuffer = new vrpn_uint8[2*d_resolution_x*d_resolution_y];
 #endif
   if (!d_scanBuffer){
 	fprintf(stderr, "Error, out of memory allocating image buffer %dx%d\n",
@@ -67,6 +69,8 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 
 nmm_Microscope_SEM_EDAX::~nmm_Microscope_SEM_EDAX (void)
 {
+  closeEDAXHardware();
+  closeScanControlInterface();
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::mainloop(void)
@@ -75,8 +79,11 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::mainloop(void)
     return 0;
   }
   if (d_scans_to_do > 0) {
+    openScanControlInterface(); // make sure we're on external control
     acquireImage();
     d_scans_to_do--;
+  } else {
+    closeScanControlInterface(); // release external control
   }
   return 0;
 }
@@ -194,7 +201,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::closeEDAXHardware()
 {
     int result = 0;
 #ifndef VIRTUAL_SEM
-	result = ResetGpuBoard();
+    result = ResetGpuBoard();
 #endif
     if (result == EDAX_ERROR) {
         fprintf(stderr, "closeHardware: ResetGpuBoard failure\n");
@@ -206,21 +213,27 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::closeEDAXHardware()
 vrpn_int32 nmm_Microscope_SEM_EDAX::openScanControlInterface()
 {
     int result = 0, enable = EDAX_TRUE;
+   // printf("EDAX is taking control of SEM scanning\n");
 #ifndef VIRTUAL_SEM
     result = SgEmia(EDAX_WRITE, &enable);
-#endif
     if (result == EDAX_ERROR) {
         fprintf(stderr, "initializeHardware: SgEmia failure\n");
         return -1;
     }
+#else
+    //printf("not\n");
+#endif
     return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::closeScanControlInterface()
 {
     int result = 0, enable = EDAX_FALSE;
+//    printf("EDAX is relinquishing control of SEM scanning\n");
 #ifndef VIRTUAL_SEM
     result = SgEmia(EDAX_WRITE, &enable);
+#else
+//    printf("not\n");
 #endif
     if (result == EDAX_ERROR) {
         fprintf(stderr, "closeHardware: SgEmia failure\n");
@@ -294,6 +307,8 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::configureScan()
     printf("%g msec;\n  actual integration time is %g msec\n", 
            msec_per_frame, msec_integration_per_frame);
     // division by 100 is to specify integration time in 100 ns units
+    // integration time = 0 has special meaning - only gives us most
+    // significant byte from ADC
     result = SetupSgScan(0, d_xScanSpan-1, 0, d_yScanSpan-1,
         d_pix_integrate_nsec/100, d_xScanSpan/d_resolution_x, 
 		d_yScanSpan/d_resolution_y);
@@ -326,10 +341,10 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setResolution
     d_resolution_x = res_x;
     d_resolution_y = res_y;
     delete [] d_scanBuffer;
-#ifdef _WIN32
-    d_scanBuffer = new UCHAR[d_resolution_x*d_resolution_y];
-#else
+#ifdef UCHAR_PIXEL
     d_scanBuffer = new vrpn_uint8[d_resolution_x*d_resolution_y];
+#else
+    d_scanBuffer = new vrpn_uint8[2*d_resolution_x*d_resolution_y];
 #endif
     configureScan();
   } else {
@@ -490,6 +505,9 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
   gettimeofday(&t0, NULL);
   // integration time is in 100 ns units
   // I guess this initializes the buffer to acquire a new image
+  // last two parameters: ADC = 1, number of strips to collect= 1
+  // integration time = 0 has special meaning - only gives us most
+  // significant byte from ADC
   result = SetupSgColl(d_resolution_index, d_pix_integrate_nsec/100, 1, 1);
   if (result == EDAX_ERROR) {
 	fprintf(stderr, "acquireImage: SetupSgColl failed\n");
@@ -522,13 +540,16 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
         // every time since SetupSgColl looks like it is just a configuration
         // function but it didn't work very well
     gettimeofday(&t0, NULL);
+#ifdef UCHAR_PIXEL
     result = CollectSgLine(&(d_scanBuffer[i*d_resolution_x]));
-	//printf("finished collecting\n");
-	if (result == EDAX_ERROR) {
+#else
+    result = CollectSgLine(&(d_scanBuffer[2*i*d_resolution_x]));
+#endif
+    //printf("finished collecting\n");
+    if (result == EDAX_ERROR) {
 		fprintf(stderr, "Error collecting scan line for row %d\n", i);
-	}
+    }
     gettimeofday(&t1, NULL);
-    //reportWindowLineData(i);
     reportScanlineData(i);
     //d_connection->mainloop();
     gettimeofday(&t2, NULL);
@@ -544,9 +565,15 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
   int j;
 
   for (i = 0; i < d_resolution_y; i++){
-    memset(&(d_scanBuffer[i*d_resolution_x]), 
-	((i+((int)(count)))%d_resolution_y)*255/d_resolution_y, d_resolution_x);
-    //reportWindowLineData(i);
+#ifdef UCHAR_PIXEL
+    memset(&(d_scanBuffer[i*d_resolution_x]),
+        ((i+((int)(count)))%d_resolution_y)*255/d_resolution_y, d_resolution_x);
+#else
+    for (j = 0; j < d_resolution_x; j++){
+        ((vrpn_uint16 *)d_scanBuffer)[i*d_resolution_x + j] = 
+            ((i+(int)count)%d_resolution_y)*64000/d_resolution_y;
+    }
+#endif
     reportScanlineData(i);
     //d_connection->mainloop();
   }
@@ -568,33 +595,17 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
   return 0;
 }
 
-vrpn_int32 nmm_Microscope_SEM_EDAX::reportWindowLineData(int line_num)
-{
-  // line data is at d_scanBuffer[line_num*d_resolution_x]
-  char *msgbuf;
-  vrpn_int32 len;
-  struct timeval now;
-  vrpn_int32 offset = 0;
-  vrpn_uint8 *data = &(d_scanBuffer[line_num*d_resolution_x]);
-
-  gettimeofday(&now, NULL);
-
-  msgbuf = encode_WindowLineData(&len, 0, line_num, 1, 0,
-               d_resolution_x, 1, &offset, now.tv_sec, now.tv_usec, 
-               &data);
-  if (!msgbuf){
-    return -1;
-  }
-  return dispatchMessage(len, msgbuf, d_WindowLineData_type);
-}
-
 vrpn_int32 nmm_Microscope_SEM_EDAX::reportScanlineData(int line_num)
 {
   // line data is at d_scanBuffer[line_num*d_resolution_x]
   char *msgbuf;
   vrpn_int32 len;
   struct timeval now;
-  vrpn_uint8 *data = &(d_scanBuffer[line_num*d_resolution_x]);
+#ifdef UCHAR_PIXEL
+  void *data = &(d_scanBuffer[line_num*d_resolution_x]);
+#else
+  void *data = &(d_scanBuffer[2*line_num*d_resolution_x]);
+#endif
 
   gettimeofday(&now, NULL);
   vrpn_int32 lines_per_message = d_lines_per_message;
@@ -602,9 +613,15 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportScanlineData(int line_num)
       lines_per_message = d_resolution_y - line_num;
   }
   */
+#ifdef UCHAR_PIXEL
+  msgbuf = encode_ScanlineData(&len, 0, line_num, 1, 1,
+               d_resolution_x, 1, lines_per_message, now.tv_sec, now.tv_usec,
+               NMB_UINT8, &data);
+#else
   msgbuf = encode_ScanlineData(&len, 0, line_num, 1, 1,
                d_resolution_x, 1, lines_per_message, now.tv_sec, now.tv_usec, 
-               &data);
+               NMB_UINT16, &data);
+#endif
   if (!msgbuf) { 
     return -1;
   }
@@ -697,14 +714,13 @@ int nmm_Microscope_SEM_EDAX::RcvRequestScan
 int nmm_Microscope_SEM_EDAX::RcvGotConnection
 		(void *_userdata, vrpn_HANDLERPARAM _p)
 {
-	nmm_Microscope_SEM_EDAX *me = 
+    nmm_Microscope_SEM_EDAX *me = 
 			(nmm_Microscope_SEM_EDAX *)_userdata;
   
-	me->reportResolution();
+    me->reportResolution();
     me->reportPixelIntegrationTime();
     me->reportInterPixelDelayTime();
-	printf("Taking control of SEM scanning\n");
-    me->openScanControlInterface();
+    //me->openScanControlInterface();
     me->d_scans_to_do = 0;
     me->d_scan_enabled = 0;
     return 0;
@@ -716,7 +732,6 @@ int nmm_Microscope_SEM_EDAX::RcvDroppedConnection
 {
         nmm_Microscope_SEM_EDAX *me =
                         (nmm_Microscope_SEM_EDAX *)_userdata;
-		printf("Relinquishing control of SEM scanning\n");
         me->closeScanControlInterface();
         return 0;
 }

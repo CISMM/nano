@@ -1,4 +1,6 @@
-USES_LIBS := nmSEM nmUI nmImageViewer nmBase vrpn quat
+USES_LIBS := nmSEM nmImageViewer nmBase vrpn quat
+
+USES_EXTERNAL_LIBS := tcl tk
 
 EXTRA_CFLAGS := -DVIRTUAL_SEM
 

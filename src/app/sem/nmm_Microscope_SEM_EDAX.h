@@ -34,8 +34,7 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_int32 reportResolution();
     vrpn_int32 reportPixelIntegrationTime();
     vrpn_int32 reportInterPixelDelayTime();
-    vrpn_int32 reportWindowLineData(int line_num);
-	vrpn_int32 reportScanlineData(int line_num);
+    vrpn_int32 reportScanlineData(int line_num);
 
   private:
     vrpn_int32 initializeParameterDefaults(void);
