@@ -1,3 +1,9 @@
+2001-12-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c (default_spring_k):  changed the default
+	value to 0.35, so that the Phantom doesn't resonate on the 
+	edges of the scan area.
+
 2001-12-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C (initialize):  small change to 

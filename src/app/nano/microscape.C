@@ -523,7 +523,7 @@ Tclvar_float	adhesion_slider_min_limit("adhesion_slider_min_limit",0);
 Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
 Tclvar_string adhesionPlaneName ("adhesion_comes_from", "");
 
-TclNet_float    default_spring_k("spring_k_slider",0.5);
+TclNet_float    default_spring_k("spring_k_slider", 0.35);
 
 //-----------------------------------------------------------------------
 /// Navigate window, moves the surface view. 
