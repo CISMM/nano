@@ -369,8 +369,8 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
-  long numSets = 0;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
   long i;
 
 // NANO BEGIN
@@ -392,19 +392,19 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
     mptr = msgbuf;
     mlen = *len;
 // NANO BEGIN
-    fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %ld\n", numSets);
+    fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %d\n", numSets);
 // NANO END
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)
       if (1 == list->Is_set(i)) {
-        nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
 
         // Ask for 10 samples of each except Topography;
         // of that we want 90
         if (!strcmp("Topography", list->Checkbox_name(i)))
-          nmb_Util::Buffer(&mptr, &mlen, (long)90);
+          vrpn_buffer(&mptr, &mlen, (vrpn_int32)90);
         else
-          nmb_Util::Buffer(&mptr, &mlen, (long)10);
+          vrpn_buffer(&mptr, &mlen, (vrpn_int32)10);
       }
   }
 
@@ -416,20 +416,17 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
-  long numSets = 0;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
   long i;
 
   if (!len) return NULL;
-// NANO BEGIN
-  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: Entering...\n");
-// NANO END
 
   for (i = 0; i < list->Num_checkboxes(); i++)
     if (1 == list->Is_set(i)) numSets++;
 
 // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %ld\n", numSets);
+  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
 // NANO END
   *len = sizeof(long) + STM_NAME_LENGTH * numSets;
   msgbuf = new char [*len];
@@ -440,10 +437,10 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++) {
        if (1 == list->Is_set(i)) {
-	  nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+	  vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
 	  fprintf(stderr, "     name: %s\n",list->Checkbox_name(i));
        }
     }
@@ -1892,8 +1889,8 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
 
   // Set the delay parameters for when we change things
   // These are used on the DI code to control keyboard delay
-  CHECK(SetStdDelay(state.StdDelay));
-  CHECK(SetStPtDelay(state.StPtDelay));
+  //CHECK(SetStdDelay(state.StdDelay));
+  //CHECK(SetStPtDelay(state.StPtDelay));
 
   // Set the microscope for imaging mode, if we're supposed to.
   if (_setMode)
