@@ -30,36 +30,42 @@ void	hsv_to_rgb(float h, float s, float v, float *r, float *g, float *b)
 	}
 }
 
-void	main(unsigned argc, char *argv[])
+int main(unsigned argc, char *argv[])
 {
-	float	r,g,b, h,s,v;
+	float	r,g,b, hue1, hue2,s,v;
 	float	i;
 	int	COUNT = 200;
+	if ( argc == 3 ) {
+	  hue1 = atof( argv[1] );
+	  hue2 = atof( argv[2] );
+	}
+	else {
+	  fprintf( stderr, "Usage: throughgray hue1 hue2\n" );
+	  return 0;
+	}
 
 	// Print header
 	printf("Colormap\n");
 	printf("Value\tRed\tGreen\tBlue\tAlpha\n");
 	printf("-----------------------------------------------------\n");
 
-	// First half: goes from blue to unsaturated gray
-	h = 240;	// Blue
-	v = 1.0;	// Constant intensity
+	// First half: goes from first hue to unsaturated gray
+	v = 0.8;	// Constant intensity
 	for (i = 0; i < COUNT/2; i++) {
 		s = (1 - (i/(COUNT/2)));	// Desaturate
-		hsv_to_rgb(h,s,v, &r,&g,&b);
+		hsv_to_rgb(hue1,s,v, &r,&g,&b);
 		printf("%7.3g\t%d\t%d\t%d\t%d\n", i/(COUNT-1),
 			(int)(r*255),(int)(g*255),(int)(b*255), 255);
 	}
 
-	// Second half: goes from unsaturated gray to red
-	h = 0;		// Red
-	v = 1.0;	// Constant intensity
+	// Second half: goes from unsaturated gray to second hue
+	v = 0.8;	// Constant intensity
 	for (i = COUNT/2; i < COUNT; i++) {
 		s = (i-COUNT/2)/(COUNT/2-1);	// Saturate
-		hsv_to_rgb(h,s,v, &r,&g,&b);
+		hsv_to_rgb(hue2,s,v, &r,&g,&b);
 		printf("%7.3g\t%d\t%d\t%d\t%d\n", i/(COUNT-1),
 			(int)(r*255),(int)(g*255),(int)(b*255), 255);
 	}
-
+	return 0;
 }
 

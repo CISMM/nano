@@ -97,7 +97,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     }
 
     initDisplays();
-    init_world_modechange( USER_GRAB_MODE, 0 );
 
     // make sure everything is going into the right gl context
     v_gl_set_context_to_vlib_window();
@@ -200,6 +199,14 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
+
+  // This section initializes the user mode to GRAB and sets an initial
+  // position for the aimLine...
+  BCPlane* plane = dataset->inputGrid->getPlaneByName
+    (dataset->heightPlaneName->string());
+  decoration->aimLine.moveTo(plane->numX()/2, plane->numY()/2, plane);
+  init_world_modechange( USER_GRAB_MODE, 0 );
+
 
   if (!connection) return;
 
@@ -784,7 +791,16 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 
 void nmg_Graphics_Implementation::enableChartjunk (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
+  if ( g_config_chartjunk == on )
+    return;
   g_config_chartjunk = on;
+  if ( on == 1 ) {
+    init_world_modechange( USER_GRAB_MODE, 0);
+  }
+  else if ( on == 0 ) {
+    clear_world_modechange( USER_MEASURE_MODE, 0);
+    clear_world_modechange( USER_GRAB_MODE, 0);
+  }
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
@@ -922,16 +938,11 @@ void nmg_Graphics_Implementation::setTextureDirectory (const char * dir) {
 void nmg_Graphics_Implementation::setColorMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
 
-  // If CUSTOM is selected, set the color map pointer to
-  // NULL so that the gl code will go back to using the old
-  // method of computing color.  XXX Integrate this better,
-  // so that we always use a color map but that it is set to
-  // the min/max colors when we are using CUSTOM.
-  if (strcmp(name, "CUSTOM") == 0) {
-          g_curColorMap = NULL;
+  if (strcmp(name, "none") == 0) {
+    g_curColorMap = NULL;
   } else {
-          g_colorMap.load_from_file(name, g_colorMapDir);
-          g_curColorMap = &g_colorMap;
+    g_colorMap.load_from_file(name, g_colorMapDir);
+    g_curColorMap = &g_colorMap;
   }
   causeGridRedraw();
 }

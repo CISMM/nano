@@ -1025,16 +1025,6 @@ void init_slow_line (void * _mptr)
   microscope->requestSynchronization(0, 0, RELAX_MSG);
 }
 
-void step_slow_line (void * _mptr, Position_list *p ) 
-{
-  microscope->state.modify.slow_line_position_param = 0.0;
-
-  microscope->state.modify.slow_line_currPt =  p->curr();
-  microscope->state.modify.slow_line_prevPt = p->peekPrev();
-  // send barrier message to detect end of relaxation points
-  microscope->requestSynchronization(0, 0, RELAX_MSG);
-}
-
 /** If the line has been specified, and commit has been pressed, start
  taking steps along that line. Otherwise, do nothing. The line is
  specified in interaction.c in the doLine function. */

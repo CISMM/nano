@@ -447,7 +447,7 @@ static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 //-----------------------------------------------------------------------
 /// This is a string that lets the user choose a color map to use.
 
-static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
+static	char	defaultColormapDirectory[] = "g:/nsrc/nano/src/util/colorMaps/maps/";
 static	char	*colorMapDir = NULL;
 
 static ColorMap	colorMap;		///< Color map currently loaded
@@ -1414,7 +1414,7 @@ static void handle_color_change (vrpn_float64, void * userdata) {
   g->setColorMinMax(color_min, color_max);
   g->setDataColorMinMax(data_min, data_max);
   tcl_colormapRedraw();
-  //cause_grid_redraw(0.0, NULL);
+  cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
@@ -2591,16 +2591,12 @@ static	void	handle_colormap_change (const char *, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorMapName(dataset->colorMapName->string());
 
-  // If CUSTOM is selected, set the color map pointer to
-  // NULL so that the gl code will go back to using the old
-  // method of computing color.  XXX Integrate this better,
-  // so that we always use a color map but that it is set to
-  // the min/max colors when we are using CUSTOM.
   if (strcmp(dataset->colorMapName->string(), "none") == 0) {
-          curColorMap = NULL;
-  } else {
-          colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
-          curColorMap = &colorMap;
+    curColorMap = NULL;
+  }
+  else {
+    colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
+    curColorMap = &colorMap;
   }
   tcl_colormapRedraw();
 }
@@ -3693,9 +3689,9 @@ int	loadColorMapNames(void)
 	colorMapNames.addEntry("none");
 
 	// Find the directory we are supposed to use
-	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
+	//	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
 		colorMapDir = defaultColormapDirectory;
-	}
+		//	}
 
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list

@@ -463,9 +463,6 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	      microscope->state.modify.slow_line_committed = VRPN_TRUE;
 	      // Call this function to initialize the slow_line tool
 	      init_slow_line(microscope);
-	      for (p.next(); p.notDone(); p.next()) {
-		step_slow_line( microscope, &p );
-	      }
 	      return;
 	    }
 
@@ -1329,6 +1326,9 @@ doScale(int whichUser, int userEvent, double scale_factor)
       fprintf(stderr, "Error in doScale: could not get plane!\n");
       return -1;
     }     
+    v_get_world_from_hand(whichUser, &worldFromHand);
+    decoration->aimLine.moveTo(worldFromHand.xlate[0],
+			       worldFromHand.xlate[1], plane);
     
     switch ( userEvent )
       {
@@ -1338,10 +1338,6 @@ doScale(int whichUser, int userEvent, double scale_factor)
 	
 	v_scale_about_hand(whichUser, &temp, scale_factor);
         updateWorldFromRoom(&temp);
-	
-	v_get_world_from_hand(whichUser, &worldFromHand);
-	decoration->aimLine.moveTo(worldFromHand.xlate[0],
-				   worldFromHand.xlate[1], plane);
 	break;
 	
       case PRESS_EVENT:

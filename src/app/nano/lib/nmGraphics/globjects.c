@@ -87,6 +87,10 @@ static GLint green_line_struct;
 static GLint blue_line_struct;
 static GLint scan_line_struct;
 
+static int red_line_struct_id;
+static int green_line_struct_id;
+static int blue_line_struct_id;
+
 static GLint collab_hand_struct;
 
 static marker_type * marker_list; // linked list of markers for selected area 
@@ -184,6 +188,11 @@ int clear_world_modechange(int mode, int style)
     break;
   case USER_MEASURE_MODE:
     removeFunctionFromFunclist(&v_hand,hand_id);
+    if ( !g_config_chartjunk ) {
+      removeFunctionFromFunclist(&vir_world, red_line_struct_id);
+      removeFunctionFromFunclist(&vir_world, green_line_struct_id);
+      removeFunctionFromFunclist(&vir_world, blue_line_struct_id);
+    }
     break;
     //  case USER_PULSE_MODE:
     //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
@@ -266,7 +275,6 @@ int clear_world_modechange(int mode, int style)
  */
 int init_world_modechange(int mode, int style)
 {
-
   if (g_config_planeonly) {
     // display NOTHING but the plane - used by nmg_RenderServer
     return 0;
@@ -345,12 +353,12 @@ int init_world_modechange(int mode, int style)
   addFunctionToFunclist(&vir_world,draw_north_pointing_arrow, NULL,
                         "draw_north_pointing_arrow");  /* dim */
   if (g_config_measurelines) {
-    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
-                                      "draw_list(red_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
-                                      "draw_list(green_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
-                                      "draw_list(blue_line_struct)"); 
+    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+					       "draw_list(red_line_struct)"); 
+    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+					       "draw_list(green_line_struct)"); 
+    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+					       "draw_list(blue_line_struct)"); 
   }
   if (g_scanline_display_enabled) {
 	scanline_id = addFunctionToFunclist(&vir_world, my_scanline_indicator,
@@ -815,6 +823,8 @@ int make_selected_region_marker (float x_min, float y_min, float x_max, float y_
 
 int make_red_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(red_line_struct,1);
    red_line_struct = glGenLists(1);
@@ -829,6 +839,8 @@ int make_red_line (const float a[], const float b[])
 
 int make_green_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(green_line_struct,1);
    green_line_struct = glGenLists(1);
@@ -843,6 +855,8 @@ int make_green_line (const float a[], const float b[])
 
 int make_blue_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(blue_line_struct,1);
    blue_line_struct = glGenLists(1);
@@ -1387,7 +1401,7 @@ void position_sphere(float x,float y, float z)
 
 int mysphere(void * /*data*/ )
 {
-	//float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
+  //float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
 
        	glPushMatrix();
 #ifndef FLOW
@@ -1931,14 +1945,16 @@ int replaceDefaultObjects(void)
   addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
 	"draw_north_pointing_arrow");
 
-  if (g_config_measurelines) {
-    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
-                          "draw_list(red_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
-                          "draw_list(green_line_struct)");
-    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
-                          "draw_list(blue_line_struct)");
-  }
+  // THis is commented out as we now call init_world_modechange on graphics startup, so
+  // it should be unnessary
+  //  if (g_config_measurelines) {
+  //    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+  //                          "draw_list(red_line_struct)"); 
+  //    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+  //                          "draw_list(green_line_struct)");
+  //    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+  //                          "draw_list(blue_line_struct)");
+  //  }
 
   marker_type *marker_node = marker_list;
   while (marker_node != NULL) {
