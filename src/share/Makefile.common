@@ -369,7 +369,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd 
+  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /nodefaultlib:"glut32.lib"
 
 #/LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/quat/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vogl/pc_win32_MTd
 
