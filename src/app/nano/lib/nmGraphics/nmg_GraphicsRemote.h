@@ -183,6 +183,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setFeelGrid (int xsize, int ysize, q_vec_type * vertices);
     virtual void showFeelGrid (vrpn_bool on);
+    virtual void setFeelPlane (q_vec_type origin, q_vec_type vertices);
+    virtual void showFeelPlane (vrpn_bool on);
 
     // ACCESSORS
 

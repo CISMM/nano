@@ -301,6 +301,10 @@ extern int g_fg_xside;
 extern int g_fg_yside;
 extern q_vec_type * g_fg_vertices;
 
+extern int g_config_feelPlane;
+extern q_vec_type g_fp_origin;
+extern q_vec_type g_fp_normal;
+
 #endif  // GRAPHICS_GLOBALS_H
 
 

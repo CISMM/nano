@@ -2971,3 +2971,27 @@ int nmg_Graphics::decode_showFeelGrid (const char * buf, vrpn_bool * on) {
    assert(0);
    return 0;
 }
+char * nmg_Graphics::encode_setFeelPlane (int * len, q_vec_type origin,
+      q_vec_type normal) {
+
+   assert(0);
+   return NULL;
+}
+
+int nmg_Graphics::decode_setFeelPlane (const char * buf,
+      q_vec_type * origin, q_vec_type * normal) {
+
+   assert(0);
+   return 0;
+}
+char * nmg_Graphics::encode_showFeelPlane (int * len, vrpn_bool on) {
+
+   assert(0);
+   return NULL;
+}
+
+int nmg_Graphics::decode_showFeelPlane (const char * buf, vrpn_bool * on) {
+
+   assert(0);
+   return 0;
+}

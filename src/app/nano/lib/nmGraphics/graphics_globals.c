@@ -248,6 +248,10 @@ int g_fg_xside = 0;
 int g_fg_yside = 0;
 q_vec_type * g_fg_vertices = NULL;
 
+int g_config_feelPlane = 0;
+q_vec_type g_fp_origin;
+q_vec_type g_fp_normal;
+
 // Local Variables:
 // mode:c++
 // End:

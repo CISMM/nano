@@ -400,6 +400,9 @@ class nmg_Graphics {
                               q_vec_type * vertices) = 0;
     virtual void showFeelGrid (vrpn_bool) = 0;
 
+    virtual void setFeelPlane (q_vec_type origin, 
+                               q_vec_type normal) = 0;
+    virtual void showFeelPlane (vrpn_bool) = 0;
 
 
     // ACCESSORS
@@ -539,6 +542,8 @@ class nmg_Graphics {
 
     vrpn_int32 d_setFeelGrid_type;
     vrpn_int32 d_showFeelGrid_type;
+    vrpn_int32 d_setFeelPlane_type;
+    vrpn_int32 d_showFeelPlane_type;
 
     // Each encode_ routine will allocate a new char [] to hold
     // the appropriate encoding of its arguments, and write the
@@ -786,9 +791,15 @@ class nmg_Graphics {
 	  q_vec_type * vertices);
     int decode_setFeelGrid (const char * buf, int * xsize, int * ysize,
 	                    q_vec_type ** vertices);
+    char * encode_setFeelPlane (int * len, q_vec_type origin,
+	                        q_vec_type normal);
+    int decode_setFeelPlane (const char * buf, q_vec_type * origin,
+	                     q_vec_type * normal);
 
     char * encode_showFeelGrid (int * len, vrpn_bool on);
     int decode_showFeelGrid (const char * buf, vrpn_bool * on);
+    char * encode_showFeelPlane (int * len, vrpn_bool on);
+    int decode_showFeelPlane (const char * buf, vrpn_bool * on);
 };
 
 #endif  // NMG_GRAPHICS_H

@@ -2833,6 +2833,18 @@ void nmg_Graphics_Implementation::showFeelGrid (vrpn_bool on) {
    enableFeelGrid(on);
 }
 
+void nmg_Graphics_Implementation::setFeelPlane (q_vec_type origin,
+      q_vec_type normal) {
+
+  q_vec_copy(g_fp_origin, origin);
+  q_vec_copy(g_fp_normal, normal);
+
+}
+
+void nmg_Graphics_Implementation::showFeelPlane (vrpn_bool on) {
+   enableFeelPlane(on);
+}
+
 
 
 

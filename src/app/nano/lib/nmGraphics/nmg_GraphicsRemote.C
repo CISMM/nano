@@ -2265,6 +2265,15 @@ void nmg_Graphics_Remote::showFeelGrid (vrpn_bool on) {
 }
 
 
+void nmg_Graphics_Remote::setFeelPlane (q_vec_type origin, q_vec_type normal) {
+   assert(0);
+}
+
+void nmg_Graphics_Remote::showFeelPlane (vrpn_bool on) {
+   assert(0);
+}
+
+
 
 
 // ACCESSORS

@@ -197,6 +197,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setFeelGrid (int xsize, int ysize, q_vec_type * vertices);
     virtual void showFeelGrid (vrpn_bool);
+    virtual void setFeelPlane (q_vec_type origin, q_vec_type normal);
+    virtual void showFeelPlane (vrpn_bool);
 
 
 

@@ -52,5 +52,6 @@ extern int initialize_globjects (const char * fontName = NULL);
 
 // TCH Dissertation Dec 2001
 extern void enableFeelGrid (int on);
+extern void enableFeelPlane (int on);
 
 #endif  // GLOBJECTS_H

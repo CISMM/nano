@@ -153,6 +153,8 @@ static int TrueTip (void *);
 // TCH Dissertation Dec 2001
 static int FeelGrid (void *);
 static int feelGrid_id;
+static int FeelPlane (void *);
+static int feelPlane_id;
 
 static int measure_hand (void *);
 static int vx_down_icon (void *);
@@ -220,6 +222,9 @@ int clear_world_modechange(int mode, int style, int tool_param)
     }
     if (g_config_feelGrid) {
        removeFunctionFromFunclist(&vir_world, feelGrid_id);
+    }
+    if (g_config_feelPlane) {
+       removeFunctionFromFunclist(&vir_world, feelPlane_id);
     }
     break;
     //  case USER_SWEEP_MODE:
@@ -333,6 +338,10 @@ int init_world_modechange(int mode, int style, int tool_param)
     if (g_config_feelGrid) {
        feelGrid_id = addFunctionToFunclist(&vir_world, FeelGrid, NULL,
 	     "feel grid");
+    }
+    if (g_config_feelPlane) {
+       feelPlane_id = addFunctionToFunclist(&vir_world, FeelPlane, NULL,
+	     "feel plane");
     }
     if (style == SWEEP) {
       sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list,
@@ -1972,6 +1981,44 @@ int FeelGrid (void *) {
    /* FeelGrid */
 }
 
+int FeelPlane (void *) {
+   int i, j;
+   double * vp;  // UGLY HACK!
+
+   glPushMatrix();
+   glPushAttrib(GL_CURRENT_BIT);
+   glColor3f(1.0f, 1.0f, 1.0f);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+/* TODO
+   for (i = 0; i < g_fg_xside - 1; i++) {
+
+      glBegin(GL_TRIANGLE_STRIP);
+
+      for (j = 0; j < g_fg_yside; j++) {
+        vp = g_fg_vertices[i * g_fg_xside + j];
+        glVertex3d(vp[0], vp[1], vp[2]);
+        vp = g_fg_vertices[(i + 1) * g_fg_xside + j];
+        glVertex3d(vp[0], vp[1], vp[2]);
+      }
+      glEnd();
+   }
+*/
+
+// HACK  - display a ball, ignores orientation, but gives us position,
+// which is what is critical for warped-plane
+
+  glTranslatef(g_fp_origin[0], g_fp_origin[1], g_fp_origin[2]);
+  glScalef(g_sphere_scale / 2.0, g_sphere_scale / 2.0, g_sphere_scale / 2.0);
+  glCallList(sphere);
+
+   glPopAttrib();
+   glPopMatrix();
+
+   return 0;
+   /* FeelPlane */
+}
+
 
 
 #define RED   1
@@ -2578,5 +2625,24 @@ void enableFeelGrid (int on) {
    }
 
    g_config_feelGrid = on;
+}
+
+void enableFeelPlane (int on) {
+
+   switch (on) {
+      case 1:
+
+        feelPlane_id = addFunctionToFunclist(&vir_world, FeelPlane, NULL,
+	     "feel plane");
+	break;
+
+      default:
+
+        removeFunctionFromFunclist(&vir_world, feelPlane_id);
+
+	break;
+   }
+
+   g_config_feelPlane = on;
 }
 

@@ -644,6 +644,15 @@ void nmg_Graphics_Timer::showFeelGrid (vrpn_bool on) {
    d_imp->showFeelGrid(on);
 }
 
+void nmg_Graphics_Timer::setFeelPlane (q_vec_type o, q_vec_type n) {
+   activateTimer();
+   d_imp->setFeelPlane(o, n);
+}
+void nmg_Graphics_Timer::showFeelPlane (vrpn_bool on) {
+   activateTimer();
+   d_imp->showFeelPlane(on);
+}
+
 
 void nmg_Graphics_Timer::getLightDirection (q_vec_type * v) const {
   d_imp->getLightDirection(v);
