@@ -63,6 +63,13 @@ proc save_plane_data {} {
     }
 }
 
+#
+################################
+#
+# This allows the user to export a file that
+# is a snapshot of the window on the screen, in any of several formats
+#
+
 #Initial dialog which allows user to choose which plane
 #of data to save.
 iwidgets::dialog .save_screen_dialog -title "Save screen image" 
@@ -116,6 +123,10 @@ proc save_screenImage {} {
     .save_screen_dialog activate
 }	
 
+#
+################################
+#
+#
 
 #Initial dialog which allows user to choose which plane
 #of data to save.
@@ -180,4 +191,45 @@ proc save_mod_dialog {} {
     }
 }	
 
+#
+################################
+#
+# This allows the user to export a file containing a scene description.
+# Currently, only openNURBS (Rhino's .3dm file format) is supported.
+#
 
+#dialog which allows user to export current scene configuration
+iwidgets::dialog .export_scene_dialog -title "Export scene" \
+        -modality application
+
+.export_scene_dialog hide Help
+.export_scene_dialog hide Apply
+# "Cancel" button is already set up correctly
+.export_scene_dialog buttonconfigure OK -text "Save" -command {
+    .export_scene_dialog deactivate 1
+}
+
+set win [.export_scene_dialog childsite]
+set export_scene_formats {"openNURBS (rhino .3dm)"}
+generic_optionmenu $win.export_scene_filetype export_scene_filetype \
+	"Format for saved picture:" export_scene_formats
+pack $win.export_scene_filetype -anchor nw
+
+# Allow the user to save 
+proc export_scene {} {
+    global export_scene_filetype export_scene_filename
+    if { [.export_scene_dialog activate] } {
+        set types { {"All files" *} }
+        set file [tk_getSaveFile -filetypes $types \
+                -initialfile nanoscene.3dm ]
+        if {$file != ""} {
+            puts "Export scene: $file $export_scene_filetype"
+	    # setting this variable triggers a callback in C code
+	    # which saves the file. 
+	    set export_scene_filename $file
+        }
+        # otherwise do nothing - user pressed cancel or didn't enter file name
+    } else {
+	# user pressed "cancel" so do nothing
+    }
+}

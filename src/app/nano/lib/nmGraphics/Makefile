@@ -1,7 +1,7 @@
 USES_LIBS := nmBase ImgFormat nmGenTex nmMScope tclLinkVar nmUGraphics vrpn \
              vogl quat
 
-USES_EXTERNAL_LIBS := RhinoIO
+USES_EXTERNAL_LIBS := RhinoIO 
 
 NAUGHTY := 1
 

@@ -189,6 +189,7 @@ static  void    handle_x_dataset_change(const char *new_value, void *userdata);
 static	void    handle_colormap_change(const char *new_value, void *userdata);
 static	void	handle_exportFileName_change(const char *new_value, void *userdata);
 static  void    handle_exportPlaneName_change(const char *new_value, void *userdata);
+static  void    handle_exportScene_Filename_change(const char *new_value, void *userdata);
 static  void    handle_sumPlaneName_change(const char *new_value, void *userdata);
 static  void    handle_adhPlaneName_change(const char *new_value, void *userdata);
 static  void    handle_flatPlaneName_change(const char *new_value, void *userdata);
@@ -450,6 +451,11 @@ Tclvar_string	exportFileType("export_filetype","");
 /// Filename to save the data in. Setting this variable in tcl triggers
 /// the save process.
 Tclvar_string newExportFileName("export_filename", "");
+
+/// Filename to save scene description into.  Setting this variable in
+/// tcl triggers the save process.
+Tclvar_string exportScene_Filename("export_scene_filename", "");
+
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the color to apply to the surface.
@@ -2694,6 +2700,44 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     */
 }
 
+/////////////////////////////////
+/** XXX this func decl should come from export_scene.h
+ */
+/*
+void export_scene_to_openNURBS (const char * filename,
+                                const nmg_Graphics *,
+                                const BCGrid *,
+                                const nmb_PlaneSelection &);
+*/
+/** See if the user has given a name to the export plane other
+    than "".  If so, we should export a file and set the value
+    back to "". If there are any errors, report them and leave name alone. 
+*/
+static void handle_exportScene_Filename_change (
+    const char * filename,
+    void * userdata)
+{
+    extern void export_scene_to_openNURBS (const char * filename,
+                                           const nmg_Graphics *,
+                                           const BCGrid *,
+                                           const nmb_PlaneSelection &);
+
+    if (strlen(filename) > 0) {
+        nmb_Dataset * dataset = (nmb_Dataset*) userdata;
+        nmb_PlaneSelection planes;
+        planes.lookup (dataset);
+        
+        // need to do error checking here
+        export_scene_to_openNURBS (filename, graphics,
+                                   dataset->inputGrid, planes);
+        
+        // what is the correct way to change the name back?
+        // the answer depends on who owns the storage for the current name.
+        filename = "";
+    }
+}
+
+
 /** See if the user has given a name to the filtered plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
@@ -3731,6 +3775,10 @@ void setupCallbacks (nmb_Dataset *d) {
   newExportFileName  = "";
   newExportFileName.addCallback
             (handle_exportFileName_change, NULL);
+
+  exportScene_Filename = "";
+  exportScene_Filename.addCallback (handle_exportScene_Filename_change,
+                                    dataset);
 
   // REALIGN TEXTURES:
   // handler for enabling/disabling the Realignment of Textures

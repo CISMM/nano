@@ -3,6 +3,8 @@ USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope \
              nmMP tclLinkVar nmBase ImgFormat \
              vrpn vogl quat sdi
 
+USES_EXTERNAL_LIBS := RhinoIO
+
 EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \
   collaboration.C
 

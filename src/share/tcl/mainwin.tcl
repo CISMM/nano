@@ -130,6 +130,8 @@ $filemenu add command -label "Save Plane Data..." -command \
 	"save_plane_data"
 $filemenu add command -label "Save Modification Data..." -command \
 	"save_mod_dialog"
+$filemenu add command -label "Export Scene..." -command \
+	"export_scene"
 $filemenu add separator
 $filemenu add command -label "Exit" -underline 1 -command \
 	"set term_input q"
