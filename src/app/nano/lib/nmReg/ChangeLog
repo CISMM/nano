@@ -1,3 +1,17 @@
+2002-07-16  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.C (createResampleImage and
+        createResamplePlane): added an offset to non-zero values so
+	that the resulting resampled images can be displayed without
+	looking completely black and white
+	a more ideal fix would be to change the display code to treat
+	zero values as not being part of the intensity range but I don't
+	think it matters that much
+	* nmr_Util.[Ch] (createResampledImageWithImageSpaceTransformation - 
+	both versions): added a parameter to add an offset to non-zero
+	values in the resampled image
+	
+
 2002-07-08  David Borland <borland@cs.unc.edu>
 
         * nmr_RegistrationUI.[Ch] : removed code for selecting the 

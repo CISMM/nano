@@ -75,7 +75,8 @@ class nmr_Util {
     /// pixel coordinates always span the unit square)
     static void createResampledImageWithImageSpaceTransformation(
           nmb_Image &target, const nmb_TransformMatrix44 &xform,
-          nmb_Image &resampleImage);
+          nmb_Image &resampleImage,
+		  double nonZeroIntensityOffset);
 
     /// xform defines a transformation from source to target
     /// resampleImage is assumed to have the same world coordinate system as
@@ -83,7 +84,8 @@ class nmr_Util {
     /// source image (as may be necessary to completely cover the target)
     static void createResampledImageWithImageSpaceTransformation(
           nmb_Image &target, nmb_Image &source, 
-          const nmb_TransformMatrix44 &xform, nmb_Image &resampleImage);
+          const nmb_TransformMatrix44 &xform, nmb_Image &resampleImage,
+		  double nonZeroIntensityOffset);
 
     /// for 3D->2D transformations
     /// computes interpolated height for points in the resampleImage by

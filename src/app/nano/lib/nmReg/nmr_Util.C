@@ -226,7 +226,8 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
 void nmr_Util::createResampledImageWithImageSpaceTransformation(
                         nmb_Image &targetImage,
                         const nmb_TransformMatrix44 &xform,
-                        nmb_Image &resampleImage)
+                        nmb_Image &resampleImage,
+						double nonZeroIntensityOffset)
 {
   int i,j;
   int w,h;
@@ -288,7 +289,9 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
       } else {
           value_target = 0.0;
       }
-
+      if (value_target != 0) {
+        value_target += nonZeroIntensityOffset;
+      }
 
       resampleImage.setValue(i,j, value_target);
     }
@@ -304,7 +307,8 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 void nmr_Util::createResampledImageWithImageSpaceTransformation(
                         nmb_Image &targetImage, nmb_Image &sourceImage,
                         const nmb_TransformMatrix44 &xform,
-                        nmb_Image &resampleImage)
+                        nmb_Image &resampleImage,
+						double nonZeroIntensityOffset)
 {
   int i,j;
   int w,h;
@@ -385,7 +389,9 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
           value_target = 0.0;
       }
 
-
+      if (value_target != 0) {
+        value_target += nonZeroIntensityOffset;
+      }
       resampleImage.setValue(i,j, value_target);
     }
     if (i%progressStride == 0) {

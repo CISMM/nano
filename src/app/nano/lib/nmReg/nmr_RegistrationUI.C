@@ -787,9 +787,11 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
                 "createResampleImage failed: non-invertible transform\n");
         }
 
+		double intensityRange = im_2D->maxNonZeroValue() - im_2D->minNonZeroValue();
+		double nonZeroIntensityOffset = -(im_2D->minNonZeroValue()-0.01*intensityRange);
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_3D), 
                  (*im_2D),
-                 topoImageFromProjImage, (*new_image));
+                 topoImageFromProjImage, (*new_image), nonZeroIntensityOffset);
 
         // an extra step: combine the two datasets in a somewhat arbitrary
         // way so that you can see features from both in a single image
@@ -829,10 +831,12 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
           return;
         }
         
+		double intensityRange = im_2D->maxNonZeroValue() - im_2D->minNonZeroValue();
+		double nonZeroIntensityOffset = -(im_2D->minNonZeroValue()-0.01*intensityRange);
         nmr_Util::createResampledImageWithImageSpaceTransformation(
             (*im_2D),
             projImageFromTopoImage, 
-            (*new_image));
+            (*new_image), nonZeroIntensityOffset);
       } else {
         
         // projWorldFromTopoWorld = identity because the transforms have 
@@ -872,8 +876,11 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         //printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);
+		double intensityRange = im_2D->maxNonZeroValue() - im_2D->minNonZeroValue();
+		double nonZeroIntensityOffset = -(im_2D->minNonZeroValue()-0.01*intensityRange);
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_2D), 
-                 (*im_3D), projImageFromTopoImage, (*new_image));
+                 (*im_3D), projImageFromTopoImage, (*new_image),
+				 nonZeroIntensityOffset);
 
         // HACK:
         // an extra step: combine the two datasets in a somewhat arbitrary
@@ -935,9 +942,12 @@ void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
            return;
         }
 
+		double intensityRange = im_2D->maxNonZeroValue() - im_2D->minNonZeroValue();
+		double nonZeroIntensityOffset = -(im_2D->minNonZeroValue()-0.01*intensityRange);
         nmr_Util::createResampledImageWithImageSpaceTransformation(
                  (*im_2D),
-                 projImageFromTopoImage, (*new_image));
+                 projImageFromTopoImage, (*new_image),
+				 nonZeroIntensityOffset);
 
     //printf("finished resampling image\n");
     // now make it available elsewhere:
