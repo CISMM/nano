@@ -72,6 +72,7 @@ static TransformFile transformFile;
 
 static Tclvar_int timeToQuit ("time_to_quit", 0);
 
+vrpn_Connection *local_connection;
 PatternEditor *patternEditor = NULL;
 nmr_Registration_Proxy *aligner = NULL;
 nmm_Microscope_SEM_Remote *sem = NULL;
@@ -90,6 +91,8 @@ int main(int argc, char **argv)
     // Initialize TCL/TK so that TclLinkvar variables link up properly
     char *tcl_script_dir;
     char command[128];
+
+    local_connection = new vrpn_Synchronized_Connection(4511);
 
     if ((tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
          tcl_script_dir = "./";
@@ -132,10 +135,11 @@ int main(int argc, char **argv)
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+#ifndef _WIN32
     glutCreateWindow("the program crashes without this window");
     glutDisplayFunc(nullDisplayFunc);
     glutIdleFunc(nullIdleFunc);
-
+#endif
     // this must come after we initialize graphics
     patternEditor = new PatternEditor();
 
@@ -145,7 +149,7 @@ int main(int argc, char **argv)
     if (alignerDeviceSet) {
       aligner = new nmr_Registration_Proxy(alignerDeviceName);
     } else { // use local implementation
-      aligner = new nmr_Registration_Proxy();
+      aligner = new nmr_Registration_Proxy(NULL, local_connection);
     }
     if (semDeviceSet) {
       printf("Opening SEM: %s\n", semDeviceName);
@@ -285,6 +289,8 @@ int init_Tk(){
 #ifndef NO_ITCL
 
   Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
+
+#ifndef _WIN32
   if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
     fprintf(stderr, "Package_Init failed: %s\n",
           tk_control_interp->result);
@@ -299,5 +305,6 @@ int init_Tk(){
   Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, 
                     (Tcl_PackageInitProc *) NULL);
 #endif
-        return 0;
+#endif
+  return 0;
 }

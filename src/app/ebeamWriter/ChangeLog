@@ -1,9 +1,29 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+	
+ 	This is the first version that draws lines correctly
+	* Makefile: added glut to USES_EXTERNAL_LIBS
+ 	* controlPanels.C: sets d_exposure_uCoulombs_per_square_cm to 300 by
+	default instead of 0
+	replaced calculations converting magnification to scan region with
+	calls to nmm_Microscope_SEM_Remote::getScanRegion_nm in order to 
+	keep things consistent
+	* exposureManager.C: changed default overlap factor for 
+	lines and areas to 2 and 4 instead of 0.7 and 0.7
+	(convert_nm_to_DAC): to compensate for the flipped Y elsewhere in 
+	the program we needed to flip Y here, I think I've correctly unflipped
+	it in the rest of the program so the old version should now be correct
+	* main.C: changed registration code so it always goes through vrpn
+	* patternEditor.C (zoomBy) : this preserves aspect ratio now
+	(newPosition) : sorts images by area so bigger ones are drawn first
+	(addImage): maintains the sorted image order
+	(drawImage): fixed so it does color scaling correctly on matrox g400
+
 2001-02-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* this version compiles with glut on sgi (this port was motivated 
 	by the need to check for memory bugs)
 	* Makefile - changed the order of libraries and added V_GLUT flag to
-	get the program to compile on sgi
+	get the program to compile on sgi 
         * controlPanels.C (handle_openImageFileName_change): sets worldToImage
  	transformation to a reasonable default value when loading new images
 	and reads them in using recently added functions 

@@ -22,17 +22,17 @@ typedef enum {PS_POLYLINE, PS_POLYGON} ShapeType;
 
 class PatternShape {
   public:
-    PatternShape(double lw = 0, double exp = 0, ShapeType type=PS_POLYLINE);
+    PatternShape(double lw = 0.0, double exp = 1.0, ShapeType type=PS_POLYLINE);
     PatternShape(const PatternShape &sh);
     int operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
     void addPoint(double x, double y);
     void removePoint();
     void translate(double x, double y)
     { d_trans_x += x; d_trans_y += y; }
-    void draw();
-    void drawThinPolyline();
-    void drawThickPolyline();
-    void drawPolygon();
+    void draw(double units_per_pixel_x, double units_per_pixel_y);
+    void drawThinPolyline(double units_per_pixel_x, double units_per_pixel_y);
+    void drawThickPolyline(double units_per_pixel_x, double units_per_pixel_y);
+    void drawPolygon(double units_per_pixel_x, double units_per_pixel_y);
     list<PatternPoint>::iterator pointListBegin();
     list<PatternPoint>::iterator pointListEnd();
 
@@ -55,6 +55,9 @@ class ImageElement {
             d_red(r), d_green(g), d_blue(b), d_opacity(o), 
             d_enabled(e), d_image(im) {}
    int operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
+   int operator< (const ImageElement& ie) {
+       return (d_image->areaInWorld() > ie.d_image->areaInWorld());
+   }
    
    double d_red;
    double d_green;

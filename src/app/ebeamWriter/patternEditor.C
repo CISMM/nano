@@ -33,11 +33,13 @@ void PatternShape::removePoint()
   return;
 }
 
-void PatternShape::drawThinPolyline()
+void PatternShape::drawThinPolyline(double units_per_pixel_x, 
+                                    double units_per_pixel_y)
 {
   if (d_points.empty()) return;
 
   double x, y;
+  double x_max, y_min;
   glLineWidth(1);
   glColor4f(1.0, 0.0, 0.0, 1.0);
 
@@ -45,6 +47,8 @@ void PatternShape::drawThinPolyline()
   
   x = (*pntIter).d_x;
   y = (*pntIter).d_y;
+  x_max = x;
+  y_min = y;
   pntIter++;
   if (pntIter == d_points.end()) {
     glBegin(GL_POINTS);
@@ -56,14 +60,25 @@ void PatternShape::drawThinPolyline()
     while (pntIter != d_points.end()) {
       x = (*pntIter).d_x;
       y = (*pntIter).d_y;
+      if (x > x_max) {
+        x_max = x;
+        y_min = y;
+      }
       glVertex3f(x,y,0.0);
       pntIter++;
     }
     glEnd();
   }
+
+  glColor4f(1.0, 1.0, 1.0, 1.0);
+  glBegin(GL_LINE_STRIP);
+  glVertex3f(x_max, y_min, 0.0);
+  glVertex3f(x_max+units_per_pixel_x*10.0, y_min-units_per_pixel_y*10.0, 0.0);
+  glEnd();
 }
 
-void PatternShape::drawPolygon()
+void PatternShape::drawPolygon(double units_per_pixel_x, 
+                               double units_per_pixel_y)
 {
   if (d_points.empty()) return;
 
@@ -93,7 +108,8 @@ void PatternShape::drawPolygon()
   }
 }
 
-void PatternShape::drawThickPolyline()
+void PatternShape::drawThickPolyline(double units_per_pixel_x, 
+                                     double units_per_pixel_y)
 {
   double x_start, y_start;
   double x0, y0, x1, y1, x2, y2;
@@ -213,13 +229,14 @@ void PatternShape::drawThickPolyline()
   }
 }
 
-void PatternShape::draw() {
+void PatternShape::draw(double units_per_pixel_x, 
+                        double units_per_pixel_y) {
   if (d_type == PS_POLYGON) {
-    drawPolygon();
+    drawPolygon(units_per_pixel_x, units_per_pixel_y);
   } else if (d_lineWidth_nm > 0){
-    drawThickPolyline();
+    drawThickPolyline(units_per_pixel_x, units_per_pixel_y);
   } else {
-    drawThinPolyline();
+    drawThinPolyline(units_per_pixel_x, units_per_pixel_y);
   }
 }
 
@@ -319,14 +336,28 @@ PatternEditor::~PatternEditor()
 void PatternEditor::addImage(nmb_Image *im, double opacity,
       double r, double g, double b)
 {
-   nmb_ImageBounds ib;
-   im->getBounds(ib);
-   nmb_ImageBounds::ImageBoundPoint points[4] = 
+  nmb_ImageBounds ib;
+  im->getBounds(ib);
+  nmb_ImageBounds::ImageBoundPoint points[4] = 
      {nmb_ImageBounds::MIN_X_MIN_Y, nmb_ImageBounds::MIN_X_MAX_Y,
       nmb_ImageBounds::MAX_X_MIN_Y, nmb_ImageBounds::MAX_X_MAX_Y};
    
-   ImageElement ie(im, r,g,b,opacity);
-   d_images.insert(d_images.begin(), ie);
+  ImageElement ie(im, r,g,b,opacity);
+  double newArea = im->areaInWorld();
+
+  list<ImageElement>::iterator insertPnt;
+  if (d_images.empty()) {
+    insertPnt = d_images.begin();
+  } else {
+    list<ImageElement>::iterator testElt = d_images.begin();
+    while (testElt != d_images.end()) {
+      if ((*testElt).d_image->areaInWorld() > newArea) break;
+      testElt++;
+    }
+    insertPnt = testElt;
+  }
+
+   d_images.insert(insertPnt, ie);
 
    for (int i = 0; i < 4; i++) {
        d_worldMinX_nm = min(d_worldMinX_nm, ib.getX(points[i]));
@@ -428,9 +459,11 @@ void PatternEditor::show()
    d_viewer->showWindow(d_navWinID);
 }
 
-void PatternEditor::newPosition(nmb_Image * /*im*/)
+void PatternEditor::newPosition(nmb_Image * im)
 {
+  
   // really this is only necessary if the image is currently displayed
+  d_images.sort();
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -571,6 +604,11 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   d_mainWinMinY_nm = minY_nm;
   d_mainWinMaxX_nm = maxX_nm;
   d_mainWinMaxY_nm = maxY_nm;
+  d_worldMinX_nm = min(d_worldMinX_nm, minX_nm);
+  d_worldMinY_nm = min(d_worldMinY_nm, minY_nm);
+  d_worldMaxX_nm = max(d_worldMaxX_nm, maxX_nm);
+  d_worldMaxY_nm = max(d_worldMaxY_nm, maxY_nm);
+
   d_viewer->dirtyWindow(d_mainWinID);
   d_viewer->dirtyWindow(d_navWinID);
 }
@@ -596,7 +634,7 @@ int PatternEditor::mainWinEventHandler(
 int PatternEditor::handleMainWinEvent(
                     const ImageViewerWindowEvent &event)
 {
-    double x = event.mouse_x, y = event.mouse_y;
+    double x = 0, y = 0;
     double centerX_nm, centerY_nm;
     double x_world_nm, y_world_nm;
 
@@ -606,6 +644,7 @@ int PatternEditor::handleMainWinEvent(
          d_mainWinHeight = event.height;
          break;
       case MOTION_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          //if (event.state & IV_LEFT_BUTTON_MASK) {
              // adjust current line being drawn
              if (getUserMode() == PE_DRAWMODE && 
@@ -625,6 +664,7 @@ int PatternEditor::handleMainWinEvent(
          //}
          break;
       case BUTTON_PRESS_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // start dragging an object
@@ -665,6 +705,7 @@ int PatternEditor::handleMainWinEvent(
          }
          break;
       case BUTTON_RELEASE_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          switch(event.button) {
            case IV_LEFT_BUTTON:
              d_viewer->toImage(event.winID, &x, &y);
@@ -691,6 +732,7 @@ int PatternEditor::handleMainWinEvent(
          }
          break;
       case KEY_PRESS_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          switch(event.keycode) {
            case 'z':
              d_viewer->toImage(event.winID, &x, &y);
@@ -722,31 +764,71 @@ int PatternEditor::handleMainWinEvent(
 void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
                            double magFactor)
 {
-    double width, height;
+    double desired_width, desired_height;
+    double clamped_width, clamped_height;
+    double xmin,xmax,ymin,ymax;
+
     if (magFactor == 0) {
        fprintf(stderr, "PatternEditor::zoomBy: Error, can't zoom by 0\n");
        return;
     }
-    width = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/magFactor;
-    height = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/magFactor;
 
-    d_mainWinMinX_nm = centerX_nm - 0.5*width;
-    d_mainWinMaxX_nm = centerX_nm + 0.5*width;
-    d_mainWinMinY_nm = centerY_nm - 0.5*height;
-    d_mainWinMaxY_nm = centerY_nm + 0.5*height;
+    desired_width = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/magFactor;
+    desired_height = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/magFactor;
 
-    if (d_mainWinMinX_nm < d_worldMinX_nm) {
-       d_mainWinMinX_nm = d_worldMinX_nm;
+    double worldWidth = d_worldMaxX_nm - d_worldMinX_nm;
+    double worldHeight = d_worldMaxY_nm - d_worldMinY_nm;
+
+    if (desired_width > worldWidth || 
+        desired_height > worldHeight) {
+       // then we must clamp
+       if (desired_width/worldWidth > desired_height/worldHeight) {
+         clamped_height = desired_height*worldWidth/desired_width;
+         clamped_width = worldWidth;
+       } else {
+         clamped_height = worldHeight;
+         clamped_width = desired_width*worldHeight/desired_height;
+       }
+       xmin = centerX_nm - 0.5*clamped_width;
+       xmax = centerX_nm + 0.5*clamped_width;
+       ymin = centerY_nm - 0.5*clamped_height;
+       ymax = centerY_nm + 0.5*clamped_height;
+    } else {
+       xmin = centerX_nm - 0.5*desired_width;
+       xmax = centerX_nm + 0.5*desired_width;
+       ymin = centerY_nm - 0.5*desired_height;
+       ymax = centerY_nm + 0.5*desired_height;
     }
-    if (d_mainWinMinY_nm < d_worldMinY_nm) {
-       d_mainWinMinY_nm = d_worldMinY_nm;
+
+    // now we can fix everything by shifting: 
+    double x_shift = 0.0, y_shift = 0.0;
+
+    if (xmin < d_worldMinX_nm) {
+       x_shift = d_worldMinX_nm - xmin;
+       xmin += x_shift;
+       xmax += x_shift;
     }
-    if (d_mainWinMaxX_nm > d_worldMaxX_nm) {
-       d_mainWinMaxX_nm = d_worldMaxX_nm;
+    if (ymin < d_worldMinY_nm) {
+       y_shift = d_worldMinY_nm - ymin;
+       ymin += y_shift;
+       ymax += y_shift;
     }
-    if (d_mainWinMaxY_nm > d_worldMaxY_nm) {
-       d_mainWinMaxY_nm = d_worldMaxY_nm;
+    if (xmax > d_worldMaxX_nm) {
+       x_shift = d_worldMaxX_nm - xmax;
+       xmin += x_shift;
+       xmax += x_shift;
     }
+    if (ymax > d_worldMaxY_nm) {
+       y_shift = d_worldMaxY_nm - ymax;
+       ymin += y_shift;
+       ymax += y_shift;
+    }
+
+    d_mainWinMinX_nm = xmin;
+    d_mainWinMaxX_nm = xmax;
+    d_mainWinMinY_nm = ymin;
+    d_mainWinMaxY_nm = ymax;
+
     double temp;
     if ((d_mainWinMinX_nm > d_mainWinMaxX_nm) || 
         (d_mainWinMinY_nm > d_mainWinMaxY_nm)) {
@@ -786,7 +868,7 @@ int PatternEditor::mainWinDisplayHandler(
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-  glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_BLEND);
+  glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   GLfloat textureColor[] = {0.5, 0.5, 0.5, 0.5};
   glTexEnvfv(GL_TEXTURE_2D, GL_TEXTURE_ENV_COLOR, textureColor);
 
@@ -830,10 +912,10 @@ int PatternEditor::mainWinDisplayHandler(
   PE_UserMode currMode = me->getUserMode();
   if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
     glOrtho(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxXadjust_nm,
-            me->d_mainWinMaxYadjust_nm, me->d_mainWinMinYadjust_nm, -1, 1);
+            me->d_mainWinMinYadjust_nm, me->d_mainWinMaxYadjust_nm, -1, 1);
   } else {
     glOrtho(me->d_mainWinMinX_nm, me->d_mainWinMaxX_nm, 
-            me->d_mainWinMaxY_nm, me->d_mainWinMinY_nm, -1, 1);
+            me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
   }
 
   glMatrixMode(GL_MODELVIEW);
@@ -923,9 +1005,6 @@ void PatternEditor::drawImage(const ImageElement &ie)
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
               GL_LUMINANCE,
               pixType, texture);
-       glPixelTransferf(GL_RED_SCALE, 1.0);
-       glPixelTransferf(GL_GREEN_SCALE, 1.0);
-       glPixelTransferf(GL_BLUE_SCALE, 1.0);
 
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
               GL_LINEAR_MIPMAP_LINEAR);
@@ -937,11 +1016,17 @@ void PatternEditor::drawImage(const ImageElement &ie)
            printf("%g %g %g %g\n", worldToImage[j*4], worldToImage[j*4+1],
                                    worldToImage[j*4+2], worldToImage[j*4+3]);
        }
-       printf("bounds : (%g,%g) -> (%g,%g)\n",
+*/
+/*
+       printf("bounds : (%g,%g),(%g,%g),(%g,%g),(%g,%g)\n",
             ib.getX(nmb_ImageBounds::MIN_X_MIN_Y),
             ib.getY(nmb_ImageBounds::MIN_X_MIN_Y),
+            ib.getX(nmb_ImageBounds::MAX_X_MIN_Y),
+            ib.getY(nmb_ImageBounds::MAX_X_MIN_Y),
             ib.getX(nmb_ImageBounds::MAX_X_MAX_Y),
-            ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
+            ib.getY(nmb_ImageBounds::MAX_X_MAX_Y),
+            ib.getX(nmb_ImageBounds::MIN_X_MAX_Y),
+            ib.getY(nmb_ImageBounds::MIN_X_MAX_Y));
 */
        float scaleFactorX = (float)(ie.d_image->width())/(float)texwidth;
        float scaleFactorY = (float)(ie.d_image->height())/(float)texheight;
@@ -955,9 +1040,23 @@ void PatternEditor::drawImage(const ImageElement &ie)
        // now we can use the xform defined for the actual image part of the
        // texture
        glMultMatrixd(worldToImage);
+
+
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
        glColor4f(1.0, 1.0, 1.0, (float)ie.d_opacity);
+       // draw a parallelogram fit to the image
+       // I'm so glad I generalized the image bounds the way I did
+       // since it matches so well the use of affine transformations
+       glVertex2f(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y),
+                  ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
+       glVertex2f(ib.getX(nmb_ImageBounds::MAX_X_MIN_Y),
+                  ib.getY(nmb_ImageBounds::MAX_X_MIN_Y));
+       glVertex2f(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y),
+                  ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
+       glVertex2f(ib.getX(nmb_ImageBounds::MIN_X_MAX_Y),
+                  ib.getY(nmb_ImageBounds::MIN_X_MAX_Y));
+/*
        PE_UserMode currMode = getUserMode();
        if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
          glVertex3f(d_mainWinMinXadjust_nm, d_mainWinMinYadjust_nm, 0);
@@ -970,23 +1069,35 @@ void PatternEditor::drawImage(const ImageElement &ie)
          glVertex3f(d_mainWinMaxX_nm, d_mainWinMaxY_nm, 0);
          glVertex3f(d_mainWinMinX_nm, d_mainWinMaxY_nm, 0);
        }
+*/
        glEnd();
+
+       glPixelTransferf(GL_RED_SCALE, 1.0);
+       glPixelTransferf(GL_GREEN_SCALE, 1.0);
+       glPixelTransferf(GL_BLUE_SCALE, 1.0);
      }
 }
 
 
 void PatternEditor::drawPattern()
 {
+  double units_per_pixel_x, units_per_pixel_y;
+
+  units_per_pixel_x = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
+                      (double)d_mainWinWidth;
+  units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
+                      (double)d_mainWinHeight;
+
   list<PatternShape>::iterator shapeIter;
   int numShapes = 0;
   if (d_currShape) {
     numShapes++;
-    d_currShape->draw();
+    d_currShape->draw(units_per_pixel_x, units_per_pixel_y);
   }
   for (shapeIter = d_pattern.begin();
        shapeIter != d_pattern.end(); shapeIter++)
   {
-     (*shapeIter).draw();
+     (*shapeIter).draw(units_per_pixel_x, units_per_pixel_y);
      numShapes++;
   }
 //  printf("drawing %d shapes\n", numShapes);
@@ -997,6 +1108,7 @@ void PatternEditor::drawScale()
   float xSpan = d_mainWinMaxX_nm - d_mainWinMinX_nm;
   float ySpan = d_mainWinMaxY_nm - d_mainWinMinY_nm;
   char str[64];
+  if (xSpan == 0.0) return;
   double t = 1.0;
   double scale_length;
   // set t to the first power of 10 greater than xSpan
@@ -1041,7 +1153,7 @@ int PatternEditor::navWinEventHandler(
                    const ImageViewerWindowEvent &event, void *ud)
 {
     PatternEditor *me = (PatternEditor *)ud;
-    double x = event.mouse_x, y = event.mouse_y;
+    double x = 0, y = 0;
 
     switch(event.type) {
       case RESIZE_EVENT:
@@ -1049,6 +1161,7 @@ int PatternEditor::navWinEventHandler(
          me->d_navWinHeight = event.height;
          break;
       case MOTION_EVENT:
+	 x = event.mouse_x; y = event.mouse_y;
          if (event.state & IV_LEFT_BUTTON_MASK ||
              event.state & IV_RIGHT_BUTTON_MASK) {
              me->d_viewer->toImage(event.winID, &x, &y);
@@ -1082,6 +1195,7 @@ int PatternEditor::navWinEventHandler(
          }
          break;
       case BUTTON_PRESS_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // start dragging a rectangle
@@ -1113,6 +1227,7 @@ int PatternEditor::navWinEventHandler(
          }
          break;
       case BUTTON_RELEASE_EVENT:
+         x = event.mouse_x; y = event.mouse_y;
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // copy the dragged rectangle into the main displayed rectangle
@@ -1186,7 +1301,7 @@ int PatternEditor::navWinDisplayHandler(
   glLoadIdentity();
 
   glOrtho(me->d_worldMinX_nm, me->d_worldMaxX_nm,
-          me->d_worldMaxY_nm, me->d_worldMinY_nm, -1, 1);
+          me->d_worldMinY_nm, me->d_worldMaxY_nm, -1, 1);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1250,14 +1365,14 @@ void PatternEditor::navWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_worldMinX_nm + x*(d_worldMaxX_nm - d_worldMinX_nm);
-  y_nm = d_worldMaxY_nm + (1.0-y)*(d_worldMinY_nm - d_worldMaxY_nm);
+  y_nm = d_worldMaxY_nm + y*(d_worldMinY_nm - d_worldMaxY_nm);
 }
 
 void PatternEditor::mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
-  y_nm = d_mainWinMaxY_nm + (1.0-y)*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
+  y_nm = d_mainWinMaxY_nm + y*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
 }
 
 void PatternEditor::worldToMainWinPosition(const double x_nm,
@@ -1272,7 +1387,7 @@ void PatternEditor::worldToMainWinPosition(const double x_nm,
     fprintf(stderr, "Warning, x range is 0\n");
   }
   if (delY != 0) {
-    y_norm = 1.0-(y_nm - d_mainWinMaxY_nm)/delY;
+    y_norm = (y_nm - d_mainWinMaxY_nm)/delY;
   } else {
     fprintf(stderr, "Warning, y range is 0\n");
   }

@@ -12,7 +12,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_bufferImageFileName("bufferImage_filename", ""),
    d_bufferImageFormat("bufferImage_format", ""),
    d_lineWidth_nm("line_width_nm", 0),
-   d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 0),
+   d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 300),
    d_drawingTool("drawing_tool", 1),
    d_clearDrawing("clear_drawing", 0),
 
@@ -222,7 +222,8 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
 }
 
 //static 
-void ControlPanels::handle_bufferImageFileName_change(const char */*new_value*/,
+void ControlPanels::handle_bufferImageFileName_change(
+                                              const char * /*new_value*/,
                                               void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
@@ -514,6 +515,7 @@ void ControlPanels::handle_sem_change(void *ud,
 void ControlPanels::handleSEMChange(
                         const nmm_Microscope_SEM_ChangeHandlerData &info)
 {
+  static int point_count = 0;
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec = 0;
   vrpn_int32 enabled;
@@ -524,6 +526,7 @@ void ControlPanels::handleSEMChange(
   vrpn_int32 start_x, start_y, dx,dy, line_length, num_fields, num_lines;
   nmb_PixelType pix_type;
   int i,j;
+  vrpn_float32 mag = 1;
 
   vrpn_uint8 *uint8_data = NULL;
   vrpn_uint16 *uint16_data = NULL;
@@ -595,13 +598,7 @@ void ControlPanels::handleSEMChange(
             // necessary
 	    updateCurrentImageControls();
         }
-        // assuming square pixels and a display size of 12.8 cm, 
-        // come up with a reasonable estimate of
-        // the scaling factors in x and y based on the magnification
-        imageRegionWidth = 12.8e7/
-                                  (double)(d_semAcquisitionMagnification);
-        imageRegionHeight = imageRegionWidth*(double)res_y/
-                                                    (double)res_x;
+        info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
         transformMatrix[0] = 1.0/imageRegionWidth;
         transformMatrix[5] = 1.0/imageRegionHeight;
 
@@ -685,6 +682,7 @@ void ControlPanels::handleSEMChange(
                 info.sem->requestScan(1);
             } else {
                 info.sem->requestScan(0);
+                info.sem->setExternalScanControlEnable(0);
             }
         }
       break;
@@ -703,7 +701,11 @@ void ControlPanels::handleSEMChange(
       break;
     case nmm_Microscope_SEM::BEAM_LOCATION:
       info.sem->getBeamLocation(x, y);
-      printf("BEAM_LOCATION: %d, %d\n", x, y);
+      point_count++;
+      if (point_count % 1000 == 0) {
+         printf("%d points exposed\n", point_count);
+      }
+//      printf("BEAM_LOCATION: %d, %d\n", x, y);
       break;
     case nmm_Microscope_SEM::RETRACE_DELAYS:
       info.sem->getRetraceDelays(h_time_nsec, v_time_nsec);
@@ -723,6 +725,11 @@ void ControlPanels::handleSEMChange(
       info.sem->getExternalScanControlEnable(enabled);
       printf("EXTERNAL_SCAN_CONTROL_ENABLE: %d\n", enabled);
       d_semExternalScanControlEnable = enabled;
+      break;
+    case nmm_Microscope_SEM::REPORT_MAGNIFICATION:
+      info.sem->getMagnification(mag);
+      printf("REPORT_MAGNIFICATION: %f\n", mag);
+      d_semAcquisitionMagnification = mag;
       break;
     default:
       printf("unknown message type: %d\n", info.msg_type);
@@ -767,7 +774,7 @@ void ControlPanels::handle_targetImageName_change(const char *new_value, void *u
 
 // static
 void ControlPanels::handle_resampleImageName_change(
-                              const char */*new_value*/, void *ud)
+                              const char * /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("new resampled image: %s\n",(const char *)me->d_resampleImageName);
@@ -833,7 +840,9 @@ void ControlPanels::handle_semAcquireImagePushed_change(int /*new_value*/,
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem acquire image pushed: %d\n",(int)me->d_semAcquireImagePushed);
+  
   if (me->d_SEM) {
+    me->d_SEM->setExternalScanControlEnable(1);
     printf("requesting scan\n");
     me->d_SEM->requestScan(1);
   }
@@ -907,10 +916,15 @@ void ControlPanels::handle_semAcquisitionMagnification_change(
   // set exposure mag as a convenience since it will generally be the same
   me->d_semExposureMagnification = (int)me->d_semAcquisitionMagnification;
   // scale the display so that images at this magnification fill the window
-  double maxX = 12.8e7/(double)new_value;
-  double maxY = maxX/1.28;
-//  printf("acq. mag.-> %d; viewport->(%g, %g)\n", new_value, maxX, maxY);
-  me->d_patternEditor->setViewport(0, 0, maxX, maxY);
+  double width, height;
+  if (me->d_SEM) {
+    me->d_SEM->getScanRegion_nm(width, height);
+  } else {
+    width = 1e8/(double)new_value;
+    height = width;
+  }
+//  printf("acq. mag.-> %d; viewport->(%g, %g)\n", new_value, width, height);
+  me->d_patternEditor->setViewport(0, 0, width, height);
 }
 
 // static
@@ -1025,9 +1039,26 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
+  int dwell_time_nsec = 0;
+  double dwell_time_sec;
+  double beam_width_nm, beamCurrent;
+  nmm_EDAX::snapIntegrationTime_nsec(dwell_time_nsec, vrpn_TRUE);
+  dwell_time_sec = 1e-9*(double)dwell_time_nsec;
+  beam_width_nm = (double)(me->d_semBeamWidth_nm);
+  beamCurrent = (double)(me->d_semBeamCurrent_picoAmps);
+
+  int externalControlSave = me->d_semExternalScanControlEnable;
+  if (me->d_SEM) {
+    me->d_SEM->setExternalScanControlEnable(1);
+  }
+  me->d_exposureManager->setColumnParameters(dwell_time_sec,
+              beam_width_nm, beamCurrent);
   me->d_exposureManager->exposePattern(me->d_patternEditor->shapeList(),
                                        me->d_patternEditor->dumpPointList(),
                                      me->d_SEM, me->d_semExposureMagnification);
+  if (me->d_SEM) {
+    me->d_SEM->setExternalScanControlEnable(externalControlSave);
+  }
 }
 
 /*

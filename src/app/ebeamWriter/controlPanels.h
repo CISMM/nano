@@ -89,6 +89,10 @@ class ControlPanels {
    Tclvar_string d_openImageFileName;
    Tclvar_string d_bufferImageFileName;
    Tclvar_string d_bufferImageFormat;
+   Tclvar_string d_openTransformFileName;
+   Tclvar_string d_transformFileName;
+   Tclvar_string d_openPatternFileName;
+   Tclvar_string d_patternFileName;
 
    // Tcl variables linked to control panels
    // drawing parameters:
