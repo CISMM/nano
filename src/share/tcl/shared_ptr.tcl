@@ -140,7 +140,6 @@ image create photo sharedptr_up_arrow \
 
 frame $sharedptr(sp).state
 
-set copy_inactive_state 0
 set share_sync_state 0
 
 frame $sharedptr(sp).state.copy

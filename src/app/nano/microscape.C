@@ -308,7 +308,6 @@ static void handle_load_button_press_change (vrpn_int32, void *);
 /// synchronization UI handlers
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
-static void handle_timed_sync (vrpn_int32, void *);
 static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
                                               void * userdata);
 static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
@@ -1010,7 +1009,6 @@ Tclvar_float directz_force_scale("directz_force_scale", 1.0);
 // they wouldn't be shared but that while replaying logs we could
 // determine which state to use.
 TclNet_int share_sync_state ("share_sync_state", 0);
-TclNet_int copy_inactive_state ("copy_inactive_state", 0);
 TclNet_int copy_to_private_state ("copy_to_private_state", 0);
 TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
 
@@ -1497,11 +1495,10 @@ void shutdown_connections (void) {
 
   //display_realign_textures.bindConnection(NULL);
 
-    share_sync_state.bindConnection(NULL);
-    copy_inactive_state.bindConnection(NULL);
-      copy_to_private_state.bindConnection(NULL);
-      copy_to_shared_state.bindConnection(NULL);
-    collab_machine_name.bindConnection(NULL);
+  share_sync_state.bindConnection(NULL);
+  copy_to_private_state.bindConnection(NULL);
+  copy_to_shared_state.bindConnection(NULL);
+  collab_machine_name.bindConnection(NULL);
 
   changed_modify_params.bindConnection(NULL);
   changed_image_params.bindConnection(NULL);
@@ -2415,49 +2412,6 @@ static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
 
 }
 
-/**
- * Currently assumes that only the most recently added peer is
- *  "valid";  others are a (small?) memory/network leak.
- */
-static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
-
-  CollaborationManager * cm = (CollaborationManager *) userdata;
-  nmui_Component * sync = cm->uiRoot();
-  nmui_PlaneSync * plane_sync = cm->planeSync();
-
-  int copyFrom = !sync->synchronizedTo();
-
-  //// only run once
-  //if (!value) {
-    //return;
-  //}
-
-  if (copyFrom) {
-
-    // a copyReplica needs to be deferred until the new data arrives
-    // The right way to do this is probably to have a Component's
-    // sync handler pack a "syncComplete" message AFTER all the
-    // callbacks have been triggered (=> the sync messages are marshalled
-    // for VRPN), so when that arrives we know the sync is complete and
-    // we can issue a copyReplica()
-
-    //collaborationTimer.block(collaborationTimer.getListHead());
-
-    sync->requestSync();
-    sync->d_maintain = VRPN_FALSE;
-//fprintf(stderr, "++ In handle_timed_sync() to %d;  "
-//"sent synch request to peer.\n", copyFrom);
-  } else {
-
-    sync->copyReplica(copyFrom);
-//fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
-//copyFrom);
-    plane_sync->acceptUpdates();
-    plane_sync->queueUpdates();
-
-  }
-
-}
 
 static int handle_timed_sync_request (void *) {
   // Write the current elapsed time of the stream
@@ -2501,7 +2455,7 @@ static int handle_timed_sync_complete (void * userdata) {
   // Once we have the *latest* state of time-depenedent values,
   // update with that.
 
-  if (sync->d_maintain) {
+  if (sync->d_maintain) { // completion of a syncReplica call
 
     // Make sure we save the state of any volatile variables -
     // if latency is high the previous save will be off by a few
@@ -2513,7 +2467,7 @@ static int handle_timed_sync_complete (void * userdata) {
     plane_sync->acceptUpdates();
     sync->syncReplica(useReplica);
 //fprintf(stderr, "++   ... synched.\n");
-  } else {
+  } else { // completion of a copyReplica call
     sync->copyReplica(useReplica);
 
     // Create any planes from copied state, but go back to 
@@ -5638,9 +5592,8 @@ void setupSynchronization (CollaborationManager * cm,
     // TclNet objects but don't make them part of the UI Components.
 
     share_sync_state.bindLogConnection(logConnection);
-    copy_inactive_state.bindLogConnection(logConnection);
-      copy_to_private_state.bindLogConnection(logConnection);
-      copy_to_shared_state.bindLogConnection(logConnection);
+    copy_to_private_state.bindLogConnection(logConnection);
+    copy_to_shared_state.bindLogConnection(logConnection);
     collab_machine_name.bindLogConnection(logConnection);
   }
 
@@ -5659,14 +5612,12 @@ void setupSynchronization (CollaborationManager * cm,
   // that one.
 
   share_sync_state.addCallback
-      (handle_synchronize_timed_change, cm);
-  copy_inactive_state.addCallback
-      (handle_timed_sync, cm);
+    (handle_synchronize_timed_change, cm);
 
-    copy_to_private_state.addCallback
-        (handle_copy_to_private, cm);
-    copy_to_shared_state.addCallback
-        (handle_copy_to_shared, cm);
+  copy_to_private_state.addCallback
+    (handle_copy_to_private, cm);
+  copy_to_shared_state.addCallback
+    (handle_copy_to_shared, cm);
 
   // OBSOLETE COMMENT
   // need to pass rootUIControl to handle_timed_sync_complete

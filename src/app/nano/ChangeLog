@@ -1,3 +1,8 @@
+2001-06-18  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c:  dead code removal.  Got rid of copy_inactive_state
+	and its attendant callback, handle_timed_sync.
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c : Make bdboxName, headTrackerName, handTrackerName

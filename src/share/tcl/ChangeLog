@@ -1,3 +1,7 @@
+2001-06-18  David Marshburn  <marshbur@cs.unc.edu>
+
+	* shared_ptr.tcl:  removed lingering reference to copy_inactive_state
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* latency.tcl : Add (but comment out) nonfunctional UI for phantom
@@ -20,7 +24,6 @@
 	* mainwin.tcl: tcl_script_dir simplified. 
 	frame_rate display added.
 
->>>>>>> 1.39
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added image saving menu item to file menu
