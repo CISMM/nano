@@ -1,3 +1,16 @@
+2001-06-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmui_PlaneSync.C, .h:
+        	* removed AFMState data member, as plane names are now
+          	  kept in nmb_Dataset.
+        	* moved into the various calculated plane classes the code for
+          	  plane creation as a result of an incoming vrpn message 
+        	* likewise for sending vrpn messages about new planes
+          	  defined locally.
+        	* PlaneSync now just keeps track of whether or not nano is
+          	  currently accepting and sending calculated planes, depending
+          	  on whether nano is synched with a peer.
+
 2001-05-31  Aron Helser  <helser@cs.unc.edu>
 
 	* nmui_PlaneSync.C: Handle inputPlaneNames move.

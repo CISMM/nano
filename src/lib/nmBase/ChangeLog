@@ -1,3 +1,25 @@
+2001-06-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_Image.h:  
+	        - changed "friend nmb_Dataset" to "friend class nmb_Dataset"
+	          in order to avoid loads of warnings on the SGIs.
+	        - added a new accessor, getImageByPlane( BCPlane* )
+	* nmb_Dataset.C, .h:
+	        - removed all the code for calculated plane creation
+	          and update, as well as data members for lists of
+	          specific types of calculated planes.
+	        - added methods addNewCalculatedPlane( ... ) and
+	          getHostname(), and data member to keep a list
+	          of calculated planes.
+	* nmb_CalculatedPlane.C, .h:
+	        - base class for all calculated plane types.
+	* nmb_FlattenedPlane.C, .h:
+	        - data type for flattened planes.
+	* nmb_LBLFlattenedPlane.C, .h:
+	        - data type for line-by-lin flattened planes.
+	* nmb_SummedPlane.C, .h:
+	        - data type for summed planes.
+
 2001-06-01  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.Ch (nmb_Dataset): Change d_hostname to nmb_String so
