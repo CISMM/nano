@@ -1,3 +1,7 @@
+2003-02-26  Adam Seeger  <seeger@cs.unc.edu>
+
+   * litho_main.tcl: added control to set color of the pattern
+
 2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* afm_sem.tcl: Added opacity and colormap controls for texture

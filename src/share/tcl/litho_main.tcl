@@ -381,6 +381,11 @@ set line_exposure_pCoulombs_per_cm 150
 set drawing_tool 1
 set clear_drawing 0
 
+set pattern_color_changed 0
+set pattern_r 255
+set pattern_g 255
+set pattern_b 255
+
 frame $drawing_parameters_win.tool -bd 3 -relief groove
 label $drawing_parameters_win.tool.tool_label -text "Tool:"
 pack $drawing_parameters_win.tool.tool_label -side top
@@ -457,6 +462,42 @@ label $drawing_parameters_win.segment_length.value \
 pack $drawing_parameters_win.segment_length 
 pack $drawing_parameters_win.segment_length.title -side left
 pack $drawing_parameters_win.segment_length.value -side left
+
+set pattern_color [format #%02x%02x%02x $pattern_r $pattern_g $pattern_b]
+
+proc set_pattern_color {} {
+    global pattern_r pattern_g pattern_b pattern_color pattern_color_changed
+    # Extract three component colors of pattern_color
+    # and save into pattern_r g b
+    scan $pattern_color #%02x%02x%02x pattern_r pattern_g pattern_b
+    set pattern_color_changed 1
+}
+
+proc update_pattern_color_sample {name el op} {
+    global pattern_r pattern_g pattern_b pattern_color drawing_parameters_win
+    set pattern_color [format #%02x%02x%02x $pattern_r $pattern_g $pattern_b]
+    $drawing_parameters_win.pattern_color.colorsample configure -bg $pattern_color
+}
+
+trace variable pattern_color_changed w update_pattern_color_sample
+
+frame $drawing_parameters_win.pattern_color
+button $drawing_parameters_win.pattern_color.set_color -text "Set pattern color" \
+   -command {
+     choose_color pattern_color "Choose pattern color" $drawing_parameters_win
+     $drawing_parameters_win.pattern_color.colorsample configure -bg $pattern_color
+     set_pattern_color
+}
+
+button $drawing_parameters_win.pattern_color.colorsample -relief groove -bd 2 \
+   -bg $pattern_color -command {
+           $drawing_parameters_win.pattern_color.set_color invoke
+}
+
+pack $drawing_parameters_win.pattern_color -side top -fill x
+pack $drawing_parameters_win.pattern_color.set_color -side left -fill x
+pack $drawing_parameters_win.pattern_color.colorsample -side left -fill x \
+     -expand yes
 
 ######### End of Drawing Parameters Control Panel ####################
 
