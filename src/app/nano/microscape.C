@@ -332,7 +332,7 @@ static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
 static void handle_viz_tex_new(const char *, void *);
-tatic void handle_viz_tex(const char *, void *);
+static void handle_viz_tex(const char *, void *);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
