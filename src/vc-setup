@@ -17,6 +17,7 @@
 export MY_NANO_OBJ_DIR=/nsrc/obj
 export TCL_LIBRARY=/nsrc/external/pc_win32/bin/tcl8.2/
 export NM_COLORMAP_DIR=/nsrc/colormaps
+export NM_TCL_DIR=/nsrc/nano/src/share/tcl/
 
 # Root of MS Visual Studio. 
 # Use ls with paths of this form to determine which numbers to use. 
