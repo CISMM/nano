@@ -6,7 +6,7 @@
 #include <vrpn_Mutex.h>
 #include <vrpn_Connection.h>
 
-/// nmb_SharedDevice
+/// \class nmb_SharedDevice
 ///
 ///   A subclass of nmb_Device_Client that uses a vrpn_Mutex to ensure that
 /// only one instance of the class is sending commands to the Device_Server

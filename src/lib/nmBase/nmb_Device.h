@@ -31,6 +31,9 @@ class nmb_SynchMessage {
         getting the latest values for each available channel
         ability to register a callback to be called when new data arrives for
            each acquisition channel
+
+    Added 2000:  manages a vrpn_RedundantTransmission in addition to the
+      vrpn_Connection to handle forward error correction (FEC).
 */
 
 class nmb_Device {
