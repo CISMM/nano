@@ -31,7 +31,7 @@ class nM_coord_change : public vrpn_Tracker {
 
     vrpn_bool peerIsSynchronized (void) const;
 
-    void mainloop (const struct timeval * timeout = NULL);
+    void mainloop (void);
 
     void bindConnection (vrpn_Connection * remoteC);
       /**< Late binding of remote connection (connection to listen

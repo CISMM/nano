@@ -39,17 +39,17 @@ nM_coord_change::nM_coord_change (const char * name,
 nM_coord_change::~nM_coord_change (void) {
   // connection doesn't belong to us;  why are we writing into it in
   // the destructor?
-    //connection = NULL;
+    //d_connection = NULL;
 }
 
 vrpn_bool nM_coord_change::peerIsSynchronized (void) const {
   return d_peerIsSynced;
 }
 
-void nM_coord_change::mainloop(const struct timeval *curr_time)
-{
-  if (connection)
-    connection->mainloop(curr_time);
+void nM_coord_change::mainloop (void) {
+  if (d_connection) {
+    d_connection->mainloop();
+  }
 }
 
 void nM_coord_change::bindConnection (vrpn_Connection * remoteC) {
@@ -72,6 +72,7 @@ void nM_coord_change::startSync (void) {
   char buf [50];
   char * bptr;
   vrpn_int32 mlen;
+  int retval;
 
   mlen = 50;
   bptr = buf;
@@ -79,8 +80,12 @@ void nM_coord_change::startSync (void) {
 
   c = connectionPtr();  // get the Tracker's copy of server connection
   gettimeofday(&now, NULL);
-  c->pack_message(50 - mlen, now, d_changeSyncStatus_type, d_myId,
+  retval = c->pack_message(50 - mlen, now, d_changeSyncStatus_type, d_myId,
                   buf, vrpn_CONNECTION_RELIABLE);
+  if (retval) {
+    fprintf(stderr, "nM_coord_change::startSync:  "
+                    "cannot write message.\n");
+  }
 }
 
 void nM_coord_change::stopSync (void) {
@@ -89,6 +94,7 @@ void nM_coord_change::stopSync (void) {
   char buf [50];
   char * bptr;
   vrpn_int32 mlen;
+  int retval;
 
   mlen = 50;
   bptr = buf;
@@ -96,8 +102,12 @@ void nM_coord_change::stopSync (void) {
 
   c = connectionPtr();  // get the Tracker's copy of server connection
   gettimeofday(&now, NULL);
-  c->pack_message(50 - mlen, now, d_changeSyncStatus_type, d_myId,
+  retval = c->pack_message(50 - mlen, now, d_changeSyncStatus_type, d_myId,
                   buf, vrpn_CONNECTION_RELIABLE);
+  if (retval) {
+    fprintf(stderr, "nM_coord_change::stopSync:  "
+                    "cannot write message.\n");
+  }
 
 }
 
@@ -128,6 +138,7 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
   nM_coord_change *me = (nM_coord_change *)userdata;
   vrpn_float64	floatbuf[128];	// Aligns properly
   char * msgbuf = (char*)(void*)(floatbuf);
+  int retval;
 
   v_get_world_from_hand(0, &worldFromHandPtr);
 
@@ -141,12 +152,15 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
 
   gettimeofday(&me->timestamp, NULL);
 
-  if (me->connection) {
+  if (me->d_connection) {
     len = me->encode_to(msgbuf);
-    if (me->connection->pack_message(len, me->timestamp, me->position_m_id,
-				     me->my_id, msgbuf, 
-				     vrpn_CONNECTION_LOW_LATENCY)) {
-      fprintf(stderr, "nM_coord_change: cannot write message: tossing\n");
+    retval = me->d_connection->pack_message(len,
+                        me->timestamp, me->position_m_id,
+			me->d_sender_id, msgbuf, 
+			vrpn_CONNECTION_LOW_LATENCY);
+    if (retval) {
+      fprintf(stderr, "nM_coord_change::handle_tracker_pos_change:  "
+                      "cannot write message.\n");
     }
   }
 }

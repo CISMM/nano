@@ -111,6 +111,7 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_log (VRPN_FALSE),
     d_NIC_IP (NULL),
     d_replay (replay),
+    d_userMode (0),
     d_handServerName (NULL),
     d_modeServerName (NULL),
     d_uiController (NULL)
@@ -173,11 +174,8 @@ void CollaborationManager::mainloop (void) {
 
   static unsigned long last = 0L;
 
-  struct timeval zero;
   struct timeval now;
 
-  zero.tv_sec = 0;
-  zero.tv_usec = 0;
   gettimeofday(&now, NULL);
 
   // Tell them where our Phantom is.
@@ -193,13 +191,16 @@ void CollaborationManager::mainloop (void) {
   // Tell them what our mode is.
   if (d_modeServer) {
 
+    d_modeServer->channels()[0] = d_userMode;
+    d_modeServer->report_changes(vrpn_CONNECTION_RELIABLE);
+
     // Send an update every couple of seconds, even if it hasn't changed -
     // soft state.
     if (now.tv_sec - last >= 2) {
       last = now.tv_sec;
       d_modeServer->report();
     }
-    d_modeServer->mainloop(&zero);
+    d_modeServer->mainloop();
   }
 
   // Find out what their mode is.
@@ -319,6 +320,10 @@ void CollaborationManager::setUI (nmui_Component * ui) {
 
 void CollaborationManager::setPlaneSync (nmui_PlaneSync * ps) {
   d_planeSync = ps;
+}
+
+void CollaborationManager::setUserMode (int mode) {
+  d_userMode = mode;
 }
 
 
