@@ -1,3 +1,18 @@
+2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Tcl_Linkvar.C : reorder & fix #includes, #include nmb_Debug.h
+        (handle_int_value_change) : changed fprintf() to collabVerbose()
+        (Tclvar_int constructor) : same
+        (Tclvar_int::updateTcl) : same
+        * Tcl_Netvar.C : #include nmb_Debug.h, remove old code
+        (activateTimer) : changed fprintf() to collabVerbose()
+        (blockTimer) : same
+        (TclNet_int::operator =) : same
+        (TclNet_int::copyReplica) : same
+        (TclNet_int::copyFromToReplica) : same
+        (TclNet_int::syncReplica) : same
+        (TclNet_int::propagateReceivedUpdate) : same
+
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
         * Tcl_Linkvar.C : clean up old code & comments

@@ -10,13 +10,15 @@
 #include	<string.h>
 #include	<ctype.h>
 
-#include "nmb_String.h"
+#include <tcl.h>
+#include <tk.h>
+
+#include <nmb_String.h>
+#include <nmb_Debug.h>
+
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
-
-#include <tcl.h>
-#include <tk.h>
 
 // Moved a lot of code here that was formerly inlined in the header
 // file because we had to change it to virtual and that generated
@@ -87,7 +89,7 @@ char	*handle_int_value_change(ClientData clientData,
 	} else if (intvar->d_ignoreChange) {
           intvar->d_ignoreChange = VRPN_FALSE;
 //if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
-fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
+collabVerbose(8, "handle_int_value_change (%s, %d):  ignoring the change.\n",
 intvar->d_myTclVarname, value);
 
         } else { //no errors: update the variable
@@ -95,11 +97,11 @@ intvar->d_myTclVarname, value);
           // by derived class.  (?)
 
 //if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
-fprintf(stderr, "handle_int_value_change (%s, %d).\n",
+collabVerbose(8, "handle_int_value_change (%s, %d).\n",
 intvar->d_myTclVarname, value);
 
           //*intvar = value;
-fprintf(stderr, "  .. set updateFromTcl.\n");
+collabVerbose(8, "  .. set updateFromTcl.\n");
           intvar->d_updateFromTcl = VRPN_TRUE;
           intvar->SetFromTcl(value);
           intvar->d_updateFromTcl = VRPN_FALSE;
@@ -221,8 +223,6 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	int	i;
 	char	cvalue[100];
 
-//fprintf(stderr, "Tclvar_init() called\n");
-
 	// Set the interpreter
 	interpreter = tcl_interp;
 
@@ -273,11 +273,6 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	    }
 	}
 
-        // NANOX
-        //for (i = 0; i < num_ints; i++) {
-          //if (int_list[i]->initialize(interpreter)) return(-1);
-        //}
-
 	// Set up the integer with buttons.
 	for (i = 0; i < num_ib; i++) {
 	    if (ib_list[i]->tcl_widget_name != NULL) {
@@ -285,21 +280,6 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	    }
 	}
 
-	// Set up the floatscales.
-	/*
-	for (i = 0; i < num_fs; i++) {
-	    if (fs_list[i]->tcl_widget_name != NULL) {
-		if (fs_list[i]->initialize(interpreter)) return(-1);
-	    }
-	}
-
-	// Set up the intscales.
-	for (i = 0; i < num_is; i++) {
-	    if (is_list[i]->tcl_widget_name != NULL) {
-		if (is_list[i]->initialize(interpreter)) return(-1);
-	    }
-	}
-	*/
 	// Set up the intentries.
 	for (i = 0; i < num_intentry; i++) {
 	    if (intentry_list[i]->tcl_widget_name != NULL) {
@@ -381,7 +361,7 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
   d_inCallback (VRPN_FALSE),
   d_updateFromTcl (VRPN_FALSE)
 {
-//fprintf(stderr, "Tclvar_int constructor %s\n", tcl_varname);
+  collabVerbose(4, "Tclvar_int constructor %s\n", tcl_varname);
 
 	if (num_ints >= (MAX_INTS-1)) {
 		fprintf(stderr,"Tclvar_int::Tclvar_int(): Can't link to %s\n",
@@ -449,7 +429,8 @@ Tclvar_int::~Tclvar_int (void)
 	// Find this entry in the list of variables
 	while ( (i < num_ints) && (int_list[i] != this) ) { i++; };
 	if (i >= num_ints) {
-		fprintf(stderr,"Tclvar_int::~Tclvar_int(): Internal error -- not in list\n");
+	  fprintf(stderr, "Tclvar_int::~Tclvar_int():  "
+                          "Internal error -- not in list\n");
 		return;
 	}
 //fprintf(stderr, " %d of %d\n", i, num_ints);
@@ -582,8 +563,8 @@ void Tclvar_int::updateTcl (void) {
   if (!interpreter) {
     return;
   }
-fprintf(stderr, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
-d_myTclVarname, d_myint, mylastint);
+  collabVerbose(8, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
+                d_myTclVarname, d_myint, mylastint);
 
     // If we're inside a Tcl callback, we're NOT going to generate
     // another Tcl callback with the Tcl_SetVar call below, since
@@ -600,7 +581,8 @@ d_myTclVarname, d_myint, mylastint);
     // which we want to ignore to avoid endless loops or hitting the callback
     // twice.
 
-fprintf(stderr, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n", d_myTclVarname);
+    collabVerbose(8, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n",
+                  d_myTclVarname);
     d_ignoreChange = VRPN_TRUE;
   }
 

@@ -8,33 +8,44 @@
 #include <vrpn_SharedObject.h>  // for vrpn_Shared_int32 and the like
 
 #include <nmb_TimerList.h>
+#include <nmb_Debug.h>
 
 /** \file Tcl_Netvar.C
- * Implementation for Tcl variables replicated and shared across the network.
- * Definitions:
- *   A shared variable is one that multiple processes can write to.
- *   A replicated variable is one that has several independant copies
- * of its state which readers and writers can choose among.
- *
- * This package can run in two modes, chosen between by the optional
- * second argument to Tclnet_init().
- *
- * If we're using centralized serialization (useOptimism == VRPN_FALSE),
- *
- *  * start up all vrpn_SharedObjects as VRPN_SO_DEFER_UPDATES
- *  * always write into d_replica[d_writeReplica],
- * which is the same as d_activeReplica, which is whatever end-user
- * we are synchronizing this Tclvar with.
- *  * accept updates from any replica.
- *
- * If we're using distributed serialization (useOptimism == VRPN_TRUE)
- *
- *  * we rely on the clocks of all processors involved being acceptably
- * serialized to reduce the latency hit of a round-trip to the central
- * serializer.
- *  * start up all vrpn_SharedObjects as VRPN_SO_IGNORE_OLD
- *
+   Implementation for Tcl variables replicated and shared across the network.
+   Definitions:
+     A shared variable is one that multiple processes can write to.
+     A replicated variable is one that has several independant copies
+   of its state which readers and writers can choose among.
+  
+   This package can run in two modes, chosen between by the optional
+   second argument to Tclnet_init().
+  
+   If we're using centralized serialization (useOptimism == VRPN_FALSE),
+  
+    * start up all vrpn_SharedObjects as VRPN_SO_DEFER_UPDATES
+    * always write into d_replica[d_writeReplica],
+   which is the same as d_activeReplica, which is whatever end-user
+   we are synchronizing this Tclvar with.
+    * accept updates from any replica.
+  
+   If we're using distributed serialization (useOptimism == VRPN_TRUE)
+  
+    * we rely on the clocks of all processors involved being acceptably
+   serialized to reduce the latency hit of a round-trip to the central
+   serializer.
+    * start up all vrpn_SharedObjects as VRPN_SO_IGNORE_OLD
+  
+   Verbosity scheme
+   ----------------
+   0 - no output
+   2 - integer netvar initialization
+   4 - integer linkvar initialization
+   6 - integer netvar assignment
+   8 - integer linkvar assignment
+   10 - netvar timing data
+
  */
+
 
 #define STARTING_NUM_REPLICAS 2
 /**<
@@ -64,7 +75,7 @@ void Tclnet_init (Tcl_Interp * i, int collabMode,
       sharedObjectMode = VRPN_SO_IGNORE_OLD;
       break;
     case TCLNET_SERIALIZE_LAMPORTCLOCK:
-fprintf(stderr, "TCLNET_SERIALIZE_LAMPORTCLOCK not implemented!\n");
+      fprintf(stderr, "TCLNET_SERIALIZE_LAMPORTCLOCK not implemented!\n");
       break;
   }
 
@@ -80,7 +91,7 @@ static void activateTimer (void) {
   sn = tclnetTimer->getListHead();
   if (sn != -1) {
     tclnetTimer->activate(sn);
-fprintf(stderr, "Activated timer %d.\n", sn);
+    collabVerbose(10, "Activated timer %d.\n", sn);
   }
 }
 
@@ -93,7 +104,7 @@ static int blockTimer (void *) {
   sn = tclnetTimer->getListHead();
   if (sn != -1) {
     tclnetTimer->block(sn);
-fprintf(stderr, "Blocked timer %d.\n", sn);
+    collabVerbose(10, "Blocked timer %d.\n", sn);
   }
   return 0;
 }
@@ -316,10 +327,10 @@ vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
 
     gettimeofday(&now, NULL);
 
-//fprintf(stderr, "TclNet_int (%s)::operator = (%d) "
-//"into d_replica[%d] at %ld:%ld.\n",
-//my_tcl_varname, newValue, d_writeReplica,
-//now.tv_sec, now.tv_usec);
+    collabVerbose(6, "TclNet_int (%s)::operator = (%d) "
+                  "into d_replica[%d] at %ld:%ld.\n",
+                  d_myTclVarname, newValue, d_writeReplica,
+                  now.tv_sec, now.tv_usec);
 
     if (d_replica[d_writeReplica]) {
       ((vrpn_Shared_int32 *) d_replica[d_writeReplica])->set(newValue, now);
@@ -396,8 +407,8 @@ void TclNet_int::SetFromTcl (vrpn_int32 newValue) {
 // ISSUE:  Need a better way of specifying which one (?)
 void TclNet_int::copyReplica (int whichReplica) {
 
-//fprintf(stderr, "TclNet_int::copyReplica:  Copying %d.\n",
-//whichReplica);
+  collabVerbose(6, "TclNet_int::copyReplica:  Copying %d.\n",
+                whichReplica);
 
   if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
     fprintf(stderr, "TclNet_int::copyReplica:  illegal id %d.\n",
@@ -412,6 +423,11 @@ void TclNet_int::copyReplica (int whichReplica) {
 // Copy the state of the source replica to the destination replica.
 void TclNet_int::copyFromToReplica (int sourceReplica, int destReplica)
 {
+
+  collabVerbose(6, "++ TclNet_int::copyFromToReplica:  "
+                "Copying from %d to %d.\n",
+                sourceReplica, destReplica);
+
   if ((sourceReplica < 0) || (sourceReplica >= d_numReplicas)) {
     fprintf(stderr, "TclNet_int::copyFromToReplica:  illegal id %d.\n",
             sourceReplica);
@@ -439,8 +455,8 @@ void TclNet_int::copyFromToReplica (int sourceReplica, int destReplica)
 // receiving any network updates (under OPTIMISTIC_CONNECTIONS).
 void TclNet_int::syncReplica (int whichReplica) {
 
-//fprintf(stderr, "++ TclNet_int::syncReplica:  Synchronizing with %d.\n",
-//whichReplica);
+  collabVerbose(6, "++ TclNet_int::syncReplica:  Synchronizing with %d.\n",
+                whichReplica);
 
   if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
     fprintf(stderr, "TclNet_int::syncReplica:  illegal id %d.\n",
@@ -495,7 +511,7 @@ int TclNet_int::propagateReceivedUpdate (
     void * userdata,
     vrpn_int32 newValue,
     timeval when,
-    vrpn_bool /*isLocal*/)
+    vrpn_bool isLocal)
 {
   TclNet_int * nti;
 
@@ -507,10 +523,10 @@ int TclNet_int::propagateReceivedUpdate (
 
   nti = (TclNet_int *) userdata;
 
-//fprintf(stderr, "TclNet_int (%s)::propagateReceivedUpdate (%d) - %s - "
-//"at %ld:%ld.\n",
-//nti->d_myTclVarname, newValue, isLocal ? "local" : "remote",
-//when.tv_sec, when.tv_usec);
+  collabVerbose(6, "TclNet_int (%s)::propagateReceivedUpdate (%d) - %s - "
+                "at %ld:%ld.\n",
+                nti->d_myTclVarname, newValue, isLocal ? "local" : "remote",
+                when.tv_sec, when.tv_usec);
 
   // Ignore the next change to this variable generated by Tcl
   // if and only if updateTcl() is going to send an update
@@ -518,8 +534,8 @@ int TclNet_int::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-//fprintf(stderr, "In TclNet_int::pre with ignore %d and fromTcl %d.\n",
-//nti->d_ignoreChange, nti->d_updateFromTcl);
+  collabVerbose(6, "In TclNet_int::pre with ignore %d and fromTcl %d.\n",
+                nti->d_ignoreChange, nti->d_updateFromTcl);
 
   // Need to do this check before calling operator = ();  otherwise
   // mylastint will always equal newValue!
@@ -538,8 +554,8 @@ int TclNet_int::propagateReceivedUpdate (
     }
   }
 
-//fprintf(stderr, "Leaving TclNet_int::pre with ignore %d and fromTcl %d.\n",
-//nti->d_ignoreChange, nti->d_updateFromTcl);
+  collabVerbose(6, "Leaving TclNet_int::pre with ignore %d and fromTcl %d.\n",
+                nti->d_ignoreChange, nti->d_updateFromTcl);
 
   return 0;
 }
