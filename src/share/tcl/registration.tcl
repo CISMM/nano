@@ -42,10 +42,13 @@ generic_optionmenu $nmInfo(registration).selection2D \
         "Projection image" imageNames
 button $nmInfo(registration).colormap2D -text "Colormap..."  \
     -command "show.reg_proj_colorscale"
+checkbutton $nmInfo(registration).flip_projection_image_checkbutton \
+    -text "Flip image in X" -variable reg_proj_flipX -anchor nw
+
 #generic_optionmenu $nmInfo(registration).colormap2D \
 #	reg_projection_colormap_from \
 #	"Colormap" colorMapNames
-pack $nmInfo(registration).selection2D $nmInfo(registration).colormap2D -anchor nw -pady 3
+pack $nmInfo(registration).selection2D $nmInfo(registration).colormap2D $nmInfo(registration).flip_projection_image_checkbutton -anchor nw -pady 3
 
 #proc printvar {fooa element op} {
 #    global reg_projection_cm

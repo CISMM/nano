@@ -1,3 +1,8 @@
+2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* registration.tcl: added a checkbutton to flip the projection image
+	in X in those situations where that makes more sense (SEM data)
+
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
         * mainwin.tcl: added tool menu item for AFM tip visualization controls
