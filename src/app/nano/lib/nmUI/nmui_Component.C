@@ -9,6 +9,15 @@
 #include <Tcl_Netvar.h>
 
 
+/* static */
+const char* nmui_Component::
+d_syncRequest_type_string = "nmui Component request sync";
+
+
+/* static */
+const char* nmui_Component::
+d_syncComplete_type_string = "nmui Component sync complete";
+
 // sync:  all sync traffic is SENT over d_connection
 // (collaboratingPeerServerConnection in microscape.c) and received over
 // d_peer (collaboratingPeerRemoteConnection in microscape.c).
@@ -139,9 +148,9 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
   sprintf(namebuf, "nmui Component %s", d_name);
   d_myId = d_connection->register_sender(namebuf);
   d_syncRequest_type =
-      d_connection->register_message_type("nmui Component request sync");
+      d_connection->register_message_type(d_syncRequest_type_string);
   d_syncComplete_type =
-      d_connection->register_message_type("nmui Component sync complete");
+      d_connection->register_message_type(d_syncComplete_type_string);
 
 //fprintf(stderr, "## Bound connection %ld for nmuiComponent %s.\n",
 //c, d_name);
@@ -288,9 +297,9 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
   sprintf(namebuf, "nmui Component %s", d_name);
   myId = c->register_sender(namebuf);
   syncRequest_type =
-      c->register_message_type("nmui Component request sync");
+      c->register_message_type(d_syncRequest_type_string);
   syncComplete_type =
-      c->register_message_type("nmui Component sync complete");
+      c->register_message_type(d_syncComplete_type_string);
 
   // MAKE SURE THERE'S ONLY ONE COPY OF THE HANDLER - HACK
   c->unregister_handler(syncRequest_type, handle_syncRequest,

@@ -1,3 +1,10 @@
+2001-06-17  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmui_Component.C, .h:  
+		added static member strings for the vrpn message types
+		(d_syncRequest_type_string, d_syncComplete_type_string)
+		and use them when registering message types.
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_Component.C : remove dead code.

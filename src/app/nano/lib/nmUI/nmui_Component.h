@@ -224,7 +224,9 @@ class nmui_Component {
     vrpn_Connection * d_connection;
     vrpn_int32 d_myId;
     vrpn_int32 d_syncRequest_type;
+    static const char* d_syncRequest_type_string;
     vrpn_int32 d_syncComplete_type;
+    static const char* d_syncComplete_type_string;
     vrpn_int32 d_lock_type;
     vrpn_int32 d_unlock_type;
 
