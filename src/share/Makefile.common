@@ -162,7 +162,8 @@ DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
 DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
 
 ifndef MY_NANO_SRC_DIR
-   MY_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/$(WHOAMI)
+   MY_NANO_SRC_DIR := $(shell echo $(shell $(PWD_COMMAND)) | perl -pe "s|/nano/src(?\!.*/nano/src/).+||;")
+   #MY_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/$(WHOAMI)
 endif
 
 TOP_LEVEL_DIR     := $(MY_NANO_SRC_DIR)/nano
@@ -176,10 +177,10 @@ else
    FULL_OBJECT_DIR   := $(TOP_LEVEL_OBJ_DIR)/obj/$(HW_OS)
 endif
 
-#TCL_INC_DIR := /net/nano/nano3/tcltk.sgi_irix/include
-#TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib
-TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include
-TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib
+TCL_INC_DIR := /net/nano/nano3/tcltk.sgi_irix/include \
+               /afs/unc/proj/stm/src/tcltk.sgi_irix/include
+TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib \
+               /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib
 
 ###############################################################################
 #
