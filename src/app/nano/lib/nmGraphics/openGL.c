@@ -175,7 +175,7 @@ int build_list_set
   int i;
   int count;
 
-  if (subset.empty()) return 0;
+  if (!g_just_color && subset.empty()) return 0;
 
 #if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
@@ -245,7 +245,16 @@ int build_list_set
   if (spm_graphics_verbosity >= 15) { 
     fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
   } 
+  // Store g_just_color
+  vrpn_bool g_just_color_was_on = g_just_color;
+  // If we are re-doing the whole surface, we don't need to then
+  // re-do the color, so turn flag off.
+  if ( (subset.low() == 0) && (subset.high() == num_grid_lists -1) ) {
+      g_just_color_was_on = 0;
+  }
 
+  // turn g_just_color off so only geometry gets re-generated
+  g_just_color = 0;
   for (i = subset.low(); i <= subset.high(); i++) {
 
     if (spm_graphics_verbosity >= 10) {
@@ -281,6 +290,48 @@ int build_list_set
     VERBOSECHECK(10);
 
     glEndList();
+  }
+  if ( g_just_color_was_on ) {
+      // Flag tells stripfn to only regenerate color, and use cached normals 
+      // and vertices. 
+      g_just_color = 1;
+      // re-color the whole surface
+      for (i = 0; i < num_grid_lists; i++) {
+          
+          if (spm_graphics_verbosity >= 10) {
+              fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+          }
+          
+          glNewList(base + i, GL_COMPILE);
+          
+          VERBOSECHECK(10);
+          
+          if (g_VERTEX_ARRAY) {
+              count = (*stripfn)(planes, minColor, maxColor, i * g_stride,
+                                 vertexptr[i]);
+              if (count == -1) {
+                  fprintf(stderr, "build_list_set():  "
+                          "Internal error (with arrays) - bad strip\n");
+                  return -1;
+              }
+              
+              specify_vertexArray(planes, i, count);
+          } else {
+              //      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, NULL)) {
+              if ((*stripfn)(planes, minColor, maxColor, i * g_stride, vertexptr[i])) {
+                  fprintf(stderr, "build_list_set():  "
+                          "Internal error - bad strip\n");
+                  return -1;
+              }
+          }
+          
+          if (spm_graphics_verbosity >= 10) {
+              fprintf(stderr, "    updated %d.\n", i);
+          }
+          VERBOSECHECK(10);
+          
+          glEndList();
+      }
   }
   g_just_color = 0;
   return 0;
@@ -319,11 +370,11 @@ int build_list_set (
     glDeleteLists(grid_list_base + subset.low(),
                   subset.high() - subset.low() + 1);
     VERBOSECHECK(8);
-
-    return build_list_set(subset, planes, grid_list_base,
-                          g_minColor, g_maxColor, stripfn);
-  } else
-    return 0;
+  }
+  // Always call build_list_set even if subset is empty
+  // in case color needs to be re-done. 
+  return build_list_set(subset, planes, grid_list_base,
+                        g_minColor, g_maxColor, stripfn);
 }
 
 
@@ -415,7 +466,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
   build_list_set(nmb_Interval (0, *num - 1), planes, *base,
 		 minColor, maxColor, stripfn);
   
-  last_num_lists = *num;	// Remember how may done this time
+  last_num_lists = *num;	// Remember how many done this time
   
   VERBOSE(4,"     done build_grid_display_lists in openGL.c");
   VERBOSECHECK(4);

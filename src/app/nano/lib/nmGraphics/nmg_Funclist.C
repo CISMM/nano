@@ -66,11 +66,11 @@ int removeFunctionFromFunclist (nmg_Funclist ** list, int id) {
 
   // list empty or off right
   if (!head) {
-    if (!prev)
-      fprintf(stderr, "removeFunctionFromFunclist:  Already empty!\n");
-    else
-      fprintf(stderr, "removeFunctionFromFunclist:  "
-                      "No function in list with id %d.\n", id);
+//      if (!prev)
+//        fprintf(stderr, "removeFunctionFromFunclist:  Already empty!\n");
+//      else
+//        fprintf(stderr, "removeFunctionFromFunclist:  "
+//                        "No function in list with id %d.\n", id);
     return -1;
   }
 

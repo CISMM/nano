@@ -55,7 +55,7 @@ extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 #define FALSE (0)
 
 
-static	Tcl_Interp *tk_control_interp;
+static	Tcl_Interp *tk_control_interp = NULL;
 static	int	old_user_mode;
 //static	double	old_x_min_scale, old_x_max_scale;
 static	int	controls_on = 0;
@@ -64,7 +64,7 @@ static  int  knobs_set_from_c;
 
 // Global variables for the colormap widget:
 static Tk_PhotoImageBlock colormap;
-static unsigned char *colormap_pixels;
+static unsigned char *colormap_pixels = NULL;
 static int colormap_width = 32, colormap_height = 256;
 static Tk_PhotoHandle image;
 
@@ -246,61 +246,61 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 
 
 	VERBOSE(4, "  Initializing Tcl");
-	tk_control_interp = Tcl_CreateInterp();
+	Tcl_Interp * my_tk_control_interp = Tcl_CreateInterp();
 
-	printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
+	VERBOSE(1,"init_Tk_control_panels(): just created the tcl/tk interpreter\n");
 
 #if defined (_WIN32) && !defined (__CYGWIN__)
-        if (Tcl_InitStubs(tk_control_interp, TCL_VERSION, 1) == NULL) {
+        if (Tcl_InitStubs(my_tk_control_interp, TCL_VERSION, 1) == NULL) {
             fprintf(stderr, "Non matching version of tcl and tk\n");
             return -1;
         }
 #endif
 	/* Start a Tcl interpreter */
 	VERBOSE(4, "  Starting Tcl interpreter");
-	if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
+	if (Tcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tcl_Init failed: %s\n",tk_control_interp->result);
+			"Tcl_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
 
 	/* Initialize Tk using the Tcl interpreter */
 	VERBOSE(4, "  Initializing Tk");
-	if (Tk_Init(tk_control_interp) == TCL_ERROR) {
+	if (Tk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tk_Init failed: %s\n",tk_control_interp->result);
+			"Tk_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
 
 #ifndef NO_ITCL
 	/* Initialize Tcl packages */
-	if (Blt_Init(tk_control_interp) == TCL_ERROR) {
+	if (Blt_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
-	if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
+	if (Itcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	if (Itk_Init(tk_control_interp) == TCL_ERROR) {
+	if (Itk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-	Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+	Tcl_StaticPackage(my_tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 #endif	
         // Check to see if we have a Tk main window.
 	VERBOSE(4, "  Checking Tk mainwindow");
-	tk_control_window = Tk_MainWindow(tk_control_interp);
+	tk_control_window = Tk_MainWindow(my_tk_control_interp);
 	if (tk_control_window == NULL) {
 		fprintf(stderr,"Tk can't get main window: %s\n",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
@@ -309,34 +309,34 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	/* Load the Tcl script that handles main interface window
 	 * and mode changes */
 	VERBOSE(4, "  Loading Tcl script");
-	sprintf(command, "source %s%s",tcl_script_dir,TCL_MODE_FILE);
-	if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
+	sprintf(command, "%s%s",tcl_script_dir,TCL_MODE_FILE);
+	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
 	/* Link the variables that need linking and the callback routines
 	 * to handle updates to the mode from either end. */
 	VERBOSE(4, "  Tracing more Tcl variables");
-	if (Tcl_TraceVar(tk_control_interp, "user_0_mode",
+	if (Tcl_TraceVar(my_tk_control_interp, "user_0_mode",
 		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 		handle_Tk_mode_change, (ClientData) NULL) != TCL_OK) {
 		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "user_0_mode",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 	old_user_mode = user_mode[0];
 	sprintf(cvalue,"%d",user_mode[0]);
-	Tcl_SetVar(tk_control_interp, "user_0_mode", cvalue, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp, "user_0_mode", cvalue, TCL_GLOBAL_ONLY);
 
 	/* setup callback for changes to tcl terminal input variable to */
 	/* simulate an option entered by the keyboard */
-	if (Tcl_TraceVar(tk_control_interp, "term_input",
+	if (Tcl_TraceVar(my_tk_control_interp, "term_input",
 		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 		handle_term_input, (ClientData) NULL) != TCL_OK) {
 		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "term_input",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
@@ -348,15 +348,15 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	  old_knobs[i] = new_val;
 	  sprintf(index,"%d",i);
 	  sprintf(cvalue,"%d",new_val);
-	  Tcl_SetVar2(tk_control_interp,"knobs",index,cvalue,TCL_GLOBAL_ONLY);
+	  Tcl_SetVar2(my_tk_control_interp,"knobs",index,cvalue,TCL_GLOBAL_ONLY);
 	}
 
 	/* setup callback for changes to tcl knob variable */
-	if (Tcl_TraceVar2(tk_control_interp, "knobs",NULL,
+	if (Tcl_TraceVar2(my_tk_control_interp, "knobs",NULL,
 		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 		handle_knob_change, (ClientData) NULL) != TCL_OK) {
 		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "knobs",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
@@ -364,11 +364,11 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	/* this callback does nothing except force a redraw of the entire surface */
 	/* you still need to link the tcl and c lighting variables */
 	/* only works for the GL version currently XXX */
-	if (Tcl_TraceVar2(tk_control_interp, "surface_changed",NULL,
+	if (Tcl_TraceVar2(my_tk_control_interp, "surface_changed",NULL,
 		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 		handle_surface_change, (ClientData) NULL) != TCL_OK) {
 		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "surface_change",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
@@ -377,27 +377,27 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 
 	/* initialize Tk variables for color settings */
 	sprintf(cvalue, "%d", (int)minColor[0]);
-	Tcl_SetVar(tk_control_interp,"minR",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"minR",(char *) cvalue,TCL_GLOBAL_ONLY);
 	sprintf(cvalue, "%d", (int)minColor[1]);
-	Tcl_SetVar(tk_control_interp,"minG",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"minG",(char *) cvalue,TCL_GLOBAL_ONLY);
 	sprintf(cvalue, "%d", (int)minColor[2]);
-	Tcl_SetVar(tk_control_interp,"minB",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"minB",(char *) cvalue,TCL_GLOBAL_ONLY);
 	sprintf(cvalue, "%d", (int)maxColor[0]);
-	Tcl_SetVar(tk_control_interp,"maxR",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"maxR",(char *) cvalue,TCL_GLOBAL_ONLY);
 	sprintf(cvalue, "%d", (int)maxColor[1]);
-	Tcl_SetVar(tk_control_interp,"maxG",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"maxG",(char *) cvalue,TCL_GLOBAL_ONLY);
 	sprintf(cvalue, "%d", (int)maxColor[2]);
-	Tcl_SetVar(tk_control_interp,"maxB",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"maxB",(char *) cvalue,TCL_GLOBAL_ONLY);
 
 	sprintf(cvalue, "%d", graphics->getSpecularity());
-	Tcl_SetVar(tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
 	controls_on = 1;
 
 
 	/* Initialize the Tclvar variables */
 	VERBOSE(4, "  Calling Tclvar_init()");
-        Tclnet_init(tk_control_interp, useOptimism);
-	if (Tclvar_init(tk_control_interp)) {
+        Tclnet_init(my_tk_control_interp, useOptimism);
+	if (Tclvar_init(my_tk_control_interp)) {
 		fprintf(stderr,"Tclvar_init failed.\n");
 		return(-1);
 	}
@@ -413,10 +413,14 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	colormap.pixelSize = 3;
 	colormap.pitch = colormap_width * 3;
 	colormap.offset[0] = 0;	colormap.offset[1] = 1;	colormap.offset[2] = 2;
-	image = Tk_FindPhoto( tk_control_interp, "colormap_image" );
+	image = Tk_FindPhoto( my_tk_control_interp, "colormap_image" );
 	Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
 	// end of colormap setup
 
+        // Initialize the global tcl interpreter
+        // Waiting til here makes sure the error_display functions get to use a
+        // fully-initialized interpreter, and don't cause a seg-fault.
+        tk_control_interp = my_tk_control_interp;
 	return(0);
 }
 

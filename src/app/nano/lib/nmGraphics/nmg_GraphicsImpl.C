@@ -752,7 +752,8 @@ _______________________________********************/
 
 void nmg_Graphics_Implementation::causeGridReColor (void) {
   g_just_color = 1;
-  causeGridRedraw();
+  // Don't cause geometry to be re-calculated !!
+  //causeGridRedraw();
 }
 
 

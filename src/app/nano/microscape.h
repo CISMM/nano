@@ -51,6 +51,7 @@ class Xform;		//added from ugraphics
 #ifndef NO_MAGELLAN
 class vrpn_Magellan;
 class vrpn_Tracker_AnalogFly;
+class vrpn_Text_Receiver;
 #endif
 class vrpn_Phantom;
 
@@ -141,6 +142,7 @@ extern  vrpn_Button_Remote *buttonBox;
 extern  vrpn_Analog_Remote *dialBox;
 extern  int bdboxButtonState[BDBOX_NUMBUTTONS];
 extern  double bdboxDialValues[BDBOX_NUMDIALS];
+
 #ifndef NO_MAGELLAN
 extern  vrpn_Magellan *magellanButtonBoxServer;
 extern  vrpn_Tracker_AnalogFly *magellanTrackerServer;
@@ -149,7 +151,10 @@ extern  vrpn_Button_Remote *magellanButtonBox;
 extern  int magellanButtonState[MAGELLAN_NUMBUTTONS];
 extern  vrpn_Analog_Remote *magellanPuckAnalog;
 extern  vrpn_Tracker_Remote *magellanPuckTracker;
+extern  vrpn_Text_Receiver * magellanTextRcvr;
 extern  vrpn_bool magellanPuckActive;
+
+void shutdown_Magellan();
 #endif
 /* end vrpn stuff */
 
@@ -281,7 +286,7 @@ extern int disableOtherTextures (TextureMode m);
 /* defined in minit.c */
 int x_init(char* argv[]);
 int reset_phantom();
-int peripheral_init(vrpn_Connection *, vrpn_bool do_magellan);
+int peripheral_init(vrpn_Connection *, char * magellanName);
 int stm_init (const vrpn_bool set_region,
               const vrpn_bool set_mode, const int, const char *,
               const int, const int);

@@ -34,6 +34,7 @@
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
 #include <vrpn_Tracker_AnalogFly.h>
+#include <vrpn_Text.h>
 #endif
 
 #ifndef NO_PHANTOM_SERVER
@@ -1021,6 +1022,7 @@ int magellanButtonState[MAGELLAN_NUMBUTTONS];
 
 vrpn_Analog_Remote *magellanPuckAnalog = NULL;
 vrpn_Tracker_Remote *magellanPuckTracker = NULL;
+vrpn_Text_Receiver * magellanTextRcvr = NULL;
 vrpn_bool magellanPuckActive = VRPN_FALSE;
 #endif
 
@@ -1138,7 +1140,7 @@ struct MicroscapeInitializationState {
 
   int packetlimit;
 
-  vrpn_bool do_magellan;
+  char magellanName [256];
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -1167,14 +1169,14 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   useOptimism (VRPN_FALSE),
   phantomRate (60.0),  // standard default
   tesselation (1),
-  packetlimit (0),
-  do_magellan(1)
+  packetlimit (0)
 {
     graphicsHost[0] = '\0';
     SPMhost[0] = '\0';
     remoteOutputStreamName[0] = '\0';
     peerName[0] = '\0';
     logPath[0] = '\0';
+    magellanName[0]= '\0';
 }
 
 
@@ -1182,7 +1184,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
-int createNewMicroscope( MicroscapeInitializationState &istate,
+static int createNewMicroscope( MicroscapeInitializationState &istate,
                          vrpn_Connection * c);
 void Usage (char * s);
 int main (int argc, char * argv []);
@@ -4696,7 +4698,7 @@ void ParseArgs (int argc, char ** argv,
         //do_menus = 0;
         fprintf(stderr, "Warning: -nomenus obsolete.\n");
       } else if (strcmp(argv[i], "-nomagellan") == 0) {
-          istate->do_magellan = 0;
+          istate->magellanName[0] = '\0';
       } else if (strcmp(argv[i], "-o") == 0) {
         istate->afm.writingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
@@ -5617,7 +5619,7 @@ void update_rtt (void) {
   lasttime = now;
 }
 
-int createNewMicroscope( MicroscapeInitializationState &istate,
+static int createNewMicroscope( MicroscapeInitializationState &istate,
    vrpn_Connection * c) 
 {
     VERBOSE(1, "Creating a new microscope");
@@ -5782,7 +5784,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
 
 // Get stuff from the environment, and set essential variables
 // if they haven't been already.
-int initialize_environment() {
+static int initialize_environment(MicroscapeInitializationState * istate) {
     char	*envir;
 
     envir = getenv("TRACKER");
@@ -5813,14 +5815,26 @@ int initialize_environment() {
         head_tracked = VRPN_TRUE;
     }
 
+    // Handling for button boxes. If BDBOX=Magellan0, open a magellan device
+    // on COM1 (minit.c: peripheral_init). Any other name except "null", open
+    // an SGI button box.
     envir = getenv("BDBOX");
-    if (envir == NULL) {
+    if ((envir == NULL) || (strncmp(envir, "null", 4)==0)) {
         bdboxName = (char *)"null";
+        istate->magellanName[0] = '\0';
     } else {
-        bdboxName = strtok(envir, " ");
-        //printf("sgibdbox is %s\n", bdboxName);
-        if (bdboxName == NULL) {
-	    bdboxName = (char *)"null";
+        // Check for a Magellan
+        if (strncmp(envir, "Magellan", 8) == 0) {
+            strncpy(istate->magellanName,envir, 255);
+            // bdboxName used only for SGI button box. 
+            bdboxName = (char *)"null";
+        } else {
+            istate->magellanName[0] = '\0';
+            bdboxName = strtok(envir, " ");
+            //printf("SGI button/dial box is %s\n", bdboxName);
+            if (bdboxName == NULL) {
+                bdboxName = (char *)"null";
+            }
         }
     }
 
@@ -5856,12 +5870,14 @@ int initialize_environment() {
     colorMapDir=getenv("NM_COLORMAP_DIR");
     if (nano_root) {
         char *env_string = new char [strlen(nano_root) + 50];
-#if defined (_WIN32) && !defined (__CYGWIN__)
-        if (getenv("TCL_LIBRARY") == NULL) {
-            sprintf(env_string, "%s/lib/tcl8.2", nano_root);
-            _putenv(env_string);
-        }
-#endif
+// Not needed if tcl is installed next to the nano app, as
+// the use of NANO_ROOT implies
+//  #if defined (_WIN32) && !defined (__CYGWIN__)
+//          if (getenv("TCL_LIBRARY") == NULL) {
+//              sprintf(env_string, "TCL_LIBRARY=%s/lib/tcl8.2", nano_root);
+//              _putenv(env_string);
+//          }
+//  #endif
         if ( tcl_script_dir == NULL) {
             sprintf(env_string, "%s/share/tcl/", nano_root);
             tcl_script_dir = new char [strlen(env_string) + 1];
@@ -5922,6 +5938,10 @@ int main(int argc, char* argv[])
     minC[1] = maxC[1] = surface_g;
     minC[2] = maxC[2] = surface_b;
 
+    // get stuff and set stuff from environment
+    // Before parseArgs so command line can over-ride.
+    initialize_environment(&istate);
+    
     /* Parse the command line */
     ParseArgs(argc, argv, &istate);
 
@@ -5929,9 +5949,6 @@ int main(int argc, char* argv[])
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
 
-    // get stuff and set stuff from environment
-    initialize_environment();
-    
     // Load the names of usable color maps
     VERBOSE(1, "Loading color maps");
     loadColorMapNames(colorMapDir);
@@ -6140,8 +6157,8 @@ int main(int argc, char* argv[])
     // Initialize force, tracker, a/d device, sound
     VERBOSE(1,"Before tracker enable");
     internal_device_connection = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
-    if (peripheral_init(internal_device_connection, istate.do_magellan)){
-        display_fatal_error_dialog("Cannot initialize peripheral devices\n");
+    if (peripheral_init(internal_device_connection, istate.magellanName)){
+        display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
         return(-1);
     }
     else if (register_vrpn_callbacks()){
@@ -6490,18 +6507,8 @@ VERBOSE(1, "Entering main loop");
         sem_ui->mainloop();
       }
 #ifndef NO_MAGELLAN
-        // Count the number of times the magellan box resets. 
-      static int num_magellan_reset = 0;
       if (magellanButtonBoxServer) {
 	magellanButtonBoxServer->mainloop();
-        // XXX ATH if (magellanButtonBoxServer->doing_reset()) num_magellan_reset++;
-        // If magellan resets too many times, stop trying to talk to it. 
-        if (num_magellan_reset > 2) {
-            delete magellanButtonBoxServer;
-            magellanButtonBoxServer = NULL;
-            delete magellanButtonBox;
-            magellanButtonBox = NULL;
-        }
       }
       if (magellanTrackerServer) {
 	magellanTrackerServer->mainloop();
@@ -6514,7 +6521,13 @@ VERBOSE(1, "Entering main loop");
       }
       if (magellanPuckTracker) {
 	magellanPuckTracker->mainloop();
+        // Only call text receiver mainloop if magellan tracker is active, too. 
+        // Otherwise we get spurious messages after shutting down the tracker. 
+        if (magellanTextRcvr) {
+            magellanTextRcvr->mainloop();
+        }
       }
+
 #endif
 
 #ifndef NO_PHANTOM_SERVER
@@ -6824,27 +6837,10 @@ VERBOSE(1, "Entering main loop");
 	  vrpnHeadTracker[i] = NULL;
       }
     }
+
 #ifndef NO_MAGELLAN
-    if (magellanPuckTracker) {
-	delete magellanPuckTracker;
-	magellanPuckTracker = NULL;
-    }
-    if (magellanPuckAnalog) {
-	delete magellanPuckAnalog;
-	magellanPuckAnalog = NULL;
-    }
-    if (magellanButtonBox) {
-	delete magellanButtonBox;
-	magellanButtonBox = NULL;
-    }
-    if (magellanTrackerServer) {
-        delete magellanTrackerServer;
-        magellanTrackerServer= NULL;
-    }
-    if (magellanButtonBoxServer) {
-        delete magellanButtonBoxServer;
-        magellanButtonBoxServer= NULL;
-    }
+    // Defined in minit.c - deletes all magellan objects. 
+    shutdown_Magellan();
 #endif
 
     if (phantButton) {

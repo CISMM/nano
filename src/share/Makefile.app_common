@@ -65,7 +65,11 @@ endif
 endif
 
 ifndef APP_NAME
+ifdef VC
+   APP_NAME := $(notdir $(CWD)).exe
+else
    APP_NAME := $(notdir $(CWD))
+endif
 endif
 
 ifndef APP_EXEC
@@ -73,7 +77,7 @@ ifndef APP_EXEC
 endif
 
 ifdef VC
-  OUTPUT_CMD := /OUT:"$(shell cygpath -w $(APP_EXEC).exe)"
+  OUTPUT_CMD := /OUT:"$(shell cygpath -w $(APP_EXEC))"
   LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO /NODEFAULTLIB:LIBCMT
 # /MTd /Z7 /link
 

@@ -136,6 +136,13 @@ proc nano_warning {msg } {
     .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
     .error_dialog activate
 }
+
+# bgerror is a special name, provided by tcl/tk, called if there
+# is a background error in the script. Don't necessarily want
+# these to be fatal. 
+proc bgerror {msg} {
+    nano_error "Internal tcl error: $msg"
+}
 ######################
 
 

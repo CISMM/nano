@@ -1,7 +1,7 @@
 ### first attempt at a top-level makefile.
 ### cd to nano/src, and type "make"
 
-.PHONY: all lib app/nano/lib app/nano
+.PHONY: all lib app/nano/lib app/nano install
 
 all: lib app/nano/lib app/nano
 
@@ -15,6 +15,9 @@ app/nano: app/nano/lib
 ### this should probably be moved into app/nano/Makefile
 app/nano/lib:
 	$(MAKE) -C app/nano/lib
+
+install:
+	$(MAKE) -C app/nano install
 
 .PHONY:	clean
 clean:

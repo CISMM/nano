@@ -4653,7 +4653,7 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
   
   //printf("nmm_Microscope_Remote::Got control, sending initialization\n");
   // Send off the relaxation parameters (if any)
-  if (me->d_relax_comp.is_enabled()) {
+  if (me->state.doRelaxComp) {
       me->SetRelax(me->state.stmRxTmin, me->state.stmRxTsep);
   } else {
       me->SetRelax(0, 0);

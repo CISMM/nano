@@ -55,8 +55,10 @@ ifdef VC
 # option for g++ and CC. 
 # Let's try to use the g++ compiler here - no CFLAGS because those are
 # for CL. 
+# Note the perl clause is different, too - we are replacing .o with
+# .obj because CL builds .obj files. 
 DEPEND_BUILD_RULE := ( \
-   g++ -M -D_WIN32 $(DEFINES) $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" ; \
+   g++ -M -D_WIN32 $(DEFINES) $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*)(\\.o)(\\w*:)|$(OBJECT_DIR)/\\1\\.obj\\3|g;" ; \
    echo $(APP_LIST) ; \
    echo DEP_LIBS_INC := $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) ; \
    echo DEP_LIBS_LD := $(filter-out -I%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_LD) ; \

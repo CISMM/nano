@@ -20,3 +20,8 @@ ifdef NANO_WITH_ROBOT
 endif
 
 include ../Makefile.share
+
+.PHONY: install
+install:
+	cp $(APP_EXEC) $(NANO_ROOT)/bin
+	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share

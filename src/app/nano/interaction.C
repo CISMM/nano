@@ -382,7 +382,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
 void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
 
-      printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
+    //printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -428,7 +428,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
                                 "could not get input point!\n");
 		return;
 	    }
-	    printf("handle_commit_change: points in list, doing modify.\n");
+	    //printf("handle_commit_change: points in list, doing modify.\n");
 	    microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
 
 	    double x, y;
@@ -525,7 +525,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    }
 	
 	    // resume normal scanning operation of AFM
-	    printf("handle_commit_change: done modifying, resuming scan.\n");
+	    //printf("handle_commit_change: done modifying, resuming scan.\n");
 	    microscope->ResumeScan();
 	    // All done - turn off commit button
 	    tcl_commit_pressed = 0;	
@@ -543,7 +543,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    // This comparison sets the smallest possible scan region 
 	    // to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
 	    // only do something if region has been specified.
-	    printf ( "Setting region, size %f\n", microscope->state.select_region_rad);
+	    //printf ( "Setting region, size %f\n", microscope->state.select_region_rad);
 	    // here's how the region is specified. 
 	    //x_min = centerx - rad;
 	    //x_max = centerx + rad;
@@ -584,7 +584,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
  */
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
-    printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
+    //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
     if (tcl_commit_canceled != 1) return;
@@ -620,7 +620,7 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	    // waiting for the user - we're about to resume the scan.
 	    microscope->state.modify.slow_line_committed = VRPN_FALSE;
 
-	    fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
+	    //fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
 	}
 	// I think we should always resume scan - if the user hits "cancel"
 	// that should mean "start over", so we always begin scanning again.
