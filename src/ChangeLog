@@ -1,3 +1,8 @@
+2001-07-16  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* vc-setup:  removed this file to the module
+	nano-cygwin-homedir-stuff.
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* vc-setup: Path to tcl dlls must be set using Windows path,
