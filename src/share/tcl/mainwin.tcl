@@ -63,6 +63,14 @@ catch { option add *Font {helvetica -12 } userDefault}
 #
 if {![info exists thirdtech_ui] } { set thirdtech_ui 0 }
 
+#
+# nanoEd modifications:
+#   For some nanoEd experiments, we want a very simple interface
+#   to show up, and the bulk of the interface to be hidden off-
+#   screen.  Setting this variable to 1 does that.  Setting it to
+#   0 provides the more-complete interface.
+#
+set nanoed_simple_ui 0
 
 # We will also watch for "viewer_only" to be set, indicating this
 # version can't connect to live SPMs.
@@ -987,7 +995,10 @@ after idle {
 
     # The stripchart window.
     #Make the window appear on the top right corner.
-    wm geometry $graphmod(sc) -0+0
+
+    if { !$nanoed_simple_ui } {
+	wm geometry $graphmod(sc) -0+0
+    }
 
     # The colormap window - about the same as the stripchart window.
     wm geometry $nmInfo(colorscale) -0+[expr $main_ypos + 10]
@@ -1083,8 +1094,52 @@ wm resizable . 0 0
 # puts the focus on the main window, instead of any other windows 
 # which have been created. 
 after idle {
-    wm deiconify .
+	wm deiconify .
+
+  if { $nanoed_simple_ui } {
+	#NANOED: Changed this function to not show the existing windows, but
+	# to show a new window that has only the controls in it that we want.
+	wm geometry . +2000+200
+	wm geometry $graphmod(sc) +2000+200
+
+	toplevel .nanoed
+	wm geometry .nanoed +0+0
+
+	# The rest of the stuff is moved into another setup routine because
+	# some of it has to be done after the application has been up and
+	# running (setting the user mode and clearing the modify lines).
+	button .nanoed.button0 -padx 350 -pady 50 -text "(Press here to start)" -command {nanoed_extras}
+	pack .nanoed.button0 -side top
+  }
 }
+
+proc nanoed_extras {} {
+
+	# Get rid of the start button
+	pack forget .nanoed.button0
+
+	# Put the user into touch stored mode.
+	global user_0_mode
+	set user_0_mode 11
+
+	# Clear the accumulated markers
+	global clear_markers
+	set clear_markers 1
+
+	# Give the instructions
+	label .nanoed.info1 -text "Please use the Joystick to feel the virus to get an idea of its shape.  When you are ready to see the experiment, hit the Play button below."
+	pack .nanoed.info1 -side top -fill x
+
+	button .nanoed.button1 -text "Play" -command {set stream_replay_rate 5}
+	pack .nanoed.button1 -side top
+
+	label .nanoed.info2 -text "When the experiment stops, feel the virus to see if it changed.  When you are finished, press the Quit button just below to return to the 'Mystery of the Sick Puppy'."
+	pack .nanoed.info2 -side top -fill x
+
+	button .nanoed.button2 -text "Quit" -command {set quit_program_now 1}
+	pack .nanoed.button2 -side top
+}
+
 # Just for fun - total number of commands invoked so far
 #puts "Command count: [info cmdcount]"
 

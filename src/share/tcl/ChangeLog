@@ -1,3 +1,8 @@
+2004-01-16  David Marshburn  <marshbur@cs.unc.edu>
+
+	* mainwin.tcl:  a bunch of changes for the NanoEd experiments of
+	Fall '03.  Guarded by a nanoed_simle_ui variable.
+
 2003-05-13  David Jack  <jackd@cs.unc.edu>
     * afm_sem.tcl: added Z Scale entry
 	* modify.tcl: hacked to allow the user to use Direct Z mode without
