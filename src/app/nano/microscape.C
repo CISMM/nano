@@ -2260,7 +2260,7 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   set_stream_time_now = 0; 
 }
 
-static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
+static void handle_shiny_change (vrpn_int32, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   // Values less than zero or more than 128 cause "GL error GL_INVALID_VALUE"
   if (shiny < 0) shiny = 0;
@@ -3679,50 +3679,48 @@ void handle_phantom_connect (vrpn_Tracker_Remote * handT) {
 
 }
 
+/** If we are using the Workbench display, then set the Phantom offsets
+    based on what is correct for the flat-screen CRT we are using (yes, these
+    are hard-coded values that depend on the display device).  If we are not
+    using the Workbench, then ask the server for the offset values.
+*/
+
 int register_vrpn_phantom_callbacks(void)
 {
     vrpn_Tracker_Remote *handT = vrpnHandTracker[0];
     int hand_sensor = handSensor[0];
-    if (handT != NULL){
-        handT->register_change_handler((void *)&V_ROOM_FROM_HAND_TRACKER,
-            handle_tracker2room_change);
 
-// XXX using the SCP for the graphical position of the hand is possible but
-// we definitely don't want to use for determining the next plane to send or
-// for controlling the microscope (this can give you really bad oscillations).
-// It may also not make sense for the graphics because it will introduce a
-// small difference in where the user sees the hand and where the microscope
-// is told to go.
-// Thus, for now I am taking it out completely (AAS)
-/*	if (forceDevice != NULL){
-          handT->register_change_handler((void *)&V_TRACKER_FROM_HAND_SENSOR,
-                handle_sensor2tracker_quat_change, hand_sensor);
-          forceDevice->register_scp_change_handler(
-                (void *)&V_TRACKER_FROM_HAND_SENSOR,
-                handle_forcedevice_scp_change);
-        }
-        else
-*/
-         handT->register_change_handler((void *)&V_TRACKER_FROM_HAND_SENSOR,
-              handle_sensor2tracker_change, hand_sensor);
+    if (handT != NULL) {
+	handT->register_change_handler((void *)&V_TRACKER_FROM_HAND_SENSOR,
+		handle_sensor2tracker_change, hand_sensor);
 
-         //fprintf(stderr, "DEBUG: using remote vrpn config files for hand tracker\n");
+	handT->register_change_handler((void *)&V_SENSOR_FROM_HAND_UNIT,
+		handle_unit2sensor_change, hand_sensor);
 
-            handT->register_change_handler((void *)&V_SENSOR_FROM_HAND_UNIT,
-                                            handle_unit2sensor_change, hand_sensor);
-            handT->register_change_handler((void *)&V_ROOM_FROM_HAND_TRACKER,
-                                            handle_tracker2room_change);
+	handle_phantom_connect(handT);
 
-       handle_phantom_connect(handT);
-       
+    /* Check to see if we're in Workbench mode.  If we are, then we set the
+     * room offsets directly.  If not, then we allow the server to tell us.
+     */
+	char *envir = getenv("V_DISPLAY");
+	if (strstr(envir, "workbench") != NULL) {
+	    q_vec_type	sfh_xlate = { 0.0, -0.3, -0.1 };
+	    q_type	sfh_quat = { 0.0, 0.0, 0.0, 1.0 };
+	    printf("XXX Setting workbench hand-tracker offset by fiat\n");
+	    v_update_user_xform(0, V_ROOM_FROM_HAND_TRACKER,
+		sfh_xlate, sfh_quat);
+	} else {
+	    handT->register_change_handler((void*)&V_ROOM_FROM_HAND_TRACKER,
+		handle_tracker2room_change);
+	}
     }
-    return 0;
 
+    return 0;
 }
 
 
-int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM) {
-
+int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
+{
   handle_phantom_connect(vrpnHandTracker[0]);
   return 0;
 }
@@ -8298,7 +8296,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
     //        screenUR_v[0], screenUR_v[1], screenUR_v[2]);
 
     /* Check to see if vlib has the screen defined in room space, i.e, we're in
-     * head-tracked mode.
+     * Workbench mode.
      */
     int null_head_tracker = 0;
     if (   vec_cmp(screenLL_v, NULL_SCREEN_LOWER_LEFT)

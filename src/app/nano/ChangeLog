@@ -1,3 +1,9 @@
+2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* microscape.c (register_vrpn_phantom_callbacks) : Moved the
+	Phantom to the correct location when using the new Workbench (head-
+	tracked mono or stereo flat-screen CRT).
+
 2000-11-30  Russ Taylor  <taylorr@cs.unc.edu>
 
 	* microscape.c (find_center_xforms) : Modified the center code for
