@@ -16,10 +16,6 @@
 
 #include <vrpn_Shared.h>
 #include <nmb_Types.h>  // for PointType
-//#include <nmb_ColorMap.h>
-
-#include "ImageMaker.h" // Image formats for screen capture
-
 
 class Position_list;  // from Position.h
 class nmb_Dataset;  // from nmb_Dataset.h
@@ -285,9 +281,10 @@ class nmg_Graphics {
     virtual void setTesselationStride (int, int region = 0) {};
       ///< Sets the stride with which the data grid is tesselated.
 
-    virtual void setTextureMode (TextureMode,TextureTransformMode, int region = 0) {};
-      ///< Determines which texture to display currently.
-      // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, OPACITYMAP };
+    virtual void setTextureMode (TextureMode,TextureTransformMode, 
+				 int region = 0) {};
+    ///< Determines which texture to display currently.
+    // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, OPACITYMAP };
 
     virtual void setTextureScale (float) {};
       ///< Interval between contour lines.
@@ -296,8 +293,8 @@ class nmg_Graphics {
       ///< Size at which true tip indicator is drawn
       ///< FOR DEBUGGING ONLY
 
-    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style,
-			      int tool) {};
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, 
+			      int style, int tool) {};
       ///< Specifies the mode of interaction currently being used,
       ///< Controls which widgets are displayed.
 
@@ -331,7 +328,8 @@ class nmg_Graphics {
     virtual void positionRubberCorner (float x0, float y0,
                                        float x1, float y1, int) {};
     virtual void positionRegionBox (float, float, float, float, float, int) {};
-    virtual void positionCrossSection (int, int, float, float, float, float, int) {};
+    virtual void positionCrossSection (int, int, float, float, float, 
+				       float, int) {};
     virtual void positionSweepLine (const PointType topL,
                                     const PointType bottomL,
 				    const PointType topR,
@@ -351,13 +349,14 @@ class nmg_Graphics {
        */
 
     /// Screen capture
-    virtual void createScreenImage(const char *filename,
-                                   const ImageType  type ) {};
+    virtual void createScreenImage(const char* filename,
+                                   const char*  type ) {};
 
 	/*New surface based method.*/
     virtual int createRegion() {return 0;};
     virtual void destroyRegion(int region) {};
-	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0) {};
+    virtual void setRegionMaskHeight(float min_height, float max_height, 
+				     int region = 0) {};
     virtual void setRegionControlPlaneName (const char *, int region = 0) {};
 
     //These functions are related to controlling what changes affect the
@@ -366,7 +365,8 @@ class nmg_Graphics {
     virtual void associateFilledPolygons(vrpn_bool associate, int region) {};
     virtual void associateTextureDisplayed(vrpn_bool associate, int region) {};
     virtual void associateTextureMode(vrpn_bool associate, int region) {};
-    virtual void associateTextureTransformMode(vrpn_bool associate, int region) {};
+    virtual void associateTextureTransformMode(vrpn_bool associate, 
+					       int region) {};
     virtual void associateStride(vrpn_bool associate, int region) {};
 
     // ACCESSORS
@@ -681,9 +681,9 @@ class nmg_Graphics {
     int decode_setViewTransform (const char * buf, v_xform_type *);
 
     char *encode_createScreenImage(int *len, const char *filename,
-                                   const ImageType  type );
+                                   const char*  type );
     int decode_createScreenImage(const char *buf, char **filename,
-                                 ImageType   *type );
+                                 char** type );
 
     char * encode_setViztexScale (int * len, float);
     int decode_setViztexScale (const char * buf, float *);
@@ -691,8 +691,10 @@ class nmg_Graphics {
     char * encode_setRegionMaskHeight (int * len, float, float, int);
     int decode_setRegionMaskHeight (const char * buf, float *, float *, int *);
     
-    char * encode_setRegionControlPlaneName (int * len, const char *, int region);
-    int decode_setRegionControlPlaneName (const char * buf, char **, int * region);
+    char * encode_setRegionControlPlaneName (int * len, const char *, 
+					     int region);
+    int decode_setRegionControlPlaneName (const char * buf, char **, 
+					  int * region);
 
     char * encode_createRegion (int * len);
     int decode_createRegion (const char * buf);

@@ -2618,8 +2618,8 @@ void nmg_Graphics_Implementation::setViewTransform (v_xform_type xform) {
 }
 
 void nmg_Graphics_Implementation::
-createScreenImage( const char *filename,
-		   const ImageType /*type*/ )
+createScreenImage( const char* filename,
+		   const char* /*type*/ )
 {
   int w, h;
   unsigned char * pixels = NULL;
@@ -3710,8 +3710,7 @@ int nmg_Graphics_Implementation::
 handle_createScreenImage( void *userdata, vrpn_HANDLERPARAM  p )
 {
    char *filename = new char[512];
-
-   ImageType type;
+   char* type = new char[512];
 
    nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
    it->decode_createScreenImage(p.buffer, &filename, &type);

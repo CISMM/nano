@@ -45,7 +45,6 @@
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
-//#define M_PI_2		1.57079632679489661923
 #endif
 
 #include <v.h>  // to define GLfloat
@@ -75,7 +74,6 @@ static nmg_Funclist * vir_world;
 static nmg_Funclist * v_room;
 static nmg_Funclist * v_head;
 static nmg_Funclist * v_hand;
-//static nmg_Funclist * v_tracker;
 static nmg_Funclist * v_screen;
 
 // indicies of display lists created by similarly-named functions
@@ -86,8 +84,6 @@ static GLint vx_quarter_up;
 static GLint vx_half_up;
 static GLint rubber_corner;
 static GLint region_box;
-static GLint xs_struct;
-//static GLint region_marker;
 static GLint aim_struct;
 
 static GLint red_line_struct;
@@ -462,10 +458,6 @@ void myobjects(nmg_State * state)
 
   glNewList(collab_hand_struct, GL_COMPILE);
   glEndList();
-
-  /* region marker */
-//    glNewList(region_marker,GL_COMPILE);
-//    glEndList();
 
   //show lines where old selected areas were
   glNewList(marker_list->id, GL_COMPILE); /* empty list?*/
@@ -1092,9 +1084,6 @@ int move_cross_section(nmg_State * state, int id, int enable,
 int draw_cross_section(void * data )
 {
     nmg_State * state = (nmg_State *) data;
-    //float x_wide = state->inputGrid->maxX() - state->inputGrid->minX();
-
-
 
     VertexType Points[6];
     float z_min,z_max, z_range;
@@ -1381,11 +1370,8 @@ static int myroom (int, void * data)
 
   // Set material parameters for the space, then draw things in room space.
   // Since all in room space is text or lines, set measure materials.
-
   TIMERVERBOSE(5, mytimer, "globjects.c:myroom:set_gl_measure_materials");
-
   set_gl_measure_materials(state);
-
   TIMERVERBOSE(5, mytimer, "globjects.c:myroom:end set_gl_measure_materials");
 
   while(head != NULL) {
@@ -1457,11 +1443,8 @@ static int myscreen (int, void * data)
   
   // Set material parameters for the space, then draw things in head space.
   // Since all in screen space is text or lines, set measure materials.
-
   TIMERVERBOSE(5, mytimer, "myscreen;set_gl_measure_materials");
-
   set_gl_measure_materials(state);
-
   TIMERVERBOSE(5, mytimer, "myscreen; end set_gl_measure_materials");
 
   // Ugly kluge to put text on CRTs "in front of" the screen.
@@ -2013,8 +1996,9 @@ int TrueTip (void *data)
         if (spm_graphics_verbosity >= 4)
           fprintf(stderr, "Drawing true tip at (%.2f %.2f %.2f) "
                           "with scale %.2f (net scale %.2f).\n",
-             state->trueTipLocation[0], state->trueTipLocation[1], state->trueTipLocation[2],
-             state->trueTipScale, state->trueTipScale * handlescale * state->icon_scale);
+		  state->trueTipLocation[0], state->trueTipLocation[1], 
+		  state->trueTipLocation[2], state->trueTipScale, 
+		  state->trueTipScale * handlescale * state->icon_scale);
 
 	glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 

@@ -2474,17 +2474,16 @@ char *nmg_Graphics::encode_createScreenImage
 (
    int             *len,
    const char      *filename,
-   const ImageType  type
+   const char*  type
 )
 {
-//fprintf(stderr,"encode_createScreenImage\n");
    char *msgbuf = NULL;
    char *mptr;
    int mlen;
 
    if (!len) return NULL;
 
-   *len = 512 + sizeof(int);
+   *len = 1024;
    msgbuf = new char[*len];
    if (!msgbuf)
    {
@@ -2496,7 +2495,7 @@ char *nmg_Graphics::encode_createScreenImage
       mptr = msgbuf;
       mlen = *len;
       vrpn_buffer(&mptr, &mlen, filename, 512);
-      vrpn_buffer(&mptr, &mlen, (int)(type));
+      vrpn_buffer(&mptr, &mlen, type, 512);
    }
 
    return msgbuf;
@@ -2506,18 +2505,13 @@ int nmg_Graphics::decode_createScreenImage
 (
    const char  *buf,
    char       **filename,
-   ImageType   *type
+   char**       type
 )
 {
-//fprintf(stderr,"decode_createScreenImage\n");
    const char *bptr = buf;
-   int temp;
-   if (!buf || !(*filename) || !type) return -1;
+   if (!buf || !(*filename) || !(*type)) return -1;
    CHECK(vrpn_unbuffer(&bptr, *filename, 512));
-//fprintf(stderr, "Filename: %s\n", *filename);
-   CHECK(vrpn_unbuffer(&bptr, &temp));
-//fprintf(stderr, "Type: %d\n", temp);
-   *type = (ImageType)(temp);
+   CHECK(vrpn_unbuffer(&bptr, *type, 512));
    return 0;
 }
 // End screen capture network code

@@ -1791,14 +1791,13 @@ void nmg_Graphics_Remote::setViewTransform (v_xform_type xform) {
 void nmg_Graphics_Remote::createScreenImage
 (
    const char      *filename,
-   const ImageType  type
+   const char*      type
 )
 {
    struct timeval now;
    char *msgbuf;
    int len;
    int retval;
-
 
    msgbuf = encode_createScreenImage(&len, filename, type);
    gettimeofday(&now, NULL);

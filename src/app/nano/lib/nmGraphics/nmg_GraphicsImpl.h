@@ -164,7 +164,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void positionSphere (float, float, float);
 
     virtual void setViewTransform (v_xform_type);
-    virtual void createScreenImage(const char *filename, const ImageType type);
+    virtual void createScreenImage(const char *filename, const char* type);
 
 	/*New surface based method.  Chooses which visualizaton to use */
 	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);

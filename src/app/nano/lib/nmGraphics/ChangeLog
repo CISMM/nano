@@ -1,3 +1,15 @@
+2001-12-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmg_Graphics.Ch: (createScreenImage) changed the signature
+	to accept a string arg "type" rather than an arg of type 
+	ImageType
+	(encode_createScreenImage) same, and changed the vrpn encoding
+	(decode_createScreenImage) same, and changed the vrpn decoding
+	* nmg_GraphicsImpl.Ch:  remove references to ImageType
+	* nmg_GraphicsRemote.Ch:  same
+	* nmg_GraphicsTime.Ch:  same
+	* globjects.c: remove compiler warning on the SGI
+
 2001-12-18  Aron Helser  <helser@cs.unc.edu>
 
 	* globjects.c (clear_world_modechange): handle USER_CROSS_SECTION_MODE
@@ -11,7 +23,7 @@
 
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
-	* globject.c: remove some compiler warnings on the SGI, remove
+	* globjects.c: remove some compiler warnings on the SGI, remove
 	commented out code, some code clean-up
 	* nmg_Graphics.C: same
 	* nmg_GraphicsImpl.C: same

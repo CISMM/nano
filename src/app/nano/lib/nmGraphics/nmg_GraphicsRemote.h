@@ -150,9 +150,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setViewTransform (v_xform_type);
 
-    virtual void createScreenImage(const char *filename, const ImageType type);
+    virtual void createScreenImage(const char *filename, const char* type);
 
-	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
+    virtual void setRegionMaskHeight(float min_height, float max_height, 
+				     int region = 0);
     virtual void setRegionControlPlaneName(const char *, int region = 0);
     virtual void setViztexScale (float);
     virtual int createRegion();

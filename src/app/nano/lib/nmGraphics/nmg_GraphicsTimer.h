@@ -135,7 +135,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 
     virtual void positionSphere (float x, float y, float z);
     virtual void createScreenImage (const char * filename,
-                                    const ImageType type);
+                                    const char* type);
     virtual void setViewTransform (v_xform_type);
 
     virtual void getLightDirection (q_vec_type *) const;
@@ -144,7 +144,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual const double * getSurfaceColor (void) const;
 
     virtual void setViztexScale (float);
-    virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
+    virtual void setRegionMaskHeight(float min_height, float max_height, 
+				     int region = 0);
     virtual void setRegionControlPlaneName(const char *, int region = 0);
     virtual int createRegion();
     virtual void destroyRegion(int region);

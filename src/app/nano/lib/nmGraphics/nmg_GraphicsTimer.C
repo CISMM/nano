@@ -571,7 +571,7 @@ void nmg_Graphics_Timer::positionSphere (float x, float y, float z) {
 
 
 void nmg_Graphics_Timer::createScreenImage
-  (const char * filename, const ImageType type)
+  (const char * filename, const char* type)
 {
   activateTimer();
   d_imp->createScreenImage(filename, type);
