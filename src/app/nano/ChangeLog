@@ -1,3 +1,9 @@
+2003-11-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.C (main):  removed the color plane and colormap
+	initialization from before the main loop to after the first pass
+	through the main loop.
+
 2003-11-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C (main):  at the end of the main loop, added a call

@@ -8531,19 +8531,16 @@ int main (int argc, char* argv[])
   // seem to be?
   tclstride = istate.tesselation;
 
-  if (istate.colorplane[0]) {
-    dataset->doInitColorPlane = true;
-	strcpy(dataset->initColorPlane,istate.colorplane);
-    }
-  if (istate.colormap[0]) {
-    dataset->colorMapName->Set(istate.colormap);
-    printf("Setting colormap to %s\n", istate.colormap);
-
+  // this sets the heightplane up to be initialized according to
+  // the -heightplane command-line option.  this initialization is
+  // done in nmm_Microscope since we have to wait until we hear what
+  // data planes are available.
+  if (istate.heightplane[0]) 
+  {
+	  dataset->doInitHeight = true;
+	  strcpy(dataset->initHeight,istate.heightplane);
   }
-   if (istate.heightplane[0]) {
-    dataset->doInitHeight = true;
-    strcpy(dataset->initHeight,istate.heightplane);
-  }
+  
   /* Center the image first thing */
   center();
 
@@ -9052,15 +9049,37 @@ if (microscope) microscope->ResetClock();
         set_stream_clip_time = t.tv_sec;
     }
 
-	// if we have jumped to a time in the stream file, and this is 
-	// our first time through, center the view
-	if( first && (istate.initTime !=0) )
+	// a number of initializations that need to be done after the
+	// first pass through the main loop (usually, things that need
+	// any command-line data sources opened).
+	if( first )
 	{
-		center( );
-	}
+		// if we have jumped to a time in the stream file, and this is 
+		// our first time through, center the view
+		if( istate.initTime !=0 )
+		{
+			center( );
+		}
 
-	// we're done with the first time through
-	first = false;
+		// colormap initialization options:
+		// these are here because the stream file needs time
+		// to be primed (and one pass through the loop should do).
+		if( istate.colorplane[0] )
+		{
+			dataset->colorPlaneName->Set( istate.colorplane );
+			printf("Setting colorplane to %s\n", istate.colorplane);
+		}
+		if( istate.colormap[0] )
+		{
+			dataset->colorMapName->Set(istate.colormap);
+			printf("Setting colormap to %s\n", istate.colormap);
+		}
+	
+		// we're done with the first time through
+		first = false;
+	} // end if( first )
+	// don't put anything after this in mainloop
+
   }  // end of mainloop
 
   dataset->done = VRPN_TRUE; //XXXX
