@@ -1,3 +1,9 @@
+2001-04-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* active_set.Ch - took out changes from yesterday to reduce complexity
+	* nmm_Microscope.Ch - took out changes from yesterday to reduce 
+	complexity
+
 2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* active_set.C (Handle_report) : added optional boolean argument to

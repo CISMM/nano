@@ -350,8 +350,7 @@ int	Scan_channel_selector::Add_channel(char *name, char *units,
 }
 
 int     Scan_channel_selector::Handle_report( int x, int y,
-		long sec, long usec, float *values, int numvalues, 
-		vrpn_bool notifyCallbacks)
+		long sec, long usec, float *values, int numvalues)
 {
 	int	i;
 	//float offset, scale;
@@ -367,8 +366,7 @@ int     Scan_channel_selector::Handle_report( int x, int y,
 	// Update each of the planes with the values.
 	for (i = 0; i < numchannels; i++) {
 		planes[i]->setValue(x, y,
-			channels[i].offset + channels[i].scale*values[i],
-                        notifyCallbacks);
+			channels[i].offset + channels[i].scale*values[i]);
 		planes[i]->setTime(x, y, sec, usec);
 	}
 

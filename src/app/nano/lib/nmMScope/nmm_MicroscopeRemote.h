@@ -462,7 +462,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvForceSetFailure (float);
     void RcvPulseParameters (long, float, float, float);
     long RcvWindowLineData (long, long, long, long,
-                            long, const float *, vrpn_bool);
+                            long, const float *);
     long RcvWindowLineData (long, long, long, long,
 			    long);
     long RcvWindowLineData (void);

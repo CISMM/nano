@@ -2908,19 +2908,12 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
      ignoringData = VRPN_TRUE;
   }
 
-  for (i = 0; i < lineCount-1; i++) {
+  for (i = 0; i < lineCount; i++) {
     ms->decode_WindowLineDataField(&param.buffer, fieldCount, fields);
     if (!ignoringData) {
-       // don't notify BCPlane line callbacks once for every point in the line
        ms->RcvWindowLineData(x + i * dx, y + i * dy, sec, usec,
-                          fieldCount, fields, vrpn_FALSE);
+                          fieldCount, fields);
     }
-  }
-  ms->decode_WindowLineDataField(&param.buffer, fieldCount, fields);
-  if (!ignoringData) {
-     // notify BCPlane line callbacks for the last point in the line
-     ms->RcvWindowLineData(x + i * dx, y + i * dy, sec, usec,
-                        fieldCount, fields, vrpn_TRUE);
   }
   
   if (!ignoringData) {
@@ -4105,13 +4098,11 @@ void nmm_Microscope_Remote::RcvPulseParameters (long _pulseEnabled,
 long nmm_Microscope_Remote::RcvWindowLineData (long _x, long _y,
                                     long _sec, long _usec,
                                     long _fieldCount,
-                                    const float * _fields,
-                                    vrpn_bool notifyLineCallbacks) {
+                                    const float * _fields) {
   // HACK HACK HACK
 
   if (state.data.scan_channels->Handle_report(_x, _y, _sec, _usec,
-                                         (float *) _fields, _fieldCount,
-                                         notifyLineCallbacks)) {
+                                         (float *) _fields, _fieldCount)) {
     fprintf(stderr, "Error handling window line data\n");
     d_dataset->done = VRPN_TRUE;
     return -1;
