@@ -259,7 +259,7 @@ void nmb_Image::setAcquisitionDimensions(double distX, double distY)
   return;
 }
 
-void nmb_Image::getAcquisitionDimensions(double &distX, double &distY)
+void nmb_Image::getAcquisitionDimensions(double &distX, double &distY) const
 {
   distX = d_acquisitionDistX;
   distY = d_acquisitionDistY;
@@ -274,6 +274,20 @@ void nmb_Image::getAcquisitionDimensions(double &distX, double &distY)
 */
 void nmb_Image::pixelToWorld(const double i, const double j,
                   double &x, double &y) const {
+  nmb_TransformMatrix44 imageToWorld;
+  getWorldToImageTransform(imageToWorld);
+  imageToWorld.invert();
+  double pnt[4] = {0, 0, 0, 1};
+  pnt[0] = i/(double)width();
+  pnt[1] = j/(double)height();
+  imageToWorld.transform(pnt);
+  x = pnt[0];
+  y = pnt[1];
+
+/*
+ either this or the worldToPixel function doesn't work right - they are
+ inconsistent with each other
+
         // just bilinear interpolation:
         double y_frac = j/((double)height());
         double x_frac = i/((double)width());
@@ -287,6 +301,7 @@ void nmb_Image::pixelToWorld(const double i, const double j,
         double y_max = boundY(nmb_ImageBounds::MAX_X_MIN_Y)*(1.0-y_frac) +
              boundY(nmb_ImageBounds::MAX_X_MAX_Y)*(y_frac);
         y = y_min*(1.0-x_frac) + y_max*(x_frac);
+*/
 }
 
 /** This function assumes that (i,j) are coordinates for the basis vectors (u,v)
@@ -297,6 +312,19 @@ void nmb_Image::pixelToWorld(const double i, const double j,
 */
 void nmb_Image::worldToPixel(const double x, const double y,
                   double &i, double &j) const {
+  nmb_TransformMatrix44 worldToImage;
+  getWorldToImageTransform(worldToImage);
+  double pnt[4] = {0,0,0,1};
+  pnt[0] = x;
+  pnt[1] = y;
+  worldToImage.transform(pnt);
+  i = pnt[0]*width();
+  j = pnt[1]*height();
+
+/*
+  either this or the pixelToWorld function doesn't work right - they are
+  inconsistent with each other
+ 
         // project x,y onto i,j coordinate axes
         double x_diff = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
                         boundX(nmb_ImageBounds::MIN_X_MIN_Y);
@@ -316,6 +344,7 @@ void nmb_Image::worldToPixel(const double x, const double y,
                (y - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
         double y_frac = temp/(x_diff*x_diff + y_diff*y_diff);
         j = y_frac*(double)height();
+*/
 }
 
 /**
@@ -327,7 +356,7 @@ void nmb_Image::worldToPixel(const double x, const double y,
  in openGL
 */
 
-void nmb_Image::getWorldToImageTransform(double *matrix44)
+void nmb_Image::getWorldToImageTransform(double *matrix44) const
 {
   /* What this function is doing:
       If the worldToImage matrix has been set then we just return that but
@@ -414,14 +443,14 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
   }
 }
 
-void nmb_Image::getWorldToImageTransform(nmb_TransformMatrix44 &xform)
+void nmb_Image::getWorldToImageTransform(nmb_TransformMatrix44 &xform) const
 {
   double matrix[16];
   getWorldToImageTransform(matrix);
   xform.setMatrix(matrix);
 }
 
-void nmb_Image::getImageToTextureTransform(double *matrix44)
+void nmb_Image::getImageToTextureTransform(double *matrix44) const
 {
   int texwidth = width() + borderXMin() + borderXMax();
   int texheight = height() + borderYMin() + borderYMax();
@@ -452,7 +481,7 @@ void nmb_Image::getImageToTextureTransform(double *matrix44)
   matrix44[15] = 1.0;
 }
 
-void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform)
+void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform) const
 {
   double matrix[16];
   getImageToTextureTransform(matrix);
@@ -512,7 +541,7 @@ void nmb_Image::setWorldToImageTransform(nmb_TransformMatrix44 &xform)
   setWorldToImageTransform(matrix);
 }
 
-void nmb_Image::getWorldToScaledImageTransform(double *matrix44)
+void nmb_Image::getWorldToScaledImageTransform(double *matrix44) const
 {
   getWorldToImageTransform(matrix44);
   double distX, distY;
@@ -529,13 +558,14 @@ void nmb_Image::getWorldToScaledImageTransform(double *matrix44)
 }
 
 void nmb_Image::getWorldToScaledImageTransform(nmb_TransformMatrix44 &xform)
+const
 {
   double matrix[16];
   getWorldToScaledImageTransform(matrix);
   xform.setMatrix(matrix);
 }
 
-void nmb_Image::getScaledImageToImageTransform(double *matrix44)
+void nmb_Image::getScaledImageToImageTransform(double *matrix44) const
 {
   // based on AcquisitionDimensions
   double distX, distY;
@@ -568,13 +598,14 @@ void nmb_Image::getScaledImageToImageTransform(double *matrix44)
 }
 
 void nmb_Image::getScaledImageToImageTransform(nmb_TransformMatrix44 &xform)
+const
 {
   double matrix[16];
   getScaledImageToImageTransform(matrix);
   xform.setMatrix(matrix);
 }
 
-void nmb_Image::getImageToScaledImageTransform(double *matrix44)
+void nmb_Image::getImageToScaledImageTransform(double *matrix44) const
 {
   // based on AcquisitionDimensions
   double distX, distY;
@@ -607,16 +638,18 @@ void nmb_Image::getImageToScaledImageTransform(double *matrix44)
 }
 
 void nmb_Image::getImageToScaledImageTransform(nmb_TransformMatrix44 &xform)
+const
 {
   double matrix[16];
   getImageToScaledImageTransform(matrix);
   xform.setMatrix(matrix);
 }
 
-double nmb_Image::areaInWorld()
+double nmb_Image::areaInWorld() const
 {
-  getBounds(d_imagePosition);
-  return d_imagePosition.area();
+  nmb_ImageBounds ib;
+  getBounds(ib);
+  return ib.area();
 }
 
 vrpn_bool nmb_Image::dimensionUnknown()
@@ -1097,10 +1130,10 @@ void nmb_ImageGrid::getTopoFileInfo(TopoFile &tf)
 
 void *nmb_ImageGrid::pixelData() { return (void *)(plane->flatValueArray());}
 
-int nmb_ImageGrid::borderXMin() { return plane->_borderXMin;}
-int nmb_ImageGrid::borderXMax() { return plane->_borderXMax;}
-int nmb_ImageGrid::borderYMin() { return plane->_borderYMin;}
-int nmb_ImageGrid::borderYMax() { return plane->_borderYMax;}
+int nmb_ImageGrid::borderXMin() const { return plane->_borderXMin;}
+int nmb_ImageGrid::borderXMax() const { return plane->_borderXMax;}
+int nmb_ImageGrid::borderYMin() const { return plane->_borderYMin;}
+int nmb_ImageGrid::borderYMax() const { return plane->_borderYMax;}
 
 int nmb_ImageGrid::arrayLength() 
 { 
@@ -1372,10 +1405,10 @@ int nmb_ImageArray::width() const {return num_x;}
 
 int nmb_ImageArray::height() const {return num_y;}
 
-int nmb_ImageArray::borderXMin() {return d_borderXMin;}
-int nmb_ImageArray::borderXMax() {return d_borderXMax;}
-int nmb_ImageArray::borderYMin() {return d_borderYMin;}
-int nmb_ImageArray::borderYMax() {return d_borderYMax;}
+int nmb_ImageArray::borderXMin() const {return d_borderXMin;}
+int nmb_ImageArray::borderXMax() const {return d_borderXMax;}
+int nmb_ImageArray::borderYMin() const {return d_borderYMin;}
+int nmb_ImageArray::borderYMax() const {return d_borderYMax;}
 
 int nmb_ImageArray::arrayLength() 
 {

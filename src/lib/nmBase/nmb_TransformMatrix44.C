@@ -20,7 +20,7 @@ nmb_TransformMatrix44 & nmb_TransformMatrix44::operator = (
   for (i = 0; i < 4; i++) {
     for (j = 0; j < 4; j++) {
       xform[i][j] = t.xform[i][j];
-      inverse_xform[i][j] = t.xform[i][j];
+      inverse_xform[i][j] = t.inverse_xform[i][j];
     }
   }
   inverse_needs_to_be_computed = t.inverse_needs_to_be_computed;

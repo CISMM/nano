@@ -151,7 +151,7 @@ class nmb_Image {
         //void setHeightWorld(double height, double originY = 0.5);
 
         void setAcquisitionDimensions(double distX, double distY);
-        void getAcquisitionDimensions(double &distX, double &distY);
+        void getAcquisitionDimensions(double &distX, double &distY) const;
 
 	/// convert a position in an image given as a pixel location into a
 	/// position in the world coordinate system for the image
@@ -186,22 +186,22 @@ class nmb_Image {
               dimensions powers of 2)
         */
 
-        void getWorldToImageTransform(double *matrix44);
-        void getWorldToImageTransform(nmb_TransformMatrix44 &xform);
-        void getImageToTextureTransform(double *matrix44);
-        void getImageToTextureTransform(nmb_TransformMatrix44 &xform);
-        void setWorldToImageTransform(double *matrix44);
+        void getWorldToImageTransform(double *matrix44) const;
+        void getWorldToImageTransform(nmb_TransformMatrix44 &xform) const;
+        void getImageToTextureTransform(double *matrix44) const;
+        void getImageToTextureTransform(nmb_TransformMatrix44 &xform) const;
+        void setWorldToImageTransform(double *matrix44); 
         void setWorldToImageTransform(nmb_TransformMatrix44 &xform);
 
-        void getWorldToScaledImageTransform(double *matrix44);
-        void getWorldToScaledImageTransform(nmb_TransformMatrix44 &xform);
+        void getWorldToScaledImageTransform(double *matrix44) const;
+        void getWorldToScaledImageTransform(nmb_TransformMatrix44 &xform) const;
 
-        void getScaledImageToImageTransform(double *matrix44);
-        void getScaledImageToImageTransform(nmb_TransformMatrix44 &xform);
-        void getImageToScaledImageTransform(double *matrix44);
-        void getImageToScaledImageTransform(nmb_TransformMatrix44 &xform);
+        void getScaledImageToImageTransform(double *matrix44) const;
+        void getScaledImageToImageTransform(nmb_TransformMatrix44 &xform) const;
+        void getImageToScaledImageTransform(double *matrix44) const;
+        void getImageToScaledImageTransform(nmb_TransformMatrix44 &xform) const;
 
-        double areaInWorld();
+        double areaInWorld() const;
 
         virtual void setTopoFileInfo(TopoFile &tf) = 0;
         virtual void getTopoFileInfo(TopoFile &tf) = 0;
@@ -226,10 +226,10 @@ class nmb_Image {
 	virtual void *pixelData() = 0;
 
         /// gives the border widths for data returned by pixelData
-        virtual int borderXMin() = 0;
-        virtual int borderXMax() = 0;
-        virtual int borderYMin() = 0;
-        virtual int borderYMax() = 0;
+        virtual int borderXMin() const = 0;
+        virtual int borderXMax() const = 0;
+        virtual int borderYMin() const = 0;
+        virtual int borderYMax() const = 0;
 
         /// tells you the size of the array returned by pixelData()
         virtual int arrayLength() = 0;
@@ -326,10 +326,10 @@ class nmb_ImageGrid : public nmb_Image{
         virtual void setTopoFileInfo(TopoFile &tf);
         virtual void getTopoFileInfo(TopoFile &tf);
         virtual void *pixelData();
-        virtual int borderXMin();
-        virtual int borderXMax();
-        virtual int borderYMin();
-        virtual int borderYMax();
+        virtual int borderXMin() const;
+        virtual int borderXMax() const;
+        virtual int borderYMin() const;
+        virtual int borderYMax() const;
         virtual int arrayLength();
 	virtual nmb_PixelType pixelType();
         virtual int numExportFormats();
@@ -435,10 +435,10 @@ class nmb_ImageArray : public nmb_Image {
     virtual void *pixelData();
 
     /// gives the border width for data returned by pixelData
-    virtual int borderXMin();
-    virtual int borderXMax();
-    virtual int borderYMin();
-    virtual int borderYMax();
+    virtual int borderXMin() const;
+    virtual int borderXMax() const;
+    virtual int borderYMin() const;
+    virtual int borderYMax() const;
 
     /// tells you the size of the array returned by pixelData()
     virtual int arrayLength();
