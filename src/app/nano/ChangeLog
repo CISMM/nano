@@ -1,3 +1,11 @@
+2002-06-06 David Borland <borland@cs.unc.edu>
+
+        * import.C : just added and removed some debugging info
+
+	* interaction.c : removed code for handling projective texture
+	transformation.  It is handled by creating an UberGraphics object
+	for the texture, and using the objects transform now.
+
 2002-06-06 Woojin Seok <seok@cs.unc.edu>
         *microscape.C <teardownMicroscopeSynchronization> 
         : added m->state.doRelaxComp to share the state of button of
