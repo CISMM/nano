@@ -158,5 +158,50 @@ pack $latency(la).timing -side bottom
 
 
 
+# This doesn't work.  I'm leaving it here-but-commented-out so it gets
+# committed once.
+# In general, we can't currently change between logging and non-logging
+# stuff mid-run (without a lot more debugging or rework than I'm willing
+# to put it).
 
+#
+# Recording/replaying Phantom
+# No, this isn't latency compensation, but it's used to test latency comp
+# in Tom Hudson's dissertation, so it's here.  Feel free to remove it
+# in 2002.
+#
+# Nonorthogonal interface.  Whee.
+# Recording:  checkbutton:  check to begin recording.  uncheck to stop.
+# Replay:  button:  press to replay once.  checkbutton:  check to begin
+#   infinite-loop replay.  uncheck to stop.
+
+# frame $latency(la).phantom
+# 
+# frame $latency(la).phantom.record
+# 
+# generic_entry $latency(la).phantom.record.name phantom_record_name \
+#   "PHANTOM recording file" ""
+# checkbutton $latency(la).phantom.record.now -variable phantom_record_now \
+#   -text "GO" 
+# 
+# pack $latency(la).phantom.record.name \
+#      $latency(la).phantom.record.now -side left
+# pack $latency(la).phantom.record -side bottom
+# 
+# frame $latency(la).phantom.replay
+# 
+# generic_entry $latency(la).phantom.replay.name phantom_replay_name \
+#   "PHANTOM replay file" ""
+# checkbutton $latency(la).phantom.replay.now -variable phantom_replay_now \
+#   -text "ONCE" 
+# checkbutton $latency(la).phantom.replay.many -variable phantom_replay_many \
+#   -text "REPEAT" 
+# 
+# pack $latency(la).phantom.replay.name \
+#      $latency(la).phantom.replay.now \
+#      $latency(la).phantom.replay.many -side left
+# pack $latency(la).phantom.replay -side bottom
+# 
+# pack $latency(la).phantom
+# 
 

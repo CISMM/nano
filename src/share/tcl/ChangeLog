@@ -1,3 +1,8 @@
+2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* latency.tcl : Add (but comment out) nonfunctional UI for phantom
+	recording and playback.
+
 2001-06-08    <dwyer@BISMUTH-CS>
 
 	* mainwin.tcl: Removed guarded scan interface from TipControl menu.
@@ -15,6 +20,7 @@
 	* mainwin.tcl: tcl_script_dir simplified. 
 	frame_rate display added.
 
+>>>>>>> 1.39
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added image saving menu item to file menu
