@@ -130,7 +130,8 @@ class nmb_Image {
 	virtual int numExportFormats() = 0;
 	virtual const char *exportFormatType(int type) = 0;
 	virtual nmb_ListOfStrings *exportFormatNames() = 0;
-	virtual int exportToFile(FILE *f, const char *export_type) = 0;
+	virtual int exportToFile(FILE *f, const char *export_type,
+                                 const char * filename) = 0;
 
   protected:
 	vrpn_bool is_height_field;
@@ -170,19 +171,21 @@ class nmb_ImageGrid : public nmb_Image{
         virtual int numExportFormats();
 	virtual nmb_ListOfStrings *exportFormatNames();
         virtual const char *exportFormatType(int type); 
-        virtual int exportToFile(FILE *f, const char *export_type);
+        virtual int exportToFile(FILE *f, const char *export_type, 
+                                 const char * filename);
 
-	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im);
+	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im, const char * filename);
   protected:
 	static const int     num_export_formats;
         static const char    *export_formats_list[];
 	nmb_ListOfStrings formatNames;
 	static const FileExportingFunction file_exporting_function[];
-        static int writeTopoFile(FILE *file, nmb_ImageGrid *im);
-	static int writeTextFile(FILE *file, nmb_ImageGrid *im);
-        static int writePPMFile(FILE *file, nmb_ImageGrid *im);
-        static int writeSPIPFile(FILE *file, nmb_ImageGrid *im);
-	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im);
+        static int writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+	static int writeTextFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writePPMFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writeTIFFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writeSPIPFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * filename);
 
 	BCPlane *plane;
 	BCGrid *grid;  ///< this is NULL if we are not the allocator of
@@ -233,9 +236,10 @@ class nmb_Image8bit : public nmb_Image {
     virtual int numExportFormats();
     virtual nmb_ListOfStrings *exportFormatNames();
     virtual const char *exportFormatType(int type);
-    virtual int exportToFile(FILE *f, const char *export_type);
+    virtual int exportToFile(FILE *f, const char *export_type, 
+                             const char * filename);
 
-    typedef int (*FileExportingFunction) (FILE *file, nmb_Image8bit *im);
+    typedef int (*FileExportingFunction) (FILE *file, nmb_Image8bit *im, const char * filename);
   protected:
     vrpn_uint8 *data;
     short num_x, num_y;

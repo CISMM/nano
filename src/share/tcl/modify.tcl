@@ -373,7 +373,7 @@ generic_entry $nmInfo(modifyfull).modeparam.setpoint_pcnt newmodifyp_setpoint \
 generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
-generic_entry $nmInfo(modifyfull).modeparam.rate newmodifyp_rate "Rate (0.1,50.0 uM/sec)" real 
+generic_entry $nmInfo(modifyfull).modeparam.rate newmodifyp_rate "Rate (0.1,50.0 um/sec)" real 
 generic_entry $nmInfo(modifyfull).modeparam.amplitude newmodifyp_amplitude \
 	"Amplitude (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.frequency newmodifyp_frequency \

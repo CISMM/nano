@@ -2739,11 +2739,11 @@ int nmm_Microscope_Remote::handle_ForceCurveData (void * userdata,
 
 //  printf("got header: x=%f,y=%f,layers=%d,halfcyc=%d\n",x,y,num_points,
 //              num_halfcycles);
-  curves = (float **)malloc(num_halfcycles*sizeof(float *));
+  curves = new float * [num_halfcycles]; //(float **)malloc(num_halfcycles*sizeof(float *));
   if (!curves) mem_err = 1;
   else {
     for (i = 0; i < num_halfcycles; i++){
-      curves[i] = (float *)malloc(num_points*sizeof(float));
+        curves[i] = new float [num_points];//(float *)malloc(num_points*sizeof(float));
       if (!curves[i]) mem_err = 1;
     }
   }
@@ -2770,13 +2770,17 @@ int nmm_Microscope_Remote::handle_ForceCurveData (void * userdata,
   if (mem_err){
     fprintf(stderr, "nmm_MicroscopeRemote::RcvForceCurveData:  "
                     "Out of memory.\n");
+    return -1;
   }
   else {
     ms->RcvForceCurveData(x, y, sec, usec, num_points, num_halfcycles,
                                 z_values, (const float **) curves);
   }
 //  printf("decoded force curve data successfully\n");
-
+  for (i = 0; i < num_halfcycles; i++){
+      delete [] curves[i];
+  }
+  delete [] curves;
   return 0;
 }
 
@@ -3400,7 +3404,7 @@ void nmm_Microscope_Remote::RcvInSpectroscopyMode(const float _setpoint,
     printf("stdel=%g, z_st=%g, z_end=%g, z_pull=%g, forcelim=%g, dist=%g\n",
            _startDelay, _zStart, _zEnd, _zPullback, _forceLimit, _distBetweenFC);
     printf("numpoints=%d, numhalfcycles=%d, samp_spd=%g, pull_spd=%g, start_spd=%g\n",
-           _sampleSpeed, _pullbackSpeed, _startSpeed, _numPoints, _numHalfcycles);
+           _numPoints, _numHalfcycles,_sampleSpeed, _pullbackSpeed, _startSpeed);
     printf("fdback_spd=%g, avg_num=%d, samp_del=%g, pull_del=%g, fdback_del=%g\n",
                 _feedbackSpeed, _avgNum, _sampleDelay, _pullbackDelay, _feedbackDelay);
     if (state.modify.style != FORCECURVE) {

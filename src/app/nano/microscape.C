@@ -3005,7 +3005,7 @@ static	void	handle_exportFileName_change (const char *, void *)
           return;
       }
 
-      if (im->exportToFile(file_ptr, exportFileType.string())) {
+      if (im->exportToFile(file_ptr, exportFileType.string(), newExportFileName.string())) {
 	  display_error_dialog( "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 newExportFileName.string());

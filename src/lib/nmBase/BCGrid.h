@@ -141,6 +141,7 @@ class BCGrid
     int writeUNCAFile(FILE* file, BCPlane* grid);
     int writeSPIPFile(FILE* file, BCPlane* grid);
     int writePPMFile(FILE* file, BCPlane* grid);
+    int writeTIFFile(FILE* file, BCPlane* grid, const char * filename);
     int writeRawVolFile(const char* file_name);
     int writeNCFile(FILE* file, BCPlane* grid,
 	double sizex = 1, double sizey = 1, double sizez = 1,

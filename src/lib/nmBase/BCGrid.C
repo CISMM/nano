@@ -29,7 +29,7 @@ int close( int filedes );
 #include "BCPlane.h"
 #include "Topo.h"
 #include "PPM.h"	// used in readPPMorPGMFileNew()
-
+#include <ImageMaker.h> // used in writeTIFFile
 
 #include "readNanoscopeFile.C" // <------------ reading a .C file!
 
@@ -1051,6 +1051,60 @@ BCGrid::writePPMFile(FILE* file, BCPlane* plane)
     
 } // writePPMFile
 
+int 
+BCGrid::writeTIFFile(FILE* file, BCPlane* plane, const char * filename)
+{
+    int file_descriptor;
+    if ( (file_descriptor = fileno(file)) == -1) {
+      perror("BCGrid::writeTIFFile: Could not get descriptor!");
+      return -1;
+    }
+    // We are going to re-open using iostreams below. 
+    fclose(file);
+
+  int w = plane->numX(), h =plane->numY();
+  unsigned char * pixels = new unsigned char[3*w*h];
+
+  if (!pixels) {
+    return -1;
+  }
+    double scale = 254.0 / (plane->maxNonZeroValue() - plane->minNonZeroValue());
+
+    unsigned int val;
+    int x, y;
+
+    //printf("%f %f %f\n", minValue(), maxValue(), scale);
+    // Reverse Y traversal so image is not flipped vertically.
+    for(y = h -1; y >=0; y-- ) {
+	for(x = 0; x < w; x++ ) {
+            if (plane->value(x,y) < plane->minNonZeroValue()) {
+               val = 0;
+            } else {
+               val = 1 + 
+                     (unsigned)((plane->value(x, y) - plane->minNonZeroValue()) * scale);
+            }
+            pixels[3*y*w + 3*x] = 
+            pixels[3*y*w + 3*x + 1] = 
+            pixels[3*y*w + 3*x + 2] = val;
+        }
+    }
+  AbstractImage *ai = ImageMaker(TIFFImageType, h, w, 3, pixels, true);
+
+  delete [] pixels;
+
+  if (ai)
+  {
+      if (!ai->Write(filename)) {
+        fprintf(stderr, "Failed to write data to '%s'!\n", filename);
+        delete ai;
+        return -1;
+      }
+     delete ai;
+  }
+  return 0;
+    
+} // writeTIFFile
+
 
 /**
 writeRawVolFile
@@ -1795,8 +1849,9 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	for (i = 0; i < _num_x; i++) {
 		for (j = 0; j < _num_y; j++) {
 			ppm_file.Tellppm(i,j,&r,&g,&b);
-                        // Flip y values so data is oriented correctly
-			plane->setValue(i,(_num_y -1) -j,(float)r);
+                        // data is oriented correctly without flipping y values
+			//plane->setValue(i,(_num_y -1) -j,(float)r);
+			plane->setValue(i,j,(float)r);
 			if (r < min) min = r;
 			if (r > max) max = r;
 		}

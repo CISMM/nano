@@ -194,8 +194,9 @@ proc save_plane_data {} {
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
         { "ThermoMicroscopes" ".tfr" }
-        { "Text(MathCAD)" ".txt" }
+        { "TIFF Image" ".tif" }
         { "PPM Image" ".ppm" }
+        { "Text(MathCAD)" ".txt" }
         { "SPIP" ".spip" }
         { "UNCA Image" ".ima" } }
 

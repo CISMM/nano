@@ -393,7 +393,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
    ARCH_LIBS := $(addprefix -l,glut32 wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32 ghost30)
+                               opengl32 ghost31)
 endif
 
 ##########################

@@ -2828,7 +2828,7 @@ char * nmm_Microscope::encode_ForceCurveData (long * len, vrpn_float32 x, vrpn_f
 
   if (!len) return NULL;
 
-  *len = 2*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + 
+  *len = 4*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + 
 		num_points*(num_halfcycles+1)*sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
