@@ -1,3 +1,8 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+	
+	* nmg_Funclist.h : function parameter "list" renamed to "flist" to avoid
+	conflict with stl list now included by nmb_Image.h
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_Graphics.C : removed obsolete realign textures code

@@ -18,11 +18,11 @@ struct nmg_Funclist {
   const char * name;
 };
 
-int addFunctionToFunclist (nmg_Funclist ** list,
+int addFunctionToFunclist (nmg_Funclist ** flist,
                            object_ptr function, void * userdata,
                            const char * name = NULL);
-int removeFunctionFromFunclist (nmg_Funclist ** list, int id);
-int changeDataInFunclist (nmg_Funclist * list, int id, void * userdata);
+int removeFunctionFromFunclist (nmg_Funclist ** flist, int id);
+int changeDataInFunclist (nmg_Funclist * flist, int id, void * userdata);
 
 
 
