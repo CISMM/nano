@@ -27,7 +27,16 @@ int addFunctionToFunclist (nmg_Funclist ** list,
 
   head = *list;
   if (!head) {
-    head = new nmg_Funclist (0, func, data, NULL, name);
+      // The first id should be set to 1.
+      // The problem occurred when items were being deleted from
+      // the list which were never added. Since the items were never
+      // added to the list the variable used to reference the item
+      // (for example trueTip_id in globjects) had a default value of
+      // zero this default value was then used to access and delete
+      // some other item which had been added to the list and assigned
+      // the id zero. This could be solved by a) never deleting items
+      // which weren't added or b) setting default values in globjects.c
+    head = new nmg_Funclist (1, func, data, NULL, name);
     *list = head;
     return head->id;
   }
@@ -65,14 +74,16 @@ int removeFunctionFromFunclist (nmg_Funclist ** list, int id) {
     return -1;
   }
 
-  if (head == prev) {
+  if ((head == prev) && (id == head->id)) {
     delete head;
     *list = NULL;
     return 0;
   }
-
-  prev->next = head->next;
-  delete head;
+  if ( id == head->id ) {
+      prev->next = head->next;
+      delete head;
+      return 0;
+  }
   return 0;
 }
 

@@ -474,10 +474,31 @@ void nmg_Graphics_Timer::positionRubberCorner
   d_imp->positionRubberCorner(minx, miny, maxx, maxy);
 }
 
-void nmg_Graphics_Timer::positionSweepLine (const PointType top,
-                                                     const PointType bottom) {
+void nmg_Graphics_Timer::positionSweepLine (const PointType topL,
+					    const PointType bottomL,
+					    const PointType topR,
+					    const PointType bottomR) {
   activateTimer();
-  d_imp->positionSweepLine(top, bottom);
+  d_imp->positionSweepLine(topL, bottomL, topR, bottomR);
+}
+
+int nmg_Graphics_Timer::addPolySweepPoints (const PointType topL,
+					    const PointType bottomL,
+					    const PointType topR,
+					    const PointType bottomR) {
+    activateTimer();
+    return d_imp->addPolySweepPoints(topL, bottomL, topR, bottomR);
+}
+
+void nmg_Graphics_Timer::setRubberSweepLineStart (const PointType left,
+						  const PointType right) {
+    activateTimer();
+    d_imp->setRubberSweepLineStart(left, right);
+}
+void nmg_Graphics_Timer::setRubberSweepLineEnd (const PointType left,
+						const PointType right) {
+    activateTimer();
+    d_imp->setRubberSweepLineEnd(left, right);
 }
 
 void nmg_Graphics_Timer::positionSphere (float x, float y, float z) {

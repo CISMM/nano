@@ -56,8 +56,11 @@ class BCPlane
     inline double maxNonZeroValueComputedLast() const { return _max_nonzero_value; }
 
     double minAttainableValue (void) const;
+    ///< Set to min value reachable by the scanner used in the AFM. 
+    ///< For files, set to the min data value. 
     double maxAttainableValue (void) const;
-      ///< Only valid for files, not streams or live devices
+    ///< Set to max value reachable by the scanner used in the AFM. 
+    ///< For files, set to the max data value. 
 
     inline void setMinAttainableValue(double v) { _min_attainable_value = v; }
     inline void setMaxAttainableValue(double v) { _max_attainable_value = v; }

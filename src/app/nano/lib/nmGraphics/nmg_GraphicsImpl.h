@@ -147,7 +147,14 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void positionAimLine (const PointType, const PointType);
     virtual void positionRubberCorner (float, float, float, float);
-    virtual void positionSweepLine (const PointType, const PointType);
+    virtual void positionSweepLine (const PointType, const PointType,
+				    const PointType, const PointType);
+    virtual int addPolySweepPoints (const PointType, const PointType,
+				    const PointType, const PointType);
+    virtual void setRubberSweepLineStart (const PointType, const PointType);
+    virtual void setRubberSweepLineEnd (const PointType, const PointType);
+
+
     virtual void positionSphere (float, float, float);
 
     virtual void setViewTransform (v_xform_type);
@@ -254,9 +261,12 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setLightDirection (void *, vrpn_HANDLERPARAM);
     static int handle_resetLightDirection (void *, vrpn_HANDLERPARAM);
     static int handle_addPolylinePoint (void *, vrpn_HANDLERPARAM);
+    static int handle_addPolySweepPoints (void *, vrpn_HANDLERPARAM);
     static int handle_emptyPolyline (void *, vrpn_HANDLERPARAM);
     static int handle_setRubberLineStart (void *, vrpn_HANDLERPARAM);
     static int handle_setRubberLineEnd (void *, vrpn_HANDLERPARAM);
+    static int handle_setRubberSweepLineStart (void *, vrpn_HANDLERPARAM);
+    static int handle_setRubberSweepLineEnd (void *, vrpn_HANDLERPARAM);
     static int handle_setScanlineEndpoints(void *, vrpn_HANDLERPARAM);
     static int handle_displayScanlinePosition(void *, vrpn_HANDLERPARAM);
     static int handle_positionAimLine (void *, vrpn_HANDLERPARAM);

@@ -166,6 +166,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
      }
 
   g_positionList = new Position_list;
+  g_positionListL = new Position_list;
+  g_positionListR = new Position_list;
 
   // genetic textures:
   fprintf( stderr, "Genetic Texture: initializing remote\n" );
@@ -350,6 +352,24 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
   connection->register_handler(d_positionSweepLine_type,
                                handle_positionSweepLine,
                                this, vrpn_ANY_SENDER);
+
+  connection->register_handler(d_addPolySweepPoints_type,
+                               handle_addPolySweepPoints,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRubberSweepLineStart_type,
+                               handle_setRubberSweepLineStart,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRubberSweepLineEnd_type,
+                               handle_setRubberSweepLineEnd,
+                               this, vrpn_ANY_SENDER);
+
+  connection->register_handler(d_setRubberLineStart_type,
+                               handle_setRubberLineStart,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRubberLineEnd_type,
+                               handle_setRubberLineEnd,
+                               this, vrpn_ANY_SENDER);
+
   connection->register_handler(d_positionSphere_type,
                                handle_positionSphere,
                                this, vrpn_ANY_SENDER);
@@ -2080,8 +2100,9 @@ int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
 void nmg_Graphics_Implementation::emptyPolyline (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::emptyPolyline().\n");
 
-  empty_rubber_line(g_positionList);
-
+    empty_rubber_line(g_positionList);
+    empty_rubber_line(g_positionListL, 0);
+    empty_rubber_line(g_positionListR, 1);
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (float p0, float p1) {
@@ -2106,6 +2127,72 @@ void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
   g_rubberPt[2] = p[0];
   g_rubberPt[3] = p[1];
+}
+
+void nmg_Graphics_Implementation::setRubberSweepLineStart (const PointType Left,
+							   const PointType Right) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
+  g_rubberSweepPts[0][0] = Left[0];
+  g_rubberSweepPts[0][1] = Left[1];
+
+  g_rubberSweepPts[1][0] = Right[0];
+  g_rubberSweepPts[1][1] = Right[1];
+}
+
+void nmg_Graphics_Implementation::setRubberSweepLineEnd (const PointType Left,
+							 const PointType Right) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
+    PointType avg_old, avg_new, dif;
+
+    avg_old[0] = (g_rubberSweepPts[0][0] + g_rubberSweepPts[1][0])/2;
+    avg_old[1] = (g_rubberSweepPts[0][1] + g_rubberSweepPts[1][1])/2;
+
+    avg_new[0] = (Left[0] + Right[0])/2;
+    avg_new[1] = (Left[1] + Right[1])/2;
+
+    dif[0] = avg_new[0] - Left[0];
+    dif[1] = avg_new[1] - Left[1];
+
+    // adjust old points:
+    g_rubberSweepPts[0][0] = avg_old[0] + dif[0]; //Left
+    g_rubberSweepPts[0][1] = avg_old[1] + dif[1];
+
+    g_rubberSweepPts[1][0] = avg_old[0] - dif[0]; //Right
+    g_rubberSweepPts[1][1] = avg_old[1] - dif[1];
+
+
+    PointType vr, vl;
+    float d1, d2;
+    vr[0] = Right[0] - g_rubberSweepPts[1][0];
+    vr[1] = Right[1] - g_rubberSweepPts[1][1];
+    vr[2] = 0;
+    d1 = sqrt( vr[0]*vr[0] + vr[1]*vr[1]);
+
+    vl[0] = Left[0] - g_rubberSweepPts[1][0];
+    vl[1] = Left[1] - g_rubberSweepPts[1][1];
+    vl[2] = 0;
+    d2 = sqrt( vl[0]*vl[0] + vl[1]*vl[1]);
+
+    if ( d1 < d2 ) {
+	g_rubberSweepPts[0][2] = Left[0];
+	g_rubberSweepPts[0][3] = Left[1];
+	
+	g_rubberSweepPts[1][2] = Right[0];
+	g_rubberSweepPts[1][3] = Right[1];
+    }
+    else {
+	g_rubberSweepPts[0][2] = Right[0];
+	g_rubberSweepPts[0][3] = Right[1];
+	
+	g_rubberSweepPts[1][2] = Left[0];
+	g_rubberSweepPts[1][3] = Left[1];
+    }
+
+    g_rubberSweepPtsSave[0][2] = g_rubberSweepPts[0][0];
+    g_rubberSweepPtsSave[0][3] = g_rubberSweepPts[0][1];
+
+    g_rubberSweepPtsSave[1][2] = g_rubberSweepPts[1][0];
+    g_rubberSweepPtsSave[1][3] = g_rubberSweepPts[1][1];
 }
 
 
@@ -2134,11 +2221,24 @@ void nmg_Graphics_Implementation::positionRubberCorner
   make_rubber_corner(minx, miny, maxx, maxy);
 }
 
-void nmg_Graphics_Implementation::positionSweepLine (const PointType top,
-                                                     const PointType bottom) {
+void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,
+                                                     const PointType bottomL,
+                                                     const PointType topR,
+                                                     const PointType bottomR) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionSweepLine().\n");
-  make_sweep(top, bottom);
+  make_sweep(topL, bottomL, topR, bottomR);
 }
+
+int nmg_Graphics_Implementation::addPolySweepPoints (const PointType topL,
+                                                     const PointType bottomL,
+                                                     const PointType topR,
+                                                     const PointType bottomR) {
+//fprintf(stderr, "nmg_Graphics_Implementation::addPolySweepPoints().\n");
+    make_rubber_line_point(topL, bottomL, g_positionListL, 0);
+    make_rubber_line_point(topR, bottomR, g_positionListR, 1);
+    return 0;
+}
+
 
 void nmg_Graphics_Implementation::positionSphere (float x, float y, float z) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionSphere().\n");
@@ -2923,6 +3023,17 @@ int nmg_Graphics_Implementation::handle_addPolylinePoint
 }
 
 // static
+int nmg_Graphics_Implementation::handle_addPolySweepPoints
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType topL, botL, topR, botR;
+
+  CHECK(it->decode_addPolySweepPoints(p.buffer, topL, botL, topR, botR));
+  it->addPolySweepPoints( topL, botL, topR, botR);
+  return 0;
+}
+
+// static
 int nmg_Graphics_Implementation::handle_emptyPolyline
                                  (void * userdata, vrpn_HANDLERPARAM) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
@@ -2950,6 +3061,28 @@ int nmg_Graphics_Implementation::handle_setRubberLineEnd
 
   CHECK(it->decode_setRubberLineEnd(p.buffer, pt));
   it->setRubberLineEnd(pt);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRubberSweepLineStart
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType left, right;
+
+  CHECK(it->decode_setRubberSweepLineStart(p.buffer, left, right));
+  it->setRubberSweepLineStart(left, right);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setRubberSweepLineEnd
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  PointType left, right;
+
+  CHECK(it->decode_setRubberSweepLineEnd(p.buffer, left, right));
+  it->setRubberSweepLineEnd(left, right);
   return 0;
 }
 
@@ -3000,10 +3133,10 @@ int nmg_Graphics_Implementation::handle_positionRubberCorner
 int nmg_Graphics_Implementation::handle_positionSweepLine
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  PointType top, bottom;
+  PointType topL, bottomL, topR, bottomR;
 
-  CHECK(it->decode_positionSweepLine(p.buffer, top, bottom));
-  it->positionSweepLine(top, bottom);
+  CHECK(it->decode_positionSweepLine(p.buffer, topL, bottomL, topR, bottomR));
+  it->positionSweepLine(topL, bottomL, topR, bottomR);
   return 0;
 }
 

@@ -52,6 +52,7 @@ struct marker_type {
 
 
 static int poly_rubber_line_id;
+static int poly_sweep_rubber_line_id[4];
 
 // Lists of functions to call to draw arbitrary objects in various
 // coordinate spaces.
@@ -146,7 +147,8 @@ int my_scanline_indicator (void *);
 int replaceDefaultObjects (void);
 int clear_world_modechange (int);
 int make_aim (const float a [], const float b []);
-int make_sweep (const float a [], const float b []);
+int make_sweep (const float a [], const float b [],
+		const float c [], const float d [] );
 int make_rubber_corner (float, float, float, float);
 
 static int selecthand (void *);
@@ -178,6 +180,10 @@ int clear_world_modechange(int mode)
     removeFunctionFromFunclist(&vir_world, aim_struct_id);
     removeFunctionFromFunclist(&vir_world, sweep_struct_id);
     removeFunctionFromFunclist(&vir_world, poly_rubber_line_id);
+    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[0]);
+    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[1]);
+    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[2]);
+    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[3]);
     removeFunctionFromFunclist(&vir_world, trueTip_id);
     break;
   case USER_SWEEP_MODE:
@@ -218,7 +224,7 @@ int clear_world_modechange(int mode)
   }
   /* some icons get removed from every mode */
   removeFunctionFromFunclist(&v_hand,hand_id);
-  removeFunctionFromFunclist(&vir_world,sphere_id);  
+  removeFunctionFromFunclist(&vir_world,sphere_id); 
 
   /* The other user's hand doesn't depend on what your hand is doing,
      but we seem to need this anyway... */
@@ -828,7 +834,8 @@ int make_blue_line (const float a[], const float b[])
 } 
 
 
-int make_sweep (const float a [], const float b [])
+int make_sweep (const float a [], const float b [],
+		const float c [], const float d [] )
 {
   v_gl_set_context_to_vlib_window(); 
   glDeleteLists(sweep_struct,1);
@@ -836,6 +843,7 @@ int make_sweep (const float a [], const float b [])
   glNewList(sweep_struct,GL_COMPILE);
   glColor3f(0.0,1.0,0.0);
   make_line(a,b);
+  make_line(c,d);
   glEndList();
   return(sweep_struct);
 }
@@ -1922,8 +1930,7 @@ int replaceDefaultObjects(void)
   return 0;
 }
 
-int make_rubber_line_point (const float point [2][3],
-                            Position_list * p) {
+int make_rubber_line_point (const float point [2][3], Position_list * p) {
   //static float rep [4];
   int list_id;
 
@@ -1940,7 +1947,6 @@ int make_rubber_line_point (const float point [2][3],
                                   (void *) g_rubberPt,
                                   "my_rubber_line");
   }
-
   // TODO:
   //   move into server, or onto graphics state!
   //   currently duplicated in interaction and here
@@ -1952,10 +1958,66 @@ int make_rubber_line_point (const float point [2][3],
   return list_id;
 }
 
+static int draw_rubber_line[2] = {0,0};
+static int draw_rubber_corner_line[2] = {0,0};
+int make_rubber_line_point (const PointType top, const PointType bot,
+                            Position_list * p, int index) {
+    //static float rep [4];
+    int list_id;
+
+    if ( draw_rubber_line[index] ) { 
+	float *rubber_point = new float[4];
+	rubber_point[0] = g_rubberSweepPts[index][0];
+	rubber_point[1] = g_rubberSweepPts[index][1];
+	rubber_point[2] = g_rubberSweepPts[index][2];
+	rubber_point[3] = g_rubberSweepPts[index][3];
+	
+	list_id = addFunctionToFunclist(&vir_world, my_rubber_line,
+					(void *) rubber_point,
+					"my_rubber_line");
+	p->insert( rubber_point[0], rubber_point[1], list_id);
+
+	if ( draw_rubber_corner_line[index] ) {
+	    float *rubber_corner_point = new float[4];
+	    rubber_corner_point[0] = g_rubberSweepPtsSave[index][0];
+	    rubber_corner_point[1] = g_rubberSweepPtsSave[index][1];
+	    rubber_corner_point[2] = g_rubberSweepPtsSave[index][2];
+	    rubber_corner_point[3] = g_rubberSweepPtsSave[index][3];
+	    
+	    list_id = addFunctionToFunclist(&vir_world, my_rubber_line,
+					    (void *) rubber_corner_point,
+					    "my_rubber_line");
+	    p->insert( rubber_point[0], rubber_point[1], list_id);
+	    printf( "       ALEXANDRA saving connecting point %d\n", index );
+
+	    g_rubberSweepPtsSave[index][0] = g_rubberSweepPts[index][2];
+	    g_rubberSweepPtsSave[index][1] = g_rubberSweepPts[index][3];
+	}
+	else {
+	    g_rubberSweepPtsSave[index][0] = g_rubberSweepPts[index][2];
+	    g_rubberSweepPtsSave[index][1] = g_rubberSweepPts[index][3];
+
+	    poly_sweep_rubber_line_id[index + 2] =
+		addFunctionToFunclist(&vir_world,
+				      my_rubber_line,
+				      (void *) g_rubberSweepPtsSave[index],
+				      "my_rubber_line");
+	    draw_rubber_corner_line[index] = 1;
+	}
+     }
+    else if ( p->empty() ) { 
+	poly_sweep_rubber_line_id[index] =
+	    addFunctionToFunclist(&vir_world,
+				  my_rubber_line,
+				  (void *) g_rubberSweepPts[index],
+				  "my_rubber_line");
+	draw_rubber_line[index] = 1;
+    }
+    return list_id;
+}
+
 void empty_rubber_line (Position_list * p) {
 
-  // DO NOT delete points  (???)
-//  for (p->start(); p->notDone(); p->next()) {
    p->start();
    while( p->notDone()) {
       //printf("commit - remove func: %d\n", (p->curr())->iconID());
@@ -1964,10 +2026,23 @@ void empty_rubber_line (Position_list * p) {
       p->del();
   }
   // get rid of the rubber-band line
-  removeFunctionFromFunclist(&vir_world, poly_rubber_line_id);
-
+   removeFunctionFromFunclist(&vir_world, poly_rubber_line_id);
 }
 
+void empty_rubber_line (Position_list * p, int index) {
+  p->start();
+   while( p->notDone()) {
+      removeFunctionFromFunclist(&vir_world, (p->curr())->iconID());
+
+      // Delete the current position, and advance to the next one in the list. 
+      p->del();
+  }
+  // get rid of the rubber-band line
+   removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[index]);
+   removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[index + 2]);
+   draw_rubber_line[index] = 0;
+   draw_rubber_corner_line[index] = 0;
+}
 
 int initialize_globjects (const char * fontName) {
   char * ev;

@@ -334,8 +334,17 @@ class nmg_Graphics {
 
     virtual void positionRubberCorner (float x0, float y0,
                                        float x1, float y1) = 0;
-    virtual void positionSweepLine (const PointType top,
-                                    const PointType bottom) = 0;
+    virtual void positionSweepLine (const PointType topL,
+                                    const PointType bottomL,
+				    const PointType topR,
+				    const PointType bottomR) = 0;
+    virtual int addPolySweepPoints (const PointType topL,
+				    const PointType bottomL,
+				    const PointType topR,
+				    const PointType bottomR) = 0;
+    virtual void setRubberSweepLineStart (const PointType, const PointType) = 0;
+    virtual void setRubberSweepLineEnd (const PointType, const PointType) = 0;
+
     virtual void positionSphere (float x, float y, float z) = 0;
 
     virtual void setViewTransform (v_xform_type) = 0;
@@ -429,9 +438,12 @@ class nmg_Graphics {
     vrpn_int32 d_setLightDirection_type;
     vrpn_int32 d_resetLightDirection_type;
     vrpn_int32 d_addPolylinePoint_type;
+    vrpn_int32 d_addPolySweepPoints_type;
     vrpn_int32 d_emptyPolyline_type;
     vrpn_int32 d_setRubberLineStart_type;
     vrpn_int32 d_setRubberLineEnd_type;
+    vrpn_int32 d_setRubberSweepLineStart_type;
+    vrpn_int32 d_setRubberSweepLineEnd_type;
     vrpn_int32 d_positionAimLine_type;
     vrpn_int32 d_positionRubberCorner_type;
     vrpn_int32 d_positionSweepLine_type;
@@ -586,10 +598,27 @@ class nmg_Graphics {
     int decode_setLightDirection (const char * buf, q_vec_type &);
     char * encode_addPolylinePoint (int * len, const float [2][3]);
     int decode_addPolylinePoint (const char * buf, float [2][3]);
+
+    char * encode_addPolySweepPoints (int * len,
+				      const PointType, const PointType,
+				      const PointType, const PointType );
+    int decode_addPolySweepPoints (const char * buf,
+				   PointType, PointType,
+				   PointType, PointType );
+
     char * encode_setRubberLineStart (int * len, const float [2]);
     int decode_setRubberLineStart (const char * buf, float [2]);
     char * encode_setRubberLineEnd (int * len, const float [2]);
     int decode_setRubberLineEnd (const char * buf, float [2]);
+
+    char * encode_setRubberSweepLineStart (int * len,
+					   const PointType, const PointType );
+    int decode_setRubberSweepLineStart (const char * buf,
+					PointType, PointType );
+    char * encode_setRubberSweepLineEnd (int * len,
+					 const PointType, const PointType );
+    int decode_setRubberSweepLineEnd (const char * buf,
+				      PointType, PointType );
 
     char * encode_setScanlineEndpoints (int *len, const float [6]);
     int decode_setScanlineEndpoints (const char *buf, float [6]);
@@ -604,8 +633,10 @@ class nmg_Graphics {
     int decode_positionRubberCorner (const char * buf, float *, float *,
                                       float *, float *);
     char * encode_positionSweepLine (int * len, const PointType,
-                                   const PointType);
-    int decode_positionSweepLine (const char * buf, PointType, PointType);
+				     const PointType, const PointType,
+				     const PointType);
+    int decode_positionSweepLine (const char * buf, PointType, PointType,
+				  PointType, PointType);
     char * encode_positionSphere (int * len, float, float, float);
     int decode_positionSphere (const char * buf, float *, float *, float *);
 

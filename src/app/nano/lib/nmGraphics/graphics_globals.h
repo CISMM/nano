@@ -143,6 +143,8 @@ extern int g_tex_sem_installed_width;
 extern int g_tex_sem_installed_height;
 
 extern float g_rubberPt [4];
+extern float g_rubberSweepPts[2][4];
+extern float g_rubberSweepPtsSave[2][4];
 extern float g_scanlinePt[6];
 extern int g_scanline_display_enabled;
 
@@ -188,6 +190,8 @@ extern int g_PRERENDERED_TEXTURE;
 extern int g_PRERENDERED_DEPTH;
 
 extern Position_list * g_positionList;
+extern Position_list * g_positionListL;  // for the left side of the sweep marker
+extern Position_list * g_positionListR;  // for the right side of the sweep marker
 
 #define N_TEX 7
 #define CONTOUR_1D_TEX_ID       0

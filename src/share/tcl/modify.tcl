@@ -322,8 +322,6 @@ pack $modify.styleparam.label -side top -anchor nw
 
 generic_entry $modify.styleparam.sweepwidth newmodifyp_sweep_width\
 	"Sweep Width (0,1000 nm)" real 
-checkbutton $modify.styleparam.sweeplock -text "Sweep Lock" \
-	-variable sweep_lock_pressed 
 
 generic_entry $modify.styleparam.bot-delay newmodifyp_bot_delay \
 	"Bottom Delay (0,10)" real 
@@ -364,7 +362,7 @@ generic_entry $modify.styleparam.avg-num newmodifyp_avg_num "averaging (1,10)" r
 #generic_entry $modify.styleparam.feedback-delay newmodifyp_feedback_delay "feedback delay (0,1000 us)" real 
 
 #set mod_blunt_list "$modify.styleparam.tri-size $modify.styleparam.tri-speed"
-set mod_sweep_list "$modify.styleparam.sweepwidth $modify.styleparam.sweeplock"
+set mod_sweep_list "$modify.styleparam.sweepwidth"
 set mod_sewing_list "$modify.styleparam.bot-delay \
 	$modify.styleparam.top-delay $modify.styleparam.z-pull \
         $modify.styleparam.punchdist $modify.styleparam.speed \
@@ -583,6 +581,8 @@ proc acceptModifyVars {varlist} {
     $modify.mode.accept configure -background $fc
     $modify.mode.cancel configure -background $fc
 
+    #close the window when the Accept Button is pressed
+    wm withdraw $modify
 }
 
 

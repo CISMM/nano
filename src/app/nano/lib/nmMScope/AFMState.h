@@ -357,8 +357,6 @@ struct AFMInitializationState {
   float MaxSafeMove;
   int ModSubWinSz;
 
-  float scrapeHeight;
-
   float xMin;
   float xMax;
   float yMin;
@@ -414,8 +412,7 @@ struct AFMState {
         yMin, yMax,              
         zMin, zMax;
     ///< maximum scan range of which the spm is capable
-  float scrapeHeight;            ///< height above surface of scrape lines
-  
+
   // optional system components
   vrpn_bool doDriftComp;           ///< compensate for drift
   Tclvar_int doRelaxComp;           ///< compensate for relaxation -can change in Tcl.

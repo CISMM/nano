@@ -1,4 +1,4 @@
- /** \file interaction.c
+/** \file interaction.c
  *
     interaction.c - handles all interaction for user program
     
@@ -190,7 +190,7 @@ int	plane_line_set = 0;		/**< 1 if plane_line initialized */
 int     pulse_enabled = 0;              /* 1 if pulses are enabled, 0 if not */
 
 /** parameters locking the width in sweep mode (qliu 6/29/95)*/
-Tclvar_int lock_width("sweep_lock_pressed");
+//Tclvar_int lock_width("sweep_lock_pressed", 1);
 
 /** parameter locking the tip in sharp tip mode */
 Tclvar_int xy_lock("xy_lock_pressed");
@@ -488,9 +488,15 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 		    microscope->state.modify.yaw =
                            atan2((currPt->y() - y),
 				 (currPt->x() - x)) - M_PI_2;
-		    // only draw an arc if this is an outside turn. 
-                    microscope->DrawArc(x, y, oldyaw,
-                                        microscope->state.modify.yaw);
+		    //  Following ensures that the turn is through the min angle:
+		    if ( fabs( oldyaw - microscope->state.modify.yaw) > M_PI_2 ) {
+			if ( oldyaw > microscope->state.modify.yaw ) {
+			    oldyaw -= M_PI;
+			} else {
+			    microscope->state.modify.yaw -= M_PI;
+			}
+		    }
+                    microscope->DrawArc(x,y, oldyaw, microscope->state.modify.yaw);
 		}
 		// Draw a line between prevPt and currPt
 		// Wait until we get the report before we send the next line
@@ -498,16 +504,13 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 		//	   x, y, currPt->x(), currPt->y());
 		microscope->DrawLine(x, y, currPt->x(), currPt->y());
 	    }
-	
-	    // delete stored points (so we don't use them again!)
-	    // get rid of the rubber-band line
-	    graphics->emptyPolyline();
+	    // Find out if the list of points has at least two points in it
 	    p.start();
 	    while(p.notDone()) {
-		//printf("commit - remove func: %d\n", (p.curr())->iconID());
-		p.del();
+	      //printf("commit - remove func: %d\n", (p.curr())->iconID());
+	      p.del();
 	    }
-
+	
 	    // resume normal scanning operation of AFM
 	    printf("handle_commit_change: done modifying, resuming scan.\n");
 	    microscope->ResumeScan();
@@ -740,358 +743,359 @@ void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
 int interaction(int bdbox_buttons[], double bdbox_dials[], 
 		int phantButtonPressed, nmb_TimerList * timer)
 {
-    int		user;
-    int i;
-    /* eventList is static so unsupported buttons/dials will be init-ed and
-    ** stay 0 (no event) */
-    static int	lastButtonsPressed[BDBOX_NUMBUTTONS];
-    static int  startup=0;
-    static int	lastTriggerButtonPressed = 0;
-    static int  eventList[BDBOX_NUMBUTTONS+1];
-    static int  lastTriggerEvent = NULL_EVENT;
-    static float old_mod_tap_force = -1;
-    static float old_mod_con_force = -1;
-    static float old_img_tap_force = -1;
-    static float old_img_con_force = -1;
-
-    if(startup==0){
-	for (i = 0; i < BDBOX_NUMBUTTONS; i++) lastButtonsPressed[i]=0;
-	startup=1;
+  int		user;
+  int i;
+  /* eventList is static so unsupported buttons/dials will be init-ed and
+  ** stay 0 (no event) */
+  static int	lastButtonsPressed[BDBOX_NUMBUTTONS];
+  static int  startup=0;
+  static int	lastTriggerButtonPressed = 0;
+  static int  eventList[BDBOX_NUMBUTTONS+1];
+  static int  lastTriggerEvent = NULL_EVENT;
+  static float old_mod_tap_force = -1;
+  static float old_mod_con_force = -1;
+  static float old_img_tap_force = -1;
+  static float old_img_con_force = -1;
+  
+  if(startup==0){
+    for (i = 0; i < BDBOX_NUMBUTTONS; i++) lastButtonsPressed[i]=0;
+    startup=1;
+  }
+  
+  // NULL_EVENT=0, PRESS_EVENT=1, RELEASE_EVENT=2, HOLD_EVENT=3 in microscape.h
+  // compute events for button box buttons
+  if (buttonBox){
+    for (i = 0; i < BDBOX_NUMBUTTONS; i++){
+      if (!lastButtonsPressed[i]){
+	if (bdbox_buttons[i]){
+	  eventList[i] = PRESS_EVENT;
+	  lastButtonsPressed[i]=1;
+	}
+	else eventList[i] = NULL_EVENT;
+      }
+      else {
+	if (bdbox_buttons[i]) eventList[i] = HOLD_EVENT;
+	else{ eventList[i] = RELEASE_EVENT;
+	lastButtonsPressed[i]=0;
+	}
+      }
     }
-
-    // NULL_EVENT=0, PRESS_EVENT=1, RELEASE_EVENT=2, HOLD_EVENT=3 in microscape.h
-    // compute events for button box buttons
-    if (buttonBox){
-	for (i = 0; i < BDBOX_NUMBUTTONS; i++){
-	    if (!lastButtonsPressed[i]){
-		if (bdbox_buttons[i]){
-			eventList[i] = PRESS_EVENT;
-			lastButtonsPressed[i]=1;
-		}
-		else eventList[i] = NULL_EVENT;
-	    }
-	    else {
-		if (bdbox_buttons[i]) eventList[i] = HOLD_EVENT;
-		else{ eventList[i] = RELEASE_EVENT;
-			lastButtonsPressed[i]=0;
-		}
-	    }
+  }
+  
+  VERBOSE(4, "  Entering interaction() loop.");
+  /*
+   * handle button events for each user-  do each handler independent of
+   *  of the other so that grabbing and flying can be done together
+   */
+  for ( user = 0; user < NUM_USERS; user++ ) {
+    int		triggerButtonPressed = 0; 
+    
+    // get value for trigger button event
+    // first check phantom button, then mouse button, then button box 
+    // trigger, tcl_trigger
+    if (phantButton && using_phantom_button) {
+      triggerButtonPressed = phantButtonPressed;
+    } else if (using_mouse3button) {
+      triggerButtonPressed = mouse3button;
+    } else if (buttonBox) {
+      triggerButtonPressed = bdbox_buttons[TRIGGER_BT];
 	}
+    if (tcl_trigger_just_forced_on) {
+      triggerButtonPressed = 1;
+      tcl_trigger_just_forced_on = 0;
     }
-
-VERBOSE(4, "  Entering interaction() loop.");
-/*
- * handle button events for each user-  do each handler independent of
- *  of the other so that grabbing and flying can be done together
- */
-for ( user = 0; user < NUM_USERS; user++ ) {
-	int		triggerButtonPressed = 0; 
-
-	// get value for trigger button event
-	// first check phantom button, then mouse button, then button box 
-	// trigger, tcl_trigger
-	if (phantButton && using_phantom_button) {
-		triggerButtonPressed = phantButtonPressed;
-	} else if (using_mouse3button) {
-		triggerButtonPressed = mouse3button;
-	} else if (buttonBox) {
-		triggerButtonPressed = bdbox_buttons[TRIGGER_BT];
+    if (tcl_trigger_just_forced_off) {
+      triggerButtonPressed = 0;
+      tcl_trigger_just_forced_off = 0;
+    }
+    
+    if (!lastTriggerButtonPressed){
+      if (triggerButtonPressed) eventList[TRIGGER_BT] = PRESS_EVENT;
+      else eventList[TRIGGER_BT] = NULL_EVENT;
+    } else {
+      if (triggerButtonPressed) eventList[TRIGGER_BT] = HOLD_EVENT;
+      else eventList[TRIGGER_BT] = RELEASE_EVENT;
+    }
+    lastTriggerButtonPressed = triggerButtonPressed;
+    
+    // If the user has forced a trigger, then make sure that the
+    // button is pressed or held until they release it by pressing
+    // the tcl control again.
+    if ( (tcl_trigger_pressed) && (!tcl_trigger_just_forced_on) &&
+	 (eventList[0] != RELEASE_EVENT) ) {
+      // normally we would pass through a PRESS_EVENT here
+      // but some things (like GRAB mode) will not handle
+      // a HOLD_EVENT correctly if it is not preceded by
+      // a PRESS event (AAS)
+      if (eventList[0] != HOLD_EVENT) {
+	dispatch_event(user, user_mode[user], eventList[0], timer);
+      }
+      eventList[0] = HOLD_EVENT;
+    }
+    if (tcl_trigger_just_forced_on) {
+      switch (eventList[0]) {
+      case NULL_EVENT:	eventList[0] = PRESS_EVENT; break;
+      case PRESS_EVENT: break;
+      case HOLD_EVENT: break;
+      case RELEASE_EVENT: eventList[0] = HOLD_EVENT; break;
+      }
+      tcl_trigger_just_forced_on = 0;
+    }
+    if (tcl_trigger_just_forced_off) {
+      // Don't repeat a release event, but if there was not one
+      // last time, generate one for a NULL event.  If the button
+      // has just been pressed somewhere else, then cancel the
+      // release and turn it into a hold event.
+      
+      switch (eventList[0]) {
+      case NULL_EVENT:	{if (lastTriggerEvent == NULL_EVENT) 
+	eventList[0] = RELEASE_EVENT; } break;
+      case PRESS_EVENT: eventList[0] = HOLD_EVENT; break;
+      case HOLD_EVENT: break;
+      case RELEASE_EVENT: break;
+      }
+      tcl_trigger_just_forced_off = 0;
+    }
+    
+    // Copy the current state of the trigger (whatever caused it)
+    // into the tcl variable, so it will track.
+    if ((eventList[0]== PRESS_EVENT) || (eventList[0]== HOLD_EVENT)) {
+      // TCH 6 Oct 99 - cut down on operator = () calls
+      if (tcl_trigger_pressed != 1) {
+	tcl_trigger_pressed = 1;
+      }
+    } else {
+      // TCH 6 Oct 99 - cut down on operator = () calls
+      if (tcl_trigger_pressed != 0) {
+	tcl_trigger_pressed = 0;
+      }
+    }
+    // copy dial values to "Arm_knobs" - 
+    for (i = 0; i < BDBOX_NUMDIALS; i++)
+      {
+	// Offset of 0.5? that's confusing, so I'm taking it out.
+	// Yeah, it's confusing, but it makes the default value of
+	// all the knobs be 50, instead of 0, so the phantom feels
+	// right. So leave it in.
+	// It'd be better for the Phantom to be changed to expect
+	// a default value of 0, or tcl_offsets to contain this shift,
+	// so there!  Or at least it would be if we weren't constraining
+	// values to [0,1] but to [-.5,.5] instead.
+	Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i] + 0.5;
+	//Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i];
+	if (Arm_knobs[i] > 1.0) {
+	  Arm_knobs[i] -= 1.0;
+	} else if (Arm_knobs[i] < 0.0) {
+	  Arm_knobs[i] += 1.0;
 	}
-	if (tcl_trigger_just_forced_on) {
-	    triggerButtonPressed = 1;
-	    tcl_trigger_just_forced_on = 0;
-	}
-	if (tcl_trigger_just_forced_off) {
-	    triggerButtonPressed = 0;
-	    tcl_trigger_just_forced_off = 0;
-	}
-
-	if (!lastTriggerButtonPressed){
-	    if (triggerButtonPressed) eventList[TRIGGER_BT] = PRESS_EVENT;
-	    else eventList[TRIGGER_BT] = NULL_EVENT;
-	} else {
-	    if (triggerButtonPressed) eventList[TRIGGER_BT] = HOLD_EVENT;
-	    else eventList[TRIGGER_BT] = RELEASE_EVENT;
-	}
-	lastTriggerButtonPressed = triggerButtonPressed;
-
-	// If the user has forced a trigger, then make sure that the
-	// button is pressed or held until they release it by pressing
-	// the tcl control again.
-	if ( (tcl_trigger_pressed) && (!tcl_trigger_just_forced_on) &&
-	     (eventList[0] != RELEASE_EVENT) ) {
-		// normally we would pass through a PRESS_EVENT here
-		// but some things (like GRAB mode) will not handle
-		// a HOLD_EVENT correctly if it is not preceded by
-		// a PRESS event (AAS)
-		if (eventList[0] != HOLD_EVENT) {
-		    dispatch_event(user, user_mode[user], eventList[0], timer);
-		}
-		eventList[0] = HOLD_EVENT;
-	}
-	if (tcl_trigger_just_forced_on) {
-	  switch (eventList[0]) {
-	    case NULL_EVENT:	eventList[0] = PRESS_EVENT; break;
-	    case PRESS_EVENT: break;
-	    case HOLD_EVENT: break;
-	    case RELEASE_EVENT: eventList[0] = HOLD_EVENT; break;
-	  }
-	  tcl_trigger_just_forced_on = 0;
-	}
-	if (tcl_trigger_just_forced_off) {
-	  // Don't repeat a release event, but if there was not one
-	  // last time, generate one for a NULL event.  If the button
-	  // has just been pressed somewhere else, then cancel the
-	  // release and turn it into a hold event.
-
-	  switch (eventList[0]) {
-	    case NULL_EVENT:	{if (lastTriggerEvent == NULL_EVENT) 
-				eventList[0] = RELEASE_EVENT; } break;
-	    case PRESS_EVENT: eventList[0] = HOLD_EVENT; break;
-	    case HOLD_EVENT: break;
-	    case RELEASE_EVENT: break;
-	  }
-	  tcl_trigger_just_forced_off = 0;
-	}
-
-	// Copy the current state of the trigger (whatever caused it)
-	// into the tcl variable, so it will track.
-	if ((eventList[0]== PRESS_EVENT) || (eventList[0]== HOLD_EVENT)) {
-          // TCH 6 Oct 99 - cut down on operator = () calls
-          if (tcl_trigger_pressed != 1) {
-		tcl_trigger_pressed = 1;
-          }
-	} else {
-          // TCH 6 Oct 99 - cut down on operator = () calls
-          if (tcl_trigger_pressed != 0) {
-		tcl_trigger_pressed = 0;
-          }
-	}
-	// copy dial values to "Arm_knobs" - 
-	for (i = 0; i < BDBOX_NUMDIALS; i++)
-	{
-	  // Offset of 0.5? that's confusing, so I'm taking it out.
-	  // Yeah, it's confusing, but it makes the default value of
-	  // all the knobs be 50, instead of 0, so the phantom feels
-	  // right. So leave it in.
-          // It'd be better for the Phantom to be changed to expect
-          // a default value of 0, or tcl_offsets to contain this shift,
-          // so there!  Or at least it would be if we weren't constraining
-          // values to [0,1] but to [-.5,.5] instead.
-	  Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i] + 0.5;
-	  //Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i];
-	    if (Arm_knobs[i] > 1.0) {
-	    	Arm_knobs[i] -= 1.0;
-	    } else if (Arm_knobs[i] < 0.0) {
-		Arm_knobs[i] += 1.0;
-            }
-	}
-
-	float	force;			/* force level [0..1] */
-
-	// Make sure the old_* static variable are initialized correctly.
-	if( old_mod_con_force == -1) {
-	  old_mod_con_force =Arm_knobs[MOD_FORCE_KNOB];
-	  old_mod_tap_force =Arm_knobs[MOD_FORCE_KNOB];
-	  old_img_con_force =Arm_knobs[IMG_FORCE_KNOB];
-	  old_img_tap_force =Arm_knobs[IMG_FORCE_KNOB];
-	}
-
-	/* check if there's been a force level change from the knobs 
-	** if so, store the new level so it will get sent to the microscope 
-	** Notice it depends on which mode we're in, tapping or contact,
-	** AND whether we are imaging or modifying.
-	**/
-	force = Arm_knobs[MOD_FORCE_KNOB];
-	if( microscope->state.modify.mode == CONTACT ) {
- 	    if( force != old_mod_con_force ) {
-		//printf("Changing setpoint based on mod force knob\n");
-		microscope->state.modify.setpoint = microscope->state.modify.setpoint_min +
-		    force * (microscope->state.modify.setpoint_max - microscope->state.modify.setpoint_min);
-		old_mod_con_force = force;
-	    }
-	} else if ( microscope->state.modify.mode == TAPPING ) {
- 	    if( force != old_mod_tap_force ) {
-		//printf("Changing amplitude based on mod force knob\n");
-		microscope->state.modify.amplitude = microscope->state.modify.amplitude_min +
-		    force * (microscope->state.modify.amplitude_max - microscope->state.modify.amplitude_min);
-		old_mod_tap_force = force;
-	    }
-	}
-
-	force = Arm_knobs[IMG_FORCE_KNOB];
-	if( microscope->state.image.mode == CONTACT ) {
- 	    if( force != old_img_con_force ) {
-		//printf("Changing setpoint based on image force knob\n");
-		microscope->state.image.setpoint =
-                  microscope->state.image.setpoint_min +
-		    force * (microscope->state.image.setpoint_max -
-                             microscope->state.image.setpoint_min);
-		old_img_con_force = force;
-	    }
-	} else if ( microscope->state.image.mode == TAPPING ) {
- 	    if( force != old_img_tap_force ) {
-		//printf("Changing amplitude based on image force knob\n");
-		microscope->state.image.amplitude =
-                  microscope->state.image.amplitude_min +
-		    force * (microscope->state.image.amplitude_max -
-                             microscope->state.image.amplitude_min);
+      }
+    
+    float	force;			/* force level [0..1] */
+    
+    // Make sure the old_* static variable are initialized correctly.
+    if( old_mod_con_force == -1) {
+      old_mod_con_force =Arm_knobs[MOD_FORCE_KNOB];
+      old_mod_tap_force =Arm_knobs[MOD_FORCE_KNOB];
+      old_img_con_force =Arm_knobs[IMG_FORCE_KNOB];
+      old_img_tap_force =Arm_knobs[IMG_FORCE_KNOB];
+    }
+    
+    /* check if there's been a force level change from the knobs 
+    ** if so, store the new level so it will get sent to the microscope 
+    ** Notice it depends on which mode we're in, tapping or contact,
+    ** AND whether we are imaging or modifying.
+    **/
+    force = Arm_knobs[MOD_FORCE_KNOB];
+    if( microscope->state.modify.mode == CONTACT ) {
+      if( force != old_mod_con_force ) {
+	//printf("Changing setpoint based on mod force knob\n");
+	microscope->state.modify.setpoint = microscope->state.modify.setpoint_min +
+	  force * (microscope->state.modify.setpoint_max - microscope->state.modify.setpoint_min);
+	old_mod_con_force = force;
+      }
+    } else if ( microscope->state.modify.mode == TAPPING ) {
+      if( force != old_mod_tap_force ) {
+	//printf("Changing amplitude based on mod force knob\n");
+	microscope->state.modify.amplitude = microscope->state.modify.amplitude_min +
+	  force * (microscope->state.modify.amplitude_max - microscope->state.modify.amplitude_min);
+	old_mod_tap_force = force;
+      }
+    }
+    
+    force = Arm_knobs[IMG_FORCE_KNOB];
+    if( microscope->state.image.mode == CONTACT ) {
+      if( force != old_img_con_force ) {
+	//printf("Changing setpoint based on image force knob\n");
+	microscope->state.image.setpoint =
+	  microscope->state.image.setpoint_min +
+	  force * (microscope->state.image.setpoint_max -
+		   microscope->state.image.setpoint_min);
+	old_img_con_force = force;
+      }
+    } else if ( microscope->state.image.mode == TAPPING ) {
+      if( force != old_img_tap_force ) {
+	//printf("Changing amplitude based on image force knob\n");
+	microscope->state.image.amplitude =
+	  microscope->state.image.amplitude_min +
+	  force * (microscope->state.image.amplitude_max -
+		   microscope->state.image.amplitude_min);
 		old_img_tap_force = force;
-	    }
-	}
+      }
+    }
 
-	/* Check for immediate action button presses
-	**
-	** Center command is a special case
+    /* Check for immediate action button presses
+    **
+    ** Center command is a special case
+    **/
+    if( PRESS_EVENT == eventList[CENT_BT] ) {
+      if (timer) { timer->activate(timer->getListHead()); }
+      center();
+    }
+
+    /* Clear pulses
 	**/
-	if( PRESS_EVENT == eventList[CENT_BT] ) {
-          if (timer) { timer->activate(timer->getListHead()); }
-	  center();
-	}
+    if(PRESS_EVENT == eventList[CLEAR_BT] ) {
+      if (timer) { timer->activate(timer->getListHead()); }
+      handleCharacterCommand("C", &dataset->done, 1);
+    }
 
-	/* Clear pulses
+    /* Select All (maximum scan range)
 	**/
-	if(PRESS_EVENT == eventList[CLEAR_BT] ) {
-          if (timer) { timer->activate(timer->getListHead()); }
-		handleCharacterCommand("C", &dataset->done, 1);
-	}
+    if(PRESS_EVENT == eventList[ALL_BT] ) {
+      if (timer) { timer->activate(timer->getListHead()); }
+      handleCharacterCommand("A", &dataset->done, 1);
+    }
 
-	/* Select All (maximum scan range)
-	**/
-	if(PRESS_EVENT == eventList[ALL_BT] ) {
-          if (timer) { timer->activate(timer->getListHead()); }
-		handleCharacterCommand("A", &dataset->done, 1);
-	}
+    /* code dealing with locking the sweep width (qliu 6/29/95)*/
+    /*
+      if(PRESS_EVENT == eventList[LOCK_BT] ) {
+      lock_width=1;	
+      }
+      if(RELEASE_EVENT == eventList[LOCK_BT] ) {
+      lock_width=0;
+      }
+    */        
+    /* code dealing with locking the tip in sharp tip mode */
+    /* locks the tip in one place so you can take repeated measurements */
+    if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
+      xy_lock =1;
+    }
+    if( RELEASE_EVENT ==eventList[XY_LOCK_BT] ) {
+      xy_lock =0;
+    }
 
-	/* code dealing with locking the sweep width (qliu 6/29/95)*/
-	if(PRESS_EVENT == eventList[LOCK_BT] ) {
-	  lock_width=1;	
-	}
-        if(RELEASE_EVENT == eventList[LOCK_BT] ) {
-	  lock_width=0;
-        }
-        
-        /* code dealing with locking the tip in sharp tip mode */
-	/* locks the tip in one place so you can take repeated measurements */
-        if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
-          xy_lock =1;
-        }
-        if( RELEASE_EVENT ==eventList[XY_LOCK_BT] ) {
-          xy_lock =0;
-        }
-
-	/* Handle a "commit" or "cancel" button press/release on
+    /* Handle a "commit" or "cancel" button press/release on
 	 * the real button box by causing a callback to
 	 * the tcl routines */
-        if( PRESS_EVENT == eventList[COMMIT_BT] ) {
-	    //printf("Commit from button box.\n");
-	    // causes "handle_commit_change" to be called
-	    tcl_commit_pressed  = !tcl_commit_pressed; 
-	}
-        if( PRESS_EVENT == eventList[CANCEL_BT] ) {
-	    //printf("Cancel from button box.\n");
-	    // causes "handle_commit_cancel" to be called
-	    tcl_commit_canceled = !tcl_commit_canceled; 
-	}
-	if( PRESS_EVENT == eventList[PH_RSET_BT] ) {
-	    // causes "handle_phantom_reset" to be called
-	    tcl_phantom_reset_pressed = 1;
-	}
-	// testing for the remaining buttons on the button box.
-        if( PRESS_EVENT == eventList[NULL1_BT] )
-            printf("NULL1 from button box.\n");
-        if( PRESS_EVENT == eventList[NULL2_BT] ) 
-	    printf("NULL2 from button box.\n");
-        if( PRESS_EVENT == eventList[NULL3_BT] ) 
-	    printf("NULL3 from button box.\n");
-        if( PRESS_EVENT == eventList[NULL4_BT] ) 
-	    printf("NULL4 from button box.\n");
-        if( PRESS_EVENT == eventList[NULL5_BT] ) 
-	    printf("NULL5 from button box.\n");
-	if( PRESS_EVENT == eventList[NULL6_BT] )
-	    printf("NULL6 from button box.\n");
-        if( PRESS_EVENT == eventList[NULL7_BT] ) 
-	    printf("NULL7 from button box.\n");
+    if( PRESS_EVENT == eventList[COMMIT_BT] ) {
+      //printf("Commit from button box.\n");
+      // causes "handle_commit_change" to be called
+      tcl_commit_pressed  = !tcl_commit_pressed; 
+    }
+    if( PRESS_EVENT == eventList[CANCEL_BT] ) {
+      //printf("Cancel from button box.\n");
+      // causes "handle_commit_cancel" to be called
+      tcl_commit_canceled = !tcl_commit_canceled; 
+    }
+    if( PRESS_EVENT == eventList[PH_RSET_BT] ) {
+      // causes "handle_phantom_reset" to be called
+      tcl_phantom_reset_pressed = 1;
+    }
+    // testing for the remaining buttons on the button box.
+    if( PRESS_EVENT == eventList[NULL1_BT] )
+      printf("NULL1 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL2_BT] ) 
+      printf("NULL2 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL3_BT] ) 
+      printf("NULL3 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL4_BT] ) 
+      printf("NULL4 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL5_BT] ) 
+      printf("NULL5 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL6_BT] )
+      printf("NULL6 from button box.\n");
+    if( PRESS_EVENT == eventList[NULL7_BT] ) 
+      printf("NULL7 from button box.\n");
 	    
 	/* see if the user changed modes using a button
 	**/
-	mode_change |= butt_mode(eventList, user_mode+user);
-	// also check to see if the modify style has changed -
-	// can affect hand icon as well.
-	if (user_mode[user] == USER_PLANEL_MODE) {
-	    mode_change |= microscope->state.modify.style_changed;
-        }
+    mode_change |= butt_mode(eventList, user_mode+user);
+    // also check to see if the modify style has changed -
+    // can affect hand icon as well.
+    if (user_mode[user] == USER_PLANEL_MODE) {
+      mode_change |= microscope->state.modify.style_changed;
+    }
 
-	/* If there has been a mode change, clear old stuff and set new mode */
-	if (mode_change) {
-          if (timer) { timer->activate(timer->getListHead()); }
-	    //fprintf(stderr, "Mode change.\n");
-	    // If the user was going to go into a disabled mode, change them
-	    // into GRAB mode instead.  Some modes are currently not
-	    // implemented or not used.
-		if ((user_mode[user] == USER_COMB_MODE)||
-		    (user_mode[user] == USER_SWEEP_MODE)||
-		    (user_mode[user] == USER_BLUNT_TIP_MODE)||
-		    (user_mode[user] == USER_PULSE_MODE))
-		    {
-			fprintf(stderr,"Warning -- mode disabled (entering grab mode instead)\n");
-			user_mode[user] = USER_GRAB_MODE;
-		}
-
-		/* If the user is in HOLD_EVENT at the time of the
-		 * change, we need to send an RELEASE_EVENT to the
-		 * previous mode and an PRESS_EVENT to the new mode
-		 * so that all setup/cleanup code is executed. */
-		if (eventList[TRIGGER_BT] == HOLD_EVENT) {
-		    dispatch_event(user, last_mode[user], RELEASE_EVENT, timer);
-		    dispatch_event(user, user_mode[user], PRESS_EVENT, timer);
-		}		    
-
-VERBOSE(6, "    Calling graphics->setUserMode().");
-
-		// Change icons to ones for this new mode.
-		graphics->setUserMode(last_mode[user],
-		                      user_mode[user],
-                                      microscope->state.modify.style);
-
-		/* Make the associated sound */
-		// Taken out for now
-
-		/* Clear the mode change flag */
-		mode_change = 0;
-		microscope->state.modify.style_changed = 0;
+    /* If there has been a mode change, clear old stuff and set new mode */
+    if (mode_change) {
+	if (timer) { timer->activate(timer->getListHead()); }
+	//fprintf(stderr, "Mode change.\n");
+      // If the user was going to go into a disabled mode, change them
+      // into GRAB mode instead.  Some modes are currently not
+      // implemented or not used.
+      if ((user_mode[user] == USER_COMB_MODE)||
+	  (user_mode[user] == USER_SWEEP_MODE)||
+	  (user_mode[user] == USER_BLUNT_TIP_MODE)||
+	  (user_mode[user] == USER_PULSE_MODE))
+	{
+	  fprintf(stderr,"Warning -- mode disabled (entering grab mode instead)\n");
+	  user_mode[user] = USER_GRAB_MODE;
 	}
 
- // quick approximation
- switch (eventList[0]) {
-   case PRESS_EVENT:
-   case RELEASE_EVENT:
-   case HOLD_EVENT:
-     if (timer) {
-       timer->activate(timer->getListHead());
-     }
-     break;
-   default:
-     break;
+      /* If the user is in HOLD_EVENT at the time of the
+       * change, we need to send an RELEASE_EVENT to the
+       * previous mode and an PRESS_EVENT to the new mode
+       * so that all setup/cleanup code is executed. */
+      if (eventList[TRIGGER_BT] == HOLD_EVENT) {
+	dispatch_event(user, last_mode[user], RELEASE_EVENT, timer);
+	dispatch_event(user, user_mode[user], PRESS_EVENT, timer);
+      }		    
 
- }
+      VERBOSE(6, "    Calling graphics->setUserMode().");
 
-VERBOSE(6, "    Calling dispatch_event().");
+      // Change icons to ones for this new mode.
+      graphics->setUserMode(last_mode[user],
+			    user_mode[user],
+			    microscope->state.modify.style);
+
+      /* Make the associated sound */
+      // Taken out for now
+
+      /* Clear the mode change flag */
+      mode_change = 0;
+      microscope->state.modify.style_changed = 0;
+    }
+
+    // quick approximation
+    switch (eventList[0]) {
+    case PRESS_EVENT:
+    case RELEASE_EVENT:
+    case HOLD_EVENT:
+      if (timer) {
+	timer->activate(timer->getListHead());
+      }
+      break;
+    default:
+      break;
+
+    }
+
+    VERBOSE(6, "    Calling dispatch_event().");
 
 	/* Handle the current event, based on the user mode and user */
-	dispatch_event(user, user_mode[user], eventList[0], timer);
-	lastTriggerEvent = eventList[0];
+    dispatch_event(user, user_mode[user], eventList[0], timer);
+    lastTriggerEvent = eventList[0];
 
 
     /* Last mode next time around is the current mode this time around */
     last_mode[user] = user_mode[user];
-}
+  }
   // TCH - HACK but it works
   decoration->user_mode = user_mode[0];
 
-VERBOSE(4, "  Done with interaction().");
+  VERBOSE(4, "  Done with interaction().");
 
-return 0;
+  return 0;
 }	/* interaction */
 
 
@@ -2327,12 +2331,11 @@ int doMeasure(int whichUser, int userEvent)
 int doLine(int whichUser, int userEvent)
 {
 	v_xform_type	worldFromHand;
-   	PointType 	Top, Bot;
         q_vec_type clipPos;
  	static int	SurfaceGoing = 0;
-	double		hypot_len = microscope->state.modify.region_diag;
         q_matrix_type	hand_mat;
 	q_vec_type	angles;
+	PointType 	TopL, BottomL, TopR, BottomR; // sweepline markers
 
 VERBOSE(8, "      In doLine().");
 
@@ -2384,8 +2387,9 @@ VERBOSE(8, "      In doLine().");
 	    	pos_list.goToTail();
 
 		// Add pi/2 because it matches mod...
-	    	microscope->state.modify.yaw =atan2((pos_list.currY()-clipPos[1]),
-	           (pos_list.currX()-clipPos[0])) + M_PI_2;
+  	    	microscope->state.modify.yaw =
+ 		  atan2((pos_list.currY()-clipPos[1]),
+  			(pos_list.currX()-clipPos[0])) + M_PI_2;
 	    } else {
 		// otherwise, set the angle based on hand position.
 
@@ -2395,32 +2399,27 @@ VERBOSE(8, "      In doLine().");
 		microscope->state.modify.yaw = angles[YAW] + M_PI_2;
 	    }
 
-	    /* code dealing with locking the width (qliu 7/5/95) */
-	    if (lock_width == 0) {
-		// Change sweep width based on phantom pen roll.
-		microscope->state.modify.sweep_width = - SWEEP_WIDTH_SCALE*
-		                         hypot_len * sin(angles[ROLL]);
-		// set the sweep position based on the phantom pen yaw.
-        	Top[X] = clipPos[0];
-        	Top[Y] = clipPos[1];
-		Bot[X] = clipPos[0] + microscope->state.modify.sweep_width *
-                                  cos(microscope->state.modify.yaw);
-		Bot[Y] = clipPos[1] + microscope->state.modify.sweep_width *
-                                  sin(microscope->state.modify.yaw);
-		Bot[Z] = plane->valueAt(clipPos[0], clipPos[1]) * plane->scale();
-		Top[Z] = Bot[Z] - hypot_len * cos(angles[ROLL]);
-
-	    } else {  // sweep width is locked, look up value.
-		Top[X] = Bot[X] = clipPos[0] + microscope->state.modify.sweep_width 
-		    * cos( microscope->state.modify.yaw );
-		Top[Y] = Bot[Y] = clipPos[1] + microscope->state.modify.sweep_width 
-		    * sin( microscope->state.modify.yaw );
-		Bot[Z] = plane->valueAt( clipPos[0], clipPos[1] ) * plane->scale();
-		Top[Z] = plane->maxAttainableValue() * plane->scale();
-	    }
-	    //draw vertical green line representing sweep width.
-	    graphics->positionSweepLine(Top, Bot);
+	    TopL[X] = BottomL[X] = clipPos[0] +
+	      (microscope->state.modify.sweep_width 
+	       * cos( microscope->state.modify.yaw ))/2.0;
+	    TopL[Y] = BottomL[Y] = clipPos[1] +
+	      (microscope->state.modify.sweep_width 
+	       * sin( microscope->state.modify.yaw ))/2.0;
 	    
+	    TopR[X] = BottomR[X] = clipPos[0] -
+	      (microscope->state.modify.sweep_width 
+	       * cos( microscope->state.modify.yaw ))/2.0;
+	    TopR[Y] = BottomR[Y] = clipPos[1] -
+	      (microscope->state.modify.sweep_width 
+	       * sin( microscope->state.modify.yaw ))/2.0;
+	    
+	    BottomL[Z] = BottomR[Z] = plane->valueAt( clipPos[0], clipPos[1] ) *
+	      plane->scale();
+	    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
+		  plane->scale();
+	    
+	    //draw vertical green line representing sweep width.
+	    graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
 	}
 
 VERBOSE(8, "      doLine:  starting case statement.");
@@ -2439,6 +2438,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 
 		// update the position of the rubber-band line
 		graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
+		graphics->setRubberSweepLineEnd(TopL, TopR);
 		break;
 
 	case HOLD_EVENT:
@@ -2448,6 +2448,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    
 	    // update the position of the rubber-band line
 	    graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
+	    graphics->setRubberSweepLineEnd(TopL, TopR);
 	    
 	    /* Apply force to the user based on current sample points */
 	    if( microscope->state.relaxComp >= 0 ) {
@@ -2478,22 +2479,20 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		    }
 		}
 
-		//add an icon to represent this spot as part of the polyline.
-		PointType * markpts = new PointType[2];
-		markpts[0][0] = markpts[1][0] = clipPos[0];
-		markpts[0][1] = markpts[1][1] = clipPos[1];
-		markpts[0][2] = plane->maxAttainableValue()*plane->scale();
-		markpts[1][2] = plane->minAttainableValue()*plane->scale();
-
-		// HACK
-		// list_id is always 0 or -1
-		// because it (apparently) no longer matters
-		// but we haven't rewritten Position/Position_list
-		// to reflect that fact
 		int list_id;
-		list_id = graphics->addPolylinePoint(markpts);
-
-		
+ 		if (microscope->state.modify.style == SWEEP) {
+ 		    graphics->addPolySweepPoints(TopL, BottomL, TopR, BottomR);
+ 		}
+  		else {
+		    //add an icon to represent this spot as part of the polyline.
+		    PointType * markpts = new PointType[2];
+		    markpts[0][0] = markpts[1][0] = clipPos[0];
+		    markpts[0][1] = markpts[1][1] = clipPos[1];
+		    markpts[0][2] = plane->maxAttainableValue()*plane->scale();
+		    markpts[1][2] = plane->minAttainableValue()*plane->scale();
+		    
+		    list_id = graphics->addPolylinePoint(markpts);
+		}
 		// Now we do some different things depending on
 		// whether this is LINE tool or CONSTR_FREEHAND
 		// tool. LINE or SLOW_LINE tool can keep adding points
@@ -2505,6 +2504,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		if ((microscope->state.modify.tool == LINE)||
 		    (microscope->state.modify.tool == SLOW_LINE)){
 		   graphics->setRubberLineStart(clipPos[0], clipPos[1]);
+		   graphics->setRubberSweepLineStart(TopL, TopR);
 		   //save this point as part of the poly-line
 		   pos_list.insert(clipPos[0], clipPos[1], list_id);
 		} else if (microscope->state.modify.tool == CONSTR_FREEHAND) {
@@ -2516,6 +2516,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		      // endpoints.
 		   } else {
 		      graphics->setRubberLineStart(clipPos[0], clipPos[1]);
+		      graphics->setRubberSweepLineStart(TopL, TopR);
 		   }
 		   //save this point as part of the poly-line
 		   pos_list.insert(clipPos[0], clipPos[1], list_id);
@@ -2706,14 +2707,13 @@ int doFeelFromGrid(int whichUser, int userEvent)
 int doFeelLive(int whichUser, int userEvent)  
 {
 
+	PointType 	TopL, BottomL, TopR, BottomR; // sweepline markers
         q_matrix_type	hand_mat;
 	q_vec_type	angles;
-	double		hypot_len = microscope->state.modify.region_diag;
 
 	v_xform_type	worldFromHand;
 	// static to allow xy_lock to work properly
         static q_vec_type clipPos;
-	PointType	Top, Bot;
 	static		int	SurfaceGoing = 0;
 	static		int	ForceFieldGoing = 0;
 
@@ -2802,29 +2802,27 @@ int doFeelLive(int whichUser, int userEvent)
 	    q_col_matrix_to_euler( angles, hand_mat );
 	    microscope->state.modify.yaw = angles[YAW] + M_PI_2;
 	    
-	    /* code dealing with locking the width (qliu 7/5/95) */
-	    if(lock_width==0) {
-		// Change sweep width based on phantom pen rotation.
-		microscope->state.modify.sweep_width = - SWEEP_WIDTH_SCALE *
-		                         hypot_len * sin( angles[ROLL] );
-		// set the sweep position based on the phantom pen yaw.
-		Top[X] = clipPos[0];
-		Top[Y] = clipPos[1];
-		Bot[X] = clipPos[0] + microscope->state.modify.sweep_width
-                                * cos( microscope->state.modify.yaw );
-		Bot[Y] = clipPos[1] + microscope->state.modify.sweep_width
-                                * sin( microscope->state.modify.yaw );
-		Bot[Z] = plane->valueAt( clipPos[0], clipPos[1] ) * plane->scale();
-		Top[Z] = Bot[Z] - hypot_len * cos( angles[ROLL] );
-	    } else {
-		Top[X] = Bot[X] = clipPos[0] + microscope->state.modify.sweep_width
-                                         * cos( microscope->state.modify.yaw );
-		Top[Y] = Bot[Y] = clipPos[1] + microscope->state.modify.sweep_width
-                                         * sin( microscope->state.modify.yaw );
-		Bot[Z] = plane->valueAt( clipPos[0], clipPos[1] ) * plane->scale();
-		Top[Z] = plane->maxAttainableValue() * plane->scale();
-	    }
-            graphics->positionSweepLine(Top, Bot);
+	    TopL[X] = BottomL[X] = clipPos[0] +
+	      (microscope->state.modify.sweep_width 
+	       * cos( microscope->state.modify.yaw ))/2.0;
+	    TopL[Y] = BottomL[Y] = clipPos[1] +
+	      (microscope->state.modify.sweep_width 
+	       * sin( microscope->state.modify.yaw ))/2.0;
+	    
+	    TopR[X] = BottomR[X] = clipPos[0] -
+	      (microscope->state.modify.sweep_width 
+	       * cos( microscope->state.modify.yaw ))/2.0;
+	    TopR[Y] = BottomR[Y] = clipPos[1] -
+	      (microscope->state.modify.sweep_width 
+	       * sin( microscope->state.modify.yaw ))/2.0;
+	    
+	    BottomL[Z] = BottomR[Z] = plane->valueAt( clipPos[0], clipPos[1] ) *
+	      plane->scale();
+	    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
+		  plane->scale();
+	    
+	    //draw vertical green line representing sweep width.
+	    graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
 	}
 	switch ( userEvent ) {
 	    
@@ -2957,6 +2955,7 @@ int doFeelLive(int whichUser, int userEvent)
 	   if (microscope->state.modify.constr_line_specified) {
 	      microscope->state.modify.constr_line_specified = VRPN_FALSE;
 	   }
+	   /*
 	   // Remove any points from the constraint line list.
 	   Position_list & p = microscope->state.modify.stored_points;
 	   if (!p.empty()) {
@@ -2972,7 +2971,7 @@ int doFeelLive(int whichUser, int userEvent)
 		 p.del();  //this moves the pointer forward to the next point.
 	      }
 	   }
-	   
+	   */	   
 	}
 	/* Start image mode and resume previous scan pattern */
         microscope->ResumeScan();
@@ -3327,6 +3326,14 @@ void handle_worldFromRoom_change (vrpn_float64, void *) {
   //tcl_wfr_changed = 0;
 }
 
+int clear_polyline( void * userdata ) {
+  nmg_Graphics_Implementation *g = (nmg_Graphics_Implementation *)userdata;
+
+  // delete stored points (so we don't use them again!)
+  // get rid of the rubber-band line
+  g->emptyPolyline();
+  return 0;
+}
 /*============================================================================
  end interaction.c
  ===========================================================================*/

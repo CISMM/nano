@@ -357,8 +357,6 @@ AFMInitializationState::AFMInitializationState (void) :
   MaxSafeMove (100.0f),
   ModSubWinSz (15),
 
-  scrapeHeight (0.0f),
-
   xMin (-2500.0f),
   xMax ( 2500.0f),
   yMin (-2500.0f),
@@ -411,8 +409,6 @@ AFMState::AFMState (const AFMInitializationState & i) :
     yMax (i.yMax),
     zMin (-5000.0f),
     zMax ( 5000.0f),
-
-    scrapeHeight (i.scrapeHeight),
 
     doDriftComp    (i.doDriftComp),
     doRelaxComp    ("doRelaxComp", i.doRelaxComp),

@@ -116,8 +116,15 @@ class nmg_Graphics_Timer : public nmg_Graphics {
                                   const PointType bottom);
     virtual void positionRubberCorner (float x0, float y0,
                                        float x1, float y1);
-    virtual void positionSweepLine (const PointType top,
-                                    const PointType bottom);
+    virtual void positionSweepLine (const PointType topL,
+                                    const PointType bottomL,
+				    const PointType topR,
+                                    const PointType bottomR);
+    virtual int addPolySweepPoints (const PointType, const PointType,
+				    const PointType, const PointType);
+    virtual void setRubberSweepLineStart (const PointType, const PointType);
+    virtual void setRubberSweepLineEnd (const PointType, const PointType);
+
     virtual void positionSphere (float x, float y, float z);
     virtual void createScreenImage (const char * filename,
                                     const ImageType type);

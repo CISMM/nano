@@ -145,12 +145,18 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics resetLightDirection");
   d_addPolylinePoint_type =
     c->register_message_type("nmg Graphics addPolylinePoint");
+  d_addPolySweepPoints_type =
+    c->register_message_type("nmg Graphics addPolySweepPoints");
   d_emptyPolyline_type =
     c->register_message_type("nmg Graphics emptyPolyline");
   d_setRubberLineStart_type =
     c->register_message_type("nmg Graphics setRubberLineStart");
   d_setRubberLineEnd_type =
     c->register_message_type("nmg Graphics setRubberLineEnd");
+  d_setRubberSweepLineStart_type =
+    c->register_message_type("nmg Graphics setRubberSweepLineStart");
+  d_setRubberSweepLineEnd_type =
+    c->register_message_type("nmg Graphics setRubberSweepLineEnd");
 
   d_setScanlineEndpoints_type =
     c->register_message_type("nmg Graphics setScanlineEndpoints");
@@ -1749,6 +1755,69 @@ int nmg_Graphics::decode_addPolylinePoint
   return 0;
 }
 
+char * nmg_Graphics::encode_addPolySweepPoints(int * len, 
+					       const PointType topL,
+					       const PointType botL,
+					       const PointType topR,
+					       const PointType botR ) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 12 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_addPolylinePoint:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, topL[0]);
+    nmb_Util::Buffer(&mptr, &mlen, topL[1]);
+    nmb_Util::Buffer(&mptr, &mlen, topL[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, botL[0]);
+    nmb_Util::Buffer(&mptr, &mlen, botL[1]);
+    nmb_Util::Buffer(&mptr, &mlen, botL[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, topR[0]);
+    nmb_Util::Buffer(&mptr, &mlen, topR[1]);
+    nmb_Util::Buffer(&mptr, &mlen, topR[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, botR[0]);
+    nmb_Util::Buffer(&mptr, &mlen, botR[1]);
+    nmb_Util::Buffer(&mptr, &mlen, botR[2]);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_addPolySweepPoints(const char * buf,
+					    PointType topL,
+					    PointType botL,
+					    PointType topR,
+					    PointType botR ) {
+  CHECK(nmb_Util::Unbuffer(&buf, &topL[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &topL[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &topL[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &botL[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &botL[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &botL[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &topR[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &topR[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &topR[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &botR[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &botR[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &botR[2]));
+  return 0;
+}
+
 char * nmg_Graphics::encode_setRubberLineStart (int * len, const float p [2]) {
   char * msgbuf = NULL;
   char * mptr;
@@ -1806,6 +1875,95 @@ int nmg_Graphics::decode_setRubberLineEnd (const char * buf, float p [2]) {
   CHECK(nmb_Util::Unbuffer(&buf, &p[1]));
   return 0;
 }
+
+char * nmg_Graphics::encode_setRubberSweepLineStart (int * len,
+						     const PointType left,
+						     const PointType right) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 6 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setRubberLineStart:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, left[0]);
+    nmb_Util::Buffer(&mptr, &mlen, left[1]);
+    nmb_Util::Buffer(&mptr, &mlen, left[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, right[0]);
+    nmb_Util::Buffer(&mptr, &mlen, right[1]);
+    nmb_Util::Buffer(&mptr, &mlen, right[2]);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setRubberSweepLineStart (const char * buf,
+						  PointType left,
+						  PointType right) {
+  CHECK(nmb_Util::Unbuffer(&buf, &left[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &left[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &left[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &right[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &right[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &right[2]));
+  return 0;
+}
+
+char * nmg_Graphics::encode_setRubberSweepLineEnd (int * len,
+						   const PointType left,
+						   const PointType right) {
+
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 6 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setRubberLineEnd:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, left[0]);
+    nmb_Util::Buffer(&mptr, &mlen, left[1]);
+    nmb_Util::Buffer(&mptr, &mlen, left[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, right[0]);
+    nmb_Util::Buffer(&mptr, &mlen, right[1]);
+    nmb_Util::Buffer(&mptr, &mlen, right[2]);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setRubberSweepLineEnd (const char * buf,
+						PointType left,
+						PointType right) {
+  CHECK(nmb_Util::Unbuffer(&buf, &left[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &left[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &left[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &right[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &right[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &right[2]));
+  return 0;
+}
+
+
 
 char * nmg_Graphics::encode_setScanlineEndpoints (int * len, 
 	const float p [6]) {
@@ -1954,16 +2112,18 @@ int nmg_Graphics::decode_positionRubberCorner
   return 0;
 }
 
-char * nmg_Graphics::encode_positionSweepLine
-                     (int * len, const PointType lo,
-                                   const PointType hi) {
+char * nmg_Graphics::encode_positionSweepLine(int * len,
+					      const PointType loL,
+					      const PointType hiL,
+					      const PointType loR,
+					      const PointType hiR) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = 6 * sizeof(float);
+  *len = 12 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_positionSweepLine:  "
@@ -1972,26 +2132,45 @@ char * nmg_Graphics::encode_positionSweepLine
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, lo[0]);
-    nmb_Util::Buffer(&mptr, &mlen, lo[1]);
-    nmb_Util::Buffer(&mptr, &mlen, lo[2]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[0]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[1]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[2]);
+    nmb_Util::Buffer(&mptr, &mlen, loL[0]);
+    nmb_Util::Buffer(&mptr, &mlen, loL[1]);
+    nmb_Util::Buffer(&mptr, &mlen, loL[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, hiL[0]);
+    nmb_Util::Buffer(&mptr, &mlen, hiL[1]);
+    nmb_Util::Buffer(&mptr, &mlen, hiL[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, loR[0]);
+    nmb_Util::Buffer(&mptr, &mlen, loR[1]);
+    nmb_Util::Buffer(&mptr, &mlen, loR[2]);
+
+    nmb_Util::Buffer(&mptr, &mlen, hiR[0]);
+    nmb_Util::Buffer(&mptr, &mlen, hiR[1]);
+    nmb_Util::Buffer(&mptr, &mlen, hiR[2]);
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_positionSweepLine
-                   (const char * buf, PointType lo, PointType hi) {
-  if (!buf || !lo || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[2]));
+                   (const char * buf, PointType loL, PointType hiL,
+		    PointType loR, PointType hiR) {
+  if (!buf || !loL || !hiL || !loR || !hiR) return -1;
+  CHECK(nmb_Util::Unbuffer(&buf, &loL[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &loL[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &loL[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &hiL[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &hiL[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &hiL[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &loR[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &loR[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &loR[2]));
+
+  CHECK(nmb_Util::Unbuffer(&buf, &hiR[0]));
+  CHECK(nmb_Util::Unbuffer(&buf, &hiR[1]));
+  CHECK(nmb_Util::Unbuffer(&buf, &hiR[2]));
   return 0;
 }
 

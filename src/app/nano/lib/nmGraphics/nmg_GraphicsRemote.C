@@ -1769,14 +1769,84 @@ void nmg_Graphics_Remote::positionRubberCorner (float x0, float y0,
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::positionSweepLine (const PointType lo,
-                                             const PointType hi) {
+void nmg_Graphics_Remote::setRubberSweepLineStart (const PointType left,
+						   const PointType right) {
+
+    struct timeval now;
+    char * msgbuf;
+    int len;
+    int retval;
+    
+    msgbuf = encode_setRubberSweepLineStart(&len, left, right);
+    gettimeofday(&now, NULL);
+    if (d_connection && msgbuf) {
+	retval = d_connection->pack_message(len, now, d_setRubberSweepLineStart_type,
+				    d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+	if (retval) {
+	    fprintf(stderr, "nmg_Graphics_Remote::setRubberSweepLineStart:  "
+		    "Couldn't pack message to send to server.\n");
+	}
+    }
+    if (msgbuf)
+	delete [] msgbuf;
+}
+void nmg_Graphics_Remote::setRubberSweepLineEnd (const PointType left,
+						 const PointType right) {
+
+    struct timeval now;
+    char * msgbuf;
+    int len;
+    int retval;
+    
+    msgbuf = encode_setRubberSweepLineEnd(&len, left, right);
+    gettimeofday(&now, NULL);
+    if (d_connection && msgbuf) {
+	retval = d_connection->pack_message(len, now, d_setRubberSweepLineEnd_type,
+				    d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+	if (retval) {
+	    fprintf(stderr, "nmg_Graphics_Remote::setRubberSweepLineEnd:  "
+		    "Couldn't pack message to send to server.\n");
+	}
+    }
+    if (msgbuf)
+	delete [] msgbuf;
+}
+
+int nmg_Graphics_Remote::addPolySweepPoints (const PointType topL,
+					     const PointType botL,
+					     const PointType topR,
+					     const PointType botR) {
+    struct timeval now;
+    char * msgbuf;
+    int len;
+    int retval;
+    
+    msgbuf = encode_addPolySweepPoints(&len, topL, botL, topR, botR);
+    gettimeofday(&now, NULL);
+    if (d_connection && msgbuf) {
+	retval = d_connection->pack_message(len, now, d_addPolySweepPoints_type,
+				    d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+	if (retval) {
+	    fprintf(stderr, "nmg_Graphics_Remote::addPolySweepPoints:  "
+		    "Couldn't pack message to send to server.\n");
+	}
+    }
+    if (msgbuf)
+	delete [] msgbuf;
+    return 0;
+}
+
+
+void nmg_Graphics_Remote::positionSweepLine (const PointType topL,
+                                             const PointType botL,
+					     const PointType topR,
+                                             const PointType botR     ) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_positionSweepLine(&len, lo, hi);
+  msgbuf = encode_positionSweepLine(&len, topL, botL, topR, botR);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_positionSweepLine_type,

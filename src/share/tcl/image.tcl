@@ -230,6 +230,8 @@ proc acceptImageVars {varlist} {
 	$image.mode.accept configure -background $fc
 	$image.mode.cancel configure -background $fc
 
+    #close the window when the Accept Button is pressed
+    wm withdraw $image
 }
 
 

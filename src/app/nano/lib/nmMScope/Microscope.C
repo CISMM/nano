@@ -1347,7 +1347,7 @@ void Microscope::DisplayModResult (const float _x, const float _y,
   if (state.acquisitionMode == MODIFY) {
     if (((unsigned) x < (unsigned) d_dataset->inputGrid->numX()) &&
         ((unsigned) y < (unsigned) d_dataset->inputGrid->numY())) {
-      top[2] = heightPlane->scaledValue(x, y) + state.scrapeHeight;
+      top[2] = heightPlane->scaledValue(x, y);
 
       if (_checkZ) {
         if (_z)

@@ -14,6 +14,8 @@ int set_aim_line_color (float);
 /// Set up synchronization variables with meaningful values.
 
 void initializeInteraction (void);
+int clear_polyline( void * userdata );
+
 
 // NANOX
 /** Send our new proposed world_from_room transform

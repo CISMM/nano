@@ -27,6 +27,7 @@ class nmb_Decoration {
     enum tipMode { IMAGE, FEEL, MODIFY, SCANLINE };
 
     nmb_Decoration (void);
+    nmb_Decoration ( int markerHeight, int numMarkers );
       // Constructor.
 
     ~nmb_Decoration (void);
@@ -59,6 +60,7 @@ class nmb_Decoration {
 
     /// surface modification markers
     int num_markers_shown;
+    int marker_height;
 
     /// latency compensation features
     float trueTipLocation [3];

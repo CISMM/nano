@@ -37,6 +37,40 @@ nmb_Decoration::nmb_Decoration (void) :
     max_num_scrapes = 0;
 }
 
+
+nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
+  selectedRegion_changed (1),
+  //red_changed (1),
+  //green_changed (1),
+  //blue_changed (1),
+  mode (IMAGE),
+  elapsedTime (0),
+  rateOfTime (1),
+  user_mode (0),
+  //std_dev_color_scale (1.0f),
+  trueTipLocation_changed (0),
+  modSetpoint(0), modSetpointMin(0), modSetpointMax(0),
+  imageSetpoint(0), imageSetpointMin(0), imageSetpointMax(0),
+  scanlineSetpoint(0), scanlineSetpointMin(0), scanlineSetpointMax(0),
+  num_pulses (0),
+  max_num_pulses (10),
+  pulses (new nmb_LocationInfo [max_num_pulses]),
+  num_scrapes (0),
+  max_num_scrapes (10),
+  scrapes (new nmb_LocationInfo [max_num_scrapes]),
+  scrapeCallbacks (NULL),
+  pulseCallbacks (NULL)
+{
+  marker_height = markerHeight;
+  num_markers_shown = numMarkers;
+
+  if (!pulses)
+    max_num_pulses = 0;
+  if (!scrapes)
+    max_num_scrapes = 0;
+}
+
+
 nmb_Decoration::~nmb_Decoration (void) {
   callbackEntry * t0, * t1;
 
@@ -64,6 +98,9 @@ nmb_Decoration::~nmb_Decoration (void) {
 void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom) {
   nmb_LocationInfo * temp;
   callbackEntry * nce;
+
+  // The top does not take into account the height of the scrapeHeight
+  Top[2] += marker_height;
 
   // Grow virtual memory if needed
   if (num_scrapes >= max_num_scrapes) {

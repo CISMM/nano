@@ -211,11 +211,11 @@ BCPlane::maxNonZeroValue()
 } // maxNonZeroValue
 
 double BCPlane::minAttainableValue (void) const {
-  return _min_nonzero_value;
+  return _min_attainable_value;
 }
 
 double BCPlane::maxAttainableValue (void) const {
-  return _max_nonzero_value;
+  return _max_attainable_value;
 }
 
 

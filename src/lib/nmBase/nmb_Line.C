@@ -55,8 +55,8 @@ void nmb_Line::normalize (BCPlane * plane) {
   // of nm like the xy range is. 
   float range = plane->maxX() - plane->minX();
   if (( d_top[2] - d_bottom[2] ) < range) {
-      d_top[2] += range;
-      d_bottom[2] -= range;
+    d_top[2] += range;
+    d_bottom[2] -= range;
   }
   d_changed = VRPN_TRUE;
 }

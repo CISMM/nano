@@ -115,6 +115,8 @@ int g_tex_sem_installed_width = 512;
 int g_tex_sem_installed_height = 512;
 
 float g_rubberPt [4];
+float g_rubberSweepPts[2][4];
+float g_rubberSweepPtsSave[2][4];
 float g_scanlinePt [6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 int g_scanline_display_enabled = 0;
 
@@ -170,6 +172,8 @@ int g_PRERENDERED_TEXTURE = 0;  // only used by remote rendering clients
 int g_PRERENDERED_DEPTH = 0;  // only used by remote rendering clients
 
 Position_list * g_positionList;
+Position_list * g_positionListL;  // for the left side of the sweep marker
+Position_list * g_positionListR;  // for the right side of the sweep marker
 
 BCGrid * g_inputGrid = NULL;
 

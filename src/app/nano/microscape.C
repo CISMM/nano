@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -770,7 +769,7 @@ Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 
 // Change the number of pulse or scrape markers to show
 
-Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
+Tclvar_int numMarkersShown ("number_of_markers_shown", 100);
 
 Tclvar_int markerHeight ("marker_height", 100);
 
@@ -1391,12 +1390,10 @@ static void handle_markers_height_change (vrpn_int32 new_value, void * /*userdat
   int v;
 
   v = (int) new_value;
-  microscope->state.scrapeHeight = v;
-  //cause_grid_redraw(0.0, NULL);
+  decoration->marker_height = v;
 }
 
 //For importing from tube_foundry
-
 static void handle_import_filename_change (const char *new_value, void *) { 
   import_filename_string = new_value;
 }
@@ -4511,9 +4508,6 @@ void ParseArgs (int argc, char ** argv,
         ruler_g = (GLubyte)atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         ruler_b = (GLubyte)atoi(argv[i]);
-      } else if (strcmp(argv[i], "-scrapeheight") == 0) {
-        if (++i >= argc) Usage(argv[0]);
-        istate->afm.scrapeHeight = atof(argv[i]);
       } else if (strcmp (argv[i], "-SPMhost") == 0) {
         // Added by Michele Clark 6/2/97
         // Next arguments are the hostname and port # of SPM server
@@ -5191,7 +5185,7 @@ int main(int argc, char* argv[])
     printf("Microscape version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
 	MICROSCAPE_MINOR_VERSION);
 
-    decoration = new nmb_Decoration;
+    decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
 	fprintf(stderr, "Cannot initialize decorations.\n");
 	return -1;
@@ -5549,6 +5543,9 @@ int main(int argc, char* argv[])
     microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, microscope);
 
     createGraphics(istate);
+
+    // delete polyline markers (after graphics pointer initialized):
+    microscope->registerImageModeHandler(clear_polyline, graphics);
 
     setupCallbacks(dataset, graphics);
     setupCallbacks(graphics);
