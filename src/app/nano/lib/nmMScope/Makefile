@@ -1,4 +1,4 @@
-USES_LIBS := nmBase tclLinkVar nmAux nmUI vrpn vogl quat
+USES_LIBS := nmMP nmBase tclLinkVar nmAux nmUI vrpn vogl quat
 
 EXCLUDE_SRC = stm_file.c
 
