@@ -176,9 +176,9 @@ int* group;
 bool first_in_group = true;
 int bcounter = 0;
 int oldShift = 0;
-float current_yaw = 0;
-float current_pitch = 0;
-float current_roll = 0;
+float current_rot_x = 0;
+float current_rot_y = 0;
+float current_rot_z = 0;
 
 Tclvar_string cname("tclname","");
 
@@ -594,8 +594,8 @@ void displayFuncDepth( void ) {
 			x = SimMicroscopeServer.cylHead->x;
 			y = SimMicroscopeServer.cylHead->y;
 			z = SimMicroscopeServer.cylHead->z;
-			altitude = SimMicroscopeServer.cylHead->altitude;
-			azimuth = SimMicroscopeServer.cylHead->azimuth;
+			altitude = SimMicroscopeServer.cylHead->altitude;//in radians
+			azimuth = SimMicroscopeServer.cylHead->azimuth;//in radians
 			length = SimMicroscopeServer.cylHead->length*scale;
 			radius = SimMicroscopeServer.cylHead->radius*scale;
 
@@ -604,10 +604,10 @@ void displayFuncDepth( void ) {
 			NANOTUBE_GROUP = numGroups;
 
 			addNtube(NTUBE, Vec3d(x*scale,y*scale,z*scale), 
-				altitude*RAD_TO_DEG, 0*RAD_TO_DEG, azimuth*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);	
+				azimuth*RAD_TO_DEG, 0*RAD_TO_DEG, altitude*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);	
 			//type,pos,yaw,roll,pitch,length,diameter,group
-			current_yaw = altitude;
-			current_pitch = azimuth;
+			current_rot_z = azimuth;//in radians
+			current_rot_x = altitude;//in radians
 
 			SimMicroscopeServer.cylHolder = SimMicroscopeServer.cylHead;
 			SimMicroscopeServer.cylHead = SimMicroscopeServer.cylHead->next;
@@ -625,24 +625,26 @@ void displayFuncDepth( void ) {
 
 		int obj_group = NANOTUBE_GROUP;
 
-		float x, y, z;
-		x = group_of_obs[obj_group][1]->pos.x + 
-			(group_of_obs[obj_group][numObs - 1]->pos.x - group_of_obs[obj_group][1]->pos.x) / 2;
-		y = group_of_obs[obj_group][1]->pos.y + 
-			(group_of_obs[obj_group][numObs - 1]->pos.y - group_of_obs[obj_group][1]->pos.y) / 2;
-		z = group_of_obs[obj_group][1]->pos.z + 
-			(group_of_obs[obj_group][numObs - 1]->pos.z - group_of_obs[obj_group][1]->pos.z) / 2;
+		if(group_of_obs[obj_group] != NULL){
+			float x, y, z;
+			x = group_of_obs[obj_group][0]->pos.x + 
+				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.x - group_of_obs[obj_group][0]->pos.x) / 2;
+			y = group_of_obs[obj_group][0]->pos.y + 
+				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.y - group_of_obs[obj_group][0]->pos.y) / 2;
+			z = group_of_obs[obj_group][0]->pos.z + 
+				(group_of_obs[obj_group][number_in_group[obj_group] - 1]->pos.z - group_of_obs[obj_group][0]->pos.z) / 2;
 
 
-		for(int i = 0; i < number_in_group[obj_group];i++){
-			
-			OB * this_obj = group_of_obs[obj_group][i];
-			
-			// need to reflect the fact that scaling now occurs at tube centers in nano
-			this_obj->scale(new_scale);
-			this_obj->setPos(Vec3d((this_obj->pos.x - x)*new_scale + x,
-									(this_obj->pos.y - y)*new_scale + y,
-									(this_obj->pos.z - z)*new_scale + z));
+			for(int i = 0; i < number_in_group[obj_group];i++){
+				
+				OB * this_obj = group_of_obs[obj_group][i];
+				
+				// need to reflect the fact that scaling now occurs at tube centers in nano
+				this_obj->scale(new_scale);
+				this_obj->setPos(Vec3d((this_obj->pos.x - x)*new_scale + x,
+										(this_obj->pos.y - y)*new_scale + y,
+										(this_obj->pos.z - z)*new_scale + z));
+			}
 		}
 		SimMicroscopeServer.scaleRcv = false;
 
@@ -667,58 +669,147 @@ void displayFuncDepth( void ) {
 		for(int i = 0; i < number_in_group[obj_group];i++){
 			
 			OB * this_obj = group_of_obs[obj_group][i];
-			this_obj->setPos(Vec3d(ob[i]->pos.x + new_trans_x*current_scale*ratio,
-								ob[i]->pos.y + new_trans_y*current_scale*ratio,
-								ob[i]->pos.z + new_trans_z*current_scale*ratio));
+			this_obj->setPos(Vec3d(ob[i]->pos.x + new_trans_x*ratio,
+								   ob[i]->pos.y + new_trans_y*ratio,
+								   ob[i]->pos.z + new_trans_z*ratio));
 		}
 		SimMicroscopeServer.transRcv = false;
 
 	}
 	if(SimMicroscopeServer.rotRcv){
-		float yaw = SimMicroscopeServer.yaw;
-		float pitch = SimMicroscopeServer.pitch;
-		float roll = SimMicroscopeServer.roll;
+		
+		//in radians
+		float x = SimMicroscopeServer.rot_x;
+		float y = SimMicroscopeServer.rot_y;
+		float z = SimMicroscopeServer.rot_z;
+		cout << "sim.cpp: " << "x: " << x << "\ty: " << y << "\tz: " << z << endl;
 
-		float new_yaw = yaw - current_yaw;
-		float new_pitch = pitch - current_pitch;
-		float new_roll = roll - current_roll;
+		//in radians
+		float new_x = x - current_rot_x;
+		float new_y = y - current_rot_y;
+		float new_z = z - current_rot_z;
 
-		current_yaw = yaw;
-		current_pitch = pitch;
-		current_roll = roll;
+		//in radians
+		current_rot_x = x;
+		current_rot_y = y;
+		current_rot_z = z;
+
+		int obj_group = NANOTUBE_GROUP;
 
 		//start added code
 
+		//X stuff
+		if(new_x != 0){			
 
-		//find the group center
-		Vec3d group_center;
-		int obj_group = NANOTUBE_GROUP;
-		for(int i = 0; i < number_in_group[obj_group];i++){
+			//find the group center
+			Vec3d group_center;
+			for(int i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				group_center += this_obj->pos;
+			}
+			group_center /= number_in_group[obj_group];
+			cout << "group center: " << group_center << endl;
+
+			//rotate around x
+
+			//translate objects to position new_x rad. rel. to group_center
+			for(i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				Vec3d rel_pos = this_obj->pos - group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(1,0,0),new_x) + group_center;
+				this_obj->setPos(new_pos);
+			}
 			
-			OB * this_obj = group_of_obs[obj_group][i];
-			group_center += this_obj->pos;
+			//rotate objects about themselves in x
+			for(i = 0; i < number_in_group[obj_group];i++){
+				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(1,0,0),new_x);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(1,0,0),new_x);
+				n->set(left,right,n->diam);
+			}
 		}
-		group_center /= number_in_group[obj_group];
 
-		Vec3d vec, t1, t2;
+		//Y stuff
+		if(new_y != 0){		
 
-		//translate objects to position rel. to group_center
-		for(i = 0; i < number_in_group[obj_group];i++){
-			OB * this_obj = group_of_obs[obj_group][i];
-			Vec3d rel_pos = this_obj->pos - group_center;
-			Vec3d t1 = rel_pos.rotate3(Vec3d(0,0,1),DEG_TO_RAD*yaw);
-			t2 = Vec3d(-t1.y,t1.x,0);
-			Vec3d new_pos = t1.rotate3(t2,DEG_TO_RAD*pitch);
+			//find the group center
+			Vec3d group_center;
+			for(int i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				group_center += this_obj->pos;
+			}
+			group_center /= number_in_group[obj_group];
+			cout << "group center: " << group_center << endl;
+			
+			//rotate around y
 
-			this_obj->setPos(new_pos);
+			//translate objects to position new_y rad. rel. to group_center
+			for(i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				Vec3d rel_pos = this_obj->pos - group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,1,0),new_y) + group_center;
+				this_obj->setPos(new_pos);
+			}
+
+			for(i = 0; i < number_in_group[obj_group];i++){
+				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,1,0),new_y);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,1,0),new_y);
+				n->set(left,right,n->diam);
+			}
 		}
+
+		//Z stuff
+		if(new_z != 0){	
 		
-		for(i = 0; i < number_in_group[obj_group];i++){
-			Ntube * this_obj = (Ntube *)group_of_obs[obj_group][i];
-			this_obj->setYaw(yaw);
-			this_obj->setPitch(pitch);
+			//find the group center
+			Vec3d group_center;
+			for(int i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				group_center += this_obj->pos;
+			}
+			group_center /= number_in_group[obj_group];
+			cout << "group center: " << group_center << endl;
+
+			//rotate around z
+
+			//translate objects to position new_z rad. rel. to group_center
+			for(i = 0; i < number_in_group[obj_group];i++){
+				OB * this_obj = group_of_obs[obj_group][i];
+				Vec3d rel_pos = this_obj->pos - group_center;
+				Vec3d new_pos = rel_pos.rotate3(Vec3d(0,0,1),new_z) + group_center;
+				this_obj->setPos(new_pos);
+			}
+
+			for(i = 0; i < number_in_group[obj_group];i++){
+				Ntube * n = (Ntube *)group_of_obs[obj_group][i];
+				Vec3d left;
+				Vec3d right;
+				left += n->pos;
+				left -= n->axis*n->leng/2;
+				right += n->pos;
+				right += n->axis*n->leng/2;
+
+				left = n->pos + Vec3d(left - n->pos).rotate3(Vec3d(0,0,1),new_z);
+				right = n->pos + Vec3d(right - n->pos).rotate3(Vec3d(0,0,1),new_z);
+				n->set(left,right,n->diam);		
+			}
 		}
-    
+   
 		//end added code
 
 		SimMicroscopeServer.rotRcv = false;

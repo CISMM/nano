@@ -1,5 +1,19 @@
+2002-05-07  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* sim.cpp : changed rotation procedure so that rotations are
+	made around x,y,and z axes rather than in terms of yaw, pitch,
+	and roll--this makes more sense for the information we have.
+	also fixed parameter ordering in addNtube function call when
+	cylinders received so that azimuth and altitude set correctly
+ 	(previously switched...), changed translations to not
+	affected by scaling applied to object
+
 2002-04-15  David Borland <borland@cs.unc.edu>
-        * sim.cpp : sends translation whenever cylinders are sent
+        * sim.cpp : changed scaling procedure so objects are moved to 
+	origin, scaled, then moved back to original position so that
+	absolute position of group of objects remains the same while
+	relative positions and object sizes are changed (in tube
+	model-to-sim code...)
 
 2002-04-15  David Borland <borland@cs.unc.edu>
 
