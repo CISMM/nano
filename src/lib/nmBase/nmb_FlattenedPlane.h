@@ -77,9 +77,9 @@ protected:
 
 private:
   nmb_FlattenedPlane( ) 
-    : sourcePlane( NULL ), flatPlane( NULL ),
-      dx( 0 ), dy( 0 ), offset( 0 ),
-		nmb_CalculatedPlane( "", NULL )
+    : nmb_CalculatedPlane( "", NULL ),
+	 sourcePlane( NULL ), flatPlane( NULL ),
+      dx( 0 ), dy( 0 ), offset( 0 )
   {  };
 
 }; // end class nmb_FlattenedPlane

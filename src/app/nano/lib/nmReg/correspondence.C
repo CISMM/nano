@@ -46,7 +46,7 @@ void Correspondence::init(int num_im, int max_pnts)
     }
 
     num_points = 0;
-    if (max_pnts > max_points) {
+    if (((unsigned)max_pnts) > max_points) {
         max_points = max_pnts;
     }
     num_spaces = num_im;
@@ -76,7 +76,7 @@ vrpn_bool Correspondence::equals(const Correspondence &c)
     return VRPN_FALSE;
   if (num_points != c.num_points)
     return VRPN_FALSE;
-  int i,j;
+  unsigned i,j;
   for (j = 0; j < num_points; j++){
       for (i = 0; i < num_spaces; i++){
           if (c.pnts[i][j].x != pnts[i][j].x ||
@@ -90,7 +90,7 @@ vrpn_bool Correspondence::equals(const Correspondence &c)
 
 void Correspondence::print()
 {
-   int i, j;
+   unsigned i, j;
    printf("%d points, %d spaces\n", num_points, num_spaces);
    for (i = 0; i < num_points; i++) {
        for (j = 0; j < num_spaces; j++){
@@ -221,7 +221,7 @@ int Correspondence::scalePoints(int spaceIdx,
     // x,y from 0..1
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
 
-    int i;
+    unsigned i;
     for (i = 0; i < num_points; i++) {
         pnts[spaceIdx][i].x *= sx;
         pnts[spaceIdx][i].y *= sy;

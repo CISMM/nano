@@ -2,6 +2,7 @@
 #include "WaveFrontFileGenerator.h"
 #include "MSIFileGenerator.h"
 #include <stdio.h>
+#include <string.h>
 
 FileGenerator::FileGenerator(const char *fname, const char * exten)
  : GeometryGenerator(), extension(exten), filename(NULL)

@@ -1,5 +1,6 @@
 #include "URender.h"
 #include "WaveFrontFileGenerator.h"
+#include <string.h>
 
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99

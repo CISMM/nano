@@ -142,23 +142,21 @@ _handleSourcePlaneChange( int x, int y )
 {
   float avgVal = 0;
   float diff = 0;
+  int   i;
 
   // only recalculated at the end of a line.
   if( x != sourcePlane->numX() - 1 ) return;
 
-  for( int i = 0; i < sourcePlane->numX(); i++ ) 
-    {
+  for( i = 0; i < sourcePlane->numX(); i++ ) {
       avgVal += sourcePlane->value(i, y);
-    }
+  }
   avgVal /= sourcePlane->numX();
 
   // update the current line
   diff = firstLineAvg - avgVal; 
-  for( i = 0; i < sourcePlane->numX(); i++ )
-    {
-      calculatedPlane->setValue( i, y, 
-			         sourcePlane->value( i, y ) + diff );
-    }
+  for( i = 0; i < sourcePlane->numX(); i++ ) {
+      calculatedPlane->setValue( i, y, sourcePlane->value( i, y ) + diff );
+  }
 } // end _handleSourcePlaneChange( ... )
 
 

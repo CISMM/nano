@@ -128,7 +128,8 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 	it->incomingCalcdPlaneList = newNode;
       else
 	{
-	  for( vrpn_HANDLERPARAM_node* last = it->incomingCalcdPlaneList;
+	  vrpn_HANDLERPARAM_node *last;
+	  for( last = it->incomingCalcdPlaneList;
 	       last->next != NULL; last = last->next );
 	  last->next = newNode;
 	}
@@ -160,8 +161,8 @@ queueCalculatedPlaneForSync( void* userdata, const nmb_CalculatedPlane* newPlane
       if( it->outgoingCalcdPlaneList == NULL )
 	it->outgoingCalcdPlaneList = node;
       else
-	{
-	  for( nmb_CalculatedPlaneNode* last = it->outgoingCalcdPlaneList;
+	{ nmb_CalculatedPlaneNode *last;
+	  for( last = it->outgoingCalcdPlaneList;
 	       last->next != NULL; last = last->next );
 	  last->next = node;
 	}

@@ -385,7 +385,7 @@ int nmr_AlignerMI::patternSearch(int resolutionIndex, int maxIterations,
   double maxObjective = d_objective->value(resolutionIndex, xform_matrix);
   double testObjective;
 
-  int i, j, k;
+  int j;
   double paramVal;
   testTransform = d_transform;
  

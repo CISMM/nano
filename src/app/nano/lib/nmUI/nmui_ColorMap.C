@@ -18,6 +18,7 @@
 #include "nmui_Component.h"
 
 #include <error_display.h>
+#include <string.h>
 
 /** @file nmui_ColorMap.C
     Encapsulates the interface to a list of colormaps, and the

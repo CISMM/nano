@@ -1,5 +1,5 @@
 
-#ifdef sgi
+#if (defined(sgi) || defined(linux))
 #include <unistd.h>  // for gethostname
 #endif
 #ifdef _WIN32
@@ -39,8 +39,8 @@ calculatedPlaneCB_head = NULL;
 nmb_CalculatedPlane::
 nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
   throw( nmb_CalculatedPlaneCreationException )
-  : calculatedPlane( NULL ),
-    calculatedPlaneName( NULL )
+  : calculatedPlaneName( NULL ),
+    calculatedPlane( NULL )
 {
   ///////
   // set calculatedPlaneName
@@ -82,7 +82,7 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
         "A plane already exists of the name:  ";
      char msg[1024];
      sprintf( msg, "%s%s.", s, calculatedPlaneName );
-     throw nmb_CalculatedPlaneCreationException( msg );
+     throw nmb_CalculatedPlaneCreationException( (char *)msg );
   }
 } // end nmb_CalculatedPlane( const char* )
 
@@ -258,7 +258,7 @@ nmb_CalculatedPlaneCreationException( char* msgString )
 
 
 nmb_CalculatedPlaneCreationException::
-nmb_CalculatedPlaneCreationException( nmb_CalculatedPlaneCreationException& e )
+nmb_CalculatedPlaneCreationException( const nmb_CalculatedPlaneCreationException& e )
 {
   if( e.msgString == NULL )
     {

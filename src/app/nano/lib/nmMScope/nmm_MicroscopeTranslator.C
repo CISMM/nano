@@ -1,4 +1,5 @@
 #include "nmm_MicroscopeTranslator.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -16,8 +17,8 @@
 
 typedef char* BUFPTR;
 
-void stm_unbuffer_short (BUFPTR* bufptr, short* value);
-void stm_unbuffer_double (BUFPTR* bufptr, double* value);
+//void stm_unbuffer_short (BUFPTR* bufptr, short* value);
+//void stm_unbuffer_double (BUFPTR* bufptr, double* value);
 void stm_unbuffer_int (BUFPTR* bufptr, int* value);
 void stm_unbuffer_long(BUFPTR* bufptr, long* value);
 void stm_unbuffer_timeval(BUFPTR* bufptr, struct timeval* value);
@@ -1183,6 +1184,7 @@ void stm_unbuffer_timeval(BUFPTR* bufptr, struct timeval* value) {
   *bufptr += sizeof(struct timeval);
 }
 
+/*
 void stm_unbuffer_short (BUFPTR* bufptr, short* value) {
   *value = ntohl (*(short *) (*bufptr));
   *bufptr += sizeof (short);
@@ -1192,6 +1194,7 @@ void stm_unbuffer_double (BUFPTR* bufptr, double* value) {
   *value = ntohl (*(double *) (*bufptr));
   *bufptr += sizeof (double);
 }
+*/
 
 void stm_unbuffer_float(BUFPTR* bufptr, float* value) {
 #if (defined(sgi) || defined(hpux) || defined(sparc))

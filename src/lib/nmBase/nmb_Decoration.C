@@ -31,15 +31,15 @@ nmb_Decoration::nmb_Decoration (void) :
   num_scrapes (0),
   max_num_scrapes (10),
   scrapes (new nmb_LocationInfo [max_num_scrapes]),
-  scrapeCallbacks (NULL),
-  pulseCallbacks (NULL),
   scan_line (NULL),
   scanLineCount (0),
   drawScanLine (1),
   num_slow_line_3d_markers (0),
   scrapeHeightScale(1),
   scrapeHeightOffset(0),
-  scrapeMaxDepth(0)
+  scrapeMaxDepth(0),
+  scrapeCallbacks (NULL),
+  pulseCallbacks (NULL)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {

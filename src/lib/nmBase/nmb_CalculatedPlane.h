@@ -42,7 +42,7 @@ class nmb_CalculatedPlaneCreationException
 { 
 public:
   nmb_CalculatedPlaneCreationException( char* msgString = NULL );
-  nmb_CalculatedPlaneCreationException( nmb_CalculatedPlaneCreationException& e );
+  nmb_CalculatedPlaneCreationException( const nmb_CalculatedPlaneCreationException& e );
 
   ~nmb_CalculatedPlaneCreationException( )
   { if( msgString ) delete msgString; }
