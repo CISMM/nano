@@ -42,6 +42,7 @@ class nmm_Microscope_SEM_EDAX :
                             vrpn_int32 &yGain, vrpn_int32 &yOffset,
                             vrpn_int32 &zGain, vrpn_int32 &zOffset);
     vrpn_int32 getExternalScanControlEnable(vrpn_int32 &enable);
+    vrpn_int32 getMagnification(vrpn_float32 &mag);
 
     // data acquisition
     vrpn_int32 acquireImage(void);
@@ -58,8 +59,10 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_int32 reportRetraceDelays();
     vrpn_int32 reportDACParams();
     vrpn_int32 reportExternalScanControlEnable();
+    vrpn_int32 reportMagnification();
 
   private:
+    void checkForParameterChanges(void);
     vrpn_int32 initializeParameterDefaults(void);
     vrpn_int32 openEDAXHardware(void);
     vrpn_int32 closeEDAXHardware(void);
@@ -131,6 +134,7 @@ class nmm_Microscope_SEM_EDAX :
     LONG d_blankMode;
     LONG d_scanType;
     LONG d_dataTransfer;
+    long d_magnification;
 #else
 // for the platform independent virtual SEM server
     vrpn_int16 d_gainParams[3]; // SHORT
@@ -146,6 +150,7 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_int32 d_blankMode;
     vrpn_int32 d_scanType;
     vrpn_int32 d_dataTransfer;
+    vrpn_int32 d_magnification;
 #endif
 };
 

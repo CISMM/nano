@@ -1,3 +1,16 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	This is the first version that works for point mode.
+	* nmm_Microscope_SEM_EDAX.C : disabled a bunch of calls to the column
+	and stage libraries because these don't work right until we get version
+	3.3 of the libraries from EDAX
+	added calls to SgSetScanParams, disabled for now until I can test them
+	Added a critical call to SetSgScan(EDAX_SPOT_MODE)
+	Added error printout for point commands that are out of range
+	Added commented out call to SpMoveEx - this will be needed when we
+	get the 3.3 version of the scan generator library that lets us use
+	the full x and y resolution
+
 2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
 
 	* edax_server.C : commented-out call to atexit()
