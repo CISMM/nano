@@ -388,6 +388,7 @@ proc flip_im_mode {im_mode element op} {
     global im_oscillating_list
     global im_guardedscan_list
     global fspady newimagep_ampl_or_phase
+    global thirdtech_ui
 
     upvar $im_mode k
 

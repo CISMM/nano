@@ -1,3 +1,7 @@
+2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* image.tcl (flip_im_mode): added gloabl thirdtech_ui variable
+
 2002-03-06  David Borland  <borland@cs.unc.edu>
 
         * import.tcl added : added control for tesselation of loaded nanotubes
