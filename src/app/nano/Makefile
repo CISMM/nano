@@ -1,7 +1,6 @@
 USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
-             nmReg nmImageViewer nmTipConvolution \
-             nmMP tclLinkVar nmBase ImgFormat nmAnalyze \
-             vrpn vogl quat
+             nmReg nmImageViewer nmMP tclLinkVar nmBase \
+	     ImgFormat nmAnalyze vrpn vogl quat
 
 EXCLUDE_SRC = renderer.C server_talk.c test_speech.c
 
@@ -12,11 +11,6 @@ EXCLUDE_SRC += termio.c x_util.c x_graph.c x_aux.c
 USES_EXTERNAL_LIBS := vrpn_phantom ghost31
 else
 USES_EXTERNAL_LIBS := RhinoIO
-endif
-
-ifdef NANO_WITH_ROBOT
-   EXTRA_CFLAGS += -DNANO_WITH_ROBOT 
-   USES_LIBS += nmRobotControl
 endif
 
 ifdef VIEWER

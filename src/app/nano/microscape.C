@@ -108,13 +108,7 @@ pid_t getpid();
 // Registration
 #include "nmr_Registration_Proxy.h"
 #include "nmr_RegistrationUI.h"
-
-#ifdef NANO_WITH_ROBOT
-#include "RobotControl.h"
-#endif // NANO_WITH_ROBOT
 #endif // PROJECTIVE_TEXTURE
-//Tip Convolution
-#include "nmtc_TipConvolution.h"
 
 #ifndef NO_XWINDOWS
 #include "x_util.h" /* qliu */
@@ -1026,13 +1020,6 @@ nms_SEM_ui * sem_ui = NULL;
 /// Controls for registration
 nmr_RegistrationUI *alignerUI = NULL;
 nmr_Registration_Proxy *aligner = NULL;
-
-/// Controls for tip convolution
-nmtc_TipConvolution *ConvTip = NULL;
-
-#ifdef NANO_WITH_ROBOT
-RobotControl * robotControl = NULL;
-#endif
 
 /// User controls for the colormap applied to the heightfield/surface
 nmui_ColorMap * colorMapUI = NULL;
@@ -4971,9 +4958,6 @@ void teardownSynchronization(CollaborationManager *cm,
     tclUIControls->remove(&procParams);
     tclUIControls->remove(&newFilterPlaneName);
 
-  // Analysis -> Tip Convolution
-    if(ConvTip) {
-      ConvTip->nmtc_TeardownSync(tclUIControls);
     }
   }
   /* */
@@ -5304,10 +5288,6 @@ void setupSynchronization (CollaborationManager * cm,
   tclUIControls->add(&procParams);
   tclUIControls->add(&newFilterPlaneName);
 
-  // Analysis -> Tip Convolution
-  if(ConvTip) {
-    ConvTip->nmtc_SetupSync(tclUIControls);
-  }
   rootUIControl->add(tclUIControls);
   /* */
 
@@ -6682,9 +6662,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
       alignerUI->setupCallbacks();
     }
 
-    if (ConvTip) {
-      ConvTip->changeDataset(new_dataset->dataImages);
-    }
 
   // There is no turning back. If any operations fail, the 
   // calling function will have to recover by calling again with a 
@@ -7430,12 +7407,6 @@ int main (int argc, char* argv[])
   // decoration->rateOfTime should be set correctly from the command line.
   handle_replay_rate_change (decoration->rateOfTime, NULL);
   
-#ifdef NANO_WITH_ROBOT
-  robotControl = new RobotControl(microscope, dataset);
-  robotControl->show();
-#endif
-  
-
 
   // did these in createNewMicroscope() but things were NULL then.
   linkMicroscopeToInterface(microscope);
@@ -7468,8 +7439,6 @@ int main (int argc, char* argv[])
         aligner);
     alignerUI->setupCallbacks();
   }
-
-  ConvTip = new nmtc_TipConvolution(graphics, dataset->dataImages);
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?
@@ -7861,11 +7830,6 @@ VERBOSE(1, "Entering main loop");
     
     /* Check for mouse events in the X window display */
     handleMouseEvents(&graphicsTimer);
-
-  #ifdef NANO_WITH_ROBOT
-    if (robotControl)
-       robotControl->mainloop();
-  #endif
 
     /* Run the Tk control panel checker if we are using them */
     if (tkenable) {
