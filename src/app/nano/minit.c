@@ -301,7 +301,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                q_xyz_quat_invert( &old_puck_transform, &old_puck_transform);
 
                // Save the center of the plane, basis for rotations. 
-               get_Plane_Extents(&offsetx,&offsety,&offsetz);
+               get_Plane_Centers(&offsetx,&offsety,&offsetz);
 //                 printf("offsets %g %g %g\n", offsetx, offsety, offsetz);
 //                 printf("old wfr ");
 //                 v_x_print( &old_world_from_room);

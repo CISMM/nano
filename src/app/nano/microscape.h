@@ -277,7 +277,7 @@ extern  Tclvar_float           directz_force_scale;
 /* defined in microscape.c */
 extern void handleCharacterCommand(char*, vrpn_bool* , int);
 extern void center (void);
-extern void get_Plane_Extents(float*,float*,float*);
+extern void get_Plane_Centers(float*,float*,float*);
 extern void set_channel_for_ohmeter(char* channel_name);
 extern void cause_grid_redraw(float new_value, void *userdata);
 extern int register_vrpn_phantom_callbacks(void);

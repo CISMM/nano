@@ -1182,6 +1182,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   x_max (afm.xMax),
   y_min (afm.yMin),
   y_max (afm.yMax),
+  NIC_IP(NULL),
   writingRemoteStream (0),
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
@@ -1197,6 +1198,8 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
     remoteOutputStreamName[0] = '\0';
     peerName[0] = '\0';
     logPath[0] = '\0';
+    logTimestamp.tv_sec = 0;
+    logTimeStamp.tv_usec = 0;
 }
 
 
@@ -1211,7 +1214,7 @@ int main (int argc, char * argv []);
 static void Usage (char * s);
 static void handleTermInput (int ttyFD, vrpn_bool * donePtr);
 static int handleMouseEvents (nmb_TimerList *);
-static void get_Plane_Centers (float *, float *, float *);
+void get_Plane_Centers (float *, float *, float *);
 static void find_center_xforms (q_vec_type * lock_userpos,
                                 q_type * lock_userrot,
                                 double * lock_userscale);
@@ -2939,24 +2942,25 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
 /////////////////////////////////
 /** XXX this func decl should come from export_scene.h
  */
-/*
+#if !defined(_WIN32) || defined(__CYGWIN__)
 void export_scene_to_openNURBS (const char * filename,
                                 const nmg_Graphics *,
                                 const BCGrid *,
                                 const nmb_PlaneSelection &);
-*/
+#endif
 /** See if the user has given a name to the export plane other
     than "".  If so, we should export a file and set the value
     back to "". If there are any errors, report them and leave name alone. 
 */
+
+
 static void handle_exportScene_Filename_change (
     const char * filename,
     void * userdata)
 {
-    extern void export_scene_to_openNURBS (const char * filename,
-                                           const nmg_Graphics *,
-                                           const BCGrid *,
-                                           const nmb_PlaneSelection &);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    fprintf(stderr, "Not implemented on PC");
+#else
 
     if (strlen(filename) > 0) {
         nmb_Dataset * dataset = (nmb_Dataset*) userdata;
@@ -2971,6 +2975,7 @@ static void handle_exportScene_Filename_change (
         // the answer depends on who owns the storage for the current name.
         filename = "";
     }
+#endif
 }
 
 
@@ -8359,7 +8364,7 @@ void center (void) {
 
 
 
-static void get_Plane_Centers (float * offsetx,
+void get_Plane_Centers (float * offsetx,
                                float * offsety,
                                float * offsetz)
 {

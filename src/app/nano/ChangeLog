@@ -1,8 +1,19 @@
-2000-08-27  Kwan Torrich Skinner <skinner@cs.unc.edu>
+2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
+
+        * Makefile: took out RhinoIO for VC compile
+        * microscape.c (MicroscapeInitializationState constructor): adds
+        initialization for NIC_IP and logTimestamp
+        * microscape.[ch], minit.c: fixed confusion over name of 
+        function get_Plane_Extents changing to get_Plane_Centers
+
+
+2000-08-27  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
         * microscape.c : converted procProgNames from nmb_ListOfStrings to 
 	Tclvar_list_of_strings.
 
-2000-08-17  Adam Seeger <seeger@cs.unc.edu>
+2000-08-17  Adam Seeger  <seeger@cs.unc.edu>
+
         * microscape.c (handle_texture_dataset_change): sets slider limits
 		a little differently (using minNonZeroValue instead of minValue)
 
