@@ -368,7 +368,8 @@ usptr_t *Semaphore::ppaArena = NULL;
 // this will set things up so that usinit creates temp files which never
 // show up in the file system (can't be used across processes, but fine
 // in a single process with multiple threads).
-static ptrdiff_t __gpdDummy = usconfig( CONF_ARENATYPE, US_SHAREDONLY );
+// static ptrdiff_t __gpdDummy = usconfig( CONF_ARENATYPE, US_SHAREDONLY );
+
 
 // for umask stuff
 #include <sys/types.h>
@@ -434,7 +435,7 @@ int Thread::kill() {
   // kill the os thread
   if (ulProcID>0) {
 #ifdef sgi
-    if (::kill(ulProcID, SIGKILL)<0) {
+    if (::kill( (long) ulProcID, SIGKILL)<0) {
       perror("Thread::kill: kill:");
       return -1;
     }
@@ -493,6 +494,10 @@ Thread::~Thread() {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.3  2001/03/02 17:51:45  hudson
+  	* thread.C (Semaphore::p) : removed a line that shouldn't have been
+  	committed.
+
   Revision 1.2  2001/02/20 17:50:32  hudson
 
   	* thread.C (Semaphore::v) : add cast to make error message work.
