@@ -416,6 +416,23 @@ float nmb_ImageGrid::maxValue() {return plane->maxValue();}
 
 float nmb_ImageGrid::minValue() {return plane->minValue();}
 
+int nmb_ImageGrid::normalize()
+{
+  int i,j;
+  float min = minValue();
+  float max = maxValue();
+  float range = max-min;
+  if (range == 0) return -1;
+  float inv_range = 1.0/range;
+
+  for (i = 0; i < width(); i++) {
+    for (j = 0; j < height(); j++) {
+      setValue(i,j, inv_range*(getValue(i,j)-min));
+    }
+  }
+  return 0;
+}
+
 float nmb_ImageGrid::maxValidValue() {
     short top, left, bottom, right;
     if (validDataRange(&top, &left, &bottom, &right)) {
@@ -530,16 +547,25 @@ void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
 {
     // WARNING: this might not do what you think because
     // BCGrid has a less general notion of the image extents
+/*
     if (grid == NULL) {
         fprintf(stderr,
                 "Warning: nmb_ImageGrid::setBoundX failed\n");
             return;
     }
+
     if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
         ibp == nmb_ImageBounds::MIN_X_MAX_Y) {
         grid->setMinX(x);
     } else {
         grid->setMaxX(x);
+    }
+*/
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MIN_X_MAX_Y) {
+        plane->_grid->setMinX(x);
+    } else {
+        plane->_grid->setMaxX(x);
     }
 }
 
@@ -547,6 +573,7 @@ void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
 {
     // WARNING: this might not do what you think because
     // BCGrid has a less general notion of the image extents
+/*
     if (grid == NULL) {
         fprintf(stderr,
                 "Warning: nmb_ImageGrid::setBoundY failed\n");
@@ -557,6 +584,13 @@ void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
         grid->setMinY(y);
     } else {
         grid->setMaxY(y);
+    }
+*/
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
+        plane->_grid->setMinY(y);
+    } else {
+        plane->_grid->setMaxY(y);
     }
 }
 
@@ -842,9 +876,9 @@ template <class PixelType>
 void nmb_ImageArray<PixelType>::setValue(int i, int j, float val)
 {
     if (val > maxAttainableValue()) {
-        data[i+j*num_x] = maxAttainableValue();
+        data[i+j*num_x] = (PixelType) maxAttainableValue();
     } else if (val < minAttainableValue()) {
-        data[i+j*num_x] = minAttainableValue();
+        data[i+j*num_x] = (PixelType) minAttainableValue();
     } else {
         data[i+j*num_x] = (PixelType)val;
     }
@@ -919,6 +953,32 @@ float nmb_ImageArray<PixelType>::minValue()
         d_minValueComputed = VRPN_TRUE;
     }
     return d_minValue;
+}
+
+template <class PixelType>
+int nmb_ImageArray<PixelType>::normalize() {
+  assert(minAttainableValue() == 0.0);
+  float min = minValue();
+  float range = (maxValue() - min);
+  if (range == 0) return -1;
+  float inv_range = 1.0/range;
+  for (int i = 0; i < num_x*num_y; i++) {
+     data[i] = (PixelType)(inv_range * (data[i] - min) * maxAttainableValue());
+  }
+
+  return 0;
+}
+
+int nmb_ImageArray<vrpn_float32>::normalize() {
+  float min = minValue();
+  float range = (maxValue() - min);
+  if (range == 0) return -1;
+  float inv_range = 1.0/range;
+  for (int i = 0; i < num_x*num_y; i++) {
+     data[i] = (inv_range * (data[i] - min));
+  }
+
+  return 0;
 }
 
 template <class PixelType>

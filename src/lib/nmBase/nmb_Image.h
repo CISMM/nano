@@ -68,8 +68,15 @@ class nmb_ImageList;
 class nmb_Image {
         friend class nmb_ImageList;
   public:
-	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0)
-            {};
+	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0),
+                d_worldToImageMatrixSet(VRPN_FALSE)
+        {
+           for (int i = 0; i < 4; i++){
+              for (int j = 0; j < 4; j++) {
+                 d_worldToImageMatrix[i*4+j] = (i==j?1:0);
+              }
+           }
+        };
         nmb_Image(nmb_Image *) {};
 	virtual ~nmb_Image (void);
 	virtual int width() const = 0;
@@ -79,6 +86,7 @@ class nmb_Image {
         /// min and max of values actually in the image:
 	virtual float maxValue() = 0;
 	virtual float minValue() = 0;
+        virtual int normalize() = 0;
         // min and max of values that have been set
         virtual float maxValidValue() = 0;
         virtual float minValidValue() = 0;
@@ -170,6 +178,7 @@ class nmb_ImageGrid : public nmb_Image{
                                    short* o_bottom, short*o_right);
 	virtual float maxValue();
 	virtual float minValue();
+        virtual int normalize();
         virtual float maxValidValue();
         virtual float minValidValue();
         virtual float maxNonZeroValue();
@@ -235,6 +244,7 @@ class nmb_ImageArray : public nmb_Image {
                                    short* o_bottom, short*o_right);
     virtual float maxValue();
     virtual float minValue();
+    virtual int normalize();
     virtual float maxValidValue();
     virtual float minValidValue();
     virtual float maxNonZeroValue();
