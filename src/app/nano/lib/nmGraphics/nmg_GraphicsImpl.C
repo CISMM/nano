@@ -626,11 +626,12 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
         texture[ texel( y, x, 0) ] = 0;
         texture[ texel( y, x, 1) ] = 0;
         texture[ texel( y, x, 2) ] = 0;
-#ifdef __CYGWIN__       // assume we're using BLEND texture function
-        texture[ texel( y, x, 3) ] = 255;
-#else
-        texture[ texel( y, x, 3) ] = 0;
-#endif
+        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE ||
+            g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+          texture[ texel( y, x, 3) ] = 255;
+        } else {
+          texture[ texel( y, x, 3) ] = 0;
+        }
     }
   }
 
@@ -643,31 +644,25 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
 //printf("XXX Filling %3d,%3d (%ld)\n", x, (myPPM->ny-1)-y,
 //              (long)texel((myPPM->ny-1)-y,x,0));
         myPPM->Tellppm(x,y, &r, &g, &b);
-        // was Alpha half way on
-        //texture[ texel( (myPPM->ny-1)-y, x, 3) ] = 128;
-#ifdef __CYGWIN__       // assume we're using BLEND texture function
-        texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
-        texture[ texel( (myPPM->ny-1)-y, x, 0) ] = 
+        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE ||
+            g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
+          texture[ texel( (myPPM->ny-1)-y, x, 0) ] = 
 		(GLubyte)((float)r*g_ruler_opacity/255.0);
-        texture[ texel( (myPPM->ny-1)-y, x, 1) ] = 
+          texture[ texel( (myPPM->ny-1)-y, x, 1) ] = 
 		(GLubyte)((float)g*g_ruler_opacity/255.0);
-        texture[ texel( (myPPM->ny-1)-y, x, 2) ] = 
+          texture[ texel( (myPPM->ny-1)-y, x, 2) ] = 
 		(GLubyte)((float)b*g_ruler_opacity/255.0);
-#else
-        texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)g_ruler_opacity;
-        texture[ texel( (myPPM->ny-1)-y, x, 0) ] = r;
-        texture[ texel( (myPPM->ny-1)-y, x, 1) ] = g;
-        texture[ texel( (myPPM->ny-1)-y, x, 2) ] = b;
-#endif
+        } else {
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)g_ruler_opacity;
+          texture[ texel( (myPPM->ny-1)-y, x, 0) ] = r;
+          texture[ texel( (myPPM->ny-1)-y, x, 1) ] = g;
+          texture[ texel( (myPPM->ny-1)-y, x, 2) ] = b;
+        }
     }
   }
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
-  glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,CYGWIN_TEXTURE_FUNCTION);
-#else
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
-#endif
 
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
@@ -1188,6 +1183,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   // we don't have separate functions for building textures from ppm images
   // and AFM data (these changes allow this function to do what 
   // makeAndInstallRulerImage() was used for previously)
+  strcpy(g_realign_texture_name, name);
   nmb_Image *im = d_dataset->dataImages->getImageByName(name);
   if (!im) {
     fprintf(stderr, 
@@ -1231,17 +1227,22 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
   float min = im->minValue();
   float max = im->maxValue();
-  int red_index, grn_index, blu_index;
-  for ( int j = 0,j_im= 0; j < g_tex_installed_height[COLORMAP_TEX_ID]; 
-                                               j++,j_im+=stride_y ) {
-    red_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 0;
-    grn_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 1;
-    blu_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 2;
-    for ( int k = 0,k_im= 0; k < g_tex_installed_width[COLORMAP_TEX_ID]; 
-                                                   k++,k_im+=stride_x,
-                                                   red_index += 3,
-                                                   grn_index += 3,
-                                                   blu_index += 3 ) {
+  int red_index, grn_index, blu_index, alph_index;
+  // we leave a 1 pixel border at the edge so that texture color where there
+  // is no texture gets the border color
+  int border = 1;
+  int nc = 4;// num channels
+  for ( int j = border,j_im= border*stride_y; 
+        j < g_tex_installed_height[COLORMAP_TEX_ID]-1-border; 
+        j++,j_im+=stride_y ) {
+    red_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 0 + border*nc;
+    grn_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 1 + border*nc;
+    blu_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 2 + border*nc;
+    alph_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 3 + border*nc;
+    for (int k = border,k_im= border*stride_x;
+         k < g_tex_installed_width[COLORMAP_TEX_ID]-1-border; 
+         k++, k_im+=stride_x, 
+         red_index+=nc, grn_index+=nc, blu_index+=nc, alph_index+=nc ) {
       // this condition actually chops off a pixel on each side of the 
       // texture so that the clamped texture coordinates map to 
       // completely transparent pixels
@@ -1275,21 +1276,31 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
            realign_data[grn_index] = 0.5;
            realign_data[blu_index] = 0.5;
          }
-         realign_data[red_index] += 
+
+         // Here we adjust intensity of the texture:
+         if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
+             realign_data[red_index] += 
 		(1.0- realign_data[red_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
-         realign_data[grn_index] += 
+             realign_data[grn_index] += 
 		(1.0- realign_data[grn_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
-         realign_data[blu_index] += 
+             realign_data[blu_index] += 
 		(1.0- realign_data[blu_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
+         } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
+             realign_data[alph_index]  = (float)g_ruler_opacity/255.0;
+         }
+
       }
       else { // handles parts of texture that extend beyond image
-	// for GL_MODULATE
-	realign_data[red_index] = 0.0;
-	realign_data[grn_index] = 0.0;
-	realign_data[blu_index] = 0.0;
+        if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
+	    realign_data[red_index] = 0.0;
+	    realign_data[grn_index] = 0.0;
+	    realign_data[blu_index] = 0.0;
+        } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
+            realign_data[alph_index] = 0.0;
+        }
       }
     }
   }
@@ -1310,16 +1321,16 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   
 #if defined(sgi) || defined(__CYGWIN__)
 
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, 
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGB, GL_FLOAT, realign_data) != 0) { 
+                   GL_RGBA, GL_FLOAT, realign_data) != 0) { 
     printf(" Error making mipmaps, using texture instead.\n");
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
-		0, GL_RGB, GL_FLOAT, realign_data);
+		0, GL_RGBA, GL_FLOAT, realign_data);
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making realign texture.\n");
     }
@@ -1327,10 +1338,10 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
 
 #else
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
-	       0, GL_RGB, GL_FLOAT, realign_data);
+	       0, GL_RGBA, GL_FLOAT, realign_data);
  #ifndef FLOW
   if (glGetError()!=GL_NO_ERROR) {
     printf(" Error making realign texture.\n");
@@ -1695,23 +1706,31 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
-  int l;
-  int i,j;
+  int i,j, k;
   fprintf(stderr, "initializing textures\n");
 
-  for (l = 0; l < N_TEX; l++) {
-     g_tex_image_width[l] = NMG_DEFAULT_IMAGE_WIDTH;
-     g_tex_image_height[l] = NMG_DEFAULT_IMAGE_HEIGHT;
-     g_tex_installed_width[l] = NMG_DEFAULT_IMAGE_WIDTH;
-     g_tex_installed_height[l] = NMG_DEFAULT_IMAGE_HEIGHT;
+  for (i = 0; i < N_TEX; i++) {
+     g_tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
+     g_tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
+     g_tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
+     g_tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
+#ifdef __CYGWIN__
+     g_tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
+#else
+     g_tex_blend_func[i] = GL_DECAL;
+#endif
   }
+  g_tex_blend_func[GENETIC_TEX_ID] = GL_MODULATE;
+  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  g_tex_env_color[SEM_DATA_TEX_ID][0] = 0.5;
+  g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][4] = 1.0;
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
   glGenTextures(N_TEX, tex_ids);
-
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
 #ifdef FLOW
   glGenTextures(N_SHADER_TEX, shader_tex_ids);
@@ -1745,8 +1764,8 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   // initiailize bump data
   //bump_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
   bump_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-    bump_data[l] = 0;
+  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
+    bump_data[i] = 0;
   glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
                GL_RGB, GL_BYTE, (const GLvoid *)bump_data);
@@ -1754,8 +1773,8 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   // initialize pattern data
   //pattern_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
   pattern_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-    pattern_data[l] = 0;
+  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
+    pattern_data[i] = 0;
   glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
                GL_RGB, GL_BYTE, (const GLvoid *)pattern_data)
@@ -1763,8 +1782,8 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   // initialize hatch data
   //hatch_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
   hatch_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-    hatch_data[l] = 0;
+  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
+    hatch_data[i] = 0;
   glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
                GL_RGB, GL_BYTE, (const GLvoid *)hatch_data);
@@ -1792,12 +1811,12 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   int sem_tex_size = g_tex_installed_width[SEM_DATA_TEX_ID] *
                           g_tex_installed_height[SEM_DATA_TEX_ID];
   sem_data = new GLubyte [sem_tex_size]; 
-  l = 0;
+  k = 0;
   
   for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
     for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      sem_data[l] = 20*((i/30+j/30)%2);
-      l++;
+      sem_data[k] = 255;//20*((i/30+j/30)%2);
+      k++;
     }
   }
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
@@ -1815,18 +1834,18 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-  int realign_tex_size = 3*g_tex_installed_width[COLORMAP_TEX_ID] *
+  int realign_tex_size = 4*g_tex_installed_width[COLORMAP_TEX_ID] *
                              g_tex_installed_height[COLORMAP_TEX_ID];
   realign_data = new float [realign_tex_size];
-  for (l = 0; l < realign_tex_size; l++){
-    realign_data[l] = l < realign_tex_size/2;
+  for (i = 0; i < realign_tex_size; i++){
+    realign_data[i] = 0.0;
   }
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
   
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
        g_tex_installed_width[COLORMAP_TEX_ID],
        g_tex_installed_height[COLORMAP_TEX_ID],
-       0, GL_RGB, GL_FLOAT, realign_data);
+       0, GL_RGBA, GL_FLOAT, realign_data);
 
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing realign texture\n");
@@ -1957,6 +1976,9 @@ void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
   else {
     makeRulerImage();
     buildRulergridTexture();
+  }
+  if (g_realign_texture_name[0]) {
+    createRealignTextures(g_realign_texture_name);
   }
 }
 
@@ -3254,7 +3276,8 @@ int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
 
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
-  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+               g_tex_blend_func[GENETIC_TEX_ID]);
 
   glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC]);
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );

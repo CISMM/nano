@@ -74,6 +74,7 @@ int g_maxChangedY;
 ColorMap *g_realign_textures_curColorMap = NULL;
 float g_realign_textures_slider_min = 0;
 float g_realign_textures_slider_max = 1.0;
+char g_realign_texture_name[128] = {0};
 
 BCGrid * g_prerendered_grid = NULL;
 nmb_Subgrid * g_prerenderedChange = NULL;
@@ -164,6 +165,11 @@ int g_tex_image_height[N_TEX];
 // installed size refers to size of texture passed to openGL
 int g_tex_installed_width[N_TEX];
 int g_tex_installed_height[N_TEX];
+
+// e.g. GL_MODULATE, GL_DECAL...
+int g_tex_blend_func[N_TEX];
+
+float g_tex_env_color[N_TEX][4];
 
 float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];

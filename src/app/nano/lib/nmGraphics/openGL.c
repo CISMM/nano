@@ -741,37 +741,20 @@ int draw_world (int) {
   VERBOSE(4,"    Drawing the grid");
   TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
 
-  if (g_texture_mode == GL_TEXTURE_2D) {
-#ifdef __CYGWIN__
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-#else
-      if ((g_texture_displayed == nmg_Graphics::RULERGRID) ||
-          (g_texture_displayed == nmg_Graphics::REMOTE_DATA)) {
-          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-      } else {
-	  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-      }
-#endif
-  }
-#if !(defined(__CYGWIN__) || defined(_WIN32))
-  //#ifndef __CYGWIN__
-  if ((g_texture_mode == GL_TEXTURE_1D) ||
-      (g_texture_mode == GL_TEXTURE_3D_EXT)) {
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-  }
-#endif
-
-
   switch (g_texture_displayed) {
     case nmg_Graphics::NO_TEXTURES:
       // nothing to do here
       break;
     case nmg_Graphics::CONTOUR:
       glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[CONTOUR_1D_TEX_ID]);
       break;
     case nmg_Graphics::ALPHA:
 #if !(defined(__CYGWIN__) || defined(hpux) || defined(_WIN32))
       glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[ALPHA_3D_TEX_ID]);
 #endif
     case nmg_Graphics::BUMPMAP:
 #ifdef FLOW
@@ -790,23 +773,44 @@ int draw_world (int) {
       break;
     case nmg_Graphics::RULERGRID:
       glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[RULERGRID_TEX_ID]);
       break;
     case nmg_Graphics::GENETIC:
       glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[GENETIC_TEX_ID]);
       break;
     case nmg_Graphics::COLORMAP:
       glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[COLORMAP_TEX_ID]);
       break;
     case nmg_Graphics::SEM_DATA:
       glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[SEM_DATA_TEX_ID]);
+      glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
+                         g_tex_env_color[SEM_DATA_TEX_ID]);
       break;
     case nmg_Graphics::REMOTE_DATA:
       glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                         g_tex_blend_func[REMOTE_DATA_TEX_ID]);
       break;
     default:
       fprintf(stderr, "Error, unknown texture set for display\n");
       break;
   }
+
+#if !(defined(__CYGWIN__) || defined(_WIN32))
+  //#ifndef __CYGWIN__
+  if ((g_texture_mode == GL_TEXTURE_1D) ||
+      (g_texture_mode == GL_TEXTURE_3D_EXT)) {
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+  }
+#endif
+
 
 #ifdef PROJECTIVE_TEXTURE
 

@@ -107,6 +107,7 @@ extern vrpn_int32 g_collabMode;
 extern ColorMap *g_realign_textures_curColorMap;
 extern float g_realign_textures_slider_min;
 extern float g_realign_textures_slider_max;
+extern char g_realign_texture_name[128];
 
 extern int g_translate_textures;
 extern int g_scale_textures;
@@ -212,6 +213,11 @@ extern int g_tex_image_width[N_TEX];
 extern int g_tex_image_height[N_TEX];
 extern int g_tex_installed_width[N_TEX];
 extern int g_tex_installed_height[N_TEX];
+
+// e.g. GL_MODULATE, GL_DECAL...
+extern int g_tex_blend_func[N_TEX];
+
+extern float g_tex_env_color[N_TEX][4];
 
 // note: shader textures managed separately below
 
