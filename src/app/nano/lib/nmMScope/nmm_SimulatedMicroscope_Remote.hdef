@@ -65,7 +65,7 @@ private:
 	//RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
 	//HANDLERS_DECL nmm_AFMSIMSERVER_Report;
 
-	static int handle_gotConnection(void * userdata, vrpn_HANDLERPARAM grpc_p);
+	static int VRPN_CALLBACK handle_gotConnection(void * userdata, vrpn_HANDLERPARAM grpc_p);
 
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
 	string RealAFMPlaneName;	//name of plane with real di data

@@ -79,7 +79,7 @@ class nmm_QueueMonitor {
 
     void deleteQueue (void);
 
-    static int handle_resultData (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_resultData (void *, vrpn_HANDLERPARAM);
 
     vrpn_int32 d_numPolls;
       ///< Number of times mainloop was called.

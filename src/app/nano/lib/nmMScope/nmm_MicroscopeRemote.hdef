@@ -464,8 +464,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvScanlineDataset(const char *, const char *, float, 
 	float);
 
-    static int handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
-    static int handle_DroppedConnection2 (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_DroppedConnection2 (void *, vrpn_HANDLERPARAM);
 
 // TODO:  Document and explain these better!
 
@@ -534,8 +534,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       ///< state.data.incomingPointList, then empties the latter.
 
 
-    static int handle_barrierSynch (void * ud, const nmb_SynchMessage * msg);
-    static void handle_GotMicroscopeControl (void * ud, 
+    static int VRPN_CALLBACK handle_barrierSynch (void * ud, const nmb_SynchMessage * msg);
+    static void VRPN_CALLBACK handle_GotMicroscopeControl (void * ud, 
                                              nmb_SharedDevice_Remote * dev);
 
     vrpn_bool d_incr_save;

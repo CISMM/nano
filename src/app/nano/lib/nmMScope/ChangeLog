@@ -1,3 +1,9 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.hdef : Uses new VRPN_CALLBACK definition.
+	* nmm_QueueMonitor.hdef : Uses new VRPN_CALLBACK definition.
+	* nmm_SimulatedMicroscope_Remote.hdef : same.
+
 2003-11-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_MicroscopeRemoteGen.Cdef 
