@@ -54,7 +54,7 @@ typedef struct {
 
 
 static void ServerError( char * txt );
-static void ConnectServer (int);
+static void ConnectServer (int, const char * interface);
 
 
 /*****************************************************************
@@ -92,12 +92,13 @@ int mic_Started()	// Added by JakeK so that scanning doesn't begin before connec
 }
 
 
-void StartServer (int x, int y, int port) // Added these varialbes so that the grid size can be initialized
+ // Added these varialbes so that the grid size can be initialized
+void StartServer (int x, int y, int port, const char * interface)
 {				// JakeK
   num_x = x;  
   num_y = y;
 
-  if ( NULL == connection ) ConnectServer(port);
+  if ( NULL == connection ) ConnectServer(port, interface);
   ServerOutputAdd(1, "Generating AFMSimulator......");
   AFMSimulator = new nmm_Microscope_Simulator( "nmm_Microscope_Simulator@wherever", connection );
   if ( AFMSimulator ) {
@@ -123,10 +124,11 @@ void StopServer (void)
 	  }
 }
 
-void ConnectServer (int port)
+void ConnectServer (int port, const char * interface)
 {
 
-  connection = new vrpn_Synchronized_Connection(port);
+  connection = new vrpn_Synchronized_Connection
+                          (port, NULL, NULL, interface);
 
   if (!connection || !connection->doing_okay()) {
      ServerOutputAdd(2, "Connection could not be accepted");

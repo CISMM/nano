@@ -58,7 +58,7 @@ int handle_any_print (void * userdata, vrpn_HANDLERPARAM) {
 
 
 
-int initJake (int x, int y, int port) {  
+int initJake (int x, int y, int port, const char * interface) {
   if (!x || !y) {
     fprintf(stderr, "initJake:  a 0-size grid makes microscopes crash!\n");
     return -1;
@@ -67,7 +67,7 @@ int initJake (int x, int y, int port) {
   num_y = y;
   int quitNow = 0;
   currentline = 0;
-  StartServer((num_x), (num_y), port);
+  StartServer((num_x), (num_y), port, interface);
   quitType = connection->register_message_type("Server Quit Type");
   connection->register_handler(quitType, handle_quit, &quitNow);
   connection->register_handler(vrpn_ANY_TYPE, handle_any_print, connection);

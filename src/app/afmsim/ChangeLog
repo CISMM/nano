@@ -1,3 +1,10 @@
+2001-07-24  Tom Hudson <hudson@cs.unc.edu>
+
+	* nmm_Microscope_Simulator.C (ConnectServer) : Add parameter.
+	(StartServer) : Same.
+	* simulator_server.C (initJake) : Same.
+	* surface.C (main) : Pass g_ipString to initJake().
+
 2001-07-22  Tom Hudson <hudson@cs.unc.edu>
 
 Imported lots of code from nmm_Microscope_Topometrix to add
@@ -6,15 +13,15 @@ the simulator.
 
 2001-07-17  Tom Hudson <hudson@cs.unc.edu>
 
-   * nmm_Microscope_Simulator.C (nmm_Microscope_Simulator::RcvFeelTo) :
-   Remove erroneous call to decode_BeginFeelTo().
-   (nmm_Microscope_Simulator::afmFeelToPoint) : Fix logic.
+	* nmm_Microscope_Simulator.C (nmm_Microscope_Simulator::RcvFeelTo) :
+	Remove erroneous call to decode_BeginFeelTo().
+	(nmm_Microscope_Simulator::afmFeelToPoint) : Fix logic.
 
-   * surface.C (usage) : Add new parameters.
-   (g_ipString, g_ipAddress) : Add new globals (not yet implemented).
-   (parse) : Add new parameters.
-   (initializePlane) : Change floats to doubles.  Add new surface modes.
-   Fix some previous surface modes.
+	* surface.C (usage) : Add new parameters.
+	(g_ipString, g_ipAddress) : Add new globals (not yet implemented).
+	(parse) : Add new parameters.
+	(initializePlane) : Change floats to doubles.  Add new surface modes.
+	Fix some previous surface modes.
 
 2001-05-22  Tom Hudson <hudson@cs.unc.edu>
 

@@ -8,7 +8,8 @@ int handle_wuit (void* , vrpn_HANDLERPARAM);
 
 int handle_any_print (void* , vrpn_HANDLERPARAM);
 
-int initJake (int num_x, int num_y, int port = 4500);
+int initJake (int num_x, int num_y, int port = 4500,
+              const char * interface = NULL);
 
 int jakeMain (float scan_time_diff = .1,
               vrpn_bool isWaiting = vrpn_FALSE,

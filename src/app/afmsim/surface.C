@@ -47,7 +47,6 @@ static vrpn_bool g_isWaiting = vrpn_FALSE;
 static float g_waitTime = 0.0f;
 
 static char * g_ipString = NULL;
-static vrpn_int32 g_ipAddress = 0;
 
 void usage (const char * argv0) {
   fprintf(stderr,
@@ -401,7 +400,7 @@ int main (int argc, char ** argv) {
     initializePlane(g_myZPlane, g_planeShape);
   }
 
-  retval = initJake(g_numX, g_numY, g_port);
+  retval = initJake(g_numX, g_numY, g_port, g_ipString);
   while (!retval) {
     jakeMain(.1, g_isWaiting, g_waitTime);
   }
