@@ -90,8 +90,8 @@ double view_angle = -90.;
 
 // window stuff
 int mainWindowID, viewWindowID, depthWindowID;
-double windowWidth = 600.;
-double windowHeight = 600.;
+double windowWidth = 300.;
+double windowHeight = 300.;
 double orthoFrustumCenterX = DEPTHSIZE/2; // area of XY plane always visible for all window aspect ratios
 double orthoFrustumCenterY = DEPTHSIZE/2;
 double orthoFrustumWidthNominal = DEPTHSIZE;//***
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
   // MAIN WINDOW
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
 
-  glutInitWindowPosition( 50, 0 );
+  glutInitWindowPosition( 50, 200 );
   mainWindowID = glutCreateWindow( "3D AFM simulator - Top View" );
   adjustOrthoProjectionToWindow();
 
@@ -523,6 +523,10 @@ void displayFuncDepth( void ) {
     //(double array)
 	
 	if(SimMicroscopeServer.grid_size_rcv){
+		sp.set_r(sp.r* SimMicroscopeServer.Sim_to_World_x);
+        ics.set_r(ics.r* SimMicroscopeServer.Sim_to_World_x);
+		//change tip radius to match scan resolution from nano
+
 		HeightData = doImageScanApprox(length,SimMicroscopeServer.Sim_to_World_x);
 	}
 	else{
@@ -1119,7 +1123,8 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 		length = length * SimMicroscopeServer.Sim_to_World_x;
 
-		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);
+		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius* SimMicroscopeServer.Sim_to_World_x), 
+			0., 0., 0., length, radius*2.0);
 	  }
       else{
 		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);

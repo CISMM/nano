@@ -1,3 +1,9 @@
+2002-07-04  Andrea Hilchey <hilchey@cs.unc.edu>
+	
+	* modify drawing of tip so that scaled if simulator is connected
+	to nano (scale so that an x nm tip is in the scaled in terms of
+	the real world extent of the sample in nano)
+
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp,.h : add keyboard and command line capability to
