@@ -1394,7 +1394,22 @@ nmb_ImageArray::nmb_ImageArray(nmb_Image *im)
 
 nmb_ImageArray::~nmb_ImageArray() {
   if (data) {
-    delete [] data;
+    switch (d_pixelType) {
+    case NMB_FLOAT32:
+      delete [] (vrpn_float32*) data;
+      break;
+    case NMB_UINT8:
+      delete [] (vrpn_uint8*) data;
+      break;
+    case NMB_UINT16:
+      delete [] (vrpn_uint16*) data;
+      break;
+    default:
+      fprintf(stderr, "nmb_ImageArray::~nmb_ImageArray:"
+	      " Error, unknown type\n");
+      delete [] (void*) data; // better delete it anyway
+      break;
+    }
     data = NULL;
     fData = NULL;
     ucData = NULL;
