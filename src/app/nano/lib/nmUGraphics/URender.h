@@ -80,6 +80,15 @@ protected:
 	int clamp;			// controls whether or not to clamp projected textures
 	int update_AFM;		// controls whether position, orientation, and scale are sent to the
 						// AFM simulator, when a connection is present
+	int grab_object;	// when true, translations and rotations from using the mouse in the
+						// surface window are applied to the current object
+
+	// stuff for spiders
+	double spider_length;
+	double spider_width;
+	double spider_thick;
+	int spider_tess;
+	double spider_curve;
 
 	//bounding box
 	BBOX bounds;	
@@ -130,6 +139,13 @@ public:
 	void SetAxisStep(int s) { axis_step = s; }
 	void SetClamp(int c) { clamp = c; }
 	void SetUpdateAFM(int u) { update_AFM = u; }
+	void SetGrabObject(int g) { grab_object = g; }
+
+	void SetSpiderLength(double l) { spider_length = l; }
+	void SetSpiderWidth(double w) { spider_width = w; }
+	void SetSpiderThick(double t) { spider_thick = t; }
+	void SetSpiderTess(int t) { spider_tess = t; }
+	void SetSpiderCurve(double c) { spider_curve = c; }
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
@@ -140,6 +156,13 @@ public:
 	int GetAxisStep() { return axis_step; }
 	int GetClamp() { return clamp; }
 	int GetUpdateAFM() { return update_AFM; }
+	int GetGrabObject() { return grab_object; }
+
+	double GetSpiderLength() { return spider_length; }
+	double GetSpiderWidth() { return spider_width; }
+	double GetSpiderThick() { return spider_thick; }
+	int GetSpiderTess() { return spider_tess; }
+	double GetSpiderCurve() { return spider_curve; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
@@ -192,6 +215,8 @@ public:
 
 	virtual int ChangeStaticFile(void *userdata=NULL);
 	virtual int ChangeHeightPlane(void *userdata=NULL);
+
+	virtual void ReloadGeometry()=0;
 
 	int IntersectLine(void *userdata=NULL);
 

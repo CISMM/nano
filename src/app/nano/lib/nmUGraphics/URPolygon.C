@@ -209,8 +209,16 @@ int URPolygon::SetTranszAll(void* userdata) {
 
 int URPolygon::SetRotxAll(void* userdata) {	
 	double rotx = *(double*) userdata;
-	const q_type &rot = this->GetLocalXform().GetRot();
-	this->GetLocalXform().SetRotate(rotx, rot[1], rot[2], rot[3]);
+
+	q_vec_type euler;
+	q_to_euler(euler, this->GetLocalXform().GetRot());
+
+	euler[2] = rotx;
+
+	q_type rot;
+	q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
@@ -227,8 +235,16 @@ int URPolygon::SetRotxAll(void* userdata) {
 
 int URPolygon::SetRotyAll(void* userdata) {	
 	double roty = *(double*) userdata;
-	const q_type &rot = this->GetLocalXform().GetRot();
-	this->GetLocalXform().SetRotate(rot[0], roty, rot[2], rot[3]);
+
+	q_vec_type euler;
+	q_to_euler(euler, this->GetLocalXform().GetRot());
+
+	euler[1] = roty;
+
+	q_type rot;
+	q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
@@ -245,8 +261,17 @@ int URPolygon::SetRotyAll(void* userdata) {
 
 int URPolygon::SetRotzAll(void* userdata) {	
 	double rotz = *(double*) userdata;
-	const q_type &rot = this->GetLocalXform().GetRot();
-	this->GetLocalXform().SetRotate(rot[0], rot[1], rotz, rot[3]);
+	
+	q_vec_type euler;
+	q_to_euler(euler, this->GetLocalXform().GetRot());
+
+	euler[0] = rotz;
+
+	q_type rot;
+	q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+
 
 	// if a tube file, send rot
 	if ((strstr(this->name, ".txt") != 0) && 
@@ -337,7 +362,6 @@ int URPolygon::Render(void * userdata){
 
 	}
 */
-
 	if(visible){		//if visible draw things
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();

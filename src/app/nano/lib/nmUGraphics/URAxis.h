@@ -25,6 +25,8 @@ public:
 
 	int ChangeStaticFile(void *userdata=NULL);
 	int ChangeHeightPlane(void *userdata=NULL);
+
+	void ReloadGeometry() {}
 };
 
 #endif

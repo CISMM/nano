@@ -477,7 +477,6 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 		q_vec_normalize(n1, n1);
 	
 		glNormal3f(n1[0], n1[1], n1[2]);
-//glNormal3f((float) sin(count), (float) cos(count), (float) sin(count));
 		glVertex4fv(v1);
 		glVertex4fv(v2);
 		glVertex4fv(v4);
@@ -513,8 +512,6 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 		q_vec_normalize(n1, n1);
 	
 		glNormal3f(n1[0], n1[1], n1[2]);
-
-//glNormal3f((float) sin(count), (float) cos(count), (float) sin(count));
 		glVertex4fv(v2);
 		glVertex4fv(v3);
 		glVertex4fv(v4);

@@ -2,6 +2,7 @@
 #include "WaveFrontFileGenerator.h"
 #include "MSIFileGenerator.h"
 #include "TubeFileGenerator.h"
+#include "SpiderGenerator.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -34,7 +35,7 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
     int index,i;
 
     index=strlen(fname);		//save filename
-    
+
     for(i=index-1; i>=0; i--){
         if(fname[i]=='.') break;
     }
@@ -44,6 +45,10 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
 	// added by David Borland for loading Shape Analysis tubes
 	else if (strncmp(fname + i + 1,"txt", 3) == 0) {
 		return new TubeFileGenerator(fname);
+	}
+	// added by David Borland for creating spider
+	else if (strncmp(fname + i + 1,"spi", 3) == 0) {
+		return new SpiderGenerator(fname);
 	}
     //added by Leila Plummer for loading objects from tube_foundry
     else if (strncmp(fname+i+1,"msi",3)==0){

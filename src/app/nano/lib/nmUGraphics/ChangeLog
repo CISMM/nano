@@ -1,3 +1,29 @@
+2002-05-06  David Borland <borland@cs.unc.edu>
+
+        * SpiderGenerator.C:  new file for the creation of spider TAMS objects
+
+        * SpiderGenerator.h:  new header file for SpiderGenerator.C
+
+        * FileGenerator.C:  added code for the inclusion of spider objects
+
+        * TubeFileGenerator.C:  changed some code for testing the new spider
+        objects
+
+        * WaveFrontGenerator.C:  changed some code for testing the new spider
+        objects
+
+        * URAxis.h:  added ReloadGeometry function for compatibility with 
+        spider objects
+
+        * URPolygon.C:  added compatibility with spider objects
+
+        * URender.C:  added compatibility with spider objects
+
+        * URender.h:  added variables and access functions for spider object
+        attributes
+
+        * nmUGraphics.dsp:  added SpiderGenerator.C and SpiderGenerator.h
+
 2002-04-26  David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C:  changed loaded tubes center so that scaling

@@ -73,11 +73,6 @@ void BuildList(URender *Pobject, GLuint dl,
 			   group* g);
 
 
-WaveFrontFileGenerator::WaveFrontFileGenerator(const char *fname)
-    : FileGenerator(fname, "obj")
-{
-}
-
 int WaveFrontFileGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array)
 {
     return Load(Pobject, Dlist_array);
@@ -481,14 +476,12 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	readfile.close();
-
 	
 	// add minimum extents of the height plane
 	Pobject->GetLocalXform().SetXOffset(minX);
 	Pobject->GetLocalXform().SetYOffset(minY);
 	Pobject->GetLocalXform().SetZOffset(z_value);
 	Pobject->GetLocalXform().SetTranslate(0, 0, 0);
-
 
 	return groups.size();
 }
@@ -539,9 +532,3 @@ void BuildList(URender *Pobject, GLuint dl,
 	}
 	glEndList();
 }
-
-
-
-
-
-
