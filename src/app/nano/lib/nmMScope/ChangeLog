@@ -1,3 +1,10 @@
+2002-09-30  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C (EnterDirectZControl): fixed strncmp sense
+	* nmm_MicroscopeRemoteGen.Cdef (RECEIVE_MSG WindowLineData): 
+	renormalize measure and aim lines when the first scan line is 
+	received so that they stay visible.
+
 2002-06-19 Jameson Miller <millerj@cs.unc.edu>
 	
 	* AFMState.h - autoscan tcl variable now a TclNet for

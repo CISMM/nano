@@ -1056,7 +1056,7 @@ long nmm_Microscope_Remote::EnterDirectZControl (float _max_z_step,
   char * msgbuf;
   vrpn_int32 len;	
 
-  if (!strncmp(d_dataset->heightPlaneName->string(), "Z Piezo", 7)) {
+  if (strncmp(d_dataset->heightPlaneName->string(), "Z Piezo", 7)) {
       // We are not looking at Z Piezo as our height plane
       // XXX Directz doesn't work with anything but Z Piezo, yet.
       fprintf (stderr, "WARNING: EnterDirectZControl Height plane not Z Piezo, "
