@@ -632,7 +632,7 @@ if {$bump_slider_min_limit != $bump_slider_max_limit} {
     generic_optionmenu $nmInfo(bumpscale).bump_dataset bumpsize_comes_from \
 	    "Bump plane" inputPlaneNames
     checkbutton $nmInfo(bumpscale).linear -text "linearize bumpscale" -variable \
-	    bumpscale.linear
+	    bumpscale_linear
     # Make a frame to hold the pull-down menu that selects from the list
     frame $nmInfo(bumpscale).pickframe
     pack $nmInfo(bumpscale).pickframe -side left -fill y
