@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "../ebeamWriter" /I "../../../../vrpn" /I "../../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "V_GLUT" /YX /FD /TP /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "." /I "../ebeamWriter" /I "../../../../vrpn" /I "../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmMP" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "V_GLUT" /D "VRPN_NO_STREAMS" /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -74,7 +74,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 vrpn.lib glut32_UNC.lib glu32.lib opengl32.lib wsock32.lib quat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept /libpath:"../../../../external/pc_win32/lib" /libpath:"../../../../../external/pc_win32/lib" /libpath:"../../../../vrpn/pc_win32_MTd" /libpath:"../../../../quat/pc_win32_MTd"
+# ADD LINK32 vrpn.lib glut32_UNC.lib glu32.lib opengl32.lib wsock32.lib quat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept /libpath:"../../../../external/pc_win32/lib" /libpath:"../../../../../external/pc_win32/lib" /libpath:"../../../../vrpn/pc_win32/Debug" /libpath:"../../../../quat/pc_win32/Debug"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -89,15 +89,11 @@ SOURCE=.\clmctrl.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\delay.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\edax_server.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\ebeamWriter\exposureManager.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\ebeamWriter\exposureManager.h
 # End Source File
 # Begin Source File
 
@@ -106,6 +102,10 @@ SOURCE=..\ebeamWriter\exposurePattern.C
 # Begin Source File
 
 SOURCE=..\ebeamWriter\exposurePattern.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ebeamWriter\exposureUtil.C
 # End Source File
 # Begin Source File
 
@@ -150,6 +150,10 @@ SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM_Remote.C
 # Begin Source File
 
 SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM_Remote.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ebeamWriter\patternShape.C
 # End Source File
 # Begin Source File
 
