@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Find the right ./XXX executable to run.
+# Depends on environment ($MY_NANO_???_DIR) and system ($HW_OS).
+
+APP_EXE=server;
+APP_DIR=app/ohmMeter;
+
+FULL_EXE=`../app_exec $APP_DIR $APP_EXE`;
+
+echo $FULL_EXE $*
+exec $FULL_EXE $*
+
