@@ -57,7 +57,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
-   d_textureAlpha("reg_texture_alpha", 1),
+   d_textureAlpha("colormap_texture_alpha", 1),
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
    d_resampleRatio("reg_resample_ratio", 0),
@@ -488,9 +488,10 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
         if (me->d_imageDisplay && me->d_textureDisplayEnabled) {
           // set up texture in graphics
           if (im) {
-            me->d_imageDisplay->setDisplayColorMap(im, 
+            me->d_imageDisplay->setDisplayColorMap(im,
                   me->d_2DImageCMap->getColorMapName(), "");
-            me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax, 
+            me->d_imageDisplay->setDisplayColorMapRange(im,
+                                                          dmin, dmax, 
                                                           cmin,cmax);
             me->d_imageDisplay->addImageToDisplay(im);
             me->d_imageDisplay->updateImage(im);
@@ -645,7 +646,7 @@ void nmr_RegistrationUI::handle_textureAlpha_change(
                                 me->d_registrationImageName2D.string());
     if (!im) return;
 
-    me->d_imageDisplay->updateAlpha(alpha);
+    me->d_imageDisplay->updateColorMapTextureAlpha(alpha);
     
     me->d_imageDisplay->updateImage(im);
 }
