@@ -48,6 +48,12 @@ int URAxis::SetProjTextAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
+int URAxis::SetClampAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 int URAxis::ScaleAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;

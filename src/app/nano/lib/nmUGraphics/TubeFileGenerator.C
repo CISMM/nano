@@ -59,6 +59,8 @@ typedef vector<float> vertex;
 typedef vector<vertex> verts;
 //typedef vector<verts> tubes;
 
+typedef vector<cylinder> cylinders;
+
 
 void BuildList(URender *Pobject, GLuint dl, verts vs, int & count);
 
@@ -73,13 +75,17 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	char* token;
 	ifstream readfile;
 
-        int i;
+	int i;
 	float radius, x, y, z, az, alt;
 	double theta;
+
 //	tubes t;				// gives a bunch of warnings because the name is too big...
-	verts t[10];			// go with static number for now...
+	verts t[10];			// go with static number for now...  10 tubes allowed
 	verts vs;
 	vertex v;
+
+	cylinder c;
+	cylinders cs;
 
 	q_vec_type p1;
 	q_vec_type p2;
@@ -88,6 +94,8 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	int tess = Pobject->GetTess();
 
 	int numtubes = 0;
+
+	bool newtube;
 
 	GLuint dl;
 
@@ -112,6 +120,13 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 					t[numtubes++] = vs;
 					vs.clear();
 				}
+
+				// get rid of last cylinder--it is bogus
+				if (cs.size() != 0 ) {
+					// get rid of last cylinder--it is bogus
+					cs.pop_back();
+				}
+				newtube = true;
 	
 				// get the radius of the new tube
 				token = strtok(NULL, " =\t\n");
@@ -165,11 +180,34 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 					Pobject->num_triangles += 2;	// two triangles per vertex
 				}
+				// do cylinder stuff
+				c.x1 = x;
+				c.y1 = y;
+				c.z1 = z;
+				if (!newtube) {	
+					// fill in last guys second point
+					cs.back().x2 = x;
+					cs.back().y2 = y;
+					cs.back().z2 = z;
+					// fill in length
+					cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
+											(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
+											(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
+																					
+				}
+				c.radius = radius;
+				c.az = az;
+				c.alt = alt;
+				cs.push_back(c);
+				newtube = false;
 			}
 		}
 	}
 	// add last tube
 	t[numtubes++] = vs;
+
+	// get rid of last cylinder--it is bogus
+	cs.pop_back();
 
 
 	// create space for triangles in Pobject
@@ -179,9 +217,12 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		Pobject->triangles[i] = new float[4];
 	}
 
-
-
-
+	// copy cylinders to Pobjects cylinder list
+	Pobject->num_cylinders = cs.size();
+	Pobject->cylinders = new cylinder[Pobject->num_cylinders];
+	for (i = 0; i < Pobject->num_cylinders; i++) {
+		memcpy(&Pobject->cylinders[i], &cs[i], sizeof(c));
+	}
 
 	// create geometry from list of vertices
 
@@ -202,7 +243,6 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		Dlist_array[i] = dl + i;
 	}
 
-
 	readfile.close();
 
 	return numtubes;  // should be number of display lists
@@ -220,8 +260,6 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 	q_vec_type n2;
 
 	int tess = Pobject->GetTess();
-
-printf("tess = %d\n", tess);
 
 	glNewList(dl, GL_COMPILE);	// init display list
 

@@ -42,6 +42,15 @@ int URPolygon::SetProjTextAll(void* userdata) {
 	else return ITER_STOP;
 }
 
+int URPolygon::SetClampAll(void* userdata) {
+	int setclamp = *(int*) userdata;
+
+	this->SetClamp(setclamp);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 int URPolygon::ChangeStaticFile(void* userdata) {
 	// modifies the scale and translation so appears in same place...
 
@@ -58,9 +67,6 @@ int URPolygon::ChangeStaticFile(void* userdata) {
 
 	this->GetLocalXform().SetTranslate(q2);
 
-	this->scale_triangles = scale;	// in case this object is a ShapeAnalyze nanotube
-									// file that we want to send to the AFM simulator
-
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
@@ -70,9 +76,6 @@ int URPolygon::ScaleAll(void* userdata) {
 	double scale = *(double*) userdata;
 
 	this->GetLocalXform().SetScale(scale);
-
-	this->scale_triangles = scale;	// in case this object is a ShapeAnalyze nanotube
-									// file that we want to send to the AFM simulator
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
@@ -223,9 +226,19 @@ int URPolygon::Render(void * userdata){
 				glEnable(GL_TEXTURE_GEN_T);
 				glEnable(GL_TEXTURE_GEN_R);
 				glEnable(GL_TEXTURE_GEN_Q);
-
 				glPushMatrix();
-				this->GetLocalXform().Push_As_OGL();
+
+				if (!this->GetClamp()) {
+					// don't clamp texture to object
+					this->GetLocalXform().Push_As_OGL();
+
+					// save the current Xform
+					this->GetSavedXform() = this->GetLocalXform();
+				}
+				else {
+					// clamp texture to object
+					this->GetSavedXform().Push_As_OGL();
+				}
 			}
 			else {
 				glDisable(GL_TEXTURE_2D);

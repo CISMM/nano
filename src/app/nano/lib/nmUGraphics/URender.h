@@ -52,6 +52,14 @@ typedef struct {
 	float blue;
 } RGB;
 
+typedef struct {
+	double x1, y1, z1;
+	double x2, y2, z2;
+	double radius;
+	double length;
+	double az;
+	double alt;
+} cylinder;
 
 class URender{
 friend class UTree;
@@ -68,6 +76,7 @@ protected:
 	int disp_proj_text;
 	int CCW;			// true if load as counter clockwise, false if load as clockwise
 	int tess;			// controls the number of faces along the nano-tube
+	int clamp;			// controls whether or not to clamp projected textures
 
 	//bounding box
 	BBOX bounds;	
@@ -97,6 +106,9 @@ protected:
 	//xform made public for access
 	Xform lxform;
 
+	//saved xform for clamping projective textures
+	Xform saved_xform;
+
 	
 public:
 
@@ -112,7 +124,7 @@ public:
 	void SetProjText(int b) { disp_proj_text = b; }
 	void SetCCW(int b) { CCW = b; }
 	void SetTess(int t) { tess = t; }
-
+	void SetClamp(int c) { clamp = c; }
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
@@ -120,6 +132,7 @@ public:
 	int ShowProjText() { return disp_proj_text; }
 	int GetCCW() { return CCW; }
 	int GetTess() { return tess; }
+	int GetClamp() { return clamp; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
@@ -140,6 +153,7 @@ public:
 	//info functions
 	URender_Type GetType(){return obj_type;}
 	Xform &GetLocalXform(){return lxform;}
+	Xform &GetSavedXform(){return saved_xform;}
 	double maxX(){ return bounds.xmax;}
 	double maxY(){ return bounds.ymax;}
 	double maxZ(){ return bounds.zmax;}
@@ -158,6 +172,7 @@ public:
 	// appropriate value -- called from tcl callbacks
 	virtual int SetVisibilityAll(void *userdata=NULL);
 	virtual int SetProjTextAll(void *userdata=NULL);
+	virtual int SetClampAll(void *userdata=NULL);
 	virtual int ScaleAll(void *userdata=NULL);
 	virtual int SetTransxAll(void *userdata=NULL);
 	virtual int SetTransyAll(void *userdata=NULL);
@@ -186,9 +201,9 @@ public:
 	// holds geometry for sending to afm simulator
 	float** triangles;
 	long num_triangles;
-	float scale_triangles;
 
-
+	cylinder* cylinders;
+	long num_cylinders;
 };
 
 //defines for virtual functions that will be used by the UTREE iterator

@@ -255,6 +255,12 @@ int URTexture::SetProjTextAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
+int URTexture::SetClampAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 int URTexture::ScaleAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;

@@ -96,6 +96,13 @@ int URender::SetProjTextAll(void * /*userdata*/) {
 	else return ITER_STOP;
 }
 
+int URender::SetClampAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Setting Clamp\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
 int URender::ScaleAll(void * /*userdata*/) {	
 	//base class does nothing
 	cerr << "Base class Scaling\n";
