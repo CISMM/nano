@@ -132,6 +132,7 @@ pid_t getpid();
 #include "CollaborationManager.h"
 #include "minit.h"
 #include "microscape.h"
+#include "index_mode.h"
 
 #include "error_display.h"
 /*********** Import Objects **************/
@@ -1171,6 +1172,7 @@ static vrpn_Connection * collab_forwarder_connection = NULL;
 static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
+
 struct MicroscapeInitializationState {
 
   MicroscapeInitializationState (void);
@@ -1182,8 +1184,6 @@ struct MicroscapeInitializationState {
   char *alignerName;
 
   vrpn_bool use_file_resolution;
-//    int num_x;  replaced by AFMImageState::grid_resolution.
-//    int num_y;
   int graphics_mode;
   char graphicsHost [256];
 
@@ -1237,13 +1237,13 @@ struct MicroscapeInitializationState {
   char colorplane [256];
   char colormap [256];
   char heightplane [256];
+
+  bool index_mode;
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
   alignerName(NULL),
   use_file_resolution(vrpn_TRUE),
-//    num_x (DATA_SIZE),
-//    num_y (DATA_SIZE),
   graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
   num_stm_files (0),
   num_image_files(0),
@@ -1281,7 +1281,9 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   colorplane[0] = '\0';
   colormap[0] = '\0';
   heightplane[0] = '\0';
-    magellanName[0]= '\0';
+  magellanName[0]= '\0';
+  
+  index_mode = false;
 }
 
 /*********
@@ -5241,6 +5243,8 @@ void ParseArgs (int argc, char ** argv,
 	    }
 	}
 	replay_rate = decoration->rateOfTime;
+      } else if ( strcmp( argv[i], "-index" ) == 0 ) {
+	istate->index_mode = true;
       } else if ( strcmp(argv[i],"-Loop_num")==0) {
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
@@ -5572,7 +5576,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-f infile] [-z scale] \n");
   fprintf(stderr, "       [-grid x y] [-perf]\n");
   fprintf(stderr, "       [-i streamfile rate][-o streamfile]\n");
-  fprintf(stderr, "       [-keybd] ");
+  fprintf(stderr, "       [-index] \n");
+  fprintf(stderr, "       [-keybd] \n");
   fprintf(stderr, "       [-region lowx lowy highx highy]\n");
   fprintf(stderr, "       [-fmods max min (Setpt V)] " );
   fprintf(stderr, "       [-fimgs max min (DrAmp V) setpt (V)]\n" );
@@ -5617,6 +5622,7 @@ void Usage(char* s)
   fprintf(stderr, "       -o: Write the STM data stream to streamfile\n");
   fprintf(stderr, "       -region: Scan from low to high in x and y\n");
   fprintf(stderr, "                (Default what scanner has, units are nm)\n");
+  fprintf(stderr, "       -index: produce an index of a stream file\n");
   fprintf(stderr, "       -keybd: Turn on keyboard options\n");
   fprintf(stderr, "       -relax: Perform relaxation compensation\n");
   fprintf(stderr, "       -norelax: Don't perform relaxation compensation\n");
@@ -6661,7 +6667,14 @@ int main (int argc, char* argv[])
     /* Parse the command line */
     ParseArgs(argc, argv, &istate);
 
-
+    /* Check set-up for indexing mode */
+    if( istate.index_mode == true )
+      if( !istate.afm.readingStreamFile )
+	{	
+	  cerr << "Error:  index mode requires a stream file" << endl;
+	  exit( -1 );
+	}
+    
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
 
@@ -7271,12 +7284,23 @@ microscope->ResetClock();
   graphicsTimer.start();
   collaborationTimer.start();
 
+  /* set up index mode, if we're doing that */
+  if( istate.index_mode == true )
+    {
+      cout << "Index mode:  from \"" << dataset->heightPlaneName->string( ) << "\"" << endl;
+      cout << "Index mode:  input stream:  " << istate.afm.inputStreamName << endl;
+      Index_mode::init( dataset->inputGrid->getPlaneByName( dataset->heightPlaneName->string() ), 
+			istate.afm.inputStreamName );
+    }
+
+
 /* 
  * main interactive loop
  */
 VERBOSE(1, "Entering main loop");
 
-  while( n<LOOP_NUM || !dataset->done ) {
+  while( n<LOOP_NUM || !dataset->done ) 
+    {
 #ifdef TIMING_TEST
 #define	TIM_LN	(7)
     /* draw new image for each eye  */
@@ -7622,6 +7646,19 @@ VERBOSE(1, "Entering main loop");
     if (aligner) {
        aligner->mainloop();
     }
+
+    // for index mode:
+    // if we've reached the end of the file, exit
+    if( istate.index_mode )
+      {
+	vrpn_File_Connection* conn = microscope_connection->get_File_Connection( );
+	if( conn == NULL )
+	  {
+	    // what?  how the heck are we in index mode with no file connection?
+	  }
+	else if( conn->eof( ) != 0 )
+	  { break; }
+      }
 
     /* One more iteration done */
     VERBOSE(4, "  Done with mainloop iteration");

@@ -26,6 +26,7 @@
 #include <microscape.h>
 
 #include "microscopeHandlers.h"
+#include "index_mode.h"
 #include "minit.h"  // for reset_phantom()
 
 
@@ -940,6 +941,11 @@ void handle_z_dataset_change(const char *, void * _mptr)
   graphics->setHeightPlaneName(dataset->heightPlaneName->string());
   graphics->causeGridRebuild();
   graphics->causeGridRedraw();
+  
+  // update index mode's idea of what the plane is
+  Index_mode::newPlane( dataset->inputGrid->getPlaneByName
+			(dataset->heightPlaneName->string() ) );
+
 }
 
 void handle_color_dataset_change(const char *, void * /*_mptr*/)
