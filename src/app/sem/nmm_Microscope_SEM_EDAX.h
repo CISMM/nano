@@ -5,7 +5,6 @@
 #include "nmb_Device.h"
 #include "nmm_Microscope_SEM.h"
 #include "nmm_EDAX.h"  // a bunch of EDAX header files and definitions
-#include "list.h"
 #include "patternShape.h" // this file as well as others in ebeamWriter
 #include "exposurePattern.h"  // needs to be put into a library
 
