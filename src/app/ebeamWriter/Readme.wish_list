@@ -1,0 +1,20 @@
+
+list as of (9/12/01):
+ * make a way to scan subimages (where the fiducials are) with a different
+   resolution or dwell time to get better alignment
+ * make a way to draw patterns offline and associate them with an image so
+   that when that image is aligned later, the pattern can be warped in the
+   same way
+ * use different color to indicate when a shape hasn't been finished
+ * use better colors to indicate exposure levels
+ * save all parameters to a file (current, dot and line spacing...)
+ * allow selection and more modification features for drawing
+ * add mechanism to associate a pattern file with an image file such
+   that transformations applied to the image also get applied to the
+   pattern - this will allow user to use predrawn patterns
+ * add a way to save transformations associated with image files
+ * add a measure marker feature to make it easier to measure distances
+ * add some kind of way to keep user from using a dose which
+   is below the minimum possible dose given the current, dot, and
+   line spacing - currently there is just a printed warning when the
+   dose is set below what is possible
