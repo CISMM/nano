@@ -1,3 +1,9 @@
+2001-03-14  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscape.c (CenterUbergraphics): New function to ensure that
+	the local axis of imported objects is always centered around the
+	center of the current height plane
+
 2001-03-13  Jason Clark  <jclark@cs.unc.edu>
 
 	* import.C: See below

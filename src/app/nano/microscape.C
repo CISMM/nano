@@ -340,6 +340,9 @@ void setupSynchronization (CollaborationManager * cm,
                            nmb_Dataset * dset,
                            nmm_Microscope_Remote * m);
 
+//Ubergraphics centering
+static void CenterUbergraphics(void);
+
 /*******************
  * Global variables
  *******************/
@@ -3089,7 +3092,6 @@ static void openDefaultMicroscope()
     }
     microscope_connection = NULL;
     vrpnLogFile = NULL;
-
 }
 
 /** See if the user has given a name to the export plane other
@@ -7088,6 +7090,7 @@ int main (int argc, char* argv[])
   temp->SetVisibility(0);    
   World.TSetContents(temp);
  
+  CenterUbergraphics();
   initializeInteraction();
 
   // did these in createNewMicroscope() but things were NULL then.
@@ -8693,8 +8696,22 @@ void center (void) {
 
 collabVerbose(5, "center:  updateWorldFromRoom().\n");
   updateWorldFromRoom(&lock);
+
+  CenterUbergraphics();
 }
 
+static void CenterUbergraphics (void) {
+    //Make sure that Ubergraphics are set up such that any imported
+    //objects are placed at the center
+    float x, y, z;
+  
+    // find the transforms to take us to the centered view
+    get_Plane_Centers(&x, &y, &z);
+
+    URender &obj = World.TGetContents();
+    Xform &local = obj.GetLocalXform();
+    local.SetTranslate(x, y, z);
+}
 
 
 void get_Plane_Centers (float * offsetx,
