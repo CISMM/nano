@@ -95,6 +95,7 @@ void nmui_Component::add (Tcl_Netvar * newLinkvar) {
   }
 
   d_vars[d_numVars] = newLinkvar;
+  newLinkvar->bindConnection( d_connection );
   d_numVars++;
 }
 
@@ -119,6 +120,7 @@ void nmui_Component::add (nmui_Component * newComponent) {
   }
 
   d_components[d_numComponents] = newComponent;
+  newComponent->bindConnection( d_connection );
   d_numComponents++;
 }
 
@@ -146,12 +148,14 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
   }
 
   sprintf(namebuf, "nmui Component %s", d_name);
-  d_myId = d_connection->register_sender(namebuf);
-  d_syncRequest_type =
+  if( d_connection != NULL )
+  {
+    d_myId = d_connection->register_sender(namebuf);
+    d_syncRequest_type =
       d_connection->register_message_type(d_syncRequest_type_string);
-  d_syncComplete_type =
+    d_syncComplete_type =
       d_connection->register_message_type(d_syncComplete_type_string);
-
+  }
 //fprintf(stderr, "## Bound connection %ld for nmuiComponent %s.\n",
 //c, d_name);
 }
@@ -227,8 +231,9 @@ void nmui_Component::requestSync (void) {
   timeval now;
 
   gettimeofday(&now, NULL);
-  d_connection->pack_message(0, now, d_syncRequest_type, d_myId, NULL,
-                             vrpn_CONNECTION_RELIABLE);
+  if( d_connection != NULL )
+    d_connection->pack_message(0, now, d_syncRequest_type, d_myId, NULL,
+                               vrpn_CONNECTION_RELIABLE);
 
 //fprintf(stderr, "++ nmui_Component::requestSync sent.\n");
 }
@@ -351,9 +356,10 @@ int nmui_Component::handle_syncRequest (
   }
 
   gettimeofday(&now, NULL);
-  c->d_connection->pack_message(0, now, c->d_syncComplete_type,
-                                c->d_myId, NULL,
-                                vrpn_CONNECTION_RELIABLE);
+  if( c->d_connection != NULL )
+    c->d_connection->pack_message(0, now, c->d_syncComplete_type,
+                                  c->d_myId, NULL,
+                                  vrpn_CONNECTION_RELIABLE);
   return 0;
 }
 

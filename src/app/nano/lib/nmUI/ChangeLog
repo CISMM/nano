@@ -1,3 +1,10 @@
+2002-03-15  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmui_Component.C (all):  check for null connection before doing 
+	any stuff on the connection
+	(add):  bind the current connection to the added element.  this 
+	lets us add elements to a component after it's been bound.
+
 2002-03-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmui_PlaneSync.C (handleCalculatedPlaneSync):  added some
