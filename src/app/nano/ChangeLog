@@ -1,3 +1,8 @@
+2001-11-03 Jameson Miller<millerj@cs.unc.edu>
+	*interaction.c - changed the position repoerted to the direct 
+	step window to be the acutal position reported of the 
+	microscope, instead of the position of the graphic on screen.
+
 2001-10-31  Yoni Fridman  <fridman@cs.unc.edu>
 
 	* microscape.c (handle_analyze_shape): Removed the second calling
