@@ -26,6 +26,7 @@ public:
     int createNewRegion();
     void destroyRegion(int region);
     nmg_SurfaceRegion* getRegion(int region);
+    nmb_Dataset *getDataset();
 
     void setRegionControl(BCPlane *control, int region);
     void setMaskPlane(nmg_SurfaceMask* mask, int region);

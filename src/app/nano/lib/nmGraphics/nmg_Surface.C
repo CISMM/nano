@@ -153,6 +153,16 @@ getRegion(int region)
     return (nmg_SurfaceRegion*)NULL;
 }
 
+////////////////////////////////////////////////////////////
+//    Function: nmg_Surface::getDataset
+//      Access: Public
+// Description:
+////////////////////////////////////////////////////////////
+nmb_Dataset* nmg_Surface::
+getDataset()
+{
+  return d_dataset;
+}
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Surface::setRegionControl

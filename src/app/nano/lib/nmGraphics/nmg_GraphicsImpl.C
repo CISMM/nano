@@ -1316,21 +1316,18 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
     return;
   }
   
-  int image_width = im->width();
-  int image_height = im->height();
-
-        int pixelType;
-        if (im->pixelType() == NMB_UINT8){
-            pixelType = GL_UNSIGNED_BYTE;
-        } else if (im->pixelType() == NMB_UINT16){
-            pixelType = GL_UNSIGNED_SHORT;
-        } else if (im->pixelType() == NMB_FLOAT32){
-            pixelType = GL_FLOAT;
-        } else {
-            fprintf(stderr, "nmb_GraphicsImp::createRealignTextures:"
-                 "can't handle pixel type\n");
-            return;
-        }
+  int pixelType;
+  if (im->pixelType() == NMB_UINT8){
+      pixelType = GL_UNSIGNED_BYTE;
+  } else if (im->pixelType() == NMB_UINT16){
+      pixelType = GL_UNSIGNED_SHORT;
+  } else if (im->pixelType() == NMB_FLOAT32){
+      pixelType = GL_FLOAT;
+  } else {
+      fprintf(stderr, "nmb_GraphicsImp::createRealignTextures:"
+           "can't handle pixel type\n");
+      return;
+  }
 //  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
 //                   im->width() + im->borderXMin + im->borderXMax(),
 //                   im->height() + im->borderYMin() + im->borderYMax(),
@@ -1364,26 +1361,26 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
               im_copy->width() + im_copy->borderXMin()+im_copy->borderXMax(),
               im_copy->height() + im_copy->borderYMin()+im_copy->borderYMax(),
               GL_LUMINANCE, pixelType, im_copy->pixelData());
-    delete im_copy;
+    nmb_Image::deleteImage(im_copy);
   } else {
     gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
                    im->width() + im->borderXMin()+im->borderXMax(),
                    im->height() + im->borderYMin()+im->borderYMax(),
                    GL_LUMINANCE, pixelType, im->pixelData());
   }
-    GLenum err = glGetError();
-    if (err!=GL_NO_ERROR) {
-      printf(" Error making realign texture: %s.\n", gluErrorString(err));
-    }
+  GLenum err = glGetError();
+  if (err!=GL_NO_ERROR) {
+    printf(" Error making realign texture: %s.\n", gluErrorString(err));
+  }
 //  }
-        g_tex_image_width[COLORMAP_TEX_ID] = im->width();
-        g_tex_image_height[COLORMAP_TEX_ID] = im->height();
-        g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+
-                                           im->borderXMin()+im->borderXMax();
-        g_tex_installed_height[COLORMAP_TEX_ID] = im->height()+
-                                           im->borderYMin()+im->borderYMax();
-        g_tex_image_offsetx[COLORMAP_TEX_ID] = im->borderXMin();
-        g_tex_image_offsety[COLORMAP_TEX_ID] = im->borderYMin();
+  g_tex_image_width[COLORMAP_TEX_ID] = im->width();
+  g_tex_image_height[COLORMAP_TEX_ID] = im->height();
+  g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+
+                                     im->borderXMin()+im->borderXMax();
+  g_tex_installed_height[COLORMAP_TEX_ID] = im->height()+
+                                     im->borderYMin()+im->borderYMax();
+  g_tex_image_offsetx[COLORMAP_TEX_ID] = im->borderXMin();
+  g_tex_image_offsety[COLORMAP_TEX_ID] = im->borderYMin();
 
   return;
 

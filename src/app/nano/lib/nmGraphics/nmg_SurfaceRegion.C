@@ -234,6 +234,14 @@ setUpdateAndTodo(int low_row, int high_row)
 void nmg_SurfaceRegion::
 setTexture()
 {
+    double surface_z_scale = 1.0;
+    nmb_Dataset *data = d_parent->getDataset();
+    if (data) {
+      BCPlane *heightPlane =
+           data->inputGrid->getPlaneByName(g_heightPlaneName);
+      surface_z_scale = heightPlane->scale();
+    }
+
     switch (d_currentState.textureDisplayed) {
     case nmg_Graphics::NO_TEXTURES:
         // nothing to do here
@@ -325,8 +333,7 @@ setTexture()
         GLdouble texture_matrix[16];
         double x_scale_factor = 1.0, y_scale_factor = 1.0;
         double x_translate = 0.0, y_translate = 0.0;
-        
-        
+
         switch (d_currentState.textureTransformMode) {
         case nmg_Graphics::RULERGRID_COORD:
             // use values from the older rulergrid adjustment interface
@@ -419,6 +426,7 @@ setTexture()
             glTranslated(x_translate, y_translate, 0.0);
             glScaled(x_scale_factor, y_scale_factor, 1.0);
             glMultMatrixd(g_texture_transform);
+            glScaled(1.0, 1.0, 1.0/surface_z_scale);
             break;
             //case nmg_Graphics::REMOTE_COORD;
             //glLoadIdentity();
@@ -798,6 +806,7 @@ renderRegion()
     int i;
     
     SaveRenderState();
+
     setTexture();    
 
     g_config_filled_polygons = d_currentState.filledPolygonsEnabled;

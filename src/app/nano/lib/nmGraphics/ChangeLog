@@ -1,3 +1,13 @@
+2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C: removed some compiler warnings
+	* nmg_Surface.C (getDataset): new function for use by nmg_SurfaceRegion
+	* nmg_SurfaceRegion.C (setTexture): inserted a glScale to compensate
+	for the z scale of the height plane so that textures show up on the
+	same place on the surface regardless of what z scale is set
+	(this wasn't an issue until I looked at textures projected in
+	directions other than from straight above.)
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* graphics_globals.h : reorder #includes, fix brackets.
