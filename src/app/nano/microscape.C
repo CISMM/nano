@@ -226,6 +226,11 @@ static imported_obj_list* object_list = NULL;
 #include <vrpn_Dial.h>
 
 
+//---------------------------------------------------------------------
+// Video capture stuff
+#include <vfw.h>
+
+
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.
 
@@ -452,6 +457,19 @@ Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 
 Tclvar_string    screenImageFileType("screenImage_format", "");
 Tclvar_string newScreenImageFileName("screenImage_filename", "");
+
+// KENT: video capture stuff
+
+static void handle_videoCaptureBegin_change(const char *new_value, void *userdata);
+extern void handle_videoCaptureEnd_change(int new_value, void *userdata);
+
+// Filename to save video into.
+Tclvar_string videoCaptureFilename("video_capture_filename", "");
+Tclvar_int videoCaptureEnd("video_capture_end", 0);
+
+extern int save_frame;
+static void close_video_file();
+
 
 
 //-----------------------------------------------------------------------
@@ -4453,6 +4471,115 @@ static void handle_screenImageFileName_change (const char *, void *userdata)
   newScreenImageFileName = (const char *) "";
 }
 
+
+// KENT:  2003-04-20
+extern PAVISTREAM pStream = NULL;
+static PAVIFILE pAVI = NULL;
+extern unsigned int save_width = 0, save_height = 0;
+extern unsigned char * read_buffer = NULL;
+
+static void open_video_file(const char *a_sFilename, unsigned int a_nWidth, unsigned int a_nHeight, int a_nFrameRate) {
+    unsigned int extrabytes, bytesize;
+	/// CD: I think I meddled with this, but I don't remember how/why... sorry.
+	extrabytes = (4 - (a_nWidth * 3) % 4) % 4;
+	//extrabytes = 3 * ((((a_nWidth / 4) + (width % 4 != 0 ? 1 : 0)) * 4) - width);
+
+    // This is the size of the padded bitmap
+    bytesize = (a_nWidth * 3 + extrabytes) * a_nHeight;
+
+	read_buffer = (unsigned char *) malloc(sizeof(unsigned char) * bytesize);
+
+	BITMAPINFOHEADER bmpInfoHeader;
+    // Fill the bitmap info structure
+    bmpInfoHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpInfoHeader.biWidth = a_nWidth;
+    bmpInfoHeader.biHeight = a_nHeight;
+    bmpInfoHeader.biPlanes = 1;
+    bmpInfoHeader.biBitCount = 24;			// 24 bit per pixel
+    bmpInfoHeader.biCompression = BI_RGB;
+    bmpInfoHeader.biSizeImage = bytesize;
+    bmpInfoHeader.biXPelsPerMeter = 0;
+    bmpInfoHeader.biYPelsPerMeter = 0;
+    bmpInfoHeader.biClrUsed = 0;
+    bmpInfoHeader.biClrImportant = 0;
+
+	/// CD: Okay, here's the AVI stuff I added...
+
+	AVIFileInit();
+	AVISTREAMINFO anInfo;
+	memset(&anInfo, 0, sizeof(anInfo));
+
+	// Create the AVI file (plus a video stream)
+	DeleteFile(a_sFilename);
+	int ret = AVIFileOpen(&pAVI, a_sFilename, OF_CREATE | OF_SHARE_DENY_NONE | OF_READWRITE, NULL);
+	if (ret != 0) {
+		switch (ret) {
+		case AVIERR_BADFORMAT: printf("corrupt file?\n"); break;
+		case AVIERR_MEMORY: printf("insufficient memor\n"); break;
+		case AVIERR_FILEREAD: printf("file read error\n"); break;
+		case AVIERR_FILEOPEN: printf("file open error\n"); break;
+		case REGDB_E_CLASSNOTREG: printf("file type unknown\n"); break;
+		default: printf("unknown error %u\n", ret);
+		}
+	}
+	anInfo.fccType = streamtypeVIDEO;
+	anInfo.fccHandler = 0;
+	anInfo.dwScale = a_nFrameRate; // frame rate...
+	anInfo.dwRate = anInfo.dwScale * anInfo.dwScale; // dwRate / dwScale = frame rate... (this is a wierd way to do it)
+	anInfo.dwLength = 1; // # of frames...
+	anInfo.dwQuality = -1; // default quality = -1, 0 to 10000 otherwise		
+	RECT aRect; aRect.left = 0; aRect.right = a_nWidth; aRect.top = 0; aRect.bottom = a_nHeight;
+	anInfo.rcFrame = aRect;
+	strcpy(anInfo.szName, a_sFilename);
+	if (AVIFileCreateStream(pAVI, &pStream, &anInfo) != 0)
+		fprintf(stderr, "failed to open file\n");
+	AVIStreamSetFormat(pStream, 0, &bmpInfoHeader, sizeof(BITMAPINFOHEADER));
+}
+
+static void close_video_file() {
+	// done!
+	free(read_buffer);
+	read_buffer = NULL;
+	AVIStreamRelease(pStream);
+	pStream = NULL;
+	AVIFileRelease(pAVI);
+	pAVI = NULL;
+	AVIFileExit();
+}
+
+static void handle_videoCaptureBegin_change(const char *, void *userdata)
+{
+	// See if the user has given a name other than ""
+	if (strlen(videoCaptureFilename.string()) > 0) {
+
+		if (save_frame) {
+			close_video_file();
+		}
+		save_frame = 1;
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		save_width = viewport[2] & 0xffffffc;
+		save_height = viewport[3] & 0xfffffffc;;
+		//printf("saving %u x %u\n", save_width, save_height);
+		open_video_file(videoCaptureFilename.string(), save_width, save_height, 15);
+		glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+		videoCaptureFilename = (const char *) "";
+	}
+}
+
+extern void handle_videoCaptureEnd_change(int, void *userdata)
+{
+	if (save_frame) {
+		//printf("ending capture\n");
+		close_video_file();
+		save_frame = 0;
+		videoCaptureEnd = 0;
+	}
+}
+
+
+
 static void handle_analyze_shape(vrpn_int32, void *)
 {
     if (analyze_shape == 0) {
@@ -5264,6 +5391,12 @@ void setupCallbacks (nmg_Graphics * g) {
   // do call back when name changes
   newScreenImageFileName = (const char *) "";
   newScreenImageFileName.addCallback(handle_screenImageFileName_change, g);
+
+  // KENT: do callback when name of output video changes
+  videoCaptureFilename = (const char *) "";
+  videoCaptureFilename.addCallback(handle_videoCaptureBegin_change, NULL);
+  videoCaptureEnd = 0;
+  videoCaptureEnd.addCallback(handle_videoCaptureEnd_change, NULL);
 }
 
 void setupCallbacks (vrpn_ForceDevice_Remote * p) {
