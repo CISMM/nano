@@ -40,6 +40,9 @@ void updateWorldFromRoom (v_xform_type * src = NULL);
 /** variable for Z position of microscope for Direct_step */
 extern double z_pos;
 
+//set the plane for direct Z if setpoint is now exceeded
+void set_directZ_plane_point(int);
+
 extern TclNet_float tcl_lightDirX;
 extern TclNet_float tcl_lightDirY;
 extern TclNet_float tcl_lightDirZ;

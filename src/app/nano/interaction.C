@@ -75,9 +75,6 @@
 /***************************
  * Local Defines
  ***************************/
-// maybe should be defined in nmb_Types.h
-
-#define DIRECT_Z_PLANE_MODE 100
 
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
@@ -330,6 +327,8 @@ int doPositionScanline(int, int);
 
 //variable for if the plane set for direct Z (when setpoint is exceeded) is valid
 static int directZ_plane_set = 0;
+static q_vec_type last_directZ_point; //point where plane for directZ was last set
+static q_vec_type current_directZ_point; //current point
 
 //New stuff by Renee
 //These variables are watched by Tcl sliders in the adhesion and friction
@@ -1158,15 +1157,7 @@ void setupHaptics (int mode) {
 	}
 	
 	switch (mode) {
-	
-	case DIRECT_Z_PLANE_MODE:
-		//Direct_Z_PLANE_MODE not enumerated with rest of *_*_MODE's...
-		//but up at top.
-		
-		haptic_manager.setSurface(haptic_manager.d_directZPlane);
-		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
-		break;
-		
+
     case USER_PLANE_MODE:
 		haptic_manager.setSurface(haptic_manager.d_canned);
 		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
@@ -2000,10 +1991,13 @@ int specify_directZ_force(int whichUser)
      // feel anything.
      if (microscope->state.modify.freespace_normal_force == BOGUS_FORCE) {
 	forceDevice->setFF_Force(0.0, 0.0, 0.0);
+	forceDevice->setFF_Jacobian(0,0,0,  0,0,0,  0,0,0);
 	return 0;
      }
      point[X] = microscope->state.data.inputPoint->x();
      point[Y] = microscope->state.data.inputPoint->y();
+	 //point[Z] = microscope->state.data.inputPoint->z();
+	 //z position does not get reported when in direct Z mode?
 
      // Scale the Z value by the scale factor of the currently-displayed
      // data set.  XXX This assumes that the one mapped to height display is
@@ -2027,7 +2021,7 @@ int specify_directZ_force(int whichUser)
      }
 
      point[Z] = value->value()*plane->scale();
-
+ 
     double current_force;
 
     // Get the current value of the internal sensor, which tells us 
@@ -2065,9 +2059,10 @@ int specify_directZ_force(int whichUser)
 
 
     if (!forceDevice) return 0;
-
+	
+	if(current_force < microscope->state.modify.max_z_setpoint) {
     // This should be where the user is currently located.
-    forceDevice->setFF_Origin(point[Q_X], point[Q_Y], point[Q_Z]);
+		forceDevice->setFF_Origin(point[Q_X], point[Q_Y], point[Q_Z]);
     // This is the force measured by the microscope, * scale factor, 
     // * the direction (up = positive z).
     forceDevice->setFF_Force(diff_force*up[Q_X]*directz_force_scale, 
@@ -2079,9 +2074,62 @@ int specify_directZ_force(int whichUser)
     forceDevice->setFF_Radius(0.02); // 2cm radius of validity
     // this actually turns on the force field- do that later. 
 
+   directZ_plane_set = 0; 
+	} else if((directZ_plane_set) && (current_directZ_point[2] > last_directZ_point[2])){
+		// the setpoint has been exceeded, and a plane has been set previously, but we are 
+		// now above the point set. set the jacobian to 0 so that user can pull phantom
+		// back with experiencing any opposing force
+		forceDevice->setFF_Jacobian(0,0,0, 0,0,0, 0,0,0);
+		directZ_plane_set = 0;
+	} else {
+		//set the plane if need be, else, do nothing
+		if(!directZ_plane_set) {
+			set_directZ_plane_point(whichUser);
+			directZ_plane_set = 1;
+		}
+
+	}
     return 0;
 }
 
+//this function sets up a plane force using Force fields.
+//this funtion is called when the setpoint is exceeded in directZ mode.
+void set_directZ_plane_point(int whichUser) {
+
+     q_vec_type		up = { 0.0, 0.0, 1.0 };
+     v_xform_type               WorldFromTracker, TrackerFromWorld;
+
+	 q_vec_copy(last_directZ_point, current_directZ_point);
+	 // got user's hand position and force direction (up) in microscope space, 
+     // XForm into hand-tracker space
+     // Rotate, Xlate and scale point from world space to hand-tracker space.
+     // The normal direction just needs rotating.
+     v_x_compose(&WorldFromTracker,
+		 &v_world.users.xforms[whichUser],
+		 &v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER]);
+
+     v_x_invert(&TrackerFromWorld, &WorldFromTracker);
+
+     v_x_xform_vector( current_directZ_point, &TrackerFromWorld, current_directZ_point );
+	 q_xform(up, TrackerFromWorld.rotate, up);
+
+	  float kSpring = 300; //feels like a good number
+	  int i,j;
+	  float c[9];
+
+	  forceDevice->setFF_Origin(current_directZ_point[0], current_directZ_point[1], current_directZ_point[2]);
+	  //the origin of the forcefield will be the current position of the phantom
+
+	  // introduce equivilant of plane force here
+	  // code taken from vrpn_ForceDevice for plane_constraint
+	  for (i = 0; i < 3; i++) {
+	    for (j = 0; j < 3; j ++) {
+	      c[i + j * 3] = (-kSpring * up[i] * up[j]);
+	    }
+	  }
+		forceDevice->setFF_Jacobian(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8]);
+		forceDevice->setFF_Radius(100.0); //infinity
+}
 /// used in meas_cross 
 #define IABS(i,e)	(((i)=(e)) < 0 ? (i)=-(i) : (i))
 /**
@@ -3291,6 +3339,8 @@ int doFeelLive (int whichUser, int userEvent)
 			  //just entered modify mode, we want to set a new plane for direct Z
 			  // if we need one.
 			  directZ_plane_set = 0;
+
+			  forceDevice->setFF_Force(0.0f, 0.0f, 0.0f);
 		  }
 	  
 	  /* Request a reading from the current location, 
@@ -3307,50 +3357,16 @@ int doFeelLive (int whichUser, int userEvent)
   
   if (( microscope->state.modify.control == DIRECTZ) &&
 	  (tcl_commit_pressed)) {
-	  
-	  // test to see if we have exceeded the force setpoint.
-	  // if not, than use dirct Z forces. if we have exceeded the setpoint
-	  // than set up and use a plane force.
-	  
-	  double current_force;    //current force on microscope
-	  
-	  // Get the current value of the internal sensor, which tells us 
-	  // the force the tip is experiencing.
-	  Point_value *forcevalue =
-		  microscope->state.data.inputPoint->getValueByName("Internal Sensor");
-	  
-	  if (forcevalue == NULL) {
-		  fprintf(stderr, "Error in specify_directZ_force: "
-			  "could not get force value!\n");
-		  return -1;
-	  }
-	  
-	  current_force = forcevalue->value();
-	  
-	  if (current_force >= microscope->state.modify.max_z_setpoint) {
-		  //set point has been exceeded, introduce plane force
-		  monitor.stopForceField();
-		  setupHaptics(DIRECT_Z_PLANE_MODE);
-		  //has the directZplane been set?
-		  if(!directZ_plane_set) {
-			  haptic_manager.d_directZPlane->set_direct_z_plane(clipPos[0], clipPos[1], clipPos[2]);
-			  directZ_plane_set = 1; //plane has been set
-		  }
-		  touch_surface(whichUser, clipPos);
-		  monitor.startSurface();
-	  } else {
-		  //if we have exceeded the force limit, and now are not exceeding the force limit
-		  // the plane set up is no longer valid
-		  directZ_plane_set = 0;
-		  
 		  // Stop using the plane to apply force
 		  monitor.stopSurface();
+		  q_vec_copy(current_directZ_point, clipPos); 
+		  //copy current point so directZ can set plane if setpoint is exceeded
 		  
 		  // Start using the forcefield to apply a constant force.
 		  // Apply force to the user based on current measured force 
 		  specify_directZ_force(whichUser);
 		  monitor.startForceField();
-	  }
+	  
   } else {
 	  setupHaptics(USER_PLANEL_MODE);
 	  // Apply force to the user based on current sample points
@@ -4110,7 +4126,6 @@ void initializeInteraction (void) {
   haptic_manager.d_gridFeatures = new nmui_GridFeatures
                                        (haptic_manager.d_canned);
   haptic_manager.d_pointFeatures = new nmui_PointFeatures;
-  haptic_manager.d_directZPlane = new nmui_HSDirectZPlane(dataset, decoration);
 }
 
 
