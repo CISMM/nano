@@ -3054,7 +3054,7 @@ int nmm_Microscope_Remote::handle_ForceCurveData (void * userdata,
       if (!curves[i]) mem_err = 1;
     }
   }
-  z_values = new float[num_points];
+  z_values = new float [num_points];
   if (!z_values) mem_err = 1;
 
   //microscope->GetRasterPosition(x, y);
@@ -4199,16 +4199,18 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
 	   " type %ld at (%g, %g), time %ld:%ld\n",
            _type, _x, _y, _sec, _usec);
     printf("  Raw values:");
-    for (i = 0; i < _fieldCount; i++)
+    for (i = 0; i < _fieldCount; i++) {
       printf(" %g", _fields[i]);
+    }
     printf("\n");
   }
 
   // Ignore TOP_PUNCH results for the most part, since
   // they will have less real data than the bottom
   // punches and will mess up feel mode.
-  if (_type == SPM_TOP_PUNCH_RESULT_DATA)
+  if (_type == SPM_TOP_PUNCH_RESULT_DATA) {
     return;
+  }
 
   // Make the report.  This has the side effect of updating
   // the inputPoint values and, if d_accumulatePointResults,
@@ -4225,6 +4227,7 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
   if (spm_verbosity >= 1) {
     state.data.inputPoint->print("  Result:");
   }
+
   // Look up the value that corresponds to what is
   // mapped to the heightGrid, if we are getting that
   // data set.  This will make what we feel match what
@@ -4236,11 +4239,13 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
   // height.
   if (z_value) {
     height = z_value->value();
+
     // If the height needs adjusting, do the adjustment, maybe using
     // a stored value. 
     // Otherwise fix_height will leave the height alone. 
     height = d_relax_comp.fix_height(_sec, _usec, height);
     z_value->setValue(height);
+
     //Store this height 
     state.lastZ = height;
   }
@@ -4248,20 +4253,22 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
   //XXX Drift compensation taken out
 
   // splat this point onto the grid
-  if (state.doSplat && !d_relax_comp.is_ignoring_points())
+  if (state.doSplat && !d_relax_comp.is_ignoring_points()) {
     ptSplat(&state.lost_changes, d_dataset->inputGrid, state.data.inputPoint);
-
-  // set the background color
-  if (state.acquisitionMode == MODIFY)
-    d_decoration->mode = nmb_Decoration::MODIFY;  // red if modifying
-  else{
-    d_decoration->mode = nmb_Decoration::FEEL;  // yellow if just touching
-						// or moving to start position
-						// or relaxing
   }
 
-  if (state.readingStreamFile && !state.cannedLineVisible)
+  // set the background color
+  if (state.acquisitionMode == MODIFY) {
+    // red if modifying
+    d_decoration->mode = nmb_Decoration::MODIFY;
+  } else {
+    // yellow if just touching or moving to start position or relaxing
+    d_decoration->mode = nmb_Decoration::FEEL;
+  }
+
+  if (state.readingStreamFile && !state.cannedLineVisible) {
     state.cannedLineVisible = VRPN_TRUE;
+  }
 
   // if it's a modification result, display it
   if ((state.acquisitionMode == MODIFY || state.cannedLineVisible) &&
@@ -4279,8 +4286,10 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
           state.modify.slow_line_currPt != NULL) {
           float z1 =  state.modify.slow_line_prevPt->z();
           float z2 =  state.modify.slow_line_currPt->z();
-          z_value->setValue( z2*(state.modify.slow_line_position_param) +
-              z1*(1.0-state.modify.slow_line_position_param));
+          if (z_value) {
+            z_value->setValue( z2*(state.modify.slow_line_position_param) +
+                z1*(1.0-state.modify.slow_line_position_param));
+          }
       } else {
           fprintf(stderr, "RcvResultData: expected init_slow_line to be done (programmer error)\n");
       }
@@ -4320,16 +4329,21 @@ void nmm_Microscope_Remote::RcvResultData (long _type,
 						// store the force curve
      
   }
-  // latency compensation
-  d_decoration->trueTipLocation[0] = _x;
-  d_decoration->trueTipLocation[1] = _y;
-  d_decoration->trueTipLocation[2] = z_value->value();
-  d_decoration->trueTipLocation_changed = 1;
+
+  if (z_value) {
+    // Latency compensation
+    // !z_value iff we're replaying a stream file and using a derived
+    // plane for height.
+    d_decoration->trueTipLocation[0] = _x;
+    d_decoration->trueTipLocation[1] = _y;
+    d_decoration->trueTipLocation[2] = z_value->value();
+    d_decoration->trueTipLocation_changed = 1;
+  }
 
   if (state.acquisitionMode == MODIFY) {
      double grid_x, grid_y;
      d_dataset->inputGrid->worldToGrid((double)_x, (double)_y, grid_x, grid_y);
-     if (!d_mod_window_initialized){
+     if (!d_mod_window_initialized) {
         d_mod_window_min_x = (vrpn_int32)grid_x;
         d_mod_window_min_y = (vrpn_int32)grid_y;
         d_mod_window_max_x = (vrpn_int32)grid_x;
