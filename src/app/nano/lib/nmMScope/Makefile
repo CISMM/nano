@@ -1,4 +1,4 @@
-USES_LIBS := nmMP nmBase tclLinkVar nmAux nmAnalyze nmUI vrpn vogl quat
+USES_LIBS := nmMP nmBase tclLinkVar nmAux nmAnalyze nmUI vrpn vogl quat nmUGraphics
 
 USES_EXTERNAL_LIBS := RhinoIO
 
