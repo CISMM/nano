@@ -1,4 +1,4 @@
-USES_LIBS := tclLinkVar nmBase nmImageViewer nmGraphics ImgFormat nmMScope vrpn vogl quat
+USES_LIBS := nmMP tclLinkVar nmBase nmImageViewer nmGraphics ImgFormat nmMScope vrpn vogl quat
 
 USES_EXTERNAL_LIBS := TclTk
 
