@@ -54,7 +54,7 @@ typedef struct {
 
 
 static void ServerError( char * txt );
-static void ConnectServer (int, const char * interface);
+static void ConnectServer (int, const char * ipname);
 
 
 /*****************************************************************
@@ -93,14 +93,14 @@ int mic_Started()	// Added by JakeK so that scanning doesn't begin before connec
 
 
  // Added these varialbes so that the grid size can be initialized
-void StartServer (int x, int y, int port, const char * interface)
+void StartServer (int x, int y, int port, const char * ipname)
 {				// JakeK
   num_x = x;  
   num_y = y;
 
-  if ( NULL == connection ) ConnectServer(port, interface);
+  if ( NULL == connection ) ConnectServer(port, ipname);
   ServerOutputAdd(1, "Generating AFMSimulator......");
-  AFMSimulator = new nmm_Microscope_Simulator( "nmm_Microscope_Simulator@wherever", connection );
+  AFMSimulator = new nmm_Microscope_Simulator( "nmm_Microscope", connection );
   if ( AFMSimulator ) {
 	ServerOn = VRPN_TRUE;
   }
@@ -124,14 +124,17 @@ void StopServer (void)
 	  }
 }
 
-void ConnectServer (int port, const char * interface)
+void ConnectServer (int port, const char * ipname)
 {
 
+  ServerOutputAdd(2, "Opening server on port %d (ip address %s).",
+                  port, ipname);
+
   connection = new vrpn_Synchronized_Connection
-                          (port, NULL, NULL, interface);
+                      (port, NULL, NULL, ipname);
 
   if (!connection || !connection->doing_okay()) {
-     ServerOutputAdd(2, "Connection could not be accepted");
+     ServerOutputAdd(2, "Connection could not be created.");
 	return;
   }
 
@@ -343,6 +346,7 @@ void nmm_Microscope_Simulator::mainloop (void) {
   d_connection->mainloop();
 
   executeBufferedScanMessage();
+//fprintf(stderr, ".");
 }
 
 float nmm_Microscope_Simulator::

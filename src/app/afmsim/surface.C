@@ -48,6 +48,8 @@ static float g_waitTime = 0.0f;
 
 static char * g_ipString = NULL;
 
+static int g_speed = 1;
+
 void usage (const char * argv0) {
   fprintf(stderr,
     "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
@@ -62,6 +64,8 @@ void usage (const char * argv0) {
     "      5 = circular waves, 6 = stepped ramp.\n");
   fprintf(stderr,
     "    -if:  IP address of network interface to use.\n");
+  fprintf(stderr,
+    "    -speed:  scanlines per 100 ms (integer).\n");
   
 
   exit(0);
@@ -95,8 +99,11 @@ int parse (int argc, char ** argv) {
       if (++i >= argc) usage(argv[0]);
       g_planeShape = atoi(argv[i]);
     } else if (!strcmp(argv[i], "-if")) {
-       if (++i >= argc)  usage(argv[0]);
-       g_ipString = argv[i];
+      if (++i >= argc) usage(argv[0]);
+      g_ipString = argv[i];
+    } else if (!strcmp(argv[i], "-speed")) {
+      if (++i >= argc) usage(argv[0]);
+      g_speed = atoi(argv[i]);
 #if 0
     } else if (!strcmp(argv[i], "-latency")) {
       if (++i >= argc) usage(argv[0]);
@@ -269,11 +276,14 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
       } 
       break;
     case PSHAPE_STEP :
-      // surface with 50 nm steps every 40 nm
+      // surface with <targetradius> nm steps every <interval> nm
+      // nano doesn't handle steps larger than 10 or 20 nm well at all
+      targetradius = 10.0;
+      interval = 50.0;
       fprintf(stderr, "Setting up stepped surface.\n");
       for (x = 0; x < g_numX; x++) {
         for (y = 0; y < g_numY; y++) {
-          point = 50.0f * ceil((x + y) / 40.0f);
+          point = targetradius * ceil((x + y) / interval);
           zPlane->setValue(x, y, point);
         }
       }
@@ -289,7 +299,8 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
       }
       break;
     case PSHAPE_HEMISPHERES :
-      // flat surface with hemispheres of radius <targetradius> nm every <interval> nm
+      // flat surface with hemispheres of
+      // radius <targetradius> nm every <interval> nm
       fprintf(stderr, "Setting up regular-hemisphere surface.\n");
       targetradius = 20.0f;
       tr2 = targetradius * targetradius;
@@ -314,8 +325,9 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
     fprintf(stderr, "setting up waves rv 1.\n");
     for(x = 0;x< g_numX; x++){
       for(y = 0; y < g_numY; y++){
-	point = 50.0f * ((sin((x/ 20.0f))*sin((x/20.0f)))+(cos((y/20.0f))*cos((y/20.0f))));
-	zPlane-> setValue(x,y,point);
+	point = 50.0f * ((sin((x / 20.0f)) * sin((x / 20.0f))) +
+                         (cos((y / 20.0f)) * cos((y / 20.0f))));
+	zPlane-> setValue(x, y, point);
       }
     }
     break;
@@ -346,9 +358,9 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
        for (y = 0; y < g_numY; y++) {
           step = (x + y) / interval;
           if (step % 2) {
-             point = step * interval;
+             point = ((step / 2) + 1) * interval;
           } else {
-             point = (step - 1) * interval + fmod(x + y, interval);
+             point = (step / 2) * interval + fmod(x + y, interval);
           }
           zPlane->setValue(x, y, point);
        }
@@ -402,7 +414,7 @@ int main (int argc, char ** argv) {
 
   retval = initJake(g_numX, g_numY, g_port, g_ipString);
   while (!retval) {
-    jakeMain(.1, g_isWaiting, g_waitTime);
+    jakeMain(.1 / g_speed, g_isWaiting, g_waitTime);
   }
 }
 

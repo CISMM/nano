@@ -98,7 +98,7 @@ typedef struct {
 
 // Start and stop server and create the simulator object
 void StartServer (int x, int y, int port = 4500,
-                  const char * interface = NULL);
+                  const char * ipname = NULL);
 void StopServer (void);
 
 ///////////////////////////////////////////////////////////////////

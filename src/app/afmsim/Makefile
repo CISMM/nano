@@ -4,6 +4,9 @@ ifeq ($(MAKECMDGOALS),afmcntsim)
    EXTRA_CFLAGS+=-DAFMSIM
 endif
 
+# How do we turn on debugging on PC???
+#EXTRA_CFLAGS+=-g
+
 #ifeq ($(HW_OS),sgi_irix)
 LATE_INCLUDE_PATH := -I/afs/unc/proj/stm/src/external/glut/glut-3.5/include 
 LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut/glut-3.5/lib/glut.n32 

@@ -58,7 +58,7 @@ int handle_any_print (void * userdata, vrpn_HANDLERPARAM) {
 
 
 
-int initJake (int x, int y, int port, const char * interface) {
+int initJake (int x, int y, int port, const char * ipname) {
   if (!x || !y) {
     fprintf(stderr, "initJake:  a 0-size grid makes microscopes crash!\n");
     return -1;
@@ -67,7 +67,7 @@ int initJake (int x, int y, int port, const char * interface) {
   num_y = y;
   int quitNow = 0;
   currentline = 0;
-  StartServer((num_x), (num_y), port, interface);
+  StartServer((num_x), (num_y), port, ipname);
   quitType = connection->register_message_type("Server Quit Type");
   connection->register_handler(quitType, handle_quit, &quitNow);
   connection->register_handler(vrpn_ANY_TYPE, handle_any_print, connection);
@@ -86,9 +86,10 @@ int jakeMain (float scan_time_diff, vrpn_bool isWaiting, float waitTime)
     mainloopDelay.tv_usec = 0L;
   } else {
     mainloopDelay.tv_sec = 0L;
-    mainloopDelay.tv_usec = 2000L;
+    mainloopDelay.tv_usec = 100L;
   }
 
+  AFMSimulator->mainloop();
   connection->mainloop(&mainloopDelay);
 
   gettimeofday(&t_now, NULL);

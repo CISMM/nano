@@ -1,5 +1,22 @@
 2001-07-24  Tom Hudson <hudson@cs.unc.edu>
 
+	* nmm_Microscope_Simulator.C (ConnectServer) : "interface" is
+        a reserved word on the PC?
+	(StartServer) : Same.
+	* simulator_server.C (initJake) : Same.
+
+        * simulator_server.C (jakeMain) : Major simulator error we never
+        uncovered before:  this didn't call
+        nmm_Microscope_Simulator::mainloop()!
+
+        * surface.C (g_speed) : New global.
+        (usage) : Document "-speed" argument.
+        (parse) : Handle "-speed" argument.
+        (main) : Tell jakeMain() to wait .1/g_speed seconds,
+        rather than always waiting .1 second.
+
+2001-07-24  Tom Hudson <hudson@cs.unc.edu>
+
 	* nmm_Microscope_Simulator.C (ConnectServer) : Add parameter.
 	(StartServer) : Same.
 	* simulator_server.C (initJake) : Same.
