@@ -1587,7 +1587,7 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * userdata)
 {
-  char hnbuf [256];
+  //char hnbuf [256];
 
   if (!new_value || !strlen(new_value)) {
     // transitory excitement during startup
@@ -6215,7 +6215,6 @@ VERBOSE(1, "Entering main loop");
       if (nM_coord_change_server) nM_coord_change_server->mainloop();
       if (vrpnHandTracker_collab[0]) vrpnHandTracker_collab[0]->mainloop();
       if (vrpnMode_Local) {
-	struct	timeval	zerotime;
 	// Set the mode to the current one and send if changed
 	vrpnMode_Local->channels()[0] = user_mode[0];
 	vrpnMode_Local->report_changes(vrpn_CONNECTION_RELIABLE);
@@ -6233,8 +6232,7 @@ VERBOSE(1, "Entering main loop");
 			vrpnMode_Local->report();
 		}
 	}
-	zerotime.tv_sec = zerotime.tv_usec = 0;
-	vrpnMode_Local->mainloop(&zerotime);
+	vrpnMode_Local->mainloop();
       }
       if (vrpnMode_collab[0]) {
         vrpnMode_collab[0]->mainloop();
