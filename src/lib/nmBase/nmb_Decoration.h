@@ -94,6 +94,7 @@ class nmb_Decoration {
     /// first scan line data.
     float first_line_avg, first_line_avg_prev;
 
+	int ds_sphere_axis;
 // To add:
 // state.data.inputPoint
 // state.modify.setpoint/min/max

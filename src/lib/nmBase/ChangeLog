@@ -1,3 +1,8 @@
+2002-07-18 Jameson Miller <millerj@cs.unc.edu>
+	*nmb_decoration.c (h) - added state variable to keep track
+	of if we are dsiplaying the an axis at the position of the sphere
+	for direct step
+
 2002-07-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_TransformMatrix44.C (getTScShR_2DParameters): changed name for

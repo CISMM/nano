@@ -39,7 +39,8 @@ nmb_Decoration::nmb_Decoration (void) :
   scrapeHeightOffset(0),
   scrapeMaxDepth(0),
   scrapeCallbacks (NULL),
-  pulseCallbacks (NULL)
+  pulseCallbacks (NULL),
+  ds_sphere_axis(0)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
@@ -81,7 +82,8 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   num_slow_line_3d_markers (0),
   scrapeHeightScale(1),
   scrapeHeightOffset(0),
-  scrapeMaxDepth(0)
+  scrapeMaxDepth(0),
+  ds_sphere_axis(0)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
