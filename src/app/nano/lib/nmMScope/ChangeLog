@@ -1,3 +1,9 @@
+2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C (~nmm_MicroscopeRemote) : unregisters
+	all vrpn_Connection handlers now (should eventually be replaced by
+	making this class inherit from vrpn_BaseClass)
+
 2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmm_MicroscopeRemote.C (DisplayModResult) : Changed how this sets

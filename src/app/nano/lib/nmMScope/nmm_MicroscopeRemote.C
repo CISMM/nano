@@ -366,6 +366,218 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
     }
   }
     */
+
+  if (d_connection) {
+    d_connection->unregister_handler(d_VoltsourceEnabled_type,
+                                 handle_VoltsourceEnabled,
+                                 this);
+  d_connection->unregister_handler(d_VoltsourceDisabled_type,
+                                 handle_VoltsourceDisabled,
+                                 this);
+  d_connection->unregister_handler(d_AmpEnabled_type,
+                                 handle_AmpEnabled,
+                                 this);
+  d_connection->unregister_handler(d_AmpDisabled_type,
+                                 handle_AmpDisabled,
+                                 this);
+  d_connection->unregister_handler(d_SuspendCommands_type,
+                                 handle_SuspendCommands,
+                                 this);
+  d_connection->unregister_handler(d_ResumeCommands_type,
+                                 handle_ResumeCommands,
+                                 this);
+  d_connection->unregister_handler(d_StartingToRelax_type,
+                                 handle_StartingToRelax,
+                                 this);
+  d_connection->unregister_handler(d_RelaxSet_type,
+                                 handle_RelaxSet,
+                                 this);
+  d_connection->unregister_handler(d_WindowLineData_type,
+                                 handle_WindowLineData,
+                                 this);
+  d_connection->unregister_handler(d_WindowScanNM_type,
+                                 handle_WindowScanNM,
+                                 this);
+  d_connection->unregister_handler(d_WindowBackscanNM_type,
+                                 handle_WindowBackscanNM,
+                                 this);
+  d_connection->unregister_handler(d_PointResultNM_type,
+                                 handle_PointResultNM,
+                                 this);
+  d_connection->unregister_handler(d_PointResultData_type,
+                                 handle_PointResultData,
+                                 this);
+  d_connection->unregister_handler(d_BottomPunchResultData_type,
+                                 handle_BottomPunchResultData,
+                                 this);
+  d_connection->unregister_handler(d_TopPunchResultData_type,
+                                 handle_TopPunchResultData,
+                                 this);
+  d_connection->unregister_handler(d_ZigResultNM_type,
+                                 handle_ResultNM,
+                                 this);
+  d_connection->unregister_handler(d_BluntResultNM_type,
+                                 handle_ResultNM,
+                                 this);
+  d_connection->unregister_handler(d_ForceCurveData_type,
+                                 handle_ForceCurveData,
+                                 this);
+  d_connection->unregister_handler(d_Scanning_type,
+                                 handle_Scanning,
+                                 this);
+  d_connection->unregister_handler(d_ScanRange_type,
+                                 handle_ScanRange,
+                                 this);
+  d_connection->unregister_handler(d_ReportScanAngle_type,
+                                 handle_ReportScanAngle,
+                                 this);
+  d_connection->unregister_handler(d_SetRegionCompleted_type,
+                                 handle_SetRegionCompleted,
+                                 this);
+  d_connection->unregister_handler(d_SetRegionClipped_type,
+                                 handle_SetRegionClipped,
+                                 this);
+  d_connection->unregister_handler(d_ResistanceFailure_type,
+                                 handle_ResistanceFailure,
+                                 this);
+  d_connection->unregister_handler(d_Resistance_type,
+                                 handle_Resistance,
+                                 this);
+  d_connection->unregister_handler(d_Resistance2_type,
+                                 handle_Resistance2,
+                                 this);
+  d_connection->unregister_handler(d_ReportSlowScan_type,
+                                 handle_ReportSlowScan,
+                                 this);
+  d_connection->unregister_handler(d_ScanParameters_type,
+                                 handle_ScanParameters,
+                                 this);
+  d_connection->unregister_handler(d_HelloMessage_type,
+                                 handle_HelloMessage,
+                                 this);
+  d_connection->unregister_handler(d_ClientHello_type,
+                                 handle_ClientHello,
+                                 this);
+  d_connection->unregister_handler(d_ScanDataset_type,
+                                 handle_ScanDataset,
+                                 this);
+  d_connection->unregister_handler(d_PointDataset_type,
+                                 handle_PointDataset,
+                                 this);
+  d_connection->unregister_handler(d_PidParameters_type,
+                                 handle_PidParameters,
+                                 this);
+  d_connection->unregister_handler(d_ScanrateParameter_type,
+                                 handle_ScanrateParameter,
+                                 this);
+  d_connection->unregister_handler(d_ReportGridSize_type,
+                                 handle_ReportGridSize,
+                                 this);
+  d_connection->unregister_handler(d_ServerPacketTimestamp_type,
+                                 handle_ServerPacketTimestamp,
+                                 this);
+  d_connection->unregister_handler(d_TopoFileHeader_type,
+                                 handle_TopoFileHeader,
+                                 this);
+
+  d_connection->unregister_handler(d_RecvTimestamp_type,
+                                 handle_RecvTimestamp,
+                                 this);
+  d_connection->unregister_handler(d_FakeSendTimestamp_type,
+                                 handle_FakeSendTimestamp,
+                                 this);
+  d_connection->unregister_handler(d_UdpSeqNum_type,
+                                 handle_UdpSeqNum,
+                                 this);
+
+  // AFM-ish
+
+  d_connection->unregister_handler(d_InTappingMode_type,
+                                 handle_InTappingMode,
+                                 this);
+  d_connection->unregister_handler(d_InOscillatingMode_type,
+                                 handle_InOscillatingMode,
+                                 this);
+  d_connection->unregister_handler(d_InContactMode_type,
+                                 handle_InContactMode,
+                                 this);
+  d_connection->unregister_handler(d_InDirectZControl_type,
+                                 handle_InDirectZControl,
+                                 this);
+  d_connection->unregister_handler(d_InSewingStyle_type,
+                                 handle_InSewingStyle,
+                                 this);
+  d_connection->unregister_handler(d_InSpectroscopyMode_type,
+                                 handle_InSpectroscopyMode,
+                                 this);
+  d_connection->unregister_handler(d_ForceParameters_type,
+                                 handle_ForceParameters,
+                                 this);
+  d_connection->unregister_handler(d_BaseModParameters_type,
+                                 handle_BaseModParameters,
+                                 this);
+  d_connection->unregister_handler(d_ForceSettings_type,
+                                 handle_ForceSettings,
+                                 this);
+  d_connection->unregister_handler(d_InModModeT_type,
+                                 handle_InModModeT,
+                                 this);
+  d_connection->unregister_handler(d_InModMode_type,
+                                 handle_InModMode,
+                                 this);
+  d_connection->unregister_handler(d_InImgModeT_type,
+                                 handle_InImgModeT,
+                                 this);
+  d_connection->unregister_handler(d_InImgMode_type,
+                                 handle_InImgMode,
+                                 this);
+  d_connection->unregister_handler(d_ModForceSet_type,
+                                 handle_ModForceSet,
+                                 this);
+  d_connection->unregister_handler(d_ImgForceSet_type,
+                                 handle_ImgForceSet,
+                                 this);
+  d_connection->unregister_handler(d_ModSet_type,
+                                 handle_ModSet,
+                                 this);
+  d_connection->unregister_handler(d_ImgSet_type,
+                                 handle_ImgSet,
+                                 this);
+  d_connection->unregister_handler(d_ForceSet_type,
+                                 handle_ForceSet,
+                                 this);
+  d_connection->unregister_handler(d_ForceSetFailure_type,
+                                 handle_ForceSetFailure,
+                                 this);
+  d_connection->unregister_handler(d_MaxSetpointExceeded_type,
+                                 handle_MaxSetpointExceeded,
+                                 this);
+
+  // STM-ish
+
+  d_connection->unregister_handler(d_PulseParameters_type,
+                                 handle_PulseParameters,
+                                 this);
+  d_connection->unregister_handler(d_PulseCompletedNM_type,
+                                 handle_PulseCompletedNM,
+                                 this);
+  d_connection->unregister_handler(d_PulseFailureNM_type,
+                                 handle_PulseFailureNM,
+                                 this);
+
+  // scanline mode
+  d_connection->unregister_handler(d_InScanlineMode_type,
+                                 handle_InScanlineMode,
+                                 this);
+  d_connection->unregister_handler(d_ScanlineData_type,
+                                 handle_ScanlineData,
+                                 this);
+
+  unregisterSynchHandler(handle_barrierSynch, this);
+  unregisterGotMutexCallback(this, handle_GotMicroscopeControl);
+
+  }
+
   if (d_tcl_script_dir) {
     delete [] d_tcl_script_dir;
   }
