@@ -15,6 +15,9 @@ GLenum drawStyle = GL_FILL;
 static int firstTime = 1;
 static GLUquadricObj* qobj;
 
+extern void drawSphere(double diamter);
+extern void drawCylinder(double diamter, double height);
+
 /* Class : OB */
 void OB :: setPos_z(double _z) {
 
@@ -80,9 +83,6 @@ void Ntube::set(int _type, Vec3d _pos, double _yaw, double _roll, double _pitch,
   t2 = Vec3d(-t1.y,t1.x,0);
   t3 = t1.rotate3(t2,DEG_TO_RAD*pitch);
   axis = t3.normalize();
-
-  // do the precomputation for the afm
-  do_precomputation();
 }
 
 Ntube :: Ntube( Vec3d a, Vec3d b, double diam) {
@@ -149,9 +149,6 @@ void Ntube::recalc_all() {
   t2 = Vec3d(-t1.y,t1.x,0);
   t3 = t1.rotate3(t2,DEG_TO_RAD*pitch);
   axis = t3.normalize();
-
-  // do the precomputation for the afm
-  do_precomputation();
 }
 
 
@@ -197,177 +194,93 @@ void Ntube :: setPitch(double _pitch) {
   recalc_all();
 }
 
-void Ntube :: do_precomputation() {
-  precomp = PreCompute(this);
-}
-
-void Ntube :: redo_precomputation() {
-  do_precomputation();
-}
-
-void
-drawSphere( double radius )
-{
-  static int firstTime = 1;
-  static GLUquadricObj* qobj;
-  if( firstTime ) { 
-    qobj = gluNewQuadric();
-    drawStyle = GLU_FILL;
-    gluQuadricDrawStyle( qobj, drawStyle );
-    gluQuadricNormals( qobj, GLU_FLAT );
-    firstTime=0;
-  }
-  //cout << "radius " << radius << endl;
-  //  exit(0);
-  //  radius = 0.000001;
-  gluSphere( qobj, radius, 30, 30);
-}
-
-
-// draw cylinder with given diameter and height.
-// The cylinder's axis is on the Z-axis, with one end at the origin
-// and the other end on the +Z side.
-void
-drawCylinder( double diameter, double height )
-{
-  double radius;
-  if( firstTime ) { 
-    qobj = gluNewQuadric();
-    drawStyle = GLU_FILL;
-    gluQuadricDrawStyle( qobj, drawStyle );
-    gluQuadricNormals( qobj, GLU_FLAT );  
-    firstTime=0;
-  }
-  
-  radius = diameter / 2.;
-  gluCylinder( qobj, radius, radius, height, 30, 30);
-}
-
-
 float zBuffer2[ 128*128 ];			
 extern int mousepress;
 
-#if 0
-void Ntube::draw() {
-  glPushMatrix();
-  glLoadIdentity();
-#if 0
-  glBegin(GL_POINTS);
-  glVertex3f(pos.x, pos.y,pos.z);
-  glEnd();
-#else
-  glBegin(GL_LINES);
-  glVertex3f( pos.x-10, pos.y, pos.z);
-  glVertex3f( pos.x+10, pos.y, pos.z);
-  //  glVertex3f( pos.x-10, pos.y-10, pos.z);
-  //  glVertex3f( pos.x+10, pos.y+10, pos.z);
-  glEnd();
-#endif
-
-  if (mousepress) {
-  void* zBufferPtr = &(zBuffer2[0]);
-  int pixelGridSize = 128;
-  glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
-
-  for( int j=0; j<128; j++ ) {
-    for( int i=0; i<128; i++ ) {
-      double zNormalized = zBuffer2[ j*pixelGridSize + i ];
-      //      double zDepth = scanFar + zNormalized * (scanNear - scanFar);
-      // changed this : mapping the far plane to a height zero
-      double zDepth = (1-zNormalized)*100;
-      //      zHeight[i][j] = zDepth;
-      //      zHeight[i][j] = zDepth;
-#if 0
-      if (zDepth > 5) {
-	cout << "posy " << pos.y << endl;
-      	cout << zDepth << endl;
-	cout << "j " << j << endl;
-	cout << "i " << i << endl;
-	cout << zBuffer2[128*59+40] << endl;
-	cout << zBuffer2[128*59+41] << endl;
-	cout << zBuffer2[128*60+40] << endl;
-	exit(0);
-      }
-#endif
-
-    }
-  }
-
-  }
-
-  glPopMatrix();
-}
-#endif
 
 #if 1
 void Ntube :: draw() {
-
   glPushMatrix();
   glTranslatef(pos.x, pos.y, pos.z );
-  // set tube yaw angle (in-plane rotation angle)
-  glRotatef(yaw, 0.0, 0.0, 1.0 ); 
-  
-  // set roll angle around tube axis
-  glRotatef(pitch,  0.0, 1.0, 0.0 );
-  
-  // set roll angle around tube axis
-  glRotatef(roll,  1.0, 0.0, 0.0 );
 
-  // draw cylinder with its axis parallel to X-axis
-  glPushMatrix();
-  /* we now have to align the cylinder with the Z-axis
-   * if the tube did not have any translation and rotation
-   * we want, the tube to be along the X-axis. GL on the other
-   * hand draws a cylinder along the Z-axis by default. And so
-   * we need to do the following rotate 
-   */
-  glRotatef(90, 0.0, 1.0, 0.0 );
-  /* The position of the tube is given by its centre on the
-   * axis. We want to draw the cylinder starting from its base
-   * Get to its base
-   */
-  glTranslatef( 0., 0., - leng/2. );  
-  drawCylinder( diam, leng );      // tube axis starts parallel to Z
-  glTranslatef( -leng/2., 0., 0 );  
-  glPopMatrix();
-
+  if (type == SPHERE) {// optimize if a sphere
+    drawSphere(diam);
+  }
+  else {
+    // set tube yaw angle (in-plane rotation angle)
+    glRotatef(yaw, 0.0, 0.0, 1.0 ); 
+    
+    // set roll angle around tube axis
+    glRotatef(pitch,  0.0, 1.0, 0.0 );
+    
+    // set roll angle around tube axis
+    glRotatef(roll,  1.0, 0.0, 0.0 );
+    
+    // draw cylinder with its axis parallel to X-axis
+    glPushMatrix();
+    /* we now have to align the cylinder with the Z-axis
+     * if the tube did not have any translation and rotation
+     * we want, the tube to be along the X-axis. GL on the other
+     * hand draws a cylinder along the Z-axis by default. And so
+     * we need to do the following rotate 
+     */
+    glRotatef(90, 0.0, 1.0, 0.0 );
+    /* The position of the tube is given by its centre on the
+     * axis. We want to draw the cylinder starting from its base
+     * Get to its base
+     */
+    glTranslatef( 0., 0., - leng/2. );  
+    drawCylinder( diam, leng );      // tube axis starts parallel to Z
+    glTranslatef( -leng/2., 0., 0 );  
+    glPopMatrix();
+    
 #if 1
-  // draw spherical endcap on tube
-  glPushMatrix();
-  glTranslatef( leng/2., 0., 0. );
-  drawSphere(diam/ 2. ); 
-  glPopMatrix();
-
-  // draw spherical endcap on tube's other end
-  glPushMatrix();
-  glTranslatef( - leng/2., 0., 0. );
-  drawSphere(diam/ 2. ); 
-  glPopMatrix();
+    // draw spherical endcap on tube
+    glPushMatrix();
+    glTranslatef( leng/2., 0., 0. );
+    drawSphere(diam); 
+    glPopMatrix();
+    
+    // draw spherical endcap on tube's other end
+    glPushMatrix();
+    glTranslatef( - leng/2., 0., 0. );
+    drawSphere(diam); 
+    glPopMatrix();
 #endif
+  }
 
   glPopMatrix();
 }
 #endif
 
 void Ntube :: afm_sphere_tip(SphereTip sp) {
-  Ntube bigtube = *this;
-  double tipRadius = sp.r;
-  double newradius = diam/2. + tipRadius;
-  bigtube.setDiam(2*newradius);
-  bigtube.draw();
+  glPushMatrix();
+  if (type == SPHERE) {
+    glTranslatef(pos.x,pos.y,pos.z);
+    drawSphere(diam+2*sp.r);
+  }
+  else {
+    Ntube bigtube = *this;
+    double tipRadius = sp.r;
+    double newradius = diam/2. + tipRadius;
+    bigtube.setDiam(2*newradius);
+    bigtube.draw();
+  }
+  glPopMatrix();
 }
 
 void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 
+  glPushMatrix();
   if (type == SPHERE) {
     // for spheres only
     // Lower surface to match real surface height for ridges and plains.
     double tipRadius = icsTip.r; // the radius for the tip
     double theta = icsTip.theta; // theta for the tip
     double radius=diam/2.;
-    double afm_height = pos.z + (radius+tipRadius)/sin(theta);
-    ConeSphere c = ConeSphere(radius+tipRadius, afm_height, theta);
-    glTranslatef(pos.x,pos.y,0);
+    double cone_height = pos.z + (radius+tipRadius)/sin(theta);
+    ConeSphere c = ConeSphere(radius+tipRadius, cone_height, theta);
+    glTranslatef(pos.x,pos.y,pos.z);
     c.draw();
   }
   else {// for a general ntube
@@ -379,87 +292,106 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     double theta = icsTip.theta;
     
     double r = diam/2.;
+
+    // first draw the two quads
+    N = Vec3d(axis.y,-axis.x,0);
+    temp = N.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N = N.rotate3(axis,-theta);
+    }
+    else
+      N=temp;
+    N = N.normalize();
+    Nxy = Vec3d(N.x,N.y,0);
+    Nxy = Nxy.normalize();
     
-    A = precomp.A;
-    B = precomp.B;
-    C = precomp.C;
-    D = precomp.D;
-    A2 = precomp.A2;
-    B2 = precomp.B2;
-    C2 = precomp.C2;
-    D2 = precomp.D2;
+    // endpts of the tube
+    P = pos - axis*leng/2.;
+    Q = pos + axis*leng/2.;
+    
+    A = P + N*(r+R);
+    B = Q + N*(r+R);
+    
+    Axy = Vec3d(A.x,A.y,0);
+    Bxy = Vec3d(B.x,B.y,0);
+    D = Axy + Nxy*A.z*tan(theta);
+    C = Bxy + Nxy*B.z*tan(theta);
+    
+    // now let us calculate quad on the other side.
+    N2 = Vec3d(-axis.y,axis.x,0);
+    temp = N2.rotate3(axis,theta);
+    if (temp.z < 0) {
+      N2 = N2.rotate3(axis,-theta);
+    }
+    else
+      N2=temp;
+    N2 = N2.normalize();
+    N2xy = Vec3d(N2.x,N2.y,0);
+    N2xy = N2xy.normalize();
+    
+    A2 = P + N2*(r+R);
+    B2 = Q + N2*(r+R);
+    
+    A2xy = Vec3d(A2.x,A2.y,0);
+    B2xy = Vec3d(B2.x,B2.y,0);
+    D2 = A2xy + N2xy*A2.z*tan(theta);
+    C2 = B2xy + N2xy*B2.z*tan(theta);
+
+#if 1
     Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
-    
     xyz.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz.x, xyz.y, xyz.z );
+    glVertex3f( A.x, A.y, A.z );
+    glVertex3f( B.x, B.y, B.z );
+    glVertex3f( C.x, C.y, C.z );
+    glVertex3f( D.x, D.y, D.z );
+    glEnd();
     
-#if 0
-  cout << "1\n";
-  A.print();
-  B.print();
-  C.print();
-  D.print();
-  cout << "2\n";
-  A2.print();
-  B2.print();
-  C2.print();
-  D2.print();
-  cout << endl;
-  cout <<" tip theta " << tip.icsTip.theta << endl;
-  exit(0);
+    Vec3d xyz2 = Vec3d :: crossProd(A2-B2,A2-D2);
+    xyz2.normalize();
+    glBegin(GL_POLYGON);
+    glNormal3f( xyz2.x, xyz2.y, xyz2.z );
+    glVertex3f( A2.x, A2.y, A2.z );
+    glVertex3f( B2.x, B2.y, B2.z );
+    glVertex3f( C2.x, C2.y, C2.z );
+    glVertex3f( D2.x, D2.y, D2.z );
+    glEnd();
 #endif
 
-#if 1
-  glBegin(GL_POLYGON);
-  glNormal3f( xyz.x, xyz.y, xyz.z );
-  glVertex3f( A.x, A.y, A.z );
-  glVertex3f( B.x, B.y, B.z );
-  glVertex3f( C.x, C.y, C.z );
-  glVertex3f( D.x, D.y, D.z );
-  glEnd();
-
-  Vec3d xyz2 = Vec3d :: crossProd(A2-B2,A2-D2);
-  xyz2.normalize();
-
-  glBegin(GL_POLYGON);
-  glNormal3f( xyz2.x, xyz2.y, xyz2.z );
-  glVertex3f( A2.x, A2.y, A2.z );
-  glVertex3f( B2.x, B2.y, B2.z );
-  glVertex3f( C2.x, C2.y, C2.z );
-  glVertex3f( D2.x, D2.y, D2.z );
-  glEnd();
-#endif
 
 #if 1
-  // now draw the two frustums
-  Vec3d one_end = pos - axis*leng/2.;
-  Vec3d other_end = pos + axis*leng/2.;
+    // now draw the two frustums
+    Vec3d one_end = pos - axis*leng/2.;
+    Vec3d other_end = pos + axis*leng/2.;
+    
+    double cone_height = one_end.z + (r+R)/sin(theta);
+    ConeSphere c = ConeSphere(r+R, cone_height, theta);
+    glPushMatrix();
+    glTranslatef(one_end.x,one_end.y,one_end.z);
+    c.draw();
+    glPopMatrix();
   
-  double afm_height = one_end.z + (r+R)/sin(theta);
-  ConeSphere c = ConeSphere(r+R, afm_height, theta);
-  glPushMatrix();
-  glTranslatef(one_end.x,one_end.y,0);
-  c.draw();
-  glPopMatrix();
-  
-  // now other end
-  afm_height = other_end.z + (r+R)/sin(theta);
-  c = ConeSphere(r+R, afm_height, theta);
-  glPushMatrix();
-  glTranslatef(other_end.x,other_end.y,0);
-  c.draw();
-  glPopMatrix();
-
+    // now other end
+    cone_height = other_end.z + (r+R)/sin(theta);
+    c = ConeSphere(r+R, cone_height, theta);
+    glPushMatrix();
+    glTranslatef(other_end.x,other_end.y,other_end.z);
+    c.draw();
+    glPopMatrix();
+    
 #endif
-
+    
 #if 1
-  double newradius = diam/2. + R;
-  Ntube bigtube = *this;
-  bigtube.setDiam(2*newradius); 
-  bigtube.draw();
+    double newradius = diam/2. + R;
+    Ntube bigtube = *this;
+    bigtube.setDiam(2*newradius); 
+    bigtube.draw();
 #endif
 #else 
 #endif
   }
+  glPopMatrix();
 }
 
 void Ntube :: keyboardFunc(unsigned char key, int x, int y) {
@@ -474,46 +406,58 @@ void Ntube :: keyboardFunc(unsigned char key, int x, int y) {
     break;
     /* Now we consider various rotations */
   case 'x' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'X' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(1,0,0),-DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'y' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'Y' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,1,0),-DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'z' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'Z' :
-    left = pos - axis*leng/2.;
-    right = pos + axis*leng/2.;
-    left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
-    right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
-    set(left,right,diam);
+    if (leng) {      
+      left = pos - axis*leng/2.;
+      right = pos + axis*leng/2.;
+      left = pos+Vec3d(left-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+      right = pos+Vec3d(right-pos).rotate3(Vec3d(0,0,1),-DEG_TO_RAD*ANGLE_UNIT);
+      set(left,right,diam);
+    }
     break;
   case 'e' :
     setRoll(roll + ANGLE_UNIT);
@@ -553,93 +497,6 @@ void Ntube :: keyboardFunc(unsigned char key, int x, int y) {
 
 void Ntube::print() {
   cout << "pos x " << pos.x << " y " << pos.y << " z " << pos.z << " yaw " << yaw << " pitch " << pitch << " roll " << roll << " length " << leng << " diam " << diam << endl;
-}
-
-/* Accessing icsTip from here is dirty. But I had to do this to do the 
- * precomputation using the tip and i want this function invoked from within
- * the Ntube class which doesn't know anything about the tip.
- */
-extern Tip tip;
-/* Class : PreCompute */
-PreCompute :: PreCompute(Ntube *tubeptr) {
-  Vec3d P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
-  Vec3d A2xy, B2xy;
-  
-  Ntube tube = *tubeptr;
-
-  double R = tip.icsTip.r;
-  double theta = tip.icsTip.theta;
-
-  Vec3d pos = tube.pos;
-  double leng = tube.leng;
-  double diam = tube.diam;
-  Vec3d axis = tube.axis;
-
-  double r = diam/2.;
-
-  // see the figure in the docs
-  // First let use calculate A and B
-  N = Vec3d(axis.y,-axis.x,0);
-  temp = N.rotate3(axis,theta);
-  if (temp.z < 0) {
-    N = N.rotate3(axis,-theta);
-  }
-  else
-    N=temp;
-  N = N.normalize();
-  Nxy = Vec3d(N.x,N.y,0);
-  Nxy = Nxy.normalize();
-
-  // endpts of the tube
-  P = pos - axis*leng/2.;
-  Q = pos + axis*leng/2.;
-
-  A = P + N*(r+R);
-  B = Q + N*(r+R);
-
-  Axy = Vec3d(A.x,A.y,0);
-  Bxy = Vec3d(B.x,B.y,0);
-  D = Axy + Nxy*A.z*tan(theta);
-  C = Bxy + Nxy*B.z*tan(theta);
-
-  // now let us calculate quad on the other side.
-  N2 = Vec3d(-axis.y,axis.x,0);
-  temp = N2.rotate3(axis,theta);
-  if (temp.z < 0) {
-    N2 = N2.rotate3(axis,-theta);
-  }
-  else
-    N2=temp;
-  N2 = N2.normalize();
-  N2xy = Vec3d(N2.x,N2.y,0);
-  N2xy = N2xy.normalize();
-
-  A2 = P + N2*(r+R);
-  B2 = Q + N2*(r+R);
-
-  A2xy = Vec3d(A2.x,A2.y,0);
-  B2xy = Vec3d(B2.x,B2.y,0);
-  D2 = A2xy + N2xy*A2.z*tan(theta);
-  C2 = B2xy + N2xy*B2.z*tan(theta);
-}
-
-void PreCompute :: print() {
-  cout << "A = ";
-  A.print();
-  cout << "B = ";
-  B.print();
-  cout << "C = ";
-  C.print();
-  cout << "D = ";
-  D.print();
-  cout << "A2 = ";
-  A2.print();
-  cout << "B2 = ";
-  B2.print();
-  cout << "C2 = ";
-  C2.print();
-  cout << "D2 = ";
-  D2.print();
 }
 
 /* Class : Triangle  */
@@ -819,12 +676,6 @@ void Triangle :: keyboardFunc(unsigned char key, int x, int y) {
       break;
     }
   }
-}
-
-void Triangle :: redo_precomputation() {
-  ab.do_precomputation();
-  bc.do_precomputation();
-  ca.do_precomputation();
 }
 
 void Triangle :: print() {

@@ -32,4 +32,19 @@
 #define CYAN	6
 #define BLACK	7
 
+#define KEY_DELETE 0x7f
+
+// display list
+#define DISP_LIST 1
+#define SPHERE_LIST 1
+#define CYLINDER_LIST 2
+#define CONE_SPHERE_LIST 3
+
+
+// rotating protein
+#define XLEAST_COUNT 90
+#define YLEAST_COUNT 90
+#define XMAX 90
+#define YMAX 90
+
 #endif

@@ -85,6 +85,7 @@ void Tip :: inc_r() {
     spTip.set_r(spTip.r + TIP_RADIUS_UNIT);
   }
   else {
+    cout << "r " << icsTip.r << endl;
     icsTip.set_r(icsTip.r + TIP_RADIUS_UNIT);
   }
 }
@@ -101,6 +102,7 @@ void Tip :: dec_r() {
 
 void Tip :: inc_theta() {
   if (type == INV_CONE_SPHERE_TIP) {
+    cout << "theta " << RAD_TO_DEG*icsTip.theta << endl;
     icsTip.set_theta(icsTip.theta+DEG_TO_RAD*TIP_THETA_UNIT);
   }
 }

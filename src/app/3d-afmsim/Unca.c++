@@ -3,20 +3,22 @@
 #include <stdlib.h>
 #include "Unca.h"
 
+// Unit is nm
+
 Unca :: Unca (int _Xres, int _Yres, double _minx, double _maxx, double _miny, double _maxy, double _minz, double _maxz, double *_zHeight) {
   set(_Xres, _Yres, _minx, _maxx, _miny, _maxy, _minz, _maxz, _zHeight);
 }
 
+
 void Unca :: set (int _Xres, int _Yres, double _minx, double _maxx, double _miny, double _maxy, double _minz, double _maxz, double *_zHeight) {
   Xres = _Xres;
   Yres = _Yres;
-  // input is in Angstroms. need to convert to nm.
-  minx = 10*_minx;
-  maxx = 10*_maxx;
-  miny = 10*_miny;
-  maxy = 10*_maxy;
-  minz = 10*_minz;
-  maxz = 10*_maxz;
+  minx = _minx;
+  maxx = _maxx;
+  miny = _miny;
+  maxy = _maxy;
+  minz = _minz;
+  maxz = _maxz;
   zHeight = _zHeight;
 }
 
@@ -29,13 +31,9 @@ void Unca :: writeUnca(char *filename) {
   fprintf (f,"%lf %lf\n",miny, maxy);
   fprintf (f,"%lf %lf\n",minz, maxz);
 
-  fprintf(f,"\n");
-
   for (int j=0;j<Yres;j++) {
     for (int i=0;i<Xres;i++) {
-      // input is in Angstroms. need to convert to nm.
-      //cout << 0 << " " << 0 << " " << 10*zHeight[Xres*j+i] << endl;
-      fprintf(f,"0 0 %lf\n",10*zHeight[Xres*j+i]);
+      fprintf(f,"0 0 %lf\n",zHeight[Xres*j+i]);
     }
   }
   fclose(f);

@@ -8,6 +8,107 @@ Symbols
 ??? ... ??? - problem/doubt/bug etc
 
 
+7 Dec
+
+Found that when I increased the tesselation,
+
+the case where I was drawing only the AFM surface,
+using lists was faster. 
+
+For tesselation of 80 x 80 of sphere, got 32-33 s as opposed to 36-37 s for the case without lists. With a tesseln of 30 x 30, not much diff
+
+When I increased tessn further to 100 x 100 got times
+
+54.98 without list
+49.357 with list.
+
+One strange thing
+
+Without list 
+real 54.985
+user 51.985
+sys 0.279 s
+
+With list
+real 49.357
+user 0.931
+sys 0.209
+
+user time in one case is small and large in the other case.
+
+Initially I thought this is because we are executing display lists. But no, when I run my test program disp,
+
+I see that in both cases, with or without disp list, i get large user times. 
+
+Moreover another strange thing, for tesseln 30 x 30, both versions show small user time 0.9 s
+
+
+
+
+
+
+6 Dec
+
+
+???????????????????????????????????????????????
+Removing glutSwap buffers, not sure if we need glFlush or not
+
+. Strange thing happening. I write into the buffer, don't do a Swap and read it back. It reads the prev val and not the current. Tried with glFlush and glFinish. didn't work.
+
+. Another strange thing - 
+
+i run sim, create a ntube, move it, exit
+now i run it again now the depth window displays the ntube together with the AFM the first time. 
+
+This effect is not observed when I do not move the ntube during the first run.
+
+. A day of weird things
+
+Even when I increased the tesselation to 80,80, both version with/without disp list take same time. Something is obviously wrong !!!
+
+Whereas, when I did the same with the test program, disp, there was a clear difference in the two speeds. Looks like something is worng with the way, I am handling the lists.
+
+
+
+5 Dec
+
+
+using display lists for drawing spheres - didn't really help
+
+Now figure out why display lists did not result in a speedup.
+
+tried disp.c++ for spheres and cylinders. There was an improvement. something like 
+
+10,000 got times 3.3 versus 4.1
+100,000 got 33.608 versus 41.5 s
+
+These were obtained by turning the compiler opti off
+
+since glut doesn't allow display lists to be shared across contexts, having spearate disp lists for each context.
+
+
+
+No the case below is not a problem. In this case, the conical part of the
+AFM envelope will be below the surface. So this isn't a problem.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxx
+Found a case that I wasn't considering in the ConeSphere tip model. What happens when the tip radius is too large compared to the object radius. The conical part of the tip will not touch the object at all. So we should not draw the slant part of the AFM. I expect to face this problem in both spheres and nanotubes. Triangles shouldn't be affected since they have been designed using ntubes.
+
+There is a transition from the spherical AFM to a slant AFM. This transition is basically captured by two pts (if you consider the object and tip projected onto a plane). The problem is that there can be cases when this transition doesn't take place at all. We can test whether or not this transition takes place by simply comparing the two heights. This is simple in case of sphere.
+
+
+In case of ntube we can
+
+compare the height (z value) of the potential contact point with the z val of A,A2,B and B2 is below t. 
+
+Problem??????????? :
+
+What if A is below but B is above or vice-versa.
+
+Will need to find a point B' which is just at the right height and then instead of drawing the quad ABCD, will now have to draw the quad AB'C'D where C' is computed from B' just the way C was computed from B.
+
+
+
 27 Nov 2000 - 
 ####################################################################
 
@@ -15,6 +116,8 @@ Sun :
 
 Working since 3:30 PM
 checked few things - 1hr about the viewing protein along difft orientations. 
+
+Wrote docs - 5 hrs
 
 Sat :
 
@@ -132,7 +235,7 @@ Problem - there is discontinuity at boundaries.
 
 
 
-23 Nov - 26 Nov 2000
+20 Nov - 26 Nov 2000
 ####################################################################
 
 Thu - 5 hrs  obtained AFM of nanotube with new tip model

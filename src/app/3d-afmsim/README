@@ -10,9 +10,17 @@ To run the simulator run
 
 to get the AFM of a protein
 
-./run -p filename
+./run -p filename unit [-w]
 
-Example : ./run -p lac.data
+unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
+-w orients the protein at different XY rotations and outputs the AFMS to files.
+
+Note : 
+
+We first rotate along X and then Y. The rotation along Y is on the already X-rotated protein molecule.
+
+
+Example : ./run -p lac.data 0.1
 
 to get AFM of a triangular model run
 
@@ -20,8 +28,59 @@ to get AFM of a triangular model run
 
 Example :
 
-./run -t teddy.obj 20
+./run -t teddy.obj 10
 
 scale scales the values in the given input file
+
+
+Information
+
+. This code uses display lists. They are turned on by default. To turn them off, change the #define DISP_LIST in defns.h and recompile.
+
+. For objects totally composed of spheres, use the type SPHERE instead of NTUBE. This enable a number of optimizations. However you cannot change the length of an object declared as a SPHERE.
+
+
+Key and Mouse bindings :
+
+. Left mouse click on an object selects it. The object's color turns red
+. Left mouse when clicked and moved while the key remains pressed moves the object along XY plane.
+. Right mouse click works on triangles. It is used to select a side of a triangle.
+
+The following keys produce global changes (not object specific)
+
+. 'q' - exit
+. 'o' - draw objects. By default, objects are not drawn, only the AFM is.
+. 'w' - write the AFM to a file.
+. 'n' - add a new nano tube
+. 's' - add a sphere
+. 't' - add a new triangle
+. 'p' - toggle the tip model, the default is the inverted ConeSphere tip model
+. 'r', 'R' - change the tip radius
+. 'a', 'A' - change the tip angle in case of inv ConeSphere tip.
+. 'i' - toggles between "no scan" to "semi solid scan" to "solid scan".
+
+The following perform object specific actions.
+
+. DELETE - deleted that object
+. 'd', 'D' - change diam
+. 'l', 'L' - change length
+. '+', '-' - change z
+. 'x', 'X' - rotate about X
+. 'y', 'Y' - rotate about X
+. 'z', 'Z' - rotate about X
+
+The following will have effect only on nano tubes
+
+. 'e', 'E' - change roll
+. 'f', 'F' - change yaw
+. 'g', 'g' - change pitch
+
+
+Important Note :
+----------------
+
+We had said earlier, right click selects one side of a triangle. But since a side of a triangle is modelled as a nanotube, you can perform all the nanotube operations on that side.
+
+
 
 

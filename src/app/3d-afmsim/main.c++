@@ -13,8 +13,6 @@
 #include "defns.h"
 #include "Unca.h"
 
-#define DISP_LIST 0
-
 GLuint list_sphere;
 GLuint list_cylinder;
 
@@ -34,6 +32,7 @@ GLuint list_cylinder;
 
 typedef int Bool;
 static int dblBuf  = GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH;
+//static int singleBuf  = GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH;
 Ntube nullntube;
 
 OB *ob[MAXOBS];
@@ -48,11 +47,16 @@ int selected_triangle_side;
 #define NO_AFM 0
 #define SEMI_SOLID_AFM 1
 #define SOLID_AFM 2
+
 int afm_scan=SEMI_SOLID_AFM;
+int draw_objects=0;
+
+
 //int solid_afm_scan=0;
 //int enable_afm=1;
 
 int rotate_and_write_to_file=0;
+int done_monster_process_x=0, done_monster_process_y=0;
 
 // display options
 int renderStyle = OB_OUTLINE2D;
@@ -64,8 +68,9 @@ double windowWidth  = 600.;
 double windowHeight = 600.;
 double orthoFrustumCenterX = 64.;	// area of XY plane always visible for all window aspect ratios
 double orthoFrustumCenterY = 64.;
-double orthoFrustumWidthNominal  = 128. + 10.;
-double orthoFrustumHeightNominal = 128. + 10.;
+double orthoFrustumWidthNominal  = 128.;
+double orthoFrustumHeightNominal = 128.;
+
 // actual bounds of current ortho view frustum matching window aspect ratio
 double orthoFrustumLeftEdge;
 double orthoFrustumBottomEdge;
@@ -89,7 +94,10 @@ double scanYMin =  0.;
 //double scanYMax =   scanYMin + (scanStep * scanResolution);
 double minZval=0;
 // these might get changed in initSpheresFromFile
-double scanNear =  -100.;	// near end of Z-buffer range
+
+//double scanNear =  -100.;	// near end of Z-buffer range
+double scanNear =  -128.;	// near end of Z-buffer range
+
 double scanFar  =   0.;	// far  end of Z-buffer range
 // mouse and cursor
 int xMouseInWindow;	// mouse position in world coords
@@ -104,11 +112,14 @@ int stopAFM=0;
 int done_afm_scan=0;
 int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
+double cone_sphere_list_radius;
 
 /* Here are our AFM tips */
 // third arg is the default
-SphereTip sp(5.);
-InvConeSphereTip ics(5.,100.,DEG_TO_RAD*20.);
+
+// all units in nm
+SphereTip sp(20.);
+InvConeSphereTip ics(20.,1000.,DEG_TO_RAD*30.);
 Tip tip(sp,ics,INV_CONE_SPHERE_TIP);
 //Tip tip(sp,ics,SPHERE_TIP);
 
@@ -177,6 +188,8 @@ drawObjects( void )
   
   // draw the objects
   for( i=0; i<numObs; i++ ) {
+    if (ob[i] == UNUSED) continue;
+
     // we want different colors for our objects
     if ((i % 3) == 0)
       setColor( YELLOW );
@@ -238,7 +251,11 @@ drawFrame( void )
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  drawObjects(); // Draw objects
+
+  if (draw_objects) {
+    drawObjects(); // Draw objects
+  }
+
   if (afm_scan!=NO_AFM) {
     // Draw the image scan grid.
     showGrid();
@@ -247,73 +264,116 @@ drawFrame( void )
   glutSwapBuffers();
 }
 
-
-
-#if 0
-// display list for a sphere
-void make_cylinder() {
-
-  if( firstTime ) { 
-    qobj = gluNewQuadric();
-    drawStyle = GLU_FILL;
-    gluQuadricDrawStyle( qobj, drawStyle );
-    gluQuadricNormals( qobj, GLU_FLAT );
-    firstTime=0;
-  }
-
-  list_cylinder = glGenLists(1);
-  // Create a display list for a sphere
-  glNewList(list_cylinder, GL_COMPILE);
-  gluCylinder( qobj, 1, 1, 1, 30, 30);
-  // End definition of circle
-  glEndList();
-}
-void
-drawCylinder( double diameter, double height ) {
-  glPushMatrix();
-  glScalef(diameter/2.,diameter/2.,height);
-  //  glScalef(20,20,20);
-  // Draw the predefined sphere
-  //  cout << "rad = " << radius << endl;
-  glCallList(list_cylinder);
-  glCallList(11);
-  glPopMatrix();
-
-}
+#if DISP_LIST
 // display list for a sphere
 void make_sphere() {
-  static int firstTime = 1;
   static GLUquadricObj* qobj;
 
-  if( firstTime ) { 
-    qobj = gluNewQuadric();
-    drawStyle = GLU_FILL;
-    gluQuadricDrawStyle( qobj, drawStyle);
-    gluQuadricNormals( qobj, GLU_FLAT );
-    firstTime=0;
-  }
-
+  qobj = gluNewQuadric();
+  gluQuadricDrawStyle( qobj, GLU_FILL);
+  gluQuadricNormals( qobj, GLU_FLAT );
+  
   // Create a display list for a sphere
-  list_sphere = glGenLists(1);
-  //  cout << "mk : sp = " << list_sphere << endl;
-  glNewList(list_sphere, GL_COMPILE);
+  glNewList(SPHERE_LIST, GL_COMPILE);
   // draw a sphere of radius 1
   gluSphere( qobj, 1, 30, 30);
   // End definition of circle
   glEndList();
 }
-void drawSphere(double radius)
-{
-  glPushMatrix();
-  glScalef(radius,radius,radius);
-  //  glScalef(20,20,20);
-  // Draw the predefined sphere
-  //  cout << "rad = " << radius << endl;
-  glCallList(list_sphere);
-  glCallList(11);
-  glPopMatrix();
+
+// display list for a sphere
+void make_cylinder() {
+  static GLUquadricObj* qobj;
+
+  qobj = gluNewQuadric();
+  gluQuadricDrawStyle( qobj, GLU_FILL);
+  gluQuadricNormals( qobj, GLU_FLAT );
+  
+  // Create a display list for a sphere
+  glNewList(CYLINDER_LIST, GL_COMPILE);
+  // draw a cylinder of top and base radius of 1 and height 1
+  gluCylinder( qobj, 1, 1, 1, 30, 30);
+  glEndList();
 }
+
+void make_cone_sphere() {
+  static GLUquadricObj* qobj;
+
+  qobj = gluNewQuadric();
+  gluQuadricDrawStyle( qobj, GLU_FILL);
+  gluQuadricNormals( qobj, GLU_FLAT );
+
+  // here we consider the AFM of a sphere of 0 radius.
+
+  double tipRadius = ics.r; // the radius for the tip
+  double theta = ics.theta; // theta for the tip
+  double radius=0.; 
+  
+  double bignum = 200; // some big no for now
+
+  double cone_height = bignum + (radius+tipRadius)/sin(theta);
+  ConeSphere c = ConeSphere(radius+tipRadius, cone_height, theta);
+  //  c.print();
+  //  exit(0);
+
+  cone_sphere_list_radius = tipRadius;  
+  // Create a display list for a sphere
+  glNewList(CONE_SPHERE_LIST, GL_COMPILE);
+  gluSphere( qobj, tipRadius, 30, 30);
+  glPushMatrix();
+  glTranslatef(0,0,-bignum);
+  gluCylinder( qobj, c.cr, c.topRadius, c.topHeight, 30, 30);
+  glPopMatrix();
+  glEndList();
+  
+
+}
+
 #endif
+
+
+void
+drawSphere( double diameter)
+{
+#if (DISP_LIST == 0)
+  static int firstTime = 1;
+  static GLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle( qobj, GLU_FILL);
+    gluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+  gluSphere( qobj, diameter/2., 30, 30);
+#else
+  glPushMatrix();
+  glScalef(diameter/2., diameter/2., diameter/2);
+  glCallList(SPHERE_LIST);
+  glPopMatrix();
+#endif
+}
+
+void
+drawCylinder( double diameter, double height)
+{
+#if (DISP_LIST == 0)
+  static int firstTime = 1;
+  static GLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle( qobj, GLU_FILL);
+    gluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+  gluCylinder( qobj, diameter/2., diameter/2., height, 30, 30);
+#else
+  glPushMatrix();
+  glScalef(diameter/2.,diameter/2.,height);
+  glCallList(CYLINDER_LIST);
+  glPopMatrix();
+#endif
+}
+
 
 /* Here are our object. Note we want our objects to be above the surface
  * i.e z >= 0
@@ -327,6 +387,7 @@ initObs( void )
   // a nano tube
   // addNtube(NTUBE,  Vec3d( 25., 30., 45.), 0., 40., 0., 20, 10.,   NULLOB, NULLOB);
   addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.,   NULLOB, NULLOB);
+  //addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.,   NULLOB, NULLOB);
 
   //  addTriangle(Vec3d(55.8418,20.437,20), Vec3d(81.6421,45.6232,35), Vec3d (42.5162,53.9397,35));
   //  addTriangle(Vec3d(60,20,20), Vec3d(80,50,35), Vec3d (40,50,35));
@@ -334,8 +395,10 @@ initObs( void )
   //  tri[numtri-1].print();
 }
 
-// give me the scaling factor
-void addSpheresFromFile (char *filename) {
+/* Give me the unit in terms of nm. So if the unit assumed in the file is 
+ * Angstrom, give me 0.1 (since 1 A = 0.1 nm)
+ */
+void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
   double x,y,z;
   int stop;
   double minx=0.,miny=0.,minz=0., maxx=0., maxy=0., maxz=0.;
@@ -344,14 +407,18 @@ void addSpheresFromFile (char *filename) {
 
   cout << "Loading file " << filename << endl;
 
-  // assume a radius of 1.5
-  double rad = 1.5;
   stop=0;
   while (!stop) {
     fscanf(file,"%lf",&x);
     if (!feof(file)) {
       fscanf(file,"%lf",&y);
       fscanf(file,"%lf",&z);
+      // unit conversion - everything will be in nm from now on.
+      x *= no_of_nm_in_one_unit;
+      y *= no_of_nm_in_one_unit;
+      z *= no_of_nm_in_one_unit;
+      // assume a radius of 1.5 A
+      double rad = 1.5*no_of_nm_in_one_unit;
       // need to do some profiling for later.
       minx = ((!minx) || (x < minx)) ? x : minx;
       miny = ((!miny) || (z < miny)) ? y : miny;
@@ -383,7 +450,7 @@ void addSpheresFromFile (char *filename) {
     
 }
 
-// give me the scaling factor
+// give me the scale
 void addTrianglesFromFile(char *filename, double scale) {
   FILE *file = fopen(filename,"r"); 
   int stop=0;
@@ -460,15 +527,11 @@ void addTrianglesFromFile(char *filename, double scale) {
  * assuming here protein is made up of spheres
  *
  */
-#if 1
 void monster_process_x() {
   char filename[100];
   double minz=0.;
 
-  
-#define LEAST_COUNT 90
-
-
+  // stop AFM for now
   stopAFM=1;
 
   // write output to a file.
@@ -483,31 +546,71 @@ void monster_process_x() {
   write_to_unca(filename);
   cout << "Finished writing ..\n";
   
-  if (thetax >= 90) {
-    exit(0);
+  if (thetax >= XMAX) {
+    done_monster_process_x=1;
+    stopAFM=0;
+    return;
   }
-  thetax += LEAST_COUNT;
+  thetax += XLEAST_COUNT;
 
   for (int i=0;i<numObs;i++) {
+    if (ob[i] == UNUSED) continue;
     Vec3d pos = ob[i]->pos;
-    //    ob[i]->pos.print();
-    ob[i]->setPos(centroid + Vec3d(pos-centroid).rotate3(Vec3d(1,0,0),DEG_TO_RAD*LEAST_COUNT));
-    //    ob[i]->pos.print();
-    //    exit(0);
+    ob[i]->setPos(centroid + Vec3d(pos-centroid).rotate3(Vec3d(1,0,0),DEG_TO_RAD*XLEAST_COUNT));
     minz = ((!minz) || (ob[i]->pos.z < minz)) ? ob[i]->pos.z : minz;
   }
 
   /* not done yet - have to place the protein such that its bottom most point
    * just touches the surface 
    */
-#if 1
   for (i=0;i<numObs;i++) {
+    if (ob[i] == UNUSED) continue;
     ob[i]->setPos_z(ob[i]->pos.z-minz);
   }
-#endif
   stopAFM=0;
 }
-#endif
+
+void monster_process_y() {
+  char filename[100];
+  double minz=0.;
+
+  stopAFM=1;
+
+  // write output to a file.
+  if (tip.type == SPHERE_TIP) {
+    sprintf(filename,"rotated_angley_%.1lf_sptip_r_%.1lf.UNCA",thetay,tip.spTip.r);
+  }
+  else {
+    sprintf(filename,"rotated_angley_%.1lf_icstip_r_%.1lf_ch_%.1lf_theta_%.1lf.UNCA",thetay,tip.icsTip.r,tip.icsTip.ch,RAD_TO_DEG*tip.icsTip.theta);
+  }
+  
+  cout << "Writing to file " << filename << endl;
+  write_to_unca(filename);
+  cout << "Finished writing ..\n";
+  
+  if (thetay >= YMAX) {
+    done_monster_process_y=1;
+    exit(0);
+  }
+  thetay += YLEAST_COUNT;
+
+  for (int i=0;i<numObs;i++) {
+    if (ob[i] == UNUSED) continue;
+    Vec3d pos = ob[i]->pos;
+    ob[i]->setPos(centroid + Vec3d(pos-centroid).rotate3(Vec3d(0,1,0),DEG_TO_RAD*YLEAST_COUNT));
+    minz = ((!minz) || (ob[i]->pos.z < minz)) ? ob[i]->pos.z : minz;
+  }
+
+  /* not done yet - have to place the protein such that its bottom most point
+   * just touches the surface 
+   */
+  for (i=0;i<numObs;i++) {
+    if (ob[i] == UNUSED) continue;
+    ob[i]->setPos_z(ob[i]->pos.z-minz);
+  }
+  stopAFM=0;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -517,9 +620,9 @@ main(int argc, char *argv[])
 
   if (argc > 1) {// load from a file
     if (0==strcmp(argv[1],"-p")) {//ntube file
-      addSpheresFromFile(argv[2]);
+      addSpheresFromFile(argv[2],atof(argv[3]));
       //      addSpheresFromFile(argv[2],atof(argv[3]));
-      if (0==strcmp(argv[3],"-w")) {
+      if (0==strcmp(argv[4],"-w")) {
 	rotate_and_write_to_file=1;
       }
     }
@@ -527,40 +630,19 @@ main(int argc, char *argv[])
       addTrianglesFromFile(argv[2],atof(argv[3]));
     }
     else {
-      cout << "Usage : ./sim [-p filename [-w]] for protein\n -w orients the protein at different rotations and outputs the AFMS to a file";
-      cout << "        ./sim [-t filename scale] for triangle\n";
+      cout << "\nUsage : ./sim [-p filename unit [-w]] for proteins\n";
+      cout << "        ./sim [-t filename scale] for triangulated models\n\nSee README\n\n";
       exit(0);
     }
   }
   else {
     initObs();
   }
-#if 0
-  double thetax = 40;
-  double minz=0.;
-  centroid.print();
-  for (i=0;i<numObs;i++) {
-    Vec3d pos = ob[i]->pos;
-    //    ob[i]->pos.print();
-    ob[i]->setPos(centroid + Vec3d(pos-centroid).rotate3(Vec3d(1,0,0),DEG_TO_RAD*LEAST_COUNT));
-    //    ob[i]->pos.print();
-    //    exit(0);
-    minz = ((!minz) || (ob[i]->pos.z < minz)) ? ob[i]->pos.z : minz;
-  }
-
-  /* not done yet - have to place the protein such that its bottom most point
-   * just touches the surface 
-   */
-  for (i=0;i<numObs;i++) {
-    ob[i]->setPos_z(ob[i]->pos.z-minz);
-  }
-#endif
-
-
 
   // Deal with command line.
   glutInit(&argc, argv);
   glutInitDisplayMode(dblBuf);
+  //  glutInitDisplayMode(singleBuf);
 
   /* The view on Main window is a view of XY plane from a pt on the +ve 
    * Z-axis. +ve X axis is towards right while +ve Y is to upwards
@@ -569,14 +651,15 @@ main(int argc, char *argv[])
   // MAIN WINDOW
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
   glutInitWindowPosition( 0, 0 );
-  mainWindowID = glutCreateWindow( "3D CNT simulator - Top View" );
+  mainWindowID = glutCreateWindow( "3D AFM simulator - Top View" );
   adjustOrthoProjectionToWindow();
 
-#if 0
+#if DISP_LIST
   make_sphere();
   make_cylinder();
+  make_cone_sphere();
 #endif
-  
+
   // pass pointers to callback routines for main window
   glutDisplayFunc(displayFuncMain);
   glutIdleFunc(idleFuncDummy );
@@ -588,6 +671,8 @@ main(int argc, char *argv[])
   /* The view on Another View window is a front view from a point on the
    *  -Y axis
    */
+
+#if 1
   
   // another view WINDOW
   glutInitWindowSize( (int)windowWidth, (int)windowHeight );
@@ -595,9 +680,10 @@ main(int argc, char *argv[])
   viewWindowID = glutCreateWindow( "Front View" );
   adjustOrthoProjectionToViewWindow();
 
-#if 0
+#if DISP_LIST
   make_sphere();
   make_cylinder();
+  make_cone_sphere();
 #endif
 
   // pass pointers to callback routines for the other view window
@@ -605,16 +691,17 @@ main(int argc, char *argv[])
   glutIdleFunc(idleFuncDummy );
   //  glutReshapeFunc(reshapeWindow);
   glutKeyboardFunc(commonKeyboardFunc);
-
+#endif
 
   // Depth WINDOW
   glutInitWindowSize( (int)DEPTHSIZE, (int)DEPTHSIZE );
   glutInitWindowPosition( 0, 650 );
   depthWindowID = glutCreateWindow( "Depth window" );
 
-#if 0
+#if DISP_LIST
   make_sphere();
   make_cylinder();
+  make_cone_sphere();
 #endif
 
   glutDisplayFunc( displayFuncDepth );
@@ -810,7 +897,7 @@ adjustOrthoProjectionToWindow( void )
 {
   double orthoFrustumNearEdge =  scanNear;
   /* All far pts get mapped to scanFar. Allow round off of 1 */
-  double orthoFrustumFarEdge  =   scanFar+1;
+  double orthoFrustumFarEdge  =   scanFar;
 
   // set projection matrix to orthoscopic projection matching current window
   glMatrixMode(GL_PROJECTION);
@@ -838,103 +925,6 @@ error( char* errMsg )
 {
   printf( "\nError: %s\n", errMsg );
   exit( 1 );
-}
-
-void afm_ntube_inv_conesphere(Ntube tube) {
-
-  Vec3d A, B, C, D, P, Q, Axy, Bxy, N, N2, Nxy, N2xy, temp;
-  Vec3d A2, B2, C2, D2, A2xy, B2xy;
-
-  double R = tip.icsTip.r;
-  double theta = tip.icsTip.theta;
-
-  Vec3d pos = tube.pos;
-  double leng = tube.leng;
-  double diam = tube.diam;
-  Vec3d axis = tube.axis;
-
-  double r = diam/2.;
-
-  A = tube.precomp.A;
-  B = tube.precomp.B;
-  C = tube.precomp.C;
-  D = tube.precomp.D;
-  A2 = tube.precomp.A2;
-  B2 = tube.precomp.B2;
-  C2 = tube.precomp.C2;
-  D2 = tube.precomp.D2;
-  Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
-
-  xyz.normalize();
-
-#if 1
-  glBegin(GL_POLYGON);
-  glNormal3f( xyz.x, xyz.y, xyz.z );
-  glVertex3f( A.x, A.y, A.z );
-  glVertex3f( B.x, B.y, B.z );
-  glVertex3f( C.x, C.y, C.z );
-  glVertex3f( D.x, D.y, D.z );
-  glEnd();
-
-  Vec3d xyz2 = Vec3d :: crossProd(A2-B2,A2-D2);
-  xyz2.normalize();
-
-  glBegin(GL_POLYGON);
-  glNormal3f( xyz2.x, xyz2.y, xyz2.z );
-  glVertex3f( A2.x, A2.y, A2.z );
-  glVertex3f( B2.x, B2.y, B2.z );
-  glVertex3f( C2.x, C2.y, C2.z );
-  glVertex3f( D2.x, D2.y, D2.z );
-  glEnd();
-#endif
-
-#if 1
-  // now draw the two frustums
-  Vec3d one_end = pos - axis*leng/2.;
-  Vec3d other_end = pos + axis*leng/2.;
-  
-  double afm_height = one_end.z + (r+R)/sin(theta);
-  ConeSphere c = ConeSphere(r+R, afm_height, theta);
-  glPushMatrix();
-  glTranslatef(one_end.x,one_end.y,0);
-  c.draw();
-  glPopMatrix();
-  
-  // now other end
-  afm_height = other_end.z + (r+R)/sin(theta);
-  c = ConeSphere(r+R, afm_height, theta);
-  glPushMatrix();
-  glTranslatef(other_end.x,other_end.y,0);
-  c.draw();
-  glPopMatrix();
-
-#endif
-
-#if 1
-  double newradius = diam/2. + R;
-  Ntube bigtube = tube;
-  bigtube.setDiam(2*newradius); 
-  bigtube.draw();
-#endif
-}
-
-void afm_triang_inv_conesphere(Triangle tri) {
-  Vec3d a, b, c;
-  Triangle tr;
-
-  double R = tip.icsTip.r;
-
-  a = tri.a;
-  b = tri.b;
-  c = tri.c;
-
-  Vec3d offset = tri.normal*R;
-  tr = Triangle(a+offset, b+offset, c+offset); 
-  tr.draw();
-
-  afm_ntube_inv_conesphere(tri.ab);
-  afm_ntube_inv_conesphere(tri.bc);
-  afm_ntube_inv_conesphere(tri.ca);
 }
 
 int cnt=0;
@@ -966,14 +956,20 @@ doImageScanApprox( void )
       //      double zDepth = minZval + (1-zNormalized)*abs(scanNear - scanFar);
       double zDepth = scanFar + (1-zNormalized)*abs(scanNear - scanFar);
       zHeight[i][j] = zDepth;
+      //      zHeight[i][j] = 0.;
     }
   }
   done_afm_scan=1;
   cnt++;
 #if 1
   if (rotate_and_write_to_file) {
-    if (cnt >= 2) {
-      monster_process_x();
+    if (cnt >= 2) {// for startup transients to finish !!!
+      if (!done_monster_process_x) {
+	monster_process_x();
+      }
+      else {
+	monster_process_y();
+      }
     }
   }
 #endif
@@ -985,11 +981,10 @@ doImageScanApprox( void )
  */
 // display graphics in the depth window.
 void 
-imageScanDepthRender( void ) 
-{
+imageScanDepthRender( void )  {
   // draw into depth window
   glutSetWindow( depthWindowID );
-
+  
   // Setup OpenGL state.
   glClearDepth(1.0);
   glClearColor(0.5, 0.5, 0.5, 0.0);   // gray background
@@ -1016,7 +1011,7 @@ imageScanDepthRender( void )
   setColor( WHITE );
 
   for( int i=0; i<numObs; i++ ) {
-	  
+    if (ob[i] == UNUSED) continue;	  
     switch (tip.type) {
     case SPHERE_TIP :
       glPushMatrix();
@@ -1034,10 +1029,12 @@ imageScanDepthRender( void )
       break;
     }
   }
-  
-  glPopMatrix();
+
   // end of display frame, so flip buffers
   glutSwapBuffers();
+  //glFlush();
+  //glFinish();
+
   renderStyle = saveRenderStyle;
 }
 
@@ -1115,14 +1112,6 @@ showGrid( void )
 
 }
 
-void  do_precomputation_for_all_obs() {
-  // we do the safest thing
-  for (int i=0;i<numObs;i++) {
-    ob[i]->redo_precomputation();
-  }
-}
-
-
 /* this does global transormations (e,g rotate or translate the entire world)
  * as opposed to commonKeyboardFunc which mostly does object level 
  * transformations.
@@ -1130,6 +1119,7 @@ void  do_precomputation_for_all_obs() {
  */
 void globalkeyboardFunc(unsigned char key, int x, int y) {
   for (int i=0;i<numObs;i++) {
+    if (ob[i] == UNUSED) continue;
     ob[i]->keyboardFunc(key,x,y);
   }
 }
@@ -1138,9 +1128,25 @@ void globalkeyboardFunc(unsigned char key, int x, int y) {
 void
 commonKeyboardFunc(unsigned char key, int x, int y) {
   switch (key) {
+  case KEY_DELETE :
+    if (selectedOb != NULLOB) {
+      ob[selectedOb] = UNUSED;
+    }
+    break;
+  case 'o' :
+    if (draw_objects) {
+      draw_objects = 0;
+    }
+    else {
+      draw_objects = 1;
+    }
+    break;
   case 'n' :
-      // z of the tube is such that it just sits on the surface.
     addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM,   NULLOB, NULLOB);
+    selectedOb = numObs-1;
+    break;
+  case 's' :
+    addNtube( SPHERE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., 0., DEFAULT_DIAM,   NULLOB, NULLOB);
     selectedOb = numObs-1;
     break;
   case 't' :
@@ -1157,19 +1163,15 @@ commonKeyboardFunc(unsigned char key, int x, int y) {
       // radius of the tip
   case 'r' :
     tip.inc_r();
-    do_precomputation_for_all_obs();
     break;
   case 'R' :
     tip.dec_r();
-    do_precomputation_for_all_obs();
     break;
   case 'a' ://change angle, slant of the tip
     tip.inc_theta();
-    do_precomputation_for_all_obs();
     break;
   case 'A' ://change angle, slant of the tip
     tip.dec_theta();
-    do_precomputation_for_all_obs();
     break;
   case 'i':
     if (afm_scan == NO_AFM) {
@@ -1182,13 +1184,22 @@ commonKeyboardFunc(unsigned char key, int x, int y) {
       afm_scan = NO_AFM;
     break;
   case 'w':
-    //    monster_process_x();
 #if 1
     stopAFM=1;
-    write_to_unca("try.out");
-    cout << "Finished writing file\n";
-    stopAFM=0;
-    exit(0);
+  // write output to a file.
+    {
+	char filename[40];
+	if (tip.type == SPHERE_TIP) {
+	  sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip.r);
+	}
+	else {
+	  sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip.r,tip.icsTip.ch,RAD_TO_DEG*tip.icsTip.theta);
+	}
+	cout << "Writing to file " << filename << endl;
+	write_to_unca(filename);
+	cout << "Finished writing to file " << filename << endl;
+	stopAFM=0;
+    }
 #endif
     break;
   case 'q' :
@@ -1316,6 +1327,7 @@ findNearestObToMouse( void ) {
   double dist;
   
   for( i=0; i<numObs; i++ ) {
+    if (ob[i] == UNUSED) continue;
     dist = vec_xy_Distance( vMouseWorld, ob[i]->pos );
     if( dist < nearestDist  &&  dist < thresholdDist ) {
       nearestDist = dist;
@@ -1333,6 +1345,7 @@ findNearestTriangleSideToMouse( void ) {
   int nearestTriangle;
   
   for( i=0; i<numObs; i++ ) {
+    if (ob[i] == UNUSED) continue;
     if (ob[i]->type == TRIANGLE) {
       Triangle *tri = (Triangle *) ob[i];
       double dist1 = vec_xy_Distance( vMouseWorld, tri->ab.pos );

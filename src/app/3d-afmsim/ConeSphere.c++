@@ -9,6 +9,9 @@
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
 #include "ConeSphere.h"
+#include "defns.h"
+
+extern double cone_sphere_list_radius;
 
 // _theta is in degrees
 ConeSphere :: ConeSphere(double _r, double _ch, double _theta) {
@@ -60,9 +63,11 @@ extern GLuint list_sphere, list_cylinder;
 extern void drawSphere(double);
 
 
+#if 0
 /* Draws the ConeSphere with the axis along Z axis with the base of the 
  * cylinder in X-Y plane. The centre of the base of the cylinder is at (0,0)
  */
+
 void ConeSphere :: draw() {
   static int firstTime = 1;
   static GLUquadricObj* qobj;
@@ -75,7 +80,7 @@ void ConeSphere :: draw() {
   gluQuadricDrawStyle( qobj, GLU_FILL );
   gluQuadricNormals( qobj, GLU_FLAT );
   // draw  (can't put this on a display list because, topRadius is computed at runtime. Therefore can't do a simple scaling of a precompile time frustum.
-  gluCylinder( qobj, cr, topRadius, topHeight, 30, 10);
+  gluCylinder( qobj, cr, topRadius, topHeight, 30, 30);
 #endif
   
   // now go to the centre of the embedded sphere
@@ -88,6 +93,32 @@ void ConeSphere :: draw() {
 #endif
   glPopMatrix();
 }
+#endif
+
+
+void ConeSphere :: draw() {
+#if (DISP_LIST == 0)
+  static int firstTime = 1;
+  static GLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle( qobj, GLU_FILL);
+    gluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+  gluSphere( qobj, r, 30, 30);
+  glTranslatef(0, 0, -sphereHeight);
+  gluCylinder( qobj, cr, topRadius, topHeight, 30, 30);
+#else
+  glPushMatrix();
+  glScalef(r/cone_sphere_list_radius, r/cone_sphere_list_radius, r/cone_sphere_list_radius);
+  glCallList(CONE_SPHERE_LIST);
+  glPopMatrix();
+#endif
+}
+
+
+
 
 #define PI            3.14159265358979323846
 #define DEG_TO_RAD (PI/180.)

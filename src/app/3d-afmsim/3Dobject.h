@@ -47,27 +47,7 @@ public :
    * This might not be efficient, but I chose ease over efficiency.
    */
   virtual void keyboardFunc(unsigned char key, int x, int y)=0;
-  virtual void redo_precomputation()=0;
 };
-
-class Ntube;
-
-/* This is class does some precomputation for the AFM of a triangle */
-class PreCompute {
-public:
-  Vec3d A;
-  Vec3d B;
-  Vec3d C;
-  Vec3d D;
-  Vec3d A2;
-  Vec3d B2;
-  Vec3d C2;
-  Vec3d D2;
-  PreCompute(void) {}
-  PreCompute(Ntube *);
-  void print();
-};
-
 
 // subclass of OB
 class Ntube : public OB {
@@ -87,8 +67,6 @@ public:
   int   prevSeg;	// link to previous segment of bendable tube  (can be null)
   int   moved;	// 1=already moved this sim step; 0=free to be moved.
 
-  // holds precomputed data
-  PreCompute precomp;
   Ntube( void );
   Ntube(Vec3d leftendpt, Vec3d rightendpt, double diam);
   Ntube(int _type, Vec3d _pos, double _yaw, double _roll, double _pitch, double _length, double _diameter, int _nextSeg, int _prevSeg);
@@ -107,12 +85,6 @@ public:
   void afm_sphere_tip(SphereTip);
   void afm_inv_cone_sphere_tip(InvConeSphereTip);
   void keyboardFunc(unsigned char key, int x, int y);
-  // this does a initial precomputation based on the tip
-  void do_precomputation();
-  /* 
-   * when tip changes, we need to redo the pre computation
-   */
-  void redo_precomputation();
 };
 
 // subclass of OB
@@ -141,10 +113,6 @@ public:
   void afm_sphere_tip(SphereTip);
   void afm_inv_cone_sphere_tip(InvConeSphereTip);
   void keyboardFunc(unsigned char key, int x, int y);
-  /* since our triangle is composed of ntubes, we are doing precompn. So
-   * when tip changes, we need to redo the pre computation
-   */
-  void redo_precomputation();
 };
 
 
