@@ -377,6 +377,7 @@ pack $drawing_parameters_win.main_label -side top
 
 set line_width1_nm 1000
 set line_width2_nm 400
+set line_width3_nm 300
 set area_exposure_uCoulombs_per_square_cm 300
 set line_exposure_pCoulombs_per_cm 150
 set drawing_tool 1
@@ -431,6 +432,11 @@ radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.bu
 	-variable width_value -value 2
 generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.entry \
     line_width2_nm "line width 2 (nm)" real
+frame $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3
+radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3.button \
+	-variable width_value -value 3
+generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3.entry \
+    line_width3_nm "line width 3 (nm)" real
 
 pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1 
 pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1.button \
@@ -441,6 +447,11 @@ pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2
 pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.button \
 	-side left
 pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.entry \
+	-side right
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3.button \
+	-side left
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width3.entry \
 	-side right
 
 radiobutton $drawing_parameters_win.tool.area_tools.polygon \
