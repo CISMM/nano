@@ -357,6 +357,10 @@ void ImageViewer::mainloop() {
 #ifdef V_GLUT // event processing will be done in glut callbacks
 #else
     for (i = 0; i < num_windows; i++){
+
+	    glXMakeCurrent(dpy[window[i].display_index].x_dpy,
+                *(window[i].win), dpy[window[i].display_index].cx);
+
 	while (XCheckWindowEvent(dpy[window[i].display_index].x_dpy, 
 		*(window[i].win), event_mask, &event)) {
 	    switch(event.type) {
