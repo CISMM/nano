@@ -1,3 +1,13 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C: replaced two instances of 
+	exit(V_ERROR) with exit(-1) because the v.h #define/#undef of 
+	V_ERROR now seems to conflict with a microsoft windows header although
+	I can't see why given what is in v.h
+	* Makefile: added dependency on nmMP through nmb_Device
+	* nmg_SurfaceRegion.C (setTexture): added a comment suggesting future
+	work
+
 2001-08-07  David Marshburn  <marshbur@cs.unc.edu>
 
 	* globjects.c: added "region select" to the list MODE_NAMES

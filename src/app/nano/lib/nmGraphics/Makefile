@@ -1,4 +1,4 @@
-USES_LIBS := nmBase ImgFormat nmMScope nmUI tclLinkVar nmUGraphics vrpn \
+USES_LIBS := nmMP nmBase ImgFormat nmMScope nmUI tclLinkVar nmUGraphics vrpn \
              vogl quat
 
 USES_EXTERNAL_LIBS := RhinoIO glut

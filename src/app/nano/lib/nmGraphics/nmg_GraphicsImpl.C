@@ -107,7 +107,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     //printf("Initializing graphics...\n");
 
     if ( v_open() != V_OK ) {
-        exit(V_ERROR);
+        exit(-1);
     }
 
     initDisplays();
@@ -2932,7 +2932,7 @@ void nmg_Graphics_Implementation::initDisplays (void) {
     /* open display */
     d_displayIndexList[i] = v_open_display(V_ENV_DISPLAY, i);
     if (d_displayIndexList[i] == V_NULL_DISPLAY) {
-      exit(V_ERROR);
+      exit(-1);
     }
     //printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
   }

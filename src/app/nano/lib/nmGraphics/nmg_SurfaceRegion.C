@@ -421,8 +421,17 @@ setTexture()
                 fprintf(stderr, "Error, unknown texture set for display\n");
                 break;
             }
+            // XXX the following two lines to compensate for the texture border
+            // does nearly the same thing as the code in 
+            // nmb_Image::getImageToTextureTransform() so we could
+            // replace all the above related calculations and 
+            // image-related state with an nmb_Image object per texture
+            // See code in ImageViewer::drawImageAsTexture() for example.
+            // (AAS, 8-10-01)
+
             glTranslated(x_translate, y_translate, 0.0);
             glScaled(x_scale_factor, y_scale_factor, 1.0);
+
             glMultMatrixd(g_texture_transform);
             glScaled(1.0, 1.0, 1.0/surface_z_scale);
             break;
