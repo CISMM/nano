@@ -1,3 +1,7 @@
+2002-07-11    <marshbur@cs.unc.edu>
+
+	* import.tcl:  fixes an error in how the frames are loaded
+
 2002-07-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* import.tcl:  added controls for registering projected textures 

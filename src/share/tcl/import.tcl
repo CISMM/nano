@@ -57,7 +57,6 @@ frame $nmInfo(basic_options).file
 frame $nmInfo(basic_options).file.buttons -bd 3 -relief groove
 frame $nmInfo(basic_options).file.buttons.f1
 frame $nmInfo(basic_options).file.buttons.f1.f1
-frame $nmInfo(basic_options).f1.f2 -bd 3 -relief groove 
 
 generic_optionmenu $nmInfo(basic_options).file.buttons.imported_files current_object\
 	"Current Object" imported_objects
@@ -115,9 +114,12 @@ generic_entry $nmInfo(basic_options).file.buttons.import_axis_step import_axis_s
 
 #generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
 
+
 frame $nmInfo(basic_options).f1
 frame $nmInfo(basic_options).f2
 frame $nmInfo(basic_options).f1.f1 -bd 3 -relief groove
+frame $nmInfo(basic_options).f1.f2 -bd 3 -relief groove
+
 generic_entry $nmInfo(basic_options).f1.import_scale import_scale \
      "Scale" real 
 floatscale $nmInfo(basic_options).f1.import_scale_slide 0.1 1000.0 100 1 1 \
