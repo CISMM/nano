@@ -1260,27 +1260,43 @@ nmb_ImageArray::file_exporting_function[] = {
 		nmb_ImageArray::exportUsingImgMagick};
 
 nmb_ImageArray::nmb_ImageArray(const char *name,
+                                          const char *units,
+                                          short x, short y,
+                                          nmb_PixelType pixType)
+{
+	init(name, units, x, y, pixType);
+}
+
+void nmb_ImageArray::init(const char *name,
                                           const char * /*units*/,
                                           short x, short y,
-                                          nmb_PixelType pixType):
-        nmb_Image(), 
-        fData(NULL),ucData(NULL), usData(NULL), data(NULL),
-        num_x(x), num_y(y), d_borderXMin(1), d_borderXMax(1),
-        d_borderYMin(1), d_borderYMax(1),
-        units_x("none"), units_y("none"), units("ADC"),
-        my_name(name),
-        d_minNonZeroValueComputed(VRPN_FALSE),
-        d_minNonZeroValue(0),
-        d_minValueComputed(VRPN_FALSE),
-        d_minValue(0),
-        d_maxValueComputed(VRPN_FALSE),
-        d_maxValue(0),
-        d_minValidValueComputed(VRPN_FALSE),
-        d_minValidValue(0),
-        d_maxValidValueComputed(VRPN_FALSE),
-        d_maxValidValue(0),
-        d_pixelType(pixType)
+                                          nmb_PixelType pixType)
 {
+	fData = NULL;
+	ucData = NULL;
+	usData = NULL;
+	data = NULL;
+	num_x = x;
+	num_y = y;
+	d_borderXMin = 1;
+	d_borderXMax = 1;
+	d_borderYMin = 1;
+	d_borderYMax = 1;
+	units_x = string("none");
+	units_y = string("none");
+	units = string("ADC");
+	my_name = string(name);
+	d_minNonZeroValueComputed = vrpn_FALSE;
+	d_minNonZeroValue = 0;
+	d_minValueComputed = VRPN_FALSE;
+    d_minValue=0;
+    d_maxValueComputed=VRPN_FALSE;
+    d_maxValue=0;
+    d_minValidValueComputed=VRPN_FALSE;
+    d_minValidValue=0;
+    d_maxValidValueComputed=VRPN_FALSE;
+    d_maxValidValue=0;
+    d_pixelType=pixType;
     setAcquisitionDimensions( x, y );
     min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
@@ -1380,8 +1396,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
 
 nmb_ImageArray::nmb_ImageArray(nmb_Image *im)
 {
-  nmb_ImageArray(im->name()->c_str(),
-                  im->unitsValue()->c_str(),
+  init(im->name()->c_str(), im->unitsValue()->c_str(),
                   im->width(), im->height(), im->pixelType());
   units_x = *(im->unitsX());
   units_y = *(im->unitsY());

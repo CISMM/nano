@@ -9,6 +9,11 @@
 
 nmb_TransformMatrix44::nmb_TransformMatrix44()
 {
+    init();
+}
+
+void nmb_TransformMatrix44::init()
+{
     buildIdentity(xform);
     buildIdentity(inverse_xform);
     inverse_needs_to_be_computed = vrpn_FALSE;

@@ -1,3 +1,11 @@
+2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.C (minNonZeroValue): took out debugging file I/O code that was
+	making things run very slowly
+	* nmb_Image.C : fixed bad memory bug for one of the
+	nmb_ImageArray constructors
+	* nmb_TransformMatrix44.C: no significant changes
+
 2002-08-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_TransformMatrix44.[Ch] (transformVector): new function

@@ -147,29 +147,18 @@ minNonZeroValue
 double
 BCPlane::minNonZeroValue()
 {
-	//cout << "name = " << _dataset << endl;
-	FILE* out;
-	out = fopen("BCPlane.txt","a");	
-	//if(out!=NULL && _dataset=="e1")	fprintf(out,"%d %d\n",numX(),numY());
-
     if (!_modified_nz){
-		fclose(out);
 		return minNonZeroValueComputedLast();
 	}
     else{
 		int x, y;
 		_min_nonzero_value = 0;
 		_max_nonzero_value = 0;
-		//cout << "numX() = " << numX() << endl;		
-		//cout << "numY() = " << numY() << endl;
 		
 		for (x = 0; x < numX(); x++) {
 			
 			for (y = 0; y < numY(); y++) {
-				double value =  this->value(x, y);
-				
-				//save heights to file 
-				//if(out!=NULL && _dataset=="e1")		fprintf(out,"%04.4lf ",value);	
+				double value =  this->value(x, y);	
 							
 				if (((x == 0) && (y == 0)) || (_min_nonzero_value == 0)){
 					_min_nonzero_value = value;
@@ -182,16 +171,13 @@ BCPlane::minNonZeroValue()
 				}
 
 			}
-			//if(out != NULL && _dataset=="e1")		fprintf(out,"\n");
 		}
 
 
 		_modified_nz = 0;
-		fclose(out);
 		return _min_nonzero_value;
 		
-    }
-	fclose(out);	
+    }	
 } // minNonZeroValue
 
 

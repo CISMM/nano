@@ -399,6 +399,8 @@ class nmb_ImageArray : public nmb_Image {
     nmb_ImageArray(const char *name, const char *units, short x, short y,
         nmb_PixelType pixType = NMB_FLOAT32);
     nmb_ImageArray(nmb_Image *);
+	void init(const char *name, const char *units, short x, short y,
+        nmb_PixelType pixType = NMB_FLOAT32);
     virtual int width() const;
     virtual int height() const;
 
