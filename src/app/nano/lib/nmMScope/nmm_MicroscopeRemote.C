@@ -77,8 +77,10 @@
 #define FC_MAX_HALFCYCLES (100)
 
 // I feel bad, but we need to know if there is an ohmmeter
-class vrpn_Ohmmeter_Remote;
-extern vrpn_Ohmmeter_Remote *ohmmeter;
+//class vrpn_Ohmmeter_Remote;
+//extern vrpn_Ohmmeter_Remote *ohmmeter;
+// This made things difficult to compile so I did something equally ugly
+// but it should work.
 
 // Microscope
 //
@@ -1617,7 +1619,8 @@ long nmm_Microscope_Remote::SetStPtDelay (long delay) {
 long nmm_Microscope_Remote::SetRelax (long min, long sep) {
   char * msgbuf;
   long len;
-
+  
+  printf("setRelax, %ld %ld\n", min, sep);
   msgbuf = encode_SetRelax(&len, min, sep);
   if (!msgbuf)
     return -1;
@@ -1898,7 +1901,7 @@ long nmm_Microscope_Remote::DisableVoltsource (long _which) {
 }
 
 // HACK to get ohmmeter data into point results
-static float lastResistanceReceived = 0;
+static float lastResistanceReceived = -1;
 // END HACK
 
 long nmm_Microscope_Remote::RecordResistance
@@ -4252,7 +4255,7 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
           z_value->setValue( z2*(state.modify.slow_line_position_param) +
               z1*(1.0-state.modify.slow_line_position_param));
       } else {
-          display_error_dialog("RcvResultData: expected init_slow_line to be done (programmer error)\n");
+          fprintf(stderr, "RcvResultData: expected init_slow_line to be done (programmer error)\n");
       }
     }
 // Causes the white tick marks/modify markers to show up.      
@@ -4262,7 +4265,8 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   }
   if (state.modify.style != FORCECURVE)	{
       // XXX HACK - we need point results
-      if (ohmmeter !=NULL) {
+//      if (ohmmeter !=NULL) {
+        if (lastResistanceReceived >= 0) {
           // HACK - to get ohmmeter data in point results
           char *res_channel_name = "Resistance";
           char *res_channel_unit = "Ohms";
@@ -4270,6 +4274,7 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
               state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
               d_res_channel_added = vrpn_TRUE;
           }
+
           Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
           if (!pv) {
               fprintf(stderr, "nmm_Microscope_Remote::RcvResultData: "

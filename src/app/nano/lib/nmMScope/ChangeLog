@@ -1,3 +1,10 @@
+2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C : took out extern reference to 
+	vrpn_Ohmmeter_Remote since this prevented me from compiling the
+	ohmmeter client. This stuff really needs to be cleaned up but there
+	is no time at the moment
+
 2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C (~nmm_MicroscopeRemote) : unregisters
