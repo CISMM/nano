@@ -50,6 +50,11 @@ checkbutton $nmInfo(tip_display).display_geometry_checkbutton \
         -text "Display Geometry" -variable tip_display_enable
 pack $nmInfo(tip_display).display_geometry_checkbutton -anchor w
 
+# Controls where location for tip comes from
+checkbutton $nmInfo(tip_display).get_location_from_hand_checkbutton \
+  -text "Get Location From Hand" -variable tip_display_get_location_from_hand
+pack $nmInfo(tip_display).get_location_from_hand_checkbutton -anchor w
+
 frame $nmInfo(tip_display).tip_model -bd 3 -relief groove
 pack $nmInfo(tip_display).tip_model -side left
 

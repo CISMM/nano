@@ -1,3 +1,8 @@
+2002-10-10  Adam Seeger  <seeger@cs.unc.edu>
+
+	* tip.tcl: added switch to make the tip appear at the hand position to
+	help with making a picture for the manual
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* afm_sem.tcl : added "Update Model" and "Update SEM" buttons
