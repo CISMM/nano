@@ -3167,6 +3167,153 @@ static float xform_width(float x, float y, float angle) {
 static float xform_height(float x, float y, float angle) {
     return fabs(cos(angle)*(y) - sin(angle)*(x));
 }
+static int regionOutsidePlane(BCPlane* plane ,
+                              float region_center_x,
+                              float region_center_y,
+                              float region_width,
+                              float region_height,
+                              float region_angle) 
+{
+    // The idea is to check and see if the entire region area is
+    // outside of the plane, then return true.
+    while (region_angle > 3*M_PI/2) region_angle -= 2*M_PI;
+    while (region_angle < -M_PI/2) region_angle += 2*M_PI;
+//      printf("center %f %f, w h %f %f, ang %f\n",
+//             region_center_x, region_center_y,
+//             region_width, region_height,region_angle );
+
+    float A,B,C,cx1, cy1, cx2, cy2, cx3, cy3, cx4, cy4; 
+            // Formula Ax + By + C = 0 of edge of region
+    // Derived from y = mx +b, mx -y + b = 0, so A=m, B = -1, C = b
+
+    // If all corners of plane fall on outside of any edge, region is
+    // totally outside plane. 
+    // Sign factor I don't understand, but it works. 
+    int sign = 1;
+    if (region_angle > M_PI/2) sign = -1;
+    A = sign * tan(region_angle);
+    B = -sign;
+    cx1 = region_center_x +cos(region_angle)*region_width
+        -sin(region_angle)*region_height;
+    cy1 = region_center_y +cos(region_angle)*region_height
+        +sin(region_angle)*region_width;
+    C = sign *(-cx1 * tan(region_angle) + cy1);
+
+    if ((A* plane->maxX() + B*plane->maxY() + C ) < 0 &&
+        (A* plane->maxX() + B*plane->minY() + C ) < 0 &&
+        (A* plane->minX() + B*plane->maxY() + C ) < 0 &&
+        (A* plane->minX() + B*plane->minY() + C ) < 0 ) {
+        //printf("fail1, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
+        return 1;
+    }
+    cx2 = region_center_x +cos(region_angle)*-region_width
+        -sin(region_angle)*-region_height;
+    cy2 = region_center_y +cos(region_angle)*-region_height
+        +sin(region_angle)*-region_width;
+    C = sign *(-cx2 * tan(region_angle) + cy2);
+    
+    // Other side of this line. 
+    if ((A* plane->maxX() + B*plane->maxY() + C ) > 0 &&
+        (A* plane->maxX() + B*plane->minY() + C ) > 0 &&
+        (A* plane->minX() + B*plane->maxY() + C ) > 0 &&
+        (A* plane->minX() + B*plane->minY() + C ) > 0 ) {
+        //printf("fail2, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+    // We need these later, so calc now before angle changes.
+    cx3 = region_center_x +cos(region_angle)*-region_width
+        -sin(region_angle)*region_height;
+    cy3 = region_center_y +cos(region_angle)*region_height
+        +sin(region_angle)*-region_width;
+    cx4 = region_center_x +cos(region_angle)*region_width
+        -sin(region_angle)*-region_height;
+    cy4 = region_center_y +cos(region_angle)*-region_height
+        +sin(region_angle)*region_width;
+
+
+    region_angle = region_angle + M_PI/2.0;
+    if (region_angle > 3*M_PI/2) region_angle -= 2*M_PI;
+    // Sign factor I don't understand, but it works. 
+    sign = 1;
+    if (region_angle > M_PI/2) sign = -1;
+    A = sign * tan(region_angle);
+    B = -sign;
+    C = sign *(-cx1 * tan(region_angle) + cy1);
+    
+    //printf("%f ", (A* plane->maxX() + B*plane->maxY() + C ));
+    if ((A* plane->maxX() + B*plane->maxY() + C ) > 0 &&
+        (A* plane->maxX() + B*plane->minY() + C ) > 0 &&
+        (A* plane->minX() + B*plane->maxY() + C ) > 0 &&
+        (A* plane->minX() + B*plane->minY() + C ) > 0 ) {
+        //printf("fail3, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
+        return 1;
+    }
+    
+    C = sign *(-cx2 * tan(region_angle) + cy2);
+    // Other side of this line. 
+    if ((A* plane->maxX() + B*plane->maxY() + C ) < 0 &&
+        (A* plane->maxX() + B*plane->minY() + C ) < 0 &&
+        (A* plane->minX() + B*plane->maxY() + C ) < 0 &&
+        (A* plane->minX() + B*plane->minY() + C ) < 0 ) {
+        //printf("fail4, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+
+    // Now, checks for the other way around. 
+    // Corner coords are contained in cx* and cy* calculated above. 
+    A = 0;
+    B = -1;
+    C = plane->minY();
+    // Simplfy checks based on these values
+    if (( -cy1 + C ) > 0 &&
+        ( -cy2 + C ) > 0 &&
+        ( -cy3 + C ) > 0 &&
+        ( -cy4 + C ) > 0 ) {
+        //printf("fail5, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+    A = 0;
+    B = -1;
+    C = plane->maxY();
+    // Simplfy checks based on these values
+    if (( -cy1 + C ) < 0 &&
+        ( -cy2 + C ) < 0 &&
+        ( -cy3 + C ) < 0 &&
+        ( -cy4 + C ) < 0 ) {
+        //printf("fail6, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+    //A = infinity;
+    //B = -1;
+    // C used for X intercept. 
+    C = plane->minX();
+    // Simplfy checks based on these values
+    if (( -cx1 + C ) > 0 &&
+        ( -cx2 + C ) > 0 &&
+        ( -cx3 + C ) > 0 &&
+        ( -cx4 + C ) > 0 ) {
+        //printf("fail7, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+    //A = infinity;
+    //B = -1;
+    // C used for X intercept.
+    C = plane->maxX();
+    // Simplfy checks based on these values
+    if (( -cx1 + C ) < 0 &&
+        ( -cx2 + C ) < 0 &&
+        ( -cx3 + C ) < 0 &&
+        ( -cx4 + C ) < 0 ) {
+        //printf("fail8, A %f C %f, cx2 %f, cy2 %f\n", A, C, cx2, cy2);
+        return 1;
+    }
+
+    //printf("pass, A %f C %f, cx1 %f, cy1 %f\n", A, C, cx1, cy1);
+    
+    return 0;
+
+}
+
 /**
  *
    Region mode
@@ -3332,6 +3479,14 @@ doRegion(int whichUser, int userEvent)
         if (userEvent == RELEASE_EVENT) {
             // Helps display highlight correctly, below
             region_drag_mode = REG_NULL;
+            if (regionOutsidePlane(plane, region_center_x, region_center_y, 
+                                   region_width, region_height, region_angle)){
+                // Tell gfx to delete the region
+                region_drag_mode = REG_DEL;
+                // Reset region size, position to zero. 
+                region_center_x = region_center_y = region_width =
+                    region_height = region_angle = 0;
+            }
         }
         break;
 

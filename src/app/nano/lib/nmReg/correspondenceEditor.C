@@ -184,10 +184,10 @@ int CorrespondenceEditor::eventHandler(
         }
         break;
       case KEY_PRESS_EVENT:
-        printf("CorrespondenceEditor: got a key: %d\n", event.keycode);
-        if (event.keycode == 108 ||
+        //printf("CorrespondenceEditor: got a key: %d\n", event.keycode);
+        if (event.keycode == 127 ||
 	    event.keycode == 8){ // 8 is for backspace, ^H. 
-            // 108 for delete key? Doesn't work with glut 3.6, only 3.7+
+            // 127 for delete key. Delete key needs glut 3.7 or greater. 
             if (me->correspondence->numPoints() > 0){
                 me->correspondence->deletePoint(me->selectedPointIndex);
             }

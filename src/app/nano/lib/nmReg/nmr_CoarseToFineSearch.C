@@ -51,7 +51,7 @@ nmr_CoarseToFineSearch::nmr_CoarseToFineSearch():
   if (d_alignerMI.setSampleSizes(200, 200)) {
     printf("setSampleSizes error\n");
   } else {
-    printf("setSampleSizes succeeded\n");
+      //printf("setSampleSizes succeeded\n");
   }
 }
 

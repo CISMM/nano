@@ -1,15 +1,23 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
+#include <stdlib.h>
+
+#include <nmb_Dataset.h>
+#include <BCPlane.h>
+
 #include "nmg_Surface.h"
 #include "nmg_SurfaceRegion.h"
 #include "nmg_SurfaceMask.h"
-#include <nmb_Dataset.h>
-#include <BCPlane.h>
-#include <stdlib.h>
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::Constructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 nmg_Surface::
 nmg_Surface()
 {
@@ -22,11 +30,10 @@ nmg_Surface()
     d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::Destructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 nmg_Surface::
 ~nmg_Surface()
 {
@@ -37,11 +44,10 @@ nmg_Surface::
     delete d_defaultRegion;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::init
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 int nmg_Surface::
 init(unsigned int width, unsigned int height)
 {
@@ -59,11 +65,10 @@ init(unsigned int width, unsigned int height)
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::changeDataset
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 changeDataset(nmb_Dataset *dataset)
 {
@@ -76,11 +81,10 @@ changeDataset(nmb_Dataset *dataset)
     d_numSubRegions = 0;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::createNewRegion
-//      Access: Public
-// Description: Returns the ID of the newly created region
-////////////////////////////////////////////////////////////
+/**
+ Returns the ID of the newly created region
+    Access: Public
+*/
 int nmg_Surface::
 createNewRegion()
 {
@@ -110,12 +114,11 @@ createNewRegion()
     return region_id;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::destroyRegion
-//      Access: Public
-// Description: Removes a region from the set of regions 
-//              sub-dividing the surface
-////////////////////////////////////////////////////////////
+/**
+ Removes a region from the set of regions 
+            sub-dividing the surface
+    Access: Public
+*/
 void nmg_Surface::
 destroyRegion(int region)
 {
@@ -135,11 +138,10 @@ destroyRegion(int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::getRegion
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 nmg_SurfaceRegion* nmg_Surface::
 getRegion(int region)
 {
@@ -153,23 +155,21 @@ getRegion(int region)
     return (nmg_SurfaceRegion*)NULL;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::getDataset
-//      Access: Public
-// Description:
-////////////////////////////////////////////////////////////
+/**
+
+    Access: Public
+*/
 nmb_Dataset* nmg_Surface::
 getDataset()
 {
   return d_dataset;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setRegionControl
-//      Access: Public
-// Description: Set the plane that controls the functions that
-//              automatically derive the masking plane
-////////////////////////////////////////////////////////////
+/**
+ Set the plane that controls the functions that
+            automatically derive the masking plane
+    Access: Public
+*/
 void nmg_Surface::
 setRegionControl(BCPlane *control, int region)
 {
@@ -184,11 +184,10 @@ setRegionControl(BCPlane *control, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setMaskPlane
-//      Access: Public
-// Description: Manually set the mask plane
-////////////////////////////////////////////////////////////
+/**
+ Manually set the mask plane
+    Access: Public
+*/
 void nmg_Surface::
 setMaskPlane(nmg_SurfaceMask *mask, int region)
 {
@@ -203,12 +202,11 @@ setMaskPlane(nmg_SurfaceMask *mask, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::deriveMaskPlane
-//      Access: Public
-// Description: Create a masking plane, using a range of
-//              height values
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a range of
+            height values
+    Access: Public
+*/
 void nmg_Surface::
 deriveMaskPlane(float min_height, float max_height, int region)
 {
@@ -223,11 +221,10 @@ deriveMaskPlane(float min_height, float max_height, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::deriveMaskPlane
-//      Access: Public
-// Description: Create a masking plane, using a box method
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a box method
+    Access: Public
+*/
 void nmg_Surface::
 deriveMaskPlane(float center_x, float center_y, float width,float height, 
                 float angle, int region)
@@ -245,11 +242,10 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::rederive
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 rederive(int region) 
 {
@@ -259,12 +255,14 @@ rederive(int region)
             if (d_subRegions[region]->needsDerivation()) {                
                 nmg_SurfaceMask *mask;
 
-                mask = d_subRegions[region]->getMaskPlane();                
+                mask = d_subRegions[region]->getMaskPlane(); 
+                // Remove old area from default region
                 d_defaultRegion->getMaskPlane()->invertSubtract(mask);
             
                 d_subRegions[region]->rederiveMaskPlane(d_dataset);
             
                 mask = d_subRegions[region]->getMaskPlane();
+                // Default region contains all space not in other regions. 
                 d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
@@ -275,11 +273,10 @@ rederive(int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::rebuildRegion
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 int nmg_Surface::
 rebuildRegion(int region)
 {
@@ -293,15 +290,14 @@ rebuildRegion(int region)
     return 0;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::rebuildSurface
-//      Access: Public
-// Description: Force the entire surface to rebuild.  This
-//              SHOULD be mostly avoided, as in the general
-//              case you will only be calling rebuildRegion 
-//              on the particular region of the surface that
-//              changed
-////////////////////////////////////////////////////////////
+/**
+ Force the entire surface to rebuild.  This
+            SHOULD be mostly avoided, as in the general
+            case you will only be calling rebuildRegion 
+            on the particular region of the surface that
+            changed
+    Access: Public
+*/
 int nmg_Surface::
 rebuildSurface(vrpn_bool force)
 {
@@ -320,12 +316,11 @@ rebuildSurface(vrpn_bool force)
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::rebuildInterval
-//      Access: Public
-// Description: rebuild the interval of the entire surface
-//              that changed
-////////////////////////////////////////////////////////////
+/**
+ rebuild the interval of the entire surface
+            that changed
+    Access: Public
+*/
 int nmg_Surface::
 rebuildInterval(int low_row, int high_row, int strips_in_x)
 {
@@ -345,11 +340,10 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::renderSurface
-//      Access: Public
-// Description: Render the entire surface
-////////////////////////////////////////////////////////////
+/**
+ Render the entire surface
+    Access: Public
+*/
 void nmg_Surface::
 renderSurface()
 {
@@ -361,14 +355,13 @@ renderSurface()
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setAlpha
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 setAlpha(float alpha, int region)
 {
@@ -386,14 +379,13 @@ setAlpha(float alpha, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::enableFilledPolygons
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 enableFilledPolygons(int enable, int region)
 {
@@ -411,14 +403,13 @@ enableFilledPolygons(int enable, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setTextureDisplayed
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 setTextureDisplayed(int display, int region)
 {
@@ -436,14 +427,13 @@ setTextureDisplayed(int display, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setTextureMode
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 setTextureMode(int mode, int region)
 {
@@ -461,14 +451,13 @@ setTextureMode(int mode, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setTextureTransformMode
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 setTextureTransformMode(int mode, int region)
 {
@@ -486,14 +475,13 @@ setTextureTransformMode(int mode, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::setStride
-//      Access: Public
-// Description: As with all the graphics mutator functions,
-//              a region value of 0 means apply to all regions
-//              that aren't unassociate.  And a normal value will
-//              override this
-////////////////////////////////////////////////////////////
+/**
+ As with all the graphics mutator functions,
+            a region value of 0 means apply to all regions
+            that aren't unassociate.  And a normal value will
+            override this
+    Access: Public
+*/
 void nmg_Surface::
 setStride(unsigned int stride, int region)
 {
@@ -511,11 +499,10 @@ setStride(unsigned int stride, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateAlpha
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateAlpha(vrpn_bool associate, int region)
 {
@@ -529,11 +516,10 @@ associateAlpha(vrpn_bool associate, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateFilledPolygons
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateFilledPolygons(vrpn_bool associate, int region)
 {
@@ -547,11 +533,10 @@ associateFilledPolygons(vrpn_bool associate, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateTextureDisplayed
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateTextureDisplayed(vrpn_bool associate, int region)
 {
@@ -565,11 +550,10 @@ associateTextureDisplayed(vrpn_bool associate, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateTextureMode
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateTextureMode(vrpn_bool associate, int region)
 {
@@ -583,11 +567,10 @@ associateTextureMode(vrpn_bool associate, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateTextureTransformMode
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateTextureTransformMode(vrpn_bool associate, int region)
 {
@@ -601,11 +584,10 @@ associateTextureTransformMode(vrpn_bool associate, int region)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::associateStride
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_Surface::
 associateStride(vrpn_bool associate, int region)
 {

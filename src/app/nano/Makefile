@@ -6,7 +6,7 @@ USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
 EXCLUDE_SRC = renderer.C server_talk.c test_speech.c
 
 ifdef VC
-EXCLUDE_SRC += termio.c x_util.c
+EXCLUDE_SRC += termio.c x_util.c x_graph.c x_aux.c
 # vrpn_phantom isn't really external but we specify the path explicitly
 # as being in vrpn/server_src/pc_win32_MTd unlike we do for other internal libs
 USES_EXTERNAL_LIBS := vrpn_phantom ghost31

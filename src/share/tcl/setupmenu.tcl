@@ -901,12 +901,20 @@ pack $nmInfo(display_settings).icons -fill both
 pack $nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
 	-side top -fill x
 #
+############################
+# other_settings
+
+# This is for anything the user won't want to change very often, 
+# and can't be classified as a display setting, above. 
+set nmInfo(other_settings) [create_closing_toplevel other_settings "Other Settings..." ]
+
+#
 # Acquisition Parameters
 #
-iwidgets::Labeledframe $nmInfo(display_settings).acquisition \
+iwidgets::Labeledframe $nmInfo(other_settings).acquisition \
 	-labeltext "Acquisition Parameters" \
 	-labelpos nw
-set nmInfo(pref_acq) [$nmInfo(display_settings).acquisition childsite]
+set nmInfo(pref_acq) [$nmInfo(other_settings).acquisition childsite]
 
 set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
@@ -916,7 +924,7 @@ checkbutton $nmInfo(pref_acq).null_data_alpha \
 	-variable null_data_alpha_pressed
 
 if { !$thirdtech_ui } {
-pack $nmInfo(display_settings).acquisition -fill both
+pack $nmInfo(other_settings).acquisition -fill both
 pack $nmInfo(pref_acq).jump_back -side top -fill x
 pack $nmInfo(pref_acq).null_data_alpha -fill x -side left
 }
@@ -934,14 +942,14 @@ iwidgets::Labeledwidget::alignlabels \
 # Coupling
 #
 if { !$thirdtech_ui } {
-iwidgets::Labeledframe $nmInfo(display_settings).coupling \
+iwidgets::Labeledframe $nmInfo(other_settings).coupling \
         -labeltext "Coupling" \
         -labelpos nw
-set nmInfo(pref_coupling) [$nmInfo(display_settings).coupling childsite]
+set nmInfo(pref_coupling) [$nmInfo(other_settings).coupling childsite]
 
 checkbutton $nmInfo(pref_coupling).finegrained_coupling \
         -text "fine-grained coupling" -variable finegrained_coupling
 
-pack $nmInfo(display_settings).coupling -fill both
+pack $nmInfo(other_settings).coupling -fill both
 pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
 }

@@ -615,6 +615,12 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   strcpy(g_maskPlaneName, data->maskPlaneName->string());
 
   g_surface->changeDataset(data);
+  // If there is an existing region, it won't be applicable to new 
+  // data set. 
+  if (d_last_region != -1) {
+      g_surface->destroyRegion(d_last_region);
+      d_last_region = -1;
+  }
   causeGridRebuild(); 
 }
 
@@ -2715,10 +2721,12 @@ void nmg_Graphics_Implementation::positionRegionBox
     make_region_box(center_x, center_y, width, height, angle, highlight_mask);
 
     // If we don't have a region yet, make one. 
-    if (d_last_region == -1) {
+    if ((d_last_region == -1) && (highlight_mask != REG_DEL)) {
         d_last_region = g_surface->createNewRegion();
         g_surface->associateStride(VRPN_FALSE, d_last_region);
-        setTesselationStride(5, 1);
+        // Make this new region, outside of the box, blurry by setting
+        // stride to 5. 
+        setTesselationStride(5, d_last_region);
         // Always derive the mask plane the first time. 
         g_surface->deriveMaskPlane(center_x, center_y, width, 
                                    height, angle, d_last_region);    
@@ -2726,17 +2734,20 @@ void nmg_Graphics_Implementation::positionRegionBox
         // Don't derive a mask plane while dimensions are changing.
         // Only derive it if user has released widget. 
         // And g_surface knows not to re-derive the same surface. 
-        // NOTE: maybe not quite the effect we want, since surface
-        // doesn't re-derive until user moves away from center or
-        // edge they were moving. Better to re-derive when they
-        // release phantom button?
+        // Note: highlight_mask is supposed to be a bitmask,
+        // but is being interpreted here as a single value. 
         if (highlight_mask == REG_NULL || 
             highlight_mask == REG_PREP_TRANSLATE || 
             highlight_mask == REG_PREP_SIZE_WIDTH || 
             highlight_mask == REG_PREP_SIZE_HEIGHT || 
             highlight_mask == REG_PREP_SIZE) {
+            // Create new mask plane for this region. Region is "on"
+            // outside the box. Default region is on inside. 
             g_surface->deriveMaskPlane(center_x, center_y, width, 
                                        height, angle, d_last_region);    
+        } else if (highlight_mask == REG_DEL) {
+            g_surface->destroyRegion(d_last_region);
+            d_last_region = -1;
         }
     }
 }

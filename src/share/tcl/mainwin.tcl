@@ -46,7 +46,8 @@ namespace import -force blt::tile::*
 #option add *highlightBackground blanchedAlmond startupFile
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
-option add *menu*background grey75 startupFile
+option add *menu*background SystemMenu startupFile
+#option add *menu*background grey75 startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}
@@ -249,13 +250,13 @@ $setupmenu add command -label "Data Sets..." -underline 0 \
 }
 $setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
-$setupmenu add command -label "Visualization Settings..." -underline 0 -command \
-	"show.visualizations"
 $setupmenu add command -label "Color Map..." -underline 0 -command \
 	"show.colorscale"
 $setupmenu add command -label "Contour Lines..." -underline 8 -command \
 	"show.contour_lines"
 if { !$thirdtech_ui } {
+$setupmenu add command -label "Visualization Settings..." -underline 0 \
+        -command "show.visualizations"
 $setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
 $setupmenu add command -label "Haptic..." -underline 2 -command \
@@ -265,7 +266,10 @@ $setupmenu add command -label "External Filters..." -underline 0 -command \
 }
 $setupmenu add command -label "Display Settings..." -underline 8 -command \
 		"show.display_settings"
-
+if { !$thirdtech_ui } {
+$setupmenu add command -label "Other Settings..." -underline 0 -command \
+		"show.other_settings"
+}
 if { !$viewer_only } {
 lappend device_only_controls \
         [list $setupmenu entryconfigure "Data Sets..."]

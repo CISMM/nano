@@ -1,3 +1,8 @@
+2001-08-01  Aron Helser  <helser@cs.unc.edu>
+
+	* correspondenceEditor.C (eventHandler): Handle DEL keypress,
+	delete correspondence point. 
+
 2001-07-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondenceEditor.C (CorrespondenceEditor): changed 

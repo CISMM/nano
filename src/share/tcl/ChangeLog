@@ -1,3 +1,9 @@
+2001-08-01  Aron Helser  <helser@cs.unc.edu>
+
+	* setupmenu.tcl: Moved some commands to "Other Settings"
+	* mainwin.tcl: added "Other Settings", a few menu order tweaks.
+	* view.tcl: Scaleup and scaledown are consolidated to Scale. 
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* colormap.tcl: Modularization, so more than one cmap widget can

@@ -73,7 +73,7 @@ foreach i $magellan_buttons {
             -anchor nw
 }
 
-radiobutton $nmInfo(viewb1).grab -text "Grab"  -variable user_0_mode \
+radiobutton $nmInfo(viewb1).grab -text "Grab/Scale"  -variable user_0_mode \
 	-value 1 -padx 0 -pady 0
 button $nmInfo(viewb5).center -text "Center" -command "set center_pressed 1"
 
@@ -88,10 +88,10 @@ radiobutton $nmInfo(viewb6).demotouch -text "Touch Stored" \
 radiobutton $nmInfo(viewb6).region -text "Region" -variable user_0_mode \
 	-value 17  -padx 0 -pady 0
 
-radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale Up"   -variable user_0_mode \
+radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale"   -variable user_0_mode \
 	-value 2  -padx 0 -pady 0
-radiobutton $nmInfo(viewb2).r2.scaledown -text "Scale Down" -variable user_0_mode \
-	-value 3  -padx 0 -pady 0
+#radiobutton $nmInfo(viewb2).r2.scaledown -text "Scale Down" -variable user_0_mode \
+#	-value 3  -padx 0 -pady 0
 
 if { !$viewer_only } {
 radiobutton $nmInfo(viewb3).live -text "Touch" \
@@ -126,7 +126,8 @@ grid $view.b8 -sticky nsew -padx 1 -pady 1 -row 1 -column 3
 pack $nmInfo(viewb1).grab -side left
 pack $nmInfo(viewb2).r1 $nmInfo(viewb2).r2 -side left -fill x
 pack $nmInfo(viewb2).r1.changelight $nmInfo(viewb2).r1.measure -anchor nw
-pack $nmInfo(viewb2).r2.scaleup $nmInfo(viewb2).r2.scaledown -anchor nw
+pack $nmInfo(viewb2).r2.scaleup -anchor nw
+#$nmInfo(viewb2).r2.scaledown 
 if { !$viewer_only } {
 pack $nmInfo(viewb3).live $nmInfo(viewb3).select -anchor nw
 pack $nmInfo(viewb4).commit -side left

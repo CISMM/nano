@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_SurfaceRegion.h"
 
 #include <nmb_Dataset.h>
@@ -23,11 +30,9 @@
 
 #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::Constructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ */
 nmg_SurfaceRegion::
 nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
 {
@@ -58,11 +63,10 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
     d_num_lists = 0;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::Destructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 nmg_SurfaceRegion::
 ~nmg_SurfaceRegion()
 {
@@ -76,12 +80,11 @@ nmg_SurfaceRegion::
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::init
-//      Access: Public
-// Description: Allocates memory for each "vertex" array that
-//              the class needs
-////////////////////////////////////////////////////////////
+/**
+ * Allocates memory for each "vertex" array that
+ *              the class needs
+ * Access: Public
+ */
 int nmg_SurfaceRegion::
 init(int width, int height)
 {
@@ -124,33 +127,30 @@ init(int width, int height)
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::copy
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 void nmg_SurfaceRegion::
 copy(nmg_SurfaceRegion *other)
 {
     d_currentState = other->d_currentState;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::forceRebuildCondition
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 void nmg_SurfaceRegion::
 forceRebuildCondition()
 {
     d_needsFullRebuild = VRPN_TRUE;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setUpdateAndMark
-//      Access: Protected, Virtual
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Protected, Virtual
+ * 
+ */
 void nmg_SurfaceRegion::
 setUpdateAndTodo(int low_row, int high_row) 
 {
@@ -225,11 +225,10 @@ setUpdateAndTodo(int low_row, int high_row)
     last_marked = mark;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setTexture
-//      Access: Protected, Virtual
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Protected, Virtual
+ * 
+ */
 void nmg_SurfaceRegion::
 setTexture()
 {
@@ -441,12 +440,11 @@ setTexture()
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::cleanUp
-//      Access: Protected
-// Description: Unset or disable whatever needs to be after 
-//              rendering is complete
-////////////////////////////////////////////////////////////
+/**
+ * Unset or disable whatever needs to be after 
+ *              rendering is complete
+ * Access: Protected
+ */
 void nmg_SurfaceRegion::
 cleanUp()
 {
@@ -478,23 +476,21 @@ cleanUp()
 #endif
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setRegionControl
-//      Access: Public
-// Description: Set the plane that controls the functions that
-//              automatically derive the masking plane
-////////////////////////////////////////////////////////////
+/**
+ * Set the plane that controls the functions that
+ *              automatically derive the masking plane
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 setRegionControl(BCPlane *control)
 {
     d_regionalMask->setControlPlane(control);
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setMaskPlane
-//      Access: Public
-// Description: Manually set the mask plane
-////////////////////////////////////////////////////////////
+/**
+ * Manually set the mask plane
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 setMaskPlane(nmg_SurfaceMask *mask)
 {
@@ -505,12 +501,11 @@ setMaskPlane(nmg_SurfaceMask *mask)
     d_needsFullRebuild = VRPN_TRUE;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::deriveMaskPlane
-//      Access: Public
-// Description: Create a masking plane, using a range of
-//              height values
-////////////////////////////////////////////////////////////
+/**
+ * Create a masking plane, using a range of
+ *              height values
+ * Access: Public
+ */
 int nmg_SurfaceRegion::
 deriveMaskPlane(float min_height, float max_height)
 {   
@@ -518,12 +513,10 @@ deriveMaskPlane(float min_height, float max_height)
             
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::deriveMaskPlane
-//      Access: Public
-// Description: Create a masking plane, using a range of
-//              height values
-////////////////////////////////////////////////////////////
+/**
+ * Create a masking plane, using an oriented box
+ * Access: Public
+ */
 int nmg_SurfaceRegion::
 deriveMaskPlane(float center_x, float center_y, float width,float height, 
                 float angle)
@@ -531,11 +524,9 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
     return d_regionalMask->deriveMask(center_x, center_y, width, height, angle);
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::rederiveMaskPlane
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 rederiveMaskPlane(nmb_Dataset *dataset) 
 {
@@ -544,22 +535,19 @@ rederiveMaskPlane(nmb_Dataset *dataset)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::needsDerivation
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ */
 int nmg_SurfaceRegion::
 needsDerivation() 
 {
     return d_regionalMask->needsDerivation();
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setAlpha
-//      Access: Public
-// Description: Set the alpha value to use
-////////////////////////////////////////////////////////////
+/**
+ * Set the alpha value to use
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 setAlpha(float alpha, vrpn_bool respect_unassociate)
 {
@@ -569,12 +557,11 @@ setAlpha(float alpha, vrpn_bool respect_unassociate)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::enableFilledPolygons
-//      Access: Public
-// Description: Determine whether wire frame is enabled for
-//				this region
-////////////////////////////////////////////////////////////
+/**
+ * Determine whether wire frame is enabled for
+ *				this region
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 enableFilledPolygons(int enable, vrpn_bool respect_unassociate)
 {
@@ -583,12 +570,11 @@ enableFilledPolygons(int enable, vrpn_bool respect_unassociate)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setStride
-//      Access: Public
-// Description: Set the tesselation stride to use for this
-//				region
-////////////////////////////////////////////////////////////
+/**
+ * Set the tesselation stride to use for this
+ *				region
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 setStride(int stride, vrpn_bool respect_unassociate)
 {
@@ -598,12 +584,11 @@ setStride(int stride, vrpn_bool respect_unassociate)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setTextureDisplayed
-//      Access: Public
-// Description: Set which texture is to be displayed in this
-//              region
-////////////////////////////////////////////////////////////
+/**
+ * Set which texture is to be displayed in this
+ *              region
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 setTextureDisplayed(int display, vrpn_bool respect_unassociate)
 {
@@ -613,11 +598,10 @@ setTextureDisplayed(int display, vrpn_bool respect_unassociate)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setTextureMode
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 void nmg_SurfaceRegion::
 setTextureMode(int mode, vrpn_bool respect_unassociate)
 {
@@ -627,11 +611,10 @@ setTextureMode(int mode, vrpn_bool respect_unassociate)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::setTextureTransformMode
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 void nmg_SurfaceRegion::
 setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
 {
@@ -642,25 +625,23 @@ setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
 }
 
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::getRegionData
-//      Access: Public
-// Description: The registration code needs explicit access 
-//              to the data
-////////////////////////////////////////////////////////////
+/**
+ * The registration code needs explicit access 
+ *              to the data
+ * Access: Public
+ */
 Vertex_Struct ** nmg_SurfaceRegion::
 getRegionData()
 {
     return d_vertexPtr;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::SaveBuildState
-//      Access: Protected
-// Description: Saves the state of global variables
-//        Note: This function wil be unnecessary once we get
-//              rid of all the Global variables!
-////////////////////////////////////////////////////////////
+/**
+ * Saves the state of global variables
+ * Access: Protected
+ * @note This function wil be unnecessary once we get
+ *            rid of all the Global variables!
+ */
 void nmg_SurfaceRegion::
 SaveBuildState()
 {
@@ -670,13 +651,11 @@ SaveBuildState()
     d_savedState.alpha = g_surface_alpha;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::RestoreBuildState
-//      Access: Protected
-// Description: 
-//        Note: This function wil be unnecessary once we get
-//              rid of all the Global variables!
-////////////////////////////////////////////////////////////
+/**
+ * Access: Protected
+ * @note This function wil be unnecessary once we get
+ *              rid of all the Global variables!
+ */
 void nmg_SurfaceRegion::
 RestoreBuildState()
 {
@@ -685,13 +664,12 @@ RestoreBuildState()
     g_surface_alpha = d_savedState.alpha;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::SaveRenderState
-//      Access: Protected
-// Description: Saves the state of global variables
-//        Note: This function wil be unnecessary once we get
-//              rid of all the Global variables!
-////////////////////////////////////////////////////////////
+/**
+ * Saves the state of global variables
+ * Access: Protected
+ * @note This function wil be unnecessary once we get
+ *              rid of all the Global variables!
+ */
 void nmg_SurfaceRegion::
 SaveRenderState()
 {
@@ -701,13 +679,11 @@ SaveRenderState()
     d_savedState.textureTransformMode = g_texture_transform_mode;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::RestoreRenderState
-//      Access: Protected
-// Description: 
-//        Note: This function wil be unnecessary once we get
-//              rid of all the Global variables!
-////////////////////////////////////////////////////////////
+/**
+ * Access: Protected
+ * @note This function wil be unnecessary once we get
+ *              rid of all the Global variables!
+ */
 void nmg_SurfaceRegion::
 RestoreRenderState()
 {
@@ -717,12 +693,11 @@ RestoreRenderState()
     g_texture_transform_mode = d_savedState.textureTransformMode;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::rebuildGrid
-//      Access: Public
-// Description: Rebuilds the display lists that correspond
-//              to the region
-////////////////////////////////////////////////////////////
+/**
+ * Rebuilds the display lists that correspond
+ *              to the region
+ * Access: Public
+ */
 int nmg_SurfaceRegion::
 rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
 {  
@@ -755,11 +730,10 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::rebuildInterval
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ * Access: Public
+ * 
+ */
 int nmg_SurfaceRegion::
 rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x)
 {
@@ -793,15 +767,14 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
     return 1;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceRegion::renderRegion
-//      Access: Public
-// Description: Renders the region.
-////////////////////////////////////////////////////////////
+/**
+ * Renders the region.
+ * Access: Public
+ */
 void nmg_SurfaceRegion::
 renderRegion()
 {
-	static bool set = false;
+    //	static bool set = false;
     int i;
     
     SaveRenderState();

@@ -1,3 +1,17 @@
+2001-08-01  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (positionRegionBox): Respond to REG_DEL state
+	from interaction.c
+
+	* nmg_GraphicsImpl.h: cleanup
+	
+	* nmg_Globals.h (RegMode): Added "REG_DEL" so interaction.c could
+	delete region. 
+
+	* nmg_Surface.C: cleanup, doxygen method comments.
+	* nmg_SurfaceRegion.C: same
+	* nmg_SurfaceMask.C: same
+	
 2001-07-30  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_SurfaceMask.C (nmg_SurfaceMask): Initialization change so

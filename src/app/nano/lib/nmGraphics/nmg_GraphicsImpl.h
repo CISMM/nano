@@ -9,9 +9,10 @@
 #define NMG_GRAPHICS_IMPL_H
 
 #include "nmg_Graphics.h"
-#include "PPM.h"
 
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
+
+class PPM;
 
 class nmg_Graphics_Implementation : public nmg_Graphics {
 

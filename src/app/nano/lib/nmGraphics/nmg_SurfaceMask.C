@@ -12,11 +12,10 @@
 #include <math.h>
 #include <quat.h> // For Q_DEG_TO_RAD
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::Constructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 nmg_SurfaceMask::
 nmg_SurfaceMask()
 {
@@ -39,22 +38,20 @@ nmg_SurfaceMask()
     d_oldDerivation = (nmg_SurfaceMask*)NULL;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::Destructor
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 nmg_SurfaceMask::
 ~nmg_SurfaceMask()
 {
     delete [] d_maskData;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::init
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_SurfaceMask::
 init(int width, int height)
 {
@@ -97,11 +94,10 @@ init(int width, int height)
     }    
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::setControlPlane
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 void nmg_SurfaceMask::
 setControlPlane(BCPlane *control)
 {
@@ -118,12 +114,11 @@ setControlPlane(BCPlane *control)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::invertAdd
-//      Access: Public
-// Description: This sets as masked in this mask, the unmasked
-//              portions of the other mask
-////////////////////////////////////////////////////////////
+/**
+ This sets as masked in this mask, the unmasked
+            portions of the other mask
+    Access: Public
+*/
 void nmg_SurfaceMask::
 invertAdd(nmg_SurfaceMask *other)
 {
@@ -140,12 +135,11 @@ invertAdd(nmg_SurfaceMask *other)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::invertSubtract
-//      Access: Public
-// Description: This sets as unmasked in this mask, the unmasked
-//              portions of the other mask
-////////////////////////////////////////////////////////////
+/**
+ This sets as unmasked in this mask, the unmasked
+            portions of the other mask
+    Access: Public
+*/
 void nmg_SurfaceMask::
 invertSubtract(nmg_SurfaceMask *other)
 {
@@ -164,12 +158,11 @@ invertSubtract(nmg_SurfaceMask *other)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::subtract
-//      Access: Public
-// Description: This sets as unmasked in this mask, the masked
-//              portions of the other mask
-////////////////////////////////////////////////////////////
+/**
+ This sets as unmasked in this mask, the masked
+            portions of the other mask
+    Access: Public
+*/
 void nmg_SurfaceMask::
 subtract(nmg_SurfaceMask *other)
 {
@@ -188,12 +181,11 @@ subtract(nmg_SurfaceMask *other)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::add
-//      Access: Public
-// Description: This sets as masked in this mask, the masked
-//              portions of the other mask
-////////////////////////////////////////////////////////////
+/**
+ This sets as masked in this mask, the masked
+            portions of the other mask
+    Access: Public
+*/
 void nmg_SurfaceMask::
 add(nmg_SurfaceMask *other)
 {
@@ -210,11 +202,10 @@ add(nmg_SurfaceMask *other)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::clear
-//      Access: Public
-// Description: Resets to an empty mask
-////////////////////////////////////////////////////////////
+/**
+ Resets to an empty mask
+    Access: Public
+*/
 void nmg_SurfaceMask::
 clear()
 {
@@ -225,12 +216,11 @@ clear()
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::deriveMask
-//      Access: Public
-// Description: Create a masking plane, using a range of
-//              height values
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a range of
+            height values
+    Access: Public
+*/
 int nmg_SurfaceMask::
 deriveMask(float min_height, float max_height)
 {
@@ -247,12 +237,11 @@ deriveMask(float min_height, float max_height)
     return 0;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::deriveHeight
-//      Access: Private
-// Description: Create a masking plane, using a range of
-//              height values
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a range of
+            height values
+    Access: Private
+*/
 void nmg_SurfaceMask::
 deriveHeight()
 {   
@@ -278,12 +267,11 @@ deriveHeight()
     add(d_oldDerivation);
 }
 
-////////////////////////////////////////////////////////////
-//    Function: xform_width && xform_height
-//      Access: Public
-// Description: Helper function for deriveBox that together
-//              return if the point is inside the rotated box
-////////////////////////////////////////////////////////////
+/**
+ Helper function for deriveBox that together
+            return if the point is inside the rotated box
+    Access: Public
+*/
 static float xform_width(float x, float y, float angle) {
     return fabs(cos(angle)*(x) + sin(angle)*(y));
 }
@@ -291,12 +279,11 @@ static float xform_height(float x, float y, float angle) {
     return fabs(cos(angle)*(y) - sin(angle)*(x));
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::deriveMask
-//      Access: Public
-// Description: Create a masking plane, using a rotated box based
-//              method
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a rotated box based
+            method
+    Access: Public
+*/
 int nmg_SurfaceMask::
 deriveMask(float center_x, float center_y, float width,float height, 
            float angle)
@@ -318,12 +305,11 @@ deriveMask(float center_x, float center_y, float width,float height,
     return 0;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::deriveMask
-//      Access: Public
-// Description: Create a masking plane, using a rotated box based
-//              method
-////////////////////////////////////////////////////////////
+/**
+ Create a masking plane, using a rotated box based
+            method
+    Access: Public
+*/
 void nmg_SurfaceMask::
 deriveBox(nmb_Dataset *dataset)
 {
@@ -351,12 +337,11 @@ deriveBox(nmb_Dataset *dataset)
     add(d_oldDerivation);
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::rederive
-//      Access: Public
-// Description: Check the plane derivation method that is being
-//              used and rederive if necessary.
-////////////////////////////////////////////////////////////
+/**
+ Check the plane derivation method that is being
+            used and rederive if necessary.
+    Access: Public
+*/
 int nmg_SurfaceMask::
 rederive(nmb_Dataset *dataset)
 {
@@ -380,12 +365,11 @@ rederive(nmb_Dataset *dataset)
     return derived;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::needsDerivation
-//      Access: Public
-// Description: Check the plane derivation method that is being
-//              used and return whether derivation is needed
-////////////////////////////////////////////////////////////
+/**
+ Check the plane derivation method that is being
+            used and return whether derivation is needed
+    Access: Public
+*/
 int nmg_SurfaceMask::
 needsDerivation()
 {
@@ -399,26 +383,24 @@ needsDerivation()
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::setDrawPartialMask
-//      Access: Public
-// Description: Set whether this SurfaceMask is to consider
-//              partially masked quads as unmasked or not.
-//              The default is for it to consider them masked.
-////////////////////////////////////////////////////////////
+/**
+ Set whether this SurfaceMask is to consider
+            partially masked quads as unmasked or not.
+            The default is for it to consider them masked.
+    Access: Public
+*/
 void nmg_SurfaceMask::
 setDrawPartialMask(vrpn_bool draw)
 {
     d_drawPartialMask = draw;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::quadMasked
-//      Access: Public
-// Description: Tell whether the quad (with the points given
-//              as the upper left of the quad) is to be
-//              considered masked or not
-////////////////////////////////////////////////////////////
+/**
+ Tell whether the quad (with the points given
+            as the upper left of the quad) is to be
+            considered masked or not
+    Access: Public
+*/
 bool nmg_SurfaceMask::
 quadMasked(int x, int y, int stride)
 {
@@ -438,11 +420,10 @@ quadMasked(int x, int y, int stride)
     }
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::completeImage
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 bool nmg_SurfaceMask::
 completeImage(nmg_SurfaceMask *other)
 {
@@ -463,11 +444,10 @@ completeImage(nmg_SurfaceMask *other)
     return true;
 }
 
-////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::numberOfHoles
-//      Access: Public
-// Description: 
-////////////////////////////////////////////////////////////
+/**
+ 
+    Access: Public
+*/
 int nmg_SurfaceMask::
 numberOfHoles()
 {

@@ -246,9 +246,11 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
            user_0_mode = USER_MEASURE_MODE;
        } else if (user_0_mode == USER_MEASURE_MODE) {
            user_0_mode = USER_SCALE_UP_MODE;
-       } else if (user_0_mode == USER_SCALE_UP_MODE) {
-           user_0_mode = USER_SCALE_DOWN_MODE;
        } else {
+           // Scale up and down are the same state, now. 
+//  if (user_0_mode == USER_SCALE_UP_MODE) {
+//             user_0_mode = USER_SCALE_DOWN_MODE;
+//         } else {
            user_0_mode = USER_LIGHT_MODE;
        }
        break;

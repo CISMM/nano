@@ -1,3 +1,14 @@
+2001-08-01  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (regionOutsidePlane): new.
+	(doRegion): call regionOutsidePlane and delete region if user
+	drags/creates it outside of plane. 
+
+	* minit.c (handle_magellan_button_change): Scale up/down
+	consolidated to just "scale".
+
+	* Makefile: few more excluded files for VC
+	
 2001-07-30  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (doRegion): Changes highlight param sent to
@@ -10,7 +21,6 @@
 	with NANO_WITH_ROBOT.
 	* Makefile:  USES_LIBS includes nmRobotControl only iff
 	building with NANO_WITH_ROBOT
-	
 
 2001-07-27  Aron Helser  <helser@cs.unc.edu>
 
