@@ -13,6 +13,7 @@ class nmui_HSCanned;
 class nmui_HSMeasurePlane;
 class nmui_HSLivePlane;
 class nmui_HSFeelAhead;
+class nmui_HSPseudoFA;
 class nmui_HSDirectZ;
 class nmui_HSWarpedPlane;
 
@@ -45,6 +46,7 @@ class nmui_HapticsManager {
     nmui_HSMeasurePlane * d_measurePlane;
     nmui_HSLivePlane * d_livePlane;
     nmui_HSFeelAhead * d_feelAhead;
+    nmui_HSPseudoFA * d_pseudoFA;
     nmui_HSDirectZ * d_directZ;
     nmui_HSWarpedPlane * d_warpedPlane;
 

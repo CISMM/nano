@@ -146,6 +146,9 @@ proc show_tool {name path nm element op} {
     } elseif { $tool == 8 } {
         # Warped plane tool
         $path configure -text "Warped Plane"
+    } elseif { $tool == 9 } {
+	# Pseudo-Feelahead tool
+        $path configure -text "Pseudo-Feelahead"
     }
 }
 
@@ -586,6 +589,8 @@ radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
 	-variable newmodifyp_tool -value 7 -anchor nw
 radiobutton $nmInfo(modifyfull).tool.warpedplane -text "Warped Plane" \
          -variable newmodifyp_tool -value 8 -anchor nw
+radiobutton $nmInfo(modifyfull).tool.pseudofa -text "Pseudo-Feelahead" \
+         -variable newmodifyp_tool -value 9 -anchor nw
 
 pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
@@ -595,6 +600,7 @@ pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.feelahead \
         $nmInfo(modifyfull).tool.optimize_now \
         $nmInfo(modifyfull).tool.warpedplane \
+        $nmInfo(modifyfull).tool.pseudofa \
         -side top -fill x 
 
 lappend device_only_controls \
@@ -605,7 +611,8 @@ lappend device_only_controls \
 	$nmInfo(modifyfull).tool.slow_line_3d \
 	$nmInfo(modifyfull).tool.feelahead \
 	$nmInfo(modifyfull).tool.optimize_now \
-        $nmInfo(modifyfull).tool.warpedplane
+        $nmInfo(modifyfull).tool.warpedplane \
+	$nmInfo(modifyfull).tool.pseudofa
 
 #setup Modify toolparam box
 label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -967,6 +974,28 @@ proc flip_mod_tool {mod_tool element op} {
          # enable styles that might have been disabled. 
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
+    } elseif {$k==9} {
+
+        # selected pseudo-feelahead
+        # HACK TCH - enable same things as freehand until we have a clue
+
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
+	foreach widg $plist {pack forget $widg} 
+        foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
+	foreach widg $feelahead_param_list {pack $widg -side top -fill x}
+
+        # hide slow line tool
+        hide.modify_live
+
+        # set style to sharp, control to feedback
+        set newmodifyp_style 0
+	set newmodifyp_control 0
+
+        # disable other styles
+        $nmInfo(modifyfull).style.sweep configure -state disabled
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     }
 
     # disable widgets if you don't have the lock 

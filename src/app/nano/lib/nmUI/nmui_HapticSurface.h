@@ -277,6 +277,39 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
 };
 
+class nmui_HSPseudoFA : public nmui_HapticSurface {
+
+  public:
+
+    nmui_HSPseudoFA (nmg_Graphics * = NULL);
+
+    virtual ~nmui_HSPseudoFA (void);
+
+    virtual double distanceFromSurface (void) const;
+      ///< Return distance from last sampled surface area.
+      ///< TODO - currently returns 0.
+
+    // MANIPULATORS
+
+    virtual void update (nmm_Microscope_Remote *);
+    virtual void sendForceUpdate (vrpn_ForceDevice_Remote *);
+
+  protected:
+
+    vrpn_bool testTriangle (int v0, int v1, int v2);
+      ///< Utility for finding out which triangle
+      ///< the phantom is currently in.
+    vrpn_bool testEdge (int i, int j, vrpn_bool in);
+      ///< Utility for finding out which triangle
+      ///< the phantom is currently in.
+
+    vrpn_ForceDevice_Remote * d_device;
+    nmm_Microscope_Remote * d_microscope;
+    nmg_Graphics * d_graphics;
+
+    nmm_Sample d_sampleAlgorithm;
+
+};
 
 class nmui_HSDirectZ : public nmui_HapticSurface {
 

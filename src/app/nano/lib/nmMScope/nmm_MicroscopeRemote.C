@@ -3582,7 +3582,8 @@ void nmm_Microscope_Remote::RcvEndFeelTo (
 //    float32 dx
 //    float32 dy
 //    float32 orientation
-fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
+fprintf(stderr, "Completed feel to %.2f, %.2f;  %d x %d.\n",
+x, y, numx, numy);
   state.data.receivedAlgorithm.numx = numx;
   state.data.receivedAlgorithm.numy = numy;
   state.data.receivedAlgorithm.dx = dx;

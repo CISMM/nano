@@ -28,7 +28,8 @@ enum Tool {
   SLOW_LINE_3D,  // 5
   FEELAHEAD,
   OPTIMIZE_NOW,
-  WARPED_PLANE
+  WARPED_PLANE,
+  PSEUDO_FEELAHEAD
 };  // tool
 
 // style is defined in nmb_Types.h

@@ -1334,6 +1334,7 @@ struct MicroscapeInitializationState {
   int laQMD;
   vrpn_bool laUseWPA;
   vrpn_bool laUseFA;
+  vrpn_bool laUsePFA;
   int laFaN;
   int laFaD;
 
@@ -1381,6 +1382,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   laQMD (0),
   laUseWPA (vrpn_FALSE),
   laUseFA (vrpn_FALSE),
+  laUsePFA (vrpn_FALSE),
   laFaN (0),
   laFaD (0)
 {
@@ -3765,10 +3767,11 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
     }
     if ((xformIndex == V_TRACKER_FROM_HEAD_SENSOR) ||
 	(xformIndex == V_TRACKER_FROM_HAND_SENSOR)) {
+// TCH DISSN Jan 2002
 //printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
-printf("ph (%g, %g, %g)\n",
-info.pos[0], info.pos[1], info.pos[2]
-);
+//printf("ph (%g, %g, %g)\n",
+//info.pos[0], info.pos[1], info.pos[2]
+//);
 //,info.quat[0], info.quat[1], info.quat[2], info.quat[3]);
 	v_update_user_xform(0, xformIndex, UGLYCAST info.pos,
                             UGLYCAST info.quat);
@@ -5895,6 +5898,12 @@ void ParseArgs (int argc, char ** argv,
         istate->laFaN = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         istate->laFaD = atoi(argv[i]);
+      } else if (!strcmp(argv[i], "-pfa")) {
+        istate->laUsePFA = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        istate->laFaN = atoi(argv[i]);
+        if (++i >= argc) Usage(argv[0]);
+        istate->laFaD = atoi(argv[i]);
       } else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
@@ -7620,7 +7629,13 @@ fprintf(stderr, "Using Queue Monitoring for tip control.\n");
     microscope->state.modify.feelahead_numY = istate.laFaN;
     microscope->state.modify.feelahead_distX = istate.laFaD;
     microscope->state.modify.feelahead_distY = istate.laFaD;
-
+  }
+  if (istate.laUsePFA) {
+    microscope->state.modify.tool = PSEUDO_FEELAHEAD;
+    microscope->state.modify.feelahead_numX = istate.laFaN;
+    microscope->state.modify.feelahead_numY = istate.laFaN;
+    microscope->state.modify.feelahead_distX = istate.laFaD;
+    microscope->state.modify.feelahead_distY = istate.laFaD;
   }
 
   if (istate.logAdaptations) {

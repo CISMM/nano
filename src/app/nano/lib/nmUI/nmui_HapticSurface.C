@@ -724,7 +724,7 @@ qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
   // but it's one more point in the process that we can verify.)
   // Hacked, of course.
   
-  for (i = 0; i < l->numEntries(); i++) {
+  for (i = 0; (i < l->numEntries()) && (i < 100); i++) {
      vertices[i][0] = l->entry(i)->x();
      vertices[i][1] = l->entry(i)->y();
      vertices[i][2] = l->entry(i)->z();
@@ -749,6 +749,215 @@ int nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
 
 
 
+nmui_HSPseudoFA::nmui_HSPseudoFA (nmg_Graphics * graphics) :
+    d_graphics (graphics) {
+
+}
+
+// virtual
+nmui_HSPseudoFA::~nmui_HSPseudoFA (void) {
+
+}
+
+// virtual
+double nmui_HSPseudoFA::distanceFromSurface (void) const {
+  // TODO
+  return 0.0;
+}
+
+// MANIPULATORS
+
+
+// virtual
+void nmui_HSPseudoFA::update (nmm_Microscope_Remote * m) {
+
+  d_microscope = m;
+
+  // TODO:  update sample for current network conditions &
+  // current scan size
+
+  m->SetSampleMode(&d_sampleAlgorithm);
+}
+
+// virtual
+void nmui_HSPseudoFA::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
+
+  static q_vec_type vertices [100];
+
+  Point_list * l;
+  q_vec_type p0, p1, p2, e0, e1;
+  int v0, v1, v2;
+  int i, j, k, start;
+  int xside, yside;
+  vrpn_bool in; 
+
+  // The Phantom is at d_handPosMS.
+
+  if (!d_microscope) {
+    fprintf(stderr, "nmui_HSPseudoFA::sendForceUpdate:  no microscope!\n");
+    return;
+  }
+
+  l = &d_microscope->state.data.receivedPointList;
+  xside = d_microscope->state.data.receivedAlgorithm.numx;
+  yside = d_microscope->state.data.receivedAlgorithm.numy;
+
+  if ((xside <= 1) || (yside <= 1)) {
+    fprintf(stderr, "nmui_HSPseudoFA::sendForceUpdate:  grid too small.\n");
+    return;
+  }
+
+  if (l->numEntries() != xside * yside) {
+    fprintf(stderr, "nmui_HSPseudoFA::sendForceUpdate():  "
+                    "Didn't get enough data from microscope\n"
+                    "to reconstruct surface.\n");
+    fprintf(stderr, "  Got %d entries for %d x %d.\n", l->numEntries(),
+            xside, yside);
+    return;
+  }
+
+  // Find the closest facet.
+  // Naive approach:  work in the XY plane.
+  //   do 3 * # triangles half-plane tests
+  //   (but then ordering matters!)
+
+  // Slightly better approach?  Shoot ray and count edge-crossings
+  // From www.ecse.rpi.edu/Homepages/wrf/research/geom/pnpoly.html
+  // William Randolph Franklin, comp.graphics.algorithms FAQ
+
+  // Each set of 4 points defines *2* triangles, so there's
+  // semiduplicate code in this loop.  I don't move it into a function
+  // because the "temporary variables" v0, v1, v2 get reused later.
+
+  // All this is done in microscope space!
+
+  k = 0;  // polygon number
+  in = VRPN_FALSE;
+  for (i = 0; (i < xside - 1) && !in; i++) {
+    start = i * xside;
+    for (j = 0; (j < yside - 1) && !in; j++) {
+
+      v0 = start + j;
+      v1 = start + j + xside;
+      v2 = start + j + 1;
+
+      in = testTriangle (v0, v1, v2);
+
+      if (in) {
+        // in triangle k!
+        // force out of inner loop, fall out of outer loop and on to resolution
+        break;
+      } 
+
+      // not in this triangle;  try the next one
+      k++;
+
+      v0 = start + j + 1;
+      v1 = start + j + xside;
+      v2 = start + j + xside + 1;
+
+      in = testTriangle (v0, v1, v2);
+
+      if (in) {
+        // in triangle k!
+        // force out of inner loop, fall out of outer loop and on to resolution
+        break;
+      } 
+
+      // not in this triangle;  try the next one
+      k++;
+    }
+  }
+
+  // If all of those fail, you're outside the mesh...
+  //   How do we handle that?
+
+  if (!in) {
+
+    // TODO
+    // HACK
+    // For now, just leave the last known plane active
+
+  }
+
+  // Send that plane back to the Phantom.
+  // Relies on v0, v1, v2 being kept intact - we care about that,
+  // and would have to regenerate them if we'd just kept track of k.
+
+  if (in) {
+    // Normal is cross product of two edges.
+    // Parameter is dot product of any point on plane with normal.
+    p0[0] = l->entry(v0)->x();
+    p0[1] = l->entry(v0)->y();
+    p0[2] = l->entry(v0)->z();
+    p1[0] = l->entry(v1)->x();
+    p1[1] = l->entry(v1)->y();
+    p1[2] = l->entry(v1)->z();
+    p2[0] = l->entry(v2)->x();
+    p2[1] = l->entry(v2)->y();
+    p2[2] = l->entry(v2)->z();
+
+    pointToTrackerFromWorld(p0, p0);
+    pointToTrackerFromWorld(p1, p1);
+    pointToTrackerFromWorld(p2, p2);
+
+    q_vec_subtract(e0, p1, p0);
+    q_vec_subtract(e1, p2, p0);
+    q_vec_cross_product(d_currentPlaneNormal, e0, e1);
+    d_currentPlaneParameter = - q_vec_dot_product (d_currentPlaneNormal, p0);
+
+    nmui_HapticSurface::sendForceUpdate(device);
+  }
+
+  // Draw a grid on-screen so we can see if this is where it ought
+  // to be.  (This uses microscope coordinates, not phantom coords,
+  // but it's one more point in the process that we can verify.)
+  // Hacked, of course.
+  
+  for (i = 0; (i < l->numEntries()) && (i < 100); i++) {
+     vertices[i][0] = l->entry(i)->x();
+     vertices[i][1] = l->entry(i)->y();
+     vertices[i][2] = l->entry(i)->z();
+  }
+
+  if (d_graphics) {
+    d_graphics->setFeelGrid(xside, yside, vertices);
+  }
+
+}
+
+    
+vrpn_bool nmui_HSPseudoFA::testTriangle (int v0, int v1, int v2) {
+  vrpn_bool in;
+
+  in = testEdge (v0, v1, VRPN_FALSE);
+  in = testEdge (v1, v2, in);
+  in = testEdge (v2, v0, in);
+
+  return in;
+}
+
+vrpn_bool nmui_HSPseudoFA::testEdge (int l, int m, vrpn_bool in) {
+  Point_list * list;
+  const Point_results * pl, * pm;
+
+  list = &d_microscope->state.data.receivedPointList;
+  pl = list->entry(l);
+  pm = list->entry(m);
+
+  // Shoot ray and count edge-crossings.
+  // From www.ecse.rpi.edu/Homepages/wrf/research/geom/pnpoly.html
+  // William Randolph Franklin, comp.graphics.algorithms FAQ
+
+  if ((((pl->y() <= d_handPosMS[1]) && (d_handPosMS[1] < pm->y())) ||
+       ((pm->y() <= d_handPosMS[1]) && (d_handPosMS[1] < pl->y()))) &&
+      (d_handPosMS[0] < ((pm->x() - pl->x()) * (d_handPosMS[1] - pl->y())
+                         / (pm->y() - pl->y()) + pl->x()))) {
+    in = !in;
+  }
+
+  return in;
+}
 
 
 nmui_HSDirectZ::nmui_HSDirectZ (nmb_Dataset * dataset,

@@ -838,6 +838,9 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
       case FEELAHEAD:
 fprintf(stderr, "Feelahead mode!\n");
         break;
+      case PSEUDO_FEELAHEAD:
+fprintf(stderr, "Pseudo-Feelahead mode!\n");
+        break;
       case WARPED_PLANE:
 fprintf(stderr, "Warped plane mode!\n");
         break;

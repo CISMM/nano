@@ -1125,7 +1125,14 @@ fprintf(stderr, "In feelahead for live plane!\n");
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
         return;
-      } 
+      } else if (microscope->state.modify.tool = PSEUDO_FEELAHEAD) {
+        haptic_manager.setSurface(haptic_manager.d_pseudoFA);
+        haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+        // TODO:  invent a surface feature strategy!
+        // Can't just reuse d_pointFeatures?  Ought to interpolate something
+        //   from nearby points.
+        return;
+      }
 
       // fall through...
 
@@ -2826,7 +2833,8 @@ int doFeelLive (int whichUser, int userEvent)  {
       return -1;
    }
 
-  if (microscope->state.modify.tool == FEELAHEAD) {
+  if ((microscope->state.modify.tool == FEELAHEAD) ||
+      (microscope->state.modify.tool == PSEUDO_FEELAHEAD)) {
      graphics->showFeelGrid(VRPN_TRUE);
   }
 
@@ -2920,7 +2928,8 @@ int doFeelLive (int whichUser, int userEvent)  {
 
     case HOLD_EVENT:
 
-      if (microscope->state.modify.tool == FEELAHEAD) {
+      if ((microscope->state.modify.tool == FEELAHEAD) ||
+          (microscope->state.modify.tool == PSEUDO_FEELAHEAD)) {
 
         // Feelahead mode IGNORES the commit button;  it never
         // leaves image mode.
@@ -3521,6 +3530,7 @@ collabVerbose(5, "initializeInteraction:  updateWorldFromRoom().\n");
   haptic_manager.d_measurePlane = new nmui_HSMeasurePlane (decoration);
   haptic_manager.d_livePlane = new nmui_HSLivePlane;
   haptic_manager.d_feelAhead = new nmui_HSFeelAhead (graphics);
+  haptic_manager.d_pseudoFA = new nmui_HSPseudoFA (graphics);
   haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
   haptic_manager.d_warpedPlane = new nmui_HSWarpedPlane;
 
