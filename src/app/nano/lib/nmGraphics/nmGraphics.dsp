@@ -121,6 +121,10 @@ SOURCE=.\nmg_GraphicsTimer.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmg_ImageDisplayProjectiveTexture.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmg_RenderClient.C
 # End Source File
 # Begin Source File
@@ -218,6 +222,10 @@ SOURCE=.\nmg_GraphicsRemote.h
 # Begin Source File
 
 SOURCE=.\nmg_GraphicsTimer.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmg_ImageDisplayProjectiveTexture.h
 # End Source File
 # Begin Source File
 
