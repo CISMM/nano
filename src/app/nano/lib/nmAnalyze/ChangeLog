@@ -1,3 +1,9 @@
+2002-01-17  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze : added some checks for which rownumber the UpdateDataArray
+	is on, and allowed for the fact that the number of rows might not be the same
+	as the number of columns
+
 2002-01-15  Andrea Hilchey <hilchey@cs.unc.edu>
 	
 	* nma_ShapeAnalyze.C : updated Update_Data_Array function so now calls
@@ -34,8 +40,8 @@
 
 2001-10-16  Adam Seeger  <seeger@cs.unc.edu>
 
-        * ppm.hC - renamed to nma_ppm.hC to avoid link conflicts with a file
-        that has the same name in nmBase
+    * ppm.hC - renamed to nma_ppm.hC to avoid link conflicts with a file
+    that has the same name in nmBase
 
 2001-09-25  David Marshburn  <marshbur@cs.unc.edu>
 
