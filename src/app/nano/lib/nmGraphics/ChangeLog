@@ -1,3 +1,10 @@
+2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.hC (clearSEMDataTexture) : new function to
+	clear the texture array so parts that don't contain the current image 
+	don't show up
+        Also, various small changes to alter the appearance of the SEM texture
+
 2001-03-29  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmg_GraphicsImpl.C: changed use of nmb_Image::border() to use the

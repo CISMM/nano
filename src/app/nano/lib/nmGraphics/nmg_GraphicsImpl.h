@@ -116,6 +116,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
        int end_x, int end_y);
  
     // helper for updateTexture
+    virtual void clearSEMDataTexture();
     virtual void loadRawDataTexture(const int which, const char *image_name,
 	const int start_x, const int start_y);
 

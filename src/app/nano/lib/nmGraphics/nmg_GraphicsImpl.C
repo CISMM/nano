@@ -1341,7 +1341,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
         } else if (im->pixelType() == NMB_FLOAT32){
             pixelType = GL_FLOAT;
         } else {
-            fprintf(stderr, "nmb_GraphicsImp::loadRawDataTexture:"
+            fprintf(stderr, "nmb_GraphicsImp::createRealignTexturexs:"
                  "can't handle pixel type\n");
             return;
         }
@@ -1965,13 +1965,21 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      g_tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
   g_tex_blend_func[VISUALIZATION_TEX_ID] = GL_MODULATE;
 
+#if defined(sgi)
+  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
   g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
+#else
+  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
+#endif
 
   g_tex_blend_func[COLORMAP_TEX_ID] = GL_BLEND;
   g_tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
@@ -2013,47 +2021,8 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   g_tex_image_offsetx[SEM_DATA_TEX_ID] = 0;
   g_tex_image_offsety[SEM_DATA_TEX_ID] = 0;
 
+  clearSEMDataTexture();
 
-  int sem_tex_size = 4*g_tex_installed_width[SEM_DATA_TEX_ID] *
-      g_tex_installed_height[SEM_DATA_TEX_ID];
-  GLubyte *sem_data = new GLubyte [sem_tex_size]; 
-  k = 0;
-  
-  GLubyte value, alpha;
-  for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
-    for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
-         value = 0;//20*((i/30+j/30)%2);
-         alpha = 255;
-      } else {
-         value = 235 + 20*((i/30+j/30)%2);
- 	 alpha = 40;
-      }
-      sem_data[4*k] = value;
-      sem_data[4*k+1] = value;
-      sem_data[4*k+2] = value;
-      sem_data[4*k+3] = alpha;
-      k++;
-    }
-  }
-
-  glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-
-#ifdef sgi
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-        g_tex_installed_width[SEM_DATA_TEX_ID],
-        g_tex_installed_height[SEM_DATA_TEX_ID],
-        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-#else 
-  // WIN_32 openGL does funky stuff at the texture border if you try to use
-  // an RGBA texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-        g_tex_installed_width[SEM_DATA_TEX_ID],
-        g_tex_installed_height[SEM_DATA_TEX_ID],
-        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-#endif
-  delete [] sem_data;
-  
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing sem texture\n");
   }
@@ -2176,8 +2145,10 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
     // make sure gl calls are directed to the right context
     v_gl_set_context_to_vlib_window();
 
-    if (im->width() + im->borderXMin()+im->borderXMax() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
-	im->height() + im->borderYMin()+im->borderYMax() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
+    if (im->width() + im->borderXMin()+im->borderXMax() <= 
+            g_tex_installed_width[SEM_DATA_TEX_ID] && 
+	im->height() + im->borderYMin()+im->borderYMax() <= 
+            g_tex_installed_height[SEM_DATA_TEX_ID]) {
         int pixelType;
         if (im->pixelType() == NMB_UINT8){
             pixelType = GL_UNSIGNED_BYTE;
@@ -2191,9 +2162,14 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
             return;      
         }
         glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-        glPixelTransferf(GL_RED_SCALE, (float)0.5);
-	glPixelTransferf(GL_BLUE_SCALE, (float)0.6);
-	glPixelTransferf(GL_GREEN_SCALE, (float)0.6);
+        if (g_tex_image_width[SEM_DATA_TEX_ID] > im->width() ||
+            g_tex_image_height[SEM_DATA_TEX_ID] > im->height()) {
+          // clear the texture array
+          clearSEMDataTexture();
+        }
+//        glPixelTransferf(GL_RED_SCALE, (float)0.5);
+//	glPixelTransferf(GL_BLUE_SCALE, (float)0.6);
+//	glPixelTransferf(GL_GREEN_SCALE, (float)0.6);
         glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
                im->width()+im->borderXMin()+im->borderXMax(), 
                im->height()+im->borderYMin()+im->borderYMax(), 
@@ -2212,6 +2188,68 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
     } else {
       fprintf(stderr, "Error, sem image size exceeds limit\n");
     }
+}
+
+void nmg_Graphics_Implementation::clearSEMDataTexture()
+{
+  // XXX if you know a way to do this without allocating 4 MB of memory 
+  // please replace this with that method
+  int sem_tex_size = 4*g_tex_installed_width[SEM_DATA_TEX_ID] *
+                       g_tex_installed_height[SEM_DATA_TEX_ID];
+  GLubyte *sem_data = new GLubyte [sem_tex_size];
+  int i,j,k=0;
+  GLubyte value, alpha;
+  for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
+    for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
+      if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
+         value = 0;//20*((i/30+j/30)%2);
+         alpha = 255;
+      } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
+         value = 255;//200 + 55*((i/30+j/30)%2);
+         alpha = 255;//200 + 55*((i/60+j/60)%2);
+      } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_DECAL) {
+         value = 0;
+         alpha = 0;
+      }
+      sem_data[4*k] = value;
+      sem_data[4*k+1] = value;
+      sem_data[4*k+2] = value;
+      sem_data[4*k+3] = alpha;
+      k++;
+    }
+  }
+
+  glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+
+#ifdef sgi
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+        g_tex_installed_width[SEM_DATA_TEX_ID],
+        g_tex_installed_height[SEM_DATA_TEX_ID],
+        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
+#else
+  // WIN_32 openGL does funky stuff at the texture border if you try to use
+  // an RGBA texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+        g_tex_installed_width[SEM_DATA_TEX_ID],
+        g_tex_installed_height[SEM_DATA_TEX_ID],
+        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
+#endif
+  delete [] sem_data;
+
+  if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
+    float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
+    float bord_col[4] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  } else {
+    float bord_col[4] = {0.0, 0.0, 0.0, 0.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  }
+
+  if (report_gl_errors()) {
+    fprintf(stderr, "Error clearing sem texture\n");
+  }
 }
 
 void nmg_Graphics_Implementation::updateTexture(int which_texture,
