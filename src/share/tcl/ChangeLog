@@ -1,3 +1,7 @@
+2002-05-16 Jameson Miller <millerj@cs.unc.edu>
+	* Modify.tcl : new button to toggle weather to take data
+	continuosly or not when paused in slow line mode.
+
 2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl (save_image_file, save_buffer_dialog) :

@@ -1383,9 +1383,9 @@ proc cancelModifyVars {varlist} {
 proc config_play_name {name elem op} {
     global slow_line_playing nmInfo
     if {$slow_line_playing} {
-	$nmInfo(ml_slow_line).slow_line_play configure -text "Pause"
+	$nmInfo(top_slow_line).slow_line_play configure -text "Pause"
     } else {
-	$nmInfo(ml_slow_line).slow_line_play configure -text "Play"
+	$nmInfo(top_slow_line).slow_line_play configure -text "Play"
     }
 }
 
@@ -1409,8 +1409,16 @@ proc init_live_controls {} {
     set nmInfo(ml_slow_line) [$nmInfo(modify_live).slow_line childsite]
     pack $nmInfo(modify_live).slow_line -fill both -expand yes
 
+    set nmInfo(top_slow_line) [frame $nmInfo(ml_slow_line).top_slow_line]
+
+	#collect data even when playing is paused?
+	checkbutton $nmInfo(top_slow_line).slow_line_collect_data -text "Collect data\n when paused" \
+	-variable collect_data -padx 0 -pady 0
+
+	set collect_data 1
+
     set slow_line_playing 0
-    button $nmInfo(ml_slow_line).slow_line_play -text "Play" -command {
+    button $nmInfo(top_slow_line).slow_line_play -text "Play" -command {
 	if {$slow_line_playing} {
 	    set slow_line_playing 0
 	} else {
@@ -1433,14 +1441,17 @@ proc init_live_controls {} {
     generic_entry $nmInfo(ml_slow_line).step-size modifyp_step_size \
 	"Step Size (nm)" real 
 
-    pack $nmInfo(ml_slow_line).slow_line_play \
-	$nmInfo(ml_slow_line).slow_line_step \
+pack $nmInfo(top_slow_line) -side top
+pack $nmInfo(top_slow_line).slow_line_collect_data \
+	$nmInfo(top_slow_line).slow_line_play -side right
+
+    pack $nmInfo(ml_slow_line).slow_line_step \
 	$nmInfo(ml_slow_line).slow_line_forward \
 	$nmInfo(ml_slow_line).slow_line_reverse \
 	$nmInfo(ml_slow_line).step-size \
 	-side top -pady 2 -anchor nw
 
-    eval lappend device_only_controls "$nmInfo(ml_slow_line).slow_line_play \
+    eval lappend device_only_controls "$nmInfo(top_slow_line).slow_line_play \
 	$nmInfo(ml_slow_line).slow_line_step \
 	$nmInfo(ml_slow_line).slow_line_forward \
 	$nmInfo(ml_slow_line).slow_line_reverse \
