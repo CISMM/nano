@@ -1,4 +1,4 @@
-2002-02-04  Adam Seeger  <seeger@cs.unc.edu>
+2003-02-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (updateColorMapTextureAlpha): added new virtual function
 	to allow this file to compile
