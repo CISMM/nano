@@ -1726,24 +1726,25 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
   }
 }
 
-static void handle_tclwin_resize_change (vrpn_int32 newval, void * userdata)
+
+static void handle_tclwin_resize_change (vrpn_int32 /* newval */, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  //printf("Win position %d %d\n", (int)left_strip_width, (int)main_height);
   g->positionWindow(left_strip_width, main_height);
-        // default for Nano for 1280x1024 screen
-    int s_width = 1280, s_height = 1024;
+  // default for Nano for 1280x1024 screen
+  int s_width = 1280, s_height = 1024;
 #ifdef V_GLUT
-    if (glutGet( GLUT_SCREEN_WIDTH )) {
-        s_width = glutGet( GLUT_SCREEN_WIDTH );
-    } 
-    if (glutGet( GLUT_SCREEN_HEIGHT)) {
-        s_height = glutGet( GLUT_SCREEN_HEIGHT);
-    }
+  if (glutGet( GLUT_SCREEN_WIDTH )) {
+    s_width = glutGet( GLUT_SCREEN_WIDTH );
+  } 
+  if (glutGet( GLUT_SCREEN_HEIGHT)) {
+    s_height = glutGet( GLUT_SCREEN_HEIGHT);
+  }
 #endif
-    // subtract width of borders, title bar, and task bar for win2k
+  // subtract width of borders, title bar, and task bar for win2k
   g->resizeViewport(s_width-left_strip_width -6, s_height-main_height-55);
 }
+
 
 static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -1917,12 +1918,11 @@ static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
   // MOVED to nmg_Graphics
   g->setRulergridColor((int)ruler_r, (int)ruler_g, (int)ruler_b);
   
-//fprintf(stderr, "Ruler color %d %d %d\n",
-//(int) ruler_r,(int) ruler_g, (int) ruler_b);
 }
 
+
 /// Handle opacity change of the rulergrid
-static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
+static void handle_rulergrid_opacity_change (vrpn_float64, void* userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   // MOVED to nmg_Graphics
@@ -1930,30 +1930,34 @@ static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
   g->setRulergridOpacity(ruler_opacity*2.55);
 }
 
-static void handle_friction_slider_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
-}
-
-static void handle_bump_slider_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-
-  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
-}
-
-static void handle_buzz_slider_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+static void handle_friction_slider_change (vrpn_float64, void* /* userdata */) {
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 
-static void handle_compliance_slider_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+static void handle_bump_slider_change (vrpn_float64, void* /* userdata */) {
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
+
+
+static void handle_buzz_slider_change (vrpn_float64, void* /* userdata */) {
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
+
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
+}
+
+
+static void handle_compliance_slider_change (vrpn_float64, void* /* userdata */) {
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
+
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
+}
+
 
 static void handle_recovery_time_change (vrpn_float64 value, void * userdata)
 {
@@ -2159,10 +2163,7 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   if (set_stream_time_now == 0) return;
 
   struct timeval newStreamTime;
-  // BUG BUG BUG
-  // If we're at x.y and set stream time to x.0 we'll replay the
-  // whole stream file?
-  newStreamTime.tv_sec = (long) set_stream_time;
+  newStreamTime.tv_sec = (long) ((double) set_stream_time);
   newStreamTime.tv_usec = 999999L;
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
@@ -3392,6 +3393,7 @@ void handle_opacitymap_dataset_change (const char*, void * userdata) {
   g->causeGridRedraw();
 }
 
+
 //callbacks for when the datasets for the haptic stimuli change
 // For all of these, we use plane->m*NonZeroValue() instead of
 // plane->m*Value() in order to set min and max to reasonable values
@@ -3401,10 +3403,9 @@ void handle_opacitymap_dataset_change (const char*, void * userdata) {
 //    min_limit = min_value - range
 //    max_limit = max_value + range
 // in order to account for drifting (in stream files or running live).
-
-void    handle_adhesion_dataset_change(const char *, void * userdata)
+void    handle_adhesion_dataset_change( const char *, void* /* userdata */ )
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                      (adhesionPlaneName.string());
   float range;
@@ -3433,9 +3434,10 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
   }
 }
 
-void    handle_friction_dataset_change(const char *, void * userdata)
+
+void    handle_friction_dataset_change( const char *, void* /* userdata */ )
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                (frictionPlaneName.string());
   float range;
@@ -3465,9 +3467,10 @@ void    handle_friction_dataset_change(const char *, void * userdata)
   
 }
 
-void    handle_bump_dataset_change(const char *, void * userdata)
+
+void    handle_bump_dataset_change( const char *, void* /* userdata */ )
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
     (bumpPlaneName.string());
   float range;
@@ -3499,9 +3502,10 @@ void    handle_bump_dataset_change(const char *, void * userdata)
   
 }
 
-void    handle_buzz_dataset_change(const char *, void * userdata)
+
+void    handle_buzz_dataset_change( const char *, void* /* userdata */ )
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
       (buzzPlaneName.string());
   float range;
@@ -3531,9 +3535,10 @@ void    handle_buzz_dataset_change(const char *, void * userdata)
   }  
 }
 
-void    handle_compliance_dataset_change(const char *, void * userdata)
+
+void    handle_compliance_dataset_change( const char *, void* /* userdata */ )
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  // nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
       (compliancePlaneName.string());
   float range;
@@ -3562,6 +3567,8 @@ void    handle_compliance_dataset_change(const char *, void * userdata)
       compliance_slider_max = 1;
   }
 }
+
+
 
 // Callbacks for latency compensation techniques.
 

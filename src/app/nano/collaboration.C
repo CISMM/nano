@@ -100,7 +100,7 @@ void handle_synchronize_timed_change( vrpn_int32 value,
 
 
 
-void handle_peer_sync_change (void * userdata, vrpn_bool value) 
+void handle_peer_sync_change (void * /*userdata*/, vrpn_bool value) 
 {
   if (isSynchronized && value) // both synchronized
     { graphics->enableCollabHand(VRPN_TRUE); } 
@@ -178,7 +178,7 @@ int handle_timed_sync_complete( void * userdata )
  * Linked to button in tcl UI. If pressed, copy the shared state to
  * the private state.
  */
-void handle_copy_to_private( vrpn_int32 value, void * userdata )
+void handle_copy_to_private( vrpn_int32 /*value*/, void * userdata )
 {
   CollaborationManager * cm = (CollaborationManager *) userdata;
   nmui_Component * sync = cm->uiRoot();

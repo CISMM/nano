@@ -414,7 +414,6 @@ void CollaborationManager::setPeerName
 
   // TCH 6 March 2001
   // If the name is already set, it isn't safe to change!
-  //if ((d_peerName)&&(d_peerName[0]!='\0')) {
   if(d_isCollaborationOn){
     display_warning_dialog
         ("Can't change which collaborator we're connected to.\n");
@@ -438,8 +437,6 @@ void CollaborationManager::setPeerName
   }
 
   if (d_peerRemote->connected()) {
-
-//fprintf(stderr, "CM Quickie remote\n");
     d_gotPeerRemote = VRPN_TRUE;
     if (d_gotPeerServer) {
       fullyConnected();
@@ -456,7 +453,6 @@ void CollaborationManager::setPeerName
                 d_peerRemote);
 
   // Open peerHand and peerMode
-
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", d_logPath, d_logTime);
   if (d_replay) {
     sprintf(peerHandName, "handCoordinateServer0@file://%s", sfbuf);
@@ -484,7 +480,6 @@ void CollaborationManager::setPeerName
   }
 
   // Figure out who does the synchronizing
-
   if (d_peerRemote && d_peerRemote->doing_okay()) {
     sprintf(buf, "%s", newName);
 
@@ -514,7 +509,6 @@ void CollaborationManager::setPeerName
 
   // Let everybody else know who the remote is and do other misc.
   // initialization tasks.
-
   if (d_peerRemote && d_peerRemote->doing_okay()) {
     d_uiController->initializeConnection(d_peerRemote);
 
@@ -533,7 +527,6 @@ void CollaborationManager::setPeerName
 
     // Plane sync object also needs to know the name of collaborator
     // to uniquely identify planes created.
-
     if (d_planeSync) {
       d_planeSync->changePeer(d_peerRemote);
     }
@@ -674,10 +667,8 @@ int CollaborationManager::handle_timerResponse (void * userdata,
 
 // static
 int CollaborationManager::handle_gotPeerServerConnection
-      (void * ud, vrpn_HANDLERPARAM p) {
+(void * ud, vrpn_HANDLERPARAM /*p*/) {
   CollaborationManager * it = (CollaborationManager *) ud;
-
-//fprintf(stderr, "CM got Peer Server Connection\n");
 
   it->d_gotPeerServer = VRPN_TRUE;
   if (it->d_gotPeerRemote) {
@@ -689,10 +680,8 @@ int CollaborationManager::handle_gotPeerServerConnection
 
 // static
 int CollaborationManager::handle_gotPeerRemoteConnection
-      (void * ud, vrpn_HANDLERPARAM p) {
+(void * ud, vrpn_HANDLERPARAM /*p*/) {
   CollaborationManager * it = (CollaborationManager *) ud;
-
-//fprintf(stderr, "CM got Peer Remote Connection\n");
 
   it->d_gotPeerRemote = VRPN_TRUE;
   if (it->d_gotPeerServer) {

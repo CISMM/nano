@@ -241,9 +241,9 @@ static int	fout_vrml_normal_dimension(nmb_PlaneSelection planes,
 
 
 
-static int	fout_vrml_color(nmb_PlaneSelection planes,
-		GLdouble minColor[3],GLdouble maxColor[3],
-		ofstream &fout, int stride)
+static int fout_vrml_color( nmb_PlaneSelection planes,
+			    GLdouble /*minColor*/[3], GLdouble /*maxColor[3]*/[3],
+			    ofstream &fout, int stride )
 {
     int x,y;
 
@@ -254,31 +254,7 @@ static int	fout_vrml_color(nmb_PlaneSelection planes,
     for (x = 0; x < planes.height->numX(); x += stride) {// right->left
       for (y = 0; y < planes.height->numY(); y += stride) {	// bottom->top
         GLfloat	Color[3] = {0.5,0.5,0.5};
-	/*
-	// stretch/shrink data based on data_min/max colors:
-	float data_value = planes.color->value(x, y);
-	data_value = data_value * (data_max - data_min) + data_min;
-	
-	// clamp data based on the stretched/shrunk colormap:
-	if ( data_value <  color_min ) data_value = 0;
-	else if ( data_value > color_max ) data_value = 1.0;
-	else data_value = (data_value - color_min)/(color_max - color_min);
-	
-	if (g_curColorMap) {    // Use the color map loaded from file
-	  float r, g, b, a;
-	  g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-	  Color[0] = r;
-	  Color[1] = g;
-	  Color[2] = b;
-	  Color[3] = (GLubyte) (g_surface_alpha * 255);
-	}
-      } else {      // Use the CUSTOM color mapping tool
-	for (int i = 0; i < 3; i++) {
-	  double  color_diff = (maxColor[i] - minColor[i]);
-	  Color[i] = minColor[i] + (color_diff * data_value);
-	}
-      }
-	*/
+
 	if ((y + stride >= planes.height->numY())&&
 	    (x + stride >= planes.height->numX())) {
 						//at bottom of list

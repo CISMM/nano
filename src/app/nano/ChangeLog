@@ -1,3 +1,14 @@
+2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* CollaborationManager.C:  removed compiler warnings on the SGI, 
+	removed commented-out code, some code-clean up
+	* collaboration.C: same
+	* import.C: same
+	* index_mode.C: same
+	* microscape.c: same
+	* vrml.C: same
+	* vrpn_MousePhantom.C: same
+
 2001-12-12    <marshbur@cs.unc.edu>
 
 	* microscape.c (handle_rewind_stream_change): tell the keithley

@@ -67,7 +67,7 @@ Index_mode::newPlane( BCPlane* plane )
   
   if( Index_mode::plane != NULL )
     Index_mode::plane->remove_callback( (Plane_Valuecall) handle_new_datapoint,
-				  (void*) callback_username );
+					(void*) callback_username );
 
   cout << "Index_mode::newPlane." << endl;
   cout << "\tfrom:  ";
@@ -144,7 +144,6 @@ Index_mode::snapshot( )
      v_gl_set_context_to_vlib_window();
      glutPopWindow();
      glutProcessEvents_UNC();
-
   #else
      /* XWindows stuff would go here */
   #endif
@@ -165,15 +164,14 @@ Index_mode::snapshot( )
 
 
 void
-Index_mode::handle_new_datapoint( BCPlane *plane, int x, int y, void *userdata )
+Index_mode::handle_new_datapoint( BCPlane* plane, int x, int y, void* /*userdata*/ )
 {
-
 #ifndef _WIN32
   if( !initialized ) return;
 
-  if( x == 0 && y == plane->numY() - 1 && decoration != NULL && (int) decoration->elapsedTime > prev_time)
+  if( x == 0 && y == plane->numY() - 1 
+      && decoration != NULL && (int) decoration->elapsedTime > prev_time)
     {
-
       if( first_scan ){ 
           first_scan = false;
           return;

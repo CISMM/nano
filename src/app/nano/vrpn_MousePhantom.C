@@ -136,8 +136,6 @@ void vrpn_MousePhantom::print_report(void)
 }
 void vrpn_MousePhantom::get_report(void)
 {
-	double x = 0,y =0,z=0;
-  	double dt_vel = .10, dt_acc = .10;
         q_type temp_quat;
 
         // This is a "meters per pixel" translation factor.
@@ -157,7 +155,6 @@ void vrpn_MousePhantom::get_report(void)
                     // This sign means "pull towards, push away"
                     pos[2] = d_press_pos[2] + (d_move_y - d_press_y)*trans_scale;
                 }
-                //printf("P %d %d M %d %d\n",d_press_x, d_press_y,d_move_x,d_move_y);
             } else {
                 // Rotate, instead of translate
                 // x mouse,  rotate around y axis, angle in radians.
@@ -174,42 +171,6 @@ void vrpn_MousePhantom::get_report(void)
             }
         }
 
-        // Left over from Phantom routine - probably should
-        // figure out if we ever use it...
-//          gstVector phantomVel = phantom->getVelocity();//mm/sec
-//          phantomVel.getValue(x, y, z);
-//          vel[0] = x/1000.0;      // convert from mm to m
-//          vel[1] = y/1000.0;
-//          vel[2] = z/1000.0;
-//          gstVector phantomAcc = phantom->getAccel(); //mm/sec^2
-//          phantomAcc.getValue(x,y,z);
-//          acc[0] = x/1000.0;      // convert from mm to m
-//          acc[1] = y/1000.0;
-//          acc[2] = z/1000.0;
-
-	// need to work out expression for acceleration quaternion
-
-	//gstVector phantomAngAcc = phantom->getAngularAccel();//rad/sec^2
-//          gstVector phantomAngVel = phantom->getAngularVelocity();//rad/sec
-//          angVelNorm = phantomAngVel.norm();
-//          phantomAngVel.normalize();
-
-	// compute angular velocity quaternion
-//          phantomAngVel.getValue(x,y,z);
-        //q_make(v_quat, x, y, z, angVelNorm*dt_vel);
-        // set v_quat = v_quat*d_quat
-        //q_mult(v_quat, v_quat, d_quat);
-
-
-//  	for(i=0;i<4;i++ ) {
-//  		d_quat[i] = p_quat[i];
-//  		vel_quat[i] = v_quat[i];
-//  		scp_quat[i] = 0.0; // no torque with PHANToM
-//  	}
-//  	scp_quat[3] = 1.0;
-
-//  	vel_quat_dt = dt_vel;
-//printf("get report pos = %lf, %lf, %lf\n",pos[0],pos[1],pos[2]);
 }
 
 
@@ -219,7 +180,6 @@ void vrpn_MousePhantom::get_report(void)
 //      get position from mouse (done in vrpn_MousePhantom::get_report())
 //      send position message
 //      send force message
-
 void vrpn_MousePhantom::mainloop(void) {
     struct timeval current_time;
     char	msgbuf[1000];
@@ -268,17 +228,6 @@ void vrpn_MousePhantom::mainloop(void) {
                     fprintf(stderr,"Phantom: cannot write message: tossing\n");
             }
         }
-        //Encode the acceleration/angular acceleration if there is a connection
-/*        if (vrpn_Tracker::d_connection) {
-            len = vrpn_Tracker::encode_acc_to(msgbuf);
-            if(vrpn_Tracker::d_connection->pack_message(len,
-                timestamp,vrpn_Tracker::acc_m_id,
-                vrpn_Tracker::d_sender_id, msgbuf,vrpn_CONNECTION_LOW_LATENCY)) {
-                    fprintf(stderr,"Phantom: cannot write message: tossing\n");
-            }
-        }
-*/
-  //      print_report();
     }
 }
 
@@ -317,8 +266,8 @@ void vrpn_MousePhantom::handle_mp_enabled_change(int, void *)
 }
 
 // static
-int vrpn_MousePhantom::handle_resetOrigin_change_message(void * userdata,
-                                                vrpn_HANDLERPARAM p) {
+int vrpn_MousePhantom::
+handle_resetOrigin_change_message(void * userdata, vrpn_HANDLERPARAM /*p*/) {
   vrpn_MousePhantom * me = (vrpn_MousePhantom *) userdata;
   me->reset();
   return 0;
@@ -327,8 +276,8 @@ int vrpn_MousePhantom::handle_resetOrigin_change_message(void * userdata,
 
 
 // static
-int vrpn_MousePhantom::handle_update_rate_request (void * userdata,
-                                                  vrpn_HANDLERPARAM p) {
+int vrpn_MousePhantom::
+handle_update_rate_request (void * userdata, vrpn_HANDLERPARAM p) {
   vrpn_MousePhantom * me = (vrpn_MousePhantom *) userdata;
 
   if (p.payload_len != sizeof(double)) {
@@ -362,16 +311,11 @@ void vrpn_MousePhantom::my_glutMouseFunc(int btn, int state, int x, int y)
         if (state == GLUT_DOWN) {
             // Would normally work when called by GLUT, but
             // doesn't work when called by my_glutMotionFunc below.
-//              int modifiers = glutGetModifiers();
-//              d_ctrl_on = (modifiers & GLUT_ACTIVE_CTRL) != 0;
-//              d_shift_on = (modifiers & GLUT_ACTIVE_SHIFT) != 0;
 #ifdef _WIN32
             // Windows functions, the same one GLUT calls for _WIN32
             d_ctrl_on = (GetKeyState(VK_CONTROL) < 0);
             d_shift_on = (GetKeyState(VK_SHIFT) < 0);
 #endif
-//              printf("GLUT mod %d, ctrl %d, shift %d\n", 
-//                     modifiers, d_ctrl_on,d_shift_on);
             d_press_x = x;
             d_press_y = y;
             // The mouse hasn't moved yet, so note that. 
@@ -397,11 +341,6 @@ void vrpn_MousePhantom::my_glutMouseFunc(int btn, int state, int x, int y)
 //static 
 void vrpn_MousePhantom::my_glutMotionFunc(int x, int y)
 {
-    // Can't do this in this callback, GLUT doesn't allow it. 
-//      int modifiers;
-//      modifiers = glutGetModifiers();
-//      d_ctrl_on = (modifiers & GLUT_ACTIVE_CTRL) != 0;
-//      d_shift_on = (modifiers & GLUT_ACTIVE_SHIFT) != 0;
 #ifdef V_GLUT
 #ifdef _WIN32
     // Windows functions, the same one GLUT calls for _WIN32
@@ -421,18 +360,9 @@ void vrpn_MousePhantom::my_glutMotionFunc(int x, int y)
 
 // Argh. This doesn't work - not called when just shift or control is pressed.
 //static 
-void vrpn_MousePhantom::my_glutKeyboardFunc(unsigned char key, int x, int y)
+void vrpn_MousePhantom::my_glutKeyboardFunc(unsigned char /*key*/, int /*x*/, int /*y*/)
 {
 #ifdef V_GLUT
-    // If the user changes the modifiers, treat it like a press and release
-    // of the left mouse button. 
-//      printf("k\n");
-//      int modifiers = glutGetModifiers();
-//      int ctrl_on = (modifiers & GLUT_ACTIVE_CTRL) != 0;
-//      int shift_on = (modifiers & GLUT_ACTIVE_SHIFT) != 0;
-//      if ((ctrl_on != d_ctrl_on) || (shift_on != d_shift_on)) {
-//          my_glutMouseFunc( GLUT_LEFT_BUTTON, GLUT_UP, x, y);
-//          my_glutMouseFunc( GLUT_LEFT_BUTTON, GLUT_DOWN, x, y);
-//      }
+
 #endif
 }
