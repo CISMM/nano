@@ -410,7 +410,7 @@ void CollaborationManager::setPeerName
 
   // TCH 6 March 2001
   // If the name is already set, it isn't safe to change!
-  if (d_peerName) {
+  if ((d_peerName)&&(d_peerName[0]!='\0')) {
     display_warning_dialog
         ("Can't change which collaborator we're connected to.\n");
     return;
