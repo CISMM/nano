@@ -435,7 +435,7 @@ void buildContourTexture (void) {
                    GL_RGBA, GL_UNSIGNED_BYTE, contourImage);
   }
   if (glGetError()!=GL_NO_ERROR) {
-    fprintf(stderr, "what a mess, man\n");
+    fprintf(stderr, "Error creating contour texture image\n");
   }
 #endif
         /********************88888888888_____________________
@@ -455,7 +455,7 @@ void buildRulergridTexture (void) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  printf("building rulergrid texture\n");
+  //printf("building rulergrid texture\n");
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -476,7 +476,7 @@ void buildRulergridTexture (void) {
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, 4, rulerImageWidth,
                        rulerImageHeight, GL_RGBA,
                        GL_UNSIGNED_BYTE, rulerImage)!=0) { 
-    fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
+      //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
     glTexImage2D(GL_TEXTURE_2D, 0, 4,
                  rulerImageWidth, rulerImageHeight,
                  0, GL_RGBA, GL_UNSIGNED_BYTE,

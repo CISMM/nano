@@ -84,6 +84,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope SetScanWindow");
     d_ResumeWindowScan_type = connection->register_message_type
          ("nmm Microscope ResumeWindowScan");
+    d_PauseScanning_type = connection->register_message_type
+         ("nmm Microscope PauseScanning");
     d_SetGridSize_type = connection->register_message_type
          ("nmm Microscope SetGridSize");
     d_SetOhmmeterSampleRate_type = connection->register_message_type
@@ -116,6 +118,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope GetNewPointDatasets");
     d_GetNewScanDatasets_type = connection->register_message_type
          ("nmm Microscope GetNewScanDatasets");
+    d_WithdrawTip_type = connection->register_message_type
+	("nmm Microscope WithdrawTip");
     d_MarkModify_type = connection->register_message_type
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type
@@ -165,6 +169,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope BluntResultNM");
     d_ScanRange_type = connection->register_message_type
          ("nmm Microscope ScanRange");
+    d_Scanning_type = connection->register_message_type
+         ("nmm Microscope Scanning");
     d_SetRegionCompleted_type = connection->register_message_type
          ("nmm Microscope SetRegionCompleted");
     d_SetRegionClipped_type = connection->register_message_type
@@ -2135,6 +2141,36 @@ long nmm_Microscope::decode_ResultNM (const char ** buf,
   return 0;
 }
 
+char * nmm_Microscope::encode_Scanning (long * len,
+                  vrpn_int32 on_off) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_Scanning:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen,  on_off);
+  }
+
+  return msgbuf;
+}
+long nmm_Microscope::decode_Scanning (const char ** buf,
+         vrpn_int32 *  on_off) {
+  CHECK(vrpn_unbuffer(buf,  on_off));
+
+  return 0;
+}
+
+
 char * nmm_Microscope::encode_ScanRange (long * len,
            vrpn_float32 minX, vrpn_float32 maxX, vrpn_float32 minY, vrpn_float32 maxY,
            vrpn_float32 minZ, vrpn_float32 maxZ) {
@@ -2959,6 +2995,9 @@ char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
                     "Out of memory.\n");
     *len = 0;
   } else {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, p);
@@ -2968,9 +3007,9 @@ char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
     vrpn_buffer(&mptr, &mlen, amplitude);
     vrpn_buffer(&mptr, &mlen, frequency);
     vrpn_buffer(&mptr, &mlen, input_gain);
-    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
     vrpn_buffer(&mptr, &mlen, drive_attenuation);
     vrpn_buffer(&mptr, &mlen, phase);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
   }
 
   return msgbuf;
@@ -2982,6 +3021,9 @@ long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));
@@ -2989,9 +3031,9 @@ long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
   CHECK(vrpn_unbuffer(buf, amplitude));
   CHECK(vrpn_unbuffer(buf, frequency));
   CHECK(vrpn_unbuffer(buf, input_gain));
-  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
   CHECK(vrpn_unbuffer(buf, drive_attenuation));
   CHECK(vrpn_unbuffer(buf, phase));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
 
   return 0;
 }
@@ -3263,6 +3305,9 @@ char * nmm_Microscope::encode_InOscillatingMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
     vrpn_buffer(&mptr, &mlen, p);
     vrpn_buffer(&mptr, &mlen, i);
     vrpn_buffer(&mptr, &mlen, d);
@@ -3270,9 +3315,9 @@ char * nmm_Microscope::encode_InOscillatingMode (long * len,
     vrpn_buffer(&mptr, &mlen, amplitude);
     vrpn_buffer(&mptr, &mlen, frequency);
     vrpn_buffer(&mptr, &mlen, input_gain);
-    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
     vrpn_buffer(&mptr, &mlen, drive_attenuation);
     vrpn_buffer(&mptr, &mlen, phase);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
   }
 
   return msgbuf;
@@ -3284,6 +3329,9 @@ long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));
@@ -3291,9 +3339,9 @@ long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
   CHECK(vrpn_unbuffer(buf, amplitude));
   CHECK(vrpn_unbuffer(buf, frequency));
   CHECK(vrpn_unbuffer(buf, input_gain));
-  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
   CHECK(vrpn_unbuffer(buf, drive_attenuation));
   CHECK(vrpn_unbuffer(buf, phase));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
 
   return 0;
 }

@@ -5,6 +5,10 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+/**
+ * This file is really Devices.C, now. It handles the initialization 
+ * and callbacks for external input devices for the NanoManipulator. 
+ */
 #include <stdio.h>
 #include <string.h>
 #if !defined (_WIN32) || defined (__CYGWIN__)
@@ -26,8 +30,9 @@
 #include <errno.h>
 #endif
 
-#include <vrpn_Tracker.h>
 #include <vrpn_Types.h>
+#include <vrpn_Tracker.h>
+#include <vrpn_Magellan.h>
 
 #include "stm_file.h"
 #include "stm_cmd.h"
@@ -47,60 +52,27 @@
 
 #include <nmm_Globals.h>
 
-#include <nmg_Globals.h>
-#include <nmg_Graphics.h>
+//  #include <nmg_Globals.h>
+//  #include <nmg_Graphics.h>
 
 #include "x_util.h" /* qliu */
 #include "relax.h"
 #include "microscape.h"  // for #defines
 #include "butt_mode.h"   // for button defines
+#include "interaction.h"
 
 // MOVED #ifdef FLOW includes and declarations to graphics.C
 
 int x_init(char* argv[]);
-int stm_init (const vrpn_bool, const vrpn_bool, const vrpn_bool,
-              const int, const char *, const int, const int);
-extern "C" void txt_init(int);
-
-static void handle_config_fp_change (vrpn_int32, void *);
-static void handle_config_ss_change (vrpn_int32, void *);
-static void handle_config_cj_change (vrpn_int32, void *);
+//  int stm_init (const vrpn_bool, const vrpn_bool, const vrpn_bool,
+//                const int, const char *, const int, const int);
+//  extern "C" void txt_init(int);
 
 extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
 
 
-//-----------------------------------------------------------------------
-/// Configure triangle-display methods
-Tclvar_int config_filled_polygons
-     ("filled_triangles", 1, handle_config_fp_change, NULL);
-Tclvar_int config_smooth_shading
-     ("smooth_shading",  1, handle_config_ss_change, NULL);
-Tclvar_int config_chartjunk
-     ("chart_junk",  1, handle_config_cj_change, NULL);
-
-// MOVED to graphics.C
-//GLfloat l0_position[4] = { 0.0, 1.0, 0.0, 0.0 };
-//GLubyte contourImage[contourImageWidth][4];
-//GLubyte checkImage[checkImageDepth][checkImageWidth][checkImageHeight][4];
-//GLubyte rulerImage[rulerImageHeight][rulerImageWidth][4];
-
 // Added by Michele Clark 6/2/97
 unsigned long inet_addr();
-
-//static
-void handle_config_fp_change (vrpn_int32, void *) {
-  graphics->enableFilledPolygons(config_filled_polygons);
-}
-
-//static
-void handle_config_ss_change (vrpn_int32, void *) {
-  graphics->enableSmoothShading(config_smooth_shading);
-}
-
-//static
-void handle_config_cj_change (vrpn_int32, void *) {
-  graphics->enableChartjunk(config_chartjunk);
-}
 
 
 #ifdef FLOW
@@ -114,11 +86,6 @@ void handle_config_cj_change (vrpn_int32, void *) {
 #endif
 
 #define NANO_FONT	(34)
-
-/**********
- * Variable lighting position
- *********/
-VectorType	lightpos,lightdir;
 
 /*****************************************************************************
 
@@ -192,6 +159,53 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
    for (int i = 0; i < info.num_channel; i++){
    	bdboxDialValues[i] = info.channel[i];
    }
+}
+
+/** callbacks for vrpn_Button_Remote for magellan button box (registered below)
+ */
+void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
+   int * magellanButtonStates = (int *)userdata;
+   magellanButtonStates[b.button] = b.state;
+   //printf("Magellan button %d -> %d\n",  b.button, b.state);
+   // if it's a button release event, ignore it. 
+   if (b.state == 0) return;
+   switch (b.button) {
+   case 0:
+       // This is the * button, we don't use it for anything. 
+       break;
+   case 1: 		/* Grab World mode */
+       mode_change = 1;	/* Will make icon change */
+       user_mode[0] = USER_GRAB_MODE;
+       break;
+   case 2:
+       mode_change = 1;	/* Will make icon change */
+       user_mode[0] = USER_LIGHT_MODE;
+       break;
+       
+   case 3: 		/* T Touch Live mode */
+       mode_change = 1;	/* Will make icon change */
+       user_mode[0] = USER_PLANEL_MODE;
+       break;
+   case 4:              /* Commit button */
+       tcl_commit_pressed = 1;
+       break;
+   case 5:              /* Center the surface */
+       center();
+       break;
+   case 6: 		/* Measure mode */
+       mode_change = 1;	/* Will make icon change */
+       user_mode[0] = USER_MEASURE_MODE;
+       break;
+   case 7: 		/* Select mode */
+       mode_change = 1;	/* Will make icon change */
+       user_mode[0] = USER_SERVO_MODE;
+       break;
+   case 8:              /* Cancel button */
+       tcl_commit_canceled = 1;
+       break;
+   }
+
+
 }
 
 // XXX - add a separate function to reconnect to phantom after a dropped
@@ -270,7 +284,7 @@ phantom_init()
  *
  *****************************************************************************/
 int
-peripheral_init()
+peripheral_init(vrpn_Connection * local_device_connection)
 {
     int	i;
 
@@ -321,6 +335,18 @@ peripheral_init()
 	dialBox = NULL;
     }
 
+    // Open the Magellan puck and button box.
+    if (local_device_connection) {
+        magellanButtonBoxServer = new vrpn_Magellan("Button0@ibmwildt2", 
+                                                    local_device_connection, 
+                                                    "COM1", 9600);
+        magellanButtonBox = new vrpn_Button_Remote("Button0@ibmwildt2",
+                                                   local_device_connection);
+        if ( magellanButtonBox->register_change_handler(magellanButtonState,
+                                handle_magellan_button_change)) {
+            fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
+        }
+    }
     return 0;
 }
 

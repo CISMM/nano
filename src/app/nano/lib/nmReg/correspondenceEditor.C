@@ -40,7 +40,7 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     }
 
     char win_name[64];
-    printf("CorrespondenceEditor: opening display %s\n", display_name);
+    //printf("CorrespondenceEditor: opening display %s\n", display_name);
     viewer->init(display_name);
     num_images = num_im;
     win_ids = new int[num_images];
@@ -282,7 +282,7 @@ void CorrespondenceEditor::show() {
     for (i = 0; i < num_images; i++){
         viewer->showWindow(win_ids[i]);
     }
-    printf("CorrespondenceEditor: finished opening windows\n");
+    //printf("CorrespondenceEditor: finished opening windows\n");
 }
 
 void CorrespondenceEditor::hide() {
@@ -312,7 +312,7 @@ int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
     im_w = im->width();
     im_h = im->height();
     viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
-	printf("CorrespondenceEditor::setImage: \n");
+    //printf("CorrespondenceEditor::setImage: \n");
     viewer->setValueRange(win_ids[spaceIndex], im->minValue(), im->maxValue());
 //	printf(" min,max = %f, %f\n", im->minValue(), im->maxValue());
     for (i = 0; i < im_w; i++){

@@ -21,7 +21,7 @@
 /** Merely sets a flag, so the next time UpdateMicroscope gets called
  new datasets are requested.
 */
-void tcl_update_callback(const char * /*name*/, int /*val*/, void *udata)
+void tcl_update_callback( int /*val*/, void *udata)
 {
 	Channel_selector	*me = (Channel_selector*)(udata);
 
@@ -45,8 +45,12 @@ Channel_selector::Channel_selector (nmb_ListOfStrings * namelist,
     change_from_tcl (0),
     change_from_microscope (0),
     namelist (namelist),
-    d_dataset (dataset) {
-
+    d_dataset (dataset) 
+{
+    for (int i = 0; i < MAX_CHANNELS; i++ ) {
+        active_list[i]=NULL;
+        numsamples_list[i]=NULL;
+    }
 }
 
 // Moved here because virtual functions can't be inlined but
@@ -54,38 +58,52 @@ Channel_selector::Channel_selector (nmb_ListOfStrings * namelist,
 // some compilers - TCH 1 Oct 97
 
 Channel_selector::~Channel_selector (void) {
+    for (int i = 0; i < MAX_CHANNELS; i++ ) {
+        if (active_list[i]!=NULL) {
+            delete active_list[i];
+        }
+        if ( numsamples_list[i]!=NULL) {
+            delete  numsamples_list[i];
+        }
+    }  
 }
 
 int	Channel_selector::Set(const char *channel)
 {
-	// Set the channel in the checklist.  If this fails, add a new
-	// checkbox in (Set_checkbox returns -1 if it can't find the
-	// checkbox).
-//  	if (checklist->Set_checkbox(channel)) {
-//  		if (checklist->Add_checkbox(channel,1)) {
-//  			fprintf(stderr,
-//  			  "Channel_selector::Set(): Can't add %s\n",
-//  			  channel);
-//  			return -1;
-//  		}
-//  	}
+    int index;
+    // Set the channel in the lists.  
+    if ((index = channel_list.getIndex(channel)) == -1) {
+        return -1;
+    } else if (active_list[index] == NULL){
+        return -1;
+    }
+    *active_list[index] = 1;
     return 0;
 }
 
 int	Channel_selector::Unset(const char *channel)
 {
-	// Unset the channel in the checklist.  If this fails, add a new
-	// checkbox in (Set_checkbox returns -1 if it can't find the
-	// checkbox).
-//  	if (checklist->Unset_checkbox(channel)) {
-//  		if (checklist->Add_checkbox(channel,0)) {
-//  			fprintf(stderr,
-//  			  "Channel_selector::Unset(): Can't add %s\n",
-//  			  channel);
-//  			return -1;
-//  		}
-//  	}
+    int index;
+    // UnSet the channel in the lists.  
+    if ((index = channel_list.getIndex(channel)) == -1) {
+        return -1;
+    } else if (active_list[index] == NULL){
+        return -1;
+    }
+    *active_list[index] = 0;
     return 0;
+}
+
+int	Channel_selector::Is_set(const char *channel)
+{
+    int index;
+    // Set the channel in the lists.  
+    if ((index = channel_list.getIndex(channel)) == -1) {
+        return 0;
+    } else if (active_list[index] == NULL){
+        return 0;
+    }
+    return (*active_list[index] == 1);
 }
 
 // virtual
@@ -97,25 +115,21 @@ int Channel_selector::Update_microscope (nmm_Microscope_Remote *) {
 
 int	Channel_selector::Clear_channels(void)
 {
-	int	ret = 0;
-	//int	i;
+	int	i;
 
 	// Mark this a being a change from the microscope.
-	change_from_microscope = 1;
+	//change_from_microscope = 1;
 
 	// Clear all of the channels that are currently getting data
 	numchannels = 0;
 
 	// Clear all of the checkboxes
-//  	for (i = 0; i < checklist->Num_checkboxes(); i++) {
-//  	  if (checklist->Unset_checkbox(checklist->Checkbox_name(i))) {
-//  	    fprintf(stderr,
-//  	      "Channel_selector::Clear_channels(): Can't unset checkbox %s\n",
-//  		channels[i].name);
-//  	    ret = -1;
-//  	  }
-//  	}
-	return ret;
+  	for (i = 0; i < channel_list.numEntries(); i++) {
+            if (active_list[i] != NULL) {
+                *active_list[i] = 0;
+            }
+  	}
+	return 0;
 }
 
 int	Channel_selector::Add_channel(char *name, char *units,
@@ -128,13 +142,26 @@ int	Channel_selector::Add_channel(char *name, char *units,
 	}
 
 	// See if we can set this checkbox in the checklist.  If not, add it
-//  	if (checklist->Set_checkbox(name)) {
-//  	    if (checklist->Add_checkbox(name,1)) {
-//  		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
-//  		return -1;
-//  	    }
-//  	}
-
+        // NOTE: This probably never happens - we have a complete list
+        // of all channels that come from the ThermoMicroscopes SPMs. 
+        int index;
+        if ((index = channel_list.getIndex(name)) == -1) {
+            channel_list.addEntry(name);
+            if ((index = channel_list.getIndex(name)) == -1) {
+                fprintf(stderr,"Channel_selector::Add_channel(): Can't add name\n");
+                return -1;
+            }
+            // The derived classes had better set these, so they aren't NULL.
+            //active_list[index] = new Tclvar_int("dataset(stuff)",1);
+            //numsamples_list[index] = new Tclvar_int("dataset(stuff_samples)",10);
+  	} 
+        if (active_list[index] == NULL){
+            // Derived class should take care of this
+            //fprintf(stderr,"Channel_selector::Add_channel(): no active tclvar to set\n");
+        } else {
+            *active_list[index] = 1;
+        }
+            
 	// Fill in the rest and increment the count
 	strncpy(channels[numchannels].units,units,
 		sizeof(channels[numchannels].units));
@@ -158,14 +185,31 @@ int	Channel_selector::Add_channel(char *name, char *units,
 	}
 
 	// See if we can set this checkbox in the checklist.  If not, add it
-//  	if (checklist->Set_checkbox(name)) {
-//  	    if (checklist->Add_checkbox_entry(name,1, num_samples)) {
-//  		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
-//  		return -1;
-//  	    }
-//  	} else { // if set succeeds, make sure we set entry field, too.
-//  	   checklist->Set_checkbox_entry(name, num_samples);
-//  	}
+        // NOTE: This probably never happens - we have a complete list
+        // of all channels that come from the ThermoMicroscopes SPMs. 
+        int index;
+        if ((index = channel_list.getIndex(name)) == -1) {
+            channel_list.addEntry(name);
+            if ((index = channel_list.getIndex(name)) == -1) {
+                fprintf(stderr,"Channel_selector::Add_channel(): Can't add name\n");
+                return -1;
+            }
+            // The derived classes had better set these, so they aren't NULL.
+            //active_list[index] = new Tclvar_int("dataset(stuff)",1);
+            //numsamples_list[index] = new Tclvar_int("dataset(stuff_samples)",10);
+  	} 
+        if (active_list[index] == NULL){
+            // Derived class should take care of this
+            //fprintf(stderr,"Channel_selector::Add_channel(): no active tclvar to set\n");
+        } else {
+            *active_list[index] = 1;
+        }
+        if (numsamples_list[index] == NULL){
+            // Derived class should take care of this
+            //fprintf(stderr,"Channel_selector::Add_channel(): no numsamples tclvar to set\n");
+        } else {
+            *numsamples_list[index] = num_samples;
+        }
 
 	// Fill in the rest and increment the count
 	strncpy(channels[numchannels].units,units,
@@ -182,39 +226,48 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
 		Channel_selector (namelist, dataset)
 {
 	change_from_tcl = 0;		
-	change_from_microscope = 1;   // Get current datasets from MScope
+	//change_from_microscope = 1;   // Get current datasets from MScope
 
 	numchannels = 0;	// No channels mapped yet
 	mygrid = grid_to_track;
 
-	// Get a new checklist.
-//  	Checklist = new Tclvar_checklist_with_entry(".data_sets.scan");
-//  	if (checklist == NULL) {
-//  	    fprintf(stderr,"Scan_channel_selector(): Can't make checklist\n");
-//  	    return;
-//  	}
-
-//  	// Put the known types into the checklist, but don't require planes for
-//  	// them.
-//  	checklist->Add_checkbox("Topography-Forward",1);
-//  	checklist->Add_checkbox("Topography-Reverse",0);
-//  	checklist->Add_checkbox("Internal Sensor-Forward",0);
-//  	checklist->Add_checkbox("Internal Sensor-Reverse",0);
-//  	checklist->Add_checkbox("Z Modulation-Forward",0);
-//  	checklist->Add_checkbox("Z Modulation-Reverse",0);
-//  	checklist->Add_checkbox("Lateral Force-Forward",0);
-//  	checklist->Add_checkbox("Lateral Force-Reverse",0);
-//  	checklist->Add_checkbox("IN 1-Forward",0);
-//  	checklist->Add_checkbox("IN 1-Reverse",0);
-//  	checklist->Add_checkbox("IN 2-Forward",0);
-//  	checklist->Add_checkbox("IN 2-Reverse",0);
-//  	checklist->Add_checkbox("FastTrack-Forward",0);
-//  	checklist->Add_checkbox("FastTrack-Reverse",0);
-//  	checklist->Add_checkbox("Z Piezo-Forward",0);
-//  	checklist->Add_checkbox("Z Piezo-Reverse",0);
-
-//  	// Set up a callback from the checklist
-//  	checklist->addCallback(tcl_update_callback,this);
+ 	// Put the known types into the list, but don't require planes for
+ 	// them.
+        // The names and the tcl variable names are "magic" - i.e. they must
+        // correspond exactly to the widgets we create for them. 
+        // As of 6/00, those are created from a list in setup_menu.tcl
+  	channel_list.addEntry("Topography-Forward");
+        active_list[0] = new Tclvar_int("data_sets(scan0)",1,tcl_update_callback,this);
+  	channel_list.addEntry("Topography-Reverse");
+        active_list[1] = new Tclvar_int("data_sets(scan1)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Internal Sensor-Forward");
+        active_list[2] = new Tclvar_int("data_sets(scan2)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Internal Sensor-Reverse");
+        active_list[3] = new Tclvar_int("data_sets(scan3)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Modulation-Forward");
+        active_list[4] = new Tclvar_int("data_sets(scan4)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Modulation-Reverse");
+        active_list[5] = new Tclvar_int("data_sets(scan5)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Lateral Force-Forward");
+        active_list[6] = new Tclvar_int("data_sets(scan6)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Lateral Force-Reverse");
+        active_list[7] = new Tclvar_int("data_sets(scan7)",0,tcl_update_callback,this);
+  	channel_list.addEntry("IN 1-Forward");
+        active_list[8] = new Tclvar_int("data_sets(scan8)",0,tcl_update_callback,this);
+  	channel_list.addEntry("IN 1-Reverse");
+        active_list[9] = new Tclvar_int("data_sets(scan9)",0,tcl_update_callback,this);
+  	channel_list.addEntry("IN 2-Forward");
+        active_list[10] = new Tclvar_int("data_sets(scan10)",0,tcl_update_callback,this);
+  	channel_list.addEntry("IN 2-Reverse");
+        active_list[11] = new Tclvar_int("data_sets(scan11)",0,tcl_update_callback,this);
+  	channel_list.addEntry("FastTrack-Forward");
+        active_list[12] = new Tclvar_int("data_sets(scan12)",0,tcl_update_callback,this);
+  	channel_list.addEntry("FastTrack-Reverse");
+        active_list[13] = new Tclvar_int("data_sets(scan13)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Piezo-Forward");
+        active_list[14] = new Tclvar_int("data_sets(scan14)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Piezo-Reverse");
+        active_list[15] = new Tclvar_int("data_sets(scan15)",0,tcl_update_callback,this);
 
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
@@ -236,14 +289,14 @@ int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * micros
 	// channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-	if (change_from_microscope) {
-	    change_from_microscope = 0;
-	    //fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
-	    return 0;
-	} else {
-	  //if (microscope->GetNewScanDatasets(checklist) == -1)
-            //return -1;
-	}
+//  	if (change_from_microscope) {
+//  	    change_from_microscope = 0;
+//  	    fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
+//  	    return 0;
+//  	} else {
+	  if (microscope->GetNewScanDatasets(&channel_list, active_list) == -1)
+            return -1;
+//  	}
     }
     return 0;
 }
@@ -262,6 +315,14 @@ int	Scan_channel_selector::Add_channel(char *name, char *units,
 	    fprintf(stderr,"Scan_channel_selector::Add_channel(): Failed\n");
 	    return -1;
 	}
+        // If this was a previously unknown channel, add the active tclvar for it.
+        int full_list_index = channel_list.getIndex(name);
+        if (active_list[full_list_index] == NULL) {
+            char varname[100];
+            sprintf(varname, "dataset(scan%d)", full_list_index);
+            active_list[full_list_index] = new Tclvar_int(varname,1,tcl_update_callback,this);
+        }
+        *active_list[full_list_index] = 1;
 
 	// See if we can lookup the plane for this checkbox.  If not, make one
 	if ( (planes[which] = mygrid->getPlaneByName(name)) == NULL) {
@@ -334,34 +395,43 @@ Point_channel_selector::Point_channel_selector
 	numchannels = 0;	// No channels mapped yet
 	myresult = point;	// Where to store values
 
-	// Get a new checklist.
-//  	checklist = new Tclvar_checklist_with_entry(".data_sets.touch");
-//  	if (checklist == NULL) {
-//  	    fprintf(stderr,"Point_channel_selector(): Can't make checklist\n");
-//  	    return;
+//  	// Put the known types into the list.
+        // The names and the tcl variable names are "magic" - i.e. they must
+        // correspond exactly to the widgets we create for them. 
+        // As of 6/00, those are created from a list in setup_menu.tcl
+ 	channel_list.addEntry("Topography");
+        active_list[0] = new Tclvar_int("data_sets(touch0)",1,tcl_update_callback,this);
+        numsamples_list[0] = new Tclvar_int("data_sets(touch_samples0)",90,tcl_update_callback,this);
+ 	channel_list.addEntry("Internal Sensor");
+        active_list[1] = new Tclvar_int("data_sets(touch1)",1,tcl_update_callback,this);
+        numsamples_list[1] = new Tclvar_int("data_sets(touch_samples1)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("Z Modulation");
+        active_list[2] = new Tclvar_int("data_sets(touch2)",0,tcl_update_callback,this);
+        numsamples_list[2] = new Tclvar_int("data_sets(touch_samples2)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("Lateral Force");
+        active_list[3] = new Tclvar_int("data_sets(touch3)",1,tcl_update_callback,this);
+        numsamples_list[3] = new Tclvar_int("data_sets(touch_samples3)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("IN 1");
+        active_list[4] = new Tclvar_int("data_sets(touch4)",0,tcl_update_callback,this);
+        numsamples_list[4] = new Tclvar_int("data_sets(touch_samples4)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("IN 2");
+        active_list[5] = new Tclvar_int("data_sets(touch5)",0,tcl_update_callback,this);
+        numsamples_list[5] = new Tclvar_int("data_sets(touch_samples5)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("FastTrack");
+        active_list[6] = new Tclvar_int("data_sets(touch6)",0,tcl_update_callback,this);
+        numsamples_list[6] = new Tclvar_int("data_sets(touch_samples6)",10,tcl_update_callback,this);
+ 	channel_list.addEntry("Z Piezo");
+        active_list[7] = new Tclvar_int("data_sets(touch7)",1,tcl_update_callback,this);
+        numsamples_list[7] = new Tclvar_int("data_sets(touch_samples7)",10,tcl_update_callback,this);
+
+	// Set up for default, which is Topography 
+        // Should be taken care of with first call to Update_Microscope, or message from Thermo...
+//  	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
+//              (d_dataset->inputGrid->readMode() == READ_STREAM)) {
+//              if (Add_channel("Topography","nm",0,1, 90) ) {
+//  		fprintf(stderr,"Point_channel_selector(): Can't get height\n");
+//  	  }
 //  	}
-
-//  	// Put the known types into the checklist.
-//     // Turned more of these "on" -CCWeigle 8/6/99
-//  	checklist->Add_checkbox_entry("Topography",1, 90);
-//  	checklist->Add_checkbox_entry("Internal Sensor",1, 10);
-//  	checklist->Add_checkbox_entry("Z Modulation",0, 10);
-//  	checklist->Add_checkbox_entry("Lateral Force",1, 10);
-//  	checklist->Add_checkbox_entry("IN 1",0, 10);
-//  	checklist->Add_checkbox_entry("IN 2",0, 10);
-//  	checklist->Add_checkbox_entry("FastTrack",0, 10);
-//  	checklist->Add_checkbox_entry("Z Piezo",1, 10);
-
-//  	// Set up a callback from the checklist
-//  	checklist->addCallback(tcl_update_callback,this);
-
-	// Set up for old default, which was Topography and standard deviation
-	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
-            (d_dataset->inputGrid->readMode() == READ_STREAM)) {
-            if (Add_channel("Topography","nm",0,1, 90) ) {
-		fprintf(stderr,"Point_channel_selector(): Can't get height\n");
-	  }
-	}
 }
 
 Point_channel_selector::~Point_channel_selector (void) {
@@ -376,14 +446,14 @@ int     Point_channel_selector::Update_microscope (nmm_Microscope_Remote * micro
 	// channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-	if (change_from_microscope) {
-	    change_from_microscope = 0;
-	    //fprintf(stderr, "Update_microscope Point: ignoring update req.\n");
-	    return 0;
-	} else {
-//  	  if (microscope->GetNewPointDatasets(checklist) == -1)
+//  	if (change_from_microscope) {
+//  	    change_from_microscope = 0;
+//  	    fprintf(stderr, "Update_microscope Point: ignoring update req.\n");
+//  	    return 0;
+//  	} else {
+  	  if (microscope->GetNewPointDatasets(&channel_list, active_list, numsamples_list) == -1)
 		return -1;
-	}
+//  	}
     }
     return 0;
 }
@@ -402,6 +472,19 @@ int	Point_channel_selector::Add_channel(char *name, char *units,
 	    fprintf(stderr,"Point_channel_selector::Add_channel(): Failed\n");
 	    return -1;
 	}
+        // If this was a previously unknown channel, add the active tclvar for it.
+        int full_list_index = channel_list.getIndex(name);
+        char varname[100];
+        if (active_list[full_list_index] == NULL) {
+            sprintf(varname, "dataset(touch%d)", full_list_index);
+            active_list[full_list_index] = new Tclvar_int(varname,1,tcl_update_callback,this);
+        }
+        *active_list[full_list_index] = 1;
+        if (numsamples_list[full_list_index] == NULL) {
+            sprintf(varname, "dataset(touch_samples%d)", full_list_index);
+            numsamples_list[full_list_index] = new Tclvar_int(varname,10,tcl_update_callback,this);
+        }
+        *numsamples_list[full_list_index] = num_samples;
 
 	// See if we can lookup the value for this checkbox.  If not, make one
 	if ( (values[which] = myresult->getValueByName(name)) == NULL) {
@@ -462,20 +545,17 @@ ForceCurve_channel_selector::ForceCurve_channel_selector
     numchannels = 0;	// No channels mapped yet
     myresult = point;	// Where to store values
 
-    // Get a new checklist.
-//      checklist = new Tclvar_checklist_with_entry(".data_sets.forcecurve");
-//      if (checklist == NULL) {
-//  	fprintf(stderr,"ForceCurve_channel_selector(): Can't make checklist\n");
-//  	return;
-//      }
-
-//      // Put the known types into the checklist.
-//      // spmlab allows two out of three including the following and
-//      // the two auxiliary channels, but selection of other than the default
-//      // hasn't been implemented yet
-//      checklist->Add_checkbox("Internal Sensor",1);
+    // Put the known types into the checklist.
+    // spmlab allows two out of three including the following and
+    // the two auxiliary channels, but selection of other than the default
+    // hasn't been implemented yet
+    channel_list.addEntry("Internal Sensor");
+    active_list[0] = new Tclvar_int("data_sets(forcecurve0)",1,tcl_update_callback,this);
+    // numsamples isn't really used by the force curve (maybe), but it's required because
+    // forcecurve uses the pointresults data type to query the SPM. 
+    numsamples_list[0] = new Tclvar_int("data_sets(forcecurve_samples0)",10,tcl_update_callback,this);
     if (Add_channel("Internal Sensor", "nA", 0.0, 1.0))
-	fprintf(stderr,"ForceCurve_channel_selector(): Can't get h&d\n");
+	fprintf(stderr,"ForceCurve_channel_selector(): Can't get internal sensor\n");
 }
 
 ForceCurve_channel_selector::~ForceCurve_channel_selector (void) {
@@ -489,14 +569,14 @@ int     ForceCurve_channel_selector::Update_microscope (nmm_Microscope_Remote * 
         // channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-	if (change_from_microscope) {
-	    change_from_microscope = 0;
-	    //fprintf(stderr, "Update_microscope FC: ignoring update req.\n");
-	    return 0;
-	} else {
-//  	  if (microscope->GetNewPointDatasets(checklist) == -1)
+//  	if (change_from_microscope) {
+//  	    change_from_microscope = 0;
+//  	    //fprintf(stderr, "Update_microscope FC: ignoring update req.\n");
+//  	    return 0;
+//  	} else {
+  	  if (microscope->GetNewPointDatasets(&channel_list, active_list, numsamples_list) == -1)
 		return -1;
-	}
+//  	}
     }
  
     return 0;
@@ -516,6 +596,19 @@ int	ForceCurve_channel_selector::Add_channel(char *name, char *units,
             fprintf(stderr,"FC_channel_selector::Add_channel(): Failed\n");
             return -1;
         }
+        // If this was a previously unknown channel, add the active tclvar for it.
+        int full_list_index = channel_list.getIndex(name);
+        char varname[100];
+        if (active_list[full_list_index] == NULL) {
+            sprintf(varname, "dataset(forcecurve%d)", full_list_index);
+            active_list[full_list_index] = new Tclvar_int(varname,1,tcl_update_callback,this);
+        }
+        *active_list[full_list_index] = 1;
+        if (numsamples_list[full_list_index] == NULL) {
+            sprintf(varname, "dataset(forcecurve_samples%d)", full_list_index);
+            numsamples_list[full_list_index] = new Tclvar_int(varname,10,tcl_update_callback,this);
+        }
+        *numsamples_list[full_list_index] = 10;
 
         // See if we can lookup the value for this checkbox.  If not, make one
         if ( (values[which] = myresult->getValueByName(name)) == NULL) {

@@ -200,16 +200,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
 
-  // genetic textures:
-  //fprintf( stderr, "Genetic Texture: initializing remote\n" );
-
-  vrpn_Connection * gac;
-
-  gac = new vrpn_Synchronized_Connection( portNum );
-  gaRemote = new gaEngine_Remote (gac);
-  gaRemote->registerEvaluationCompleteHandler( genetic_textures_ready, this );
-  gaRemote->registerConnectionCompleteHandler(send_genetic_texture_data,this );
-
   if (!connection) return;
 
   connection->register_handler(d_resizeViewport_type,
@@ -417,16 +407,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 			       handle_setCollabMode,
 			       this, vrpn_ANY_SENDER);
 
-  // Genetic Textures Handlers:
-/*
-  connection->register_handler(d_enableGeneticTextures_type,
-                               handle_enableGeneticTextures,
-                               this, vrpn_ANY_SENDER);
-*/
-
-  connection->register_handler(d_sendGeneticTexturesData_type,
-                               handle_sendGeneticTexturesData,
-                               this, vrpn_ANY_SENDER);
   // Realign Textures Handlers:
   connection->register_handler( d_createRealignTextures_type,
 				handle_createRealignTextures,
@@ -553,10 +533,6 @@ void nmg_Graphics_Implementation::mainloop (void) {
   v_update_displays(d_displayIndexList);
 
   TIMERVERBOSE(5, mytimer, "GImainloop: end v_update_displays");
-
-  // genetic textures:
-  if ( gaRemote )
-    gaRemote->mainloop();
 
 }
 
@@ -1825,7 +1801,6 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      g_tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[GENETIC_TEX_ID] = GL_MODULATE;
   g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
 
   g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
@@ -2244,10 +2219,6 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 		" ALPHA mode not available under WIN32\n");
       g_texture_mode = GL_FALSE;
 #endif
-      break;
-    case GENETIC:
-//    fprintf(stderr, "nmg_Graphics_Implementation:  entering GENETIC mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
       break;
     case COLORMAP:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering COLORMAP mode.\n");
@@ -3413,184 +3384,6 @@ int nmg_Graphics_Implementation::handle_positionSphere
 
   CHECK(it->decode_positionSphere(p.buffer, &x, &y, &z));
   it->positionSphere(x, y, z);
-  return 0;
-}
-
-
-// genetic textures:
-// Call back function called when the gaEngine_Remote gets an
-// evaluation_complete message. This occurs when the selected texture
-// sent by the gaEngine_Implementation had been completely transferred
-// accross the network and is ready to be mapped onto the surface.
-//static
-int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
-  nmg_Graphics_Implementation * it = (  nmg_Graphics_Implementation * )p;
-  
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
-  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-               g_tex_blend_func[GENETIC_TEX_ID]);
-
-  glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC]);
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-
-#if defined(sgi) || defined(_WIN32)
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 512, 512,
-                        GL_RGB, GL_FLOAT, it->gaRemote->data[0]) != 0) { 
-    printf(" Error making mipmaps, using texture instead.\n");
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-		 512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making genetic texture.\n");
-    }
-  }
-#else
-  // Should use glBindTexture so it doesn't conflict w/Rulergrid...
-  //   glBindTexture( GL_TEXTURE_2D, &texName );
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-	       512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
- #ifndef FLOW
-  if (glGetError()!=GL_NO_ERROR) {
-    printf(" Error making genetic texture.\n");
-  }
- #endif
-#endif
-
-  return 0;
-}
-
-// Sends the data to the genetic algorithm.
-// The variable list is either the entire list of plane names,
-// or the selected list from the "Set Genetic Textures Parameter"
-// pop-up window. 
-// Only the selected datasets are sent to the genetic alg.
-void nmg_Graphics_Implementation::sendGeneticTexturesData (
-			   int number_of_variables, 
-			   char **variable_list ) {
-  BCGrid *grid = g_inputGrid;
-
-  gaRemote->number_of_variables( number_of_variables );
-  gaRemote->mainloop();
-  gaRemote->variableList( number_of_variables, variable_list );
-  gaRemote->mainloop();
-
-  int width  = grid->numX();
-  int height = grid->numY();
-  gaRemote->dimensions( number_of_variables, width, height );
-  gaRemote->mainloop();
-
-  float **input = new float*[height];
-  if (!input) {
-    fprintf(stderr, "nmg_Graphics_Implementation::sendGeneticTexturesData:  "
-                    "Out of memory.\n");
-    return;
-  }
-  for ( int i = 0; i < number_of_variables; i++ ) {
-    for ( BCPlane *head = grid->head(); head; head = head ->next() ) {
-      if ( !strcmp( variable_list[ i ], head->name()->Characters() ) ) {
-	float min = head->minValue();
-	float max = head->maxValue();
-	for ( int j = 0; j < height; j++ ) {
-	  input[ j ] = new float[ width ];
-          if (!input[j]) {
-            fprintf(stderr, "nmg_Graphics_Implementation::"
-                            "sendGeneticTexturesData:  "
-                            "Out of memory.\n");
-            return;
-          }
-	  for ( int k = 0; k < width; k++ )
-	    input[ j ][ k ] = ( head->value( k, j ) - min )/( max - min );
-	  gaRemote->dataSet( i, j, input );
-	  gaRemote->mainloop();
-	  delete [] input[ j ];
-	}
-      }
-    }
-  }
-
-  delete [] input;
-  causeGridRedraw();
-}
-
-
-// This is a callback function called when the gaEngine_Remote 
-// gets a connection. It calls sendGeneticTextureData which sends 
-// the number of variables, names of the planes to be used in the genetic alg.
-// and all the data sets. 
-//
-int nmg_Graphics_Implementation::send_genetic_texture_data( void *userdata ) {
-  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
-
-  BCGrid *grid = g_inputGrid;
-
-  int number_of_variables  = grid->numPlanes();
-  char **variable_list     = new char*[ number_of_variables ];
-
-  BCPlane *head = grid->head();
-
-  if (!variable_list) {
-    fprintf(stderr, "nmg_Graphics_Implementation::send_genetic_texture_data:  "
-                    "Out of memory.\n");
-    return -1;
-  }
-
-  int i;
-  for ( i = 0; ( i < number_of_variables ) && head; i++ ) {
-    variable_list[ i ] = new char[ head->name()->Length() ];
-    if (!variable_list[i]) {
-      fprintf(stderr, "nmg_Graphics_Implementation::"
-                      "send_genetic_texture_data:  "
-                      "Out of memory.\n");
-      return -1;
-    }
-    strcpy( variable_list[ i ], head->name()->Characters() );
-    head = head->next();
-  }
-
-  it->sendGeneticTexturesData ( number_of_variables, variable_list );
-
-  for ( i = 0; i < number_of_variables; i++ )
-    delete [] variable_list[ i ];
-  delete [] variable_list;
-
-  return 0;
-}
-
-// static
-/*
-int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
-						       vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
-  int value;
-  it->decode_enableGeneticTextures( p.buffer, &value );
-  it->enableGeneticTextures( value );
-  return 0;
-}
-*/
-
-// static
-int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
-						      vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  int number_of_variables;
-  char **variable_list;
-  it->decode_sendGeneticTexturesData( p.buffer, 
-				      &number_of_variables, &variable_list );
-  it->sendGeneticTexturesData( number_of_variables, variable_list );
-  for ( int i = 0; i < number_of_variables; i++ ) {
-    if (variable_list && variable_list[i]) {
-      delete [] variable_list[i];
-    }
-  }
-  if (variable_list) {
-    delete [] variable_list;
-  }
   return 0;
 }
 

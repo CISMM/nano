@@ -358,6 +358,7 @@ fprintf(stderr, "Texture mainloop.\n");
     d_textureChanged = VRPN_FALSE;
   }
   // hack - overloading genetic texture coordinate handling
+  // But now genetic textures have been removed. 
   float dx = d_imp->dataset()->inputGrid->maxX() -
              d_imp->dataset()->inputGrid->minX();
   float dy = d_imp->dataset()->inputGrid->maxY() -

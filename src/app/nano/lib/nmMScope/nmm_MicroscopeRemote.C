@@ -179,6 +179,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_ForceCurveData_type,
 				 handle_ForceCurveData,
 				 this);
+  d_connection->register_handler(d_Scanning_type,
+                                 handle_Scanning,
+                                 this);
   d_connection->register_handler(d_ScanRange_type,
                                  handle_ScanRange,
                                  this);
@@ -400,24 +403,24 @@ int nmm_Microscope_Remote::mainloop (void) {
 
 
 char * nmm_Microscope_Remote::encode_GetNewPointDatasets
-                            (long * len,
-                             const Tclvar_checklist * list) {
+                            (vrpn_int32 * len,
+                             const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[] , Tclvar_int* numsamples_list[] )
+{
   char * msgbuf = NULL;
   char * mptr;
   vrpn_int32 mlen;
   vrpn_int32 numSets = 0;
-  long i;
+  vrpn_int32 i;
 
-// NANO BEGIN
   //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): Entering...\n");
-// NANO END
 
   if (!len) return NULL;
 
-  for (i = 0; i < list->Num_checkboxes(); i++)
-    if (1 == list->Is_set(i)) numSets++;
+  for (i = 0; i < channel_list->numEntries(); i++)
+    if (1 == (*active_list[i])) numSets++;
 
-  *len = (long)(sizeof(long) + (STM_NAME_LENGTH + sizeof(long)) * numSets);
+  *len = (vrpn_int32)(sizeof(vrpn_int32) + (STM_NAME_LENGTH + sizeof(vrpn_int32)) * numSets);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets:  "
@@ -426,20 +429,15 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-// NANO BEGIN
     //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %d\n", numSets);
-// NANO END
     vrpn_buffer(&mptr, &mlen, numSets);
-    for (i = 0; i < list->Num_checkboxes(); i++)
-      if (1 == list->Is_set(i)) {
-        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+    for (i = 0; i < channel_list->numEntries(); i++)
+      if (1 == (*active_list[i])) {
+          // This is safe because STM_NAME_LENGTH is 64 and nmb_STRING_LENGTH is 128
+        vrpn_buffer(&mptr, &mlen, channel_list->entry(i), STM_NAME_LENGTH);
 
-        // Ask for 10 samples of each except Topography;
-        // of that we want 90
-        if (!strcmp("Topography", list->Checkbox_name(i)))
-          vrpn_buffer(&mptr, &mlen, (vrpn_int32)90);
-        else
-          vrpn_buffer(&mptr, &mlen, (vrpn_int32)10);
+        // Also send the number of samples per dataset
+        vrpn_buffer(&mptr, &mlen, (vrpn_int32)*numsamples_list[i]);
       }
   }
 
@@ -447,23 +445,23 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
 }
 
 char * nmm_Microscope_Remote::encode_GetNewScanDatasets
-                            (long * len,
-                             const Tclvar_checklist * list) {
+                            (vrpn_int32 * len,
+                             const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[]) 
+{
   char * msgbuf = NULL;
   char * mptr;
   vrpn_int32 mlen;
   vrpn_int32 numSets = 0;
-  long i;
+  vrpn_int32 i;
 
   if (!len) return NULL;
 
-  for (i = 0; i < list->Num_checkboxes(); i++)
-    if (1 == list->Is_set(i)) numSets++;
+  for (i = 0; i < channel_list->numEntries(); i++)
+    if (1 == (*active_list[i])) numSets++;
 
-// NANO BEGIN
   //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
-// NANO END
-  *len = (long)(sizeof(long) + STM_NAME_LENGTH * numSets);
+  *len = (vrpn_int32)(sizeof(vrpn_int32) + STM_NAME_LENGTH * numSets);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets:  "
@@ -473,14 +471,15 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, numSets);
-    for (i = 0; i < list->Num_checkboxes(); i++) {
-       if (1 == list->Is_set(i)) {
-	  vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+    for (i = 0; i < channel_list->numEntries(); i++) {
+      if (1 == (*active_list[i])) {
+          // This is safe because STM_NAME_LENGTH is 64 and nmb_STRING_LENGTH is 128
+          vrpn_buffer(&mptr, &mlen, channel_list->entry(i), STM_NAME_LENGTH);
 	  //fprintf(stderr, "     name: %s\n",list->Checkbox_name(i));
-       }
+      }
     }
   }
-
+  
   return msgbuf;
 }
 
@@ -531,6 +530,7 @@ long nmm_Microscope_Remote::Initialize ( ) {
     // them explicitly, if needed.
     if (d_connection->connected()) {
       vrpn_HANDLERPARAM p;
+      p.buffer=NULL;
       handle_GotConnection2(this, p);
     } 
     // Register this callback here because it segfaults if I execute the handler
@@ -723,11 +723,12 @@ long nmm_Microscope_Remote::ImageMode (void) {
 
 
 long nmm_Microscope_Remote::GetNewPointDatasets
-                           (const Tclvar_checklist * _list)  {
+                           (const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[], Tclvar_int* numsamples_list[])  {
   char * msgbuf = NULL;
-  long len;
+  vrpn_int32 len;
 
-  msgbuf = encode_GetNewPointDatasets(&len, _list);
+  msgbuf = encode_GetNewPointDatasets(&len, channel_list, active_list, numsamples_list);
   if (!msgbuf)
     return -1;
 
@@ -735,11 +736,12 @@ long nmm_Microscope_Remote::GetNewPointDatasets
 }
 
 long nmm_Microscope_Remote::GetNewScanDatasets
-                           (const Tclvar_checklist * _list)  {
+                           (const Tclvar_list_of_strings * channel_list,
+                             Tclvar_int* active_list[])  {
   char * msgbuf = NULL;
-  long len;
+  vrpn_int32 len;
 
-  msgbuf = encode_GetNewScanDatasets(&len, _list);
+  msgbuf = encode_GetNewScanDatasets(&len, channel_list, active_list);
   if (!msgbuf)
     return -1;
 
@@ -757,6 +759,14 @@ long nmm_Microscope_Remote::ResumeFullScan (void) {
 
 long nmm_Microscope_Remote::ResumeWindowScan (void) {
   return dispatchMessage(0, NULL, d_ResumeWindowScan_type);
+}
+
+long nmm_Microscope_Remote::PauseScan (void) {
+  return dispatchMessage(0, NULL, d_PauseScanning_type);
+}
+
+long nmm_Microscope_Remote::WithdrawTip (void) {
+  return dispatchMessage(0, NULL, d_WithdrawTip_type);
 }
 
 
@@ -1211,7 +1221,7 @@ long nmm_Microscope_Remote::EnterDirectZControl (float _max_z_step,
   char * msgbuf;
   long len;	
 
-  if (!strncmp((char *) d_dataset->heightPlaneName, "Z Piezo", 7)) {
+  if (!strncmp(d_dataset->heightPlaneName->string(), "Z Piezo", 7)) {
       // We are not looking at Z Piezo as our height plane
       // XXX Directz doesn't work with anything but Z Piezo, yet.
       fprintf (stderr, "WARNING: EnterDirectZControl Height plane not Z Piezo, "
@@ -1384,8 +1394,8 @@ long nmm_Microscope_Remote::SetSlowScan (const long _value) {
   // since this I have changed Tcl_Linkvar.C updateTcl() routines so they
   // don't do idempotent updates
   if (  state.slowScanEnabled == _value) {
-     fprintf(stderr, "nmm_MicRemote::SetSlowScan: Warning, variable is already"
-             " set to this value; you may experience infinite loop behavior\n");
+//       fprintf(stderr, "nmm_MicRemote::SetSlowScan: Warning, variable is already"
+//               " set to this value; you may experience infinite loop behavior\n");
      return 0;
   }
 
@@ -1667,7 +1677,7 @@ long nmm_Microscope_Remote::ExitScanlineMode(){
 long nmm_Microscope_Remote::AcquireScanline(){
   printf("requesting scan line - fix this: function not atomic on server!\n");
   BCPlane *p = d_dataset->inputGrid->getPlaneByName(
-		(char *) d_dataset->heightPlaneName);
+		d_dataset->heightPlaneName->string());
   if (!p) {
 	fprintf(stderr, "nmm_Microscope_Remote::AcquireScanline:"
                  " Error, could not get height plane\n");
@@ -2691,6 +2701,19 @@ int nmm_Microscope_Remote::handle_PulseFailureNM (void * userdata,
 }
 
 //static
+int nmm_Microscope_Remote::handle_Scanning (void * userdata,
+                           vrpn_HANDLERPARAM param) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  vrpn_int32 on_off;
+
+  ms->decode_Scanning(&param.buffer, &on_off);
+  ms->RcvScanning(on_off);
+
+  return 0;
+}
+
+
+//static
 int nmm_Microscope_Remote::handle_ScanRange (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
@@ -3107,7 +3130,7 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
 ) {
   if (state.acquisitionMode == MODIFY) {
     printf("Matching AFM modify parameters (Oscillating).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
            _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
            _ampl_or_phase, _drive_attenuation, _phase);
     if (state.modify.mode != TAPPING) state.modify.mode = TAPPING;
@@ -3124,7 +3147,7 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.modify.phase = _phase;
   } else if (state.acquisitionMode == IMAGE){
     printf("Matching AFM image parameters (Oscillating).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
            _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
            _ampl_or_phase, _drive_attenuation, _phase);
     if (state.image.mode != TAPPING) state.image.mode = TAPPING;
@@ -3141,7 +3164,7 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.image.phase = _phase;
   } else if (state.acquisitionMode == SCANLINE){
     printf("Matching AFM scanline parameters (Oscillating).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
            _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
            _ampl_or_phase, _drive_attenuation, _phase);
     if (state.scanline.mode != TAPPING) state.scanline.mode = TAPPING;
@@ -3269,14 +3292,12 @@ void nmm_Microscope_Remote::RcvInSpectroscopyMode(const float _setpoint,
 
   if (state.acquisitionMode == MODIFY) {
     printf("Matching AFM modify parameters (Spectroscopy).\n");
-    printf("stdel=%f, z_st=%f, z_end=%f, z_pull=%f, forcelim=%f\n",
-                _startDelay, _zStart, _zEnd, _zPullback, _forceLimit);
-    printf("dist=%f, numpoints=%d, numhalfcycles=%d\n",
-                _distBetweenFC, _numPoints, _numHalfcycles);
-    printf("samp_spd=%f, pull_spd=%f, start_spd=%f, fdback_spd=%f\n",
-                _sampleSpeed, _pullbackSpeed, _startSpeed, _feedbackSpeed);
-    printf("avg_num=%d, samp_del=%f, pull_del=%f, fdback_del=%f\n",
-                _avgNum, _sampleDelay, _pullbackDelay, _feedbackDelay);
+    printf("stdel=%g, z_st=%g, z_end=%g, z_pull=%g, forcelim=%g, dist=%g\n",
+           _startDelay, _zStart, _zEnd, _zPullback, _forceLimit, _distBetweenFC);
+    printf("numpoints=%d, numhalfcycles=%d, samp_spd=%g, pull_spd=%g, start_spd=%g\n",
+           _sampleSpeed, _pullbackSpeed, _startSpeed, _numPoints, _numHalfcycles);
+    printf("fdback_spd=%g, avg_num=%d, samp_del=%g, pull_del=%g, fdback_del=%g\n",
+                _feedbackSpeed, _avgNum, _sampleDelay, _pullbackDelay, _feedbackDelay);
     if (state.modify.style != FORCECURVE) {
       state.modify.style = FORCECURVE;
     }
@@ -3313,9 +3334,9 @@ void nmm_Microscope_Remote::RcvInSpectroscopyMode(float _setpoint,
 					
   if (state.acquisitionMode == MODIFY) {
     printf("Matching AFM modify parameters (Spectroscopy).\n");
-    printf("stdel=%f, z_st=%f, z_end=%f, z_pull=%f, forcelim=%f\n",
+    printf("stdel=%g, z_st=%g, z_end=%g, z_pull=%g, forcelim=%g\n",
 		_startDelay, _zStart, _zEnd, _zPullback, _forceLimit);
-    printf("dist=%f, numpoints=%d, numhalfcycles=%d\n",
+    printf("dist=%g, numpoints=%d, numhalfcycles=%d\n",
 		_distBetweenFC, _numPoints, _numHalfcycles);
     if ((state.modify.mode != CONTACT) ||
 	(state.modify.style != FORCECURVE)) {
@@ -3401,7 +3422,7 @@ void nmm_Microscope_Remote::RcvAmpDisabled (const long _ampNum) {
 void nmm_Microscope_Remote::RcvStartingToRelax (const long _sec, const long _usec) {
   if (state.doRelaxComp) {
     d_relax_comp.start_fix(_sec, _usec, state.lastZ);
-    printf("Beginning relaxation compensation at %ld:%ld\n", _sec, _usec);
+    //printf("Beginning relaxation compensation at %ld:%ld\n", _sec, _usec);
   }
 
   if (state.doDriftComp)
@@ -3416,7 +3437,7 @@ void nmm_Microscope_Remote::RcvInModModeT (const long, const long) {
 
   // Do relaxation compensation ( if it is enabled)
   d_relax_comp.start_fix(_sec, _usec, state.lastZ);
-  //printf("Compensating mod force %f\n", (float) state.modify.setpoint);
+  //printf("Compensating mod force %g\n", (float) state.modify.setpoint);
 
   if (state.doDriftComp)
     driftZDirty();
@@ -3434,7 +3455,7 @@ void nmm_Microscope_Remote::RcvInModMode (void) {
   // I think this should only be done if we get the startingToRelax message.
   // Do relaxation compensation ( if it is enabled)
   //d_relax_comp.start_fix(_sec, _usec, state.lastZ);
-  //printf("Compensating mod force %f\n", (float) state.modify.setpoint);
+  //printf("Compensating mod force %g\n", (float) state.modify.setpoint);
 
   if (state.doDriftComp)
     driftZDirty();
@@ -3451,7 +3472,7 @@ void nmm_Microscope_Remote::RcvInImgModeT (const long, const long) {
 
   // this is wrong, should be relax up. 
     d_relax_comp.start_fix(_sec, _usec, state.lastZ);
-    //printf("Compensating img force %f\n", (float) state.image.amplitude);
+    //printf("Compensating img force %g\n", (float) state.image.amplitude);
 
   if (state.doDriftComp)
     driftZDirty();
@@ -3507,7 +3528,7 @@ void nmm_Microscope_Remote::RcvInImgMode (void) {
     // (whether its up or down in the Y direction)
     // this is hard-coded for what works with typical Thermomicroscope setup
     int lineNumber = d_dataset->inputGrid->numY()-1 - d_mod_window_max_y;
-    printf("jumping to line %d after modify\n", lineNumber);
+    //printf("jumping to line %d after modify\n", lineNumber);
     JumpToScanLine(lineNumber);
 
   }
@@ -3584,10 +3605,10 @@ void nmm_Microscope_Remote::RcvImgSet (const long _modifyEnable, const float _ma
 void nmm_Microscope_Remote::RcvRelaxSet (const long _min, const long _sep) {
   state.stmRxTmin = _min;
   d_relax_comp.set_ignore_time_ms(_min);
-  printf("Relax ignore time set at %ld\n", _min);
+  //printf("Relax ignore time set at %ld\n", _min);
   state.stmRxTsep = _min;
   d_relax_comp.set_separation_time_ms(_sep);
-  printf("Relax separation time set at %ld\n", _sep);
+  //printf("Relax separation time set at %ld\n", _sep);
 }
 
 void nmm_Microscope_Remote::RcvForceSet (const float _force) {
@@ -3649,8 +3670,6 @@ long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
   double xi_2, yi_2, xf_2, yf_2;
   nmb_Image *image;
   
-  // need to convert from a nmb_string to a BCString
-  //BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
   image = d_dataset->dataImages->getImageByName(d_dataset->heightPlaneName->string() );
 
   xf = _x + (_lineCount - 1) * _dx;
@@ -3899,6 +3918,12 @@ void nmm_Microscope_Remote::RcvPulseFailureNM (const float, const float) {
   state.lastPulseOK = VRPN_FALSE;
 }
 
+// Is the microscope scanning (1), or is the scan paused (0)? 
+void nmm_Microscope_Remote::RcvScanning(vrpn_int32 on_off) {
+    printf("Scanning is %s\n", (on_off ? "on": "off"));
+    state.scanning = on_off;
+}
+
 // XXX
 // "Think about what this means when the data sets can be changed"
 void nmm_Microscope_Remote::RcvScanRange (const float _minX, const float _maxX,
@@ -3928,7 +3953,7 @@ void nmm_Microscope_Remote::RcvScanRange (const float _minX, const float _maxX,
 }
 
 void nmm_Microscope_Remote::RcvSetScanAngle (const float angle ) {
-  printf( "nmm_Microscope_Remote::RcvSetScanAngle: angle = %f\n", angle );
+  printf( "nmm_Microscope_Remote::RcvSetScanAngle: angle = %g\n", angle );
   state.scanAngle = angle;
 }
 
@@ -3957,8 +3982,8 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
   d_dataset->inputGrid->setMinY(_minY);
   d_dataset->inputGrid->setMaxX(_maxX);
   d_dataset->inputGrid->setMaxY(_maxY);
-  printf( "            nmm_Microscope_Remote::RcvSetRegionC minX %f minY %f maxX %f maxY %f\n", 
-          _minX, _minY, _maxX, _maxY );
+//    printf( "            nmm_Microscope_Remote::RcvSetRegionC minX %g minY %g maxX %g maxY %g\n", 
+//            _minX, _minY, _maxX, _maxY );
 
   state.modify.region_diag =
      sqrt((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
@@ -3981,8 +4006,7 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
 
   d_decoration->selectedRegion_changed = 1;
 
-  fprintf(stderr, "mm_Microscope_Remote::RcvSetRegionC\n"
-	  "    new region (%g, %g) to (%g, %g)\n",
+  fprintf(stderr, "New region (%g, %g) to (%g, %g)\n",
          heightPlane->minX(), heightPlane->minY(),
          heightPlane->maxX(), heightPlane->maxY());
 
@@ -4103,7 +4127,9 @@ void nmm_Microscope_Remote::RcvClearPointChannels (void) {
   if (state.data.point_channels->Clear_channels()) {
     fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels: Can't clear point datasets\n");
     d_dataset->done = VRPN_TRUE;
-  }
+  } else {
+      printf("New Point Datasets:\n");
+  } 
 }
 
 void nmm_Microscope_Remote::RcvPointDataset (const char * _name, const char * _units,
@@ -4111,7 +4137,7 @@ void nmm_Microscope_Remote::RcvPointDataset (const char * _name, const char * _u
                                   const float _offset, const float _scale) {
   printf("  %s (%s), count:  %ld, offset:  %g, scale:  %g\n",
          _name, _units, _numSamples, _offset, _scale);
-  // HACK HACK HACK
+
   if (state.data.point_channels->Add_channel((char *) _name, (char *) _units,
                                         _offset, _scale,_numSamples)) {
     fprintf(stderr, "Can't add point dataset\n");
@@ -4159,9 +4185,9 @@ int nmm_Microscope_Remote::RcvReportGridSize (const long _x, const long _y) {
   printf("Grid size from scanner:  %ldx%ld\n", _x, _y);
   if ((_x != d_dataset->inputGrid->numX()) ||
       (_y != d_dataset->inputGrid->numY())) {
-    fprintf(stderr, "Reset grid size from %d %d!\n",
-	    d_dataset->inputGrid->numX(),
-	    d_dataset->inputGrid->numY());
+//      fprintf(stderr, "Reset grid size from %d %d!\n",
+//  	    d_dataset->inputGrid->numX(),
+//  	    d_dataset->inputGrid->numY());
     if (d_dataset->setGridSize(_x, _y)) {
 	// Non-zero indicates error!
 	fprintf(stderr, "ERROR: unable to reset grid size\n");
@@ -4170,6 +4196,8 @@ int nmm_Microscope_Remote::RcvReportGridSize (const long _x, const long _y) {
 	// New strategy, so don't abruptly exit...
 	//exit(-1); // we get a bus error before the next iteration, so exit now.
     }
+    // update the user interface. 
+    state.image.grid_resolution = _x;
   }
   return 0;
 }
@@ -4180,13 +4208,12 @@ void nmm_Microscope_Remote::RcvServerPacketTimestamp (const long, const long) {
 }
 
 void nmm_Microscope_Remote::RcvTopoFileHeader (const long _length, const char *header) {
-  printf("********** RCV'D TOPO FILE HEADER **********\n");
-  // DO NOTHING
+    //printf("********** RCV'D TOPO FILE HEADER **********\n");
   if(_length < 1536){
-	printf("Unexpected Header length %ld need 1536\n",_length);
+	printf("Unexpected Header length %ld need at least 1536\n",_length);
   }else{
 	d_topoFile.parseHeader(header,_length);
-  	printf("********** Got Topometrix file header, length %ld\n", _length);
+  	//printf("********** Got Topometrix file header, length %ld\n", _length);
 
         nmb_ImageList *images = d_dataset->dataImages;
         int i;
@@ -4391,7 +4418,7 @@ void nmm_Microscope_Remote::RcvUdpSeqNum (const long) {
 void nmm_Microscope_Remote::doImageModeCallbacks (void) {
   modeHandlerEntry * l;
 
-  fprintf(stderr, "nmm_Microscope_Remote::doImageModeCallbacks\n");  // Tiger
+  //fprintf(stderr, "nmm_Microscope_Remote::doImageModeCallbacks\n");  // Tiger
 
   l = d_imageModeHandlers;
   while (l) {
@@ -4408,7 +4435,7 @@ void nmm_Microscope_Remote::doImageModeCallbacks (void) {
 void nmm_Microscope_Remote::doModifyModeCallbacks (void) {
   modeHandlerEntry * l;
 
-  fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks\n");
+  //fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks\n");
 
   l = d_modifyModeHandlers;
   while (l) {
@@ -4442,7 +4469,7 @@ void nmm_Microscope_Remote::doPointDataCallbacks (const Point_results * p) {
 void nmm_Microscope_Remote::doScanlineModeCallbacks (){
   modeHandlerEntry * l;
 
-  fprintf(stderr, "Microscope::doScanlineModeCallbacks\n");
+  //fprintf(stderr, "Microscope::doScanlineModeCallbacks\n");
 
   l = d_scanlineModeHandlers;
   while (l) {
@@ -4504,7 +4531,7 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
 {
   nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
   
-  printf("nmm_Microscope_Remote::Got control, sending initialization\n");
+  //printf("nmm_Microscope_Remote::Got control, sending initialization\n");
   // Send off the relaxation parameters (if any)
   if (me->d_relax_comp.is_enabled()) {
       me->SetRelax(me->state.stmRxTmin, me->state.stmRxTsep);

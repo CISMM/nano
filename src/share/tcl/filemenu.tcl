@@ -74,7 +74,10 @@ pack $win.export_filetype -anchor nw
 
 # Allow the user to save 
 proc save_plane_data {} {
-    global export_plane export_filetype export_filename fileinfo
+    global export_plane export_filetype export_filename fileinfo imageNames
+    # Trigger the export_filetype widget to display formats for
+    # the default selected export_plane.
+    set export_plane [lindex $imageNames 0]
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} }
 	set file [tk_getSaveFile -filetypes $types \

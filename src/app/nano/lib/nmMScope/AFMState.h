@@ -20,7 +20,7 @@
 #include <Tcl_Netvar.h>
 #include <active_set.h>  // Scan_channel_selector
 
-// Forces normally range from -64 to 60 nanoAmps  
+// Forces normally range from -64 to 64 nanoAmps  
 #define BOGUS_FORCE -100
 
 /** \file AFMState.h
@@ -40,6 +40,8 @@ struct AFMModifyInitializationState {
 
   int mode;
   int style;
+
+  int grid_resolution;
 
   float setpoint;
   float setpoint_min;
@@ -194,6 +196,8 @@ struct AFMImageInitializationState {
 
   int mode;
 
+  int grid_resolution;  
+
   float setpoint;
   float setpoint_max;
   float setpoint_min;
@@ -219,6 +223,8 @@ struct AFMImageState {
   Tclvar_int style;
   Tclvar_int tool;
     ///< the current mode of the microscope
+
+  Tclvar_int grid_resolution;
 
   Tclvar_float setpoint;
   float        setpoint_min,   ///< control range of the "image force" knob
@@ -432,6 +438,7 @@ struct AFMState {
 
   int acquisitionMode;///< replaces inModifyMode which replaced doing_modify_mode
 
+  Tclvar_int scanning;  ///< is the SPM scanning right now?
   Tclvar_int slowScanEnabled;
   vrpn_bool cannedLineVisible;
   int cannedLineToggle;

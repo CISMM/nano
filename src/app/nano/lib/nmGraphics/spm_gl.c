@@ -277,7 +277,7 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
         glTexCoordPointerEXT(2,GL_FLOAT,sizeof(Vertex_Struct),
                                   count,&(vertexptr[i][0].Texcoord[1]));
 
-    else if ( g_genetic_textures_enabled || g_realign_textures_enabled )
+    else if ( g_realign_textures_enabled )
       glTexCoordPointerEXT( 2, GL_FLOAT, sizeof(Vertex_Struct), count,
 			    &(vertexptr[i][0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
@@ -605,7 +605,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     }
   } 
   else if (g_texture_transform_mode == MANUAL_REALIGN_COORD) {
-    GLfloat genetic_coord[2];
+    GLfloat man_realign_coord[2];
     
     if ( (x == (num_x -1)) && (y == (num_y -1))) {
       g_tex_coord_center_x = (num_x / 512.0) / 2.0;
@@ -614,14 +614,14 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       g_tex_range_y = 1000.0;
       g_tex_theta_cumulative = 0.0;
     }
-    genetic_coord[0]= (float) (x/512.0);
-    genetic_coord[1]= (float) (y/512.0);         
+    man_realign_coord[0]= (float) (x/512.0);
+    man_realign_coord[1]= (float) (y/512.0);         
     if(g_VERTEX_ARRAY) {
-      vertexArrayPtr->Texcoord[1]=  genetic_coord[0];
-      vertexArrayPtr->Texcoord[2]=  genetic_coord[1];
+      vertexArrayPtr->Texcoord[1]=  man_realign_coord[0];
+      vertexArrayPtr->Texcoord[2]=  man_realign_coord[1];
     }
     else {
-      glTexCoord2fv(genetic_coord);
+      glTexCoord2fv(man_realign_coord);
     }		
   }
 #endif

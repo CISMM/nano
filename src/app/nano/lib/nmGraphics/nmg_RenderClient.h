@@ -71,7 +71,6 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setTesselationStride (int);
     virtual void setTextureMode (TextureMode, TextureTransformMode);
     virtual void setTextureScale (float);
-    virtual void sendGeneticTexturesData (int, char **);
 
     virtual void setViewTransform (v_xform_type);
 

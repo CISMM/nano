@@ -15,6 +15,10 @@
 #define M_PI 3.141592653589793238
 #endif
 
+/// Default grid size on startup. Kept to a minimum size.
+/// 12 because that allows a tesselation_stride of up to 6 without crashing.
+#define DATA_SIZE 12
+
 
 // Some defaults (from active_set.C)
 /*
@@ -182,6 +186,7 @@ AFMModifyState::~AFMModifyState (void) {
 
 AFMImageInitializationState::AFMImageInitializationState (void) :
   mode (TAPPING),
+  grid_resolution(DATA_SIZE),
   setpoint (50.0),
   setpoint_max (0.0),
   setpoint_min (50.0),
@@ -207,6 +212,8 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     mode ("imagep_mode", i.mode ),
     style ("imagep_style", SHARP),
     tool ("imagep_tool", FREEHAND),
+
+    grid_resolution("imagep_grid_resolution", i.grid_resolution),
 
     setpoint ("imagep_setpoint", i.setpoint ),
     setpoint_min (i.setpoint_min ),
@@ -417,6 +424,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     //done (VRPN_FALSE),
     acquisitionMode(IMAGE),
 
+    scanning ("spm_scanning", 1),
     slowScanEnabled ("slowScan", 1),
     cannedLineVisible (VRPN_FALSE),
     cannedLineToggle (0),

@@ -294,9 +294,9 @@ pack $nmInfo(modifyfull).mode.label -side top -anchor nw
 radiobutton $nmInfo(modifyfull).mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -anchor nw
 radiobutton $nmInfo(modifyfull).mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -anchor nw
 button $nmInfo(modifyfull).mode.accept -text "Accept"  \
-	-command "acceptModifyVars $modifyplist" -highlightthickness 0
+	-command "acceptModifyVars modifyplist" -highlightthickness 0
 button $nmInfo(modifyfull).mode.cancel -text "Revert"  \
-	-command "cancelModifyVars $modifyplist" -highlightthickness 0
+	-command "cancelModifyVars modifyplist" -highlightthickness 0
 
 checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
 	

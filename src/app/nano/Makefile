@@ -1,4 +1,4 @@
-USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope \
+USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
              nmRobotControl nmReg nmImageViewer \
              nmMP tclLinkVar nmBase ImgFormat \
              vrpn vogl quat
@@ -8,6 +8,10 @@ EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \
 
 ifdef VC
 EXCLUDE_SRC += termio.c x_util.c
+endif
+
+ifeq ($(HW_OS),sgi_irix)
+USES_LIBS += sdi
 endif
 
 ifdef NANO_WITH_ROBOT

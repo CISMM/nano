@@ -79,7 +79,6 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setMinColor (const int [3]);
     virtual void setMaxColor (const int [3]);
     virtual void setPatternMapName (const char *);
-    virtual void sendGeneticTexturesData (int, char **);
     virtual void createRealignTextures( const char * );
     virtual void setRealignTextureSliderRange (float, float);
     virtual void setRealignTexturesConversionMap

@@ -96,8 +96,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     nmb_Decoration * Decor (void)
       { return d_decoration; }
 
-    char * encode_GetNewPointDatasets (long * len, const Tclvar_checklist *);
-    char * encode_GetNewScanDatasets (long * len, const Tclvar_checklist *);
+    char * encode_GetNewPointDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *,
+                                        Tclvar_int*[], Tclvar_int*[]);
+   char * encode_GetNewScanDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[]);
 
     long Initialize () ;
       /**< Set up to read from a stream file or a live scope, 
@@ -126,10 +128,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
        * delay, z_pull, punch distance, speed, watchdog)
        */
 
-    //long GetNewSetOfDataChannels (const long mode,
-                                 //const Tclvar_checklist * dataTypes);
-    long GetNewPointDatasets (const Tclvar_checklist * dataTypes);
-    long GetNewScanDatasets (const Tclvar_checklist * dataTypes);
+    long GetNewPointDatasets (const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[],Tclvar_int*[]);
+    long GetNewScanDatasets (const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[]);
       /**<   Sets the list of datasets to be scanned by the microscope.
        * Microscope will respond with the list that it is actually scanning,
        * which may not match.
@@ -146,12 +148,18 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
        */
 
     long ResumeFullScan (void);
-
-    long ResumeWindowScan (void);
       /**<   Causes the microscope to scan over the entire grid.
        * SetScanWindow() may be called to limit scanning to a smaller
        * portion of the grid;  this function undoes that operation.
        */
+
+    long ResumeWindowScan (void);
+
+    long PauseScan(void);
+    /**< Pauses the scan. */
+
+    long WithdrawTip(void);
+    /**< Withdraws the tip from the surface. */
 
     long SetScanStyle (void);
       /**<   Sets the microscope to scan in X or Y first, and in a raster or
@@ -256,6 +264,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
  
     // set which line to start scanning in image mode
     long JumpToScanLine(long line);
+
+    long SetGridSize (const long _x, const long _y);
+      // Set the size of the grid:  # data points to collect in each dimension.
 
     // ODDS AND ENDS
 
@@ -367,8 +378,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long QueryStdDevParams (void);
 */
     long QueryScanRange (void);
-    long SetGridSize (const long _x, const long _y);
-      // Set the size of the grid:  # data points to collect in each dimension.
 
     long SetScanWindow (const long _minx, const long _miny,
                        const long _maxx, const long _maxy);
@@ -472,6 +481,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                       const float, const float, const float, const float);
     void RcvPulseCompletedNM (const float, const float);
     void RcvPulseFailureNM (const float, const float);
+    void RcvScanning (const vrpn_int32);
     void RcvScanRange (const float, const float, const float, const float,
                        const float, const float);
     void RcvSetScanAngle (const float);
@@ -558,6 +568,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_ForceCurveData (void *, vrpn_HANDLERPARAM);
     static int handle_PulseCompletedNM (void *, vrpn_HANDLERPARAM);
     static int handle_PulseFailureNM (void *, vrpn_HANDLERPARAM);
+    static int handle_Scanning (void *, vrpn_HANDLERPARAM);
     static int handle_ScanRange (void *, vrpn_HANDLERPARAM);
     static int handle_SetScanAngle (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionCompleted (void *, vrpn_HANDLERPARAM);

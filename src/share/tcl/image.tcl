@@ -100,6 +100,7 @@ set imagep_mode 0
 set imagep_style 0
 set imagep_tool 0
 
+set imagep_grid_resolution 200
 set imagep_setpoint 50.0
 set imagep_p_gain 1.0
 set imagep_i_gain 0.3
@@ -115,7 +116,8 @@ set imagep_phase 0.0
 set imagep_rate 1.0
 
 # list of all the variables above, imagep_*
-set imageplist [list mode style tool setpoint p_gain i_gain d_gain amplitude \
+set imageplist [list mode style tool grid_resolution setpoint \
+        p_gain i_gain d_gain amplitude \
         frequency input_gain ampl_or_phase drive_attenuation phase rate]
 
 # These variables only exist in tcl - the user changes
@@ -171,7 +173,17 @@ radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" -variable ne
 radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1 
 button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars imageplist" -highlightthickness 0
 button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars imageplist" -highlightthickness 0
+
+set grid_resolution_list { 2 5 10 25 50 100 200 300 400 500 1000 }
+generic_optionmenu $nmInfo(imagefull).mode.grid_resolution \
+        newimagep_grid_resolution \
+	"Grid Resolution" grid_resolution_list
+
 pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact -side top -anchor nw -fill x
+
+pack $nmInfo(imagefull).mode.grid_resolution -side top -fill x -pady 20
+
+
 pack $nmInfo(imagefull).mode.cancel $nmInfo(imagefull).mode.accept -side bottom -fill x
 
 # Special binding for accept button to make sure that all

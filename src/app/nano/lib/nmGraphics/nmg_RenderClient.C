@@ -267,12 +267,6 @@ void nmg_Graphics_RenderClient::setTextureScale (float a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::sendGeneticTexturesData (int a, char ** b) {
-  blockTimer();
-  nmg_Graphics_Remote::sendGeneticTexturesData (a, b);
-}
-
-// virtual
 void nmg_Graphics_RenderClient::setViewTransform (v_xform_type x) {
   blockTimer();
   nmg_Graphics_Remote::setViewTransform (x);

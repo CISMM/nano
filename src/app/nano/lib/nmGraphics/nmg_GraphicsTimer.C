@@ -257,13 +257,6 @@ void nmg_Graphics_Timer::setPatternMapName (const char * name) {
   d_imp->setPatternMapName(name);
 }
 
-void nmg_Graphics_Timer::sendGeneticTexturesData (
-                           int number_of_variables,
-                           char **variable_list ) {
-  activateTimer();
-  d_imp->sendGeneticTexturesData(number_of_variables, variable_list);
-}
-
 void nmg_Graphics_Timer::createRealignTextures( const char *name ) {
   activateTimer();
   d_imp->createRealignTextures(name);

@@ -858,66 +858,6 @@ void nmg_Graphics_Remote::setPatternMapName (const char * name) {
 }
 
 //
-// Genetic Textures Remote Code:
-//
-
-// Enables the genetic textures algorithm.
-// Sends a message to the nmg_Graphics_Implementation
-//
-/*
-void nmg_Graphics_Remote::enableGeneticTextures (int value) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_enableGeneticTextures(&len, value);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_enableGeneticTextures_type,
-				d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::enableGeneticTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-*/
-
-// Sends the list of variables to used in the genetic textures algorithm.
-// This list is set by the user the pop-up window created by the
-// Set Genetic Textures Parameters button on the microscape tcl interface...
-//
-void nmg_Graphics_Remote::sendGeneticTexturesData (int number_of_variables,
-						   char **variable_list) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_sendGeneticTexturesData(&len,
-					  number_of_variables, variable_list);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_sendGeneticTexturesData_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::sendGeneticTexturesData:  "
-	      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-//
-// End Genetic Textures Remote Code.
-//
-
-//
 // Realign Textures Remote Code:
 //
 

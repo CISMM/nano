@@ -640,22 +640,22 @@ nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
        num_images(0),
        imageNames(namelist)
 {
-    printf("nmb_ImageList::nmb_ImageList building list\n");
+    //printf("nmb_ImageList::nmb_ImageList building list\n");
 
     for (int i = 0; i < num_files; i++) {
-        printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
-		file_names[i]);
+//          printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
+//  		file_names[i]);
 	BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
 			READ_FILE, file_names[i], topoFile);
 	nmb_Image *im;
 	BCPlane *p;
-        printf("file contained: \n");
+//          printf("file contained: \n");
 	for (p = g->head(); p != NULL; p = p->next()){
 	    im = new nmb_ImageGrid(p);
             im->setTopoFileInfo(topoFile);
 	    addImage(im);
-            printf("  %s\n", (const char *)(*(im->name())));
-	    printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());
+//              printf("  %s\n", (const char *)(*(im->name())));
+//  	    printf("nmb_Image min,max=%f,%f\n", im->minValue(),im->maxValue());
 	}
     }
 }

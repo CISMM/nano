@@ -13,12 +13,7 @@
 
 #include <nmm_Types.h>
 #include <nmm_Globals.h>
-#ifndef USE_VRPN_MICROSCOPE	// Added by Tiger, and changed the order of
-				// this header file and nmm_Globals.h
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
@@ -36,18 +31,12 @@
 #endif
 
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void setupStateCallbacks (nmm_Microscope_Remote * ms) {
-
-#else
-
-void setupStateCallbacks (Microscope * ms) {
-
-#endif
 
   ms->state.doRelaxComp.addCallback
       (handle_doRelaxComp_change, ms);
+  ms->state.scanning.addCallback
+      (handle_scanning_change, ms);
 
   ms->state.modify.mode.addCallback
     (handle_Mmode_change, ms);
@@ -147,6 +136,9 @@ void setupStateCallbacks (Microscope * ms) {
   ms->state.image.style.addCallback
     (handle_Istyle_change, ms);
 
+  ms->state.image.grid_resolution.addCallback
+    (handle_grid_resolution_change, ms);
+
   ms->state.image.setpoint.addCallback
     (handle_Imode_p_change, ms);
   ms->state.image.p_gain.addCallback
@@ -237,18 +229,12 @@ void setupStateCallbacks (Microscope * ms) {
 	    (handle_scanline_position_display_change, ms);
 }
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
-
-#else
-
-void teardownStateCallbacks (Microscope * ms) {
-
-#endif
 
   ms->state.doRelaxComp.removeCallback
       (handle_doRelaxComp_change, ms);
+  ms->state.scanning.removeCallback
+      (handle_scanning_change, ms);
 
   ms->state.modify.mode.removeCallback
     (handle_Mmode_change, ms);
@@ -348,6 +334,9 @@ void teardownStateCallbacks (Microscope * ms) {
   ms->state.image.style.removeCallback
     (handle_Istyle_change, ms);
 
+  ms->state.image.grid_resolution.removeCallback
+    (handle_grid_resolution_change, ms);
+
   ms->state.image.setpoint.removeCallback
     (handle_Imode_p_change, ms);
   ms->state.image.p_gain.removeCallback
@@ -438,16 +427,9 @@ void teardownStateCallbacks (Microscope * ms) {
 	    (handle_scanline_position_display_change, ms);
 }
 
-//extern Microscope * microscope;
-#ifndef USE_VRPN_MICROSCOPE
-#define microscope ((Microscope *) _mptr)
-#else
-	// Tiger	HACK: since we use nmm_Microscope_Remote class now
 #define microscope ((nmm_Microscope_Remote *) _mptr)
-#endif
 
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
-#ifdef USE_VRPN_MICROSCOPE
     if (val == VRPN_TRUE) {
 	microscope->d_relax_comp.enable(nmm_RelaxComp::DECAY);
     } else if (val == VRPN_FALSE) {
@@ -456,7 +438,33 @@ void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
 	fprintf(stderr, "Unexpected value for doRelaxComp, %d,"
 		" should be 1 or 0", val);
     }
-#endif
+    return;
+}
+
+void handle_scanning_change (vrpn_int32 , void * _mptr) {
+    // Only allow this button to do something when we are already scanning. 
+    if (microscope->state.acquisitionMode !=IMAGE) return;
+    // Pause or resume the scan. 
+    if(microscope->state.scanning) {
+        microscope->ResumeFullScan();
+    } else {
+        microscope->PauseScan();
+    }
+    
+}
+
+void handle_grid_resolution_change (vrpn_int32, void * _mptr) {
+    // Do some bounds checking to make sure the user's specified
+    // grid resolution is reasonable. 
+
+    // Thermo can handle minimum grid resolution of 2, max of 1000
+    if (microscope->state.image.grid_resolution < 2) {
+        microscope->state.image.grid_resolution = 2;
+    } else if (microscope->state.image.grid_resolution > 1000) {
+        microscope->state.image.grid_resolution = 1000;
+    }
+    microscope->SetGridSize(microscope->state.image.grid_resolution,
+                            microscope->state.image.grid_resolution);
     return;
 }
 
@@ -633,6 +641,9 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
   handle_linescan_position(0.0, _mptr);
+  
+  // Bring the surface in view
+  center();
 }
 
 // Called when the user clicks "accept" in the Image frame
@@ -939,8 +950,8 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
         // that we get reasonable values before the 1st scan of the surface
         // finishes.
       float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
-      printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
-	     plane->maxNonZeroValue(), range);
+//        printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
+//  	     plane->maxNonZeroValue(), range);
       // We set min_limit = min_value - range and max_limit = max_value +
       // range to account for drifting.  Yes, we know this is a kluge.
 

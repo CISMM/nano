@@ -31,6 +31,7 @@
 #include <vrpn_Forwarder.h>
 #include <vrpn_Analog.h>
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
+#include <vrpn_Magellan.h>
 
 // ############ getpid hack
 #if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
@@ -157,10 +158,6 @@ static imported_obj_list* object_list = NULL;
 
 /*********** UGRAPHICS *******************/
 
-/// Default grid size on startup. Kept to a minimum size.
-/// 12 because that allows a tesselation_stride of up to 6 without crashing.
-#define DATA_SIZE 12
-
 // need to cast away constness
 
 #if defined(FLOW) || defined(linux) || defined(sgi) || defined(hpux) || defined(__CYGWIN__) || defined(_WIN32)
@@ -238,6 +235,8 @@ static	void	handle_sphere_scale_change (vrpn_float64 new_value, void * userdata)
 static	void	handle_save_xform_change (vrpn_int32 new_value, void * userdata);
 static	void	handle_set_xform_change (vrpn_int32 new_value, void * userdata);
 static void handle_global_icon_scale_change (vrpn_float64, void *);
+
+static void handle_withdraw_tip_change (vrpn_int32, void *);
 
 /// Callback functions for latency compensation techniques.
 static void handle_trueTip_change (vrpn_int32, void *);
@@ -407,6 +406,7 @@ class WellKnownPorts {
     const int roundTripTime;
     const int remote_gaEngine;
     const int microscopeMutex;
+    const int localDevice;
 
  public:
     WellKnownPorts (int base_port_number = defaultBasePort);
@@ -422,7 +422,8 @@ WellKnownPorts::WellKnownPorts (int base_port_number)
     collaboratingPeerServer (4 + base_port_number),
     roundTripTime           (5 + base_port_number),
     remote_gaEngine         (6 + base_port_number),
-    microscopeMutex         (7 + base_port_number)
+    microscopeMutex         (7 + base_port_number),
+    localDevice             (8 + base_port_number)
 {
     // empty
 }
@@ -633,29 +634,6 @@ TclNet_int ruler_b ("ruler_b", 55);
 TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
 TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 
-//
-// Genetic Textures  -- Alexandra Bokinsky
-//
-// The toggle button, genetic-textures parameters button, and
-// the GA pop-up window checklist global variables. Used
-// to activate the genetic textures and to select which variables
-// are used in the GA process..
-//
-
-/// Which GA datasets to use:
-Tclvar_checklist *genetic_checklist = NULL;      
-
-/// Activates call-back to send data on-demand...
-Tclvar_int gen_send_data( "gen_send_data", 0 );
-
-/// Activates the call-back to display the GA texture...
-Tclvar_int gen_tex_activate( "gen_tex_activate", 0 );
-
-/// Enables the GA textues... (toggle button on main tcl window)
-Tclvar_int genetic_textures_enabled ("genetic_textures_enabled", 0);
-
-
-
 //-----------------------------------------------------------------
 /// Enables the realigning textues... (toggle button on main tcl window)
 // XXX This function is not included in the one screen tcl interface.
@@ -677,6 +655,20 @@ TclNet_int shiny ("shiny", 55);
 TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
 TclNet_float surface_alpha ("surface_alpha", 1.0);
 TclNet_float specular_color ("specular_color", 0.7);
+
+static void handle_config_fp_change (vrpn_int32, void *);
+static void handle_config_ss_change (vrpn_int32, void *);
+static void handle_config_cj_change (vrpn_int32, void *);
+
+//-----------------------------------------------------------------------
+/// Configure triangle-display methods
+Tclvar_int config_filled_polygons
+     ("filled_triangles", 1, handle_config_fp_change, NULL);
+Tclvar_int config_smooth_shading
+     ("smooth_shading",  1, handle_config_ss_change, NULL);
+Tclvar_int config_chartjunk
+     ("chart_junk",  1, handle_config_cj_change, NULL);
+
 
 /// Tom Hudson's latency compensation techniques
 
@@ -840,6 +832,9 @@ Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
 Tclvar_int markerHeight ("marker_height", 100);
 
 
+Tclvar_int withdraw_tip ("withdraw_tip", 0, handle_withdraw_tip_change, NULL);
+
+
 Tclvar_float global_icon_scale ("global_icon_scale", 1.0);
 
 /// Controls for the french Ohmmeter - creates many tcl widgets
@@ -977,29 +972,36 @@ static char local_ModeName [256];
  ********/
 
 // used in interaction.c, minit.c
-vrpn_ForceDevice_Remote *forceDevice;
+vrpn_ForceDevice_Remote *forceDevice = NULL;
 
 /*********
  * remote button for PHANToM
  ********/
 
-vrpn_Button_Remote *phantButton;
+vrpn_Button_Remote *phantButton = NULL;
 int phantButtonState = 0;
 
 /********
- * button and dial box
+ * SGI button and dial box
  *******/
 
-vrpn_Button_Remote *buttonBox;
-vrpn_Analog_Remote *dialBox;
+vrpn_Button_Remote *buttonBox = NULL;
+vrpn_Analog_Remote *dialBox = NULL;
 int bdboxButtonState[BDBOX_NUMBUTTONS];
 double bdboxDialValues[BDBOX_NUMDIALS];
+
+/********
+ * Magellan button and puck
+ *******/
+vrpn_Magellan *magellanButtonBoxServer = NULL;
+vrpn_Button_Remote *magellanButtonBox = NULL;
+int magellanButtonState[MAGELLAN_NUMBUTTONS];
 
 /************
  * Ohmmeter
  ***********/
 
-vrpn_Ohmmeter_Remote *ohmmeter;
+vrpn_Ohmmeter_Remote *ohmmeter = NULL;
 
 
 /// These variables signal when someone has clicked "accept" in the 
@@ -1067,8 +1069,8 @@ struct MicroscapeInitializationState {
   char *alignerName;
 
   vrpn_bool use_file_resolution;
-  int num_x;
-  int num_y;
+//    int num_x;  replaced by AFMImageState::grid_resolution.
+//    int num_y;
   int graphics_mode;
   char graphicsHost [256];
 
@@ -1115,8 +1117,8 @@ struct MicroscapeInitializationState {
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
   alignerName(NULL),
   use_file_resolution(vrpn_TRUE),
-  num_x (DATA_SIZE),
-  num_y (DATA_SIZE),
+//    num_x (DATA_SIZE),
+//    num_y (DATA_SIZE),
   graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
   num_stm_files (0),
   num_image_files(0),
@@ -1439,7 +1441,7 @@ void handle_finegrained_changed (vrpn_int32 value, void *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_finegrained_changed\n");
+//fprintf(stderr, "handle_finegrained_changed\n");
 
   if (value) {
     sprintf(command, "pack_finegrained_coupling");
@@ -1463,7 +1465,7 @@ Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
 void handle_mutex_request (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
 
-fprintf(stderr, "handle_mutex_request (%d)\n", value);
+//fprintf(stderr, "handle_mutex_request (%d)\n", value);
 
   if (value) {
     microscope->requestMutex();
@@ -1474,7 +1476,7 @@ fprintf(stderr, "handle_mutex_request (%d)\n", value);
 void handle_mutex_release (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
 
-fprintf(stderr, "handle_mutex_release (%d)\n", value);
+//fprintf(stderr, "handle_mutex_release (%d)\n", value);
 
   if (value) {
     microscope->releaseMutex();
@@ -1488,7 +1490,7 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexRequestGranted\n");
+//fprintf(stderr, "handle_mutexRequestGranted\n");
 
   sprintf(command, "mutex_gotRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -1504,7 +1506,7 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexRequestDenied\n");
+//fprintf(stderr, "handle_mutexRequestDenied\n");
 
   sprintf(command, "mutex_deniedRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -1520,7 +1522,7 @@ void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexTaken\n");
+//fprintf(stderr, "handle_mutexTaken\n");
 
   sprintf(command, "mutex_taken_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -1536,7 +1538,7 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexReleased\n");
+//fprintf(stderr, "handle_mutexReleased\n");
 
   sprintf(command, "mutex_release_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -2256,134 +2258,22 @@ static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata)
   g->setSphereScale(new_value);
 }
 
-
-
-// Genetic Textures -- Alexandra Bokinsky
-//
-/// Called when the genetic_textures_enabled toggle switch on the main
-/// miscroscape tcl window is pressed, either on or off.
-static void handle_genetic_textures_selected_change(vrpn_int32 value, void *userdata)
-{
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  if (value) {
-    disableOtherTextures(GENETIC);
-    g->setTextureMode(nmg_Graphics::GENETIC, 
-		      nmg_Graphics::MANUAL_REALIGN_COORD);
-  } else {
-    if (g->getTextureMode() == nmg_Graphics::GENETIC) {
-      g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-                        nmg_Graphics::MANUAL_REALIGN_COORD);
-    }
-  }
-  //cause_grid_redraw(0.0, NULL);
+//static
+void handle_config_fp_change (vrpn_int32, void *) {
+  graphics->enableFilledPolygons(config_filled_polygons);
 }
 
-// This button creates a window with the genetic textures parameters
-// so the user may select which data sets to use dynamically.
-// All current datasets are listed as check boxes. The user
-// simply check which data to send...
-// The function to display the window is sent to the tcl interpreter
-// from this function, because all the data sets, and the names of the
-// data sets are not know until run-time, and may change during execution.
-// (Also, the '.' in the dataset names must be removed from the 
-// interpreted tcl commands because tcl interprets '.' )
-static void handle_genetic_textures_set_parameters (vrpn_int32 , void *)
-{
-  char    command[256];
-  int i;
-
-  Tcl_Interp *tk_control_interp = get_the_interpreter();
-
-  sprintf(command, "toplevel .genetic_data_sets");
-  if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	    tk_control_interp->result);
-  }
-
-
-  sprintf(command, "button .genetic_data_sets.button1 -text \"Close Genetic Texture Panel\" -bg red -command \"destroy .genetic_data_sets\"");
-  if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	    tk_control_interp->result);
-  }
-
-  sprintf(command, "pack .genetic_data_sets.button1");
-  if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	    tk_control_interp->result);
-  }
-
-
-  // Get a new checklist.
-  genetic_checklist = new Tclvar_checklist(".genetic_data_sets");
-  if (genetic_checklist == NULL) {
-    fprintf(stderr,"Genetic Set Parameters(): Can't make checklist\n");
-    return;
-  }
-
-  nmb_ListOfStrings *imageNames = dataset->dataImages->imageNameList();
-  char *name;
-  for (i = 0; i < imageNames->numEntries(); i++) {
-    name = new char [strlen(imageNames->entry(i)) + 1];
-    strcpy( name, imageNames->entry(i));
-    char *c = strchr( name, '.' );
-    if ( c ){
-      *c = '_';
-    }
-//    printf( "%s\n", name );
-    genetic_checklist->Add_checkbox( name, 1 );
-    delete [] name;  
-  }
-
-  sprintf(command, "button .genetic_data_sets.button -text \"Send data now\" -command \"set gen_send_data 1\"");
-  if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	    tk_control_interp->result);
-  }
-
-  sprintf(command, "pack .genetic_data_sets.button");
-  if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-	    tk_control_interp->result);
-  }
-
+//static
+void handle_config_ss_change (vrpn_int32, void *) {
+  graphics->enableSmoothShading(config_smooth_shading);
 }
 
-// Checks which datasets are selected on the checklist and
-// passes this information to the nmg_Graphics which sends it
-// to the genetic alg. Only the selected datasets are send...
-//
-static void handle_genetic_send_data (vrpn_int32 , void * userdata)
-{
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  if ( genetic_checklist ) {
-    int number_of_variables = 0;
-
-    nmb_ListOfStrings *imageNames = dataset->dataImages->imageNameList();
-    char *name;
-    char **variable_list = new char*[imageNames->numEntries()];
-    for (int i = 0; i < imageNames->numEntries(); i++) {
-      name = new char [strlen(imageNames->entry(i)) + 1];
-      strcpy( name, imageNames->entry(i));
-      char *c = strchr( name, '.' );
-      if ( c ){
-        *c = '_';
-      }
-      if ( !strcmp( name, genetic_checklist->Checkbox_name( i ) ) &&
-           -1 != genetic_checklist->Is_set( i ) ) {
-        variable_list[number_of_variables] = new
-          char[ strlen( imageNames->entry(i) ) + 1];
-        strcpy( variable_list[number_of_variables],
-                imageNames->entry(i) );
-        number_of_variables++;
-      }
-      delete [] name;
-    }
-
-    g->sendGeneticTexturesData( number_of_variables, variable_list );
-    //cause_grid_redraw(0.0, NULL);
-  }
+//static
+void handle_config_cj_change (vrpn_int32, void *) {
+  graphics->enableChartjunk(config_chartjunk);
 }
+
+
 
 
 /// Realigning Textures Interactively:
@@ -2777,7 +2667,9 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
                 istate->afm.inputStreamName);
         return ;
     }
-    if (microscope_connection) {
+    // new and old microscope_connection can be equal if we open
+    // the same stream file twice!!
+    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
       delete microscope_connection;
     }
     microscope_connection = new_microscope_connection;
@@ -3078,6 +2970,10 @@ static	void	handle_set_xform_change (vrpn_int32, void * userdata)
 
   g->setLightDirection(save_light_dir);
  
+}
+static void handle_withdraw_tip_change (vrpn_int32, void *) 
+{
+    microscope->WithdrawTip();
 }
 
 static void handle_global_icon_scale_change (vrpn_float64 value, void * userdata) {
@@ -3980,16 +3876,6 @@ void setupCallbacks (Microscope * m) {
   soundPlaneName.addCallback
             (handle_sound_dataset_change, m);
 
-  // GENETIC TEXTURES -- Alexandra Bokinsky
-  //
-
-  // handler for creating the "Set Genetic Texture Parameters"
-  // tcl window.
-  gen_tex_activate.addCallback
-    (handle_genetic_textures_set_parameters, m);
-
-  // DONE GENETIC TEXTURES
-
   xPlaneName = "none";
   xPlaneName.addCallback
             (handle_x_dataset_change, NULL);
@@ -4065,14 +3951,6 @@ void teardownCallbacks (Microscope * m) {
 
   soundPlaneName.removeCallback
             (handle_sound_dataset_change, m);
-
-  // GENETIC TEXTURES -- Alexandra Bokinsky
-  //
-
-  gen_tex_activate.removeCallback
-    (handle_genetic_textures_set_parameters, m);
-
-  // DONE GENETIC TEXTURES
 
   xPlaneName.removeCallback
             (handle_x_dataset_change, NULL);
@@ -4194,16 +4072,6 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_specular_color_change, g);
   sphere_scale.addCallback
             (handle_sphere_scale_change, g);
-
-  // Genetic textures - Alexandra Bokinsky
-
-  // handler for enabling/disabling the Genetic Textures
-  genetic_textures_enabled.addCallback
-    (handle_genetic_textures_selected_change, g);
-
-  // handler for sending the datasets:
-  gen_send_data.addCallback
-    (handle_genetic_send_data, g);
 
   // Texture realignment
 
@@ -4602,9 +4470,11 @@ void ParseArgs (int argc, char ** argv,
         istate->num_stm_files++;
       } else if (strcmp(argv[i], "-grid") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        istate->num_x = atoi(argv[i]);
+        istate->afm.image.grid_resolution = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        istate->num_y = atoi(argv[i]);
+        if(atoi(argv[i]) != istate->afm.image.grid_resolution) {
+            fprintf(stderr, "Warning: non-square grid specified, ignoring 2nd size\n");
+        }
         istate->use_file_resolution = vrpn_FALSE;
       } else if (strcmp(argv[i], "-fi") == 0) {
 	if (++i >= argc) Usage(argv[0]);
@@ -5635,7 +5505,8 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
 
     nmb_Dataset *
     new_dataset = new nmb_Dataset (istate.use_file_resolution,
-                               istate.num_x, istate.num_y,
+                               istate.afm.image.grid_resolution, 
+                               istate.afm.image.grid_resolution,
                                istate.x_min, istate.x_max,
                                istate.y_min, istate.y_max, read_mode,
                                (const char **) istate.stm_file_names,
@@ -5751,6 +5622,12 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     microscope = new_microscope;
     dataset = new_dataset;
 
+
+    // Some other stuff
+
+    // clear the modify markers
+    handleCharacterCommand("C", &dataset->done, 1);
+
     return 0;
 }
 
@@ -5763,8 +5640,6 @@ int main(int argc, char* argv[])
     struct          timezone zone1,zone2;
     long            start,stop;
     long            interval;
-    float             timing;
-    float looplen;
     long            n = 0L;
     long	    n_displays = 0L;
 
@@ -5775,8 +5650,8 @@ int main(int argc, char* argv[])
     int new_value_of_rate_knob;
     int old_value_of_rate_knob;
 
-    printf("Microscape version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
-	MICROSCAPE_MINOR_VERSION);
+//      printf("NanoManipulator version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
+//  	MICROSCAPE_MINOR_VERSION);
 
     decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
@@ -6058,15 +5933,15 @@ int main(int argc, char* argv[])
     // (this space is allocated in v_create_world())
     // Initialize force, tracker, a/d device, sound
     VERBOSE(1,"Before tracker enable");
-    if (glenable) {
-        if (peripheral_init()){
-                fprintf(stderr,"Cannot initialize peripheral devices\n");
-                return(-1);
-        }
-        else if (register_vrpn_callbacks()){
-                fprintf(stderr,"Cannot setup tracker callbacks\n");
-                return(-1);
-        }
+    vrpn_Connection * devcon = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
+
+    if (peripheral_init(devcon)){
+        fprintf(stderr,"Cannot initialize peripheral devices\n");
+        return(-1);
+    }
+    else if (register_vrpn_callbacks()){
+        fprintf(stderr,"Cannot setup tracker callbacks\n");
+        return(-1);
     }
 
   // NANOX
@@ -6412,6 +6287,22 @@ VERBOSE(1, "Entering main loop");
       if (sem_ui) {
         sem_ui->mainloop();
       }
+        // Count the number of times the magellan box resets. 
+      static int num_magellan_reset = 0;
+      if (magellanButtonBoxServer) {
+	magellanButtonBoxServer->mainloop();
+        if (magellanButtonBoxServer->doing_reset()) num_magellan_reset++;
+        // If magellan resets too many times, stop trying to talk to it. 
+        if (num_magellan_reset > 3) {
+            delete magellanButtonBoxServer;
+            magellanButtonBoxServer = NULL;
+            delete magellanButtonBox;
+            magellanButtonBox = NULL;
+        }
+      }
+      if (magellanButtonBox) {
+	magellanButtonBox->mainloop();
+      }
       if (phantButton) {
 	phantButton->mainloop();
       }
@@ -6711,6 +6602,10 @@ VERBOSE(1, "Entering main loop");
 	  delete vrpnHeadTracker[i];
 	  vrpnHeadTracker[i] = NULL;
       }
+    }
+    if (magellanButtonBox) {
+	delete magellanButtonBox;
+	magellanButtonBox = NULL;
     }
     if (phantButton) {
 	delete phantButton;
@@ -8152,9 +8047,6 @@ int disableOtherTextures (TextureMode m) {
   }
   if (m != MANUAL_REALIGN){
     display_realign_textures = 0;
-  }
-  if (m != GENETIC){
-    genetic_textures_enabled = 0;
   }
 //#endif
 

@@ -88,7 +88,7 @@ class nmg_Graphics {
 
     // indicates which texture is displayed:
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
-			GENETIC, COLORMAP,
+			 COLORMAP,
 			SEM_DATA, 
 			BUMPMAP, HATCHMAP, PATTERNMAP,
                         REMOTE_DATA };
@@ -235,13 +235,6 @@ class nmg_Graphics {
     virtual void setPatternMapName (const char *) = 0;  // RENAME?
       // Specifies the name of the data plane to use to drive pattern
       // maps on PxFl.
-
-    // Genetic Textures
-
-// functionality moved to setTextureMode()
-//    virtual void enableGeneticTextures (int) = 0;
-
-    virtual void sendGeneticTexturesData (int, char **) = 0;
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * ) = 0;
@@ -462,10 +455,6 @@ class nmg_Graphics {
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
 
-    // Genetic Textures Network Types:
-    vrpn_int32 d_enableGeneticTextures_type;
-    vrpn_int32 d_sendGeneticTexturesData_type;
-
     // Realign Textures Network Types:
     vrpn_int32 d_createRealignTextures_type;
     vrpn_int32 d_setRealignTexturesConversionMap_type;
@@ -656,12 +645,6 @@ class nmg_Graphics {
     int decode_setCollabHandPos (const char *buf, double [3], double [4]);
     char * encode_setCollabMode (int * len, int);
     int decode_setCollabMode (const char *buf, int *);
-
-    // Genetic Textures Network Transmission Functions:
-    char * encode_enableGeneticTextures (int * len, int);
-    int decode_enableGeneticTextures (const char * buf, int *);
-    char * encode_sendGeneticTexturesData (int * len, int, char **);
-    int decode_sendGeneticTexturesData (const char * buf, int *, char ***);
 
     // Realign Textures Network Transmission Functions:
     char *encode_setRealignTextureSliderRange ( int *len, float, float );

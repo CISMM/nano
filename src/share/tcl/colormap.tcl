@@ -44,32 +44,42 @@ iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(colorscale).pickframe.colormap
 
 pack $nmInfo(colorscale).pickframe.colormap_plane \
-	$nmInfo(colorscale).pickframe.colormap -anchor nw -fill x
+	$nmInfo(colorscale).pickframe.colormap -side top -anchor nw -fill x
 
-
-# Make it easy to create a flat plane to use for a color map.
-button $nmInfo(colorscale).pickframe.calc_planes -text "Calculate Data Planes..."  \
-    -command "show.calc_planes"
-pack $nmInfo(colorscale).pickframe.calc_planes -side bottom -anchor nw
+# frame for buttons. Don't -fill, so they won't grow too big, but will be aligned. 
+frame $nmInfo(colorscale).pickframe.buttons
+pack $nmInfo(colorscale).pickframe.buttons -side top -anchor nw
 
 # Reset the colormap sliders:
-button $nmInfo(colorscale).pickframe.autoscale -text "AutoScale"  \
-    -command "adjust_color_min_max autoscale autoscale autoscale"
-pack $nmInfo(colorscale).pickframe.autoscale -side left -anchor nw
+button $nmInfo(colorscale).pickframe.buttons.autoscale -text "Auto-Scale"  \
+        -command {
+    # resetting the color plane forces color_m*_limit to be reset. 
+    set color_comes_from $color_comes_from 
+    adjust_color_min_max autoscale autoscale autoscale
+}
+pack $nmInfo(colorscale).pickframe.buttons.autoscale -side top -anchor nw -fill x
+
+# Set the basic surface color:
+button $nmInfo(colorscale).pickframe.buttons.set_color \
+        -text "Set surface color" -command {
+    choose_color surface_color "Choose surface color"
+    set_surface_color
+}
+pack $nmInfo(colorscale).pickframe.buttons.set_color -side top -anchor nw -fill x
+
+# Make it easy to create a flat plane to use for a color map.
+button $nmInfo(colorscale).pickframe.buttons.calc_planes -text "Calculate Data Planes..."  \
+    -command "show.calc_planes"
+pack $nmInfo(colorscale).pickframe.buttons.calc_planes -side top -anchor nw -fill x
 
 set surface_r 192
 set surface_g 192
 set surface_b 192
 set surface_color_changed 0
 
-button $nmInfo(colorscale).set_color -text "Set surface color" -command {
-    choose_color surface_color "Choose surface color"
-    set_surface_color
-}
 
 # this sets the color of the sample frame to the color of the scales
 set surface_color [format #%02x%02x%02x $surface_r $surface_g $surface_b]
-pack $nmInfo(colorscale).set_color -side left -anchor nw
 
 proc set_surface_color {} {
     global surface_r surface_g surface_b surface_color_changed surface_color

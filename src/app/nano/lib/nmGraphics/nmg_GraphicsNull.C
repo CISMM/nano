@@ -141,10 +141,6 @@ void nmg_Graphics_Null::setMinColor (const int [3]) {}
 void nmg_Graphics_Null::setMaxColor (const int [3]) {}
 void nmg_Graphics_Null::setPatternMapName (const char * ) {}
 
-// Genetic Textures;
-void nmg_Graphics_Null::enableGeneticTextures (int) {}
-void nmg_Graphics_Null::sendGeneticTexturesData (int, char **) {}
-
 // Realigning Textures:
 void nmg_Graphics_Null::createRealignTextures( const char * ) {}
 void nmg_Graphics_Null::setRealignTextureSliderRange (float, float) {}

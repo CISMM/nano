@@ -71,10 +71,6 @@ class nmg_Graphics_Null : public nmg_Graphics {
 
     virtual void setPatternMapName (const char *);  // RENAME?
 
-    // Genetic Textures
-    virtual void enableGeneticTextures (int);
-    virtual void sendGeneticTexturesData (int, char **);
-
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
     virtual void setRealignTextureSliderRange (float, float);

@@ -385,7 +385,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
 static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
 
-  //    printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
+      printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -586,7 +586,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
  */
 static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
-    //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
+    printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
     if (tcl_commit_canceled != 1) return;
@@ -2118,10 +2118,10 @@ int doFeelLive(int whichUser, int userEvent)
    char fullname[100];
 
    fullname[sizeof(fullname)-1] = '\0';
-   strncpy(fullname, (char*)dataset->heightPlaneName, sizeof(fullname)-1);
+   strncpy(fullname, dataset->heightPlaneName->string(), sizeof(fullname)-1);
    if (NULL == strrchr(fullname, '-'))
    {
-      fprintf(stderr, "doFeelLive(): problem with plane name %s\n", (char*)dataset->heightPlaneName);
+      fprintf(stderr, "doFeelLive(): problem with plane name %s\n", (char*)dataset->heightPlaneName->string());
       return -1;
    }
    *strrchr(fullname, '-') = '\0';

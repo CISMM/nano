@@ -98,6 +98,7 @@ class nmm_Microscope {
     long d_SetStdDevParams_type;
     long d_SetScanWindow_type;
     long d_ResumeWindowScan_type;
+    long d_PauseScanning_type;
     long d_SetGridSize_type;
     long d_SetOhmmeterSampleRate_type;
     long d_EnableAmp_type;
@@ -114,6 +115,7 @@ class nmm_Microscope {
     long d_DrawSweepArcCenter_type;
     long d_GetNewPointDatasets_type;
     long d_GetNewScanDatasets_type;
+    long d_WithdrawTip_type;
     long d_Echo_type;
     long d_MarkModify_type;
     long d_MarkImage_type;
@@ -149,6 +151,7 @@ class nmm_Microscope {
     long d_BluntResultNM_type;
       // ZigResultNM and BluntResultNM are both handled
       // by encode_ResultNM() and decode_ResultNM()
+    long d_Scanning_type;
     long d_ScanRange_type;
     long d_SetRegionCompleted_type;
     long d_SetRegionClipped_type;
@@ -408,6 +411,8 @@ class nmm_Microscope {
                             float, float, float, float);
     long decode_ResultNM (const char ** buf, float *, float *, vrpn_int32 *, 
                       vrpn_int32 *, float *, float *, float *, float *);
+    char * encode_Scanning (long * len, vrpn_int32 value);
+    long decode_Scanning (const char ** buf, vrpn_int32 * value);
     char * encode_ScanRange (long * len, float, float, float, float, float,
                              float);
     long decode_ScanRange (const char ** buf, float *, float *, float *,

@@ -111,7 +111,7 @@ proc change_x_axis { newaxis {newdata ""}} {
     }
 }
 
-set graphmod(axis_config) [create_closing_toplevel stripchart_axis_config]
+set graphmod(axis_config) [create_closing_toplevel stripchart_axis_config "Axis Configuration" ]
 button $graphmod(top).axis_config -text "Axis config..." -command \
 	show.stripchart_axis_config
 pack $graphmod(top).axis_config -side bottom -anchor nw
