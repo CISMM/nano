@@ -1,3 +1,7 @@
+2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* afm_sem.tcl: Added opacity and colormap controls for texture
+
 2003-02-07  David Borland <borland@cs.unc.edu>
 
         * import.tcl: Added .crv files to the import files list.  These 

@@ -189,6 +189,21 @@ checkbutton $display_settings.live_sem_texture \
       -variable afm_sem_live_sem_texture -text "Live SEM Texture"
 pack $display_settings.live_sem_texture
 
+floatscale $display_settings.texture_opacity 0 1 1000 1 1 \
+    afm_sem_texture_opacity "texture opacity"
+pack $display_settings.texture_opacity
+
+# Colormap control
+button $display_settings.texture_colormap -text "Colormap..." \
+    -command "show.afm_sem_colormap"
+
+pack $display_settings.texture_colormap -anchor w
+
+set nmInfo(afm_sem_colormap) [create_closing_toplevel afm_sem_colormap "SEM Color Map" ]
+
+colormap_controls $nmInfo(afm_sem_colormap) afm_sem_cm \
+        afm_sem_cm(color_comes_from) "SEM image" imageNames
+
 ###################################################################
 proc handle_sufficient_data_change {label varname element op} {
   upvar $varname statusVar
