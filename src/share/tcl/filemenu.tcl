@@ -64,11 +64,12 @@ set deviceConnections {}
 
 if { !$thirdtech_ui } {
 # Maintain list of all UNC SPMs available here. Don't add UNC SPMs to spm_list_def.tcl
-set deviceNames       { "Explorer1" "Explorer2" "Discoverer" "Same-machine SPM (testing)"}
+set deviceNames       { "Explorer1" "Explorer2" "Discoverer" "Same-machine SPM (testing)" "Rhodium-cs (testing)"}
 set deviceConnections { "nmm_Microscope@sodium-cs" \
         "nmm_Microscope@phantom-cs" \
         "nmm_Microscope@iron-cs" \
-        "nmm_Microscope@127.0.0.1" }
+        "nmm_Microscope@127.0.0.1" \
+	"nmm_Microscope@rhodium-cs.cs.unc.edu"}
 }
 
 # Dialog which allows user to choose which device
