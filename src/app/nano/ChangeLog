@@ -1,3 +1,12 @@
+2002-02-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c 
+	(setupSynchroniztion):  Changed to only do non-microscope variables.
+	Also added z_lock to the shared variables.
+	(teardownSynchroniztion):  same.
+	(setupMicroscopeSynchronization):  new
+	(teardownMicroscopeSynchronization):  new
+
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c (createNewDatasetOrMicroscope): Changed so it
