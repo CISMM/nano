@@ -15,6 +15,10 @@ CHILD_DIRS := $(filter-out CVS,$(subst /,,$(wildcard */)))
 
 CHILD_LIBS := $(CHILD_DIRS)
 
+ifeq ($(MAKECMDGOALS),depend)
+   DEPEND_FLAG := depend
+endif
+
 ###############################################################################
 #
 # Special targets
@@ -26,6 +30,9 @@ default: all
 .PHONY: all
 all: $(join $(addprefix $(OBJECT_DIR)/,$(CHILD_DIRS)), \
             $(addprefix /,$(CHILD_LIBS)))
+
+.PHONY: depend
+depend: all
 
 .PHONY: clean
 clean: 
@@ -42,4 +49,4 @@ thisclean:
 
 .PHONY: %
 %:
-	$(MAKE) -wC .$(subst $(OBJECT_DIR),,$(@D))
+	$(MAKE) -wC .$(subst $(OBJECT_DIR),,$(@D) $(DEPEND_FLAG))
