@@ -4131,6 +4131,8 @@ struct MicroscapeInitializationState {
   // control synchronization method for collaboration
   vrpn_bool useOptimism;
 
+  float phantomRate;
+
   int packetlimit;
 };
 
@@ -4156,6 +4158,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   logInterface (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   useOptimism (VRPN_FALSE),
+  phantomRate (60.0),  // standard default
   packetlimit (0)
 {
 
@@ -4309,6 +4312,9 @@ void ParseArgs (int argc, char ** argv,
 	if (++i >= argc) Usage(argv[0]);
         istate->graphics_mode = VIDEO_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
+      } else if (!strcmp(argv[i], "-phantomrate")) {
+        if (++i >= argc) Usage(argv[0]);
+        istate->phantomRate = atof(argv[i]);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.stmRxTmin = atoi(argv[i]);
@@ -5726,6 +5732,7 @@ printf("nM_coord_change_server initialized\n");
   }
 
     setupCallbacks(forceDevice);
+    handTracker_update_rate = istate.phantomRate;
 
     VERBOSE(1,"Before Tk initialization");
     if(tkenable) {

@@ -37,5 +37,7 @@ extern TclNet_float tcl_wfr_rot_2;
 extern TclNet_float tcl_wfr_rot_3;
 extern TclNet_float tcl_wfr_scale;
 
+extern Tclvar_float handTracker_update_rate;
+
 #endif  // INTERACTION_H
 

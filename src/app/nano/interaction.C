@@ -215,6 +215,7 @@ static void handle_commit_cancel( vrpn_int32 val, void *userdata);
  **********/
 static void handle_phantom_reset( vrpn_int32 val, void *userdata);
 
+static void handle_handTracker_update_rate (vrpn_float64, void *);
 
 /*********
  * Variables that are linked to buttons in the
@@ -236,6 +237,9 @@ Tclvar_int adhesion_linear("adhesion_linear", 0);
 Tclvar_int compliance_linear("compliance_linear", 0);
 Tclvar_int bumpscale_linear("bumpscale_linear", 0);
 Tclvar_int buzzscale_linear("buzzscale_linear", 0);
+
+Tclvar_float handTracker_update_rate ("handTracker_update_rate", 60.0,
+                                      handle_handTracker_update_rate);
 
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
@@ -327,6 +331,20 @@ TclNet_float tcl_wfr_rot_3
      ("tcl_wfr_rot_3", 1.0, handle_worldFromRoom_change, NULL);
 TclNet_float tcl_wfr_scale
      ("tcl_wfr_scale", 1.0, handle_worldFromRoom_change, NULL);
+
+
+static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
+
+  if (vrpnHandTracker[0]) {
+    vrpnHandTracker[0]->set_update_rate(v);
+fprintf(stderr, "Set force device update rate to %.5f\n", v);
+  } else {
+fprintf(stderr, "No force device, "
+                "so can't force device update rate to %.5f\n", v);
+  }
+
+}
+
 
 static void handle_trigger_change( vrpn_int32 val, void * )
 {
@@ -498,10 +516,14 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	    //y_max = centery + rad;
 	    
 	    microscope->SetRegionNM(
-	        microscope->state.select_center_x - microscope->state.select_region_rad,
-		microscope->state.select_center_y - microscope->state.select_region_rad,
-		microscope->state.select_center_x + microscope->state.select_region_rad,
-		microscope->state.select_center_y + microscope->state.select_region_rad);
+	        microscope->state.select_center_x
+                   - microscope->state.select_region_rad,
+		microscope->state.select_center_y
+                   - microscope->state.select_region_rad,
+		microscope->state.select_center_x
+                   + microscope->state.select_region_rad,
+		microscope->state.select_center_y
+                   + microscope->state.select_region_rad);
 
 	}
 	//Clear the var so we know we made a change. 
