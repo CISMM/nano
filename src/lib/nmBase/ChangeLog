@@ -1,5 +1,11 @@
 2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
 
+	* nmb_TransformMatrix44.Ch (transform): new convenient form of
+	this function that takes 4 doubles as arguments for applying 2D
+	transformations
+
+2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
+
 	* nmb_Image.hC: changed a bunch of functions to be const
 	(pixelToWorld and worldToPixel): these were inconsistent if the
 	image axes were not aligned with the axes of the world coordinates

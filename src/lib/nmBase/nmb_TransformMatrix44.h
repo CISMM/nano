@@ -31,6 +31,8 @@ class nmb_TransformMatrix44 {
                         double &scx, double &scy);
     virtual void print();
 
+    void transform(double x1, double y1, double &x2, double &y2) const;
+
   protected:
     void buildIdentity(double m[4][4]);
     vrpn_bool computeInverse();

@@ -122,6 +122,13 @@ void nmb_TransformMatrix44::transform(double *pnt) const {
    transform(temp, pnt);
 }
 
+void nmb_TransformMatrix44::transform(double x1, double y1, 
+                                      double &x2, double &y2) const
+{
+  x2 = xform[0][0]*x1 + xform[0][1]*y1 + xform[0][3];
+  y2 = xform[1][0]*x1 + xform[1][1]*y1 + xform[1][3];
+}
+
 void nmb_TransformMatrix44::invTransform(double *p_src, double *p_dest) {
     assert(p_src != p_dest);
     if (!hasInverse()) {
