@@ -1,3 +1,7 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main): changed registration to always go through vrpn
+
 2001-03-02  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c: Remove obsolete createForwarders call.

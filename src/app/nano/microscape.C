@@ -7101,7 +7101,12 @@ int main (int argc, char* argv[])
     // any non NULL string will be interpreted as a server name and
     // the proxy will attempt to connect itself to the corresponding
     // server
-    aligner = new nmr_Registration_Proxy(istate.alignerName);
+    if (istate.alignerName) {
+      aligner = new nmr_Registration_Proxy(istate.alignerName);
+    } else {
+      aligner = new nmr_Registration_Proxy(NULL,
+                                         internal_device_connection);
+    }
     alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
         aligner);
     alignerUI->setupCallbacks();
