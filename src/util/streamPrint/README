@@ -1,5 +1,8 @@
 Stream Tools
 
+vrpn_streamClip:
+	Reads a vrpn 6.0+ stream and emits the stream to a file,
+	clipping the stream at the specified time.
 
 vrpn_headerPrint:
 	Takes a nM8.0 stream file, usually with extension .nms, and
