@@ -29,6 +29,10 @@ How to compile nano (most archs):
    The executable is ./obj/$(HW_OS)/app/nano/nano
 
 
+How to get the non-vrpn version (no longer the default):
+   gmake OLD_MICROSCOPE=1 instead
+
+
 How to compile nano on pc_cygwin:
    1) Get sdi, quat, vogl (was vlib-openGL), and vrpn as per usual.
    2) Get nano.
