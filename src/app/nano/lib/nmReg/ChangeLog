@@ -1,5 +1,9 @@
 2002-06-06  David Borland <borland@cs.unc.edu>
 
+        * nmReg.dsp : added nmUberGraphics to the include path
+
+2002-06-06  David Borland <borland@cs.unc.edu>
+
         * nmr_RegistrationUI.C : code to automatically create a 
 	ProjTextObj when switching to MODEL_REGISTRATION_COORD mode
 
