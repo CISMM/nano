@@ -10,6 +10,7 @@ TAGS_CMD_LINE=xargs -0 -e ${TAGS_CMD} ${TAGS_FLAGS}
 .PHONY: nano-all lib app/nano/lib app/nano
 
 nano-all: lib app/nano/lib app/nano
+nano-app: app/nano/lib app/nano
 
 lib:
 	$(MAKE) -C lib
