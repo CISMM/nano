@@ -92,6 +92,13 @@ proc set_view {} {
 	
 	# reset height in case it has changed 
 	update idletasks
+
+	# if the window has not been initialized, set the window size
+	# to the regular size for what has been selected
+	if {$full_width == 0} {
+	    set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
+	}
+
 	set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
 		         + [winfo reqheight $nmInfo(modifydisplay)]\
 			 + [winfo reqheight $nmInfo(modify).quick_or_full]\
@@ -122,7 +129,7 @@ proc switch_view {} {
 	pack $nmInfo(scrollH) -side bottom -fill x
 	pack $nmInfo(canvas) -side left -expand yes -fill both
 
-	eval set_view
+	# eval set_view
 
         $nmInfo(modify).quick_or_full configure -text "Quick params"
 
@@ -131,16 +138,18 @@ proc switch_view {} {
 
 	#set_window_size
 	wm resizable .modify 1 1
-	if {$full_width == 0} {
-	    set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
-	}
+	#if {$full_width == 0} {
+	#    set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
+	#}
 
-	set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
-		         + [winfo reqheight $nmInfo(modifydisplay)]\
-			 + [winfo reqheight $nmInfo(modify).quick_or_full]\
-			 + [winfo reqheight $nmInfo(scrollH)]]
+#	set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
+\#		         + [winfo reqheight $nmInfo(modifydisplay)]\
+	\#		 + [winfo reqheight $nmInfo(modify).quick_or_full]\
+		\#	 + [winfo reqheight $nmInfo(scrollH)]]
 	
-	wm geometry .modify =[set full_width]x[set full_height]
+	# wm geometry .modify =[set full_width]x[set full_height]
+
+	eval set_view
 
 	# Set button background to inactive
 	$nmInfo(modifyfull).mode.accept configure -background $save_bg
@@ -1117,11 +1126,20 @@ proc change_made {nm el op} {
 	# this is now set at the end, so window is automatically resized
         # set full_width [winfo width .modify]
 	set_enabling
+
+	#pack here so we can figure out how big we need to make the window
+	pack_full
+	#so winfo gives correct size of window.
+	update idletasks
+
+	# set the full width size here, but do not set the window parameters
+	# here, this is done in set_view
+        set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
 	set_view
 
 	# reset window size, so everything fits
-        set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
-	wm geometry .modify =[set full_width]x[set full_height]
+        #set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
+	#wm geometry .modify =[set full_width]x[set full_height]
     }
 }
 ##############################################

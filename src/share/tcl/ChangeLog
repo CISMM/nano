@@ -1,3 +1,13 @@
+2002-12-06 Jameson Miller <millerj@cs.unc.ed>
+	*mainwin.tcl - fixed bug where the modify window would not
+	be set to the correct size when x-terming into another machine.
+	cleaned up the process where the window size was set.
+	modified functions: set_view - now only place where window size is sent
+			    change_made - the size of the window is set here, but not sent
+			    switch_view - moved order of where things were done
+	                                  to get correct window size
+
+
 2002-06-06 David Borland <borland@cs.unc.edu>
 
         * registration.tcl : automatically pop-up import objects window
