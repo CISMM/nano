@@ -412,7 +412,6 @@ int handSensor;
 
 CollaborationManager * collaborationManager = NULL;
 
-
 ///These are used in tracking a remote user's hand position.
 vrpn_Tracker_Remote *vrpnHandTracker_collab;
 nM_coord_change *nM_coord_change_server = NULL;
@@ -1202,6 +1201,7 @@ struct MicroscapeInitializationState {
   int monitorPort;
   int collabPort;
   int basePort;
+  int peerBasePort;
 
   float x_min;
   float x_max;
@@ -1254,6 +1254,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   monitorPort (-1),
   collabPort (-1),
   basePort (WellKnownPorts::defaultBasePort),
+  peerBasePort (WellKnownPorts::defaultBasePort),
   x_min (afm.xMin),
   x_max (afm.xMax),
   y_min (afm.yMin),
@@ -5147,6 +5148,11 @@ void ParseArgs (int argc, char ** argv,
         istate->basePort = atoi(argv[i]);
         printf("Will open ports starting with %d as the default port number\n",
                istate->basePort);
+      } else if (strcmp(argv[i], "-peerbaseport") == 0) {
+        if (++i >= argc) Usage (argv[0]);
+        istate->peerBasePort = atoi(argv[i]);
+        printf("Expecting peer to open ports starting with %d as the default"
+               " port number\n", istate->peerBasePort);
       } else if (strcmp(argv[i], "-call") == 0) {
         //DO_CALLBACKS = 1;
         fprintf(stderr, "Warning: -call obsolete.\n");
@@ -5594,6 +5600,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-marshalltest] [-multithread] \n");
   fprintf(stderr, "       [-nomagellan] \n");
   fprintf(stderr, "       [-baseport port] [-monitor port]\n");
+  fprintf(stderr, "       [-peerbaseport port]\n");
   fprintf(stderr, "       [-collaborator port] [-peer name]\n");
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
@@ -6937,7 +6944,8 @@ int main (int argc, char* argv[])
   collaborationManager->setModeServerName(local_ModeName);
   collaborationManager->setLogging(istate.logPath, istate.logTimestamp.tv_sec);
   collaborationManager->enableLogging(istate.logInterface);
-  collaborationManager->setPeerPort(wellKnownPorts->collaboratingPeerServer);
+  WellKnownPorts peerPorts(istate.peerBasePort);
+  collaborationManager->setPeerPort(peerPorts.collaboratingPeerServer);
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setTimer(&collaborationTimer);
   collaborationManager->initialize(vrpnHandTracker, NULL,

@@ -49,6 +49,11 @@ Index_mode::init( BCPlane* plane, const char* streamfileName )
 #endif
 }
 
+bool
+Index_mode::isInitialized()
+{
+  return initialized;
+}
 
 void
 Index_mode::newPlane( BCPlane* plane )

@@ -2637,7 +2637,7 @@ int doFeelLive (int whichUser, int userEvent)  {
 
   if (!microscope->haveMutex()) {
     user_0_mode = USER_GRAB_MODE;
-    //printf("Can't touch when we don't have access to the microscope.\n");
+    printf("Can't touch when we don't have access to the microscope.\n");
     return 0;
   }
 
@@ -2932,7 +2932,7 @@ doSelect(int whichUser, int userEvent)
 
   if (!microscope->haveMutex()) {
     user_0_mode = USER_GRAB_MODE;
-    //printf("Can't touch when we don't have access to the microscope.\n");
+    printf("Can't touch when we don't have access to the microscope.\n");
     return 0;
   }
 

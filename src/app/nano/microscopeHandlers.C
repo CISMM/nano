@@ -942,10 +942,11 @@ void handle_z_dataset_change(const char *, void * _mptr)
   graphics->causeGridRebuild();
   graphics->causeGridRedraw();
   
-  // update index mode's idea of what the plane is
-  Index_mode::newPlane( dataset->inputGrid->getPlaneByName
-			(dataset->heightPlaneName->string() ) );
-
+  if ( Index_mode::isInitialized() ) {
+    // update index mode's idea of what the plane is
+    Index_mode::newPlane( dataset->inputGrid->getPlaneByName
+                          (dataset->heightPlaneName->string() ) );
+  }
 }
 
 void handle_color_dataset_change(const char *, void * /*_mptr*/)

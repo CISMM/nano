@@ -1,3 +1,15 @@
+2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c: added -peerbaseport argument to let you run two 
+		collaborating copies of nano on the same machine (you might 
+		want to do that for testing)
+ 	* index_mode.Ch (isInitialized): new function to check whether 
+		index mode is active
+	* microscopeHandlers.C (handle_z_dataset_change) : checks whether 
+		index mode is active before telling it there is a new plane
+	* interaction.c : uncomments some informative print statements for when
+		collaboration mutex is restricting control of microscope
+
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
 
         * microscape.c: changed usage of vrpn_get_connection_by_name so it

@@ -17,6 +17,9 @@ class Index_mode
   // index mode won't do anything until it's initialized.
   static void init( BCPlane* plane, const char* streamfileName );
 
+  // determine whether or not index mode has been initialized
+  static bool isInitialized();
+
   // to use in case the current height plane changes.
   static void newPlane( BCPlane* plane );
 
