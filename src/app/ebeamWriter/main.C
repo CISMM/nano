@@ -7,14 +7,9 @@ main.C : this file contains the main() function for the seegerizer. This
 // stuff for tcl/tk graphical user interface 
 #include <tcl.h>
 #include <tk.h>
-#include <blt.h>
-
-#ifndef NO_ITCL
-#include <itcl.h>
-#include <itk.h>
-#endif
 
 #include <Tcl_Linkvar.h>
+#include <Tcl_Interpreter.h>
 
 #include <stdio.h>
 
@@ -25,6 +20,7 @@ main.C : this file contains the main() function for the seegerizer. This
 #include "transformFile.h"
 #include "nmr_Util.h"
 
+#include "nmr_RegistrationUI.h"
 #include "nmr_Registration_Proxy.h"
 #include "nmm_Microscope_SEM_Remote.h"
 #include "nmm_Microscope_SEM_EDAX.h"
@@ -58,16 +54,11 @@ t30 t31 t32 t33
 */
 
 static int parseArgs(int argc, char **argv);
-static int init_Tk();
-// for some reason blt.h doesn't declare this procedure.
-// I copied this prototype from bltUnixMain.c, but I had to add
-// the "C" so it would link with the library.
-extern "C" int Blt_Init (Tcl_Interp *interp);
-extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
 #define MAX_PLANNING_IMAGES 10
 static char **planningImageNames;
 static int numPlanningImages = 0;
+nmb_ImageManager *dataset = NULL;
 nmb_ImageList *imageData = NULL;
 
 static char transformFileName[256];
@@ -87,13 +78,12 @@ static Tclvar_int nextLeftWindowPos("next_left_pos", 0);
 vrpn_Connection *local_connection;
 PatternEditor *patternEditor = NULL;
 nmr_Registration_Proxy *aligner = NULL;
+nmr_RegistrationUI *alignerUI = NULL;
 nmm_Microscope_SEM_Remote *sem = NULL;
 ControlPanels *controls = NULL;
 
 nmm_Microscope_SEM_EDAX *sem_server = NULL;
 vrpn_Connection *internal_device_connection = NULL;
-
-static Tcl_Interp *tk_control_interp;
 
 #ifdef V_GLUT
 void nullDisplayFunc() { ; }
@@ -121,7 +111,7 @@ int main(int argc, char **argv)
     if ((tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
          tcl_script_dir = "./";
     }
-    init_Tk();
+    Tcl_Interp *tk_control_interp = Tcl_Interpreter::getInterpreter();
     Tclvar_init(tk_control_interp);
 
     // Hide the main window.
@@ -221,12 +211,18 @@ int main(int argc, char **argv)
 
     // Now we can hook up the Tcl/Tk control panels 
     // to the parts that do the work
-    controls = new ControlPanels(patternEditor, aligner, sem);
+    controls = new ControlPanels(patternEditor, sem);
 
+    alignerUI = new nmr_RegistrationUI(aligner, patternEditor);
+    alignerUI->setupCallbacks();
 
     // load the images specified on the command line
     TopoFile defaultTopoFileSettings;
     imageData = new nmb_ImageList(controls->imageNameList());
+
+    dataset = new nmb_ImageManager(imageData);
+
+    alignerUI->changeDataset(dataset);
 
     controls->setImageList(imageData);
     // this needs to come after the controls get the pointer to the imageData
@@ -362,49 +358,6 @@ static int parseArgs(int argc, char **argv)
   }
 
   printf("\n");
-  return 0;
-}
-
-int init_Tk(){
-        tk_control_interp = Tcl_CreateInterp();
-        printf("init_Tk(): just created the tcl/tk interpreter\n");
-        /* Start a Tcl interpreter */
-        if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
-                fprintf(stderr, "Tcl_Init failed: %s\n",
-                tk_control_interp->result);
-                return -1;
-        }
-        /* Initialize Tk using the Tcl interpreter */
-        if (Tk_Init(tk_control_interp) == TCL_ERROR) {
-                fprintf(stderr, "Tk_Init failed: %s\n",
-                tk_control_interp->result);
-                return -1;
-        }
-        if (Blt_Init(tk_control_interp) == TCL_ERROR) {
-                fprintf(stderr, "Package_Init failed: %s\n",
-                tk_control_interp->result);
-                return -1;
-        }
-#ifndef NO_ITCL
-
-  Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
-
-#ifndef _WIN32
-  if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
-    fprintf(stderr, "Package_Init failed: %s\n",
-          tk_control_interp->result);
-    return -1;
-  }
-  if (Itk_Init(tk_control_interp) == TCL_ERROR) {
-    fprintf(stderr, "Package_Init failed: %s\n",
-          tk_control_interp->result);
-    return -1;
-  }
-  Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-  Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, 
-                    (Tcl_PackageInitProc *) NULL);
-#endif
-#endif
   return 0;
 }
 

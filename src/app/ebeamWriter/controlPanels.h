@@ -5,8 +5,6 @@
 #include "patternEditor.h"
 #include "nmm_Microscope_SEM_Remote.h"
 #include "nmb_Image.h"
-#include "nmr_Registration_Proxy.h"
-#include "nmr_Registration_Impl.h"
 #include "nmm_EDAX.h"
 #include "patternFile.h"
 
@@ -15,7 +13,6 @@
 class ControlPanels {
  public:
    ControlPanels(PatternEditor *pe,
-                 nmr_Registration_Proxy *rp,
                  nmm_Microscope_SEM_Remote *sem);
    ~ControlPanels();
 
@@ -52,15 +49,6 @@ class ControlPanels {
    static void handle_currentImage_change(const char *new_value, void *ud);
    void updateCurrentImageControls();
 
-   static void handle_autoAlignRequested_change(int new_value, void *ud);
-   static void handle_sourceImageName_change(const char *new_value, void *ud);
-   static void handle_targetImageName_change(const char *new_value, void *ud);
-   static void handle_resampleImageName_change(const char *new_value,
-                                                  void *ud);
-
-   static void handle_transformationParameter_change(vrpn_float64, void *ud);
-
-   static void handle_alignWindowOpen_change(int new_value, void *ud);
    static void handle_semWindowOpen_change(int new_value, void *ud);
    static void handle_semAcquireImagePushed_change(int new_value, void *ud);
    static void handle_semAcquireContinuousChecked_change(
@@ -85,10 +73,6 @@ class ControlPanels {
    static void handle_semDoTimingTest_change(int new_value, void *ud);
    static void handle_semPointReportEnable_change(int new_value, void *ud);
 
-   static void handle_registration_change(void *ud,
-                              const nmr_ProxyChangeHandlerData &info);
-   void handleRegistrationChange
-                              (const nmr_ProxyChangeHandlerData &info);
    static void handle_sem_change(void *ud,
                         const nmm_Microscope_SEM_ChangeHandlerData &info);
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
@@ -128,31 +112,6 @@ class ControlPanels {
    Tclvar_int d_hideOtherImages;
    Tclvar_int d_enableImageDisplay;
    Tclvar_string d_currentImage;
-
-   // alignment
-   Tclvar_string d_sourceImageName;
-   Tclvar_string d_targetImageName;
-   Tclvar_int d_resampleResolutionX;
-   Tclvar_int d_resampleResolutionY;
-   Tclvar_string d_resampleImageName;
-   Tclvar_int d_alignWindowOpen;
-   // auto-align
-   Tclvar_int d_autoAlignRequested;
-   Tclvar_int d_numIterations;
-   Tclvar_float d_stepSize;
-   Tclvar_string d_resolutionLevel;
-   // this array is set by the C-code and is then copied into
-   //  d_resolutionLevelList in a string representation
-   vrpn_int32 d_numResolutionLevels;
-   vrpn_float32 d_stddev[NMR_MAX_RESOLUTION_LEVELS];
-   static vrpn_int32 s_defaultNumResolutionLevels;
-   static vrpn_float32 s_defaultStdDev[];
-   Tclvar_list_of_strings d_resolutionLevelList;
-
-   Tclvar_float d_scaleX, d_scaleY;
-   Tclvar_float d_translateX, d_translateY;
-   Tclvar_float d_rotateX, d_rotateY, d_rotateZ;
-   Tclvar_float d_shearZ;
 
    // SEM
    Tclvar_int d_semWindowOpen;
@@ -198,7 +157,6 @@ class ControlPanels {
 
    PatternEditor *d_patternEditor;
    PatternFile d_patternFile;
-   nmr_Registration_Proxy *d_aligner;
    nmm_Microscope_SEM_Remote *d_SEM;
    nmb_ImageList *d_imageList;
    int imageCount[EDAX_NUM_SCAN_MATRICES]; // a count of the number 

@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include" /I "../../../../external/pc_win32/include/ghost-stl" /I "../../../../../external/pc_win32/include/stl" /I "../../../../vrpn" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../../lib/nmMP" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "V_GLUT" /D "NO_ITCL" /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "." /I "../../../../external/pc_win32/include" /I "../../../../external/pc_win32/include/ghost-stl" /I "../../../../vrpn" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../../lib/nmMP" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../nano/lib/nmUI" /I "../nano" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "V_GLUT" /D "NO_ITCL" /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -129,6 +129,10 @@ SOURCE=..\nano\lib\nmReg\dgglse.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\nano\error_display.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\exposurePattern.C
 # End Source File
 # Begin Source File
@@ -138,6 +142,10 @@ SOURCE=.\exposureUtil.C
 # Begin Source File
 
 SOURCE=..\nano\lib\nmReg\f2c_extract.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\filter.C
 # End Source File
 # Begin Source File
 
@@ -170,6 +178,10 @@ SOURCE=..\..\lib\nmBase\nmb_Device.C
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_Image.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_ImageManager.C
 # End Source File
 # Begin Source File
 
@@ -245,7 +257,19 @@ SOURCE=..\nano\lib\nmReg\nmr_Registration_Server.C
 # End Source File
 # Begin Source File
 
+SOURCE=..\nano\lib\nmReg\nmr_RegistrationUI.C
+# End Source File
+# Begin Source File
+
 SOURCE=..\nano\lib\nmReg\nmr_Util.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmUI\nmui_ColorMap.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmUI\nmui_Component.C
 # End Source File
 # Begin Source File
 
@@ -266,6 +290,10 @@ SOURCE=..\..\lib\ImgFormat\PNMImage.C
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\PPM.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\tclLinkVar\Tcl_Interpreter.C
 # End Source File
 # Begin Source File
 
@@ -341,11 +369,19 @@ SOURCE=.\edgeTable.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\nano\error_display.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\exposurePattern.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\exposureUtil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\filter.h
 # End Source File
 # Begin Source File
 
@@ -374,6 +410,10 @@ SOURCE=..\..\lib\nmBase\nmb_Device.h
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_Image.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\nmBase\nmb_ImageManager.h
 # End Source File
 # Begin Source File
 
@@ -441,7 +481,19 @@ SOURCE=..\nano\lib\nmReg\nmr_Registration_Server.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\nano\lib\nmReg\nmr_RegistrationUI.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\nano\lib\nmReg\nmr_Util.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmUI\nmui_ColorMap.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmUI\nmui_Component.h
 # End Source File
 # Begin Source File
 
@@ -462,6 +514,10 @@ SOURCE=..\..\lib\ImgFormat\PNMImage.h
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\PPM.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\tclLinkVar\Tcl_Interpreter.h
 # End Source File
 # Begin Source File
 

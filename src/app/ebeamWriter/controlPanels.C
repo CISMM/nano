@@ -6,14 +6,7 @@
 
 static int expose_point_count = 0;
 
-vrpn_int32 ControlPanels::s_defaultNumResolutionLevels = 15;
-vrpn_float32 ControlPanels::s_defaultStdDev[] =
-               {0.0, 0.6, 1.0, 1.2, 1.4,
-                1.7, 2.0, 2.4, 3,  3.6,
-                4.5,   6,  9, 13, 18};
-
 ControlPanels::ControlPanels(PatternEditor *pe,
-                             nmr_Registration_Proxy *rp,
                              nmm_Microscope_SEM_Remote *sem):
    d_imageNames(new Tclvar_list_of_strings()),
    d_bufferImageFormatList(new Tclvar_list_of_strings()),
@@ -44,29 +37,6 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_hideOtherImages("hide_other_images", 0),
    d_enableImageDisplay("enable_image_display", 0),
    d_currentImage("current_image", "none"),
-
-   d_sourceImageName("source_image_name", "none"),
-   d_targetImageName("target_image_name", "none"),
-   d_resampleResolutionX("resample_resolution_x", 640),
-   d_resampleResolutionY("resample_resolution_y", 480),
-   d_resampleImageName("resample_image_name", "none"),
-   d_alignWindowOpen("align_window_open", 0),
-
-   d_autoAlignRequested("auto_align_requested", 0),
-   d_numIterations("auto_align_num_iterations", 100),
-   d_stepSize("auto_align_step_size", 0.0001),
-   d_resolutionLevel("auto_align_resolution", "0"),
-   d_numResolutionLevels(0),
-   d_resolutionLevelList("auto_align_resolution_list"),
-
-   d_scaleX("reg_scaleX", 1.0),
-   d_scaleY("reg_scaleY", 1.0),
-   d_translateX("reg_translateX", 0.0),
-   d_translateY("reg_translateY", 0.0),
-   d_rotateX("reg_rotateX", 0.0),
-   d_rotateY("reg_rotateX", 0.0),
-   d_rotateZ("reg_rotateX", 0.0),
-   d_shearZ("reg_shearZ", 0.0),
 
    d_semWindowOpen("sem_window_open", 0),
    d_semAcquireImagePushed("sem_acquire_image", 0),
@@ -103,7 +73,6 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semMinLinExposure_pCoul_per_cm(0),
    d_semMinAreaExposure_uCoul_per_sq_cm(0),
    d_patternEditor(pe),
-   d_aligner(rp),
    d_SEM(sem),
    d_imageList(NULL),
    d_autoEnabledImageName(NULL)
@@ -134,17 +103,6 @@ ControlPanels::ControlPanels(PatternEditor *pe,
     d_SEM->setBeamCurrent((vrpn_float32)d_semBeamCurrent_picoAmps);
   }
   updateMinimumDoses();
-
-  // set up resolutions for auto-alignment
-  d_numResolutionLevels = s_defaultNumResolutionLevels;
-  d_resolutionLevelList.clearList();
-  char listEntry[128];
-  for (i = 0; i < s_defaultNumResolutionLevels; i++) {
-    d_stddev[i] = s_defaultStdDev[i];
-    sprintf(listEntry, "%g", d_stddev[i]);
-    d_resolutionLevelList.addEntry(listEntry);
-  }
-  d_aligner->setResolutions(d_numResolutionLevels, d_stddev);
 }
 
 ControlPanels::~ControlPanels()
@@ -156,26 +114,6 @@ void ControlPanels::setImageList(nmb_ImageList *data)
 {
   d_imageList = data;
 
-  printf("setImageList: initializing source to %s\n",
-                              (const char *)d_sourceImageName);
-  printf("              initializing target to %s\n",
-                              (const char *)d_targetImageName);
-
-  nmb_Image *src_im = 
-        d_imageList->getImageByName((const char *)d_sourceImageName);
-  nmb_Image *tgt_im =
-        d_imageList->getImageByName((const char *)d_targetImageName);
-  if (!src_im) {
-     fprintf(stderr, "source image not found\n");
-     return;
-  }
-  if (!tgt_im) {
-     fprintf(stderr, "target image not found\n");
-     return;
-  }
-  // send the images off to the proxy
-  d_aligner->setImage(NMR_SOURCE, src_im, vrpn_TRUE, vrpn_FALSE);
-  d_aligner->setImage(NMR_TARGET, tgt_im, vrpn_TRUE, vrpn_FALSE);
   updateCurrentImageControls();
 }
 
@@ -251,24 +189,6 @@ void ControlPanels::setupCallbacks()
   d_enableImageDisplay.addCallback(handle_enableImageDisplay_change, this);
   d_currentImage.addCallback(handle_currentImage_change, this);
 
-// startREG
-  d_sourceImageName.addCallback(handle_sourceImageName_change, this);
-  d_targetImageName.addCallback(handle_targetImageName_change, this);
-  d_resampleImageName.addCallback(handle_resampleImageName_change, this);
-  d_alignWindowOpen.addCallback(handle_alignWindowOpen_change, this);
-  d_autoAlignRequested.addCallback
-         (handle_autoAlignRequested_change, (void *)this);
-
-  d_scaleX.addCallback(handle_transformationParameter_change, this);
-  d_scaleY.addCallback(handle_transformationParameter_change, this);
-  d_translateX.addCallback(handle_transformationParameter_change, this);
-  d_translateY.addCallback(handle_transformationParameter_change, this);
-  d_rotateX.addCallback(handle_transformationParameter_change, this);
-  d_rotateY.addCallback(handle_transformationParameter_change, this);
-  d_rotateZ.addCallback(handle_transformationParameter_change, this);
-  d_shearZ.addCallback(handle_transformationParameter_change, this);
-// endREG
-
   d_semWindowOpen.addCallback(handle_semWindowOpen_change, this);
   d_semAcquireImagePushed.addCallback(handle_semAcquireImagePushed_change, 
                                       this);
@@ -308,9 +228,6 @@ void ControlPanels::setupCallbacks()
          handle_semDoTimingTest_change, this);
   d_semPointReportEnable.addCallback(
          handle_semPointReportEnable_change, this);
-
-  // other types of callbacks
-  d_aligner->registerChangeHandler((void *)this, handle_registration_change);
 
   if (d_SEM) {
     d_SEM->registerChangeHandler((void *)this, handle_sem_change);
@@ -384,7 +301,8 @@ void ControlPanels::handle_saveImageName_change(const char * /*new_value*/,
   nmb_Image *im = me->d_imageList->getImageByName(
                           (const char *)me->d_saveImageName);
   if (!im) {
-    fprintf(stderr, "error, couldn't find image: %s\n",
+    fprintf(stderr, "handle_saveImageName_change:"
+                    "error, couldn't find image: %s\n",
                           (const char *)me->d_saveImageName);
     return;
   }
@@ -693,98 +611,6 @@ void ControlPanels::updateCurrentImageControls()
   }
 }
 
-/*
-// static
-void ControlPanels::handle_clearAlignPoints_change(int new_value, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("clear align points: %d\n",(int)me->d_clearAlignPoints);
-  if (new_value) {
-    me->d_aligner->
-
-  me->d_clearAlignPoints = 0;
-}
-*/
-
-// static
-void ControlPanels::handle_registration_change(void *ud, 
-                        const nmr_ProxyChangeHandlerData &info)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  me->handleRegistrationChange(info);
-}
-
-
-void ControlPanels::handleRegistrationChange
-                        (const nmr_ProxyChangeHandlerData &info)
-{
-  switch(info.msg_type) {
-    case NMR_IMAGE_PARAM:
-      nmr_ImageType which_image;
-      vrpn_int32 res_x, res_y;
-      vrpn_float32 sizeX, sizeY;
-      vrpn_bool flipX, flipY;
-      d_aligner->getImageParameters(which_image, res_x, res_y, sizeX, sizeY,
-                                    flipX, flipY);
-      // this is just a confirmation of settings so we probably don't need 
-      // to do anything
-      break;
-    case NMR_TRANSFORM_OPTION:
-      nmr_TransformationType xform_type;
-      d_aligner->getTransformationOptions(xform_type);
-      // this is just a confirmation of settings so we probably don't need 
-      // to do anything
-      break;
-    case NMR_REG_RESULT:
-      nmb_TransformMatrix44 targetImFromSourceIm;
-      int whichTransform;
-      d_aligner->getRegistrationResult(whichTransform, targetImFromSourceIm);
-      if (d_imageList == NULL) {
-         fprintf(stderr, "handleRegistrationChange: Error, image list null\n");
-         return;
-      }
-      nmb_Image *sourceImage = d_imageList->getImageByName
-                          (d_sourceImageName.string());
-      nmb_Image *targetImage = d_imageList->getImageByName
-                          (d_targetImageName.string());
-
-      if (!sourceImage || !targetImage) {
-           fprintf(stderr, "handleRegistrationChange: can't find image\n");
-           return;
-      }
-
-      double srcAcqDistX, srcAcqDistY, tgtAcqDistX, tgtAcqDistY;
-      sourceImage->getAcquisitionDimensions(srcAcqDistX, srcAcqDistY);
-      targetImage->getAcquisitionDimensions(tgtAcqDistX, tgtAcqDistY);
-
-      // adjust for scaling of images
-      double xform_matrix[16];
-      targetImFromSourceIm.getMatrix(xform_matrix);
-      int i;
-      for (i = 0; i < 4; i++) {
-        xform_matrix[i] *= srcAcqDistX;
-        xform_matrix[i+4] *= srcAcqDistY;
-        xform_matrix[4*i] /= tgtAcqDistX;
-        xform_matrix[4*i+1] /= tgtAcqDistY;
-      }
-      targetImFromSourceIm.setMatrix(xform_matrix);
-
-      nmb_TransformMatrix44 sourceImFromWorld;
-      sourceImage->getWorldToImageTransform(sourceImFromWorld);
-      nmb_TransformMatrix44 targetImFromWorld;
-
-      //  targetImFromWorld = targetImFromSourceIm * sourceIm
-      targetImFromWorld = targetImFromSourceIm;
-      targetImFromWorld.compose(sourceImFromWorld);
-
-      targetImage->setWorldToImageTransform(targetImFromWorld);
-      // now tell pattern editor that the transform for this image changed
-      d_patternEditor->updateDisplayTransform(targetImage, NULL);
-      break;
-  }
-}
-
-
 // static
 void ControlPanels::handle_sem_change(void *ud,
                         const nmm_Microscope_SEM_ChangeHandlerData &info)
@@ -1042,157 +868,6 @@ void ControlPanels::handleSEMChange(
       printf("unknown message type: %d\n", info.msg_type);
       break;
   }
-}
-
-// static
-void ControlPanels::handle_sourceImageName_change(
-                            const char *new_value, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("source image: %s\n",(const char *)me->d_sourceImageName);
-  if (me->d_imageList == NULL) {
-      return;
-  }
-  nmb_Image *im = me->d_imageList->getImageByName(new_value);
-  if (!im) {
-     fprintf(stderr, "image not found: %s\n", new_value);
-     return;
-  }
-  // send the image off to the proxy
-  me->d_aligner->setImage(NMR_SOURCE, im, vrpn_TRUE, vrpn_FALSE);
-}
-
-// static
-void ControlPanels::handle_targetImageName_change(const char *new_value, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("target image: %s\n",(const char *)me->d_targetImageName);
-  if (me->d_imageList == NULL){
-      return;
-  }
-  nmb_Image *im = me->d_imageList->getImageByName(new_value);
-  if (!im) {
-     fprintf(stderr, "image not found: %s\n", new_value);
-     return;
-  }
-  // send image off to the proxy
-  me->d_aligner->setImage(NMR_TARGET, im, vrpn_TRUE, vrpn_FALSE);
-}
-
-// static
-void ControlPanels::handle_resampleImageName_change(
-                              const char * /*new_value*/, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("new resampled image: %s\n",(const char *)me->d_resampleImageName);
-  printf("resampling %s onto %s at resolution %dx%d\n",
-          (const char *)me->d_sourceImageName, 
-          (const char *)me->d_targetImageName,
-          (int)(me->d_resampleResolutionX), (int)(me->d_resampleResolutionY));
-
-  printf("this feature is disabled\n");
-/*
-  if (me->d_imageList == NULL){
-      return;
-  }
-  nmb_Image *srcIm = me->d_imageList->getImageByName(
-                              (const char *)me->d_sourceImageName);
-  nmb_Image *tgtIm = me->d_imageList->getImageByName(
-                              (const char *)me->d_targetImageName);
-  if (!srcIm || !tgtIm || (strlen(d_resampleImageName.string()) == 0)){
-    return;
-  }
-  nmb_Image *new_image = new nmb_ImageGrid(
-                      (const char *)(d_resampleImageName.string()),
-                      (const char *)(tgtIm->unitsValue()),
-                      d_resampleResolutionX, d_resampleResolutionY);
-  nmb_ImageBounds srcIm_bounds;
-  srcIm->getBounds(srcIm_bounds);
-  new_image->setBounds(srcIm_bounds);
-  TopoFile tf;
-  srcIm->getTopoFileInfo(tf);
-  new_image->setTopoFileInfo(tf);
-  d_resampleImageName = (const char *) "";
-  nmr_Util::createResampledImage((*tgtIm), (*srcIm),
-        d_TargetFromSourceTransform, (*new_image));
-add the image to the list
-*/
-}
-
-// static
-void ControlPanels::handle_alignWindowOpen_change(int new_value, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("align window open: %d\n",(int)me->d_alignWindowOpen);
-
-  if (new_value) {
-    me->d_aligner->setGUIEnable(vrpn_TRUE);
-  } else {
-    me->d_aligner->setGUIEnable(vrpn_FALSE);
-  }
-
-}
-
-void ControlPanels::autoAlignImages()
-{
-  vrpn_float32 stddev = atof(d_resolutionLevel.string());
-  vrpn_int32 levelIndex;
-  for (levelIndex = 0; levelIndex < d_numResolutionLevels; levelIndex++) {
-    if (stddev == d_stddev[levelIndex]) break;
-  }
-  if (levelIndex == d_numResolutionLevels) {
-    fprintf(stderr, "Error: autoAlignImages: can't find resolution\n");
-    return;
-  }
-
-  d_aligner->setIterationLimit((vrpn_int32)d_numIterations);
-  d_aligner->setStepSize((vrpn_float32)d_stepSize);
-  d_aligner->setCurrentResolution(levelIndex);
-  d_aligner->autoAlignImages(NMR_AUTOALIGN_FROM_MANUAL);
-}
-
-// static
-void ControlPanels::handle_autoAlignRequested_change(
-      vrpn_int32 value, void *ud)
-{
-    ControlPanels *me = (ControlPanels *)ud;
-    if (value) {
-      me->autoAlignImages();
-
-/*
-      // some debugging code that inserts the blurred images used for
-      // alignment into the image list so you can easily view them:
-      nmb_Image *im_3D = me->d_imageList->getImageByName
-                            (me->d_registrationImageName3D.string());
-      nmb_Image *im_2D = me->d_imageList->getImageByName
-                            (me->d_registrationImageName2D.string());
-      nmr_AlignerMI aligner;
-      aligner.initImages(im_3D, im_2D, NULL, me->d_imageList);
-*/
-    }
-}
-
-// static
-void ControlPanels::handle_transformationParameter_change(
-      vrpn_float64 /*value*/, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  vrpn_float32 *parameters = new vrpn_float32[nmb_numTransformParameters];
-  nmb_Transform_TScShR transform;
-  transform.setParameter(NMB_ROTATE_X, (double)me->d_rotateX);
-  transform.setParameter(NMB_ROTATE_Y, (double)me->d_rotateY);
-  transform.setParameter(NMB_ROTATE_Z, (double)me->d_rotateZ);
-  transform.setParameter(NMB_TRANSLATE_X, (double)me->d_translateX);
-  transform.setParameter(NMB_TRANSLATE_Y, (double)me->d_translateY);
-  transform.setParameter(NMB_SCALE_X, (double)me->d_scaleX);
-  transform.setParameter(NMB_SCALE_Y, (double)me->d_scaleY);
-  transform.setParameter(NMB_SHEAR_Z, (double)me->d_shearZ);
-  int i;
-  for (i = 0; i < nmb_numTransformParameters; i++) {
-    parameters[i] = (vrpn_float32)transform.getParameter(
-                                 nmb_transformParameterOrder[i]);
-  }
-  me->d_aligner->setTransformationParameters(parameters);
 }
 
 // static
