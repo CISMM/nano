@@ -83,6 +83,7 @@ int PatternFile::readFromFile(const char *filename)
   if (!fin) {
     return -1;
   }
+  d_pattern.clear();
   int result = readFromFile(d_pattern.getSubShapes(), fin);
   
   fclose(fin);

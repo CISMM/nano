@@ -1,5 +1,7 @@
 2003-02-04  Adam Seeger  <seeger@cs.unc.edu>
 
+        * patternFile.C (readFromFile): fixed bug - had to clear previous 
+        pattern
 	* patternEditor.C (updateColorMapTextureAlpha): added new virtual function
 	to allow this file to compile
 
