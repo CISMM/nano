@@ -1,3 +1,14 @@
+2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
+
+        * microscopeHandlers.C (handle_z_scale_change): this now updates
+        nmb_Decoration so it can scale the modify markers to match the plane
+        * interaction.c (handle_commit_cancel): allows cancelling of 
+        planned line modification in USER_GRAB_MODE, USER_SCALE_UP_MODE,
+        USER_SCALE_DOWN_MODE, USER_LIGHT_MODE, and USER_MEASURE_MODE since
+        I think it would make things more convenient and I don't see any harm
+        in it (an alternative could be to disable the cancel button if
+        you aren't in touch before modify or select mode)
+
 2000-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscopeHandlers.C (handle_doRelaxComp_change): Changed to make

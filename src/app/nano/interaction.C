@@ -483,6 +483,8 @@ static void drawLine (void) {
     }
           
     // Wait for the mode to finish (XXX should wait for response)
+    // these calls to sleep should maybe be replaced with a 
+    // barrier synch as used in init_slow_line
     sleep(1);
     //printf("handle_commit_change: in modify mode.\n");
 
@@ -629,6 +631,11 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
     //if we are feeling before
     // a modify, (can be any tool: freehand, line, constrained freehand, ...)
     case USER_PLANEL_MODE:
+    case USER_GRAB_MODE:
+    case USER_SCALE_UP_MODE:
+    case USER_SCALE_DOWN_MODE:
+    case USER_LIGHT_MODE:
+    case USER_MEASURE_MODE:
 	{
 	Position_list & p = microscope->state.modify.stored_points;
 	if (!p.empty()) {

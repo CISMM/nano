@@ -660,6 +660,7 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
           handleCharacterCommand("G", &dataset->done, 1);
       }
     plane->setScale(microscope->state.stm_z_scale);
+    decoration->setScrapeHeightScale(microscope->state.stm_z_scale);
     //cause_grid_redraw(_value, _mptr);
     graphics->causeGridRedraw();
   }
@@ -1044,9 +1045,14 @@ void init_slow_line (void * _mptr)
 
   Position_list & p = microscope->state.modify.stored_points;
   p.start();
+  microscope->state.modify.slow_line_prevPt = p.curr();
   p.next();
   microscope->state.modify.slow_line_currPt =  p.curr();
-  microscope->state.modify.slow_line_prevPt = p.peekPrev();
+  if (microscope->state.modify.slow_line_prevPt == NULL ||
+      microscope->state.modify.slow_line_currPt == NULL) {
+      fprintf(stderr, "Error: init_slow_line:  need more points\n");
+      return;
+  }
   // send barrier message to detect end of relaxation points
 //  printf("sending barrier synch request for slow line\n");
   microscope->requestSynchronization(0, 0, RELAX_MSG);
