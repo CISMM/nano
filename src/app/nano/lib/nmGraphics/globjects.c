@@ -583,7 +583,7 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max,
 
         // Init with reasonable value. 
 	z_min=z_max= plane->scaledValue(0,0);
-        // If min max inverted, plane has no real data.
+        // If min max equal, plane has no real data.
         if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
             z_min=plane->minNonZeroValue()*plane->scale();
             z_max=plane->maxNonZeroValue()*plane->scale();
@@ -834,7 +834,7 @@ int make_region_box(float center_x,float center_y, float width,float height,
         
         // Init with reasonable value. 
 	z_min=z_max= plane->scaledValue(0,0);
-        // If min max inverted, plane has no real data.
+        // If min max equal, plane has no real data.
         if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
             z_min=plane->minNonZeroValue()*plane->scale();
             z_max=plane->maxNonZeroValue()*plane->scale();
