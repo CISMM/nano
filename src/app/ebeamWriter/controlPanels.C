@@ -1,4 +1,6 @@
 #include "controlPanels.h"
+#include "imageViewer.h"
+#include "nmm_EDAX.h"
 
 ControlPanels::ControlPanels(PatternEditor *pe,
                              nmr_Registration_Proxy *rp,
@@ -18,7 +20,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_enableImageDisplay("enable_image_display", 0),
    d_currentImage("current_image", "none"),
 
-   d_clearAlignPoints("clear_align_points", 0),
+//   d_clearAlignPoints("clear_align_points", 0),
    d_alignmentNeeded("alignment_needed", 0),
    d_sourceImageName("source_image_name", "none"),
    d_targetImageName("target_image_name", "none"),
@@ -42,6 +44,14 @@ ControlPanels::ControlPanels(PatternEditor *pe,
 {
   d_imageNames->initializeTcl("imageNames");
   setupCallbacks();
+  ImageViewer *image_viewer = ImageViewer::getImageViewer();
+  d_semWinID = image_viewer->createWindow(NULL, 10, 10, 
+               100, 100, "SEM", GL_UNSIGNED_BYTE);
+  if (d_semWinID == 0) {
+    fprintf(stderr, "Error creating sem window\n");
+  }
+  image_viewer->setWindowDisplayHandler(d_semWinID,
+         handle_semWindowRedraw, this);
 }
 
 ControlPanels::~ControlPanels()
@@ -73,6 +83,7 @@ void ControlPanels::setImageList(nmb_ImageList *data)
   // send the images off to the proxy
   d_aligner->setImage(NMR_SOURCE, src_im, vrpn_FALSE);
   d_aligner->setImage(NMR_TARGET, tgt_im, vrpn_FALSE);
+  updateCurrentImageControls();
 }
 
 nmb_ListOfStrings *ControlPanels::imageNameList()
@@ -94,7 +105,7 @@ void ControlPanels::setupCallbacks()
   d_enableImageDisplay.addCallback(handle_enableImageDisplay_change, this);
   d_currentImage.addCallback(handle_currentImage_change, this);
 
-  d_clearAlignPoints.addCallback(handle_clearAlignPoints_change, this);
+//  d_clearAlignPoints.addCallback(handle_clearAlignPoints_change, this);
   d_alignmentNeeded.addCallback(handle_alignmentNeeded_change, this);
   d_sourceImageName.addCallback(handle_sourceImageName_change, this);
   d_targetImageName.addCallback(handle_targetImageName_change, this);
@@ -118,6 +129,10 @@ void ControlPanels::setupCallbacks()
 
   // other types of callbacks
   d_aligner->registerChangeHandler((void *)this, handle_registration_change);
+
+  if (d_SEM) {
+    d_SEM->registerChangeHandler((void *)this, handle_sem_change);
+  }
 }
 
 // static
@@ -125,6 +140,8 @@ void ControlPanels::handle_lineWidth_nm_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
+  me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth_nm),
+                    (double)(me->d_exposure_uCoulombs_per_square_cm));
 }
 
 // static 
@@ -132,6 +149,8 @@ void ControlPanels::handle_exposure_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("exposure: %g\n", (double)(me->d_exposure_uCoulombs_per_square_cm));
+  me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth_nm),
+                    (double)(me->d_exposure_uCoulombs_per_square_cm));
 }
 
 // static
@@ -139,6 +158,15 @@ void ControlPanels::handle_drawingTool_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("tool: %d\n", (int)(me->d_drawingTool));
+  PE_DrawTool tool;
+  if (new_value == 1) {
+    // polyline
+    tool = PE_POLYLINE;
+  } else {
+    // polygon
+    tool = PE_POLYGON;
+  }
+  me->d_patternEditor->setDrawingTool(tool);
 }
 
 // static
@@ -146,6 +174,7 @@ void ControlPanels::handle_clearDrawing_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("clear drawing: %d\n", (int)(me->d_clearDrawing));
+  me->d_patternEditor->clearShape();
 }
 
 // static
@@ -154,6 +183,14 @@ void ControlPanels::handle_imageColorChanged_change(int new_value, void *ud)
   ControlPanels *me = (ControlPanels *)ud;
   printf("color: %d,%d,%d\n", 
          (int)me->d_imageRed, (int)me->d_imageGreen, (int)me->d_imageBlue);
+
+  nmb_Image *im = me->d_imageList->getImageByName(
+              BCString((const char *)(me->d_currentImage)));
+  double r, g, b;
+  r = (double)((int)(me->d_imageRed))/255.0;
+  g = (double)((int)(me->d_imageGreen))/255.0;
+  b = (double)((int)(me->d_imageBlue))/255.0;
+  me->d_patternEditor->setImageColor(im, r,g,b);
 }
 
 // static
@@ -161,6 +198,9 @@ void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("opacity: %g\n", (double)me->d_imageOpacity);
+  nmb_Image *im = me->d_imageList->getImageByName(
+                BCString((const char *)(me->d_currentImage)));
+  me->d_patternEditor->setImageOpacity(im, new_value);
 }
 
 // static 
@@ -168,6 +208,13 @@ void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("hide others: %d\n", (int)me->d_hideOtherImages);
+  if (new_value) {
+    nmb_Image *im = me->d_imageList->getImageByName(
+                BCString((const char *)(me->d_currentImage)));
+    me->d_patternEditor->showSingleImage(im);
+  } else {
+    me->d_patternEditor->showSingleImage(NULL);
+  }
 }
 
 // static
@@ -200,29 +247,40 @@ void ControlPanels::handle_enableImageDisplay_change(int new_value, void *ud)
 void ControlPanels::handle_currentImage_change(const char *new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("current image: %s\n", (const char *)me->d_currentImage);
-/*
-for when d_currentImage changes:
-  set d_imageRed, d_imageGreen, d_imageBlue, d_imageOpacity,
-  d_enableImageDisplay from the patternEditor's settings for this
-  image - use d_patternEditor->getImageColor(const nmb_Image *im, r,g,b)
-                               getImageOpacity(im, opacity)
-                               getImageEnable(im, enable)
-
-  if (d_hideOtherImages) then tell d_patternEditor that the current image
-  changed using d_patternEditor->showSingleImage(nmb_Image *im);
-*/
-
+  me->updateCurrentImageControls();
 }
 
+void ControlPanels::updateCurrentImageControls()
+{
+  if (!d_imageList) return;
+
+  printf("current image: %s\n", (const char *)d_currentImage);
+  nmb_Image *im = d_imageList->getImageByName(
+                  BCString((const char *)(d_currentImage)));
+  ImageElement *ie = d_patternEditor->getImageParameters(im);
+  d_imageRed = (int)(255*ie->d_red);
+  d_imageGreen = (int)(255*ie->d_green);
+  d_imageBlue = (int)(255*ie->d_blue);
+  d_imageColorChanged = 1;
+  d_imageOpacity = ie->d_opacity;
+  d_enableImageDisplay = ie->d_enabled;
+  if (d_hideOtherImages) {
+    d_patternEditor->showSingleImage(im);
+  }
+}
+
+/*
 // static
 void ControlPanels::handle_clearAlignPoints_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("clear align points: %d\n",(int)me->d_clearAlignPoints);
+  if (new_value) {
+    me->d_aligner->
 
   me->d_clearAlignPoints = 0;
 }
+*/
 
 // static
 void ControlPanels::handle_alignmentNeeded_change(int new_value, void *ud)
@@ -289,6 +347,165 @@ void ControlPanels::handleRegistrationChange
 }
 
 // static
+int ControlPanels::handle_semWindowRedraw(const ImageViewerDisplayData &data,
+        void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  ImageViewer *image_viewer = ImageViewer::getImageViewer();
+  image_viewer->drawImage(me->d_semWinID);
+  return 0;
+}
+
+// static
+void ControlPanels::handle_sem_change(void *ud,
+                        const nmm_Microscope_SEM_ChangeHandlerData &info)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  me->handleSEMChange(info);
+}
+
+void ControlPanels::handleSEMChange(
+                        const nmm_Microscope_SEM_ChangeHandlerData &info)
+{
+  vrpn_int32 res_x, res_y;
+  vrpn_int32 time_nsec;
+  void *scanlineData;
+  vrpn_int32 start_x, start_y, dx,dy, line_length, num_fields, num_lines;
+  nmb_PixelType pix_type;
+  int i,j;
+
+  vrpn_uint8 *uint8_data = NULL;
+  vrpn_uint16 *uint16_data = NULL;
+  vrpn_float32 *float32_data = NULL;
+  nmb_Image *currentImage;
+  char currentImageName[256];
+
+  ImageViewer *image_viewer = ImageViewer::getImageViewer();
+
+  switch(info.msg_type) {
+    case nmm_Microscope_SEM::REPORT_RESOLUTION:
+        info.sem->getResolution(res_x, res_y);
+        fprintf(stderr, "SEM Resolution change: %d, %d\n", res_x, res_y);
+        image_viewer->setWindowImageSize(d_semWinID, res_x, res_y);
+        i = nmm_EDAX::resolutionToIndex(res_x, res_y);
+        if (i < 0) {
+           fprintf(stderr, "Error, resolution unexpected\n");
+           break;
+        }
+        d_semResolution = i;
+      break;
+    case nmm_Microscope_SEM::REPORT_PIXEL_INTEGRATION_TIME:
+        info.sem->getPixelIntegrationTime(time_nsec);
+        printf("REPORT_PIXEL_INTEGRATION_TIME: %d\n",time_nsec);
+        d_semPixelIntegrationTime_nsec = time_nsec;
+      break;
+    case nmm_Microscope_SEM::REPORT_INTERPIXEL_DELAY_TIME:
+        info.sem->getInterPixelDelayTime(time_nsec);
+        printf("REPORT_INTERPIXEL_DELAY_TIME: %d\n", time_nsec);
+        d_semInterPixelDelayTime_nsec = time_nsec;
+      break;
+    case nmm_Microscope_SEM::SCANLINE_DATA:
+        info.sem->getScanlineData(start_x, start_y, dx, dy, line_length,
+                                  num_fields, num_lines,
+                                  pix_type, &scanlineData);
+
+        info.sem->getResolution(res_x, res_y);
+        sprintf(currentImageName, "SEM_DATA%dx%d", res_x, res_y);
+        currentImage = d_imageList->getImageByName(currentImageName);
+        if (!currentImage) {
+            currentImage = new nmb_ImageArray(currentImageName, "ADC",
+                  (short)res_x, (short)res_y, pix_type);
+            d_imageList->addImage(currentImage);
+            d_patternEditor->addImage(currentImage);
+        }
+        if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
+           fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
+           fprintf(stderr, "  got (%d,[%d-%d]), expected (%d,%d)\n",
+                              line_length*dx, start_y, start_y + dy*(num_lines),
+                                res_x, res_y);
+           break;
+        }
+        int x, y;
+        x = start_x;
+        y = start_y;
+        uint8_data = (vrpn_uint8 *)scanlineData;
+        uint16_data = (vrpn_uint16 *)scanlineData;
+        float32_data = (vrpn_float32 *)scanlineData;
+        switch(pix_type) {
+          case NMB_UINT8:
+            image_viewer->setValueRange(d_semWinID, 0.0, 255.0);
+            for (i = 0; i < num_lines; i++) {
+              x = start_x;
+
+/*
+              if (num_fields == 1) {
+                 image_viewer->setScanline(d_semWinID,
+                      y, &(uint8_data[i*line_length]));
+              } else {
+*/
+                for (j = 0; j < line_length; j++) {
+                  double val = 
+                     (double)(uint8_data[(i*line_length+j)*num_fields]);
+                  image_viewer->setValue(d_semWinID,
+                      x, y, val);
+                  currentImage->setValue(x, y, val);
+                  x += dx;
+                }
+/*
+              }
+*/
+              y += dy;
+            }
+            break;
+          case NMB_UINT16:
+              image_viewer->setValueRange(d_semWinID,0.0,65535.0);
+              for (i = 0; i < num_lines; i++) {
+                x = start_x;
+                for (j = 0; j < line_length; j++) {
+                   image_viewer->setValue(d_semWinID,
+                        x, y,
+                        (double)(uint16_data[(i*line_length+j)*num_fields]));
+                   x += dx;
+                }
+                y += dy;
+              }
+              break;
+          case NMB_FLOAT32:
+              for (i = 0; i < num_lines; i++) {
+                x = start_x;
+                for (j = 0; j < line_length; j++) {
+                   image_viewer->setValue(d_semWinID,
+                        x, y,
+                        (double)(float32_data[(i*line_length+j)*num_fields]));
+                   x += dx;
+                }
+                y += dy;
+              }
+              break;
+        }
+
+        // when we get the end of an image restart the scan
+        // and redraw the window
+        if (start_y+num_lines == res_y) {
+          image_viewer->dirtyWindow(d_semWinID);
+          image_viewer->dirtyWindow(d_patternEditor->mainWinID());
+        }
+
+        if (start_y+num_lines == res_y) {
+            if (d_semAcquireContinuousChecked){
+                info.sem->requestScan(1);
+            } else {
+                info.sem->requestScan(0);
+            }
+        }
+      break;
+    default:
+        printf("unknown message type: %d\n", info.msg_type);
+      break;
+  }
+}
+
+// static
 void ControlPanels::handle_sourceImageName_change(
                             const char *new_value, void *ud)
 {
@@ -342,6 +559,12 @@ void ControlPanels::handle_semWindowOpen_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem window open: %d\n",(int)me->d_semWindowOpen);
+  ImageViewer *image_viewer = ImageViewer::getImageViewer();
+  if (new_value) {
+    image_viewer->showWindow(me->d_semWinID);
+  } else {
+    image_viewer->hideWindow(me->d_semWinID);
+  }
 }
 
 // static
@@ -349,6 +572,10 @@ void ControlPanels::handle_semAcquireImagePushed_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem acquire image pushed: %d\n",(int)me->d_semAcquireImagePushed);
+  if (me->d_SEM) {
+    printf("requesting scan\n");
+    me->d_SEM->requestScan(1);
+  }
 }
 
 // static
@@ -367,6 +594,13 @@ void ControlPanels::handle_semPixelIntegrationTime_change(
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem pixel integrate time: %d\n",
                         (int)me->d_semPixelIntegrationTime_nsec);
+  int curr_value;
+  if (me->d_SEM) {
+    me->d_SEM->getPixelIntegrationTime(curr_value);
+    if (curr_value != new_value) {
+      me->d_SEM->setPixelIntegrationTime(new_value);
+    }
+  }
 }
 
 // static
@@ -376,6 +610,13 @@ void ControlPanels::handle_semInterPixelDelayTime_change(
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem interpix delay time: %d\n",
                        (int)me->d_semInterPixelDelayTime_nsec);
+  int curr_value;
+  if (me->d_SEM) {
+    me->d_SEM->getInterPixelDelayTime(curr_value);
+    if (curr_value != new_value) {
+      me->d_SEM->setInterPixelDelayTime(new_value);
+    }
+  }
 }
 
 // static
@@ -383,6 +624,18 @@ void ControlPanels::handle_semResolution_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem res: %d\n",(int)me->d_semResolution);
+  
+  int res_x; 
+  int res_y;
+  nmm_EDAX::indexToResolution(new_value, res_x, res_y);
+  printf("setting resolution to %d,%d\n", res_x, res_y);
+  int curr_res_x, curr_res_y;
+  if (me->d_SEM) {
+    me->d_SEM->getResolution(curr_res_x, curr_res_y);
+    if (curr_res_x != res_x || curr_res_y != res_y) {
+      me->d_SEM->setResolution(res_x, res_y);
+    }
+  }
 }
 
 // static

@@ -6,31 +6,37 @@
 #include "list.h"
 #include "Tcl_Linkvar.h"
 
-class PatternElement {
+class PatternPoint {
   public:
-   PatternElement():d_ID(s_nextID), d_lineWidth_nm(0), 
-                    d_exposure_uCoulombs_per_square_cm(0) {s_nextID++;};
-
-   operator== (const PatternElement &pe) {return (d_ID == pe.d_ID);}
-   int d_ID;
-   double d_lineWidth_nm;
-   double d_exposure_uCoulombs_per_square_cm;
-   static int s_nextID;
-};
-
-class PatternPoint : public PatternElement {
-  public:
-   PatternPoint():PatternElement(), d_x(0.0), d_y(0.0) {};
-   operator== (const PatternPoint &ppt) {return (d_ID == ppt.d_ID);}
+   PatternPoint(double x=0, double y=0 ): d_x(x), d_y(y) {};
+   operator== (const PatternPoint &ppt) {
+        return (d_x == ppt.d_x && d_y == ppt.d_y);}
+   void translate(double x, double y)
+   { d_x += x; d_y += y;}
 
    double d_x, d_y;
 };
 
-class PatternPolyLine : public PatternElement {
-  public:
-   operator== (const PatternPolyLine &ppl) {return (d_ID == ppl.d_ID);}
+typedef enum {PS_POLYLINE, PS_POLYGON} ShapeType;
 
-   list<PatternPoint> points;
+class PatternShape {
+  public:
+    PatternShape(double lw = 0, double exp = 0, ShapeType type=PS_POLYLINE);
+    PatternShape(const PatternShape &sh);
+    operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
+    void addPoint(double x, double y);
+    void translate(double x, double y)
+    { d_trans_x += x; d_trans_y += y; }
+    void draw();
+
+    int d_ID;
+    static int s_nextID;
+
+    double d_lineWidth_nm;
+    double d_exposure_uCoulombs_per_square_cm;
+    list<PatternPoint> d_points;
+    ShapeType d_type;
+    double d_trans_x, d_trans_y;
 };
 
 class ImageElement {
@@ -51,6 +57,10 @@ class ImageElement {
    nmb_Image *d_image;
 };
 
+typedef enum {PE_IDLE, PE_SET_REGION, PE_SET_TRANSLATE,
+                 PE_DRAWMODE, PE_GRABMODE} PE_UserMode;
+typedef enum {PE_POLYLINE, PE_POLYGON} PE_DrawTool;
+
 class PatternEditor {
   public:
    PatternEditor();
@@ -61,14 +71,25 @@ class PatternEditor {
                  double r=1.0, double g=1.0, double b=1.0);
    void removeImage(nmb_Image *im);
    void setImageEnable(nmb_Image *im, vrpn_bool displayEnable);
+   void setImageOpacity(nmb_Image *im, double opacity);
+   void setImageColor(nmb_Image *im, double r, double g, double b);
+   ImageElement *getImageParameters(nmb_Image *im);
+   void showSingleImage(nmb_Image *im);
+   int mainWinID() {return d_mainWinID;}
+   void setDrawingParameters(double lineWidth_nm, 
+                             double exposure);
+   void setDrawingTool(PE_DrawTool tool);
+   void clearShape();
 
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 
                                   void *ud);
+   int handleMainWinEvent(const ImageViewerWindowEvent &event);
    static int mainWinDisplayHandler(const ImageViewerDisplayData &data, 
                                     void *ud);
    // helper for mainWinDisplayHandler:
    void drawImage(const ImageElement &ie);
+   void drawPattern();
 
    static int navWinEventHandler(const ImageViewerWindowEvent &event,
                                  void *ud);
@@ -80,6 +101,19 @@ class PatternEditor {
                                        double &x_nm, double &y_nm);
    void zoomBy(double centerX_nm, double centerY_nm,
                            double magFactor);
+
+   // stuff for creating a pattern
+   int startShape(ShapeType type);
+   int addPoint(const double x_nm, const double y_nm);
+   int endShape();
+   void clearDrawingState();
+
+   // stuff for manipulating a pattern
+   vrpn_bool grab(const double x_nm, const double y_nm);
+   void updateGrab(const double x_nm, const double y_nm);
+
+   void setUserMode(PE_UserMode mode);
+   PE_UserMode getUserMode();
 
    int d_mainWinWidth, d_mainWinHeight;
    int d_navWinWidth, d_navWinHeight;
@@ -109,8 +143,10 @@ class PatternEditor {
    double d_nearDistX_nm;
    double d_nearDistY_nm;
 
-   typedef enum {IDLE, SET_REGION, SET_TRANSLATE, POLYLINE, GRAB} UserMode;
-   UserMode d_userMode;
+   PE_DrawTool d_drawingTool;
+   PE_UserMode d_userMode;
+   double d_lineWidth_nm;
+   double d_exposure_uCoulombs_per_square_cm;
 
    vrpn_bool d_displaySingleImage;
    nmb_Image *d_currentSingleDisplayImage;
@@ -125,8 +161,17 @@ class PatternEditor {
    double d_mainDragEndX_nm;
    double d_mainDragEndY_nm;
 
+   double d_grabX_nm;
+   double d_grabY_nm;
+
+   vrpn_bool d_shapeInProgress;
+   PatternShape *d_currShape;
+
+   PatternShape *d_grabShape;
+   PatternPoint *d_grabPoint;
+
    list<ImageElement> d_images;
-   list<PatternElement> d_pattern;
+   list<PatternShape> d_pattern;
 
 };
 

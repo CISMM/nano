@@ -32,8 +32,9 @@ class ControlPanels {
    static void handle_hideOtherImages_change(int new_value, void *ud);
    static void handle_enableImageDisplay_change(int new_value, void *ud);
    static void handle_currentImage_change(const char *new_value, void *ud);
+   void updateCurrentImageControls();
 
-   static void handle_clearAlignPoints_change(int new_value, void *ud);
+//   static void handle_clearAlignPoints_change(int new_value, void *ud);
    static void handle_alignmentNeeded_change(int new_value, void *ud);
    static void handle_sourceImageName_change(const char *new_value, void *ud);
    static void handle_targetImageName_change(const char *new_value, void *ud);
@@ -53,6 +54,12 @@ class ControlPanels {
                               const nmr_ProxyChangeHandlerData &info);
    void handleRegistrationChange
                               (const nmr_ProxyChangeHandlerData &info);
+   static void handle_sem_change(void *ud,
+                        const nmm_Microscope_SEM_ChangeHandlerData &info);
+   void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
+
+   static int handle_semWindowRedraw(const ImageViewerDisplayData &data,
+        void *ud);
 
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
@@ -75,7 +82,7 @@ class ControlPanels {
    Tclvar_string d_currentImage;
 
    // alignment
-   Tclvar_int d_clearAlignPoints;
+//   Tclvar_int d_clearAlignPoints;
    Tclvar_int d_alignmentNeeded;
    Tclvar_string d_sourceImageName;
    Tclvar_string d_targetImageName;
@@ -88,6 +95,7 @@ class ControlPanels {
    Tclvar_int d_semPixelIntegrationTime_nsec;
    Tclvar_int d_semInterPixelDelayTime_nsec;
    Tclvar_int d_semResolution;
+   int d_semWinID;
 
    // Beam Control
    Tclvar_float d_semBeamWidth_nm;

@@ -56,7 +56,8 @@ nmb_ImageList *imageData = NULL;
 static char transformFileName[256];
 
 static vrpn_bool semDeviceSet = VRPN_FALSE, alignerDeviceSet = VRPN_FALSE;
-static char *semDeviceName = NULL, *alignerDeviceName = NULL;
+static char semDeviceName[256];
+static char alignerDeviceName[256];
 
 
 static TransformFile transformFile;
@@ -131,6 +132,7 @@ int main(int argc, char **argv)
       aligner = new nmr_Registration_Proxy();
     }
     if (semDeviceSet) {
+      printf("Opening SEM: %s\n", semDeviceName);
       sem = new nmm_Microscope_SEM_Remote(semDeviceName);
     } else {
       sem = NULL;
@@ -148,8 +150,6 @@ int main(int argc, char **argv)
                           controls->imageNameList(),
                           (const char **)planningImageNames, numPlanningImages,
                           defaultTopoFileSettings);
-
-    controls->setImageList(imageData);
 
     double matrix[16];
     double default_matrix[16] = {1.0, 0.0, 0.0, 0.0,
@@ -175,6 +175,10 @@ int main(int argc, char **argv)
 
     patternEditor->show();
 
+    controls->setImageList(imageData);
+
+    ImageViewer *image_viewer = ImageViewer::getImageViewer();
+
     while(!timeToQuit){
       glutProcessEvents_UNC();
       while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
@@ -182,6 +186,13 @@ int main(int argc, char **argv)
           fprintf(stderr, "main: Tclvar_mainloop error\n");
           return -1;
       }
+      if (sem) {
+          sem->mainloop();
+      }
+      if (aligner) {
+          aligner->mainloop();
+      }
+      image_viewer->mainloop();
     }
 
     return 0;
@@ -189,8 +200,12 @@ int main(int argc, char **argv)
 
 static int usage(char *programName)
 {
-  fprintf(stderr, "Usage: %s [-t transform_file] [-f image_file]+\n", 
+  char dummy;
+  fprintf(stderr, "Usage: %s [-t transform_file] [-f image_file]+\n",
          programName);
+  fprintf(stderr, "     [-d vrpn_sem_device] [-da vrpn_aligner_device]\n");
+  fprintf(stderr, "Hit enter to quit\n");
+  scanf("%c", &dummy);
   exit(0);
 }
 
@@ -209,6 +224,14 @@ static int parseArgs(int argc, char **argv)
     } else if (strcmp(argv[i], "-t") == 0) {
        if (++i == argc) usage(argv[0]);
        sprintf(transformFileName, "%s", argv[i]);
+    } else if (strcmp(argv[i], "-d") == 0) {
+       if (++i == argc) usage(argv[0]);
+       sprintf(semDeviceName, "%s", argv[i]);
+       semDeviceSet = vrpn_TRUE;
+    } else if (strcmp(argv[i], "-da") == 0) {
+       if (++i == argc) usage(argv[0]);
+       sprintf(alignerDeviceName, "%s", argv[i]);
+       alignerDeviceSet = vrpn_TRUE;
     } else {
        usage(argv[0]);
     }

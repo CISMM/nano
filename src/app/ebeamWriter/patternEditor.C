@@ -1,6 +1,154 @@
 #include "patternEditor.h"
 #include "GL/gl.h"
 
+int PatternShape::s_nextID = 0;
+
+PatternShape::PatternShape(double lw, double exp, 
+                          ShapeType type): d_ID(s_nextID),
+             d_lineWidth_nm(lw),
+             d_exposure_uCoulombs_per_square_cm(exp),
+             d_type(type), d_trans_x(0.0), d_trans_y(0.0)
+{
+  s_nextID++;
+}
+
+PatternShape::PatternShape(const PatternShape &sh): d_ID(s_nextID),
+   d_lineWidth_nm(sh.d_lineWidth_nm),
+   d_exposure_uCoulombs_per_square_cm(sh.d_exposure_uCoulombs_per_square_cm),
+   d_type(sh.d_type), d_trans_x(sh.d_trans_x), d_trans_y(sh.d_trans_y)
+{
+  d_points = sh.d_points;
+  s_nextID++;
+}
+
+void PatternShape::addPoint(double x, double y)
+{
+  d_points.push_back(PatternPoint(x, y));
+}
+
+// This is highly cryptic but I also have very high confidence in its 
+// correctness because it was tested incrementally - should split this
+// up into 3 routines for clarity- 0 width polyline, finite width polyline,
+// and polygon
+void PatternShape::draw()
+{
+  double x_start, y_start;
+  double x0, y0, x1, y1, x2, y2;
+  double lenA, lenB;
+  double os_x0 = 0.0, os_y0 = 0.0, os_x1 = 0.0, os_y1 = 0.0;
+  double dxA, dyA, dxB, dyB, dx_avg, dy_avg, lenAvg;
+  double widthCorrection = 1.0;
+  double cprod;
+
+  glLineWidth(1);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+
+  list<PatternPoint>::iterator pntIter;
+  pntIter = d_points.begin();
+  x2 = (*pntIter).d_x;
+  y2 = (*pntIter).d_y;
+  x_start = x2;
+  y_start = y2;
+  pntIter++;
+  if (pntIter == d_points.end()) {
+    // just draw one point here
+    glBegin(GL_POINTS);
+    glVertex3f(x2, y2, 0.0);
+    glEnd();
+    return;
+  } else {
+    x1 = x2;
+    y1 = y2;
+    x2 = (*pntIter).d_x;
+    y2 = (*pntIter).d_y;
+    if (d_lineWidth_nm > 0 && d_type == PS_POLYLINE) {
+      dxB = x2-x1; dyB = y2-y1;
+      lenB = sqrt(dxB*dxB + dyB*dyB);
+      os_x0 = -0.5*d_lineWidth_nm*dyB/lenB;
+      os_y0 = 0.5*d_lineWidth_nm*dxB/lenB;
+    }
+    pntIter++;
+  }
+  while (pntIter != d_points.end()) {
+    x0 = x1;
+    y0 = y1;
+    x1 = x2;
+    y1 = y2;
+    x2 = (*pntIter).d_x;
+    y2 = (*pntIter).d_y;
+    if (d_lineWidth_nm > 0 && d_type == PS_POLYLINE) {
+      lenA = lenB;
+      dxA = dxB, dyA = dyB;
+      dxB = x2-x1; dyB = y2-y1;
+      lenB = sqrt(dxB*dxB + dyB*dyB);
+      dx_avg = 0.5*(dxA/lenA + dxB/lenB);
+      dy_avg = 0.5*(dyA/lenA + dyB/lenB);
+      lenAvg = sqrt(dx_avg*dx_avg + dy_avg*dy_avg);
+      os_x1 = -0.5*d_lineWidth_nm*dy_avg/lenAvg;
+      os_y1 = 0.5*d_lineWidth_nm*dx_avg/lenAvg;
+      cprod = dxA*os_y1 - dyA*os_x1;
+      if (cprod < 0) {
+        os_x1 = -os_x1;
+        os_y1 = -os_y1;
+      }
+      // project onto segment perpendicular - should get something equal to 
+      // 0.5*d_lineWidth_nm
+      widthCorrection = (0.5*d_lineWidth_nm*lenA)/
+                        (os_x1*(-dyA) + os_y1*dxA);
+      if (widthCorrection > 2.0) widthCorrection = 2.0;
+      os_x1 *= widthCorrection;
+      os_y1 *= widthCorrection;
+
+      // draw the segment from (x0,y0) to (x1,y1) with offsets os_x0,os_y0,
+      // and os_x1, os_y1
+      printf("line: (%g,%g):(%g,%g) to (%g,%g):(%g,%g)\n",
+              x0, y0, os_x0, os_y0, x1, y1, os_x1, os_y1);
+
+      glBegin(GL_LINE_LOOP);
+      glVertex3f(x0+os_x0, y0+os_y0, 0.0);
+      glVertex3f(x1+os_x1, y1+os_y1, 0.0);
+      glVertex3f(x1-os_x1, y1-os_y1, 0.0);
+      glVertex3f(x0-os_x0, y0-os_y0, 0.0);
+      glEnd();
+      os_x0 = os_x1;
+      os_y0 = os_y1;
+
+    } else {
+
+      glBegin(GL_LINES);
+      glVertex3f(x0, y0, 0.0);
+      glVertex3f(x1, y1, 0.0);
+      glEnd();
+    }
+    pntIter++;
+  }
+
+  if (d_lineWidth_nm > 0 && d_type == PS_POLYLINE) {
+    os_x1 = -0.5*d_lineWidth_nm*dyB/lenB;
+    os_y1 = 0.5*d_lineWidth_nm*dxB/lenB;
+
+    // draw the segment from (x1,y1) to (x2,y2)
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(x1+os_x0, y1+os_y0, 0.0);
+    glVertex3f(x2+os_x1, y2+os_y1, 0.0);
+    glVertex3f(x2-os_x1, y2-os_y1, 0.0);
+    glVertex3f(x1-os_x0, y1-os_y0, 0.0);
+    glEnd();
+
+  } else {
+
+    glBegin(GL_LINES);
+    glVertex3f(x1, y1, 0.0);
+    glVertex3f(x2, y2, 0.0);
+
+    if (d_type == PS_POLYGON) {
+      glVertex3f(x2, y2, 0.0);
+      glVertex3f(x_start, y_start, 0.0);
+    }
+    glEnd();
+  }
+}
+
 PatternEditor::PatternEditor()
 {
    d_viewer = ImageViewer::getImageViewer();
@@ -32,14 +180,49 @@ PatternEditor::PatternEditor()
    d_mainWinMinY_nm = 0;
    d_mainWinMaxX_nm = 1;
    d_mainWinMaxY_nm = 1;
-   
-   d_userMode = IDLE;
+ 
+   d_mainWinMinXadjust_nm = 0;
+   d_mainWinMinYadjust_nm = 0;
+   d_mainWinMaxXadjust_nm = 1;
+   d_mainWinMaxYadjust_nm = 1;
+  
+   d_mainWinWidth = 0;
+   d_mainWinHeight = 0;
+   d_navWinWidth = 0;
+   d_navWinHeight = 0;
+
+   d_nearDistX_pix;
+   d_nearDistY_pix;
+   d_nearDistX_nm;
+   d_nearDistY_nm;
+
+   d_drawingTool = PE_POLYLINE;
+   d_userMode = PE_IDLE;
+   d_lineWidth_nm = 0.0;
+   d_exposure_uCoulombs_per_square_cm = 0.0;
+
+   d_displaySingleImage = vrpn_FALSE;
+   d_currentSingleDisplayImage = NULL;
 
    d_navDragStartX_nm = d_worldMinX_nm;
    d_navDragStartY_nm = d_worldMinY_nm;
    d_navDragEndX_nm = d_worldMaxX_nm;
    d_navDragEndY_nm = d_worldMaxY_nm;
-   
+ 
+   d_mainDragStartX_nm = 0.0;
+   d_mainDragStartY_nm = 0.0;
+   d_mainDragEndX_nm = 0.0;
+   d_mainDragEndY_nm = 0.0;
+
+   d_grabX_nm = 0.0;
+   d_grabY_nm = 0.0;
+
+   d_shapeInProgress = vrpn_FALSE;
+   d_currShape = NULL;
+
+   d_grabShape = NULL;
+   d_grabPoint = NULL;
+
 }
 
 PatternEditor::~PatternEditor()
@@ -93,6 +276,65 @@ void PatternEditor::setImageEnable(nmb_Image *im, vrpn_bool displayEnable)
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
+void PatternEditor::setImageOpacity(nmb_Image *im, double opacity)
+{
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+  {
+     if ((*imIter).d_image == im) {
+          (*imIter).d_opacity = opacity;
+     }
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::setImageColor(nmb_Image *im, double r, double g, double b)
+{
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+  {
+     if ((*imIter).d_image == im) {
+          (*imIter).d_red = r;
+          (*imIter).d_green = g;
+          (*imIter).d_blue = b;
+     }
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
+ImageElement *PatternEditor::getImageParameters(nmb_Image *im)
+{
+  list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+  {
+     if ((*imIter).d_image == im) {
+       return &(*imIter); // Warning: assert(imIter != &(*imIter))
+     }
+  }
+  return NULL;
+}
+
+void PatternEditor::showSingleImage(nmb_Image *im)
+{
+  if (im == NULL) {
+    d_displaySingleImage = vrpn_FALSE;
+  } else {
+    list<ImageElement>::iterator imIter;
+    for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+    {
+       if ((*imIter).d_image == im) {
+          d_displaySingleImage = vrpn_TRUE;
+          d_currentSingleDisplayImage = im;
+       }
+    }
+  }
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
 void PatternEditor::show() 
 {
    d_viewer->showWindow(d_mainWinID);
@@ -105,38 +347,96 @@ void PatternEditor::newPosition(nmb_Image *im)
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
+void PatternEditor::setDrawingParameters(double lineWidth_nm, double exposure)
+{
+    d_lineWidth_nm = lineWidth_nm;
+    d_exposure_uCoulombs_per_square_cm = exposure;
+    if (d_currShape) {
+      d_currShape->d_lineWidth_nm = lineWidth_nm;
+      d_currShape->d_exposure_uCoulombs_per_square_cm = exposure;
+      d_viewer->dirtyWindow(d_mainWinID);
+    }
+}
+
+void PatternEditor::setDrawingTool(PE_DrawTool tool)
+{
+    d_drawingTool = tool;
+}
+
+void PatternEditor::clearShape()
+{
+  if (d_shapeInProgress){
+     clearDrawingState();
+     d_userMode = PE_IDLE;
+     d_viewer->dirtyWindow(d_mainWinID);
+  }
+  else if (!d_pattern.empty()) {
+    d_pattern.pop_back();
+    d_viewer->dirtyWindow(d_mainWinID);
+  }
+  return;
+}
+
 int PatternEditor::mainWinEventHandler(
                    const ImageViewerWindowEvent &event, void *ud)
 {
-    PatternEditor *me = (PatternEditor *)ud;
 
+    PatternEditor *me = (PatternEditor *)ud;
+    return me->handleMainWinEvent(event);
+}
+
+int PatternEditor::handleMainWinEvent(
+                    const ImageViewerWindowEvent &event)
+{
     double x = event.mouse_x, y = event.mouse_y;
     double centerX_nm, centerY_nm;
+    double x_world_nm, y_world_nm;
 
     switch(event.type) {
       case RESIZE_EVENT:
-         me->d_mainWinWidth = event.width;
-         me->d_mainWinHeight = event.height;
+         d_mainWinWidth = event.width;
+         d_mainWinHeight = event.height;
          break;
       case MOTION_EVENT:
          if (event.state & IV_LEFT_BUTTON_MASK) {
              // adjust current line being drawn
          } else if (event.state & IV_RIGHT_BUTTON_MASK) {
              // move the currently grabbed object if there is one
+             if (getUserMode() == PE_GRABMODE) {
+                 d_viewer->toImage(event.winID, &x, &y);
+                 mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
+                 updateGrab(x_world_nm, y_world_nm);
+             }
          }
          break;
       case BUTTON_PRESS_EVENT:
          switch(event.button) {
            case IV_LEFT_BUTTON:
-             // start dragging a line
+             // start dragging an object
+             if (getUserMode() != PE_DRAWMODE) {
+               if (d_drawingTool == PE_POLYLINE) {
+                 startShape(PS_POLYLINE);
+               } else if (d_drawingTool == PE_POLYGON) {
+                 startShape(PS_POLYGON);
+               }
+               setUserMode(PE_DRAWMODE);
+             }
              break;
            case IV_RIGHT_BUTTON:
-             // see if we are near something and if so then select it
-             // and grab it, otherwise deselect the currently selected object
-
-             me->d_nearDistX_nm = me->d_nearDistX_pix*
-                (me->d_mainWinMaxX_nm-me->d_mainWinMinX_nm)/me->d_mainWinWidth;
-
+             // if drawing, terminate the drawing
+             if (getUserMode() == PE_DRAWMODE) {
+               endShape();
+               setUserMode(PE_IDLE);
+             }
+             // otherwise, look for something close by to select
+             else {
+               d_viewer->toImage(event.winID, &x, &y);
+               mainWinPositionToWorld(x, y,
+                                          x_world_nm, y_world_nm);
+               if (grab(x_world_nm, y_world_nm)) {
+                  setUserMode(PE_GRABMODE);
+               }
+             }
              break;
            default:
              break;
@@ -145,10 +445,20 @@ int PatternEditor::mainWinEventHandler(
       case BUTTON_RELEASE_EVENT:
          switch(event.button) {
            case IV_LEFT_BUTTON:
-             // set the end point
+             d_viewer->toImage(event.winID, &x, &y);
+             mainWinPositionToWorld(x, y,
+                     x_world_nm, y_world_nm);
+             // set the point
+             addPoint(x_world_nm, y_world_nm);
+             d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
              // release the currently grabbed object
+             if (getUserMode() == PE_GRABMODE) {
+               d_viewer->toImage(event.winID, &x, &y);
+               mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
+               updateGrab(x_world_nm, y_world_nm);
+             }
              break;
            default:
              break;
@@ -157,20 +467,20 @@ int PatternEditor::mainWinEventHandler(
       case KEY_PRESS_EVENT:
          switch(event.keycode) {
            case 'z':
-             me->d_viewer->toImage(event.winID, &x, &y);
-             me->mainWinPositionToWorld(x, y,
+             d_viewer->toImage(event.winID, &x, &y);
+             mainWinPositionToWorld(x, y,
                  centerX_nm, centerY_nm);
-             me->zoomBy(centerX_nm, centerY_nm, 2.0);
-             me->d_viewer->dirtyWindow(me->d_navWinID);
-             me->d_viewer->dirtyWindow(event.winID);
+             zoomBy(centerX_nm, centerY_nm, 2.0);
+             d_viewer->dirtyWindow(d_navWinID);
+             d_viewer->dirtyWindow(event.winID);
              break;
            case 'Z':
-             me->d_viewer->toImage(event.winID, &x, &y);
-             me->mainWinPositionToWorld(x, y,
+             d_viewer->toImage(event.winID, &x, &y);
+             mainWinPositionToWorld(x, y,
                  centerX_nm, centerY_nm);
-             me->zoomBy(centerX_nm, centerY_nm, 0.5);
-             me->d_viewer->dirtyWindow(me->d_navWinID);
-             me->d_viewer->dirtyWindow(event.winID);
+             zoomBy(centerX_nm, centerY_nm, 0.5);
+             d_viewer->dirtyWindow(d_navWinID);
+             d_viewer->dirtyWindow(event.winID);
              break;
            default:
              break;
@@ -229,6 +539,7 @@ int PatternEditor::mainWinDisplayHandler(
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glPolygonMode(GL_FRONT, GL_FILL);
 
   GLfloat border_color[] = {0.0, 0.0, 0.0, 0.0};
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -275,7 +586,8 @@ int PatternEditor::mainWinDisplayHandler(
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  if (me->d_userMode == SET_REGION || me->d_userMode == SET_TRANSLATE) {
+  PE_UserMode currMode = me->getUserMode();
+  if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
     glOrtho(me->d_mainWinMinXadjust_nm, me->d_mainWinMaxXadjust_nm,
             me->d_mainWinMaxYadjust_nm, me->d_mainWinMinYadjust_nm, -1, 1);
   } else {
@@ -297,11 +609,19 @@ int PatternEditor::mainWinDisplayHandler(
   for (currImage = me->d_images.begin(); 
        currImage != me->d_images.end(); currImage++)
   {
-     if ((*currImage).d_enabled) {
+     if (me->d_displaySingleImage) {
+        if (((*currImage).d_image == me->d_currentSingleDisplayImage) && 
+            (*currImage).d_enabled) {
+           me->drawImage(*currImage);
+        }
+     } else if ((*currImage).d_enabled) {
           me->drawImage(*currImage);
      }
      i++;
   }
+
+  glDisable(GL_TEXTURE_2D);
+  me->drawPattern();
 
   glPopAttrib();
   glMatrixMode(GL_PROJECTION);
@@ -351,10 +671,18 @@ void PatternEditor::drawImage(const ImageElement &ie)
 /*
        printf("Loading texture %s with type %d\n",
               ie.d_image->name()->Characters(), ie.d_image->pixelType());
+       printf("width=%d,height=%d,border = %d\n", 
+         texwidth, texheight, ie.d_image->border());
 */
+       glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);
+       glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);
+       glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
               GL_LUMINANCE,
               pixType, texture);
+       glPixelTransferf(GL_RED_SCALE, 1.0);
+       glPixelTransferf(GL_GREEN_SCALE, 1.0);
+       glPixelTransferf(GL_BLUE_SCALE, 1.0);
 
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
               GL_LINEAR_MIPMAP_LINEAR);
@@ -387,7 +715,8 @@ void PatternEditor::drawImage(const ImageElement &ie)
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
        glColor4f(1.0, 1.0, 1.0, 0.5);
-       if (d_userMode == SET_REGION || d_userMode == SET_TRANSLATE) {
+       PE_UserMode currMode = getUserMode();
+       if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
          glVertex3f(d_mainWinMinXadjust_nm, d_mainWinMinYadjust_nm, 0);
          glVertex3f(d_mainWinMaxXadjust_nm, d_mainWinMinYadjust_nm, 0);
          glVertex3f(d_mainWinMaxXadjust_nm, d_mainWinMaxYadjust_nm, 0);
@@ -402,6 +731,23 @@ void PatternEditor::drawImage(const ImageElement &ie)
      }
 }
 
+
+void PatternEditor::drawPattern()
+{
+  list<PatternShape>::iterator shapeIter;
+  int numShapes = 0;
+  if (d_currShape) {
+    numShapes++;
+    d_currShape->draw();
+  }
+  for (shapeIter = d_pattern.begin();
+       shapeIter != d_pattern.end(); shapeIter++)
+  {
+     (*shapeIter).draw();
+     numShapes++;
+  }
+//  printf("drawing %d shapes\n", numShapes);
+}
 
 int PatternEditor::navWinEventHandler(
                    const ImageViewerWindowEvent &event, void *ud)
@@ -451,7 +797,7 @@ int PatternEditor::navWinEventHandler(
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // start dragging a rectangle
-             me->d_userMode = SET_REGION;
+             me->setUserMode(PE_SET_REGION);
              me->d_viewer->toImage(event.winID, &x, &y);
              me->navWinPositionToWorld(x, y, x, y);
              me->d_navDragStartX_nm = x;
@@ -466,7 +812,7 @@ int PatternEditor::navWinEventHandler(
              if (x > me->d_mainWinMinX_nm && x < me->d_mainWinMaxX_nm &&
                  y > me->d_mainWinMinY_nm && y < me->d_mainWinMaxY_nm) {
                 // start translating
-                me->d_userMode = SET_TRANSLATE;
+                me->setUserMode(PE_SET_TRANSLATE);
                 me->d_navDragStartX_nm = x;
                 me->d_navDragStartY_nm = y;
                 me->d_navDragEndX_nm = me->d_navDragStartX_nm;
@@ -482,8 +828,8 @@ int PatternEditor::navWinEventHandler(
          switch(event.button) {
            case IV_LEFT_BUTTON:
              // copy the dragged rectangle into the main displayed rectangle
-             if (me->d_userMode == SET_REGION){
-               me->d_userMode = IDLE;
+             if (me->getUserMode() == PE_SET_REGION){
+               me->setUserMode(PE_IDLE);
                me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y, 
                  me->d_navDragEndX_nm, me->d_navDragEndY_nm);
@@ -500,10 +846,10 @@ int PatternEditor::navWinEventHandler(
              }
              break;
            case IV_RIGHT_BUTTON:
-             if (me->d_userMode == SET_TRANSLATE) {
+             if (me->getUserMode() == PE_SET_TRANSLATE) {
                // copy the translated rectangle into the main 
                // displayed rectangle
-               me->d_userMode = IDLE;
+               me->setUserMode(PE_IDLE);
                me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y,
                                        me->d_navDragEndX_nm, me->d_navDragEndY_nm);
@@ -562,8 +908,8 @@ int PatternEditor::navWinDisplayHandler(
   glLoadIdentity();
 
   double t_x = 0.0, t_y = 0.0;
-  switch (me->d_userMode) {
-   case (SET_REGION):
+  switch (me->getUserMode()) {
+   case (PE_SET_REGION):
     // draw the current tentative setting
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
@@ -574,7 +920,7 @@ int PatternEditor::navWinDisplayHandler(
     glVertex3f(me->d_navDragStartX_nm, me->d_navDragEndY_nm, 0);
     glEnd();
     break;
-   case (SET_TRANSLATE):
+   case (PE_SET_TRANSLATE):
     // draw the current tentative setting
     glBegin(GL_LINE_LOOP);
     glLineWidth(1);
@@ -624,4 +970,120 @@ void PatternEditor::mainWinPositionToWorld(double x, double y,
 {
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
   y_nm = d_mainWinMaxY_nm + (1.0-y)*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
+}
+
+PE_UserMode PatternEditor::getUserMode()
+{
+  return d_userMode;
+}
+
+void PatternEditor::setUserMode(PE_UserMode mode)
+{
+  if (mode == d_userMode) {
+    printf("warning: setUserMode called with same value as current mode\n");
+    return;
+  }
+
+  // clean up from the previous mode
+  switch(d_userMode) {
+    case PE_IDLE:
+      break;
+    case PE_SET_REGION:
+      break;
+    case PE_SET_TRANSLATE:
+      break;
+    case PE_DRAWMODE:
+      if (d_shapeInProgress) {
+        clearDrawingState();
+      }
+      break;
+    case PE_GRABMODE:
+      break;
+  }
+
+  // initialize for the next mode
+  switch(mode) {
+    case PE_IDLE:
+      break;
+    case PE_SET_REGION:
+      break;
+    case PE_SET_TRANSLATE:
+      break;
+    case PE_DRAWMODE:
+      break;
+    case PE_GRABMODE:
+      break;
+  }
+
+  d_userMode = mode;
+
+}
+
+void PatternEditor::clearDrawingState()
+{
+  printf("clearing shape\n");
+  if (d_currShape) {
+    delete d_currShape;
+    d_currShape = NULL;
+  }
+  d_shapeInProgress = vrpn_FALSE;
+}
+
+int PatternEditor::startShape(ShapeType type)
+{
+  if (d_shapeInProgress) {
+     printf("Error, startShape called while shape is being specified\n");
+     return -1;
+  }
+
+  printf("starting shape\n");
+  d_shapeInProgress = vrpn_TRUE;
+  d_currShape = new PatternShape(d_lineWidth_nm, 
+                                 d_exposure_uCoulombs_per_square_cm,
+                                 type);
+  return 0;
+}
+
+int PatternEditor::addPoint(const double x_nm, const double y_nm)
+{
+  if (d_shapeInProgress) {
+    printf("adding point to current shape\n");
+    d_currShape->addPoint(x_nm, y_nm);
+    return 0;
+  } else {
+    printf("Error, addPoint called when not drawing shape\n");
+    return -1;
+  }
+}
+
+int PatternEditor::endShape()
+{
+  printf("ending shape\n");
+  // put the shape into the pattern and clear drawing state
+  d_pattern.push_back(*d_currShape);
+  clearDrawingState();
+  return 0;
+}
+
+vrpn_bool PatternEditor::grab(const double x_nm, const double y_nm)
+{
+  d_grabX_nm = x_nm;
+  d_grabY_nm = y_nm;
+  return vrpn_FALSE;
+}
+
+void PatternEditor::updateGrab(const double x_nm, const double y_nm)
+{
+  double delX_nm = x_nm - d_grabX_nm;
+  double delY_nm = y_nm - d_grabY_nm;
+
+  d_grabX_nm = x_nm;
+  d_grabY_nm = y_nm;
+
+  if (d_grabShape) {
+    d_grabShape->translate(delX_nm, delY_nm);
+  }
+  if (d_grabPoint) {
+    d_grabPoint->translate(delX_nm, delY_nm);
+  }
 }
