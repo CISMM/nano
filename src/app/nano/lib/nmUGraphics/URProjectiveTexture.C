@@ -446,18 +446,20 @@ int URProjectiveTexture::updateTextureNoMipmap()
 
     glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-/*
-	XXX - for some strange reason, the value given for GL_UNPACK_SKIP_PIXELS 
-	isn't having the desired effect - the whole row of the texture is getting
-	transferred instead of just the part of the row specified
+
+	// XXX - for some strange reason, the value given for GL_UNPACK_SKIP_PIXELS 
+	// isn't having the desired effect - the whole row of the texture is getting
+	// transferred instead of just the part of the row specified
     glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
                     width, height,
                     GL_LUMINANCE, pixelType, imageData);
-*/
+
 	// A workaround that has the desired result (AAS):
+	//  but makes projecting textures of any size slooooooow.... (DTM)
+/*
 	void *offsetImageData = ((GLubyte *)imageData + (XMin + YMin*imageBufferNumX)*pixelSize);
 	int i;
 	for (i = 0; i < height; i++) {
@@ -466,7 +468,7 @@ int URProjectiveTexture::updateTextureNoMipmap()
 						GL_LUMINANCE, pixelType, offsetImageData);
 		offsetImageData = ((GLubyte *)offsetImageData + imageBufferNumX*pixelSize);
 	}
-
+*/
 
 	glPopClientAttrib();
     glPopAttrib();

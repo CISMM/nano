@@ -1,3 +1,10 @@
+2003-12-03  David Marshburn  <marshbur@cs.unc.edu>
+
+	* URProjectiveTexture.C (UpdateTextureNoMipmap):  send the texture with
+	a single call to glTexSubImage2D, rather than (# of lines) calls.  This
+	results in a one-texel-wide border around the projected texture, but 
+	also lets nano project texture at a tolerable rate.
+
 2003-08-07  Aron Helser  <helser@cs.unc.edu>
 
 	* URender.h: Fixed compile warnings.
