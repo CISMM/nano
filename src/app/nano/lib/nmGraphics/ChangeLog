@@ -1,5 +1,9 @@
 2001-05-16  Jason Clark  <jclark@cs.unc.edu>
 
+	* openGL.c: 1 too many }s
+
+	* nmg_Graphics.C: a vrpn_buffer was in the wrong place
+
 	* openGL.c: Make sure that Texture Blending is only attempted on
 	SGI's.  This fixes the crash bug that Adam found.
 

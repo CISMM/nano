@@ -1712,10 +1712,9 @@ char * nmg_Graphics::encode_setTextureMode
 	fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
 			"Got illegal texture transform mode %d.  "
 			"Sending RULERGRID_COORD instead.\n", xm);
-	vrpn_buffer(&mptr, &mlen, 0); break;
-
-    vrpn_buffer(&mptr, &mlen, region);
+	vrpn_buffer(&mptr, &mlen, 0); break;    
     }
+    vrpn_buffer(&mptr, &mlen, region);
   }
 
   return msgbuf;

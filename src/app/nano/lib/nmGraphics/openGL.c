@@ -217,10 +217,8 @@ int build_list_set
         //and refactor all of this appropriately, this problem will disappear.
         //if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
         //    g_null_data_alpha_toggle || g_transparent) {
-            //glEnable(GL_COLOR_ARRAY_EXT);
             glEnableClientState(GL_COLOR_ARRAY);
         //} else {
-            //glDisable(GL_COLOR_ARRAY_EXT);
         //    glDisableClientState(GL_COLOR_ARRAY);
         //}
         if (glGetError()!=GL_NO_ERROR) {
@@ -255,13 +253,11 @@ int build_list_set
     
 #endif
     
-    if (g_VERTEX_ARRAY){// same extension is for TEXTURE_COORD_ARRAY
+    if (g_VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY
 #ifndef PROJECTIVE_TEXTURE
         if (g_texture_displayed != nmg_Graphics::NO_TEXTURES) {
-            //glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         } else {
-            //glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
         if (glGetError() != GL_NO_ERROR) {
@@ -269,15 +265,12 @@ int build_list_set
         } 
 #else
         if ( planes.contour) {
-            //glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 #ifdef sgi
         } else if ( planes.alpha ) {
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        }
 #endif
         } else {
-            //glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
         if (glGetError() != GL_NO_ERROR) {
