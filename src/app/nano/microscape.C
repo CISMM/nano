@@ -4253,7 +4253,11 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   tesselation (1),
   packetlimit (0)
 {
-    // empty
+    sprintf(graphicsHost, "\0");
+    sprintf(SPMhost, "\0");
+    sprintf(remoteOutputStreamName, "\0");
+    sprintf(peerName, "\0");
+    sprintf(logPath,"\0");
 }
 
 
