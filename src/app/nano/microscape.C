@@ -9106,7 +9106,7 @@ if (microscope) microscope->ResetClock();
 	{
 		// if we have jumped to a time in the stream file, and this is 
 		// our first time through, center the view
-		if( istate.initTime !=0 )
+		if( istate.initTime != 0 && !istate.initializeView )
 		{
 			center( );
 		}
