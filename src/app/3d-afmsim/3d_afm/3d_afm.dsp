@@ -523,5 +523,9 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\tclLinkVar\tclLinkVar.lib
 # End Source File
 # End Group
 # End Group
+# Begin Source File
+
+SOURCE=.\array.dat
+# End Source File
 # End Target
 # End Project
