@@ -1,3 +1,10 @@
+2002-04-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* AbstractImage.h: comments out declaration of 
+	Read() and Write() functions which are commented out in .C file
+	* PNMImage.h: "
+	* TIFFImage.h: "
+
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* PNMImage.h:  on the SGI, turn some compiler warnings off before

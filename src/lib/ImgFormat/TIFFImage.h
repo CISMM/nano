@@ -50,7 +50,8 @@ class TIFFImage : public AbstractImage
 
       bool Write(const char *filename);
   
-      bool Write(FILE *file);
+	  // Not available using standard iostream library.
+      //bool Write(FILE *file);
 };
 
 
