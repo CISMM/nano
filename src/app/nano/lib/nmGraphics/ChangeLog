@@ -1,0 +1,53 @@
+2000-08-10  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* ChangeLog: New file.
+	
+	* export_scene.C (QuadCorners): New class.
+	(write_q_vec): New function.
+	(operator <<): Same.
+	(rhinoException_to_string): Same.
+	(set_quad_corner): Same.
+	(get_view_xform): Same.
+	(export_scene_to_openNURBS): Add error checking.
+	Call get_view_xform. 
+
+2000-08-07  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (makeAndInstallRulerImage): Allocate correct
+	size array.  `texture-size' is the length of a *side*, not the
+	number of array cells.
+
+2000-08-06  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* spm_gl.c: Tell emacs to use c++-mode.
+	* nmg_GraphicsImpl.C (makeAndInstallRulerImage): Move deine of
+	macro `texel' out of funct body, and undef texel after funct body.
+	* graphics_globals.c: Tell emacs to use c++-mode.
+	* graphics.h (buildAllTextures, makeAndInstallRulerImage): Remove
+	delcarations for undefined functions. (They were previously moved
+	to nmg_GraphicsImpl.)
+	* graphics.c: Change "#define min" to "#define NMG_MIN".
+	Change "#define max" to "#define NMG_MAX".
+	Remove unused preprocessor macros.
+	Adjust (fix) comments.
+	Remove macro `vec_cmp' because unused.
+	Tell emacs to use c++-mode.
+	(createPyramid, makeTexture): Make static (internal linkage).
+
+2000-08-03  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (nmg_Graphics_Implementation): clean up
+
+2000-08-02  Jeffrey Juliano  <juliano@evans.cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (makeAndInstallRulerImage): dynamically
+	allocate texture array (was hardcoded to 512x512 cells).
+	Handle float pt. rounding issues in texture size computation.
+
+2000-08-01  Jeffrey Juliano  <juliano@evans.cs.unc.edu>
+
+	* spm_gl.c (describe_gl_vertex): small speed/clarity optimization.
+	Dereference pointer once, cache result in a reference.
+
+	* graphics.h: include just quat.h instead of all of v.h
+
