@@ -1794,13 +1794,6 @@ void handle_z_dataset_change(const char *, void * ds)
     Index_mode::newPlane( dataset->inputGrid->getPlaneByName
                           (plane->name()->c_str() ) );
   }
-
-  	// If an object is loaded, send new z_offset
-//	if (state->config_enableUber) {
-	double z = plane->minNonZeroValue();
-	World.Do(&URender::ChangeHeightPlane, &z);
-//}
-    
 }
 
 /// Update the grid scale and rebuild the display lists
@@ -2777,10 +2770,8 @@ static void handle_openStaticFilename_change (const char *, void *)
 	//return;
     //}
 
-	change_static_file csf;
-
 	// assume same scale in x and y
-	csf.scale = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
+	double scale = dataset->inputGrid->maxX();
 
     if (strlen(openStaticFilename) <= 0) return;
 
@@ -2821,18 +2812,14 @@ static void handle_openStaticFilename_change (const char *, void *)
     decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
     decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
 
-// If an object is loaded, scale it appropriately
-//      if (state->config_enableUber) {
-    csf.scale /= dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-	csf.scale = 1.0 / csf.scale;
-	BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
-	csf.xoffset = height->minX();
-	csf.yoffset = height->minY();
-	csf.zoffset = height->minNonZeroValue();
-
-	World.Do(&URender::ChangeStaticFile, &csf);
+	// If an object is loaded, scale it appropriately
+	// Doesn't register in the TCL window yet...
+//	if (state->config_enableUber) {
+    scale /= dataset->inputGrid->maxX();
+	scale = 1.0 / scale;
+	World.Do(&URender::ChangeStaticFile, &scale);
 //}
-
+    
     openStaticFilename = "";
 }
 
@@ -3087,13 +3074,7 @@ static void handle_closeMicroscope_change (vrpn_int32, void * )
  */
 static void openDefaultMicroscope() 
 {
-	change_static_file csf;
-
-	if (dataset != NULL) {
-		// assume same scale in x and y
-		csf.scale = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-	}
-	
+    
     MicroscapeInitializationState * istate = new MicroscapeInitializationState;
 
     // Default microscope has NULL vrpn_connection
@@ -3116,20 +3097,6 @@ static void openDefaultMicroscope()
     }
     microscope_connection = NULL;
     vrpnLogFile = NULL;
-
-	// If an object is loaded, scale it appropriately
-	if (dataset != NULL) {
-//      if (state->config_enableUber) {
-		csf.scale /= dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-		csf.scale = 1.0 / csf.scale;
-		BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
-		csf.xoffset = height->minX();
-		csf.yoffset = height->minY();
-		csf.zoffset = height->minNonZeroValue();
-
-		World.Do(&URender::ChangeStaticFile, &csf);
-//}
-	}
 
     // Make sure "working" dialog is gone. 
     doneWorkingMsg();

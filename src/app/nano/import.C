@@ -173,14 +173,9 @@ static void handle_import_file_change (const char *, void *) {
 			}
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
-
-/*
-Took this out because we now set the translation automatically to the heightplane's origin
-when loading
             obj->GetLocalXform().SetScale(import_scale);
             obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
-*/
 			// truncate name so it correlates to the option menu
 			// i.e. C:/Data/cube.obj -> cube.obj
 			name = new char[strlen(modelFile.string()) + 1];
@@ -192,10 +187,6 @@ when loading
 			// if a tube file, send to simulator
 			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
 				SimulatedMicroscope->sendCylinders(obj);
-				SimulatedMicroscope->encode_and_sendTrans(obj->GetLocalXform().GetTrans()[0],
-															obj->GetLocalXform().GetTrans()[1],
-															obj->GetLocalXform().GetTrans()[2]);
-				SimulatedMicroscope->encode_and_sendScale(obj->GetLocalXform().GetScale());
 			}
 			
 			*World.current_object = name;
@@ -301,10 +292,10 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
-				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
-														obj.GetLocalXform().GetRot()[1],
-														obj.GetLocalXform().GetRot()[2],
-														obj.GetLocalXform().GetRot()[3]);
+				q_vec_type q;
+				q_to_euler(q,obj.GetLocalXform().GetRot());
+				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+				
 			}
 		}
 	}
@@ -459,10 +450,9 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 			if ((strstr(*World.current_object, ".txt") != 0) && 
 				(SimulatedMicroscope != NULL) &&
 				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
-														obj.GetLocalXform().GetRot()[1],
-														obj.GetLocalXform().GetRot()[2],
-														obj.GetLocalXform().GetRot()[3]);
+				q_vec_type q;
+				q_to_euler(q,obj.GetLocalXform().GetRot());
+				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 			}
 		}
     }
@@ -486,10 +476,9 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 			if ((strstr(*World.current_object, ".txt") != 0) && 
 				(SimulatedMicroscope != NULL) &&
 				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
-														obj.GetLocalXform().GetRot()[1],
-														obj.GetLocalXform().GetRot()[2],
-														obj.GetLocalXform().GetRot()[3]);
+				q_vec_type q;
+				q_to_euler(q,obj.GetLocalXform().GetRot());
+				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 			}
 	    }
 	}
@@ -513,10 +502,9 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 			if ((strstr(*World.current_object, ".txt") != 0) && 
 				(SimulatedMicroscope != NULL) &&
 				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
-														obj.GetLocalXform().GetRot()[1],
-														obj.GetLocalXform().GetRot()[2],
-														obj.GetLocalXform().GetRot()[3]);
+				q_vec_type q;
+				q_to_euler(q,obj.GetLocalXform().GetRot());
+				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 			}
 	   }
 	}
@@ -545,6 +533,7 @@ static  void handle_import_color_change (vrpn_int32, void *)
 
 static  void handle_import_alpha (vrpn_float64, void *)
 {
+printf("hello?\n");
 
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
