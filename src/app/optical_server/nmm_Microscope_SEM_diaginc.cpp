@@ -7,6 +7,7 @@
 #include <vrpn_Connection.h>
 #include "nmm_Microscope_SEM_diaginc.h"
 #include "nmb_Image.h"
+#include "OpticalServerInterface.h"
 
 
 #define VIRTUAL_ACQ_RES_X (128)
@@ -110,6 +111,8 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 nmm_Microscope_SEM_diaginc::
 ~nmm_Microscope_SEM_diaginc (void)
 {
+	OpticalServerInterface::getInterface()->setImage( NULL, 0, 0 );
+
 	// remove spot cam callback
 	SpotSetCallback( NULL, 0 );
 	
@@ -146,7 +149,7 @@ mainloop(const struct timeval *timeout)
 	//  if (!d_connection || !(d_connection->connected())) {
 	//    return 0;
 	//  }
-	if (d_scans_to_do > 0) {
+	//if (d_scans_to_do > 0) {
 		// When running controlling the server without going over the network 
 		// (in the same process as the client) there is a slight difference
 		// process as the client it is necessary to decrement before 
@@ -154,10 +157,10 @@ mainloop(const struct timeval *timeout)
 		// acquireImage calls mainloop for the connection and this can result
 		// in a set of d_scans_to_do to 0 if the right message is received 
 		// breaking our assumption that d_scans_to_do is always non-negative 
-		d_scans_to_do--;
+		//d_scans_to_do--;
 		acquireImage();
-	} else {
-	}
+	//} else {
+	//}
 	return 0;
 }
 
@@ -228,7 +231,7 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 	}
 
 	int resInd = this->resolutionToIndex( res_x, res_y );
-	if( resInd == 0 )
+	if( resInd >= 0 )
 	{  currentResolutionIndex = resInd;  }
 	else 
 	{  
@@ -408,7 +411,11 @@ acquireImage()
 	*/
 	int result = SPOT_SUCCESS;
 	int resX = 0, resY = 0;
-	this->getResolution( resX, resY );
+	result = this->getResolution( resX, resY );
+	if( result != SPOT_SUCCESS )
+	{
+		return -1;
+	}
 	
 	if( d_virtualAcquisition )
 	{ 
@@ -445,7 +452,9 @@ acquireImage()
 		{
 			reportScanlineData(i);
 		}
-	} 
+	}
+
+	OpticalServerInterface::getInterface()->setImage( myImageBuffer, resX, resY );
 	
 	return 0;
 }
