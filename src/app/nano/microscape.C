@@ -3057,6 +3057,16 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     if (!microscopeRedundancyController) {
       microscopeRedundancyController =
         new vrpn_RedundantRemote (microscope_connection);
+
+      // This object may be created with a server that doesn't support
+      // it, in which case VRPN spews error messages which scare people.
+      // Since that's only an error when we're trying to do latency
+      // compensation, which isn't the usual case, turn off those
+      // error messages.  Of course SOMETIMES we want them, but VRPN
+      // doesn't yet give us a good way to handle that (?) - maybe we
+      // could explicitly call add_object() when we start using the
+      // latency compensation control panel?  HACK HACK HACK
+      vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
     }
 
     openSPMDeviceName = "";
@@ -6693,10 +6703,6 @@ int main (int argc, char* argv[])
       vrpnLogFile = microscope_connection->get_File_Connection();
       if (!vrpnLogFile) {
 	//fprintf(stderr, "   microscape.c:: in Live mode\n");
-          // Only create for live connection.
-          microscopeRedundancyController = new vrpn_RedundantRemote
-              (microscope_connection);
-
       } else {
 	// Allow the user to open a stream file with "-d file:..." 
 	// Set the read_mode. 
@@ -6710,6 +6716,18 @@ int main (int argc, char* argv[])
       // open up a forwarder and spin until it is connected to.
       //createForwarders(istate);
 
+      microscopeRedundancyController = new vrpn_RedundantRemote
+          (microscope_connection);
+
+      // This object may be created with a server that doesn't support
+      // it, in which case VRPN spews error messages which scare people.
+      // Since that's only an error when we're trying to do latency
+      // compensation, which isn't the usual case, turn off those
+      // error messages.  Of course SOMETIMES we want them, but VRPN
+      // doesn't yet give us a good way to handle that (?) - maybe we
+      // could explicitly call add_object() when we start using the
+      // latency compensation control panel?  HACK HACK HACK
+      vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
     }
 
     // Must get hostname before initializing nmb_Dataset, but
