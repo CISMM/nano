@@ -20,12 +20,15 @@ set nmInfo(guard) [create_closing_toplevel_with_notify guarded_win guarded_windo
 # ------------------------------------------------- end GLOBAL variables
 
 # Button to acquire guard plane
-button $nmInfo(guard).plane_button -text "Acquire Plane" \
-	-command { set guarded_plane_acquire 1 }
+button $nmInfo(guard).plane_button -text "Acquire Plane" -command { 
+    $nmInfo(guard).scan_button configure -state normal
+    set guarded_plane_acquire 1
+}
 pack $nmInfo(guard).plane_button -anchor n
 
 # Input box to acquire guard depth (below acquired plane)
 set guarded_plane_depth 0.0
+
 generic_entry $nmInfo(guard).guarded_plane_depth_cnt guarded_plane_depth \
 	"Guard depth below plane (height units)" real
 pack $nmInfo(guard).guarded_plane_depth_cnt -anchor n

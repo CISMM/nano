@@ -28,8 +28,9 @@ class CGuardedScan {
   // Plane calculations...
   static void   CalculatePlaneNormal(q_vec_type& a_ovReturnedNormal, q_vec_type a_vPt1, q_vec_type a_vPt2, q_vec_type a_vPt3);
   static double CalculatePlaneDistanceToOrigin(q_vec_type a_vNormal, q_vec_type a_vPointOnPlane);
-  double CalculateDistanceToPlane(q_vec_type a_vPoint);
+  double        CalculateDistanceToPlane(q_vec_type a_vPoint);
   static double CalculateLength(q_vec_type a_vVector);
+  double        CalculatePlaneHeight(double a_fX, double a_fY);
 
   // Scanning/approach routines...
   void Approach(); // Approaches the surface from APPROACH_STEPS away from the guard plane
@@ -58,6 +59,8 @@ class CGuardedScan {
   double m_fLastZValue;  // Last Z value
 
   double m_fMaxZStep; // Max. Z step during the approach and while scanning
+
+  int m_bScanRight; // Specifies X direction of scan (boustrophedonic scanning)
 };
 
 #endif

@@ -29,7 +29,9 @@ CGuardedScan::CGuardedScan() :
   guarded_plane_depth("guarded_plane_depth", 0.0f),
   guarded_scan_max_step("guarded_scan_max_step", 0.01f),
   m_pPlane(NULL),
-  m_pDecoration(NULL)
+  m_pDecoration(NULL),
+  m_bScanRight(1),
+  m_fGuardDepth(0.0f)
 {
   // Register TCL callbacks...
   guarded_scan_start.addCallback(HandleScanStart, this);
@@ -54,30 +56,123 @@ int CGuardedScan::IsModeActive()
 void CGuardedScan::mainloop()
 {
   printf("Guarded scan mainloop.\n");
+
+  // Variables used to scan and adjust probe position...
+  double fX, fY, fZ = m_fLastZValue, fPlaneZ, fError;
+
+  // Grab current setpoint
+  float fSetpoint = microscope->state.image.setpoint;
+
+  // Calculate the minimum error value (1% of setpoint)
+  // The feedback implemented here is a unity gain proportional loop.
+  float fErrorMin = 0.01f * fSetpoint;
+
+  // Prepare point value... (current input point)
+  Point_value* pPoint = microscope->state.data.inputPoint->getValueByPlaneName(dataset->heightPlaneName->string());
+
+  // Throw an error if the point value doesn't make sense...
+  if(pPoint == NULL) {
+    display_error_dialog("Point value not available.  Verify that the proper data is available. (live or static)");
+    m_bModeActive = FALSE;
+    guarded_scan_stop = 1;
+    return;
+  }
   
+  // Collect as many samples as defined at the top of this file (called once per loop of the microscape::main interactive loop)
   for(int i = 0;i < SAMPLES_PER_MAINLOOP;++i) {
     // Calculate sample position...
-    double fX = ((double)m_nLastXSample * m_fXResolution) + m_pPlane->minX();
-    double fY = ((double)m_nLastYSample * m_fYResolution) + m_pPlane->minY();
-    double fZ = m_fLastZValue;
+    fX = ((double)m_nLastXSample * m_fXResolution) + m_pPlane->minX();
+    fY = ((double)m_nLastYSample * m_fYResolution) + m_pPlane->minY();
+    
+    // Calculate height of the guard plane under (hopefully not above) the current X, Y position
+    fPlaneZ = CalculatePlaneHeight(fX, fY);
 
-    //    int TakeDirectZStep (const float x, const float y, const float z,
-    //                 Point_value * point = NULL,
-    //                 const vrpn_bool awaitResult = VRPN_FALSE);
-    printf("Scanning to (%0.3f, %0.3f, %0.3f)\n", fX, fY, fZ);
-   
-    // Move to next point in region...
-    m_nLastXSample++;
-    if(m_nLastXSample > m_pPlane->numX()) {
-      m_nLastXSample = 0;
-      m_nLastYSample++;
+    // DEBUG
+    printf("Scanning to (%0.3lf, %0.3lf, %0.3lf) plane=%0.3lf\n", fX, fY, fZ, fPlaneZ);
+
+    // Move to (fX, fY, fZ)... loop until the value is within fErrorMin of the 
+    // setpoint OR until the fZ value (height) drops below the guard plane 
+    // (or until bailout)
+    int nBailout = 100;
+    int bPastSetpoint = 0;
+    int nLastErrorSign = 0;
+    while((!bPastSetpoint) && // feedback
+	  (fZ > fPlaneZ) && // guard plane part... (above plane)
+	  (nBailout > 0)) { // bailout part...
+      // Take the step...
+      printf(" stepping to %0.3f\n", fZ);
+      microscope->TakeDirectZStep(fX, fY, fZ, pPoint, VRPN_TRUE);    
+      m_fLastZValue = fZ;
+      
+      // Adjust fZ according to the fError signal...
+      fError = pPoint->value() - fSetpoint;
+      if(fError > 0.0f) { 
+	// step probe away from surface (probe too close, value > setpoint)
+	fZ += m_fMaxZStep; // unity gain proportional feedback
+      } else { 
+	// step probe toward surface (probe too far away, value < setpoint)
+	fZ -= m_fMaxZStep; // unity gain proportional feedback
+      }      
+      
+      // Determine if the last step pushed us past the setpoint...
+      if((nLastErrorSign != (fError > 0 ? 1 : -1)) && (nLastErrorSign != 0)) {
+	// Error sign changed...
+	// We've past the setpoint!  (only by one Z step, so it's okay.)
+	//  but we're done stepping in Z!
+	bPastSetpoint = 1;
+      } else {
+	// Error sign is unchanged (or uninitialized)
+	nLastErrorSign = fError > 0 ? 1 : -1;
+      }
+
+      // Bailout handling (just in case)
+      nBailout--;
     }
 
+    if(nBailout <= 0) {
+      // Throw an error and stop the scan...
+      display_error_dialog("Guarded scan could not reach surface OR guard plane within 100 Z steps.  Feedback has failed.  Tip will be withdrawn.");
+      m_bModeActive = FALSE;
+      guarded_scan_stop = 1;
+      microscope->WithdrawTip();
+      return;
+    }
+
+    // Put the value into the grid at the current X,Y position...
+    m_pPlane->setValue(m_nLastXSample, m_nLastYSample, pPoint->value());
+
+    // Move to next point in region...
+    // Scan in a boustrophedonic manner... like the friendly ox.
+    if(m_bScanRight) { 
+      m_nLastXSample++; // next sample is to the right...
+
+      // Handle the scan boundary...
+      if(m_nLastXSample > m_pPlane->numX()) {
+	m_nLastXSample = m_pPlane->numX() - 1;
+	m_nLastYSample++;
+	m_bScanRight = 0; // Scan to the left now...
+      }
+    } else {
+      m_nLastXSample--; // next sample is to the left...
+
+      // Handle the scan boundary...
+      if(m_nLastXSample < 0) {
+	m_nLastXSample = 0;
+	m_nLastYSample++;
+	m_bScanRight = 1; // Scan to the right now...
+      }
+    }
+      
     // Check for scan completion
     if(m_nLastYSample > m_pPlane->numY()) {
       m_nLastYSample = 0;
+      m_nLastXSample = 0;
       m_bModeActive = FALSE;
       guarded_scan_stop = 1;
+
+      // Withdraw from surface...
+      microscope->WithdrawTip(); // hope this blocks...
+      m_fLastZValue = microscope->state.lastZ; // not that important, though.
     }
   }
 
@@ -173,6 +268,8 @@ void CGuardedScan::HandlePlaneAcquire(vrpn_int32 a_nVal, void* a_pObject)
   pMe->m_fYResolution = (pPlane->maxY() - pPlane->minY()) / (double)pPlane->numY();
   pMe->m_nLastXSample = 0;
   pMe->m_nLastYSample = 0;
+  printf("XRes=%lf, YRes=%lf\n",  pMe->m_fXResolution,  pMe->m_fYResolution);
+
 
   // Calculate the first sample's Z value from the guard plane...
   q_vec_type vCorner; // upper left corner of scan
@@ -180,6 +277,9 @@ void CGuardedScan::HandlePlaneAcquire(vrpn_int32 a_nVal, void* a_pObject)
   vCorner[1] = pPlane->minY();
   vCorner[2] = 0.0f;
   pMe->m_fLastZValue = -(pMe->CalculateDistanceToPlane(vCorner));
+  printf("Z value of upper left corner of scan = %lf\n", pMe->m_fLastZValue);
+
+  printf("Guard depth=%lf\n", pMe->m_fGuardDepth);
 }
 
 void CGuardedScan::HandleDepth(vrpn_float64 a_fDepth, void* a_pObject)
@@ -261,12 +361,32 @@ double CGuardedScan::CalculatePlaneDistanceToOrigin(q_vec_type a_vNormal, q_vec_
 double CGuardedScan::CalculateDistanceToPlane(q_vec_type a_vPoint)
 {
   double fRet;
-
-  // fRet = (D - Ax - By) / C
+  
+  // Ax + By + Cz = D
+  // z = (D - Ax - By) / C
   fRet = (m_fPlaneDistance - (m_vPlaneNormal[0] * a_vPoint[0])
 	  - (m_vPlaneNormal[1] * a_vPoint[1])) / m_vPlaneNormal[2];
 
   return fRet;
+}
+
+/// Calculates the hieght of the guard plane in world coordinates (real world)
+double CGuardedScan::CalculatePlaneHeight(double a_fX, double a_fY)
+{
+  // Find distance of the point to the plane along the plane normal
+  // Ax + By + Cz = D
+  // z = (D - Ax - By) / C
+  // (NOTE: this is the same calc. as CalculateDistanceToPlane)
+  q_vec_type vPoint;
+  vPoint[0] = a_fX;
+  vPoint[1] = a_fY;
+  vPoint[2] = 0.0f; // unused
+  double fDis = CalculateDistanceToPlane(vPoint);
+
+  // Now decrease that value by the guard depth... the value is that much lower
+  fDis -= m_fGuardDepth;
+
+  return fDis;
 }
 
 /// Approach the surface from APPROACH_STEPs away from the guard plane in m_fMaxZStep increments
@@ -291,16 +411,22 @@ void CGuardedScan::Approach()
   // Approach by looping until the SPM signal exceeds the setpoint
   // OR until fZ will pass through the guard plane on the next step...
   float fSetpoint = microscope->state.image.setpoint;
-  Point_value* pPoint = microscope->state.data.inputPoint->getValueByName("height");
+
+  Point_value* pPoint = microscope->state.data.inputPoint->getValueByPlaneName(dataset->heightPlaneName->string());
   
   if(pPoint == NULL) {
-    display_error_dialog("Point value not availabe.");
+    display_error_dialog("Point value not available.  Verify that the proper data is available. (live or static)");
+    m_bModeActive = FALSE;
+    guarded_scan_stop = 1;
     return;
   }
 
   int nBailout = 100;
   while(((pPoint->value() < fSetpoint) &&
-	((fZ - m_fMaxZStep) > fPlaneZ)) || (nBailout < 0)) {
+	((fZ - m_fMaxZStep) > fPlaneZ)) && (nBailout > 0)) {
+    //DEBUG
+    printf("stepping toward surface... %lf\n", fZ);
+
     // Take the step...
     microscope->TakeDirectZStep(fX, fY, fZ, pPoint, VRPN_TRUE);    
     m_fLastZValue = fZ;
