@@ -4463,6 +4463,9 @@ void ParseArgs (int argc, char ** argv,
 	istate->vicurve.writingLogFile = 1;
 	sprintf(istate->vicurve.outputLogName, "%s%s", argv[i],
 		VICURVE_FILE_SUFFIX);
+        istate->sem.writingLogFile = 1;
+        sprintf(istate->sem.outputLogName, "%s%s", argv[i],
+                SEM_FILE_SUFFIX);
       } else if (strcmp(argv[i], "-peer") == 0) {
         istate->openPeer = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
