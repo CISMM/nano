@@ -183,6 +183,9 @@ class CollaborationManager {
     int d_userMode;
     char * d_peerName;
 
+    vrpn_bool d_isCollaborationOn;
+       ///< Flag to indicate whether a collaborative session is on or not.
+
     char * d_handServerName;
       ///< VRPN name of d_peerHand and d_handServer.
     char * d_modeServerName;
