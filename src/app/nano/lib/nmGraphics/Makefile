@@ -3,6 +3,6 @@ USES_LIBS := nmBase ImgFormat nmGenTex nmMScope tclLinkVar nmUGraphics vrpn \
 
 NAUGHTY := 1
 
-EXCLUDE_SRC := nmg_GraphicsNull.C
+EXCLUDE_SRC := nmg_GraphicsNull.C export_scene.C
 
 include ../Makefile.share
