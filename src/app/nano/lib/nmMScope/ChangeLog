@@ -1,3 +1,18 @@
+2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
+
+	* active_set.C (Handle_report) : added optional boolean argument to
+	control whether or not callbacks get called for any of the BCPlane's
+	that get set by this function
+	* nmm_MicroscopeRemote.hC (RcvWindowLineData) : added boolean argument
+	that gets passed to Scan_channel_selector::Handle_report 
+	and then to BCPlane::setValue to control whether or not callbacks get
+	called for the plane change
+        * nmm_MicroscopeRemote.C (handle_WindowLineData) : this function
+	lets plane data callbacks get called only for the last point in
+	each line (in effect, this changes the meaning of a plane change to
+	mean the change between before receiving window line message and
+	after completely processing the window line message)
+
 2001-03-15  Tom Hudson  <hudson@cs.unc.edu>
 
 	* splat.c (ptSplat(BCGrid *, Point_value *) : new function for
