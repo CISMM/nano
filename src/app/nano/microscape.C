@@ -2486,8 +2486,7 @@ else fprintf(stderr, "Added X plane update callback\n");
 static void handle_surface_color_change (vrpn_int32, void * userdata) {
     nmg_Graphics * g = (nmg_Graphics *) userdata;
     colorMapUI->getSurfaceColor(&surfC[0], &surfC[1], &surfC[2]); 
-    g->setMinColor( surfC );
-    g->setMaxColor( surfC );
+    g->setSurfaceColor( surfC );
 
     //g->causeGridReColor();
 }
@@ -6153,7 +6152,7 @@ VERBOSE(1, "g>Graphics thread starting vrpn server\n");
   // start a graphics implementation
 VERBOSE(1, "g>Graphics thread starting graphics implementation\n");
   g = new nmg_Graphics_Implementation
-        (dataset, surfC, surfC, rulerPPMName, vizPPMName, c,
+        (dataset, surfC, rulerPPMName, vizPPMName, c,
          wellKnownPorts->remote_gaEngine);
 
   // Turn off UberGraphics until we figure out how to get it
@@ -6246,13 +6245,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
       exit(0);
 
       //fprintf(stderr, "Using NO GRAPHICS.\n");
-      //graphics = new nmg_Graphics_Null(dataset, surfC, surfC);
+      //graphics = new nmg_Graphics_Null(dataset, surfC, );
       break;
 
     case LOCAL_GRAPHICS:
         //fprintf(stderr, "Using local GL graphics implementation.\n");
       graphics = new nmg_Graphics_Implementation(
-          dataset, surfC, surfC, rulerPPMName, vizPPMName,
+          dataset, surfC, rulerPPMName, vizPPMName,
           NULL, wellKnownPorts->remote_gaEngine);
       if (istate.timeGraphics) {
         graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
@@ -6298,7 +6297,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       shmem_connection = new vrpn_Synchronized_Connection
                             (wellKnownPorts->graphicsControl);
       gi = new nmg_Graphics_Implementation (
-          dataset, surfC, surfC, rulerPPMName, vizPPMName,
+          dataset, surfC, rulerPPMName, vizPPMName,
           shmem_connection, wellKnownPorts->remote_gaEngine);
       graphics = new nmg_Graphics_Remote (shmem_connection);
       break;
@@ -6318,7 +6317,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, surfC, surfC, renderServerOutputConnection,
+                 (dataset, surfC, renderServerOutputConnection,
                   nmg_Graphics::VERTEX_COLORS,
                   nmg_Graphics::VERTEX_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6341,7 +6340,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, surfC, surfC, renderServerOutputConnection,
+                 (dataset, surfC, renderServerOutputConnection,
                   nmg_Graphics::SUPERSAMPLED_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6364,7 +6363,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, surfC, surfC, renderServerOutputConnection,
+                 (dataset, surfC, renderServerOutputConnection,
                   nmg_Graphics::CLOUDMODEL_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6387,7 +6386,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-               (dataset, surfC, surfC, renderServerOutputConnection,
+               (dataset, surfC, renderServerOutputConnection,
                 nmg_Graphics::SUPERSAMPLED_COLORS,
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
@@ -6419,7 +6418,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
       graphics = new nmg_Graphics_RenderClient
-           (dataset, surfC, surfC, renderClientInputConnection,
+           (dataset, surfC, renderClientInputConnection,
             nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             100, 100,
@@ -6458,7 +6457,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
       graphics = new nmg_Graphics_RenderClient
-           (dataset, surfC, surfC, renderClientInputConnection,
+           (dataset, surfC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
@@ -6496,7 +6495,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       // TODO
       graphics = new nmg_Graphics_RenderClient
-           (dataset, surfC, surfC, renderClientInputConnection,
+           (dataset, surfC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::PERSPECTIVE_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
@@ -8205,11 +8204,12 @@ void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
 
 //XXX Temporary way to write VRML file.  Make a control panel for it.
       case 'o': // Output a VRML file
-	{	nmb_PlaneSelection planes;
+	{/*	nmb_PlaneSelection planes;
 	        planes.lookup(dataset);
 		write_to_vrml_file("nano.wrl", planes,
                                    (GLdouble *) graphics->getMinColor(),
                                    (GLdouble *) graphics->getMaxColor());
+         */
 	}
 		break;
 

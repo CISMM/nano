@@ -1,3 +1,8 @@
+2001-10-12  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c: Get rid of remnants of min/max color in favor of
+	surface color
+
 2001-10-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c: code clean-up in the handle_mutex* functions.
