@@ -546,3 +546,8 @@ const double * nmg_Graphics_Timer::getMaxColor (void) const {
 }
 
 
+vrpn_bool nmg_Graphics_Timer::getDisplayIndexForUser (v_index & out_index,
+                                                      int user_number) const
+{
+    return d_imp->getDisplayIndexForUser (out_index, user_number);
+}

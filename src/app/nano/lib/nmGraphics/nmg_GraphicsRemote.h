@@ -165,6 +165,9 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     //   This implementation's accessors is *NOT* guaranteed
     // to be consistent with the server!
 
+    virtual vrpn_bool getDisplayIndexForUser (v_index & out_index,
+                                              int user_number) const;
+
   protected:
 
     q_vec_type d_lightDirection;

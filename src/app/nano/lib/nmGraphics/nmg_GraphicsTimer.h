@@ -138,6 +138,9 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
 
+    virtual vrpn_bool getDisplayIndexForUser (v_index & out_index,
+                                              int user_number) const;
+
   protected:
 
     vrpn_bool d_timingViewpointChanges;
