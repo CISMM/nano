@@ -1,3 +1,11 @@
+2000-08-17  Adam Seeger <seeger@cs.unc.edu>
+
+	* nmb_Image.C,h	(nmb_ImageX(nmb_Image *)) : new constructor
+			(maxValidValue) : new function
+			(minValidValue) : new function
+			(maxNonZeroValue) : new function
+			(minNonZeroValue) : new function
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

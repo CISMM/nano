@@ -16,15 +16,13 @@
 #include <math.h>
 #include "Topo.h"
 
-#if !((defined __CYGWIN__) || (_WIN32))
+#if !(defined(__CYGWIN__) || defined(_WIN32))
 #include <values.h>	// for MAXSHORT - probably different on windows
 #else
 // MAXSHORT taken care of by vrpn_Shared.h above - it's in a windows header.
 //#include <limits.h>
 //#ifndef MAXSHORT
 //#define MAXSHORT SHRT_MAX
-
-//#endif
 #endif
 
 // min and max also in Topo.h
@@ -70,6 +68,7 @@ class nmb_Image {
   public:
 	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0)
             {};
+        nmb_Image(nmb_Image *) {};
 	virtual ~nmb_Image (void);
 	virtual int width() const = 0;
 	virtual int height() const = 0;
@@ -78,6 +77,11 @@ class nmb_Image {
         /// min and max of values actually in the image:
 	virtual float maxValue() const = 0;
 	virtual float minValue() const = 0;
+        // min and max of values that have been set
+        virtual float maxValidValue() = 0;
+        virtual float minValidValue() = 0;
+        virtual float maxNonZeroValue() = 0;
+        virtual float minNonZeroValue() = 0;
         /// min and max representable values:
 	virtual float minAttainableValue() const = 0;
         virtual float maxAttainableValue() const = 0;
@@ -142,6 +146,7 @@ class nmb_ImageGrid : public nmb_Image{
   public:
 	nmb_ImageGrid(const char *name, const char *units, short x, short y);
 	nmb_ImageGrid(BCPlane *p);
+        nmb_ImageGrid(nmb_Image *);
 	virtual ~nmb_ImageGrid();
 	virtual int width() const;
 	virtual int height() const;
@@ -151,6 +156,10 @@ class nmb_ImageGrid : public nmb_Image{
                                    short* o_bottom, short*o_right);
 	virtual float maxValue() const;
 	virtual float minValue() const;
+        virtual float maxValidValue();
+        virtual float minValidValue();
+        virtual float maxNonZeroValue();
+        virtual float minNonZeroValue();
         virtual float minAttainableValue() const;
         virtual float maxAttainableValue() const;
 	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
@@ -197,6 +206,7 @@ class nmb_ImageGrid : public nmb_Image{
 class nmb_Image8bit : public nmb_Image {
   public:
     nmb_Image8bit(const char *name, const char *units, short x, short y);
+    nmb_Image8bit(nmb_Image *);
     virtual ~nmb_Image8bit();
     virtual int width() const;
     virtual int height() const;
@@ -209,6 +219,10 @@ class nmb_Image8bit : public nmb_Image {
                                    short* o_bottom, short*o_right);
     virtual float maxValue() const;
     virtual float minValue() const;
+    virtual float maxValidValue();
+    virtual float minValidValue();
+    virtual float maxNonZeroValue();
+    virtual float minNonZeroValue();
     virtual float maxAttainableValue() const;
     virtual float minAttainableValue() const;
     virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;

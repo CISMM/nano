@@ -15,6 +15,7 @@ nmb_ImageBounds::nmb_ImageBounds(double x0,double y0,double x1,double y1){
     y[MIN_X_MAX_Y] = y1; y[MAX_X_MAX_Y] = y1;
 }
 
+
 // virtual
 nmb_Image::~nmb_Image (void) {
 
@@ -263,6 +264,35 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
     }
 }
 
+nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im)
+{
+  int i,j;
+  grid = new BCGrid(im->width(), im->height(), 0.0, 1.0, 0.0, 1.0);
+  plane = grid->addNewPlane(*(im->name()), *(im->unitsValue()), 0);
+  min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+  max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+  for (i = 0; i < numExportFormats(); i++){
+      BCString name = exportFormatType(i);
+      formatNames.addEntry(name);
+  }
+  if (strcmp(im->unitsValue()->Characters(), "nm") == 0) {
+      is_height_field = vrpn_TRUE;
+  } else {
+      is_height_field = vrpn_FALSE;
+  }
+
+  units_x = *(im->unitsX());
+  units_y = *(im->unitsY());
+
+  for (i = 0; i < width(); i++) {
+    for (j = 0; j < height(); j++) {
+      setValue(i,j, im->getValue(i,j));
+    }
+  }
+  im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
+  im->getTopoFileInfo(d_topoFileDefaults);
+}
+
 nmb_ImageGrid::~nmb_ImageGrid()
 {   
     if (grid) {
@@ -280,6 +310,68 @@ float nmb_ImageGrid::getValue(int i, int j) const
 float nmb_ImageGrid::maxValue() const {return plane->maxValue();}
 
 float nmb_ImageGrid::minValue() const {return plane->minValue();}
+
+float nmb_ImageGrid::maxValidValue() {
+    short top, left, bottom, right;
+    if (validDataRange(&top, &left, &bottom, &right)) {
+        return 0;
+    }
+    if ((top == height()-1) && (bottom == 0) && 
+        (right == width()-1) && (left == 0)) {
+        return maxValue();
+    }
+
+    int i,j;
+    float result = getValue(left, bottom);
+    float val;
+    for (i = left; i <= right; i++) {
+        for (j = bottom; j <= top; j++) {
+            val = getValue(i,j);
+            if (val > result) result = val;
+        }
+    }
+    return result;
+}
+
+float nmb_ImageGrid::minValidValue() {
+    short top, left, bottom, right;
+    if (validDataRange(&top, &left, &bottom, &right)) {
+        return 0;
+    }
+    if ((top == height()-1) && (bottom == 0) && 
+        (right == width()-1) && (left == 0)) {
+        return minValue();
+    }
+
+    int i,j;
+    float result = getValue(left, bottom);
+    float val;
+    for (i = left; i <= right; i++) {
+        for (j = bottom; j <= top; j++) {
+            val = getValue(i,j);
+            if (val < result) result = val;
+        }
+    }
+    return result;
+}
+
+float nmb_ImageGrid::maxNonZeroValue() {
+    return maxValidValue();
+}
+
+float nmb_ImageGrid::minNonZeroValue() {
+    int i,j;
+    float val = 0, result = 0;
+    for (i = 0; i < width(); i++) {
+        for (j = 0; j < height(); j++) {
+            val = getValue(i,j);
+            if (result == 0 || (val != 0 && val < result)) {
+                result = val;
+            }
+        }
+    }
+    return result;
+}
 
 void nmb_ImageGrid::setValue(int i, int j, float val)
 {
@@ -511,6 +603,23 @@ nmb_Image8bit::nmb_Image8bit(const char *name, const char * /*units*/,
     }
 }
 
+nmb_Image8bit::nmb_Image8bit(nmb_Image *im)
+{
+  nmb_Image8bit(im->name()->Characters(),
+                  im->unitsValue()->Characters(),
+                  im->width(), im->height());
+  units_x = *(im->unitsX());
+  units_y = *(im->unitsY());
+  int i,j;
+  for (i = 0; i < width(); i++) {
+    for (j = 0; j < height(); j++) {
+      setValue(i,j, im->getValue(i,j));
+    }
+  }
+  im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
+}
+
+
 nmb_Image8bit::~nmb_Image8bit() {if (data) delete [] data;}
 
 int nmb_Image8bit::width() const {return num_x;}
@@ -554,6 +663,68 @@ int nmb_Image8bit::validDataRange(short* o_top, short* o_left,
 float nmb_Image8bit::maxValue() const {return 255.0;}
 
 float nmb_Image8bit::minValue() const {return 0.0;}
+
+float nmb_Image8bit::maxValidValue() {
+    short top, left, bottom, right;
+    if (validDataRange(&top, &left, &bottom, &right)) {
+        return 0;
+    }
+    if ((top == height()-1) && (bottom == 0) && 
+        (right == width()-1) && (left == 0)) {
+        return maxValue();
+    }
+
+    int i,j;
+    float result = getValue(left, bottom);
+    float val;
+    for (i = left; i <= right; i++) {
+        for (j = bottom; j <= top; j++) {
+            val = getValue(i,j);
+            if (val > result) result = val;
+        }
+    }
+    return result;
+}
+
+float nmb_Image8bit::minValidValue() {
+    short top, left, bottom, right;
+    if (validDataRange(&top, &left, &bottom, &right)) {
+        return 0;
+    }
+    if ((top == height()-1) && (bottom == 0) &&
+        (right == width()-1) && (left == 0)) {
+        return minValue();
+    }
+
+    int i,j;
+    float result = getValue(left, bottom);
+    float val;
+    for (i = left; i <= right; i++) {
+        for (j = bottom; j <= top; j++) {
+            val = getValue(i,j);
+            if (val < result) result = val;
+        }
+    }
+    return result;
+}
+
+float nmb_Image8bit::maxNonZeroValue() {
+    return maxValidValue();
+}
+
+float nmb_Image8bit::minNonZeroValue() {
+    int i,j;
+    float val = 0, result = 0;
+    for (i = 0; i < width(); i++) {
+        for (j = 0; j < height(); j++) {
+            val = getValue(i,j);
+            if (result == 0 || (val != 0 && val < result)) {
+                result = val;
+            }
+        }
+    }
+    return result;
+}
 
 float nmb_Image8bit::maxAttainableValue() const {return 255.0;}
 
