@@ -1754,7 +1754,7 @@ char * nmm_Microscope::encode_WindowLineData (long * len,
 
   if (!len) return NULL;
 
-  *len = 8 * sizeof(vrpn_int32) + lineCount * fieldCount * sizeof(vrpn_float32);
+  *len = 8 * (long) sizeof(vrpn_int32) + lineCount * fieldCount * (long) sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_WindowLineData:  "
@@ -1797,7 +1797,7 @@ char * nmm_Microscope::encode_WindowLineData (long * len,
 
   if (!len) return NULL;
 
-  *len = 8 * sizeof(vrpn_int32) + lineCount * fieldCount * sizeof(vrpn_float32);
+  *len = 8 * (long) sizeof(vrpn_int32) + lineCount * fieldCount * (long) sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_WindowLineData:  "
@@ -1987,7 +1987,8 @@ char * nmm_Microscope::encode_ResultData (long * len,
 
   if (!len) return NULL;
 
-  *len = 3*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + fieldCount * sizeof(vrpn_float32);
+  *len = 3 * (long) sizeof(vrpn_int32) + 2 * (long) sizeof(vrpn_float32) 
+    + fieldCount * (long) sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResultData:  "
@@ -2702,7 +2703,7 @@ char * nmm_Microscope::encode_TopoFileHeader (long * len,
 
   if (!len) return NULL;
 
-  *len = sizeof(vrpn_int32)+size*sizeof(char);  // HACK XXX Tiger
+  *len = (long) sizeof(vrpn_int32) + size * (long) sizeof(char);  // HACK XXX Tiger
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_TopoFileHeader:  "
@@ -2746,8 +2747,8 @@ char * nmm_Microscope::encode_ForceCurveData (long * len, vrpn_float32 x, vrpn_f
 
   if (!len) return NULL;
 
-  *len = 4*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + 
-		num_points*(num_halfcycles+1)*sizeof(vrpn_float32);
+  *len = 4 * (long) sizeof(vrpn_int32) + 2 * (long) sizeof(vrpn_float32) + 
+    num_points * (num_halfcycles+1) * (long) sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceCurveData:  "
@@ -4472,8 +4473,8 @@ char * nmm_Microscope::encode_ScanlineData(long *len,
 
   if (!len) return NULL;
 
-  *len = 9*sizeof(vrpn_float32) + 6*sizeof(vrpn_int32) +
-    num_channels*resolution*sizeof(vrpn_float32);
+  *len = 9 * (long) sizeof(vrpn_float32) + 6 * (long) sizeof(vrpn_int32) +
+    num_channels * resolution * (long) sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanlineData:  "
