@@ -2,6 +2,8 @@
 #include "nmui_AFM_SEM_CalibrationUI.h"
 #include "error_display.h"
 
+#define SCAN_COMPLETION_MESSAGE "scan complete"
+
 nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
     nmr_Registration_Proxy *aligner,
 	UTree *world,
@@ -14,7 +16,9 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_registrationMode_AFM_SEM_free("afm_sem_registration_mode_AFM_SEM_free",3),
 	d_registrationMode("afm_sem_registration_mode",1),
 	d_modelToSEM_modelImageName("afm_sem_model", "none"),
+	d_updateModel("afm_sem_update_model", 0),
 	d_modelToSEM_SEMImageName("afm_sem_sem_image", "none"),
+	d_updateSEMImage("afm_sem_update_sem_image", 0),
 	d_addContactPoint("add_contact_point", 0),
 	d_deleteContactPoint("delete_contact_point", 0),
 	d_currentContactPoint("afm_sem_current_contact_point", "none"),
@@ -77,8 +81,10 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
   d_registrationMode.addCallback(handle_registrationMode_change, this);
   d_modelToSEM_modelImageName.addCallback(handle_modelToSEM_model_change, 
 			this);
+  d_updateModel.addCallback(handle_updateModel_change, this);
   d_modelToSEM_SEMImageName.addCallback(handle_modelToSEM_SEMImage_change, 
 			this);
+  d_updateSEMImage.addCallback(handle_updateSEMImage_change, this);
   d_addContactPoint.addCallback(handle_AddContactPoint, this);
   d_deleteContactPoint.addCallback(handle_DeleteContactPoint, this);
   d_currentContactPoint.addCallback(handle_currentContactPoint_change, this);
@@ -107,10 +113,12 @@ void nmui_AFM_SEM_CalibrationUI::setSPM(nmm_Microscope_Remote *scope)
 {
   if (d_AFM) {
     d_AFM->unregisterPointDataHandler(pointDataHandler, this);
+	d_AFM->unregisterFinishedFreehandHandler(finishedFreehandHandler, this);
   }
   d_AFM = scope;
   if (d_AFM) {
     d_AFM->registerPointDataHandler(pointDataHandler, this);
+	d_AFM->registerFinishedFreehandHandler(finishedFreehandHandler, this);
   }
 }
 
@@ -118,10 +126,12 @@ void nmui_AFM_SEM_CalibrationUI::setSEM(nmm_Microscope_SEM_Remote *sem)
 {
   if (d_SEM) {
     d_SEM->unregisterChangeHandler(this, semDataHandler);
+	d_SEM->unregisterSynchHandler(semSynchHandler, this);
   }
   d_SEM = sem;
   if (d_SEM) {
     d_SEM->registerChangeHandler(this, semDataHandler);
+	d_SEM->registerSynchHandler(semSynchHandler, this);
   }
 }
 
@@ -153,6 +163,15 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 				vrpn_FALSE, vrpn_FALSE);
 		d_aligner->setImage(NMR_TARGET, d_modelToSEM_SEMImage, 
 				vrpn_FALSE, vrpn_FALSE);
+		if (d_AFM && d_AFM->Data() && d_AFM->Data()->inputGrid) {
+			double minX, minY, maxX, maxY;
+			BCGrid *inputGrid = d_AFM->Data()->inputGrid;
+			minX = inputGrid->minX();
+			minY = inputGrid->minY();
+			maxX = inputGrid->maxX();
+			maxY = inputGrid->maxY();
+			d_surfaceModelRenderer.setSurfaceRegion(minX, minY, maxX, maxY);
+		}
 	}
 }
 
@@ -668,15 +687,71 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 			const char *name, void *ud)
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	if (!(vrpn_int32)(me->d_windowOpen)) {
+		return;
+	}
 	printf("modelToSEM_model: %s\n", name);
 	if (me->d_dataset) {
 		me->d_modelToSEM_modelImage = 
 			me->d_dataset->dataImages()->getImageByName(name);
+		if (!me->d_modelToSEM_modelImage) {
+			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change: \n"
+				"image not found: %s\n", name);
+			return;
+		}
 		double modelMinX, modelMinY, modelMaxX, modelMaxY;
 		me->d_modelToSEM_modelImage->getWorldRectangle(
 			modelMinX, modelMinY, modelMaxX, modelMaxY);
 		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
 			modelMinX, modelMinY, modelMaxX, modelMaxY,
+			me->d_surfaceStride);
+		// find out where the surface model renderer will put the surface
+		// and scale and translate this so it fits where the AFM thinks the
+		// scan range is and store this transformation in d_AFMfromModel
+		if (me->d_AFM && me->d_AFM->Data() && me->d_AFM->Data()->inputGrid) {
+			double minX, minY, maxX, maxY;
+			BCGrid *inputGrid = me->d_AFM->Data()->inputGrid;
+			minX = inputGrid->minX();
+			minY = inputGrid->minY();
+			maxX = inputGrid->maxX();
+			maxY = inputGrid->maxY();
+			me->d_surfaceModelRenderer.setSurfaceRegion(minX, minY, maxX, maxY);
+		}
+	}
+	
+	if ((vrpn_int32)(me->d_registrationMode) == 
+		(vrpn_int32)(me->d_registrationMode_model_SEM) &&
+		(vrpn_int32)(me->d_windowOpen)) {
+		me->d_aligner->setImage(NMR_SOURCE, me->d_modelToSEM_modelImage, 
+				vrpn_FALSE, vrpn_FALSE);
+	}
+	me->updateInputStatus();
+}
+
+// static
+void nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(
+			vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	if (!value) {
+		return;
+	}
+	printf("modelToSEM_model: %s\n", 
+		me->d_modelToSEM_modelImageName.string());
+	if (me->d_dataset) {
+		me->d_modelToSEM_modelImage = me->d_dataset->dataImages()->
+			getImageByName(me->d_modelToSEM_modelImageName.string());
+		if (!me->d_modelToSEM_modelImage) {
+			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change: \n"
+				"image not found: %s\n", 
+				me->d_modelToSEM_modelImageName.string());
+			return;
+		}
+		double modelMinX, modelMinY, modelMaxX, modelMaxY;
+		me->d_modelToSEM_modelImage->getWorldRectangle(
+			modelMinX, modelMinY, modelMaxX, modelMaxY);
+		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
+			modelMinX+1000, modelMinY+1000, modelMaxX+1000, modelMaxY+1000,
 			me->d_surfaceStride);
 		// find out where the surface model renderer will put the surface
 		// and scale and translate this so it fits where the AFM thinks the
@@ -713,6 +788,42 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change(
 	if (me->d_dataset) {
 		me->d_modelToSEM_SEMImage = 
 			me->d_dataset->dataImages()->getImageByName(name);
+		if (!me->d_modelToSEM_modelImage) {
+			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change: \n"
+				"image not found: %s\n", name);
+			return;
+		}
+		me->d_heightFieldNeedsUpdate = vrpn_TRUE;
+	}
+	if ((vrpn_int32)(me->d_registrationMode) == 
+		(vrpn_int32)(me->d_registrationMode_model_SEM) &&
+		(vrpn_int32)(me->d_windowOpen)) {
+		me->d_aligner->setImage(NMR_TARGET, me->d_modelToSEM_SEMImage, 
+					vrpn_FALSE, vrpn_FALSE);
+	}
+	me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
+	me->updateInputStatus();
+}
+
+// static
+void nmui_AFM_SEM_CalibrationUI::handle_updateSEMImage_change(
+			vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	if (!value) {
+		return;
+	}
+	printf("modelToSEM_SEMImage: %s\n", 
+		me->d_modelToSEM_SEMImageName.string());
+	if (me->d_dataset) {
+		me->d_modelToSEM_SEMImage = me->d_dataset->dataImages()->
+			getImageByName(me->d_modelToSEM_SEMImageName.string());
+		if (!me->d_modelToSEM_modelImage) {
+			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change: \n"
+				"image not found: %s\n", 
+				me->d_modelToSEM_SEMImageName.string());
+			return;
+		}
 		me->d_heightFieldNeedsUpdate = vrpn_TRUE;
 	}
 	if ((vrpn_int32)(me->d_registrationMode) == 
@@ -733,17 +844,25 @@ void nmui_AFM_SEM_CalibrationUI::handle_AddContactPoint(
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	// switch mode
-	if (me->d_tipPositionAcquiredSinceLastAdd && 
-		me->d_semImageAcquiredSinceLastAdd) {
-		nmb_ImageArray *image;
-		me->d_SEM->getImageData(&image);
-		me->addContactPoint(me->d_tipPosition, NULL, new nmb_ImageArray(image));
-		me->d_tipPositionAcquiredSinceLastAdd = vrpn_FALSE;
-		me->d_semImageAcquiredSinceLastAdd = vrpn_FALSE;
-		me->updateInputStatus();
-	} else {
-		fprintf(stderr, "Error, need to acquire data first\n");
+	me->addLatestDataAsContactPoint();
+}
+
+void nmui_AFM_SEM_CalibrationUI::addLatestDataAsContactPoint()
+{
+	if (!d_SEM) {
+		display_error_dialog("Add Contact Point: No SEM connected");
+		return;
 	}
+	nmb_ImageArray *image;
+	d_SEM->getImageData(&image);
+	if (!image) {
+		display_error_dialog("Add Contact Point: No SEM Data");
+		return;
+	}
+	addContactPoint(d_tipPosition, NULL, new nmb_ImageArray(image));
+	d_tipPositionAcquiredSinceLastAdd = vrpn_FALSE;
+	d_semImageAcquiredSinceLastAdd = vrpn_FALSE;
+	updateInputStatus();	
 }
 
 // static 
@@ -821,17 +940,25 @@ void nmui_AFM_SEM_CalibrationUI::handle_AddFreePoint(
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	// switch mode
-	if (me->d_tipPositionAcquiredSinceLastAdd && 
-        me->d_semImageAcquiredSinceLastAdd) {
-		nmb_ImageArray *image;
-		me->d_SEM->getImageData(&image);
-		me->addFreePoint(me->d_tipPosition, NULL, new nmb_ImageArray(image));
-		me->d_tipPositionAcquiredSinceLastAdd = vrpn_FALSE;
-		me->d_semImageAcquiredSinceLastAdd = vrpn_FALSE;
-		me->updateInputStatus();
-	} else {
-		fprintf(stderr, "Error, need to acquire data first\n");
+	me->addLatestDataAsFreePoint();
+}
+
+void nmui_AFM_SEM_CalibrationUI::addLatestDataAsFreePoint()
+{
+	if (!d_SEM) {
+		display_error_dialog("Add Free Point: No SEM connected");
+		return;
 	}
+	nmb_ImageArray *image;
+	d_SEM->getImageData(&image);
+	if (!image) {
+		display_error_dialog("Add Free Point: No SEM Data");
+		return;
+	}
+	addFreePoint(d_tipPosition, NULL, new nmb_ImageArray(image));
+	d_tipPositionAcquiredSinceLastAdd = vrpn_FALSE;
+	d_semImageAcquiredSinceLastAdd = vrpn_FALSE;
+	updateInputStatus();	
 }
 
 // static 
@@ -995,6 +1122,26 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 	}
 }
 
+int nmui_AFM_SEM_CalibrationUI::finishedFreehandHandler()
+{
+	if (d_windowOpen) {
+	  fprintf(stderr, "nmui_AFM_SEM_CalibrationUI: auto-acquiring calibration point\n");
+	  if (d_SEM) {
+		d_SEM->requestScan(1);
+		// send a synchronization message so we know when the scan has completed
+		d_SEM->requestSynchronization(0, 0, SCAN_COMPLETION_MESSAGE);
+	  }
+	}
+	return 0;
+}
+
+// static
+int nmui_AFM_SEM_CalibrationUI::finishedFreehandHandler(void *ud)
+{
+  nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+  return me->finishedFreehandHandler();
+}
+
 // non-static
 int nmui_AFM_SEM_CalibrationUI::pointDataHandler(const Point_results *pr)
 {
@@ -1035,6 +1182,21 @@ void nmui_AFM_SEM_CalibrationUI::semDataHandler(void *userdata,
 			me->d_SEMTexture.setImage(image);
 		}
 	}
+}
+
+// static
+int nmui_AFM_SEM_CalibrationUI::semSynchHandler (void *userdata,
+                                        const nmb_SynchMessage *data)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)userdata;
+	if (strcmp(data->comment, SCAN_COMPLETION_MESSAGE) == 0) {
+		if (me->d_registrationMode == me->d_registrationMode_AFM_SEM_contact) {
+			me->addLatestDataAsContactPoint();
+		} else if (me->d_registrationMode == me->d_registrationMode_AFM_SEM_free) {
+			me->addLatestDataAsFreePoint();
+		}
+	}
+	return 0;
 }
 
 void nmui_AFM_SEM_CalibrationUI::updateInputStatus()

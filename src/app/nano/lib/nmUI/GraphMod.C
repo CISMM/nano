@@ -449,7 +449,11 @@ static   long	first_sec,first_usec;
               }
           }
           // chop it off to one element
-          sprintf(command, "gm_Surface_Z_Axis set {%f}", p->z());
+		  double z_value = 0;
+		  if (p->is3D()) {
+			z_value = p->z();
+		  }
+		  sprintf(command, "gm_Surface_Z_Axis set {%f}", z_value);
           TCLEVALCHECK(me->d_interp, command);
           //}
 
@@ -547,11 +551,14 @@ static   long	first_sec,first_usec;
       sprintf(command, "gm_Surface_Y_Axis append %f", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
-      if (me->d_is3D) {
-          // update the z surface vector
-          sprintf(command, "gm_Surface_Z_Axis append %f", p->z());
-          TCLEVALCHECK(me->d_interp, command);
-      }
+	  double z_value = 0.0;
+      if (p->is3D()) {
+		  z_value = p->z();
+	  }
+      // update the z surface vector
+      sprintf(command, "gm_Surface_Z_Axis append %f", z_value);
+      TCLEVALCHECK(me->d_interp, command);
+
       // sanity check on d_max_points
       if (me->d_max_points < 2) {
 	  me->d_max_points = 2;

@@ -52,10 +52,13 @@ class nmui_AFM_SEM_CalibrationUI {
     // model_SEM selectors
     static void handle_modelToSEM_model_change(const char *name, void *ud);
     static void handle_modelToSEM_SEMImage_change(const char *name, void *ud);
+	static void handle_updateModel_change(vrpn_int32 value, void *ud);
+	static void handle_updateSEMImage_change(vrpn_int32 value, void *ud);
 
     // AFM_SEM_contact
     // buttons
     static void handle_AddContactPoint(vrpn_int32 value, void *ud);
+	void addLatestDataAsContactPoint();
     static void handle_DeleteContactPoint(vrpn_int32 value, void *ud);
     // point selector
     static void handle_currentContactPoint_change(const char *name, void *ud);
@@ -63,6 +66,7 @@ class nmui_AFM_SEM_CalibrationUI {
     // AFM_SEM_free
     // buttons
     static void handle_AddFreePoint(vrpn_int32 value, void *ud);
+	void addLatestDataAsFreePoint();
     static void handle_DeleteFreePoint(vrpn_int32 value, void *ud);
     // point selector
     static void handle_currentFreePoint_change(const char *name, void *ud);
@@ -88,7 +92,9 @@ class nmui_AFM_SEM_CalibrationUI {
     Tclvar_int d_registrationMode;
 
     Tclvar_string d_modelToSEM_modelImageName;
+	Tclvar_int d_updateModel;
     Tclvar_string d_modelToSEM_SEMImageName;
+	Tclvar_int d_updateSEMImage;
 
     Tclvar_int d_addContactPoint;
     Tclvar_int d_deleteContactPoint;
@@ -117,6 +123,8 @@ class nmui_AFM_SEM_CalibrationUI {
  
     // AFM
     nmm_Microscope_Remote *d_AFM;
+	int finishedFreehandHandler();
+	static int finishedFreehandHandler(void *ud);
     int pointDataHandler(const Point_results *pr);
     static int pointDataHandler(void *ud, const Point_results *pr);
 	// stores the latest position reported by the AFM
@@ -128,6 +136,8 @@ class nmui_AFM_SEM_CalibrationUI {
 	vrpn_bool d_semImageAcquiredSinceLastAdd;
 	static void semDataHandler(void *userdata,
                           const nmm_Microscope_SEM_ChangeHandlerData &info);
+	static int semSynchHandler (void *ud,
+                                const nmb_SynchMessage *data);
     nmm_Microscope_SEM_Remote *d_SEM;
 
     // alignment module

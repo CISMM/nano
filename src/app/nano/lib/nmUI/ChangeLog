@@ -1,3 +1,17 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* GraphMod.C : fixed this so it doesn't try to access the z value from
+	a Point_results object that doesn't have a z value - uses 0 instead.
+	* nmui_AFM_SEM_CalibrationUI.C : added refresh buttons for model and
+	SEM images used for the model-SEM alignment stage
+	(finishedFreehandHandler): new function to automatically acquire a 
+	calibration result when you stop moving the tip with the phantom by 
+	letting go of the phantom button
+	(semSynchHandler): new function to tell us when the sem has completed
+	a scan which was started after when the tip stopped moving
+	(addLatestDataAsContactPoint, addLatestDataAsFreePoint): moved some
+	code into these new functions so it can be used in more than one place
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_AFM_SEM_CalibrationUI.C :
