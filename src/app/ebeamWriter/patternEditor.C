@@ -873,6 +873,10 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
+		   case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
+		   case 8:		// 8 is for backspace, ^H. 
+			 undoShape();
+			 break;
            default:
              break;
          }

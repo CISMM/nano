@@ -6,6 +6,7 @@
 	(handleSEMChange): stores SEM data in an nmb_ImageGrid since it doesn't
 	have a border by default and this keeps the texture smaller; also changes
 	the data so its stored as floats and maps min/max values to 0/1
+	- added call to undoShape() for delete or backspace keypress
 	* patternEditor.C : added texture objects for canvas image and
 	live SEM image since this is all we need most of the time
 	(drawImage): passes texture IDs to ImageViewer::drawImage so it
