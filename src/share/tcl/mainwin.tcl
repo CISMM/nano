@@ -549,7 +549,7 @@ proc diable_widgets_for_readmode { name el op } {
 }
 trace variable spm_read_mode w diable_widgets_for_readmode
 
-proc diable_device_widgets_for_commands_suspended { variable name el op } {
+proc diable_device_widgets_for_commands_suspended { name el op } {
     global device_only_controls  
     global spm_commands_suspended
     global collab_commands_suspended
@@ -564,15 +564,17 @@ proc diable_device_widgets_for_commands_suspended { variable name el op } {
     if $collab_commands_suspended {set commands_suspended 1}
     if $readmode_device_commands_suspended {set commands_suspended 1}
 
+#puts "spm $spm_commands_suspended collab $collab_commands_suspended readmode $readmode_device_commands_suspended"
 #puts "commands_suspended $commands_suspended"
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
     switch $commands_suspended {
         0 {
-#puts "Enabling controls"
+#puts "Enabling controls $device_only_controls"
             # Commands aren't suspended, enable controls
             foreach widget $device_only_controls {
+#puts "$widget"
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
                     # saved in the list with the widget name, like 
@@ -582,11 +584,13 @@ proc diable_device_widgets_for_commands_suspended { variable name el op } {
                     $widget configure -state normal
                 }
             }
+#puts "Done enabling"
         }
         1 {
-#puts "Disabling controls"
+#puts "Disabling controls $device_only_controls"
             # Commands are suspended, disable controls
             foreach widget $device_only_controls {
+#puts "$widget"
                 if { ([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
                     # saved in the list with the widget name, like 
@@ -596,8 +600,10 @@ proc diable_device_widgets_for_commands_suspended { variable name el op } {
                     $widget configure -state disabled
                 }
             }
+#puts "Done disabling"
         }
     }
+#puts "Done with diable_device_widgets_for_commands_suspended"
 }
 
 # Helps with Thermo Image Analysis mode. When in this mode, most of 
@@ -745,7 +751,7 @@ wm deiconify .
 
 if {![info exists collab_commands_suspended] } \
                  { set collab_commands_suspended 1; \
-                   diable_device_widgets_for_commands_suspended 0 0 0 0 }
+                   diable_device_widgets_for_commands_suspended 0 0 0 }
 
 trace variable collab_commands_suspended w diable_device_widgets_for_commands_suspended
 

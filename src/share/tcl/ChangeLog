@@ -1,3 +1,13 @@
+2000-12-5  Tom Hudson  <hudson@cs.unc.edu>
+
+	* latency.tcl : add forward error correction, queue monitoring,
+	network statistics controls to latency pane
+	* mainwin.tcl : fixes to cooperation between
+	diable_widgets_for_readmode and diable_device_widgets_for_
+	commands_suspended.
+	* shared_ptr.tcl : fixes to logic in mutex handler callbacks
+	so disables and enables are correct
+
 2000-12-05  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* modify.tcl : new code for optimize now.

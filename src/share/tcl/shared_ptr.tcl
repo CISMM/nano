@@ -133,30 +133,44 @@ proc mutex_request_command {} {
   global request_mutex
   global sharedptr
 
+#puts "We requested the mutex"
+
   set request_mutex 1
   $sharedptr(sp).mutex.request_mutex_button configure \
+          -state disabled
+  $sharedptr(sp).mutex.release_mutex_button configure \
           -state disabled
 }
 
 proc mutex_gotRequest_callback {} {
   global sharedptr
   global collab_commands_suspended
+  global view
 
+#puts "We got the mutex"
+
+  $sharedptr(sp).mutex.request_mutex_button configure \
+          -state disabled
   $sharedptr(sp).mutex.release_mutex_button configure \
           -state normal
 
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 0
 
-  $view.xy_lock configure -state enabled
+  $view.xy_lock configure -state normal
 }
 
 proc mutex_deniedRequest_callback {} {
   global sharedptr
   global collab_commands_suspended
+  global view
+
+#puts "We were denied the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal
+  $sharedptr(sp).mutex.release_mutex_button configure \
+          -state disabled
 
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 1
@@ -166,21 +180,34 @@ proc mutex_deniedRequest_callback {} {
 
 proc mutex_taken_callback {} {
   global sharedptr
+  global collab_commands_suspended
+  global view
+
+#puts "Somebody took the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
 
+  # Don't set collab_commands_suspended, or disable anything else,
+  # since we get this message when WE get the mutex
   # trigger a trace function in mainwin.tcl
-  set collab_commands_suspended 1
-
-  $view.xy_lock configure -state disabled
+  # set collab_commands_suspended 1
+  #$sharedptr(sp).mutex.release_mutex_button configure \
+          #-state disabled
+  #$view.xy_lock configure -state disabled
 }
 
 proc mutex_release_callback {} {
   global sharedptr
+  global collab_commands_suspended
+  global view
+
+#puts "Somebody released the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal
+  $sharedptr(sp).mutex.release_mutex_button configure \
+          -state disabled
 
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 1
