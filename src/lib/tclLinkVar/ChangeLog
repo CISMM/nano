@@ -1,3 +1,9 @@
+2002-01-31 David Marshbuirn  <marshbur@cs.unc.edu>
+
+	*  tclLinkVar.dsp:  compiles with non-static run-time libraries now.
+	*  error_display.[h,C]:  moved here so that other apps can use
+	the error dialogs
+
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Tcl_Interpreter.Ch : this provides a home for the global
