@@ -72,6 +72,7 @@ int nmm_SimulatedMicroscope_Remote::mainloop() {
 HANDLERS nmm_AFMSIM_Report ; 
 //
 int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
+  int i;
   const char * buffer = grpc_p.buffer;
   nmm_SimulatedMicroscope_Remote* grpc_me = (nmm_SimulatedMicroscope_Remote *) userdata;
   
@@ -94,7 +95,7 @@ int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_
 		}
 //
 		//send triangles
-		for(int i = 0; i < num_vertices;i += 3){//only sends triangles if they have been filled in in URender 
+		for(i = 0; i < num_vertices;i += 3){//only sends triangles if they have been filled in in URender 
                                           //(i.e. num_triangles != 0), so safe to keep have this for loop here
 			// rotate and translate points
 

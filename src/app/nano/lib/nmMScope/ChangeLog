@@ -1,5 +1,9 @@
 2002-03-27  David Borland  <borland@cs.unc.edu>
 
+        * nmm_SimulatedMicroscope_Remote.Cdef: fixed build problem on sgi
+
+2002-03-27  David Borland  <borland@cs.unc.edu>
+
         * nmm_SimulatedMicroscope_Remote.Cdef: added code for sending 
         translated and rotated triangles to the AFM simulator
 
