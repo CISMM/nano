@@ -191,7 +191,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSFeelAhead ();
+    nmui_HSFeelAhead (void);
       ///< Set of point results used is
       ///< microscope->state.data.receivedPointList.
 
@@ -210,12 +210,12 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
       ///< Do nothing - handled asynchronously by updateModel().
 
 
+    static int newPointListReceivedCallback (void *);
+      ///< To be registered on the microscope.
 
   protected:
 
     void updateModel (void);
-    static void newPointListReceivedCallback (void *);
-    ///< Registered on the microscope.
 
     vrpn_ForceDevice_Remote * d_device;
 #ifndef USE_VRPN_MICROSCOPE

@@ -3,6 +3,15 @@
 #include <stdlib.h>  // for NULL!
 
 nmui_HapticsManager::nmui_HapticsManager (void) :
+    d_canned  (NULL),
+    d_measurePlane  (NULL),
+    d_livePlane  (NULL),
+    d_feelAhead  (NULL),
+    d_directZ  (NULL),
+
+    d_gridFeatures  (NULL),
+    d_pointFeatures  (NULL),
+
     d_surfaceFeatures (),
     d_hapticSurface (NULL) {
 

@@ -463,7 +463,7 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
 
 
 
-nmui_HSFeelAhead::nmui_HSFeelAhead () {
+nmui_HSFeelAhead::nmui_HSFeelAhead (void) {
 
 }
 
@@ -565,12 +565,13 @@ void nmui_HSFeelAhead::updateModel (void) {
 }
 
 // static
-void nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
+int nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
 
   nmui_HSFeelAhead * it = (nmui_HSFeelAhead *) userdata;
 
   it->updateModel();
 
+  return 0;
 }
 
 
