@@ -73,6 +73,11 @@ public:
 	//updates d_cntMask when new information is received
 	void UpdateDataArray(double * cntMask, int size);
   
+        // Accessor.  Returns true if this calc'd plane depend on
+        // (is calculated from) the specified plane.
+        bool dependsOnPlane( const BCPlane* const plane );
+        bool dependsOnPlane( const char* planeName );
+
 	// Accessor.  Returns that calculated plane.
 	BCPlane* getCalculatedPlane(){return NULL;}//fill these in later
 

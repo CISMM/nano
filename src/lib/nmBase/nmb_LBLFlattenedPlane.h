@@ -28,6 +28,13 @@ public:
 			 )
     throw( nmb_CalculatedPlaneCreationException );
 
+  virtual ~nmb_LBLFlattenedPlane( );
+
+  // Accessor.  Returns true if this calc'd plane depend on
+  // (is calculated from) the specified plane.
+  virtual bool dependsOnPlane( const BCPlane* const plane );
+  virtual bool dependsOnPlane( const char* planeName );
+
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
   // plane.
@@ -55,8 +62,8 @@ protected:
   void fillLBLFlattenedPlane( nmb_Dataset* dataset );
 
 private:
-	nmb_LBLFlattenedPlane( ) : nmb_CalculatedPlane( "", NULL )
-		{ }
+  nmb_LBLFlattenedPlane( ) : nmb_CalculatedPlane( "", NULL )
+  { }
 
 }; // end class nmb_LBLFlattenedPlane
 

@@ -32,8 +32,13 @@ const int nmb_CalculatedPlane::
 SUMMED_PLANE_TYPE = 3;
 
 /* static */
-NewCalculatedPlaneCallbackNode* nmb_CalculatedPlane::
+nmb_CalculatedPlane::NewCalculatedPlaneCallbackNode* nmb_CalculatedPlane::
 calculatedPlaneCB_head = NULL;
+
+/* static */
+nmb_CalculatedPlaneNode* nmb_CalculatedPlane::
+calculatedPlaneList_head = NULL;
+
 
 // Constructor
 nmb_CalculatedPlane::
@@ -67,10 +72,9 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
   sprintf( calculatedPlaneName, "%s", planeName );
   // YOUR CLOSE-MINDED PLANE-NAMING TECHINIQUES WILL BE YOUR
   // DOWNFALL WHEN THE REVOLUTION COMES!!1!11!  ALL PLANE
-  // NAMES ARE BEAUTIFUL!!!!!
+  // NAMES ARE BEAUTIFUL!!!!!  :)
 #endif
   // calculatedPlaneName is now set
-
   
   BCPlane* calculatedPlane 
      = dataset->inputGrid->getPlaneByName( calculatedPlaneName );
@@ -90,9 +94,50 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
 nmb_CalculatedPlane::
 ~nmb_CalculatedPlane( )
 {
-	if( calculatedPlaneName != NULL )
-		delete calculatedPlaneName;
-}
+  if( calculatedPlaneName != NULL )
+    delete calculatedPlaneName;
+
+  // remove ourselves from the list of planes
+  nmb_CalculatedPlaneNode* node = calculatedPlaneList_head;
+  nmb_CalculatedPlaneNode* last = NULL;
+  while( node != NULL && node->data != this )
+  {
+    last = node;
+    node = node->next;
+  }
+  if( node != NULL )
+  {
+    if( node == calculatedPlaneList_head ) // first element
+      calculatedPlaneList_head = node->next;
+    if( last != NULL )
+      last->next = node->next;
+    node->next = NULL;
+    delete node;
+  }
+
+  // remove any planes that depend on us.
+  bool doneSearching = false;
+  while( !doneSearching )
+  {
+    // search through the list and find one plane
+    // that depends on our calc'd plane.  remove it,
+    // then search through the list again.
+    node = calculatedPlaneList_head;
+    nmb_CalculatedPlane* dependentPlane = NULL;
+    while( node != NULL && dependentPlane == NULL )
+    {
+      if( node->data->dependsOnPlane( calculatedPlane ) )
+        dependentPlane = node->data;
+      else
+        node = node->next;
+    }
+    if( node == NULL )
+      doneSearching = true;
+    else
+      delete dependentPlane; // note that this changes the list
+  }
+
+} // end ~nmb_CalculatedPlane
 
 
 BCPlane* nmb_CalculatedPlane::
@@ -111,7 +156,8 @@ getName( )
 
 
 void nmb_CalculatedPlane:: 
-createCalculatedPlane( char* units, BCPlane* sourcePlane, nmb_Dataset* dataset )
+createCalculatedPlane( char* units, BCPlane* sourcePlane, 
+		       nmb_Dataset* dataset )
   throw( nmb_CalculatedPlaneCreationException )
 {
   calculatedPlane 
@@ -169,12 +215,12 @@ receiveCalculatedPlane( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
       break;
     default:
       newPlane = NULL;
+      fprintf( stderr, "Warning:  received a calculated plane message "
+	       "with an unknown type:  %d\n", planeType );
       break;
     }
-
   return newPlane;
-}
-
+} // end receiveCalculatedPlane
 
 
 void nmb_CalculatedPlane::
@@ -187,6 +233,12 @@ addNewCalculatedPlane( nmb_CalculatedPlane* plane )
       cbnode->callback( cbnode->userdata, plane );
       cbnode = cbnode->next;
     }
+
+  // add this plane to our list
+  nmb_CalculatedPlaneNode* node = new nmb_CalculatedPlaneNode;
+  node->data = plane;
+  node->next = calculatedPlaneList_head;
+  calculatedPlaneList_head = node;
 
 } // end addNewCalculatedPlane( ... )
 

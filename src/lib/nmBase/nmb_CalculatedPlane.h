@@ -34,6 +34,14 @@ typedef void (NewCalculatedPlaneCallback)
   ( void* userdata, const nmb_CalculatedPlane* newPlane );
 
 
+////////////////
+// Structure used to make lists of CalculatedPlanes
+struct nmb_CalculatedPlaneNode
+{
+  nmb_CalculatedPlane* data;
+  nmb_CalculatedPlaneNode* next;
+};
+
 
 /////////////////
 // object thrown when an exception occurs during creation
@@ -56,25 +64,6 @@ protected:
 
 
 
-////////////////
-// Structure used to make lists of CalculatedPlanes
-struct nmb_CalculatedPlaneNode
-{
-  nmb_CalculatedPlane* data;
-  nmb_CalculatedPlaneNode* next;
-};
-
-
-
-struct NewCalculatedPlaneCallbackNode 
-{
-  void* userdata;
-  NewCalculatedPlaneCallback* callback;
-  NewCalculatedPlaneCallbackNode* next;
-};
-
-
-
 /* virtual */ 
 class nmb_CalculatedPlane
 {
@@ -85,6 +74,11 @@ public:
 
   // Accessor.  Returns the name of the calculated plane.
   const BCString* getName( );
+
+  // Accessor.  Returns true if this calc'd plane depend on
+  // (is calculated from) the specified plane.
+  virtual bool dependsOnPlane( const BCPlane* const plane ) = 0;
+  virtual bool dependsOnPlane( const char* planeName ) = 0;
 
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
@@ -112,14 +106,12 @@ public:
   removeNewCalculatedPlaneCallback( void* userdata,
 				    NewCalculatedPlaneCallback* callback );
 
+  // removes this plane and all planes that depend on it.
   virtual ~nmb_CalculatedPlane( );
 
 protected:
   //////////////
   // the following are member variables of all calculated planes
-
-  // The name of the calculated plane
-  char* calculatedPlaneName;
 
   // The calculated plane
   BCPlane* calculatedPlane;
@@ -148,7 +140,8 @@ protected:
   /////////////
   // function that will be called by nmb_CalculatePlane::
   // handle_CalculatedPlane_synch() for the appropriate subclass.
-  // This is reasonably a virtual function.
+  // This is reasonably a virtual function. (but things can't be
+  // both virtual and static).
   static nmb_CalculatedPlane*
   _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
     throw( nmb_CalculatedPlaneCreationException );
@@ -160,9 +153,20 @@ protected:
   // copy constructor
   nmb_CalculatedPlane( nmb_CalculatedPlane& );
 
+  // The desired name of the calculated plane
+  char* calculatedPlaneName;
+
+  struct NewCalculatedPlaneCallbackNode 
+  {
+    void* userdata;
+    NewCalculatedPlaneCallback* callback;
+    NewCalculatedPlaneCallbackNode* next;
+  };
+  
   static NewCalculatedPlaneCallbackNode* calculatedPlaneCB_head; 
   static nmb_CalculatedPlaneNode* calculatedPlaneList_head;
-   // calls any callbacks registered to listen for new 
+
+  // calls any callbacks registered to listen for new 
   // calculated plane creation.
   static void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
 
@@ -186,7 +190,9 @@ protected:
 //     to recognize planes of the new type.  This also means
 //     that a header for the new plane type needs to be included in
 //     nmb_CalculatedPlane.C.
-
+//  4) Call nmb_CalculatedPlane::createCalculatedPlane(...) in the 
+//     constructor(s) for the new plane type.  This will create and
+//     initialize the calculatedPlane data member.
 
 #ifdef _WIN32
 #pragma warning( pop )

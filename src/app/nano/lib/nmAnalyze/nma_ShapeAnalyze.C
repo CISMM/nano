@@ -218,6 +218,29 @@ nma_ShapeIdentifiedPlane::
   delete d_dataset;*/
 }
 
+
+bool nma_ShapeIdentifiedPlane::
+dependsOnPlane( const BCPlane* const plane )
+{
+  if( plane == NULL ) return false;
+  if( plane == this->d_sourcePlane /* pointer comparison */ )
+    return true;
+  else
+    return false;
+}
+
+
+bool nma_ShapeIdentifiedPlane::
+dependsOnPlane( const char* planeName )
+{
+  if( planeName == NULL ) return false;
+  if( strcmp( planeName, this->d_sourcePlane->name()->Characters() ) )
+    return true;
+  else
+    return false;
+}
+
+
 //updates d_cntMask when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
 UpdateDataArray(double * cntMask, int size){

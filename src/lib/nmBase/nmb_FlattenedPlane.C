@@ -35,7 +35,7 @@ nmb_FlattenedPlane( const char* inputPlaneName,
     }
 
   // Is the destination plane name the same as the source plane name?
-  if( strcmp( calculatedPlaneName, inputPlaneName ) == 0 ) 
+  if( strcmp( outputPlaneName, inputPlaneName ) == 0 ) 
     {
       char s[] = "Cannot create flattened plane.  "
 	"Plane cannot flatten from itself.";
@@ -78,7 +78,8 @@ nmb_FlattenedPlane( const char* inputPlaneName,
 } // end nmb_FlattenedPlane( ... )
 
 
-
+// this contructor is non-public, and is used in
+// conjunction with _handle_PlaneSynch
 nmb_FlattenedPlane::
 nmb_FlattenedPlane( const char* inputPlaneName,
                     const char* outputPlaneName,
@@ -95,7 +96,7 @@ nmb_FlattenedPlane( const char* inputPlaneName,
     }
 
   // Is the destination plane name the same as the source plane name?
-  if( strcmp( calculatedPlaneName, inputPlaneName ) == 0 ) 
+  if( strcmp( outputPlaneName, inputPlaneName ) == 0 ) 
     {
       char s[] = "Cannot create flattened plane.  "
 	"Plane cannot flatten from itself.";
@@ -113,8 +114,43 @@ nmb_FlattenedPlane( const char* inputPlaneName,
       throw nmb_CalculatedPlaneCreationException( msg );
     }
 
+  // registering ourselves to receive plane updates is deferred
+  // to _handle_PlaneSynch
 
 } // end nmb_FlattenedPlane( ... )
+
+
+nmb_FlattenedPlane::
+~nmb_FlattenedPlane( )
+{
+  // unregister ourselves to receive plane updates
+  if( sourcePlane != NULL )
+  {
+    sourcePlane->remove_callback( sourcePlaneChangeCallback, this );
+  }
+} // end ~nmb_FlattenedPlane
+
+
+bool nmb_FlattenedPlane::
+dependsOnPlane( const BCPlane* const plane )
+{
+  if( plane == NULL ) return false;
+  if( plane == sourcePlane /* pointer comparison */ )
+    return true;
+  else
+    return false;
+}
+
+
+bool nmb_FlattenedPlane::
+dependsOnPlane( const char* planeName )
+{
+  if( planeName == NULL ) return false;
+  if( strcmp( planeName, this->sourcePlane->name()->Characters() ) )
+    return true;
+  else
+    return false;
+}
 
 
 void nmb_FlattenedPlane::
@@ -193,10 +229,10 @@ sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
 void nmb_FlattenedPlane::
 _handleSourcePlaneChange( int x, int y )
 {
-  this->flatPlane->setValue(x, y, 
-			    (float) (sourcePlane->value(x, y) +
-				     this->offset - this->dx * x 
-				     - this->dy * y ) );
+  float value = (float) (sourcePlane->value(x, y) +
+                         this->offset - this->dx * x 
+			 - this->dy * y );
+  this->calculatedPlane->setValue(x, y, value);
 } // end _handleSourcePlaneChange
 
 
@@ -212,10 +248,10 @@ sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
   vrpn_buffer( &bufptr, &msglen, (vrpn_float64) dx );
   vrpn_buffer( &bufptr, &msglen, (vrpn_float64) dy );
   vrpn_buffer( &bufptr, &msglen, (vrpn_float64) offset );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) flatPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->Length() );
   vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, flatPlane->name()->Characters(),
-	      flatPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->Characters(),
+	      calculatedPlane->name()->Length() );
   vrpn_buffer( &bufptr, &msglen, sourcePlane->name()->Characters(),
 	      sourcePlane->name()->Length() );
   
@@ -270,7 +306,8 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   newFlatPlane->offset = offset;
   
   // try to get the requested source plane...
-  newFlatPlane->sourcePlane = dataset->inputGrid->getPlaneByName(sourcePlaneName);
+  newFlatPlane->sourcePlane 
+    = dataset->inputGrid->getPlaneByName(sourcePlaneName);
   if( newFlatPlane->sourcePlane == NULL )
     {
       char s[] = "Cannot create flattened plane from remote source.  "
@@ -282,20 +319,22 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
 
   // create output plane
   char newunits[1000];
-  sprintf(newunits, "%s_flat", newFlatPlane->sourcePlane->units()->Characters());
-  newFlatPlane->createCalculatedPlane( newunits, newFlatPlane->sourcePlane, dataset );
+  sprintf(newunits, "%s_flat", 
+	  newFlatPlane->sourcePlane->units()->Characters());
+  newFlatPlane->createCalculatedPlane( newunits, 
+				       newFlatPlane->sourcePlane, dataset );
   
   // fill in the new plane.
   for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
     {
       for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
 	{
-	  newFlatPlane->calculatedPlane->setValue( x, y,
-				                   (float) ( newFlatPlane->sourcePlane->value(x, y) 
-					                     + offset - dx * x - dy * y ) );
+	  float value = (float) ( newFlatPlane->sourcePlane->value(x, y) 
+				  + offset - dx * x - dy * y );
+	  newFlatPlane->calculatedPlane->setValue( x, y, value );
 	}
     }
-
+  
   // register new flattened plane to receive plane updates
   newFlatPlane->sourcePlane->add_callback( sourcePlaneChangeCallback, 
 					   newFlatPlane );

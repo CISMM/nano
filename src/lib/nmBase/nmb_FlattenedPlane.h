@@ -32,11 +32,12 @@ public:
 		      )
     throw( nmb_CalculatedPlaneCreationException );
   
-  // Accessor.  Returns that calculated plane.
-  BCPlane* getCalculatedPlane( )  { return flatPlane; }
+  virtual ~nmb_FlattenedPlane( );
 
-  // returns the name of the calculated plane
-  const BCString* getName( )  { return flatPlane->name( ); }
+  // Accessor.  Returns true if this calc'd plane depend on
+  // (is calculated from) the specified plane.
+  virtual bool dependsOnPlane( const BCPlane* const plane );
+  virtual bool dependsOnPlane( const char* planeName );
 
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
@@ -46,13 +47,14 @@ public:
 
   
 protected:
+  // this constructor is used internally when creating a plane from
+  // a remote specification in _handle_PlaneSynch
   nmb_FlattenedPlane( const char* inputPlaneName,
                       const char* outputPlaneName,
                       nmb_Dataset* dataset )
     throw( nmb_CalculatedPlaneCreationException );
 
   BCPlane* sourcePlane;
-  BCPlane* flatPlane;
   double dx, dy, offset;
 
   // create a new plane according to the data from vrpn
@@ -78,7 +80,7 @@ protected:
 private:
   nmb_FlattenedPlane( ) 
     : nmb_CalculatedPlane( "", NULL ),
-	 sourcePlane( NULL ), flatPlane( NULL ),
+	 sourcePlane( NULL ),
       dx( 0 ), dy( 0 ), offset( 0 )
   {  };
 

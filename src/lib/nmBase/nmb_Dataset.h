@@ -26,9 +26,6 @@ class nmb_String;  // from nmb_String.h
 // class nmb_Dataset
 //
 // Tom Hudson, November 1997
-
-// struct sum_node;
-
 /**
    Contains a (pointer to a) BCGrid with all known data from microscopes,
  and an nmb_Subgrid used to record the portions of that grid that have

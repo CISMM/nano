@@ -1,3 +1,7 @@
+2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nma_ShapeAnalyze.[h,C]:  added dependsOnPlane functions
+
 2001-12-28  Russell Taylor  <taylorr@cs.unc.edu>
 
 	* cnt_ia.C : Opened fDet file, rather than fSum file twice --

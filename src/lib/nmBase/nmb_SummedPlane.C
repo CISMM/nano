@@ -103,6 +103,43 @@ nmb_SummedPlane( const char* inputPlaneName1,
 } // end nmb_SummedPlane( ... )
 
 
+nmb_SummedPlane::
+~nmb_SummedPlane( )
+{
+  // unregister ourselves to receive plane updates
+  if( sourcePlane1 != NULL )
+    sourcePlane1->remove_callback( sourcePlaneChangeCallback, this );
+  if( sourcePlane2 != NULL )
+    sourcePlane2->remove_callback( sourcePlaneChangeCallback, this );
+} // end ~nmb_FlattenedPlane
+
+
+bool nmb_SummedPlane::
+dependsOnPlane( const BCPlane* const plane )
+{
+  if( plane == NULL ) return false;
+  if( plane == sourcePlane1 /* pointer comparison */ )
+    return true;
+  else if( plane == sourcePlane2 )
+    return true;
+  else
+    return false;
+}
+
+
+bool nmb_SummedPlane::
+dependsOnPlane( const char* planeName )
+{
+  if( planeName == NULL ) return false;
+  if( strcmp( planeName, this->sourcePlane1->name()->Characters() ) )
+    return true;
+  else if( strcmp( planeName, this->sourcePlane2->name()->Characters() ) )
+    return true;
+  else
+    return false;
+}
+
+
 /* static */
 void nmb_SummedPlane::
 sourcePlaneChangeCallback( BCPlane* plane, int x, int y,

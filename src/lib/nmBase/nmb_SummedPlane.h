@@ -32,6 +32,13 @@ public:
 		   )
     throw( nmb_CalculatedPlaneCreationException );
   
+  virtual ~nmb_SummedPlane( );
+
+  // Accessor.  Returns true if this calc'd plane depend on
+  // (is calculated from) the specified plane.
+  virtual bool dependsOnPlane( const BCPlane* const plane );
+  virtual bool dependsOnPlane( const char* planeName );
+
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
   // plane.

@@ -66,6 +66,38 @@ nmb_LBLFlattenedPlane( const char* inputPlaneName,
 } // end nmb_LBLFlattenedPlane( ... )
 
 
+bool nmb_LBLFlattenedPlane::
+dependsOnPlane( const BCPlane* const plane )
+{
+  if( plane == NULL ) return false;
+  if( plane == sourcePlane /* pointer comparison */ )
+    return true;
+  else
+    return false;
+}
+
+
+nmb_LBLFlattenedPlane::
+~nmb_LBLFlattenedPlane( )
+{
+  // unregister ourselves to receive plane updates
+  if( sourcePlane != NULL )
+  {
+    sourcePlane->remove_callback( sourcePlaneChangeCallback, this );
+  }
+} // end ~nmb_FlattenedPlane
+
+
+bool nmb_LBLFlattenedPlane::
+dependsOnPlane( const char* planeName )
+{
+  if( planeName == NULL ) return false;
+  if( strcmp( planeName, this->sourcePlane->name()->Characters() ) )
+    return true;
+  else
+    return false;
+}
+
 void nmb_LBLFlattenedPlane::
 fillLBLFlattenedPlane( nmb_Dataset* dataset )
 { 

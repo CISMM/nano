@@ -1,3 +1,14 @@
+2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_Dataset.h:  removed a spurious comment
+	* nmb_SummedPlane.[h,C]:  added destructor and dependsOnPlane functions
+	* nmb_LBLFlattenedPlane.[h,C]:  same
+	* nmb_FlattenedPlane.[h,C]:  same, plus removed two erroneously 
+	overridden functions from nmb_CalculatedPlane
+	* nmb_CalculatedPlane.[h,C]:  added destructor and dependsOnPlane 
+	functions.  The destructor now also deletes any planes that depend
+	on the to-be-deleted plane.
+
 2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
 
         * Makefile:  remove ImgFormat from USES_LIBS
