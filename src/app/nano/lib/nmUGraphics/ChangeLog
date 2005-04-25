@@ -1,3 +1,7 @@
+2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* URProjectiveTexture.C : Whitespace changes.
+
 2004-07-08  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* URText.h : Class to display text objects.

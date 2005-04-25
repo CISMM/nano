@@ -1,3 +1,8 @@
+2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmg_State.C : Whitespace changes.
+	* nmg_SurfaceRegion.C : Same.
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmg_GraphicsImpl.h : Uses new VRPN_CALLBACK definition.

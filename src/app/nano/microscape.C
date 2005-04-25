@@ -1112,52 +1112,9 @@ vrpn_int32 VRPN_CALLBACK GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) { 
 
     delete [] line;
 
-
-/*
-    for (int i = 0; i < x; i++) {
-        printf("%d ", line[i]);
-    }
-    printf("\n");
-*/
-//    vrpn_unbuffer(&bufptr, image + line_number * line_size, line_size);
-
-/*
-    for (int i = line_number * x; i < line_number * x + x; i++) {
-        printf("%f ", image[i]);
-    }
-    printf("\n");
-*/
     if (line_number == y - 1) {
 
-    
-//        printf("Got New Image\n");
-//        printf("current texture mode : %d\n", graphics->getTextureMode());
-
-        // only checks size now
-        // should have a typedef for different types of the same size--Imager class should have this when it's done
-/*
-        for (int i = 0; i < x*y; i++) {
-            if (pixel_size == sizeof(bool)) {
-                printf("%d ", ((bool*)image)[i]);
-            }
-            else if (pixel_size == sizeof(vrpn_uint8)) {
-                printf("%d ", ((vrpn_int8*)image)[i]);
-            }
-            else if (pixel_size == sizeof(vrpn_uint16)) {
-                printf("%d ", ((vrpn_int16*)image)[i]);
-            }
-            else if (pixel_size == sizeof(vrpn_float32)) {
-                printf("%f ", ((vrpn_float32*)image)[i]);
-            }
-            else if (pixel_size == sizeof(vrpn_float64)) {
-                printf("%f ", ((vrpn_float64*)image)[i]);
-            }
-            if ((i + 1) % x == 0) printf("\n");
-        }
-        printf("\n");
-*/   
-
-        image2 = new char[image_size];
+            image2 = new char[image_size];
 
         if (pixel_size == sizeof(vrpn_uint8)) {
             if (!image_uint8) {
@@ -1165,7 +1122,6 @@ vrpn_int32 VRPN_CALLBACK GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) { 
                 image_uint8 = new nmb_ImageArray("TEM uint8 image", "ADC", x, y, NMB_UINT8);
                 dataset->dataImages->addImage(image_uint8);
             }
-//            image_uint8->setImage((vrpn_uint8*)image);
             
             // correct flipped data
             for (long i = 0; i < x * y; i++) {
@@ -1180,7 +1136,6 @@ vrpn_int32 VRPN_CALLBACK GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) { 
                 image_uint16 = new nmb_ImageArray("TEM uint16 image", "ADC", x, y, NMB_UINT16);
                 dataset->dataImages->addImage(image_uint16);
             }
-//            image_uint16->setImage((vrpn_uint16*)image);
 
             // correct flipped data
             for (long i = 0; i < x * y; i++) {
@@ -1195,7 +1150,6 @@ vrpn_int32 VRPN_CALLBACK GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) { 
                 image_float32 = new nmb_ImageArray("TEM float32 image", "ADC", x, y, NMB_FLOAT32);
                 dataset->dataImages->addImage(image_float32);
             }
-//            image_float32->setImage((vrpn_float32*)image);
 
             // correct flipped data
             for (long i = 0; i < x * y; i++) {
@@ -8669,9 +8623,10 @@ if (microscope) microscope->ResetClock();
 		if(Eroder->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
 	}
 
-// XXX
-// call tem mainloop
-    if (tem_connection) tem_mainloop();
+        // call tem mainloop
+        if (tem_connection) {
+          tem_mainloop();
+        }
 
 #ifdef TIMING_TEST
 #define	TIM_LN	(7)
@@ -9343,7 +9298,7 @@ void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
     /* handle the given command. */
     switch ( *character ) {
 
-//XXX Temporary way to write VRML file.  Make a control panel for it.
+      //XXX Temporary way to write VRML file.  Make a control panel for it.
       case 'o': // Output a VRML file
 	{/*	nmb_PlaneSelection planes;
 	        planes.lookup(dataset);
@@ -10276,21 +10231,6 @@ void center (void) {
   // find the transforms to take us to the centered view
   find_center_xforms(&lock.xlate, &lock.rotate, &lock.scale);
   
-  /* Copy the new values to the world xform for user 0 */
-//    printf("Setting head xlate to (%f, %f, %f)\n",
-//          lock.xlate[V_X], lock.xlate[V_Y], lock.xlate[V_Z]);
-
-/*XXX Center causes seg fault on nWC after the resize has happened
-  if the rotation sets are done under Linux.  It does not fail if they
-  are not done.  If you go into grab mode to clear the resize lines
-  before centering, then all works well. */
-//    printf("Setting head rotate to (%f, %f, %f: %f)\n",
-//          lock.rotate[V_X], lock.rotate[V_Y], lock.rotate[V_Z],
-//          lock.rotate[V_W]);
-
-//    printf("Setting head scale to %f\n", lock.scale);
-
-
 collabVerbose(5, "center:  updateWorldFromRoom().\n");
   updateWorldFromRoom(&lock);
 

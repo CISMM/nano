@@ -228,10 +228,10 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 	switch(d_currentState.textureDisplayed) {
 
 	case nmg_Graphics::COLORMAP:
-    case nmg_Graphics::RULERGRID:
-    case nmg_Graphics::VIDEO:
-    case nmg_Graphics::REMOTE_DATA:
-    case nmg_Graphics::VISUALIZATION:
+        case nmg_Graphics::RULERGRID:
+        case nmg_Graphics::VIDEO:
+        case nmg_Graphics::REMOTE_DATA:
+        case nmg_Graphics::VISUALIZATION:
 		state->currentProjectiveTexture->enable();
         break;
 	case nmg_Graphics::CONTOUR:
@@ -245,8 +245,8 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 		} else {
 			buildContourTexture(state);
 		}
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->contourTextureBlendFunc);
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                          state->contourTextureBlendFunc);
         break;
     case nmg_Graphics::ALPHA:
 #ifndef _WIN32
@@ -258,8 +258,8 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 		} else {
 			buildAlphaTexture(state);
 		}
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->alphaTextureBlendFunc);
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
+                          state->alphaTextureBlendFunc);
 #endif
 	default:
 		break;

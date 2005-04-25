@@ -22,6 +22,7 @@
    
  *
  */
+
 #include <stdio.h>
 #ifdef __CYGWIN__
 #include <unistd.h> // for sleep()
@@ -592,14 +593,13 @@ void handle_xyLock (vrpn_int32, void *)
     { xyz_lock_pos[2] = temp[2]; }
 
   //get Z position of when xy_lock was set for direct step
-  if (microscope->haveMutex() 
-      && microscope->state.modify.tool == DIRECT_STEP) {
+  if (microscope->haveMutex() && microscope->state.modify.tool == DIRECT_STEP) {
     z_pos = xyz_lock_pos[2];
 
-	//if we are exiting from xy_lock, put us in image mode
-	if(xy_lock == 0) {
-		microscope->ImageMode();
-	}
+    //if we are exiting from xy_lock, put us in image mode
+    if(xy_lock == 0) {
+      microscope->ImageMode();
+    }
   }
 }
 
@@ -795,117 +795,124 @@ static void drawLineStep (Position * prevPt, Position * currPt) {
 }
 
 static void drawLine (void) {
-  if (!microscope) return;
+  if (!microscope) {
+    return;
+  }
 
-    // set up a reference for convenience
-    Position_list & p = 
-      microscope->state.modify.stored_points;
-    // Find out if the list of points has at least two points in it
-    p.start();
-    if (p.curr() == NULL) {
-	// no stored points - leave
-	tcl_commit_pressed = 0;	
-	old_commit_pressed = 0;
-	// Treat it as a canceled operation.
-	tcl_commit_canceled =1;
-	return;
-    } else if (p.peekNext() == NULL) {
-	// less than 2 points - clean up and leave
-	tcl_commit_pressed = 0;	
-	old_commit_pressed = 0;
-	// Treat it as a canceled operation.
-	tcl_commit_canceled =1;
-	return;
-    }
+  // Set a reference to use for convenience
+  Position_list & p = microscope->state.modify.stored_points;
 
-    /* Do a poly-line modification!!! */
-    // Wait for tip to get to starting position
-   if ( (microscope->state.modify.tool == LINE) ||
-	 (microscope->state.modify.tool == SLOW_LINE) ) {
-      Point_value *value =
-	microscope->state.data.inputPoint->getValueByPlaneName
-	(dataset->heightPlaneName->string());
-      if (value == NULL) {
-	fprintf(stderr, "drawLine():  "
-		"could not get input point!\n");
-	return;
-      }
-      printf("drawLine: points in list, doing modify.\n");
-      microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
-    } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
-      microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
-    }
-    double x, y;
-    Position * currPt;
-    Position * prevPt;
+  // Find out if the list of points has at least two points in it
+  p.start();
+  if (p.curr() == NULL) {
+      // no stored points - leave
+      tcl_commit_pressed = 0;	
+      old_commit_pressed = 0;
+      // Treat it as a canceled operation.
+      tcl_commit_canceled = 1;
+      return;
+  } else if (p.peekNext() == NULL) {
+      // less than 2 points - clean up and leave
+      tcl_commit_pressed = 0;	
+      old_commit_pressed = 0;
+      // Treat it as a canceled operation.
+      tcl_commit_canceled = 1;
+      return;
+  }
 
-    // sleep to allow piezo relaxation
-    sleep(2);
-
-    // XXX - might want to move everything below up to init_slow_line
-    // into init_slow_line
-    if ((microscope->state.modify.tool == SLOW_LINE)||
-	(microscope->state.modify.tool == SLOW_LINE_3D)) {
-      microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
-    }
-
-    // start modification force!
-    // We're already in modifcation mode using slow_line_3d
-    if (microscope->state.modify.tool != SLOW_LINE_3D) {
-      microscope->ModifyMode();
-    }
-          
-    // Wait for the mode to finish (XXX should wait for response)
-    // these calls to sleep should maybe be replaced with a 
-    // barrier synch as used in init_slow_line
-    sleep(1);
-
-    // Slow line tool doesn't do the modification now, it
-    // waits for the user to press Play or Step controls.
-    if ((microscope->state.modify.tool == SLOW_LINE)||
-	(microscope->state.modify.tool == SLOW_LINE_3D)) {
-      microscope->state.modify.slow_line_committed = VRPN_TRUE;
-      // Call this function to initialize the slow_line tool
-      init_slow_line(microscope);
+  /* Do a poly-line modification!!! */
+  // Wait for tip to get to starting position
+ if ( (microscope->state.modify.tool == LINE) ||
+       (microscope->state.modify.tool == SLOW_LINE) ) {
+    Point_value *value =
+      microscope->state.data.inputPoint->getValueByPlaneName
+      (dataset->heightPlaneName->string());
+    if (value == NULL) {
+      fprintf(stderr, "drawLine():  "
+	      "could not get input point!\n");
       return;
     }
-    p.next();
-    // Draw the first line 
-    currPt = p.curr();
-    prevPt = p.peekPrev();
-    x = prevPt->x();
-    y = prevPt->y();
-    // If we are in sweep mode, set the angle "yaw" correctly
-    // so the sweep is perpendicular to the line we draw.
-    microscope->state.modify.yaw = atan2((currPt->y() - y),
-					 (currPt->x() - x)) - M_PI_2;
+    printf("drawLine: points in list, doing modify.\n");
+    microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
+  } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
+    microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
+  }
+  double x, y;
+  Position * currPt;
+  Position * prevPt;
 
-    // Draw a line between prevPt and currPt
-    microscope->DrawLine(x, y, currPt->x(), currPt->y());
+  // sleep to allow piezo relaxation
+  // XXX This is a horrible way to sleep because it locks up the
+  // application while sleeping.
+  sleep(2);
 
+  // XXX - might want to move everything below up to init_slow_line
+  // into init_slow_line
+  if ((microscope->state.modify.tool == SLOW_LINE)||
+      (microscope->state.modify.tool == SLOW_LINE_3D)) {
+    microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
+  }
 
-    //start with the second point, so previous point is valid.
-    for (p.next(); p.notDone(); p.next()) {
-      drawLineStep(p.peekPrev(), p.curr());
-    }
-    // Delete these points so they are not used again. 
-    p.start();
-    while(p.notDone()) {
-      p.del();
-    }
+  // start modification force!
+  // We're already in modifcation mode using slow_line_3d
+  if (microscope->state.modify.tool != SLOW_LINE_3D) {
+    microscope->ModifyMode();
+  }
+        
+  // Wait for the mode to finish (XXX should wait for response)
+  // these calls to sleep should maybe be replaced with a 
+  // barrier synch as used in init_slow_line
+  sleep(1);
 
-    // resume normal scanning operation of AFM
+  // Slow line tool doesn't do the modification now, it
+  // waits for the user to press Play or Step controls.
+  if ((microscope->state.modify.tool == SLOW_LINE)||
+      (microscope->state.modify.tool == SLOW_LINE_3D)) {
+    microscope->state.modify.slow_line_committed = VRPN_TRUE;
+    // Call this function to initialize the slow_line tool
+    init_slow_line(microscope);
+    return;
+  }
+
+  p.next();
+  // Draw the first line 
+  currPt = p.curr();
+  prevPt = p.peekPrev();
+  x = prevPt->x();
+  y = prevPt->y();
+  // If we are in sweep mode, set the angle "yaw" correctly
+  // so the sweep is perpendicular to the line we draw.
+  microscope->state.modify.yaw = atan2((currPt->y() - y),
+				       (currPt->x() - x)) - M_PI_2;
+
+  // Draw a line between prevPt and currPt
+  microscope->DrawLine(x, y, currPt->x(), currPt->y());
+
+  //start with the second point, so previous point is valid.
+  for (p.next(); p.notDone(); p.next()) {
+    drawLineStep(p.peekPrev(), p.curr());
+  }
+  // Delete these points so they are not used again. 
+  p.start();
+  while(p.notDone()) {
+    p.del();
+  }
+
+  //microscope->EnableUpdatableQueue(VRPN_TRUE);
+
+  // Resume normal scanning operation of AFM if
+  // autoscan is enabled.  Otherwise, return to
+  // imaging force and don't do anything else.
+  if (microscope->state.autoscan) {
     printf("drawLine: done modifying, resuming scan.\n");
+    microscope->ResumeScan();
+  } else {
+    microscope->ImageMode();
+  }
 
-    //microscope->EnableUpdatableQueue(VRPN_TRUE);
-
-    if (microscope->state.autoscan) {
-	    microscope->ResumeScan();
-    }
-    // All done - turn off commit button
-    tcl_commit_pressed = 0;	
-    old_commit_pressed = 0;
-
+  // All done - turn off commit button
+  tcl_commit_pressed = 0;	
+  old_commit_pressed = 0;
 }
 
 /**
@@ -1119,50 +1126,47 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
     case USER_SCALE_DOWN_MODE:
     case USER_LIGHT_MODE:
     case USER_MEASURE_MODE:
-	{
-	Position_list & p = microscope->state.modify.stored_points;
-	if (!p.empty()) {
-	    // delete stored points (so we don't use them again!)
-	    // get rid of the rubber band line.
-	    graphics->emptyPolyline();
+        {
+	  Position_list & p = microscope->state.modify.stored_points;
+	  if (!p.empty()) {
+	      // delete stored points (so we don't use them again!)
+	      // get rid of the rubber band line.
+	      graphics->emptyPolyline();
 
-	    p.start();
-	    while(p.notDone()) {
-		// get rid of the icons marking the line endpoints
- 		p.del();  //this moves the pointer forward to the next point.
- 	    }
+	      p.start();
+	      while(p.notDone()) {
+		  // get rid of the icons marking the line endpoints
+ 		  p.del();  //this moves the pointer forward to the next point.
+ 	      }
 
-	    // For CONSTR_FREEHAND tool:
-	    // Turn off constraint line, if it was on. Otherwise next
-	    // phantom button press and release will do the wrong thing.
-	    if (microscope->state.modify.constr_line_specified) {
-	       microscope->state.modify.constr_line_specified = VRPN_FALSE;
-	    }
-	    // For SLOW_LINE tool: We are no longer sitting still,
-	    // waiting for the user - we're about to resume the scan.
-	    microscope->state.modify.slow_line_committed = VRPN_FALSE;
+	      // For CONSTR_FREEHAND tool:
+	      // Turn off constraint line, if it was on. Otherwise next
+	      // phantom button press and release will do the wrong thing.
+	      if (microscope->state.modify.constr_line_specified) {
+	         microscope->state.modify.constr_line_specified = VRPN_FALSE;
+	      }
+	      // For SLOW_LINE tool: We are no longer sitting still,
+	      // waiting for the user - we're about to resume the scan.
+	      microscope->state.modify.slow_line_committed = VRPN_FALSE;
 
-	    // For SLOW_LINE_3D tool: clear the markers along the 
-	    // rubber-band lines
-	    if (microscope->state.modify.tool == SLOW_LINE_3D) {
-	      decoration->num_slow_line_3d_markers = 0;
-	    }
-
-	}
-      /* Start image mode (to make the relaxation compensation code work
-       * as it should, and to turn the background the right color in case
-       * we don't scan more, and to stop points from coming into the list
-       * of points) and resume previous scan pattern. */
-	if (microscope->state.modify.tool == DIRECT_STEP) {
-      microscope->ImageMode();
-	}
-	// I think we should always resume scan - if the user hits "cancel"
-	// that should mean "start over", so we always begin scanning again.
-	  if (microscope->state.autoscan) {
-		microscope->ResumeScan();
+	      // For SLOW_LINE_3D tool: clear the markers along the 
+	      // rubber-band lines
+	      if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	        decoration->num_slow_line_3d_markers = 0;
+	      }
           }
-	}
-	break;
+
+          // Resume normal scanning operation of AFM if autoscan is enabled.  Otherwise,
+          // return to imaging force and don't do anything else.
+          if (microscope->state.autoscan) {
+            printf("drawLine: done modifying, resuming scan.\n");
+            microscope->ResumeScan();
+          } else {
+            microscope->ImageMode();
+          }
+
+       }
+        break;
     case USER_SERVO_MODE:
 	//Set the region back to the old scan. 
         plane = dataset->inputGrid->getPlaneByName
@@ -3396,74 +3400,73 @@ int doFeelLive (int whichUser, int userEvent)
       break;
   case HOLD_EVENT:
 
-	  //don't do anything if in Direct Step mode.
+      //don't do anything if in Direct Step mode.
       if(microscope->state.modify.tool == DIRECT_STEP && xy_lock) {
-		  return 0;
-	  }
+	return 0;
+      }
       if (microscope->state.modify.tool == FEELAHEAD) {
-		  // Feelahead mode IGNORES the commit button;  it never
-		  // leaves image mode.
-		  adaptor.updateSampleAlgorithm(microscope);
-		  microscope->TakeSampleSet(clipPos[0], clipPos[1]);
+        // Feelahead mode IGNORES the commit button;  it never
+        // leaves image mode.
+        adaptor.updateSampleAlgorithm(microscope);
+        microscope->TakeSampleSet(clipPos[0], clipPos[1]);
       } else if (!tcl_commit_pressed) { 
-		  // Commit button is not pressed - we are feeling the surface
-		  if (old_commit_pressed) { // We were modifying last time
-			  // this means we should stop using modification force.
-			  microscope->ImageMode();
-			  old_commit_pressed = tcl_commit_pressed;
-		  }
-		  /* Request a reading from the current location */
-		  microscope->TakeFeelStep(clipPos[0], clipPos[1]);
+        // Commit button is not pressed - we are feeling the surface
+        if (old_commit_pressed) { // We were modifying last time
+	  // this means we should stop using modification force.
+	  microscope->ImageMode();
+	  old_commit_pressed = tcl_commit_pressed;
+        }
+        /* Request a reading from the current location */
+        microscope->TakeFeelStep(clipPos[0], clipPos[1]);
       } else {
-		  // Commit button is pressed - we are modifying the surface
-		  if (!old_commit_pressed) { // We weren't commited last time
-			  // this means we should start using modification force.
-			  microscope->ModifyMode();
-			  old_commit_pressed = tcl_commit_pressed;
-			  
-			  //just entered modify mode, we want to set a new plane for direct Z
-			  // if we need one.
-			  directZ_plane_set = 0;
+        // Commit button is pressed - we are modifying the surface
+        if (!old_commit_pressed) { // We weren't commited last time
+	        // this means we should start using modification force.
+	        microscope->ModifyMode();
+	        old_commit_pressed = tcl_commit_pressed;
+	        
+	        //just entered modify mode, we want to set a new plane for direct Z
+	        // if we need one.
+	        directZ_plane_set = 0;
 
-			  forceDevice->setFF_Force(0.0f, 0.0f, 0.0f);
-		  }
+	        forceDevice->setFF_Force(0.0f, 0.0f, 0.0f);
+        }
 	  
-	  /* Request a reading from the current location, 
-	  * using the current modification style */
-	  if ( microscope->state.modify.control == DIRECTZ) {
+	/* Request a reading from the current location, 
+	* using the current modification style */
+	if ( microscope->state.modify.control == DIRECTZ) {
           if (nmOK) {
-			  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
-				  clipPosNM[2]);
+	    microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
+		    clipPosNM[2]);
           }
-	  } else {
+	} else {
           microscope->TakeModStep(clipPos[0], clipPos[1]);
-	  }
-  }
+	}
+      }
   
-  if (( microscope->state.modify.control == DIRECTZ) &&
-	  (tcl_commit_pressed)) {
-		  // Stop using the plane to apply force
-		  monitor.stopSurface();
-		  q_vec_copy(current_directZ_point, clipPos); 
-		  //copy current point so directZ can set plane if setpoint is exceeded
-		  
-		  // Start using the forcefield to apply a constant force.
-		  // Apply force to the user based on current measured force 
-		  specify_directZ_force(whichUser);
-		  monitor.startForceField();
-	  
-  } else {
-	  setupHaptics(USER_PLANEL_MODE);
-	  // Apply force to the user based on current sample points
-	  if (!microscope->d_relax_comp.is_ignoring_points() ) {
-		  touch_surface(whichUser, clipPos);
-		  monitor.startSurface();
-	  }
-  }
-  break;
+      if (( microscope->state.modify.control == DIRECTZ) && (tcl_commit_pressed)) {
+        // Stop using the plane to apply force
+        monitor.stopSurface();
+        q_vec_copy(current_directZ_point, clipPos); 
+        //copy current point so directZ can set plane if setpoint is exceeded
+    
+        // Start using the forcefield to apply a constant force.
+        // Apply force to the user based on current measured force 
+        specify_directZ_force(whichUser);
+        monitor.startForceField();
+	      
+      } else {
+        setupHaptics(USER_PLANEL_MODE);
+        // Apply force to the user based on current sample points
+        if (!microscope->d_relax_comp.is_ignoring_points() ) {
+          touch_surface(whichUser, clipPos);
+          monitor.startSurface();
+        }
+      }
+      break;
 	
-      /* Go back to scanning upon release */
-    case RELEASE_EVENT:	
+  /* Go back to scanning upon release */
+  case RELEASE_EVENT:	
       // Stop applying force.
       monitor.stopSurface();
       monitor.stopForceField();
@@ -3488,21 +3491,22 @@ int doFeelLive (int whichUser, int userEvent)
           }
         }
       }
-	  // this needs to be implemented along with an acknowledgement message
-	  // so we know when freehand positioning is done for 
-	  // some other part of the program that might want to know that
-	  microscope->FinishFreehand();
+      // XXX this needs to be implemented along with an acknowledgement message
+      // so we know when freehand positioning is done for 
+      // some other part of the program that might want to know that
+      microscope->FinishFreehand();
+
       /* Start image mode (to make the relaxation compensation code work
        * as it should, and to turn the background the right color in case
        * we don't scan more, and to stop points from coming into the list
        * of points) and resume previous scan pattern. */
       microscope->ImageMode();
       if (microscope->state.autoscan) {
-	      microscope->ResumeWindowScan();
+	microscope->ResumeWindowScan();
       }
       break;
 
-    default:
+  default:
       break;
   } // end switch( userEvent )
 

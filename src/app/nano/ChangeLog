@@ -1,3 +1,17 @@
+2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* interaction.C : Modified the behavior of polyline completion
+		and cancel so that they return the microscope to
+		image mode even if the autoscan button is not turned on.
+		This is required to get the correct state reported to
+		the client so that modification files can be recorded.
+		This modification may cause trouble in the case of freehand
+		XYZ line mode, where the intent may have been to leave the
+		tip hanging after the manipulation.  If this is a problem,
+		we need a new factoring of modes to create a freehand XYZ
+		mode for it to return to when imaging.
+	* microscape.C : Whitespace change, comment removal.
+
 2004-12-07  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* imagerPlugin.C : Changed from TempImager to Imager, which

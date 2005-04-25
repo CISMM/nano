@@ -561,8 +561,8 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
              value = 0;
              alpha = 0;
 		     break;
-	      default:
-		     break;
+	  default:
+		 break;
           }
           ((GLubyte*)clearData)[2 * k] = value;
           ((GLubyte*)clearData)[2 * k + 1] = alpha;
@@ -572,7 +572,7 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
       
       glPushAttrib(GL_TEXTURE_BIT);
 	  glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-      glBindTexture(GL_TEXTURE_2D, d_textureID);
+          glBindTexture(GL_TEXTURE_2D, d_textureID);
 
 	  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 

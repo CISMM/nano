@@ -20,7 +20,7 @@ class nmb_Subgrid;  // from nmb_Subgrid.h
 
 nmg_State::nmg_State ()
 {
-	alphaTextureBlendFunc = GL_DECAL;
+    alphaTextureBlendFunc = GL_DECAL;
     alpha_r = 0.0f;
     alpha_g = 1.0f;
     alpha_b = 0.0f;
@@ -55,16 +55,16 @@ nmg_State::nmg_State ()
     config_trueTip = 0;
     config_enableUber = 1;
 
-	//JM
-	config_feelGrid = 0;
-	config_feelPlane = 0;
+    //JM
+    config_feelGrid = 0;
+    config_feelPlane = 0;
 
-	fg_xside = 0;
-	fg_yside = 0;
-	fg_vertices = NULL;
+    fg_xside = 0;
+    fg_yside = 0;
+    fg_vertices = NULL;
 
 
-	contourTextureBlendFunc = GL_DECAL;
+    contourTextureBlendFunc = GL_DECAL;
     contour_r = 255;
     contour_g = 55;
     contour_b = 55;
@@ -84,14 +84,14 @@ nmg_State::nmg_State ()
     surfaceColor[3] = 1.0f;
 
     // Colormap Textures:
-	/* redundant
+    /* redundant
     colormap_texture_curColorMap = NULL;
     colormap_texture_data_min = 0;
     colormap_texture_data_max = 1.0;
     colormap_texture_color_min = 0;
     colormap_texture_color_max = 1.0;
     colormap_texture_name[0] = '\0';
-	*/
+    */
 
     prerendered_grid = NULL;
     prerenderedChange = NULL;
