@@ -69,7 +69,7 @@
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
 #include <vrpn_DirectXFFJoystick.h>
 #include <vrpn_Tracker_AnalogFly.h>
 #endif
@@ -839,7 +839,7 @@ phantom_init (vrpn_Connection * local_device_connection,
 #endif
 
     } else if (strstr(handTrackerName, "Joystick") != NULL) {
-#ifdef NO_JOYSTICK_SERVER
+#ifndef VRPN_USE_DIRECTINPUT
 	fprintf(stderr, "Asked for a local Joystick, but not compiled in\n");
 	return -1;
 #else
@@ -889,7 +889,7 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
     }
 
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
 	// if we're using a joystick, mark this to let everyone know
 	if( strstr(handTrackerName, "Joystick") != NULL )
 	{

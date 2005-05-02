@@ -38,7 +38,7 @@
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
 #include <vrpn_DirectXFFJoystick.h>
 #include <vrpn_Tracker_AnalogFly.h>
 #endif
@@ -1444,7 +1444,7 @@ static char local_ModeName [256];
 /// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
 #endif
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
 /// Local Joystick server -- only used if TRACKER env var
 /// doesn't contain a machine name of IP address for the Joystick.
 vrpn_DirectXFFJoystick	*joyServer = NULL;
@@ -1760,14 +1760,14 @@ nmb_TimerList collaborationTimer;
 // y the text name of the quantity to display
 
 #define ttest0(x,y) \
-  gettimeofday(&t_aft, &t_zone); \
+  gettimeofday(&t_aft, NULL); \
   t_this = (t_aft.tv_sec - t_b4.tv_sec) * 1000000 +  \
            (t_aft.tv_usec - t_b4.tv_usec); \
   (x) += t_this; \
   t_loop += t_this; \
   if (((n_disp >> TIM_LN) << TIM_LN) == n_disp) \
     fprintf(stdout, "T %s %d ms, avg %d ms\n", y, t_this, (x) / n_disp); \
-  gettimeofday(&t_b4, &t_zone);
+  gettimeofday(&t_b4, NULL);
 
 #else
 
@@ -7260,12 +7260,11 @@ void update_rtt (void) {
   vrpn_Synchronized_Connection * scp;
   struct timeval now;
   struct timeval rtt;
-  struct timezone tz;
   double val = 0.0;
   if ((!microscope_connection)||(read_mode == READ_STREAM)) return;
 
   /* gettimeofday takes two arguments */
-  gettimeofday(&now,&tz);
+  gettimeofday(&now,NULL);
 
   // quick and dirty approximately-one-second interval
 
@@ -7856,7 +7855,6 @@ int main (int argc, char* argv[])
     MicroscapeInitializationState istate;
     struct          timeval d_time, d_last_time;
     struct          timeval time1,time2;
-    struct          timezone zone1,zone2;
     long            start,stop;
     long            interval;
     long            n = 0L;
@@ -7867,8 +7865,8 @@ int main (int argc, char* argv[])
     int new_value_of_rate_knob;
     int old_value_of_rate_knob;
 
-//      printf("NanoManipulator version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
-//  	MICROSCAPE_MINOR_VERSION);
+    printf("NanoManipulator version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
+           MICROSCAPE_MINOR_VERSION);
 
     // DEBUG pause program to attach debugger. 
     //cin.get();
@@ -8568,9 +8566,9 @@ fprintf(stderr, "Using Queue Monitoring for tip control.\n");
 
 /* Start timing */
 VERBOSE(1, "Starting timing");
-gettimeofday(&time1,&zone1);
-gettimeofday(&d_time,&zone1);
-gettimeofday(&d_last_time,&zone1);
+gettimeofday(&time1,NULL);
+gettimeofday(&d_time,NULL);
+gettimeofday(&d_last_time,NULL);
 if (microscope) microscope->ResetClock();
 
   graphicsTimer.start();
@@ -8652,7 +8650,7 @@ if (microscope) microscope->ResetClock();
 
     t_loop = 0;
 
-    gettimeofday(&t_aft,&t_zone);
+    gettimeofday(&t_aft,NULL);
     t_this = (t_aft.tv_sec-t_b4.tv_sec)*1000000 + (t_aft.tv_usec-t_b4.tv_usec);
     if( n_disp > 1 ) {
        t_avg_l += t_this;
@@ -8666,7 +8664,7 @@ if (microscope) microscope->ResetClock();
 
     /* get and process input for the user  */
 #ifdef TIMING_TEST
-      gettimeofday(&t_b4,&t_zone);
+      gettimeofday(&t_b4,NULL);
 #endif /* TIMING_TEST */
       ttest0(t_avg_tread, "tread");
 
@@ -8710,7 +8708,7 @@ if (microscope) microscope->ResetClock();
 	phantServer->mainloop();
       }
 #endif
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
       if (joyServer) {
 	joyServer->mainloop();
 	joyflyServer->mainloop();
@@ -8917,7 +8915,7 @@ if (microscope) microscope->ResetClock();
       }
 
       n_disp++;
-      gettimeofday(&t_b4,&t_zone);
+      gettimeofday(&t_b4,NULL);
 #endif /* TIMING_TEST */
 
     if (do_keybd == 1)
@@ -9088,7 +9086,7 @@ if (microscope) microscope->ResetClock();
   dataset->done = VRPN_TRUE; //XXXX
 
   /* Stop timing */
-  gettimeofday(&time2,&zone2);
+  gettimeofday(&time2,NULL);
 
   VERBOSE(1, "Finished main loop");
 
@@ -9156,7 +9154,7 @@ if (microscope) microscope->ResetClock();
 	phantServer = NULL;
     }
 #endif
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
       if (joyServer) {
 	delete joyServer;
 	joyServer = NULL;
@@ -10067,7 +10065,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 	* halfway between the y-axis and the z-axis (to tilt the surface
 	* away from the user). If we are using the joystick, then line
 	* the surface up parallel to the screen by using the Y axis. */
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
        if (usingJoystick) {
 		   q_set_vec(pos_y, 0.0, 1.0, 0.0);
        } else
@@ -10096,7 +10094,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
       // using the joystick, we want the surface to be parallel
       // to the screen.  We also want to translate the surface
       // so that it ends up in the middle of the screen
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
 		if (usingJoystick) {
 			screen_mid[0] = 0.0;
 			screen_mid[1] = 0.0;
@@ -10219,7 +10217,7 @@ void center (void) {
   
   // If we are using the joystick, we want to have the light coming from 45
   // degrees (halfway between the Y and Z axes).
-#ifndef	NO_JOYSTICK_SERVER
+#ifdef VRPN_USE_DIRECTINPUT
   if (usingJoystick) {
     q_vec_type  lightdir = {0.0, 1.0, 1.0};
     graphics->setLightDirection(lightdir);

@@ -1,3 +1,10 @@
+2005-05-02  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C: Removed timezone structure, reordered
+	includes because of "#define X 0" somewhere.
+	* nmm_MicroscopeRemoteGen.Cdef: same
+	* nmm_MicroscopeRemote.hdef: same
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.hdef : Uses new VRPN_CALLBACK definition.

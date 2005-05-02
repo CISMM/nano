@@ -16,12 +16,11 @@ class Timer {
 	inline void	disable(void) {enabled = 0; initialized = 0;};
 	inline void	read(char *msg = "") {
 	  struct timeval	now;
-	  struct timezone	zone;
 
 	  if (!enabled) {
 	    return;
 	  }
-	  gettimeofday(&now, &zone);
+	  gettimeofday(&now, NULL);
 	  if (!initialized) {
 	    initialized = 1;
 	    fprintf(stderr,"      Timer (%s): Initializing\n",msg);
@@ -39,11 +38,10 @@ class Timer {
 	};
 	inline void     log() {
 	  struct	timeval	now;
-	  struct	timezone	zone;
 	  if (!enabled) {
 	    return;
 	  }
-	  gettimeofday(&now, &zone);
+	  gettimeofday(&now, NULL);
 	  if (!initialized) {
 	    initialized = 1;
 	  } else {

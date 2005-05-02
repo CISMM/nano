@@ -18,9 +18,8 @@ dependence on globals, and other creative hacking, removed 19 Aug 97 by TCH
 vrpn_bool updt_display (const long _displayPeriod, struct timeval & _dTime,
                         vrpn_bool & _stmNewFrame) {
   struct timeval	now;
-  struct timezone	t_zone;
 
-  gettimeofday(&now, &t_zone);
+  gettimeofday(&now, NULL);
 
   if( 
 	( ( (now.tv_sec-_dTime.tv_sec)*1000000L

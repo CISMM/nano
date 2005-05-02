@@ -28,18 +28,18 @@ set cut_filename "tmv-adeno-cut-4.nms"
 set cut_start_times(0) 730 
 set cut_start_times(1) 940
 set cut_start_times(2) 1170 
-set cut_start_times(3) 1340
+set cut_start_times(3) 1390
 set cut_start_times(4) 1490
-set cut_start_times(5) 1640
+set cut_start_times(5) 1660
 set cut_start_times(6) 1830
 
 set cut_end_times(0) 938
 set cut_end_times(1) 1168
-set cut_end_times(2) 1338
+set cut_end_times(2) 1385
 set cut_end_times(3) 1488
-set cut_end_times(4) 1638
+set cut_end_times(4) 1658
 set cut_end_times(5) 1828
-set cut_end_times(6) 2010
+set cut_end_times(6) 2040
 ### END Cut specific variables:
 
 ### START Poke specific variables:
@@ -53,25 +53,25 @@ set poke_filename "virus_graphite_poke1.nms"
 
 set poke_start_times(0) 1539
 set poke_start_times(1) 1965
-set poke_start_times(2) 2175 
+set poke_start_times(2) 2185 
 set poke_start_times(3) 2690
-set poke_start_times(4) 2835
+set poke_start_times(4) 2853
 set poke_start_times(5) 3060
-set poke_start_times(6) 3260
+set poke_start_times(6) 3295
 set poke_start_times(7) 3700
 set poke_start_times(8) 3880
 set poke_start_times(9) 4185
 
 set poke_end_times(0) 1763
-set poke_end_times(1) 2160
+set poke_end_times(1) 2180
 set poke_end_times(2) 2399
-set poke_end_times(3) 2833
+set poke_end_times(3) 2850
 set poke_end_times(4) 3058
-set poke_end_times(5) 3258
+set poke_end_times(5) 3290
 set poke_end_times(6) 3500
 set poke_end_times(7) 3878
 set poke_end_times(8) 4160
-set poke_end_times(9) 4485
+set poke_end_times(9) 4530
 ### END Poke specific variables:
 
 ### START Push specific variables:
@@ -251,7 +251,7 @@ proc cut_virus { } {
     global set_stream_time set_stream_time_now
     global center_pressed
     global clear_markers
-    global virus_cut_win
+    global virus_cut_win virus_poke_win virus_push_win
     global cut poke push
     global z_comes_from
 
@@ -272,6 +272,7 @@ proc cut_virus { } {
     after 100 {
       set set_stream_time 730
       set set_stream_time_now 1
+      set z_comes_from "Z Piezo-Forward"
       set center_pressed 1
       set clear_markers 1
     }
@@ -311,6 +312,8 @@ proc cut_virus { } {
 
     pack $virus_cut_win.f4.label7 $virus_cut_win.f4.cut $virus_cut_win.f4.repeat  -side left
     show.virus_cut
+    hide.virus_push
+    hide.virus_poke
 }
 
 proc poke_virus { } {
@@ -319,7 +322,7 @@ proc poke_virus { } {
     global set_stream_time set_stream_time_now
     global center_pressed
     global clear_markers
-    global virus_poke_win
+    global virus_cut_win virus_poke_win virus_push_win
     global cut poke push
     global z_comes_from
 
@@ -340,6 +343,7 @@ proc poke_virus { } {
     after 100 {
        set set_stream_time 1530
        set set_stream_time_now 1
+       set z_comes_from "Z Piezo-Forward"
        set center_pressed 1
        set clear_markers 1
     }
@@ -380,6 +384,8 @@ proc poke_virus { } {
     pack $virus_poke_win.f4.label7 $virus_poke_win.f4.poke $virus_poke_win.f4.repeat  -side left
 
     show.virus_poke
+    hide.virus_cut
+    hide.virus_push
 }
 
 proc push_virus { } {
@@ -388,7 +394,7 @@ proc push_virus { } {
     global set_stream_time set_stream_time_now
     global center_pressed
     global clear_markers
-    global virus_push_win
+    global virus_cut_win virus_poke_win virus_push_win
     global cut poke push
     global z_comes_from
 
@@ -404,11 +410,10 @@ proc push_virus { } {
     set set_stream_time 10
     set set_stream_time_now 1
 
-    set z_comes_from "Z Piezo-Forward"
-
     after 100 {
       set set_stream_time 610
       set set_stream_time_now 1
+      set z_comes_from "Z Piezo-Forward"
       set center_pressed 1
       set clear_markers 1
     }
@@ -448,6 +453,8 @@ proc push_virus { } {
 
     pack $virus_push_win.f4.label7 $virus_push_win.f4.push $virus_push_win.f4.repeat  -side left
     show.virus_push
+    hide.virus_cut
+    hide.virus_poke
 }
 
 proc update_time { nm el op } {

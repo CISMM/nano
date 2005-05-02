@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "../../../obj/pc_win32/debug/lib/nmBase"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GR /GX /Zi /Od /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "C:\nsrg\external\pc_win32\include" /I "../nmBase" /I "../../app/image/protvol" /I "../nmMP" /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MDd /W3 /Gm /GR /GX /Zi /Od /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "..\..\..\..\external\pc_win32\include" /I "../nmBase" /I "../../app/image/protvol" /I "../nmMP" /D "_DEBUG" /D "WIN32" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "../../../obj/pc_win32/release/lib/nmBase"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "../../app/image/protvol" /I "../nmMP" /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "..\..\..\..\external\pc_win32\include" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
-# ADD CPP /nologo /MD /W3 /GR /GX /O2 /Ob2 /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "C:\nsrg\external\pc_win32\include" /I "../nmBase" /I "../../app/image/protvol" /I "../nmMP" /D "WIN32" /D "_LIB" /D "NDEBUG" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GR /GX /O2 /Ob2 /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "..\..\..\..\external\pc_win32\include" /I "../nmBase" /I "../../app/image/protvol" /I "../nmMP" /D "NDEBUG" /D "WIN32" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe

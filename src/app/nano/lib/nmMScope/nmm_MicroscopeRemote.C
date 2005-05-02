@@ -129,7 +129,7 @@ int nmm_Microscope_Remote::mainloop (void) {
   state.new_epoch = VRPN_FALSE;
 
   last_time = d_nowtime;
-  gettimeofday(&d_nowtime, &d_nowzone);
+  gettimeofday(&d_nowtime, NULL);
   time_subtract(d_nowtime, last_time, &skiptime);
   time_multiply(skiptime, d_decoration->rateOfTime, &skiptime);
   time_add(d_next_time, skiptime, &d_next_time);
@@ -1522,7 +1522,7 @@ void nmm_Microscope_Remote::ReadMode(int rm)
 
 
 void nmm_Microscope_Remote::ResetClock (void) {
-  gettimeofday(&d_nowtime, &d_nowzone);
+  gettimeofday(&d_nowtime, NULL);
   d_next_time.tv_sec = 0L;
   d_next_time.tv_usec = 0L;
 }

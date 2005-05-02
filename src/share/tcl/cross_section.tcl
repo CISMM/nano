@@ -93,7 +93,7 @@ proc show_xs_values { marker {name ""} {el ""} {op ""} } {
             "[format %.3f [expr abs($dvec($index3) - $dvec($index1))]]"
         
     #puts  "$marker $index1"
-    foreach datavec [xs_get_sorted_names $id] {
+    foreach datavec $xswidget(sorted_names_$index) {
         upvar $datavec dvec
         #if { $datavec != "${vecname}_Path" } {
             # Show Z data from marker lines. 
@@ -250,8 +250,11 @@ proc create_new_cross_section { index } {
     set win $xswidget(point_frame$index)
 
     set id2 0
-        
-    foreach datavec [xs_get_sorted_names $index] {
+    
+    # save a list of the names we use, so a change doesn't mess us up.
+    set xswidget(sorted_names_$index) [xs_get_sorted_names $index]
+
+    foreach datavec $xswidget(sorted_names_$index) {
         # Title strips off the leading "xs0_"
         $xswidget(stripchart) element create $datavec \
                 -xdata ${vecname}_Path -ydata $datavec \
@@ -398,8 +401,9 @@ proc clear_cross_section { index } {
     if { $xsect(data${index}_init) == 0 } { return 1; }
     set win $xswidget(point_frame$index)
 
-    # Clear the graphs of this cross-section
-    foreach datavec  [xs_get_sorted_names $index] {
+    # Clear the graphs of this cross-section. We use the list
+    # of names from when controls were created, not any new list.
+    foreach datavec $xswidget(sorted_names_$index) {
         xs_clear_single_vec $datavec $gridrow $index
         
         incr gridrow
@@ -452,7 +456,7 @@ proc save_cross_section { index } {
     global xsect xswidget
     set vecname "xs$index"
     if { $xsect(data${index}_init) == 0 } { return ""; }
-    set vec_list [xs_get_sorted_names $index] 
+    set vec_list $xswidget(sorted_names_$index) 
     global ${vecname}_Path
  
     set out_text "Point No.\tDist"
@@ -505,36 +509,41 @@ proc save_xs_dialog { which } {
 
 # Change controls and data display when the input planes change. 
 proc xs_change_input_planes { nm el op } {
-    global xsect xswidget inputPlaneNames
+    global xsect xswidget inputPlaneNames xs_clear_0 xs_clear_1
 #    puts "xs Changed plane names $inputPlaneNames"
+#simple expedient - reset everything, that's safe
+    set xs_clear_0 1
+    set xs_clear_1 1
 
-    for { set index 0 } { $index < 2 } { incr index } {
-        if { $xsect(data${index}_init) == 0 } { continue; }
-        set vecname "xs$index"
-        set vec_names [info globals "${vecname}_*"]
-        #puts "vecs $vec_names"
-        set name_list ""
-        # Search the input plane names
-        foreach name $inputPlaneNames {
-            if { [string equal $name "none"] } { continue; }
-            #if { [string equal $name "Empty-HeightPlane"] } { continue; }
-            # Replace spaces and "-" (bad for variable names)
-            set name [string map {" " _ "-" _ } $name]
-            lappend name_list $name
-        }
-        #puts "names $name_list"
-        foreach vname $vec_names {
-            if { [string equal $vname "${vecname}_Path"] } { continue; }
-            # cut off leading "xs0_" and trailing units
-            set name [string range $vname 4 \
-                    [expr [string last _ $vname] -1]]
-            set i [lsearch $name_list $name]
-            if { $i == -1 } { 
-                xs_clear_vec $vname
-                continue;
-            }
-        }
-    }
+
+# Not sure what this code intends to do, looks incomplete, didn't work:
+#     for { set index 0 } { $index < 2 } { incr index } {
+#         if { $xsect(data${index}_init) == 0 } { continue; }
+#         set vecname "xs$index"
+#         set vec_names [info globals "${vecname}_*"]
+#         #puts "vecs $vec_names"
+#         set name_list ""
+#         # Search the input plane names
+#         foreach name $inputPlaneNames {
+#             if { [string equal $name "none"] } { continue; }
+#             #if { [string equal $name "Empty-HeightPlane"] } { continue; }
+#             # Replace spaces and "-" (bad for variable names)
+#             set name [string map {" " _ "-" _ } $name]
+#             lappend name_list $name
+#         }
+#         #puts "names $name_list"
+#         foreach vname $vec_names {
+#             if { [string equal $vname "${vecname}_Path"] } { continue; }
+#             # cut off leading "xs0_" and trailing units
+#             set name [string range $vname 4 \
+#                     [expr [string last _ $vname] -1]]
+#             set i [lsearch $name_list $name]
+#             if { $i == -1 } { 
+#                 xs_clear_vec $vname
+#                 continue;
+#             }
+#         }
+#     }
 }
 
 trace variable inputPlaneNames w xs_change_input_planes
@@ -569,8 +578,8 @@ proc xs_color {index index2} {
 	}
 	3 {
 	    #dark yellow
-	    set r [expr int(255*0.7)]
-	    set g [expr int(255*0.7)]
+	    set r [expr int(255*0.5)]
+	    set g [expr int(255*0.5)]
 	    set b 0
 	}
 	4 {

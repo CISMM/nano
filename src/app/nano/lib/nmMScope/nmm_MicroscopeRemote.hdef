@@ -482,7 +482,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     // replacing things in microscapeC
     timeval d_nowtime;
-    struct timezone d_nowzone;
+   //struct timezone d_nowzone;
     timeval d_next_time;
 
     int readMode;	// differentiate between Live and Replay

@@ -1,6 +1,15 @@
+2005-05-02  Aron Helser  <helser@cs.unc.edu>
+
+	* nanoed_streamfiles.tcl: Tweak times and window handling to make
+	-virus mode a little better.
+	* mainwin.tcl: remove autoscan from thirdtech build. 
+	* cross_section.tcl (clear_cross_section): When list of planes
+	changes, reset the cross section gui to avoid tcl crashing. Save
+	the list of planes that exists when gui elements created. 
+
 2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
-	* filenenu.tcl : Modified the default save format for
+	* filemenu.tcl : Modified the default save format for
 		UNCA files to unca from ima.  Added a comment that
 		the names have to match the C code.
 

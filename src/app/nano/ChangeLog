@@ -1,3 +1,12 @@
+2005-04-26  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.C: Removed any use of timezone structure. It doesn't
+	do anything, and is misleading. changed NO_JOYSTICK_SERVER define
+	to !VRPN_USE_DIRECTINPUT, which is equivalent.
+	* minit.c: same.
+	* Timer.h: same.
+	* updt_display.c: same.
+
 2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* interaction.C : Modified the behavior of polyline completion
