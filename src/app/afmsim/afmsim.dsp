@@ -119,23 +119,23 @@ SOURCE=.\surface.h
 # End Group
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\CORE_RL_xlib_.lib
+SOURCE=C:\nsrg\external\pc_win32\lib\CORE_RL_xlib_.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\CORE_RL_lcms_.lib
+SOURCE=C:\nsrg\external\pc_win32\lib\CORE_RL_lcms_.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\CORE_RL_libxml_.lib
+SOURCE=C:\nsrg\external\pc_win32\lib\CORE_RL_libxml_.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\CORE_RL_magick_.lib
+SOURCE=C:\nsrg\external\pc_win32\lib\CORE_RL_magick_.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\CORE_RL_ttf_.lib
+SOURCE=C:\nsrg\external\pc_win32\lib\CORE_RL_ttf_.lib
 # End Source File
 # End Target
 # End Project

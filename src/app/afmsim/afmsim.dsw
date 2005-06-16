@@ -27,13 +27,13 @@ Package=<4>
     Project_Dep_Name nmBase
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name nmMScopeGenerate
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name nmMScope
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name NMmp
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name nmMScopeGenerate
     End Project Dependency
 }}}
 
