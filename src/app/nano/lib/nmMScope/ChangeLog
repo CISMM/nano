@@ -1,5 +1,11 @@
 2005-06-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
+	* directstep.C : Removes reliance on microscape.h file,
+		because other apps besides nano use this code.
+	* nmm_GuardedscanClient.C : Same.
+
+2005-06-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
 	* nmMScopeGenerate.dsp : Changed it to use
 		$(SYSTEMDRIVE) rather than C: for the location of the
 		bash shell.  This is a more general solution and should

@@ -6,7 +6,6 @@
 #include "error_display.h"
 #include "BCPlane.h"
 #include "math.h"
-#include "microscape.h"
 #include "nmm_MicroscopeRemote.h"
 #include "Point.h"
 #include "tcl_tk.h"

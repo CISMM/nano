@@ -12,9 +12,17 @@
 #include <nmm_MicroscopeRemote.h>
 
 #include "AFMState.h"
-#include "microscape.h"
 #include "directstep.h"
-#include <interaction.h>
+
+/* Do not include microscope.h or interaction.h here because this library is
+   used in other applications besides the nanoManipulator.  For microscope
+   controllers, this brings in a bunch of un-needed gunk!  Instead, pull out
+   the definitions you need until we can re-factor the whole thing better. */
+//#include "microscape.h"
+//#include <interaction.h>
+extern nmm_Microscope_Remote* microscope;
+extern nmb_Dataset* dataset;
+extern nmb_Decoration* decoration;
 
 
 //for Tcl variables
