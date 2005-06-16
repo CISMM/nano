@@ -1,3 +1,10 @@
+2005-06-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmMScopeGenerate.dsp : Changed it to use
+		$(SYSTEMDRIVE) rather than C: for the location of the
+		bash shell.  This is a more general solution and should
+		keep us from having to switch in the future.
+
 2005-05-02  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C: Removed timezone structure, reordered

@@ -78,7 +78,7 @@ InputPath=.\nmm_MicroscopeRemote.hdef
 InputName=nmm_MicroscopeRemote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -91,7 +91,7 @@ InputPath=.\nmm_MicroscopeRemote.hdef
 InputName=nmm_MicroscopeRemote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -111,7 +111,7 @@ InputPath=.\nmm_SimulatedMicroscope.hdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -124,7 +124,7 @@ InputPath=.\nmm_SimulatedMicroscope.hdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -144,7 +144,7 @@ InputPath=.\nmm_SimulatedMicroscope_Remote.hdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -157,7 +157,7 @@ InputPath=.\nmm_SimulatedMicroscope_Remote.hdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -181,7 +181,7 @@ InputPath=.\nmm_MicroscopeRemoteGen.Cdef
 InputName=nmm_MicroscopeRemoteGen
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -194,7 +194,7 @@ InputPath=.\nmm_MicroscopeRemoteGen.Cdef
 InputName=nmm_MicroscopeRemoteGen
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -214,7 +214,7 @@ InputPath=.\nmm_SimulatedMicroscope.Cdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -227,7 +227,7 @@ InputPath=.\nmm_SimulatedMicroscope.Cdef
 InputName=nmm_SimulatedMicroscope
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -247,7 +247,7 @@ InputPath=.\nmm_SimulatedMicroscope_Remote.Cdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -260,7 +260,7 @@ InputPath=.\nmm_SimulatedMicroscope_Remote.Cdef
 InputName=nmm_SimulatedMicroscope_Remote
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' '$(InputPath)' "
 
 # End Custom Build
 
@@ -284,8 +284,8 @@ InputPath=.\nmm_AFM_Control.vrpndef
 InputName=nmm_AFM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -304,8 +304,8 @@ InputPath=.\nmm_AFM_Control.vrpndef
 InputName=nmm_AFM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -331,8 +331,8 @@ InputPath=.\nmm_AFM_Report.vrpndef
 InputName=nmm_AFM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -351,8 +351,8 @@ InputPath=.\nmm_AFM_Report.vrpndef
 InputName=nmm_AFM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -378,8 +378,8 @@ InputPath=.\nmm_AFMSIM_Report.vrpndef
 InputName=nmm_AFMSIM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -398,8 +398,8 @@ InputPath=.\nmm_AFMSIM_Report.vrpndef
 InputName=nmm_AFMSIM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -425,8 +425,8 @@ InputPath=.\nmm_AFMSIMSERVER_Report.vrpndef
 InputName=nmm_AFMSIMSERVER_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -445,8 +445,8 @@ InputPath=.\nmm_AFMSIMSERVER_Report.vrpndef
 InputName=nmm_AFMSIMSERVER_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -472,8 +472,8 @@ InputPath=.\nmm_Monitor.vrpndef
 InputName=nmm_Monitor
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -492,8 +492,8 @@ InputPath=.\nmm_Monitor.vrpndef
 InputName=nmm_Monitor
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -519,8 +519,8 @@ InputPath=.\nmm_SPM_Control.vrpndef
 InputName=nmm_SPM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -539,8 +539,8 @@ InputPath=.\nmm_SPM_Control.vrpndef
 InputName=nmm_SPM_Control
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -566,8 +566,8 @@ InputPath=.\nmm_SPM_Report.vrpndef
 InputName=nmm_SPM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -586,8 +586,8 @@ InputPath=.\nmm_SPM_Report.vrpndef
 InputName=nmm_SPM_Report
 
 BuildCmds= \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
-	C:\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -c '$(InputPath)' " \
+	$(SYSTEMDRIVE)\cygwin\bin\bash -c "'$(ProjDir)/generate.sh' -h '$(InputPath)' " \
 	
 
 "$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
