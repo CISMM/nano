@@ -66,7 +66,7 @@
 #include "interaction.h"
 #include "error_display.h"
 // Must be included after Tcl headers or "list" produces a conflict. 
-#ifndef NO_PHANTOM_SERVER
+#ifdef VRPN_USE_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
 #ifdef VRPN_USE_DIRECTINPUT
@@ -818,7 +818,7 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
 
     } else if (strstr(handTrackerName, "Phantom") != NULL) {
-#ifdef NO_PHANTOM_SERVER
+#ifndef VRPN_USE_PHANTOM_SERVER
 	fprintf(stderr, "phantom_init(): Asked for a local Phantom, but not compiled in\n");
 	return -1;
 #else

@@ -1,3 +1,9 @@
+2005-06-17  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* microscape.C : Changed NO_PHANTOM_SERVER to
+		!VRPN_USE_PHANTOM_SERVER, which is equivalent.
+	* minit.c : Same.
+
 2005-04-26  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.C: Removed any use of timezone structure. It doesn't

@@ -35,7 +35,7 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #include <vrpn_Text.h>
 #endif
-#ifndef NO_PHANTOM_SERVER
+#ifdef VRPN_USE_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
 #ifdef VRPN_USE_DIRECTINPUT
@@ -1439,7 +1439,7 @@ static char local_ModeName [256];
     spring coefficient, and damping coefficient through  it.
  ********/
 
-#ifndef NO_PHANTOM_SERVER
+#ifdef VRPN_USE_PHANTOM_SERVER
 /// local Phantom Server - only used if TRACKER env var doesn't
 /// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
@@ -8703,7 +8703,7 @@ if (microscope) microscope->ResetClock();
 
 #endif
 
-#ifndef NO_PHANTOM_SERVER
+#ifdef VRPN_USE_PHANTOM_SERVER
       if (phantServer) {
 	phantServer->mainloop();
       }
@@ -9148,7 +9148,7 @@ if (microscope) microscope->ResetClock();
 	forceDevice = NULL;
     }
     
-#ifndef NO_PHANTOM_SERVER
+#ifdef VRPN_USE_PHANTOM_SERVER
     if (phantServer) {
 	delete phantServer;
 	phantServer = NULL;
