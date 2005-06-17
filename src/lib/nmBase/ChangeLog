@@ -1,3 +1,14 @@
+2005-06-17  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* BCGrid.h : Removed "#include <iostream>", which was causing
+		problems when trying to link with the Igor Pro XOP
+		library needed by the Asylum port.
+	* nmb_FlattenedPlane.C : Added "#include <iostream>", which
+		is required by cerr statements.
+	* nmb_LBLFlattenedPlane.C : same.
+	* nmb_MorphologyPlane.C : same.
+	* nmb_SummedPlaned.C : same.
+
 2005-05-02  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_ImgMagick.C (initMagick): Always call some init method.

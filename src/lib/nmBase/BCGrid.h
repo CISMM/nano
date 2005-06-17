@@ -27,7 +27,6 @@ extern const char * EMPTY_PLANE_NAME;
 #include <ctype.h> 
 #include <stdio.h> // for FILE
 #include <string>
-#include <iostream>
 using namespace std;
 
 // and reset the warnings
