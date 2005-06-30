@@ -972,10 +972,10 @@ RECEIVE_MSG Scanning nmm_SPM_Report {
 // "Think about what this means when the data sets can be changed"
 RECEIVE_MSG ScanRange {
 //    float32 xmin
-//    float32 ymin
-//    float32 zmin
 //    float32 xmax
+//    float32 ymin
 //    float32 ymax
+//    float32 zmin
 //    float32 zmax
   BCPlane * heightPlane;
 

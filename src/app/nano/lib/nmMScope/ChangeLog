@@ -1,3 +1,14 @@
+2005-06-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmm_MicroscopeRemoteGen.Cdef : Believe it or not, the code
+		to decode the microscope's scan range message has
+		different ordering than the microscope code to encode
+		it, resulting in bad scan ranges being read.  I verified
+		that this is happening in old streamfiles, as well as
+		with the new code.  I don't know how this worked in the
+		past, but this fixes it so that the decoding works.
+	* nmm_SPM_Report.vrpndef : Same.
+
 2005-06-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* directstep.C : Removes reliance on microscape.h file,
