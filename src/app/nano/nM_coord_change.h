@@ -32,7 +32,7 @@ class nM_coord_change : public vrpn_Tracker {
 
     nM_coord_change (const char * name, 
                      vrpn_Tracker_Remote * tracker,
-                     vrpn_Synchronized_Connection * serverC = NULL,
+                     vrpn_Connection * serverC = NULL,
                      vrpn_Connection * remoteC = NULL);
     virtual ~nM_coord_change (void);
 

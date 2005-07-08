@@ -52,7 +52,7 @@ vrpn_Connection * getPeer (const char * hostname, int port,
   return vrpn_get_connection_by_name (buf,
              loggingInterface ? inbuf : NULL, 
              loggingInterface ? outbuf : NULL,
-             NULL, NULL, 1.0, 3, NIC_IP);
+             NULL, NULL, NIC_IP);
 }
 
 static
@@ -83,7 +83,7 @@ vrpn_Connection * getServer (int port,
                 "Opening peer server on port %d, NIC %s; any logging is to %s and %s\n",
                 port, NIC_IP, inbuf, outbuf);
 
-  return new vrpn_Synchronized_Connection
+  return new vrpn_Connection
         (port,
          loggingInterface ? inbuf : NULL, 
          loggingInterface ? outbuf : NULL, 
@@ -330,7 +330,7 @@ void CollaborationManager::initialize
                               d_NIC_IP);
     if( d_log )
       d_interfaceLog 
-        = new vrpn_Synchronized_Connection( d_interfaceLogPort, NULL,
+        = new vrpn_Connection( d_interfaceLogPort, NULL,
                                             isLoggingInterface() ? sfbuf : NULL, 
                                             d_NIC_IP );
   }
@@ -354,7 +354,7 @@ void CollaborationManager::initialize
   }
 
   d_handServer = new nM_coord_change (d_handServerName, handTracker,
-                       (vrpn_Synchronized_Connection *) d_peerServer);
+                       (vrpn_Connection *) d_peerServer);
   d_handServer->registerPeerSyncChangeHandler(syncChangeCB, syncChangeData);
   if (!d_handServer) {
     fprintf(stderr, "CollaborationManager::initialize:  "

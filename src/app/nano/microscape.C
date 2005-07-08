@@ -28,7 +28,6 @@
 #include <vrpn_ForceDevice.h>
 #include <vrpn_Forwarder.h>
 #include <vrpn_Analog.h>
-#include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
 #include <vrpn_RedundantTransmission.h>
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
@@ -619,7 +618,7 @@ Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 /// Changes recovery time for force device - i.e. the Phantom. 
 static void handle_recovery_time_change (vrpn_float64, void *);
 /// Not in user interface, 6/01
-TclNet_float recovery_time ("recovery_time", 1);
+TclNet_float recovery_time ("recovery_time", 10);
 
 //-----------------------------------------------------------------------
 /// Callbacks controling view of AFM and AFM results. 
@@ -6870,7 +6869,7 @@ VERBOSE(1, "g>In graphics thread.\n");
 
   // start a server connection
 VERBOSE(1, "g>Graphics thread starting vrpn server\n");
-  c = new vrpn_Synchronized_Connection (wellKnownPorts->graphicsControl);
+  c = new vrpn_Connection (wellKnownPorts->graphicsControl);
 
   // start a graphics implementation
 VERBOSE(1, "g>Graphics thread starting graphics implementation\n");
@@ -7017,7 +7016,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       fprintf(stderr, "Running local GL graphics implementation PLUS "
               "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
               "    THIS MODE IS FOR TESTING ONLY.\n");
-      shmem_connection = new vrpn_Synchronized_Connection
+      shmem_connection = new vrpn_Connection
                             (wellKnownPorts->graphicsControl);
       gi = new nmg_Graphics_Implementation (
           dataset, surfC, rulerPPMName, vizPPMName,
@@ -7031,12 +7030,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7054,12 +7053,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7077,12 +7076,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7100,12 +7099,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Synchronized_Connection
+              new vrpn_Connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7243,7 +7242,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
 void initialize_rtt (void) {
 
-  rtt_server_connection = new vrpn_Synchronized_Connection
+  rtt_server_connection = new vrpn_Connection
            (wellKnownPorts->roundTripTime);
   rtt_server = new vrpn_Analog_Server ("microscope_rtt",
                                        rtt_server_connection);
@@ -7257,9 +7256,9 @@ void initialize_rtt (void) {
 void update_rtt (void) {
 
   static struct timeval lasttime;
-  vrpn_Synchronized_Connection * scp;
+  vrpn_Connection * scp;
   struct timeval now;
-  struct timeval rtt;
+  //struct timeval rtt;
   double val = 0.0;
   if ((!microscope_connection)||(read_mode == READ_STREAM)) return;
 
@@ -7270,11 +7269,11 @@ void update_rtt (void) {
 
   if (now.tv_sec != lasttime.tv_sec) {
 
-    // DANGER:  forces downcast of vrpn_Connection to
-    //   vrpn_Synchronized_Connection
+    scp = (vrpn_Connection *) microscope_connection;
 
-    scp = (vrpn_Synchronized_Connection *) microscope_connection;
-
+    fprintf(stderr,"update_rtt(): This function relied on vrpn_Clock functions, which no longer exist.\n");
+    fprintf(stderr,"              It needs to be re-implemented another way.\n");
+    /*XXX
     if ((!scp) || (!scp->pClockRemote)) {
       fprintf(stderr,"Warning: Calling update_rtt when pClockRemote == NULL\n");
     } else {
@@ -7284,6 +7283,7 @@ void update_rtt (void) {
       rtt_server->report_changes();
       rtt_server_connection->mainloop();
     }
+    */
 
     updateMicroscopeRTTEstimate(val);
   }
@@ -8056,7 +8056,7 @@ int main (int argc, char* argv[])
     sprintf(phantomlog, "%s/phantom-%d.log", istate.phantomLogPath,
             istate.logTimestamp.tv_sec);
 
-    internal_device_connection = new vrpn_Synchronized_Connection 
+    internal_device_connection = new vrpn_Connection 
            (wellKnownPorts->localDevice,
             istate.logPhantom ? phantomlog : NULL);
 

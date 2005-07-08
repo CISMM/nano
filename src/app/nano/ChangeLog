@@ -1,3 +1,17 @@
+2005-07-08  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* CollaborationManager.C : There are no more synchronized connections
+		in VRPN, so this is switching to using unsynchronized ones.
+	* imagerPlugin.C : Same.
+	* nM_coord_change.C : Same.
+	* nM_coord_change.h : Same.
+	* microscape.C : Same.  Also, the rtt (round-trip-time) estimator
+		code has been disabled because it relied on the VRPN round-
+		trip estimate, which no longer exists.  Some other method of
+		estimating this will be needed.
+	* nano.dsp : Includes path the HDAPI libraries in their standard
+		location.
+
 2005-06-17  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.C : Changed NO_PHANTOM_SERVER to

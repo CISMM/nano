@@ -23,7 +23,7 @@
 
 nM_coord_change::nM_coord_change (const char * name,
 				  vrpn_Tracker_Remote * tracker,
-				  vrpn_Synchronized_Connection * serverC,
+				  vrpn_Connection * serverC,
                                   vrpn_Connection * remoteC) :
   vrpn_Tracker (name, serverC),
   d_peerIsSynced (VRPN_FALSE),

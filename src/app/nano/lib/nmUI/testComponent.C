@@ -34,7 +34,7 @@ int main (int argc, char ** argv) {
   nmui_ComponentSync * cSync;
 
   if (argc == 1) {  // "server" startup
-    connection = new vrpn_Synchronized_Connection;
+    connection = new vrpn_Connection;
   } else {
     connection = vrpn_get_connection_by_name (argv[1]);
   }
