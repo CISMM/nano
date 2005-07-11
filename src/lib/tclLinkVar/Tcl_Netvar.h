@@ -14,7 +14,7 @@
 //#include <sys/time.h>  // for struct timeval - get from vrpn_Shared
 #include <stdio.h>
 
-#include <Tcl_Linkvar.h>
+#include "Tcl_Linkvar.h"
 
 class nmb_TimerList;  // from nmb_TimerList.h
 

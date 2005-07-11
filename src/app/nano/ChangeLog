@@ -1,3 +1,10 @@
+2005-07-10  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nano.dsp : Making the code compile and link using the NSRG
+		buildtime library at C:\nsrg\external\pc_win32 rather than
+		an external directory at the same level as the nano
+		directory.
+
 2005-07-08  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* CollaborationManager.C : There are no more synchronized connections

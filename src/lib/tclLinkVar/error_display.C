@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <Tcl_Linkvar.h>
+#include "Tcl_Linkvar.h"
 
 #include "Tcl_Interpreter.h"
 #include "error_display.h"

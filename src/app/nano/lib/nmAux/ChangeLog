@@ -1,3 +1,10 @@
+2005-07-10  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmAux.dsp : Making the code compile and link using the NSRG
+		buildtime library at C:\nsrg\external\pc_win32 rather than
+		an external directory at the same level as the nano
+		directory.
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nma_Keithley2400.h : Uses new VRPN_CALLBACK definition.
