@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#define QuantumLeap
 #include <magick/api.h>
 
 #include "BCGrid.h"
@@ -18,11 +19,7 @@
 
 /** Initialize ImageMagick library. Pass in argv[0] */
 void nmb_ImgMagick::initMagick(char * argv) {
-#ifdef InitializeMagick
     InitializeMagick(argv);
-#else
-    MagickIncarnate(argv);
-#endif
 }
 
 /**
@@ -79,11 +76,22 @@ int nmb_ImgMagick::readFileMagick(const char * filename, const char * name, BCGr
           fprintf(stderr, "readFileMagick: null plane, memory error.\n"); 
           return(-1);
       }
+      double scale = 1;
+      if (QuantumDepth == 16) {
+        scale = 1.0 / 256;
+      }
       for (unsigned int j=0; j<image->rows; j++) {
           for (unsigned int i=0; i < image->columns; i++) {
-              //  data ranges 0 to 256
+              // Because we are using QuantumLeap, the images are stored as
+              // 16-bit unsigned values; 8-bit images are stored in the upper
+              // 8 bits.  So, we need to divide by 256 to get them into the correct
+              // range when we are using a quantum depth of 16.
+              // This produces data ranging from 0 to 255 for 8-bit images, and
+              // from 0 to almost 256 for 16-bit images.  It is arguable whether we
+              // would rather have the data map from 0.0 through almost 1.0, but
+              // the present behavior matches how the application used to behave.
               // Swap data vertically, to match NM convention.
-              plane->setValue(i,image->rows-1-j,pixels[i + image->columns*j].red);
+              plane->setValue(i,image->rows-1-j,pixels[i + image->columns*j].red * scale);
           }
       }
       CloseCacheView(vinfo);
@@ -104,8 +112,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
 
     //Initialize the image with provided data. 
     GetExceptionInfo(&exception);
-    image=ConstituteImage(cols, rows, "RGB", (StorageType)0, 
-                          pixels, &exception);
+    image=ConstituteImage(cols, rows, "RGB", CharPixel, pixels, &exception);
     if (image == (Image *) NULL) {
         fprintf(stderr, "writeFileMagick: Can't create image.\n");
         // Get here if we can't create the image, let caller handle it. 
@@ -121,6 +128,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
         return -1;
     }
     image_info=CloneImageInfo((ImageInfo *) NULL);
+
     // Zip is the only one that works (well) for TIF files, but some programs
     // don't read it. 
     // LZW is not even available. 
@@ -133,12 +141,18 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
         sprintf(flip_image->filename, "%s:%s", mgk_filetype, filename);
     }
 
+    // Write 8-bit image.
+    image_info->depth = 8;
+    flip_image->depth = 8;
+
     if(!WriteImage(image_info, flip_image)) {
 	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", flip_image->exception.reason, flip_image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);
     DestroyImage(flip_image);
+    // Do not destroy the original image -- it causes a seg fault.  It must
+    // do something in-place with the old image?
     return(0);
 }
 
@@ -181,7 +195,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
      
     //Initialize the image with provided data. 
     GetExceptionInfo(&exception);
-    image=ConstituteImage(w, h, "RGB", (StorageType)0, pixels, &exception);
+    image=ConstituteImage(w, h, "RGB", CharPixel, pixels, &exception);
     if (image == (Image *) NULL) {
         fprintf(stderr, "writeFileMagick: Can't create image.\n");
         // Get here if we can't create the image, let caller handle it. 
@@ -206,6 +220,10 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     // don't read it. 
     // LZW is not even available. 
     image_info->compression=NoCompression;
+
+    // Write 8-bit image.
+    image_info->depth = 8;
+    image->depth = 8;
 
     if(!WriteImage(image_info, image)) {
 	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", image->exception.reason, image->exception.description);
@@ -255,7 +273,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
 
     //Initialize the image with provided data.
     GetExceptionInfo(&exception);
-    image=ConstituteImage(w, h, "RGB", (StorageType)0, pixels, &exception);
+    image=ConstituteImage(w, h, "RGB", CharPixel, pixels, &exception);
     if (image == (Image *) NULL) {
         fprintf(stderr, "writeFileMagick: Can't create image.\n");
         // Get here if we can't create the image, let caller handle it.
@@ -280,6 +298,10 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     // don't read it. 
     // LZW is not even available. 
     image_info->compression=NoCompression;
+
+    // Write 8-bit image.
+    image_info->depth = 8;
+    image->depth = 8;
 
     if(!WriteImage(image_info, image)) {
 	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", image->exception.reason, image->exception.description);

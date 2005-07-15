@@ -7871,11 +7871,14 @@ int main (int argc, char* argv[])
     // DEBUG pause program to attach debugger. 
     //cin.get();
 
-    // image magick library expects this: in fact, it seems to ignore the
+    // The dynamically-linked image magick library expects this: in fact, it seems to ignore the
     // path and only work if the modules.mgk file is located in the same
     // directory as the batch file that ran the executable (or the executable
     // itself) is located.  The DLLs also have to be in this directory, not
     // just on the path!
+    // For the statically-linked version, things work without having to have any
+    // external files at run-time.  It doesn't hurt to pass in this path even
+    // in the static case.
     nmb_ImgMagick::initMagick(argv[0]);
     // For Tcl, also used in initialize_environment - it expects this:
     Tcl_FindExecutable(argv[0]);

@@ -1,3 +1,15 @@
+2005-07-15  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nano.dsp : Modified to: (1) Include and link with a static
+		version of ImageMagick to avoid the need to provide DLLs
+		at runtime.  (2) Use the C:\NSRG\external directory for
+		linking and include.  (3) Not have duplicate references
+		for the libraries needed to link.  (4) Add back in the
+		standard libraries for linking, which were needed by the
+		new ImageMagick.
+	* microscape.C : Modified comments describing the use of statically
+		linked ImageMagick in the current version.
+
 2005-07-10  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nano.dsp : Making the code compile and link using the NSRG
