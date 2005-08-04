@@ -1,3 +1,15 @@
+2005-08-04  David Marshburn  <marshbur@cs.unc.edu>
+
+	* opticalServer.cpp:  uses vrpn_Connection, not synchronized
+	* nmm_Microscope_SEM_diaginc.h/cpp:  many changes
+	- only changes things on the spot camera when the camera is
+	in between frames.  this should stop the crashing and the
+	flip-flopping of values.
+	- notifies the interface more dutifully when requested
+	settings fail
+	- adds an exposure setting.
+	* OpticalServerInterface.h/cpp:  adds controls for exposure.
+
 2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* OpticalServerInterface.cpp : Turned to Unix format.

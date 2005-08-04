@@ -106,6 +106,11 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	myImageBuffer = new vrpn_uint8[ maxBufferSize ];
 	cameraImageBuffer = new vrpn_uint8[ maxBufferSize ];
 
+
+	// no changes, yet
+	requestedChanges.resolutionChanged = requestedChanges.binningChanged 
+		= requestedChanges.exposureChanged = false;
+
 }
 
 nmm_Microscope_SEM_diaginc::
@@ -132,19 +137,67 @@ setupCamera( )
 	if( success != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera.  Code:  %d\n", success );
+			"and initializing the SPOT camera (init).  Code:  %d\n", success );
 		return success;
 	}
 	
 	// add our callback
 	SpotSetCallback( nmm_Microscope_SEM_diaginc_spotCallback, (DWORD) this );
 
-	success = setResolution( EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX], 
-							 EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX] );
+	// ask for 8 bits per pixel
+	int bitdepth = 8;
+	success = SpotSetValue(SPOT_BITDEPTH, &bitdepth);
 	if( success != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera.  Code:  %d\n", success );
+			"and initializing the SPOT camera (bit depth).  Code:  %d\n", success );
+		return success;
+	}
+	
+	// set bin size
+	short binning = 1;
+	success = SpotSetValue( SPOT_BINSIZE, &binning );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (binning).  Code:  %d\n", success );
+	}
+
+	// set resolution
+	// check that the requested resolution isn't too big
+	int res_x = EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX];
+	int res_y = EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX];
+	int camX = res_x * binning, camY = res_y * binning;
+	int maxX = 0, maxY = 0;
+	getMaxResolution( maxX, maxY );
+	if( camX > maxX || camY > maxY )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  "
+			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
+			res_x, res_y, maxX, maxY, currentBinning );
+		return -1;
+	}
+	
+	RECT rect;
+	rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
+	rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
+	rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
+	rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
+	success = SpotSetValue( SPOT_IMAGERECT, &rect );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (resolution).  Code:  %d\n", success );
+		return success;
+	}
+	
+	// turn off auto-exposure
+	bool autoexpose = false;
+	success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
 		return success;
 	}
 	
@@ -162,29 +215,10 @@ setupCamera( )
 		return success;
 	}
 	
-	// ask for 8 bits per pixel
-	int bitdepth = 8;
-	success = SpotSetValue(SPOT_BITDEPTH, &bitdepth);
-	if( success != SPOT_SUCCESS )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera (bit depth).  Code:  %d\n", success );
-		return success;
-	}
-	
-	// turn off auto-exposure
-	bool autoexpose = false;
-	success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
-	if( success != SPOT_SUCCESS )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
-		return success;
-	}
-	
 	// set an exposure time
+	this->currentExposure = 100;
 	SPOT_EXPOSURE_STRUCT exposure;
-	exposure.lExpMSec = 250;
+	exposure.lExpMSec = this->currentExposure;
 	exposure.lGreenExpMSec = 0;
 	exposure.lBlueExpMSec = 0;
 	exposure.nGain = 2;
@@ -196,14 +230,6 @@ setupCamera( )
 		return success;
 	}
 	
-	// set bin size
-	short binning = 1;
-	success = SpotSetValue( SPOT_BINSIZE, &binning );
-	if( success != SPOT_SUCCESS )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera (binning).  Code:  %d\n", success );
-	   }
 	return 0;
 }
 
@@ -370,7 +396,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionbyIndex:  "
 			"invalid resolution requested:  %d\n", idx );
-		return reportResolution( );
+		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		return currentResolutionIndex;
 	}
 	vrpn_int32 res_x = 0, res_y = 0;
 	this->indexToResolution( idx, res_x, res_y );
@@ -382,7 +409,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionByIndex:  "
 			"internal error.\n" );
-		return reportResolution( );
+		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		return currentResolutionIndex;
 	}
 
 	// check that the requested resolution isn't too big
@@ -392,7 +420,8 @@ setResolutionByIndex( vrpn_int32 idx )
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionByIndex:  "
 			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
 			res_x, res_y, maxX, maxY, currentBinning );
-		return reportResolution( );
+		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		return currentResolutionIndex;
 	}
 
 	if( d_virtualAcquisition )
@@ -401,23 +430,12 @@ setResolutionByIndex( vrpn_int32 idx )
 	}
 	else
 	{
-		// request the new resolution.  the requested area is centered in 
-		// the camera's capture area.
-		RECT rect;
-		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
-		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
-		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
-		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
-		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
-		if( retVal != SPOT_SUCCESS )
-		{
-			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionByIndex:  "
-				"failed on the SPOT camera.  Code:  %d\n", retVal);
-		}
+		requestedChanges.resolutionChanged = true;
+		requestedChanges.newResolutionIndex = idx;
+
 	}
 	
-	OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
-	return reportResolution();
+	return idx;
 } // end of setResolutionByIndex(...)
 
 
@@ -478,36 +496,30 @@ setBinning( vrpn_int32 bin )
 	}
 	else
 	{
-		short binsize = bin;
-		retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
-		if( retVal != SPOT_SUCCESS )
-		{
-			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
-				"failed on the SPOT camera.  Code:  %d\n", retVal);
-			return currentBinning;
-		}
-		RECT rect;
-		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
-		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
-		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
-		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
-		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
-		if( retVal != SPOT_SUCCESS )
-		{
-			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
-				"resolution failed on the SPOT camera.  Code:  %d\n", retVal);
-			// try to set the binning back
-			binsize = currentBinning;
-			SpotSetValue( SPOT_BINSIZE, &binsize );
-		}
+		requestedChanges.newBinning = bin;
+		requestedChanges.binningChanged = true;
 	}
 
-	vrpn_int32 binning = getBinning( );
-	OpticalServerInterface::getInterface()->setBinning( binning );
 	return currentBinning;
 } // end setBinning(...)
 
 
+vrpn_int32 nmm_Microscope_SEM_diaginc::
+setExposure( vrpn_int32 millisecs )
+{
+	if( d_virtualAcquisition )
+	{
+		currentExposure = millisecs;
+	}
+	else
+	{
+		requestedChanges.newExposure = millisecs;
+		requestedChanges.exposureChanged = true;
+	}
+	return currentExposure;
+}
+
+	
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 setContrastLevel( vrpn_int32 level )
 {
@@ -623,6 +635,28 @@ acquireImage()
 	}
 	else // the real thing
 	{
+		// turn off auto-exposure
+		bool autoexpose = false;
+		int success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
+		if( success != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+				"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
+			return success;
+		}
+		
+		SPOT_EXPOSURE_STRUCT exposure;
+		exposure.lExpMSec = this->currentExposure;
+		exposure.lGreenExpMSec = 0;
+		exposure.lBlueExpMSec = 0;
+		exposure.nGain = 2;
+		success = SpotSetValue( SPOT_EXPOSURE, &exposure );
+		if( success != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::acquireImage:  "
+				"error (exposure).  Code:  %d\n", success );
+			return success;
+		}
 		// collect the image
 		int retVal = SpotGetImage( 0, // bits per plane ( 0 = use set value )
 								   false, // quick image capture
@@ -714,7 +748,7 @@ vrpn_int32 nmm_Microscope_SEM_diaginc::reportMaxScanSpan()
 
 
 //static 
-int nmm_Microscope_SEM_diaginc::RcvSetResolution 
+int VRPN_CALLBACK nmm_Microscope_SEM_diaginc::RcvSetResolution 
 (void *_userdata, vrpn_HANDLERPARAM _p)
 {
 	nmm_Microscope_SEM_diaginc *me = (nmm_Microscope_SEM_diaginc *)_userdata;
@@ -735,7 +769,7 @@ int nmm_Microscope_SEM_diaginc::RcvSetResolution
 
 
 //static 
-int nmm_Microscope_SEM_diaginc::RcvRequestScan
+int VRPN_CALLBACK nmm_Microscope_SEM_diaginc::RcvRequestScan
 (void *_userdata, vrpn_HANDLERPARAM _p)
 {
 	nmm_Microscope_SEM_diaginc *me = (nmm_Microscope_SEM_diaginc *)_userdata;
@@ -757,7 +791,7 @@ int nmm_Microscope_SEM_diaginc::RcvRequestScan
 
 
 //static
-int nmm_Microscope_SEM_diaginc::RcvGotConnection
+int VRPN_CALLBACK nmm_Microscope_SEM_diaginc::RcvGotConnection
 (void *_userdata, vrpn_HANDLERPARAM _p)
 {
     nmm_Microscope_SEM_diaginc *me = 
@@ -780,7 +814,7 @@ int nmm_Microscope_SEM_diaginc::RcvGotConnection
 
 
 // static
-int nmm_Microscope_SEM_diaginc::RcvDroppedConnection
+int VRPN_CALLBACK nmm_Microscope_SEM_diaginc::RcvDroppedConnection
 (void *_userdata, vrpn_HANDLERPARAM _p)
 {
 	nmm_Microscope_SEM_diaginc *me =
@@ -790,6 +824,151 @@ int nmm_Microscope_SEM_diaginc::RcvDroppedConnection
 }
 
 
+// a helper function to change the resolution
+// should ONLY be called from the idle notice in the spot callback, below
+void nmm_Microscope_SEM_diaginc::
+doRequestedChangesOnSpot( )
+{
+	if( requestedChanges.binningChanged )
+	{
+		requestedChanges.binningChanged = false;
+
+		int bin = requestedChanges.newBinning;
+		// check that the requested bin size is in range
+		if( bin <= 0 || bin > 4 )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+				"bin size %d out of range.\n", bin );
+			return;
+		}
+		
+		// figure out what new resolution we need, and if it's possible
+		double resFactor = (double) bin / (double) currentBinning;
+		int resX = 0, resY = 0, maxX = 0, maxY = 0, camX = 0, camY  = 0;
+		int retVal = this->getResolution( resX, resY );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"(binning) error fixing the resolution (1).\n" );
+			return;
+		}
+		camX = resX * resFactor;  
+		camY = resY * resFactor;
+		retVal = this->getMaxResolution( maxX, maxY );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"(binning) error fixing the resolution (2).\n" );
+			return;
+		}
+		if( camX > maxX || camY > maxY )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"required area too large for camera: (%d x %d) needed.  "
+				"(%d x %d) available.\n", camX, camY, maxX, maxY );
+			return;
+		}
+
+		short binsize = bin;
+		retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"failed on the SPOT camera (binning).  Code:  %d\n", retVal);
+			return;
+		}
+		RECT rect;
+		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
+		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
+		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
+		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
+		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+				"resolution failed on the SPOT camera.  Code:  %d\n", retVal);
+			// try to set the binning back
+			binsize = currentBinning;
+			SpotSetValue( SPOT_BINSIZE, &binsize );
+		}
+		vrpn_int32 binning = getBinning( );
+		OpticalServerInterface::getInterface()->setBinning( binning );
+	}
+
+	if( requestedChanges.resolutionChanged )
+	{
+		requestedChanges.resolutionChanged = false;
+		vrpn_int32 res_x = 0, res_y = 0;
+		indexToResolution( requestedChanges.newResolutionIndex, res_x, res_y );
+		
+		// get the max resolution
+		int maxX = 0, maxY = 0;
+		int retVal = getMaxResolution( maxX, maxY );
+		if( retVal != 0 )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"internal error (resolution).\n" );
+			reportResolution( );
+			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			return;
+		}
+		
+		// check that the requested resolution isn't too big
+		int camX = res_x * currentBinning, camY = res_y * currentBinning;
+		if( camX > maxX || camY > maxY )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
+				res_x, res_y, maxX, maxY, currentBinning );
+			reportResolution( );
+			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			return;
+		}
+		
+		// request the new resolution.  the requested area is centered in 
+		// the camera's capture area.
+		RECT rect;
+		rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
+		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
+		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
+		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
+		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
+				"failed on the SPOT camera (resolution).  Code:  %d\n", retVal);
+		}
+		
+		reportResolution( );
+		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+	}
+	
+	
+	if( requestedChanges.exposureChanged )
+	{
+		requestedChanges.exposureChanged = false;
+
+		SPOT_EXPOSURE_STRUCT exposure;
+		exposure.lExpMSec = requestedChanges.newExposure;
+		exposure.lGreenExpMSec = 0;
+		exposure.lBlueExpMSec = 0;
+		exposure.nGain = 2;
+		int success = SpotSetValue( SPOT_EXPOSURE, &exposure );
+		if( success != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  Error setting "
+					"exposure (%d ms) in the SPOT camera.  Code:  %d\n", requestedChanges.newExposure, success );
+			OpticalServerInterface::getInterface()->setExposure( currentExposure );
+			return;
+		}
+		currentExposure = requestedChanges.newExposure;
+		OpticalServerInterface::getInterface()->setExposure( currentExposure );
+	}
+
+}
+
+
+
 // from SpotCam.h:
 // typedef VOID (WINAPI *SPOTCALLBACK)(int iStatus, long lInfo, DWORD dwUserData);
 void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DWORD dwUserData )
@@ -797,7 +976,7 @@ void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DW
 	nmm_Microscope_SEM_diaginc* me = (nmm_Microscope_SEM_diaginc*) dwUserData;
 	if( iStatus == SPOT_STATUSLIVEIMAGEREADY )
 	{
-		printf( "nmm_Microscope_SEM_diaginc_spotCallback:  status  %d\n", iStatus );
+		//printf( "nmm_Microscope_SEM_diaginc_spotCallback:  status  %d (live image ready)\n", iStatus );
 
 		/* do this in acquireImage
 		if( me->d_scans_to_do > 0 )
@@ -815,9 +994,13 @@ void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DW
 		}
 		*/
 	} // end if live image ready
+	if( iStatus == SPOT_STATUSIDLE )
+	{
+		//printf( "nmm_Microscope_SEM_diaginc_spotCallback:  status  %d (idle)\n", iStatus );
+		me->doRequestedChangesOnSpot( );
+	}
 	
 }
-
 
 
 //////////////////////////////////////////////////

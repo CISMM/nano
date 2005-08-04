@@ -1,7 +1,4 @@
 
-// Horrible hack: Code that uses this function must #include Tcl_Linkvar.h
-// BEFORE windows.h and before this file is included.  If it doesn't then
-// there is a fight between Tk and STL, and Tk loses.
 
 #include <windows.h>
 #include <vrpn_Types.h>
@@ -22,9 +19,11 @@ public:
 	int getBinning( ) { return binning; };
 	int getResolutionIndex( ) { return resolutionIndex; };
 	int getContrast( ) { return contrast; };
+	int getExposure( ) { return (int) d_exposure; }
 	void setBinning( int bin );
 	void setResolutionIndex( int idx );
 	void setContrast( int contrast );
+	void setExposure( int exposure );
 
 protected:
 
@@ -43,6 +42,7 @@ protected:
 	Tclvar_selector	*d_binningSelector;
 	Tclvar_selector *d_resolutionSelector;
 	Tclvar_selector *d_contrastSelector;
+	Tclvar_float* d_exposure;  // in ms
 	int binning;
 	int resolutionIndex;
 	int contrast;
@@ -63,6 +63,7 @@ private:
 	static void handle_binning_changed(char *new_value, void *userdata);
 	static void handle_resolution_changed(char *new_value, void *userdata);
 	static void handle_contrast_changed(char *new_value, void *userdata);
+	static void handle_exposure_changed( float new_value, void* userdata );
 
 	bool threadReady;
 };

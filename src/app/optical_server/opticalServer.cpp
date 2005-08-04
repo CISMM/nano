@@ -16,14 +16,15 @@ int main( int argc, char* argv[] )
 	port = atoi(argv[1]);
     }
 
-    vrpn_Synchronized_Connection connection(port);
+    vrpn_Connection connection(port);
 
-    // nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_FALSE );
-    nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_TRUE );
+    nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_FALSE );
+    //nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_TRUE );
 
     iface->setMicroscope( &m );
 	iface->setBinning( m.getBinning( ) );
 	iface->setResolutionIndex( m.getResolutionIndex( ) );
+	iface->setExposure( m.getExposure( ) );
 
     struct timeval timeout;
     timeout.tv_sec = 0;

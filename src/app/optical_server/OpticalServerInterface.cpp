@@ -10,7 +10,7 @@
 #include "OpticalServerInterface.h"
 #include "nmm_Microscope_SEM_diaginc.h"
 
-static char *Version_string = "01.00";
+static char *Version_string = "01.01";
 
 OpticalServerInterface* OpticalServerInterface::instance = NULL;
 bool OpticalServerInterface::interfaceShutdown = false;
@@ -19,7 +19,6 @@ void OpticalServerInterface_myGlutRedisplay( )
 {
 	static int count = 0;
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
-	//printf( "display %d\n", count++ );
 
 	glutSetWindow( iface->image_window );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -132,7 +131,8 @@ void OpticalServerInterface::handle_binning_changed(char *new_value, void *userd
 void OpticalServerInterface::handle_resolution_changed(char *new_value, void *userdata)
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
-  if( me->microscope != NULL && me->threadReady ) {
+  if( me->microscope != NULL && me->threadReady ) 
+  {
     int i, x, y;
     sscanf(new_value, "%d %dx%d", &i, &x, &y);
 	if( me->microscope->getResolutionIndex( ) != i )
@@ -148,6 +148,18 @@ void OpticalServerInterface::handle_contrast_changed(char *new_value, void *user
   {
 	  if( me->microscope->getContrastLevel( ) != atoi( new_value ) )
 		  me->microscope->setContrastLevel( atoi(new_value) );
+  }
+}
+
+
+void OpticalServerInterface::handle_exposure_changed( float new_value, void* userdata )
+{
+  OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( me->microscope != NULL && me->threadReady )
+  {
+	  int e = (int) new_value;
+	  *(me->d_exposure) = (float) e;
+	  me->microscope->setExposure( e );
   }
 }
 
@@ -265,6 +277,10 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   iface->d_contrastList->Add_entry( "8" );
   iface->d_contrastSelector = new Tclvar_selector("contrast", "", iface->d_contrastList, "0", iface->handle_contrast_changed, iface );
 
+  // exposure time
+  iface->d_exposure = new Tclvar_float_with_scale( "exposure_in_ms", "", 10, 250, 100, iface->handle_exposure_changed, iface );
+
+  
   //------------------------------------------------------------------
   // This routine must be called in order to initialize all of the
   // variables that came into scope before the interpreter was set
@@ -360,6 +376,13 @@ setBinning( int bin )
 	char binStr[512];
 	sprintf( binStr, "%d", bin );
 	*d_binningSelector = binStr;
+}
+
+
+void OpticalServerInterface::
+setExposure( int exposure )
+{
+	*d_exposure = exposure;
 }
 
 
