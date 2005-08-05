@@ -1,3 +1,15 @@
+2005-08-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* directstep.C (handle_take_z_step):  correctly increments
+	z position when stepping without the axes.
+	* AFMState.C (AFMState):  initialize 'autoscan' such that it gets
+	its value from tcl, rather than specifying it explicitly, so we 
+	don't overwrite the value as we connect to / disconnect from
+	microscopes.
+	* nmm_MicroscopeRemoteGen.Cdef (handle_GotMicroscopeControl):
+	if autoscan is off, do not start scanning when we connect to
+	a microscope.
+
 2005-06-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmm_MicroscopeRemoteGen.Cdef : Believe it or not, the code

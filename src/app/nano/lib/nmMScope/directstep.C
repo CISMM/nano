@@ -246,7 +246,7 @@ void handle_take_z_step(vrpn_float64, void * /*_mptr*/)
 			  y+= step_vec[1] *step_z;
 			  z_pos+= step_vec[2] *step_z;
 		  } else {
-			  z_pos=step_z;
+			  z_pos+=step_z;
 		  }
 		  
 		  

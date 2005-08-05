@@ -494,7 +494,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     acquisitionMode(IMAGE),
 
     scanning ("spm_scanning", 0),
-    autoscan ("autoscan", 1),
+    autoscan ("autoscan", 0, NULL, NULL, VRPN_TRUE /* get value from tcl */ ),
     withdraw_tip("withdraw_tip", 0),
     slowScanEnabled ("slowScan", 1),
     cannedLineVisible (VRPN_FALSE),

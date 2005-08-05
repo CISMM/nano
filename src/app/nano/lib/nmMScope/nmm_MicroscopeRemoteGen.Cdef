@@ -1646,7 +1646,8 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
   me->SetScanStyle();
 
   // Start scanning the surface
-  me->ResumeFullScan();
+  if( me->state.autoscan ) // only start scanning if auto-rescan is on
+      me->ResumeFullScan();
 
   return;
 }
