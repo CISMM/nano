@@ -590,7 +590,8 @@ proc withdraw_tip_state {name el op} {
 # These two button should only be available when reading a DEVICE
 lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip
 if { !$thirdtech_ui } {
-lappend device_only_controls $w2.toolbar.autoscan
+# lappend device_only_controls $w2.toolbar.autoscan
+# autoscan is okay without a device -- we want to use it before we're connected
 }
 }
 
