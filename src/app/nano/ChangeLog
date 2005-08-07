@@ -1,3 +1,7 @@
+2005-08-07  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.h:  bumped version number to 11.5
+
 2005-07-15  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nano.dsp : Modified to: (1) Include and link with a static
