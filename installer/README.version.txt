@@ -2,7 +2,12 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
-11.4: (October 1, 2004)
+11.5:  (August 7, 2005)
+	- fixes a bug with the direst-step tools when stepping in Z
+	  without using the adjustable axes.
+	- will not have topo start scanning on connect if "auto-
+	  rescan" is deselected.
+11.4:  (October 1, 2004)
 	- Makes the "direction of projected texture" icon invisible by
 	  default, so that we don't see it when loading tiny regions.
 	- Puts things where they need to be to make the ImageMagick
