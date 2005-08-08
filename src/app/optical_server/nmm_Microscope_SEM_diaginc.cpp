@@ -192,7 +192,7 @@ setupCamera( )
 	}
 	
 	// turn off auto-exposure
-	bool autoexpose = false;
+	BOOL autoexpose = false;
 	success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
 	if( success != SPOT_SUCCESS )
 	{
@@ -218,8 +218,8 @@ setupCamera( )
 	// set an exposure time
 	this->currentExposure = 100;
 	SPOT_EXPOSURE_STRUCT exposure;
-	exposure.lExpMSec = this->currentExposure;
-	exposure.lGreenExpMSec = 0;
+	exposure.lExpMSec = 0;
+	exposure.lGreenExpMSec = this->currentExposure;
 	exposure.lBlueExpMSec = 0;
 	exposure.nGain = 2;
 	success = SpotSetValue( SPOT_EXPOSURE, &exposure );
@@ -229,7 +229,23 @@ setupCamera( )
 			"and initializing the SPOT camera (exposure).  Code:  %d\n", success );
 		return success;
 	}
-	
+
+	/*
+	SPOT_EXPOSURE_STRUCT2 exposure2;
+	exposure2.dwExpDur = this->currentExposure;
+	exposure2.dwRedExpDur = 0;
+	exposure2.dwGreenExpDur = 0;
+	exposure2.dwBlueExpDur = 0;
+	exposure2.nGain = 2;
+	success = SpotSetValue( SPOT_EXPOSURE2, &exposure2 );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (exposure2).  Code:  %d\n", success );
+		return success;
+	}
+	*/
+
 	return 0;
 }
 
@@ -603,6 +619,78 @@ y_span_DAC = d_yScanSpan;
 }
 
 
+void nmm_Microscope_SEM_diaginc::
+printSpotValues( )
+{
+	// auto-expose
+	BOOL autoexpose;
+	if( SpotGetValue( SPOT_AUTOEXPOSE, &autoexpose ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get auto-expose.\n" );
+	}
+	printf( "  SPOT:  autoexpose:  %s\n", ( (autoexpose != 0) ? "true" : "false" ) );
+
+	// binning
+	short bins;
+	if( SpotGetValue( SPOT_BINSIZE, &bins ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get bins.\n" );
+	}
+	printf( "  SPOT:  binning:  %hd\n", bins );
+
+	// color enable
+	SPOT_COLOR_ENABLE_STRUCT colors;
+	if( SpotGetValue( SPOT_COLORENABLE, &colors ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get colors\n" );
+	}
+	printf( "  SPOT:  color enable:  red(%s), green(%s), blue(%s)\n", 
+			( (colors.bEnableRed != 0) ? "true" : "false" ),
+			( (colors.bEnableGreen != 0) ? "true" : "false" ),
+			( (colors.bEnableBlue != 0) ? "true" : "false" ) );
+
+	// color enable 2
+	SPOT_COLOR_ENABLE_STRUCT2 colors2;
+	if( SpotGetValue( SPOT_COLORENABLE2, &colors2 ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get colors2.\n" );
+	}
+	printf( "  SPOT:  color enable 2:  red(%s), green(%s), blue(%s), clear(%s)\n", 
+			( (colors2.bEnableRed != 0) ? "true" : "false" ),
+			( (colors2.bEnableGreen != 0) ? "true" : "false" ),
+			( (colors2.bEnableBlue != 0) ? "true" : "false" ),
+			( (colors2.bEnableClear != 0) ? "true" : "false" ) );
+
+	// exposure times
+	SPOT_EXPOSURE_STRUCT exposure;
+	if( SpotGetValue( SPOT_EXPOSURE, &exposure ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get exposure.\n" );
+	}
+	printf( "  SPOT:  exposure:  red/clear/exp(%ld), green(%ld), blue(%ld), gain(%hd)\n", 
+			exposure.lRedExpMSec, exposure.lGreenExpMSec, exposure.lBlueExpMSec, 
+			exposure.nGain );
+
+	// exposure2 times
+	SPOT_EXPOSURE_STRUCT2 exposure2;
+	if( SpotGetValue( SPOT_EXPOSURE2, &exposure2 ) != SPOT_SUCCESS )
+	{
+		printf( "nmm_Microscope_SEM_diaginc::printSpotValues:  "
+				 "failed to get exposure2.\n" );
+	}
+	printf( "  SPOT:  exposure 2:  red(%ld), green(%ld), blue(%ld), clear/exp(%ld), gain(%hd)\n", 
+			exposure2.dwRedExpDur, exposure2.dwGreenExpDur, exposure2.dwBlueExpDur, 
+			exposure2.dwClearExpDur, exposure2.nGain );
+
+
+}
+
+
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 acquireImage()
 {
@@ -635,8 +723,9 @@ acquireImage()
 	}
 	else // the real thing
 	{
+		/*
 		// turn off auto-exposure
-		bool autoexpose = false;
+		BOOL autoexpose = false;
 		int success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
 		if( success != SPOT_SUCCESS )
 		{
@@ -657,6 +746,12 @@ acquireImage()
 				"error (exposure).  Code:  %d\n", success );
 			return success;
 		}
+		*/
+
+		printf( "Before capture:  \n" );
+		printSpotValues( );
+		printf( "==============\n" );
+		
 		// collect the image
 		int retVal = SpotGetImage( 0, // bits per plane ( 0 = use set value )
 								   false, // quick image capture
@@ -672,7 +767,10 @@ acquireImage()
 				"failed on the SPOT camera.  Code:  %d\n", retVal);
 			return -1;
 		}
-		
+		printf( "After capture:  \n" );
+		printSpotValues();
+		printf( "==============\n" );
+
 		vrpn_uint8 max = 0xFF >> currentContrast;
 		for( int row = 0; row < resY; row++ )
 		{
@@ -949,8 +1047,8 @@ doRequestedChangesOnSpot( )
 		requestedChanges.exposureChanged = false;
 
 		SPOT_EXPOSURE_STRUCT exposure;
-		exposure.lExpMSec = requestedChanges.newExposure;
-		exposure.lGreenExpMSec = 0;
+		exposure.lExpMSec = 0;
+		exposure.lGreenExpMSec = requestedChanges.newExposure;
 		exposure.lBlueExpMSec = 0;
 		exposure.nGain = 2;
 		int success = SpotSetValue( SPOT_EXPOSURE, &exposure );

@@ -1,3 +1,10 @@
+2005-08-08  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_diaginc.h/cpp:  corrected a problem with
+	auto-exposure; the camera is now correctly told not to do auto-
+	exposure (the difference was bool vs. BOOL).
+	(printSpotValues):  new.  queries the camera and prints the info.
+
 2005-08-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* opticalServer.cpp:  uses vrpn_Connection, not synchronized

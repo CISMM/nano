@@ -84,6 +84,8 @@ protected:
 
     // other subroutines:
 	vrpn_int32 setupCamera( );
+
+	void printSpotValues( );
 	
     void checkForParameterChanges(void);
     vrpn_int32 initializeParameterDefaults(void);
