@@ -278,7 +278,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   iface->d_contrastSelector = new Tclvar_selector("contrast", "", iface->d_contrastList, "0", iface->handle_contrast_changed, iface );
 
   // exposure time
-  iface->d_exposure = new Tclvar_float_with_scale( "exposure_in_ms", "", 10, 250, 100, iface->handle_exposure_changed, iface );
+  iface->d_exposure = new Tclvar_float_with_scale( "exposure_in_ms", "", 80, 250, 100, iface->handle_exposure_changed, iface );
 
   
   //------------------------------------------------------------------

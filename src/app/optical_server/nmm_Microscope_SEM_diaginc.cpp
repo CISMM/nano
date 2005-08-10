@@ -723,35 +723,6 @@ acquireImage()
 	}
 	else // the real thing
 	{
-		/*
-		// turn off auto-exposure
-		BOOL autoexpose = false;
-		int success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
-		if( success != SPOT_SUCCESS )
-		{
-			fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-				"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
-			return success;
-		}
-		
-		SPOT_EXPOSURE_STRUCT exposure;
-		exposure.lExpMSec = this->currentExposure;
-		exposure.lGreenExpMSec = 0;
-		exposure.lBlueExpMSec = 0;
-		exposure.nGain = 2;
-		success = SpotSetValue( SPOT_EXPOSURE, &exposure );
-		if( success != SPOT_SUCCESS )
-		{
-			fprintf( stderr, "nmm_Microscope_SEM_diaginc::acquireImage:  "
-				"error (exposure).  Code:  %d\n", success );
-			return success;
-		}
-		*/
-
-		printf( "Before capture:  \n" );
-		printSpotValues( );
-		printf( "==============\n" );
-		
 		// collect the image
 		int retVal = SpotGetImage( 0, // bits per plane ( 0 = use set value )
 								   false, // quick image capture
@@ -767,9 +738,6 @@ acquireImage()
 				"failed on the SPOT camera.  Code:  %d\n", retVal);
 			return -1;
 		}
-		printf( "After capture:  \n" );
-		printSpotValues();
-		printf( "==============\n" );
 
 		vrpn_uint8 max = 0xFF >> currentContrast;
 		for( int row = 0; row < resY; row++ )
