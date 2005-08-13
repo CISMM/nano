@@ -1647,6 +1647,12 @@ public:
   int initTime;
   vrpn_bool index_mode;
 
+  // include this here instead of in AFMState, since we
+  // only want to use this value when the program starts,
+  // and have whatever value in tcl persist across 
+  // microscope creations and deletions.
+  vrpn_bool do_autorescan;
+
   // TCH Dissertation May 2001
   // Turn on latency adaptations from the command line
   vrpn_bool laUseUDP;
@@ -1691,6 +1697,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   packetlimit (0),
   timeGraphics (vrpn_FALSE),
   index_mode (VRPN_FALSE),
+  do_autorescan( vrpn_TRUE ),
   laUseUDP (vrpn_FALSE),
   laUseQM (vrpn_FALSE),
   laQMT (0),
@@ -6622,7 +6629,10 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         virus_dir = argv[i];
         virus_streamfile_active =  1;
-      } else if (argv[i][0] == '-') {
+      } else if( !strcmp( argv[i], "-noautorescan" ) ) {
+		istate->do_autorescan = vrpn_FALSE;
+	  }
+	  else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
       } else {
@@ -6784,6 +6794,7 @@ void Usage(char* s)
   fprintf(stderr, "       -qm t d:  queue monitoring (threshold, decay)\n");
   fprintf(stderr, "       -wpa:  warped plane approximation FFB\n");
   fprintf(stderr, "       -fa n d:  feelahead FFB, nxn samples d nm apart\n");
+  fprintf(stderr, "       -noautorescan:  turn off auto-rescan at startup\n");
   exit(-1);
 }
 
@@ -7954,6 +7965,10 @@ int main (int argc, char* argv[])
 
     VERBOSE(1,"Default microscope initialization");
     openDefaultMicroscope();
+
+	// set up auto-rescan.
+	Tclvar_int autoscan( "autoscan", istate.do_autorescan );
+
 //      if (createNewDatasetOrMicroscope(istate, microscope_connection)) {
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
 //        exit(0);

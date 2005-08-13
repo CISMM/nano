@@ -1,3 +1,10 @@
+2005-08-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.h:  bumped version number to 11.6
+	* microscape.C:  added a -noautorescan command-line option to
+	turn off auto-rescan on initialization.  useful in conjunction
+	with command-line options that connect to devices.
+
 2005-08-07  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.h:  bumped version number to 11.5

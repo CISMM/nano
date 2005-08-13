@@ -71,7 +71,7 @@ class nm_MouseInteractor;
 class nmg_haptic_graphics;
 
 #define	MICROSCAPE_MAJOR_VERSION	(11)
-#define	MICROSCAPE_MINOR_VERSION	(5)
+#define	MICROSCAPE_MINOR_VERSION	(6)
 
 
 #define HEAD	0
