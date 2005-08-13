@@ -8,7 +8,8 @@
 #include <vrpn_Connection.h>
 
 #include "OpticalServerInterface.h"
-#include "nmm_Microscope_SEM_diaginc.h"
+#include "nmm_Microscope_SEM_optical.h"
+#include "edax_defs.h"
 
 static char *Version_string = "01.01";
 
@@ -294,7 +295,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   }
 
   //------------------------------------------------------------------
-  // Ready to rock and roll
+  // Ready to go
   iface->threadReady = true;
   glutMainLoop( );
   return 0;
@@ -358,7 +359,7 @@ setImage( vrpn_uint8* buffer, int width, int height )
 
 
 void OpticalServerInterface::
-setMicroscope( nmm_Microscope_SEM_diaginc* m )
+setMicroscope( nmm_Microscope_SEM_optical* m )
 {
 	this->microscope = m;
 	if( m != NULL )

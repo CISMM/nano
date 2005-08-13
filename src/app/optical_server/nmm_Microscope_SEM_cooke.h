@@ -1,41 +1,50 @@
 
-#ifndef __NMM_MICROSCOPE_SEM_DIAGINC_H
-#define __NMM_MICROSCOPE_SEM_DIAGINC_H
+#ifndef __NMM_MICROSCOPE_SEM_COOKE_H
+#define __NMM_MICROSCOPE_SEM_COOKE_H
 
 #include <windows.h>
 #include <spotCam.h>
+#include <SC2_SDKStructures.h> // needs to be before SC2_CamExport.h
+#include <SC2_CamExport.h>
 
 #include <vrpn_Connection.h>
+#include "nmb_Device.h"
+#include "nmm_Microscope_SEM.h"
+
+
+#include "edax_defs.h"
 #include "nmm_Microscope_SEM_optical.h"
 
 // from SpotCam.h:
 // typedef VOID (WINAPI *SPOTCALLBACK)(int iStatus, long lInfo, DWORD dwUserData);
-void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
+void WINAPI nmm_Microscope_SEM_cooke_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
 
 
-class nmm_Microscope_SEM_diaginc : 
-public nmm_Microscope_SEM_optical 
-{
-	
-	
+class nmm_Microscope_SEM_cooke : 
+/*public nmb_Device_Server, public nmm_Microscope_SEM,*/ 
+public nmm_Microscope_SEM_optical
+{	
 public:
-    nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c,
+    nmm_Microscope_SEM_cooke( const char * name, vrpn_Connection * c,
              vrpn_bool virtualAcquisition = vrpn_FALSE );
-    virtual ~nmm_Microscope_SEM_diaginc( void );
+    virtual ~nmm_Microscope_SEM_cooke( void );
 
     virtual vrpn_int32 mainloop(const struct timeval *timeout = NULL);
 
-    // functions that change settings
+	// functions that change settings
 	vrpn_int32 setResolutionByIndex( vrpn_int32 index );
 	vrpn_int32 setBinning( vrpn_int32 bin );
 	vrpn_int32 setExposure( vrpn_int32 millisecs );
 
     // functions for getting settings
     vrpn_int32 getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y );
+	vrpn_int32 getResolutionIndex( ) { return currentResolutionIndex;  }
 	vrpn_int32 getMaxResolution( vrpn_int32& x, vrpn_int32& y );
 	vrpn_int32 getBinning( );
-    vrpn_bool scanEnabled();
+	vrpn_int32 getContrastLevel( ) { return currentContrast; }
+	vrpn_int32 getExposure( ) {  return currentExposure;  }
 
+    vrpn_bool scanEnabled();
     vrpn_int32 getScanRegion_nm( double &x_span_nm, double &y_span_nm );
     vrpn_int32 getMaxScan( int &x_span_DAC, int &y_span_DAC );
 
@@ -81,12 +90,23 @@ protected:
     vrpn_int32 d_scans_to_do;
 
     vrpn_bool d_virtualAcquisition;
+	
+	// Cooke-specific parameters
+	HANDLE camera;
+	int boardNumber;
+	PCO_General cameraGeneral;
+	PCO_CameraType cameraType;
+	PCO_Sensor cameraSensor;
+	PCO_Description cameraDescription;
+	PCO_Timing cameraTiming;
+	PCO_Storage cameraStorage;
+	PCO_Recording cameraRecording;
 
-	int currentResolutionIndex;  // image resolution = camera resolution / binning
+	// Cooke error stuff
+#define  ERROR_TEXT_LEN (256)
+	char errorText[ERROR_TEXT_LEN];
+	
 	int maxBufferSize;
-	int currentBinning;
-	int currentContrast;
-	int currentExposure;
 	vrpn_uint8* myImageBuffer;
 	vrpn_uint8* cameraImageBuffer;
 
@@ -105,8 +125,8 @@ protected:
 	SpotChanges requestedChanges;
 	void doRequestedChangesOnSpot( );
 
-	friend void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
+	friend void WINAPI nmm_Microscope_SEM_cooke_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
 
-}; // end class nmm_Microscope_SEM_diaginc
+}; // end class nmm_Microscope_SEM_cooke
 
-#endif // __NMM_MICROSCOPE_SEM_DIAGINC_H
+#endif // __NMM_MICROSCOPE_SEM_COOKE_H

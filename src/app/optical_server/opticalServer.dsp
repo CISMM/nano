@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\nmMP" /I "..\nano\lib\nmSEM" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /c /Tp
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\nmMP" /I "..\nano\lib\nmSEM" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /c /Tp
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 tk83.lib tcl83.lib vrpn.lib wsock32.lib spotCamVC.lib glui32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /libpath:"..\..\..\..\vrpn\pc_win32\Release" /libpath:"..\..\..\..\external\pc_win32\lib"
+# ADD LINK32 tk83.lib tcl83.lib vrpn.lib wsock32.lib spotCamVC.lib SC2_Cam.lib glui32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /libpath:"..\..\..\..\vrpn\pc_win32\Release" /libpath:"C:\nsrg\external\pc_win32\lib"
 
 !ELSEIF  "$(CFG)" == "opticalServer - Win32 Debug"
 
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\nmMP" /I "..\nano\lib\nmSEM" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\nmMP" /I "..\nano\lib\nmSEM" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -74,7 +74,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 tk83.lib tcl83.lib vrpn.lib wsock32.lib spotCamVC.lib glui32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"libcd" /pdbtype:sept /libpath:"..\..\..\..\vrpn\pc_win32\Debug" /libpath:"..\..\..\..\external\pc_win32\lib"
+# ADD LINK32 tk83.lib tcl83.lib vrpn.lib wsock32.lib spotCamVC.lib SC2_Cam.lib glui32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"libcd" /pdbtype:sept /libpath:"..\..\..\..\vrpn\pc_win32\Debug" /libpath:"C:\nsrg\external\pc_win32\lib"
 
 !ENDIF 
 
@@ -87,7 +87,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\edax_defs.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_Microscope_SEM_cooke.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_Microscope_SEM_diaginc.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_Microscope_SEM_optical.cpp
 # End Source File
 # Begin Source File
 
@@ -107,7 +119,19 @@ SOURCE=.\Tcl_Linkvar.C
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\edax_defs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_Microscope_SEM_cooke.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_Microscope_SEM_diaginc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_Microscope_SEM_optical.h
 # End Source File
 # Begin Source File
 

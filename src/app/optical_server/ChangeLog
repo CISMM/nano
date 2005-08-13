@@ -1,3 +1,22 @@
+2005-08-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* edax_defs.[h,cpp]:  new, moved the definitions of edax-like stuff 
+	  here from the microscope class.
+	* nmm_Microscipe_SEM_optical.[h,cpp]:  new, superclass for the 
+	  optical-microscope-pretending-to-be-SEM classes.
+	* nmm_Microscope_SEM_cooke.[h,cpp]:  new, class for Cooke cameras
+	* nmm_Microscope_SEM_diaginc.[h,cpp]:  extends 
+	  nmm_Microscipe_SEM_optical instead of other classes.  also, removed
+	  edax-like stuff.
+	* OpticalServerInterface.[h,cpp]:  deals with the optical 
+	  microscope superclass now.
+	* opticalServer.cpp:  added command-line options for virtual 
+	  acquisition and cooke vs. spot cameras.  dynamically creates
+	  the requested camera type.
+	* opticalServer.dsp:  adds new files to project.  also, changed
+	  the include/link directories to the standard build-time locations.
+	
+
 2005-08-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_diaginc.cpp:  removed some extra print statements

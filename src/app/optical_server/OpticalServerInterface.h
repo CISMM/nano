@@ -1,8 +1,8 @@
 
-
+#include "Tcl_Linkvar.h"
 #include <windows.h>
 #include <vrpn_Types.h>
-#include "nmm_Microscope_SEM_diaginc.h"
+#include "nmm_Microscope_SEM_optical.h"
 
 #ifndef OPTICALSERVERINTERFACE_H
 #define OPTICALSERVERINTERFACE_H
@@ -14,7 +14,7 @@ public:
 	static OpticalServerInterface* getInterface( );
 
 	void setImage( vrpn_uint8* buffer, int width, int height );
-	void setMicroscope( nmm_Microscope_SEM_diaginc* m );
+	void setMicroscope( nmm_Microscope_SEM_optical* m );
 
 	int getBinning( ) { return binning; };
 	int getResolutionIndex( ) { return resolutionIndex; };
@@ -31,7 +31,7 @@ protected:
 	HANDLE ifaceThread;
 	vrpn_uint8* lastImage;
 	int lastImageWidth, lastImageHeight;
-	nmm_Microscope_SEM_diaginc* microscope;
+	nmm_Microscope_SEM_optical* microscope;
 
 	static OpticalServerInterface* instance;
 	static bool interfaceShutdown;
