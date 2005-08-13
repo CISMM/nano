@@ -2,6 +2,10 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+11.6:  (August 13, 2005)
+	- fixes the phantom-button-as-toggle functionality
+	- adds a command-line option -noautorescan to have auto-
+	  rescan be off at program start-up.
 11.5:  (August 7, 2005)
 	- fixes a bug with the direst-step tools when stepping in Z
 	  without using the adjustable axes.
