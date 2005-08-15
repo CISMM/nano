@@ -3,8 +3,8 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SpotCam.h>
 #include <PCO_err.h>
+#include <SC2_defs.h>
 
 // for text error messages
 #define PCO_ERRT_H_CREATE_OBJECT
@@ -21,8 +21,6 @@
 nmm_Microscope_SEM_cooke::
 nmm_Microscope_SEM_cooke( const char * name, vrpn_Connection * c, vrpn_bool virtualAcq ) 
 	: nmm_Microscope_SEM_optical( name, c, virtualAcq ),
-	  //nmb_Device_Server(name, c),
-	  //nmm_Microscope_SEM(name, d_connection), 
 	  d_scan_enabled(vrpn_FALSE), 
 	  d_lines_per_message(1), 
 	  d_scans_to_do(0),
@@ -65,7 +63,7 @@ nmm_Microscope_SEM_cooke( const char * name, vrpn_Connection * c, vrpn_bool virt
 	initializeParameterDefaults();
 	
 	// create buffers in which to store data
-	short maxExtents[2]; // width then height
+	vrpn_int32 maxExtents[2]; // width then height
 	if( d_virtualAcquisition )
 	{
 		maxExtents[0] = EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES-1];
@@ -74,28 +72,51 @@ nmm_Microscope_SEM_cooke( const char * name, vrpn_Connection * c, vrpn_bool virt
 	}
 	else
 	{
-		int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
+		int ret = this->getMaxResolution( maxExtents[0], maxExtents[1] );
 		if( ret != PCO_NOERROR )
 		{
+			PCO_GetErrorText( ret, errorText, ERROR_TEXT_LEN );
 			fprintf( stderr, "nmm_Microscope_SEM_cooke constructor:  Error querying "
-					"the SPOT camera max. resolution.  Code:  %d\n", ret );
+				"the camera max. resolution.  Code:  %d (%s)\n", ret, errorText );
 			return;
 		}
 	}
-
-	// the maximum number of bytes is (width + 3) * height * 3
-	// each line can have up to 3 extra bytes to make its length a
-	// multiple of 4.  in addition, each image can have up to 3
-	// bytes per pixel (red, green, blue)
-	maxBufferSize = (maxExtents[0] + 3) * maxExtents[1] * 3;
+	maxBufferSize = maxExtents[0] * maxExtents[1] * 2;
+	if( maxBufferSize % 0x1000 )
+    {  // firewire interface needs the buffer to be (multiple of 4096) + 8192
+      maxBufferSize = maxBufferSize / 0x1000;
+      maxBufferSize += 2;
+      maxBufferSize *= 0x1000;
+    }
+    else
+      maxBufferSize += 0x1000;
+    
 	myImageBuffer = new vrpn_uint8[ maxBufferSize ];
 	cameraImageBuffer = new vrpn_uint8[ maxBufferSize ];
+	cameraBufferNumber = -1;  // -1 to allocate a new buffer
+	cameraEvent = 0;  // 0 to allocate a new handle
 
+	if( !d_virtualAcquisition )
+	{
+		int success = PCO_AllocateBuffer( camera, &cameraBufferNumber, maxBufferSize, 
+										  (WORD**) &cameraImageBuffer, &cameraEvent );
+		if( success != PCO_NOERROR )
+		{
+			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke constructor:  Error allocating "
+					"the image buffer.  Code:  %d (%s)\n", success, errorText );
+			return;
+		}
+
+	
+	
+	}
 
 	// no changes, yet
-	requestedChanges.resolutionChanged = requestedChanges.binningChanged 
-		= requestedChanges.exposureChanged = false;
-
+	requestedChanges.resolutionChanged 
+		= requestedChanges.binningChanged 
+		= requestedChanges.exposureChanged 
+		= false;
 }
 
 nmm_Microscope_SEM_cooke::
@@ -103,11 +124,11 @@ nmm_Microscope_SEM_cooke::
 {
 	OpticalServerInterface::getInterface()->setImage( NULL, 0, 0 );
 
-	// remove spot cam callback
-	SpotSetCallback( NULL, 0 );
 	
-	// let the spot camera clean up after itself
-	SpotExit( );
+	// let the camera clean up after itself
+	PCO_SetRecordingState( camera, 0 );
+	PCO_FreeBuffer( camera, cameraBufferNumber );
+	PCO_CloseCamera( &camera );
 
 	delete[] myImageBuffer;
 	delete[] cameraImageBuffer;
@@ -126,112 +147,199 @@ setupCamera( )
 			"the Cooke camera (open).  Code:  %d (%s)\n", success, errorText );
 		return success;
 	}
-	
-	// add our callback
-	SpotSetCallback( nmm_Microscope_SEM_cooke_spotCallback, (DWORD) this );
 
-	// ask for 8 bits per pixel
-	int bitdepth = 8;
-	success = SpotSetValue(SPOT_BITDEPTH, &bitdepth);
+	// make sure the camera isn't recording
+	unsigned short recstate = 0;
+	success = PCO_GetRecordingState( camera, &recstate );
+	if( success == PCO_NOERROR && recstate != 0 )
+	{
+		success = PCO_SetRecordingState( camera, 0 );
+		if( success != PCO_NOERROR )
+		{
+			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error telling"
+				"the camera to stop recording.  Code:  %d (%s)\n", success, errorText );
+			return success;
+		}
+	}
+
+	// get the camera information
+	success = PCO_GetGeneral( camera, &cameraGeneral );
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (bit depth).  Code:  %d\n", success );
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera general information.  Code:  %d (%s)\n", success, errorText );
 		return success;
 	}
+	success = PCO_GetCameraType( camera, &cameraType );
+	if( success != PCO_NOERROR )
+	{
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera type.  Code:  %d (%s)\n", success, errorText );
+		return success;
+	}
+	switch( cameraType.wCamType )
+	{
+    case CAMERATYPE_PCO1200HS:
+		printf("PCO.Camera 1200 hs found \n");
+		break;
+    case CAMERATYPE_PCO1300:
+		printf("PCO.Camera 1300 found \n");
+		break;
+    case CAMERATYPE_PCO1600:
+		printf("PCO.Camera 1600 found \n");
+		break;
+    case CAMERATYPE_PCO2000:
+		printf("PCO.Camera 2000 found \n");
+		break;
+    case CAMERATYPE_PCO4000:
+		printf("PCO.Camera 4000 found \n");
+		break;
+    default:
+		printf("PCO.Camera undefined type");
+	}
 	
+	success = PCO_GetSensorStruct( camera, &cameraSensor );
+	if( success != PCO_NOERROR )
+	{
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera sensor information.  Code:  %d (%s)\n", success, errorText );
+		return success;
+	}
+	success = PCO_GetCameraDescription( camera, &cameraDescription );
+	if( success != PCO_NOERROR )
+	{
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera description.  Code:  %d (%s)\n", success, errorText );
+		return success;
+	}
+	success = PCO_GetTimingStruct( camera, &cameraTiming );
+	if( success != PCO_NOERROR )
+	{
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera timing information.  Code:  %d (%s)\n", success, errorText );
+		return success;
+	}
+	success = PCO_GetRecordingStruct( camera, &cameraRecording );
+	if( success != PCO_NOERROR )
+	{
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error getting "
+			"camera recording information.  Code:  %d (%s)\n", success, errorText );
+		return success;
+	}
+
 	// set bin size
 	short binning = 1;
-	success = SpotSetValue( SPOT_BINSIZE, &binning );
+	/*
+	if( cameraDescription.wMaxBinHorzDESC >= 2 
+		&& cameraDescription.wMaxBinVertDESC >= 2 )
+		binning = 2;
+		*/
+	success = PCO_SetBinning( camera, binning, binning );
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (binning).  Code:  %d\n", success );
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error setting "
+			"binning to %d.  Code:  %d (%s)\n", binning, success, errorText );
+		return success;
 	}
-
-	// set resolution
-	// check that the requested resolution isn't too big
+	
+	// set the capture area
 	int res_x = EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX];
 	int res_y = EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX];
-	int camX = res_x * binning, camY = res_y * binning;
 	int maxX = 0, maxY = 0;
 	getMaxResolution( maxX, maxY );
-	if( camX > maxX || camY > maxY )
+	maxX = (int) floor( maxX / binning );
+	maxY = (int) floor( maxY / binning );
+	// check that the requested resolution isn't too big
+	if( res_x > maxX || res_y > maxY )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  "
-			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
-			res_x, res_y, maxX, maxY, currentBinning );
+			"resolution (%d x %d) x %d binning greater than max (%d x %d).\n",
+			res_x, res_y, currentBinning, maxX, maxY );
 		return -1;
 	}
-	
-	RECT rect;
-	rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( camX / 2.0f ) );
-	rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
-	rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
-	rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
-	success = SpotSetValue( SPOT_IMAGERECT, &rect );
+	/*
+	WORD left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( res_x / 2.0f ) );
+	WORD right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( res_x / 2.0f ) );
+	WORD top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( res_y / 2.0f ) );
+	WORD bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( res_y / 2.0f ) );
+	*/
+	WORD left = 1, right = res_x, top = 1, bottom = res_y;
+	fprintf( stdout, "setting ROI to %d x %d:  (%d,%d) to (%d,%d).\n",
+			res_x, res_y, left, top, right, bottom );
+	success = PCO_SetROI( camera, left, top, right, bottom );
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (resolution).  Code:  %d\n", success );
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error setting "
+			"ROI to %d x %d:  (%d,%d) to (%d,%d).  Code:  %d (%s)\n", 
+			res_x, res_y, left, top, right, bottom, success, errorText );
 		return success;
 	}
-	
-	// turn off auto-exposure
-	BOOL autoexpose = false;
-	success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
+
+	// set trigger mode
+	// from the example code -- do we care?
+	success = PCO_SetTriggerMode( camera, 0 /* auto-trigger */ );
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error "
+			"setting trigger mode.  Code:  %d (%s)\n", success, errorText );
 		return success;
 	}
-	
-	// Set the color to monochrome mode (turn off filter wheels)
-	SPOT_COLOR_ENABLE_STRUCT2 colorstruct;
-	colorstruct.bEnableRed = false;
-	colorstruct.bEnableGreen = false;
-	colorstruct.bEnableBlue = false;
-	colorstruct.bEnableClear = false;
-	success = SpotSetValue(SPOT_COLORENABLE2, &colorstruct);
-	if( success != PCO_NOERROR )
-	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (monochrome).  Code:  %d\n", success );
-		return success;
-	}
-	
+
 	// set an exposure time
 	this->currentExposure = 100;
-	SPOT_EXPOSURE_STRUCT exposure;
-	exposure.lExpMSec = 0;
-	exposure.lGreenExpMSec = this->currentExposure;
-	exposure.lBlueExpMSec = 0;
-	exposure.nGain = 2;
-	success = SpotSetValue( SPOT_EXPOSURE, &exposure );
+	WORD timebase = 2;  // Timebase: 0-ns; 1-us; 2-ms  
+	success = PCO_SetDelayExposureTime( camera, 
+										0, // delay
+										this->currentExposure, 
+										2, // Timebase: 0-ns; 1-us; 2-ms 
+										2 // Timebase: 0-ns; 1-us; 2-ms 
+										);
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (exposure).  Code:  %d\n", success );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error setting "
+			"exposure.  Code:  %d\n", success );
 		return success;
 	}
 
-	/*
-	SPOT_EXPOSURE_STRUCT2 exposure2;
-	exposure2.dwExpDur = this->currentExposure;
-	exposure2.dwRedExpDur = 0;
-	exposure2.dwGreenExpDur = 0;
-	exposure2.dwBlueExpDur = 0;
-	exposure2.nGain = 2;
-	success = SpotSetValue( SPOT_EXPOSURE2, &exposure2 );
+	// validate settings
+	success = PCO_ArmCamera( camera );
 	if( success != PCO_NOERROR )
 	{
-		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error opening "
-			"and initializing the SPOT camera (exposure2).  Code:  %d\n", success );
+		PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+		fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error "
+			"validating settings.  Code:  %d (%s)\n", success, errorText );
 		return success;
 	}
-	*/
 
+		// start recording
+		success = PCO_SetRecordingState( camera, 1 );
+		if( success != PCO_NOERROR )
+		{
+			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::acquireImage:  Error starting "
+				"recording.  Code:  %d (%s)\n", success, errorText );
+			return success;
+		}
+
+
+		// ask for 8 bits per pixel
+	
+	// turn off auto-exposure
+	
+	// add our callback
+
+	// Set the color to monochrome mode (turn off filter wheels)
+	
 	return 0;
 }
 
@@ -303,25 +411,35 @@ int i;
 vrpn_int32 nmm_Microscope_SEM_cooke::
 getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 {
+	int x = 0, y = 0;
+	indexToResolution( currentResolutionIndex, x, y );
+	res_x = x;  res_y = y;
+	return 0;
+}
+
+
+
+vrpn_int32 nmm_Microscope_SEM_cooke::
+getResolutionFromCamera( vrpn_int32 &res_x, vrpn_int32 &res_y )
+{
 	if( d_virtualAcquisition )
 	{
-		int x = 0, y = 0;
-		indexToResolution( currentResolutionIndex, x, y );
-		res_x = x;  res_y = y;
+		getResolution( res_x, res_y );
 	}
 	else
 	{
-		RECT rect;
-		int ret = SpotGetValue( SPOT_IMAGERECT, &rect );
+		WORD x, y, xmax, ymax;
+		int ret = PCO_GetSizes( camera, &x, &y, &xmax, &ymax );
 		if( ret != PCO_NOERROR )
 		{
-			fprintf( stderr, "nmm_Microscope_SEM_cooke::getResolution:  "
-				"Error getting resolution.  Code:  %d\n", ret );
+			PCO_GetErrorText( ret, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::getResolution:  Error "
+					"Code:  %d (%s)\n", ret, errorText );
 			res_x = -1;  res_y = -1;
 			return ret;
 		}
-		res_x = (rect.right - rect.left) / currentBinning;
-		res_y = (rect.bottom - rect.top) / currentBinning;
+		res_x = x;
+		res_y = y;
 	}
 
 	int resInd = resolutionToIndex( res_x, res_y );
@@ -346,20 +464,21 @@ getBinning(  )
 	}
 	else
 	{
-		short binning;
-		int ret = SpotGetValue( SPOT_BINSIZE, &binning );
+		WORD binx, biny;
+		int ret = PCO_GetBinning( camera, &binx, &biny );
 		if( ret != PCO_NOERROR )
 		{
-			fprintf( stderr, "nmm_Microscope_SEM_cooke::getBinning:  "
-				"Error getting bin size.  Code:  %d\n", ret );
+			PCO_GetErrorText( ret, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::getBinning:  Error "
+					"Code:  %d (%s)\n", ret, errorText );
 			return -1;
 		}
 		
-		if( binning != this->currentBinning )
+		if( binx != this->currentBinning )
 		{
 			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
-			if( iface != NULL ) iface->setBinning( binning );
-			currentBinning = binning;
+			if( iface != NULL ) iface->setBinning( binx );
+			currentBinning = binx;
 		}
 	}
 	return currentBinning;
@@ -376,16 +495,17 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 	}
 	else
 	{
-		short maxExtents[2]; // width then height
-		int ret = SpotGetValue( SPOT_MAXIMAGERECTSIZE, maxExtents );
+		WORD xreal, yreal, xmax, ymax;
+		int ret = PCO_GetSizes( camera, &xreal, &yreal, &xmax, &ymax );
 		if( ret != PCO_NOERROR )
 		{
-			fprintf( stderr, "nmm_Microscope_SEM_cooke::getMaxResolution:  Error querying "
-				"the SPOT camera max. resolution.  Code:  %d\n", ret );
+			PCO_GetErrorText( ret, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::getMaxResolution:  Error "
+					"Code:  %d (%s)\n", ret, errorText );
 			return -1;
 		}
-		x = maxExtents[0];
-		y = maxExtents[1];
+		x = xmax;
+		y = ymax;
 	}
 	return 0;
 }
@@ -420,8 +540,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	if( camX > maxX || camY > maxY )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_cooke::setResolutionByIndex:  "
-			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
-			res_x, res_y, maxX, maxY, currentBinning );
+			"resolution (%d x %d) x %d binning is greater than max (%d x %d).\n",
+			res_x, res_y, currentBinning, maxX, maxY );
 		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
 		return currentResolutionIndex;
 	}
@@ -434,7 +554,6 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		requestedChanges.resolutionChanged = true;
 		requestedChanges.newResolutionIndex = idx;
-
 	}
 	
 	return idx;
@@ -541,7 +660,6 @@ reportResolution()
 vrpn_int32 nmm_Microscope_SEM_cooke::
 requestScan(vrpn_int32 nscans)
 {
-	printf("enable scan = %d\n", nscans);
     if (nscans == 0) {
         d_scan_enabled = vrpn_FALSE;
         d_scans_to_do = 0;
@@ -586,8 +704,9 @@ y_span_DAC = d_yScanSpan;
 
 
 void nmm_Microscope_SEM_cooke::
-printSpotValues( )
+printCookeValues( )
 {
+	/*
 	// auto-expose
 	BOOL autoexpose;
 	if( SpotGetValue( SPOT_AUTOEXPOSE, &autoexpose ) != PCO_NOERROR )
@@ -652,8 +771,7 @@ printSpotValues( )
 	printf( "  SPOT:  exposure 2:  red(%ld), green(%ld), blue(%ld), clear/exp(%ld), gain(%hd)\n", 
 			exposure2.dwRedExpDur, exposure2.dwGreenExpDur, exposure2.dwBlueExpDur, 
 			exposure2.dwClearExpDur, exposure2.nGain );
-
-
+	*/
 }
 
 
@@ -664,7 +782,7 @@ acquireImage()
 	
 	int result = PCO_NOERROR;
 	int resX = 0, resY = 0;
-	result = this->getResolution( resX, resY );
+	result = this->getResolutionFromCamera( resX, resY );
 	if( result != PCO_NOERROR )
 	{
 		return -1;
@@ -689,21 +807,25 @@ acquireImage()
 	}
 	else // the real thing
 	{
-		// collect the image
-		int retVal = SpotGetImage( 0, // bits per plane ( 0 = use set value )
-								   false, // quick image capture
-								   0, // lines to skip
-								   cameraImageBuffer, // image buffer
-								   NULL, // ptr to red histogram
-								   NULL, // ptr to green histogram
-								   NULL  // ptr to blue histogram
-								   );
-		if( retVal != PCO_NOERROR )
+		int success = PCO_AddBufferEx( camera, 0, 0, cameraBufferNumber, resX, resY, 8 );
+		if( success != PCO_NOERROR )
 		{
-			fprintf( stderr, "nmm_Microscope_SEM_cooke::acquireImage:  "
-				"failed on the SPOT camera.  Code:  %d\n", retVal);
+			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::acquireImage:  Error adding "
+				"the image buffer.  Code:  %d (%s)\n", success, errorText );
+			return success;
+		}
+		
+		success = WaitForSingleObject( cameraEvent, 500 ); // Wait until picture arrives
+		ResetEvent( cameraEvent );
+		if( success != WAIT_OBJECT_0 )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_cooke::acquireImage:  Error adding "
+				"the image buffer.  Code:  %d\n", success );
 			return -1;
 		}
+		//static int imageNum = 0;
+		//fprintf( stdout, "got an image (i guess) %d\n", imageNum++ );
 
 		vrpn_uint8 max = 0xFF >> currentContrast;
 		for( int row = 0; row < resY; row++ )
@@ -736,22 +858,19 @@ acquireImage()
 
 vrpn_int32 nmm_Microscope_SEM_cooke::reportScanlineData(int line_num)
 {
-	// line data is at d_scanBuffer[line_num*(d_resolution_x + d_resolution_x%4)]
-	//  the spot camera can have "zero to three padding bytes per image line
-	//  so that the number of bytes per line is an integer multiple of four."
 	vrpn_int32 resX = 0, resY = 0;
 	if( this->getResolution( resX, resY ) != 0 )  { return -1; }
 	char *msgbuf;
 	vrpn_int32 len;
-	struct timeval now;
-	void* data = &(myImageBuffer[ line_num * (resX + resX%4) ]);
+	void* data = &(myImageBuffer[ line_num * resX ]);
 	
-	gettimeofday(&now, NULL);
 	vrpn_int32 lines_per_message = d_lines_per_message;
 	if (line_num + lines_per_message > resY){
 		lines_per_message = resY - line_num;
 	}
 
+	struct timeval now;
+	gettimeofday( &now, NULL );  // also used for encoding, not just timing
 	msgbuf = encode_ScanlineData(&len, 0, line_num, 1, 1,
 		resX, 1, lines_per_message, now.tv_sec, now.tv_usec,
 		NMB_UINT8, &data);
@@ -859,7 +978,7 @@ int VRPN_CALLBACK nmm_Microscope_SEM_cooke::RcvDroppedConnection
 // a helper function to change the resolution
 // should ONLY be called from the idle notice in the spot callback, below
 void nmm_Microscope_SEM_cooke::
-doRequestedChangesOnSpot( )
+doRequestedChangesOnCooke( )
 {
 	if( requestedChanges.binningChanged )
 	{
@@ -877,7 +996,7 @@ doRequestedChangesOnSpot( )
 		// figure out what new resolution we need, and if it's possible
 		double resFactor = (double) bin / (double) currentBinning;
 		int resX = 0, resY = 0, maxX = 0, maxY = 0, camX = 0, camY  = 0;
-		int retVal = this->getResolution( resX, resY );
+		int retVal = this->getResolutionFromCamera( resX, resY );
 		if( retVal != PCO_NOERROR )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnSpot:  "
@@ -902,7 +1021,7 @@ doRequestedChangesOnSpot( )
 		}
 
 		short binsize = bin;
-		retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
+		//retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
 		if( retVal != PCO_NOERROR )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnSpot:  "
@@ -914,14 +1033,14 @@ doRequestedChangesOnSpot( )
 		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
 		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
 		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
-		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		//retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
 		if( retVal != PCO_NOERROR )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::setBinning:  "
 				"resolution failed on the SPOT camera.  Code:  %d\n", retVal);
 			// try to set the binning back
 			binsize = currentBinning;
-			SpotSetValue( SPOT_BINSIZE, &binsize );
+			//SpotSetValue( SPOT_BINSIZE, &binsize );
 		}
 		vrpn_int32 binning = getBinning( );
 		OpticalServerInterface::getInterface()->setBinning( binning );
@@ -964,7 +1083,7 @@ doRequestedChangesOnSpot( )
 		rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( camX / 2.0f ) );
 		rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( camY / 2.0f ) );
 		rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( camY / 2.0f ) );
-		retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+		//retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
 		if( retVal != PCO_NOERROR )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnSpot:  "
@@ -980,12 +1099,12 @@ doRequestedChangesOnSpot( )
 	{
 		requestedChanges.exposureChanged = false;
 
-		SPOT_EXPOSURE_STRUCT exposure;
-		exposure.lExpMSec = 0;
-		exposure.lGreenExpMSec = requestedChanges.newExposure;
-		exposure.lBlueExpMSec = 0;
-		exposure.nGain = 2;
-		int success = SpotSetValue( SPOT_EXPOSURE, &exposure );
+		//SPOT_EXPOSURE_STRUCT exposure;
+		//exposure.lExpMSec = 0;
+		//exposure.lGreenExpMSec = requestedChanges.newExposure;
+		//exposure.lBlueExpMSec = 0;
+		//exposure.nGain = 2;
+		int success = PCO_NOERROR; //SpotSetValue( SPOT_EXPOSURE, &exposure );
 		if( success != PCO_NOERROR )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnSpot:  Error setting "
@@ -999,40 +1118,6 @@ doRequestedChangesOnSpot( )
 
 }
 
-
-
-// from SpotCam.h:
-// typedef VOID (WINAPI *SPOTCALLBACK)(int iStatus, long lInfo, DWORD dwUserData);
-void WINAPI nmm_Microscope_SEM_cooke_spotCallback( int iStatus, long lInfo, DWORD dwUserData )
-{
-	nmm_Microscope_SEM_cooke* me = (nmm_Microscope_SEM_cooke*) dwUserData;
-	if( iStatus == SPOT_STATUSLIVEIMAGEREADY )
-	{
-		//printf( "nmm_Microscope_SEM_cooke_spotCallback:  status  %d (live image ready)\n", iStatus );
-
-		/* do this in acquireImage
-		if( me->d_scans_to_do > 0 )
-		{
-			// When running controlling the server without going over the network 
-			// (in the same process as the client) there is a slight difference
-			// process as the client it is necessary to decrement before 
-			// calling acquireImage because
-			// acquireImage calls mainloop for the connection and this can result
-			// in a set of d_scans_to_do to 0 if the right message is received 
-			// breaking our assumption that d_scans_to_do is always non-negative 
-			
-			me->d_scans_to_do--;
-			me->acquireImage();
-		}
-		*/
-	} // end if live image ready
-	if( iStatus == SPOT_STATUSIDLE )
-	{
-		//printf( "nmm_Microscope_SEM_cooke_spotCallback:  status  %d (idle)\n", iStatus );
-		me->doRequestedChangesOnSpot( );
-	}
-	
-}
 
 
 //////////////////////////////////////////////////

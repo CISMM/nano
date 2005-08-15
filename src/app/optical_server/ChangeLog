@@ -1,3 +1,17 @@
+2005-08-15  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_cooke.[h,cpp]:  removed a few last vestigial
+	reference to SPOT stuff.
+	(constructor):  completes the set-up of the buffers.
+	(destructor):  correctly cleans up the cooke camera.
+	(setupCamera):  more camera set-up stuff
+	(getResolution):  just returns what we thing the resolution
+	currently is instead of querying the camera driver/hardware.
+	(getResolutionFromCamera):  queries the camera for its resolution.
+	it turns out that this took about 100 ms on the cooke (firewire)
+	setup that we had.
+	(acquireImage):  now collects an image from the cooke.
+
 2005-08-13  David Marshburn  <marshbur@cs.unc.edu>
 
 	* edax_defs.[h,cpp]:  new, moved the definitions of edax-like stuff 

@@ -3,7 +3,6 @@
 #define __NMM_MICROSCOPE_SEM_COOKE_H
 
 #include <windows.h>
-#include <spotCam.h>
 #include <SC2_SDKStructures.h> // needs to be before SC2_CamExport.h
 #include <SC2_CamExport.h>
 
@@ -15,10 +14,8 @@
 #include "edax_defs.h"
 #include "nmm_Microscope_SEM_optical.h"
 
-// from SpotCam.h:
-// typedef VOID (WINAPI *SPOTCALLBACK)(int iStatus, long lInfo, DWORD dwUserData);
-void WINAPI nmm_Microscope_SEM_cooke_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
-
+// for WaitForSingleObject
+DWORD WINAPI nmm_Microscope_SEM_cooke_spotCallback(LPVOID param);
 
 class nmm_Microscope_SEM_cooke : 
 /*public nmb_Device_Server, public nmm_Microscope_SEM,*/ 
@@ -71,8 +68,10 @@ protected:
 
     // other subroutines:
 	vrpn_int32 setupCamera( );
-
-	void printSpotValues( );
+    
+	vrpn_int32 getResolutionFromCamera( vrpn_int32 &res_x, vrpn_int32 &res_y );
+	
+	void printCookeValues( );
 	
     void checkForParameterChanges(void);
     vrpn_int32 initializeParameterDefaults(void);
@@ -101,16 +100,18 @@ protected:
 	PCO_Timing cameraTiming;
 	PCO_Storage cameraStorage;
 	PCO_Recording cameraRecording;
+	HANDLE cameraEvent;
 
 	// Cooke error stuff
 #define  ERROR_TEXT_LEN (256)
 	char errorText[ERROR_TEXT_LEN];
 	
+	SHORT cameraBufferNumber;
 	int maxBufferSize;
 	vrpn_uint8* myImageBuffer;
 	vrpn_uint8* cameraImageBuffer;
 
-	struct SpotChanges
+	struct CookeChanges
 	{
 		bool resolutionChanged;
 		int newResolutionIndex;
@@ -122,10 +123,8 @@ protected:
 		int newExposure;
 	};
 
-	SpotChanges requestedChanges;
-	void doRequestedChangesOnSpot( );
-
-	friend void WINAPI nmm_Microscope_SEM_cooke_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
+	CookeChanges requestedChanges;
+	void doRequestedChangesOnCooke( );
 
 }; // end class nmm_Microscope_SEM_cooke
 
