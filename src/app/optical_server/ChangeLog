@@ -1,3 +1,10 @@
+2005-08-16  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_cooke.cpp (doRequestedChangesOnCooke):  
+	correctly handles binning and exposure changes.
+	(acquireImage):  picks the correct bits out of the camera image.
+	(setupCamera):  set the sensor format
+
 2005-08-15  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_cooke.[h,cpp]:  removed a few last vestigial
