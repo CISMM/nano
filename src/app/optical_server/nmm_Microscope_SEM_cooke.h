@@ -102,6 +102,11 @@ protected:
 	PCO_Recording cameraRecording;
 	HANDLE cameraEvent;
 
+	// these are the actual number of "standard"
+	// pixels on camera sensor.  the language 
+	// follows cooke's usage.
+	int standardMaxResX, standardMaxResY;
+
 	// Cooke error stuff
 #define  ERROR_TEXT_LEN (256)
 	char errorText[ERROR_TEXT_LEN];

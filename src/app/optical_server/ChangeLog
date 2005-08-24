@@ -1,3 +1,20 @@
+2005-08-24  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_cooke.h:  added two new member variables
+	for the "standard" max resolution (sensor size).
+	* nmm_Microscope_SEM_cooke.cpp (setupCamera):  resets the camera
+	settings to default before starting.  stores the max resolution.
+	sets image parameters for the CamLink board.
+	(getMaxResolution):  uses the cached max resolution (sensor size)
+	instead of calling GetSizes.  	GetSizes was returning incorrect 
+	values for max resolution, and this messed up all sorts of things.
+	(getResolutionFromCamera):  uses GetROI now instead of GetSizes.
+	(doRequestedChangesOnCooke):  finished the code to change resolution.
+	in the case of binning changes, correctly recenters the ROI.
+	also, throughout, more places revert to old values (and correctly
+	inform relevant parties) in case of failure.
+
+
 2005-08-16  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_cooke.cpp (doRequestedChangesOnCooke):  
