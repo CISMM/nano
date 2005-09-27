@@ -1,3 +1,8 @@
+2005-09-27  David Marshburn  <marshbur@cs.unc.edu>
+
+	* filemenu.tcl:  changes the names of the Explorer1 and Explorer2
+	computers.
+
 2005-08-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* mainwin.tcl:  removes autoscan from the list of device-only 

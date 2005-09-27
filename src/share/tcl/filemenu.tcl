@@ -71,8 +71,8 @@ if { !$thirdtech_ui } {
 				"Same-machine SPM (testing)" \
 				"Rhodium-cs (testing)" \
 				"Evans (testing)" }
-    set deviceConnections { "nmm_Microscope@sodium-cs" \
-				"nmm_Microscope@phantom-cs" \
+    set deviceConnections { "nmm_Microscope@yttrium-cs" \
+				"nmm_Microscope@zirconium-cs" \
 				"nmm_Microscope@iron-cs" \
 				"nmm_Microscope@127.0.0.1" \
 				"nmm_Microscope@rhodium-cs.cs.unc.edu" \
