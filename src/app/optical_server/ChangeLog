@@ -1,3 +1,9 @@
+2006-02-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_cooke.cpp (~nmm_Microscope_SEM_cooke):  pass
+	the handle instead of a pointer to a handle to PCO_CloseCamera.  this
+	prevents a crash when the application closes.
+
 2005-08-24  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_cooke.h:  added two new member variables
