@@ -1,3 +1,9 @@
+2006-04-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* thread.h : Adds a function to determine the number of processors on
+		the computer.
+	* thread.C : Same.
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* NMmp.dsp: Release config now builds.

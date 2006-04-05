@@ -470,6 +470,19 @@ Boolean Thread::available() {
 #endif
 }
 
+unsigned Thread::number_of_processors() {
+#ifdef _WIN32
+
+  // Copy the hardware information to the SYSTEM_INFO structure. 
+  SYSTEM_INFO siSysInfo;
+  GetSystemInfo(&siSysInfo); 
+  return siSysInfo.dwNumberOfProcessors;
+#else
+  cerr << "Thread::number_of_processors: Not yet implemented on this architecture." NL;
+  return 1;
+#endif
+}
+
 void Thread::userData( void *pvNewUserData ) {
   td.pvUD = pvNewUserData;
 }
@@ -494,6 +507,10 @@ Thread::~Thread() {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.4  2001/12/18 20:41:28  marshbur
+
+          * thread.C: remove compiler warnings
+
   Revision 1.3  2001/03/02 17:51:45  hudson
   	* thread.C (Semaphore::p) : removed a line that shouldn't have been
   	committed.
