@@ -52,6 +52,14 @@
 \*****************************************************************************/
 
 #include "thread.h"
+#include <stdio.h>
+#include <string.h>
+
+// The following are copied from myUtil.h to remove the dependencies from this file.
+#include <iostream>
+using namespace std;
+#define ALL_ASSERT(exp, msg) if(!(exp)){ cerr << "\n" << "Assertion failed! " << \
+endl << msg << " (" << __FILE__ << ", " << __LINE__ << ")" << "\n"; exit(-1);}
 
 // init all fields in init()
 Semaphore::Semaphore( int cNumResources ) : 
@@ -75,18 +83,18 @@ void Semaphore::init() {
     Semaphore::allocArena();
   }
   if (cResources==1) {
-    fUsingLock=TRUE;
+    fUsingLock=true;
     ps=NULL;
     // use lock instead of semaphore
     if ((l = usnewlock(Semaphore::ppaArena)) == NULL) {
-      cerr << "Semaphore::Semaphore: error allocating lock from arena." NL;
+      cerr << "Semaphore::Semaphore: error allocating lock from arena." << "\n";
       return;
     }
   } else {    
-    fUsingLock=FALSE;
+    fUsingLock=false;
     l=NULL;
     if ((ps = usnewsema(Semaphore::ppaArena, cResources)) == NULL) {
-      cerr << "Semaphore::Semaphore: error allocating semaphore from arena." NL;
+      cerr << "Semaphore::Semaphore: error allocating semaphore from arena." << "\n";
       return;
     }
   }
@@ -110,10 +118,20 @@ void Semaphore::init() {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::Semaphore: error creating semaphore, "
       "WIN32 CreateSemaphore call caused the following error: "
-	 << lpMsgBuf NL;
+	 << lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
     return;
+  }
+#else
+  // Posix threads are the default.
+  int numMax = cResources;
+  if (numMax < 1) {
+    numMax = 1;
+  }
+  if (sem_init(&semaphore, 0, numMax) != 0) {
+      cerr << "Semaphore::Semaphore: error initializing semaphore." << "\n";
+      return;
   }
 #endif
 }
@@ -136,11 +154,16 @@ Semaphore::~Semaphore() {
 		   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
 		     // Default language
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
-    cerr << "Semaphore::~Semaphore: error destroy semaphore, "
+    cerr << "Semaphore::~Semaphore: error destroying semaphore, "
       "WIN32 CloseHandle call caused the following error: "
-	 << lpMsgBuf NL;
+	 << lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
+  }
+#else
+  // Posix threads are the default.
+  if (sem_destroy(&semaphore) != 0) {
+      cerr << "Semaphore::~Semaphore: error destroying semaphore." << "\n";
   }
 #endif
 }
@@ -194,7 +217,7 @@ int Semaphore::reset( int cNumResources ) {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::reset: error destroying semaphore, "
       "WIN32 CloseHandle call caused the following error: "
-	 << lpMsgBuf NL;
+	 << lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
   }
@@ -205,7 +228,21 @@ int Semaphore::reset( int cNumResources ) {
 
 #else  // not sgi, not _WIN32
 
-int Semaphore::reset( int ) {
+int Semaphore::reset( int cNumResources) {
+  // Posix by default.
+  // Destroy the old semaphore and then create a new one
+  if (sem_destroy(&semaphore) != 0) {
+      cerr << "Semaphore::reset: error destroying semaphore." << "\n";
+      return -1;
+  }
+  int numMax = cNumResources;
+  if (numMax < 1) {
+    numMax = 1;
+  }
+  if (sem_init(&semaphore, 0, numMax) != 0) {
+      cerr << "Semaphore::reset: error initializing semaphore." << "\n";
+      return -1;
+  }  
   return 0;
 }
 
@@ -251,13 +288,19 @@ int Semaphore::p() {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::p: error waiting for resource, "
       "WIN32 WaitForSingleObject call caused the following error: "
-	 << lpMsgBuf NL;
+	 << lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
     return -1;
     break;
   default:
     ALL_ASSERT(0,"Semaphore::p: unknown return code");
+    return -1;
+  }
+#else
+  // Posix by default
+  if (sem_wait(&semaphore) != 0) {
+    perror("Semaphore::p: ");
     return -1;
   }
 #endif
@@ -291,9 +334,15 @@ int Semaphore::v() {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::v: error v'ing semaphore, "
       "WIN32 ReleaseSemaphore call caused the following error: "
-	 << (LPTSTR) lpMsgBuf NL;
+	 << (LPTSTR) lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
+    return -1;
+  }
+#else
+  // Posix by default
+  if (sem_post(&semaphore) != 0) {
+    perror("Semaphore::p: ");
     return -1;
   }
 #endif
@@ -344,7 +393,7 @@ int Semaphore::condP() {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::condP: error waiting for resource, "
       "WIN32 WaitForSingleObject call caused the following error: "
-	 << lpMsgBuf NL;
+	 << lpMsgBuf << "\n";
     // Free the buffer.
     LocalFree( lpMsgBuf );
     return -1;
@@ -352,6 +401,15 @@ int Semaphore::condP() {
   default:
     ALL_ASSERT(0,"Semaphore::p: unknown return code");
     return -1;
+  }
+#else
+  // Posix by default
+  iRetVal = sem_trywait(&semaphore);
+  if (iRetVal == 0) {  iRetVal = 1;
+  } else if (iRetVal == EAGAIN) { iRetVal = 0;
+  } else {
+    perror("Semaphore::condP: ");
+    iRetVal = -1;
   }
 #endif
   return iRetVal;
@@ -381,7 +439,7 @@ void Semaphore::allocArena() {
   // generate a unique filename
   mktemp(rgchTemp);
   if (rgchTemp[0]=='\0') {
-    cerr << "Thread::allocArena: could not generate unique file name." NL;
+    cerr << "Thread::allocArena: could not generate unique file name." << "\n";
     return;
   }
   // set mask to read/write/execute by all so temp file can be overwritten
@@ -406,7 +464,7 @@ Thread::Thread(void (*pfThread)(void *pvThreadData),
 
 int Thread::go() {
   if (ulProcID) {
-    cerr << "Thread::go: already running (pid=" << ulProcID << ")." NL;
+    cerr << "Thread::go: already running (pid=" << ulProcID << ")." << "\n";
     return -1;
   }
 #ifdef sgi
@@ -423,10 +481,13 @@ int Thread::go() {
     perror("Thread::go: _beginthread");
     return -1;
   }
-  //  cerr << "Thread:go: thread id is " << ulProcID << "." NL;
+  //  cerr << "Thread:go: thread id is " << ulProcID << "." << "\n";
 #else
-  cerr << "Thread::go: threads not yet implemented for this arch." NL;
-  return -1;
+  // Pthreads by default
+  if (pthread_create(&ulProcID, NULL, &threadFuncShellPosix, (void*)this) != 0) {
+    perror("Thread::go:pthread_create: ");
+    return -1;
+  }
 #endif
   return 0;
 }
@@ -442,19 +503,24 @@ int Thread::kill() {
 #elif defined(_WIN32)
     // Return value of -1 passed to TerminateThread causes a warning.
     if (!TerminateThread( (HANDLE) ulProcID, 1 )) {
-      cerr << "Thread::kill: problem with terminateThread call." NL;
+      cerr << "Thread::kill: problem with terminateThread call." << "\n";
     }
 #else
+    // Posix by default
+    if (pthread_kill(ulProcID, SIGKILL) != 0) {
+      perror("Thread::kill:pthread_kill: ");
+      return -1;
+    }
 #endif
   } else {
-    cerr << "Thread::kill: thread is not currently alive." NL;
+    cerr << "Thread::kill: thread is not currently alive." << "\n";
     return -1;
   }
   ulProcID = 0;
   return 0;
 }
 
-Boolean Thread::running() {
+bool Thread::running() {
   return ulProcID!=0;
 }
 
@@ -462,24 +528,11 @@ unsigned long Thread::pid() {
   return ulProcID;
 }
 
-Boolean Thread::available() {
+bool Thread::available() {
 #ifdef THREADS_AVAILABLE
-  return TRUE;
+  return true;
 #else
-  return FALSE;
-#endif
-}
-
-unsigned Thread::number_of_processors() {
-#ifdef _WIN32
-
-  // Copy the hardware information to the SYSTEM_INFO structure. 
-  SYSTEM_INFO siSysInfo;
-  GetSystemInfo(&siSysInfo); 
-  return siSysInfo.dwNumberOfProcessors;
-#else
-  cerr << "Thread::number_of_processors: Not yet implemented on this architecture." NL;
-  return 1;
+  return false;
 #endif
 }
 
@@ -498,11 +551,55 @@ void Thread::threadFuncShell( void *pvThread ) {
   pth->ulProcID = 0;
 }
 
+// This is a Posix-compatible function prototype that
+// just calls the other function.
+void *Thread::threadFuncShellPosix( void *pvThread ) {
+  threadFuncShell(pvThread);
+  return NULL;
+}
+
 
 Thread::~Thread() {
   if (running()) {
     kill();
   }
+}
+
+unsigned Thread::number_of_processors() {
+#ifdef _WIN32
+  // Copy the hardware information to the SYSTEM_INFO structure. 
+  SYSTEM_INFO siSysInfo;
+  GetSystemInfo(&siSysInfo); 
+  return siSysInfo.dwNumberOfProcessors;
+#elif linux
+  // For Linux, we look at the /proc/cpuinfo file and count up the number
+  // of "processor	:" entries (tab between processor and colon) in
+  // the file to find out how many we have.
+  FILE *f = fopen("/proc/cpuinfo", "r");
+  int count = 0;
+  if (f == NULL) {
+    perror("Thread::number_of_processors:fopen: ");
+    return 1;
+  }
+
+  char line[512];
+  while (fgets(line, sizeof(line), f) != NULL) {
+    if (strncmp(line, "processor\t:", strlen("processor\t:")) == 0) {
+      count++;
+    }
+  }
+
+  fclose(f);
+  if (count == 0) {
+    cerr << "Thread::number_of_processors: Found zero, returning 1" << "\n";
+    count = 1;
+  }
+  return count;
+
+#else
+  cerr << "Thread::number_of_processors: Not yet implemented on this architecture." << "\n";
+  return 1;
+#endif
 }
 
 /*****************************************************************************\

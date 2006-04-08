@@ -67,6 +67,9 @@
 		process (the thread associated with the Thread object) -- this
 		will not work right now in win95/nt.
 
+		Modified by Russ Taylor to work under Posix Threads when not on
+		Windows or SGI (where Hans had it working before).
+
   ----------------------------------------------------------------------------
   Author: weberh
   Created: Mon Mar 23 16:42:55 1998
@@ -78,7 +81,11 @@
 #ifndef _THREAD_H_
 #define _THREAD_H_
 
-#if defined(sgi) || (defined(_WIN32) && !defined(__CYGWIN__))
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#if defined(sgi) || (defined(_WIN32) && !defined(__CYGWIN__)) || defined(linux)
 #define THREADS_AVAILABLE
 #else
 #undef THREADS_AVAILABLE
@@ -90,6 +97,9 @@
 #include <ulocks.h>
 #elif defined(_WIN32)
 #include <process.h>
+#else
+#include <pthread.h>
+#include <semaphore.h>
 #endif
 #include <stdio.h>
 
@@ -107,15 +117,10 @@
 #pragma set woff 1110,1424,3201
 #endif
 
-#include <iostream>
-//using namespace std;
-
 // and reset the warnings
 #ifdef sgi
 #pragma reset woff 1110,1424,3201
 #endif
-
-#include "myUtil.h"
 
 class Semaphore {
 public:
@@ -161,6 +166,8 @@ protected:
   Boolean fUsingLock;
 #elif defined(_WIN32)
   HANDLE hSemaphore;
+#else
+  sem_t	semaphore;
 #endif
 };
 
@@ -193,12 +200,12 @@ public:
   // thread info
   // check if running
   // get proc id
-  Boolean running();
+  bool running();
   unsigned long pid();
 
-  // run-time user function to test if threads are available
+  // run-time user function to test it threads are available
   // (same value as #ifdef THREADS_AVAILABLE)
-  static Boolean available();
+  static bool available();
 
   // Number of processors available on this machine.
   static unsigned number_of_processors();
@@ -215,8 +222,12 @@ protected:
   void (*pfThread)(void *pvThreadData);
   ThreadData td;
   
-  // utility func
+  // utility func for calling the specified function.
   static void threadFuncShell(void *pvThread);
+
+  // Posix version of the utility function, makes the
+  // function prototype match.
+  static void *threadFuncShellPosix(void *pvThread);
 
   // the process id
   unsigned long ulProcID;
