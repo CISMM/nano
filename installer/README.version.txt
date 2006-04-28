@@ -2,6 +2,9 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.0b:  (April 28, 2006)
+	- an interrim version that should work with the Omni 
+	  phantoms and the newest libraries from Sensable.
 11.6:  (August 13, 2005)
 	- fixes the phantom-button-as-toggle functionality
 	- adds a command-line option -noautorescan to have auto-
