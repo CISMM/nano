@@ -3,6 +3,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.C
 #include "nmm_SimulatedMicroscope.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream.h>
 #include <string.h>
 //#include <unistd.h>
 #include <sys/types.h>

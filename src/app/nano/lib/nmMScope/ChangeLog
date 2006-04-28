@@ -1,3 +1,7 @@
+2006-04-28    <marshbur@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope.Cdef:  includes iostream.h
+
 2005-08-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* directstep.C (handle_take_z_step):  correctly increments
