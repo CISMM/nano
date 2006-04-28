@@ -12,6 +12,7 @@
 #endif
 
 #include "vrpn_Ohmmeter.h"
+#include "myUtil.h"  // from nmMP, for ASSERT
 
 vrpn_Ohmmeter::vrpn_Ohmmeter(char * /*name*/, vrpn_Connection *c)
 {
