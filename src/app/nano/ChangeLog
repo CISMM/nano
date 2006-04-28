@@ -1,3 +1,7 @@
+2006-04-28    <marshbur@cs.unc.edu>
+
+	* microscape.h:  bump major and minor version numbers to 12 and 0
+
 2005-08-13  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.h:  bumped version number to 11.6
