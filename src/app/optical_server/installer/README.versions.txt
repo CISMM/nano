@@ -1,3 +1,7 @@
+v. 2.0	May 21, 2006
+	- added the ability to save logs on the server.
+	- should be more stable when closing the program.
+
 v. 1.2	August 15, 2005
 	- added the ability to use a cooke camera.
 
