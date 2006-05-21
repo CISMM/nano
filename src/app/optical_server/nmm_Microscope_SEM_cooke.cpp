@@ -119,7 +119,8 @@ nmm_Microscope_SEM_cooke( const char * name, vrpn_Connection * c, vrpn_bool virt
 nmm_Microscope_SEM_cooke::
 ~nmm_Microscope_SEM_cooke (void)
 {
-	OpticalServerInterface::getInterface()->setImage( NULL, 0, 0 );
+	if( OpticalServerInterface::getInterface() != NULL )
+		OpticalServerInterface::getInterface()->setImage( NULL, 0, 0 );
 
 	
 	// let the camera clean up after itself
@@ -609,7 +610,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_cooke::setResolutionbyIndex:  "
 			"invalid resolution requested:  %d\n", idx );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 		return currentResolutionIndex;
 	}
 
@@ -828,7 +830,8 @@ acquireImage()
 		}
 	}
 
-	OpticalServerInterface::getInterface()->setImage( myImageBuffer, resX, resY );
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface != NULL ) iface->setImage( myImageBuffer, resX, resY );
 	
 	return 0;
 }
@@ -997,7 +1000,8 @@ doRequestedChangesOnCooke( )
 			{
 				fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  "
 					"(binning) error fixing the resolution (1).\n" );
-				OpticalServerInterface::getInterface()->setBinning( currentBinning );
+				OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+				if( iface != NULL ) iface->setBinning( currentBinning );
 				return;
 			}
 			retVal = this->getMaxResolution( maxX, maxY );
@@ -1005,7 +1009,8 @@ doRequestedChangesOnCooke( )
 			{
 				fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  "
 					"(binning) error fixing the resolution (2).\n" );
-				OpticalServerInterface::getInterface()->setBinning( currentBinning );
+				OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+				if( iface != NULL ) iface->setBinning( currentBinning );
 				return;
 			}
 			if( resX * resFactor > maxX || resY * resFactor > maxY )
@@ -1013,7 +1018,8 @@ doRequestedChangesOnCooke( )
 				fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  "
 					"required area too large for camera: (%d x %d) x %f needed.  "
 					"(%d x %d) available.\n", resX, resY, resFactor, maxX, maxY );
-				OpticalServerInterface::getInterface()->setBinning( currentBinning );
+				OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+				if( iface != NULL ) iface->setBinning( currentBinning );
 				return;
 			}
 		}
@@ -1025,7 +1031,8 @@ doRequestedChangesOnCooke( )
 			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  Error setting "
 					"binning to %d.  Code:  0x%x (%s)\n", binAsShort, success, errorText );
-			OpticalServerInterface::getInterface()->setBinning( currentBinning );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setBinning( currentBinning );
 			return;
 		}
 
@@ -1071,12 +1078,14 @@ doRequestedChangesOnCooke( )
 			PCO_GetErrorText( success, errorText, ERROR_TEXT_LEN );
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  Error "
 				"validating settings (arm).  Code:  0x%x (%s)\n", success, errorText );
-			OpticalServerInterface::getInterface()->setBinning( currentBinning );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setBinning( currentBinning );
 			return;
 		}
 		
 		vrpn_int32 binning = getBinning( );
-		OpticalServerInterface::getInterface()->setBinning( binning );
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setBinning( binning );
 	}
 
 	if( requestedChanges.resolutionChanged )
@@ -1093,11 +1102,10 @@ doRequestedChangesOnCooke( )
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnSpot:  "
 				"internal error (resolution).\n" );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 			return;
 		}
-		//maxX = floor( maxX / currentBinning );
-		//maxY = floor( maxY / currentBinning );
 
 		// get the old ROI in case we need to revert
 		WORD oldLeft, oldRight, oldTop, oldBottom;
@@ -1108,7 +1116,8 @@ doRequestedChangesOnCooke( )
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::doRequestedChangesOnCooke:  Error "
 				"getting ROI.  Code:  0x%x (%s)\n", success, errorText );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );
 			return;
 		}
 
@@ -1120,7 +1129,8 @@ doRequestedChangesOnCooke( )
 				"resolution (%d x %d) x %d greater than max (%d x %d).\n",
 				res_x, res_y, currentBinning, maxX, maxY );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 			return;
 		}
 		
@@ -1144,7 +1154,8 @@ doRequestedChangesOnCooke( )
 				"ROI to %d x %d:  (%d,%d) to (%d,%d).  Code:  0x%x (%s)\n", 
 				res_x, res_y, left, top, right, bottom, success, errorText );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );
 			return;
 		}
 
@@ -1158,7 +1169,8 @@ doRequestedChangesOnCooke( )
 			// try to go back to the old ROI
 			PCO_SetROI( camera, oldLeft, oldTop, oldRight, oldBottom );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );
 			return;
 		}
 		// validate settings
@@ -1171,14 +1183,16 @@ doRequestedChangesOnCooke( )
 			// try to go back to the old ROI
 			PCO_SetROI( camera, oldLeft, oldTop, oldRight, oldBottom );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );
 			return;
 		}
 		
 		currentResolutionIndex = requestedChanges.newResolutionIndex;
 		
 		reportResolution( );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 	}
 	
 	
@@ -1196,7 +1210,8 @@ doRequestedChangesOnCooke( )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_cooke::setupCamera:  Error setting "
 				"exposure.  Code:  0x%x\n", success );
-			OpticalServerInterface::getInterface()->setExposure( currentExposure );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setExposure( currentExposure );
 			return;
 		}
 		// validate settings
@@ -1208,12 +1223,14 @@ doRequestedChangesOnCooke( )
 				"validating settings (arm).  Code:  0x%x (%s)\n", success, errorText );
 			// try to go back to the old settings
 			PCO_SetDelayExposureTime( camera, 0, currentExposure, 2, 2 );
-			OpticalServerInterface::getInterface()->setExposure( currentExposure );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setExposure( currentExposure );
 			return;
 		}
 		
 		currentExposure = requestedChanges.newExposure;
-		OpticalServerInterface::getInterface()->setExposure( currentExposure );
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setExposure( currentExposure );
 	}
 
 	// start recording

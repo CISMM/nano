@@ -91,6 +91,10 @@ SOURCE=.\edax_defs.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Logging.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_Microscope_SEM_cooke.cpp
 # End Source File
 # Begin Source File
@@ -123,6 +127,10 @@ SOURCE=.\edax_defs.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Logging.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_Microscope_SEM_cooke.h
 # End Source File
 # Begin Source File
@@ -132,6 +140,10 @@ SOURCE=.\nmm_Microscope_SEM_diaginc.h
 # Begin Source File
 
 SOURCE=.\nmm_Microscope_SEM_optical.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\optical_server.h
 # End Source File
 # Begin Source File
 
@@ -145,6 +157,78 @@ SOURCE=.\Tcl_Linkvar.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# End Group
+# Begin Group "ImageMagick libraries"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_bzlib_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_coders_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_filters_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jbig_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jp2_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jpeg_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_lcms_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_libxml_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_magick_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_Magick++_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_png_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_tiff_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_ttf_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wand_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wmf_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_xlib_.lib"
+# End Source File
+# Begin Source File
+
+SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_zlib_.lib"
+# End Source File
 # End Group
 # End Target
 # End Project

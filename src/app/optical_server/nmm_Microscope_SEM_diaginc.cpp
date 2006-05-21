@@ -80,7 +80,8 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 nmm_Microscope_SEM_diaginc::
 ~nmm_Microscope_SEM_diaginc (void)
 {
-	OpticalServerInterface::getInterface()->setImage( NULL, 0, 0 );
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface != NULL ) iface->setImage( NULL, 0, 0 );
 
 	// remove spot cam callback
 	SpotSetCallback( NULL, 0 );
@@ -376,7 +377,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionbyIndex:  "
 			"invalid resolution requested:  %d\n", idx );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 		return currentResolutionIndex;
 	}
 	vrpn_int32 res_x = 0, res_y = 0;
@@ -389,7 +391,8 @@ setResolutionByIndex( vrpn_int32 idx )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionByIndex:  "
 			"internal error.\n" );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 		return currentResolutionIndex;
 	}
 
@@ -400,7 +403,8 @@ setResolutionByIndex( vrpn_int32 idx )
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolutionByIndex:  "
 			"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
 			res_x, res_y, maxX, maxY, currentBinning );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 		return currentResolutionIndex;
 	}
 
@@ -706,7 +710,8 @@ acquireImage()
 		}
 	}
 
-	OpticalServerInterface::getInterface()->setImage( myImageBuffer, resX, resY );
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface != NULL ) iface->setImage( myImageBuffer, resX, resY );
 	
 	return 0;
 }
@@ -902,7 +907,8 @@ doRequestedChangesOnSpot( )
 			SpotSetValue( SPOT_BINSIZE, &binsize );
 		}
 		vrpn_int32 binning = getBinning( );
-		OpticalServerInterface::getInterface()->setBinning( binning );
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setBinning( binning );
 	}
 
 	if( requestedChanges.resolutionChanged )
@@ -919,7 +925,8 @@ doRequestedChangesOnSpot( )
 			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  "
 				"internal error (resolution).\n" );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 			return;
 		}
 		
@@ -931,7 +938,8 @@ doRequestedChangesOnSpot( )
 				"resolution (%d x %d) greater than max (%d x %d) x %d.\n",
 				res_x, res_y, maxX, maxY, currentBinning );
 			reportResolution( );
-			OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 			return;
 		}
 		
@@ -950,7 +958,8 @@ doRequestedChangesOnSpot( )
 		}
 		
 		reportResolution( );
-		OpticalServerInterface::getInterface()->setResolutionIndex( currentResolutionIndex );	
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );	
 	}
 	
 	
@@ -968,11 +977,13 @@ doRequestedChangesOnSpot( )
 		{
 			fprintf( stderr, "nmm_Microscope_SEM_diaginc::doRequestedChangesOnSpot:  Error setting "
 					"exposure (%d ms) in the SPOT camera.  Code:  %d\n", requestedChanges.newExposure, success );
-			OpticalServerInterface::getInterface()->setExposure( currentExposure );
+			OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+			if( iface != NULL ) iface->setExposure( currentExposure );
 			return;
 		}
 		currentExposure = requestedChanges.newExposure;
-		OpticalServerInterface::getInterface()->setExposure( currentExposure );
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		if( iface != NULL ) iface->setExposure( currentExposure );
 	}
 
 }

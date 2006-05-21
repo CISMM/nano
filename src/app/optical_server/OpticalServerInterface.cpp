@@ -10,16 +10,39 @@
 #include "OpticalServerInterface.h"
 #include "nmm_Microscope_SEM_optical.h"
 #include "edax_defs.h"
+#include "Logging.h"
 
-static char *Version_string = "01.01";
+static char *Version_string = "02.00";
 
 OpticalServerInterface* OpticalServerInterface::instance = NULL;
 bool OpticalServerInterface::interfaceShutdown = false;
+HANDLE OpticalServerInterface::ifaceThread = NULL;
+bool OpticalServerInterface::glutThreadDone = false;
+
+char* OpticalServerInterface::loggingLabel = "save_video";
+
+
+void OpticalServerInterface_exitFunc( )
+{
+	OpticalServerInterface* oldInstance = OpticalServerInterface::instance;
+	if( oldInstance )
+	{
+		oldInstance->setMicroscope( NULL );
+		oldInstance->setImage( NULL, 0, 0 );
+	}
+	OpticalServerInterface::interfaceShutdown = true;
+	OpticalServerInterface::instance = NULL;
+	if( oldInstance ) delete oldInstance;
+	OpticalServerInterface::glutThreadDone = true;
+	fprintf( stderr, "OpticalServerInterface_exitFunc done.\n" );
+	fflush( stderr );
+}
+
 
 void OpticalServerInterface_myGlutRedisplay( )
 {
-	static int count = 0;
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface == NULL ) return;
 
 	glutSetWindow( iface->image_window );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -39,6 +62,8 @@ void OpticalServerInterface_myGlutKeyboard( unsigned char key, int x, int y )
 {
 	printf( "glut keyboard func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface == NULL ) return;
+
 	if( key == '+' )
 	{
 		int idx = iface->microscope->getResolutionIndex( );
@@ -66,7 +91,7 @@ void OpticalServerInterface_myGlutKeyboard( unsigned char key, int x, int y )
 void OpticalServerInterface_myGlutSpecial( int, int, int )
 {
 	//printf( "glut special func\n" );
-	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	//OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
 
@@ -74,7 +99,7 @@ void OpticalServerInterface_myGlutSpecial( int, int, int )
 void OpticalServerInterface_myGlutMouse( int button, int state, int x, int y )
 {
 	//printf( "glut mouse func\n" );
-	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	//OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
 
@@ -82,7 +107,7 @@ void OpticalServerInterface_myGlutMouse( int button, int state, int x, int y )
 void OpticalServerInterface_myGlutMotion( int x, int y )
 {
 	//printf( "glut motion func\n" );
-	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	//OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
 
@@ -90,7 +115,7 @@ void OpticalServerInterface_myGlutMotion( int x, int y )
 void OpticalServerInterface_myGlutReshape( int w, int h )
 {
 	//printf( "glut reshape func\n" );
-	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	//OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 	GLUI_Master.auto_set_viewport( );
 
 }
@@ -115,13 +140,16 @@ void OpticalServerInterface_myGlutIdle( )
     fprintf(stderr,"Tclvar Mainloop failed\n");
   }
 
-  vrpn_SleepMsecs( 10 );
+  Sleep( 10 );
 }
 
 
-void OpticalServerInterface::handle_binning_changed(char *new_value, void *userdata)
+//static 
+void OpticalServerInterface::
+handle_binning_changed(char *new_value, void *userdata)
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( OpticalServerInterface::interfaceShutdown ) return;
   if( me->microscope != NULL && me->threadReady ) 
   {
 	  if( me->microscope->getBinning( ) != atoi( new_value ) )
@@ -129,9 +157,13 @@ void OpticalServerInterface::handle_binning_changed(char *new_value, void *userd
   }
 }
 
-void OpticalServerInterface::handle_resolution_changed(char *new_value, void *userdata)
+
+//static 
+void OpticalServerInterface::
+handle_resolution_changed(char *new_value, void *userdata)
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( OpticalServerInterface::interfaceShutdown ) return;
   if( me->microscope != NULL && me->threadReady ) 
   {
     int i, x, y;
@@ -142,9 +174,12 @@ void OpticalServerInterface::handle_resolution_changed(char *new_value, void *us
 }
 
 
-void OpticalServerInterface::handle_contrast_changed(char *new_value, void *userdata)
+//static 
+void OpticalServerInterface::
+handle_contrast_changed(char *new_value, void *userdata)
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( OpticalServerInterface::interfaceShutdown ) return;
   if( me->microscope != NULL && me->threadReady ) 
   {
 	  if( me->microscope->getContrastLevel( ) != atoi( new_value ) )
@@ -153,9 +188,12 @@ void OpticalServerInterface::handle_contrast_changed(char *new_value, void *user
 }
 
 
-void OpticalServerInterface::handle_exposure_changed( float new_value, void* userdata )
+//static 
+void OpticalServerInterface::
+handle_exposure_changed( float new_value, void* userdata )
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( OpticalServerInterface::interfaceShutdown ) return;
   if( me->microscope != NULL && me->threadReady )
   {
 	  int e = (int) new_value;
@@ -165,6 +203,39 @@ void OpticalServerInterface::handle_exposure_changed( float new_value, void* use
 }
 
 
+//static 
+void OpticalServerInterface::
+handle_logging_changed( char* entry, int new_value,void *userdata )
+{
+	if( !strcmp( entry, loggingLabel) )
+	{
+		if( new_value )
+		{
+			printf( "logging on\n" );
+			Logging* log = Logging::getInstance();
+			if( log != NULL )
+			{
+				log->startLogging( );
+			}
+		}
+		else
+		{
+			printf( "logging off\n" );
+			Logging* log = Logging::getInstance();
+			if( log != NULL )
+			{
+				log->stopLogging( );
+			}
+		}
+	}
+	else
+	{
+		fprintf( stderr, "OpticalServerInterface::handle_logging_changed:  "
+				 "unknown %s\n", entry );
+	}
+}
+
+	
 DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
 {
   printf( "OpticalServerInterface_mainloop\n" );
@@ -281,6 +352,10 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   // exposure time
   iface->d_exposure = new Tclvar_float_with_scale( "exposure_in_ms", "", 80, 250, 100, iface->handle_exposure_changed, iface );
 
+  // logging
+  iface->d_logging = new Tclvar_checklist( "" );
+  iface->d_logging->Add_entry( OpticalServerInterface::loggingLabel, 0 );
+  iface->d_logging->set_tcl_change_callback( OpticalServerInterface::handle_logging_changed, NULL );
   
   //------------------------------------------------------------------
   // This routine must be called in order to initialize all of the
@@ -314,6 +389,7 @@ OpticalServerInterface( )
   resolutionIndex( EDAX_DEFAULT_SCAN_MATRIX ),
   contrast( 0 )
 {
+	atexit( OpticalServerInterface_exitFunc );
     LPDWORD lpThreadID = NULL;
     ifaceThread = CreateThread( NULL, 0, OpticalServerInterface_mainloop, NULL, 0, lpThreadID );
 }
@@ -325,6 +401,12 @@ OpticalServerInterface::
 {
 	// ExitThread( 0 );
 	OpticalServerInterface::interfaceShutdown = true;
+	microscope = NULL;
+	d_binningSelector->set_tcl_change_callback( NULL, NULL );
+	d_resolutionSelector->set_tcl_change_callback( NULL, NULL );
+	d_contrastSelector->set_tcl_change_callback( NULL, NULL );
+	d_exposure->set_tcl_change_callback( NULL, NULL );
+	d_logging->set_tcl_change_callback( NULL, NULL );
 
 }
 
@@ -350,17 +432,22 @@ getInterface( )
 void OpticalServerInterface::
 setImage( vrpn_uint8* buffer, int width, int height )
 {
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	this->lastImage = buffer;
 	this->lastImageWidth = width;
 	this->lastImageHeight = height;
-	glutSetWindow( this->image_window );
-	glutPostRedisplay( );
+	if( buffer != NULL )
+	{
+		glutSetWindow( this->image_window );
+		glutPostRedisplay( );
+	}
 }
 
 
 void OpticalServerInterface::
 setMicroscope( nmm_Microscope_SEM_optical* m )
 {
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	this->microscope = m;
 	if( m != NULL )
 	{
@@ -373,6 +460,7 @@ setMicroscope( nmm_Microscope_SEM_optical* m )
 void OpticalServerInterface::
 setBinning( int bin ) 
 { 
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	binning = bin;
 	char binStr[512];
 	sprintf( binStr, "%d", bin );
@@ -383,6 +471,7 @@ setBinning( int bin )
 void OpticalServerInterface::
 setExposure( int exposure )
 {
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	*d_exposure = exposure;
 }
 
@@ -390,6 +479,7 @@ setExposure( int exposure )
 void OpticalServerInterface::
 setResolutionIndex( int idx ) 
 { 
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	resolutionIndex = idx;
 	char idxStr[512];
 	if( idx >= 0 && idx <= EDAX_NUM_SCAN_MATRICES - 1 )
@@ -403,12 +493,23 @@ setResolutionIndex( int idx )
 	*d_resolutionSelector = idxStr;
 }
 
+
 void OpticalServerInterface::
 setContrast( int contrast )
 {
+	if( OpticalServerInterface::interfaceShutdown )  return;
 	if( contrast < 0 || contrast > 8 ) return;
 	this->contrast = contrast;
 	char str[512];
 	sprintf( str, "%d", contrast );
 	*d_contrastSelector = str;
+}
+
+
+
+void OpticalServerInterface::
+setLogging( bool on )
+{
+	if( on ) d_logging->Set_entry( loggingLabel );
+	else d_logging->Unset_entry( loggingLabel );
 }

@@ -5,7 +5,11 @@
 #include "nmm_Microscope_SEM_diaginc.h"
 #include "nmm_Microscope_SEM_cooke.h"
 #include "OpticalServerInterface.h"
+#include "opticalServer.h"
+#include "Logging.h"
 
+const char* opticalServerName = "SEM";
+const int opticalServerPort = 5757;
 
 void Usage(char* s)
 {
@@ -16,16 +20,48 @@ void Usage(char* s)
 }
 
 
+bool keepRunning = true;
+bool microscopeThreadDone = false;
+bool glutThreadDone = false;
+vrpn_Connection* connection = NULL;
+nmm_Microscope_SEM_optical* microscope = NULL;
+
+
+// this will end up being called from the glut thread
+// when someone hits the exit button
+void __cdecl exitFunc( )
+{
+	keepRunning = false;
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface();
+	if( iface != NULL )
+	{
+		iface->setImage( NULL, 0, 0 );
+		iface->setMicroscope( NULL );
+	}
+	vrpn_SleepMsecs( 2000 );
+	while( !microscopeThreadDone )
+	{
+		vrpn_SleepMsecs( 1 );  // wait for the microscope loop to stop
+	}
+	if( microscope )
+	{
+		delete microscope;
+		microscope = NULL;
+	}
+	if( connection )
+	{
+		delete connection;
+		connection = NULL;
+	}
+
+	fprintf( stderr, "opticalServer exitFunc done.\n" );
+	fflush( stderr );
+}
+
+
 int main( int argc, char* argv[] )
 {
-
-    int port = 5757;
-
-    OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
-
-	nmm_Microscope_SEM_optical* m = NULL;
 	vrpn_bool do_virtualAcq = vrpn_FALSE;
-
 	bool do_cooke = false, do_spot = false;
 
 	int i = 1;
@@ -55,28 +91,40 @@ int main( int argc, char* argv[] )
     }
 	if( do_cooke == do_spot )  Usage( argv[0] );
 
-    vrpn_Connection connection(port);
-	
+	connection = new vrpn_Connection( opticalServerPort );
 	if( do_cooke )
-		m = new nmm_Microscope_SEM_cooke( "SEM", &connection, do_virtualAcq );
+		microscope = new nmm_Microscope_SEM_cooke( opticalServerName, connection, do_virtualAcq );
 	if( do_spot )
-		m = new nmm_Microscope_SEM_diaginc( "SEM", &connection, do_virtualAcq );
+		microscope = new nmm_Microscope_SEM_diaginc( opticalServerName, connection, do_virtualAcq );
 
-    iface->setMicroscope( m );
-	iface->setBinning( m->getBinning( ) );
-	iface->setResolutionIndex( m->getResolutionIndex( ) );
-	iface->setExposure( m->getExposure( ) );
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+    iface->setMicroscope( microscope );
+	iface->setBinning( microscope->getBinning( ) );
+	iface->setResolutionIndex( microscope->getResolutionIndex( ) );
+	iface->setExposure( microscope->getExposure( ) );
 
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = 10000;
  
-    while (1)
+	atexit( exitFunc );
+
+	Logging* log = NULL;
+	while( keepRunning )
     {
-        m->mainloop();
-        connection.mainloop(&timeout);
+        microscope->mainloop();
+        connection->mainloop(&timeout);
+
+		log = Logging::getInstance( );
+		if( log != NULL ) log->mainloop( );
 		vrpn_SleepMsecs(10);
     }
+	microscopeThreadDone = true;
+
+	while( !OpticalServerInterface::isGlutThreadDone() )
+	{
+		vrpn_SleepMsecs( 1 );
+	}
     return 0;
 }
 

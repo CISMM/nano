@@ -1,3 +1,10 @@
+2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* adds the ability to save video logs.  these are saved on the 
+	server's computer.  also, this version seems to be more stable
+	with respect to shutdown-related crashes.  bumped the version
+	number to 2.0.
+
 2006-02-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_cooke.cpp (~nmm_Microscope_SEM_cooke):  pass

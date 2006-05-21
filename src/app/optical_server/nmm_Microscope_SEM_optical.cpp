@@ -37,7 +37,8 @@ setContrastLevel( vrpn_int32 level )
 	if( level < 0 || level > 8 )
 	{  return -1;  }
 	currentContrast = level;
-	OpticalServerInterface::getInterface()->setContrast( level );
+	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( iface != NULL ) iface->setContrast( level );
 	return currentContrast;
 }
 
