@@ -1,6 +1,6 @@
 rem @echo off
 
-set NANO_ROOT=C:\nsrg\bin\NanoManipulator\11.6
+set NANO_ROOT=C:\nsrg\bin\NanoManipulator\12.1
 set NM_COLORMAP_DIR=%NANO_ROOT%\share\colormaps
 set NM_TCL_DIR=%NANO_ROOT%\share\tcl
 set TRACKER=null Phantom
@@ -8,7 +8,7 @@ set BDBOX=Magellan
 REM set BDBOX=null
 set PATH=c:\nsrg\external\pc_win32\bin;%NANO_ROOT%/bin/;%PATH%
 nano.exe
-pause
+if not errorlevel 0 pause
 
 REM set V_DISPLAY=workbench
 REM set TRACKER=head@localhost null

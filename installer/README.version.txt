@@ -2,6 +2,10 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.1:  (May 21, 2006)
+	- disables logging of SEM streams.  For the combined
+	  AFM-optical systems, this is done on the video 
+	  server.
 12.0b:  (April 28, 2006)
 	- an interrim version that should work with the Omni 
 	  phantoms and the newest libraries from Sensable.
