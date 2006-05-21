@@ -29,6 +29,7 @@ protected:
 	char* logfileName;
 
 	void makeNewLogfileName( );
+	void testAndCreateDirectory( );
 
 private:
 	Logging( );

@@ -73,6 +73,7 @@ getInstance( )
 void Logging::
 makeNewLogfileName()
 {
+	testAndCreateDirectory( );
 	EnterCriticalSection( &cslogging );
 	if( logfileName != NULL )
 		delete logfileName;
@@ -80,12 +81,38 @@ makeNewLogfileName()
 	time_t longtime;
 	time( &longtime );
 	struct tm* mytime = localtime( &longtime );
-	sprintf( newname, "%04d-%02d-%02d--%02d-%02d-%02d.nms.sem",
+	sprintf( newname, "D:\\Data\\sem_video\\%04d-%02d-%02d--%02d-%02d-%02d.nms.sem",
 			mytime->tm_year + 1900, mytime->tm_mon, mytime->tm_mday,
 			mytime->tm_hour, mytime->tm_min, mytime->tm_sec );
 	logfileName = new char[ strlen( newname ) + 1 ];
 	strcpy( logfileName, newname );
 	LeaveCriticalSection( &cslogging );
+}
+
+
+void Logging::
+testAndCreateDirectory( )
+{
+	// see if D:\Data\sem_video exists
+	HANDLE dirH = CreateFile( "D:\\Data\\sem_video\\", 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+								NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+	if( dirH == INVALID_HANDLE_VALUE ) 
+	{
+		// try to create the directory
+		int retval = CreateDirectory( "D:\\Data\\sem_video\\", NULL );
+		if( retval == 0 /*failure*/ )
+		{
+			LPVOID lpMsgBuf;
+			FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+							NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+							(LPTSTR) &lpMsgBuf, 0, NULL );
+			fprintf( stderr, "Couldn't create data directory D:\\Data\\sem_video "
+					"or C:\\Data\\sem_video\n" );
+			fprintf( stderr, (LPCTSTR)lpMsgBuf );
+			fprintf( stderr, "\n" );
+			exit( -1 );
+		}
+	}
 }
 
 

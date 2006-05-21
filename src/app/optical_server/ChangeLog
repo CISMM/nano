@@ -1,5 +1,10 @@
 2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
 
+	* Logging.[h,cpp]:  fixes the directory in which the log files
+	are saved (was the application directory; now D:\Data\sem_video).
+
+2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
+
 	* adds the ability to save video logs.  these are saved on the 
 	server's computer.  also, this version seems to be more stable
 	with respect to shutdown-related crashes.  bumped the version
