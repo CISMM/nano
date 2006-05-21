@@ -1,3 +1,9 @@
+2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.C:  disabled logging of SEM streams.  For the combined
+	AFM-optical system, this is done on the optical server.
+	* microscape.h:  bumped the minor version number.
+
 2006-04-28    <marshbur@cs.unc.edu>
 
 	* microscape.h:  bump major and minor version numbers to 12 and 0

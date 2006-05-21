@@ -6348,9 +6348,15 @@ void ParseArgs (int argc, char ** argv,
 		istate->vicurve.writingLogFile = 1;
 		sprintf(istate->vicurve.outputLogName, "%s%s", argv[i],
 			VICURVE_FILE_SUFFIX);
+		/*
+		// XXX  this makes the SEM never save logs on the client side.
+		//  needed for optical-microscope-as-SEM.  put this back when
+		//  the optical microscope uses a proper imager.
+		//  (although it may make sense for the SEM server to do the logging)
         istate->sem.writingLogFile = 1;
         sprintf(istate->sem.outputLogName, "%s%s", argv[i],
                 SEM_FILE_SUFFIX);
+		*/
       } else if (strcmp(argv[i], "-peer") == 0) {
         istate->openPeer = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
