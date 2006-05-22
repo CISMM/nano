@@ -1,3 +1,7 @@
+2006-05-22    <marshbur@cs.unc.edu>
+
+	* microscape.C:  really disable logging of SEM streams in all cases.
+
 2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C:  disabled logging of SEM streams.  For the combined
