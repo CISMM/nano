@@ -1,3 +1,8 @@
+2006-06-07  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.C:  calls directStep_mainloop with all the other mainloops
+	* nano.dsp:  names the release output nano.exe, also
+
 2006-05-22    <marshbur@cs.unc.edu>
 
 	* microscape.C:  really disable logging of SEM streams in all cases.

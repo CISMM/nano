@@ -100,6 +100,7 @@ pid_t getpid();
 #include <nmm_MicroscopeRemote.h>
 #include <nmm_SimulatedMicroscope_Remote.h>
 #include <nmm_Types.h>
+#include <directstep.h>
 
 // graphics
 #include <nmg_GraphicsImpl.h>
@@ -6091,6 +6092,8 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.step_y_size));
   paramControls->add(&(m->state.modify.step_z_size));
 
+  paramControls->add( &(m->state.modify.ds_keep_stepping) );
+
   //autoscan button
   paramControls->add(&(m->state.autoscan));
 
@@ -8910,6 +8913,8 @@ if (microscope) microscope->ResetClock();
 	if (xenable)
 	  synchronize_xwin(False);
 #endif
+
+	directStep_mainloop( );
 
         if (microscopeRedundancyController) {
           microscopeRedundancyController->mainloop();
