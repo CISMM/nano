@@ -1,3 +1,10 @@
+2006-06-07  David Marshburn  <marshbur@cs.unc.edu>
+	
+	* directstep.h,C:  implementation of functionality so that the
+	direct step tool can be made to "run" or keep taking steps.
+	(directStep_mainloop):  new, used with "keep stepping"
+	* AFMState.h,C:  tcl variable for direct-step keep-stepping
+
 2006-04-28    <marshbur@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope.Cdef:  includes iostream.h

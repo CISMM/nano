@@ -9,6 +9,8 @@ extern void handle_take_y_step(vrpn_float64, void *mptr);
 extern void handle_take_z_step(vrpn_float64, void *mptr);
 
 extern void handle_step_go_to_pos(vrpn_int32, void *mptr);
+
+extern void handle_keep_stepping( vrpn_int32, void* mptr );
 //------------------------------------------------------------
 
 
@@ -22,15 +24,9 @@ extern TclNet_float step_z;
 extern double z_pos;
 extern TclNet_int xy_lock;
 
-//class DirectStep {
-//public:
+void set_axis(q_type rot);
 
-//	DirectStep();
-	void set_axis(q_type rot);
-
-//private:
-
-//};
+extern void directStep_mainloop( );
 
 #endif //DIRECTSTEP_H
 

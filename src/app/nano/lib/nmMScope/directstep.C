@@ -38,32 +38,25 @@ static q_vec_type Y = {0,1,0};
 static q_vec_type Z = {0,0,1};
 static q_type ds_rot;
 static q_vec_type step_vec;
-int setting_axis;
+int setting_axis = 0;
+int keep_stepping = 0;
 
-//DirectStep::DirectStep() {
-//}
+enum DS_last_direction { DS_NO_STEP = 0, DS_X_STEP = 1, DS_Y_STEP = 2, DS_Z_STEP = 3 };
+DS_last_direction lastDir = DS_NO_STEP;
 
-//void DirectStep::set_axis() {
-//}
-void set_axis(q_type rot) {
+
+void set_axis(q_type rot) 
+{
 	q_copy(ds_rot, rot);
-	
-	
 }
-//---------------------------------------------------------------------
-//direct step
 
-extern void handle_take_x_step(vrpn_float64, void * /*_mptr*/);
-extern void handle_take_y_step(vrpn_float64, void * /*_mptr*/);
-extern void handle_take_z_step(vrpn_float64, void * /*_mptr*/);
 
 TclNet_float step_x("take_x_step",1.0,handle_take_x_step,NULL);
 TclNet_float step_y("take_y_step",1.0,handle_take_y_step,NULL);
 TclNet_float step_z("take_z_step",1.0,handle_take_z_step,NULL);
-
-extern void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/);
 Tclvar_int go_to_pos("step_go_to_pos",1,handle_step_go_to_pos,NULL);
-//-----------------------------------------------------------------------
+TclNet_int stepping( "keep_stepping", 1.0, handle_keep_stepping, NULL );
+
 
 
 //takes a step in the +/- X direction when user presses button
@@ -133,12 +126,18 @@ void handle_take_x_step(vrpn_float64, void * /*_mptr*/)
 	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE ) 
 	{
 		microscope->TakeModStep(x,y);
-	} else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) {   //3D step
+	} 
+	else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D)
+	{   //3D step
 		microscope->TakeDirectZStep(x,y,z_pos);
-	} else {
+	} 
+	else 
+	{
 		printf("\nBad param, didn't take step");
 	}
+	lastDir = DS_X_STEP;
 }
+
 
 //takes a step in the +/- Y direction when user presses button
 void handle_take_y_step(vrpn_float64, void * /*_mptr*/)
@@ -208,53 +207,56 @@ void handle_take_y_step(vrpn_float64, void * /*_mptr*/)
 	y+=step_y;
 	*/
 	//take a regular step if in directstep plane mode
-	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE){
+	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE)
+	{
 		microscope->TakeModStep(x,y);
-	} else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) { //3D step
+	} 
+	else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) 
+	{ //3D step
 		microscope->TakeDirectZStep(x,y,z_pos);
-	} else {
+	} 
+	else 
+	{
 		printf("\nBad param, didn't take step");
 	}
+	lastDir = DS_Y_STEP;
 }
 
 
 //takes a step in the +/- Z direction when user presses button
 void handle_take_z_step(vrpn_float64, void * /*_mptr*/)
 {
-	
 	//make sure we are in xy_lock. return if not
 	if(!xy_lock) 
 	{
 		return;
 	}
-		  Point_value * _point = 
-			  microscope->state.data.inputPoint->getValueByPlaneName
-			  (dataset->heightPlaneName->string());
-		  
-		  x = _point->results()->x();
-		  y = _point->results()->y();
-		  
-		  if(_point->results()->x() == -1 || _point->results()->y() == -1){
-			  return;	
-		  }
-		  
-		  if(setting_axis) {
-			  //set the rotation
-			  q_xform(step_vec,ds_rot, Z);
-			  q_vec_normalize(step_vec, step_vec);
-			  x+= step_vec[0] *step_z;
-			  y+= step_vec[1] *step_z;
-			  z_pos+= step_vec[2] *step_z;
-		  } else {
-			  z_pos+=step_z;
-		  }
-		  
-		  
-		  /*
-		  
-		   z_pos+=step_z;
-		  */
-		  microscope->TakeDirectZStep(x,y,z_pos);
+	Point_value * _point = 
+		microscope->state.data.inputPoint->getValueByPlaneName
+		(dataset->heightPlaneName->string());
+	
+	x = _point->results()->x();
+	y = _point->results()->y();
+	
+	if(_point->results()->x() == -1 || _point->results()->y() == -1){
+		return;	
+	}
+	
+	if(setting_axis) 
+	{
+		//set the rotation
+		q_xform(step_vec,ds_rot, Z);
+		q_vec_normalize(step_vec, step_vec);
+		x+= step_vec[0] *step_z;
+		y+= step_vec[1] *step_z;
+		z_pos+= step_vec[2] *step_z;
+	} 
+	else 
+	{
+		z_pos+=step_z;
+	}
+	microscope->TakeDirectZStep(x,y,z_pos);
+	lastDir = DS_Z_STEP;
 }
 
 
@@ -291,13 +293,49 @@ void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/)
 		return;
 	}
 	
-	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE){
+	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE)
+	{
 		microscope->TakeModStep(x_pos,y_pos);
-	}else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D){
+	}
+	else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D)
+	{
 		z_pos = microscope->state.modify.step_z_pos;
 		microscope->TakeDirectZStep(x_pos,y_pos,z_pos);
-	} else {
+	} 
+	else 
+	{
 		printf("\nBad param, didn't go to pos\n");
+	}
+}
+
+
+void handle_keep_stepping( vrpn_int32 val, void* )
+{
+	keep_stepping = val;
+	lastDir = DS_NO_STEP; 
+}
+
+
+void directStep_mainloop( )
+{
+	if( keep_stepping ) 
+	{
+		if( lastDir == DS_X_STEP )
+		{
+			printf( "DS x step, keep running\n" );
+			handle_take_x_step( 0, NULL );
+		}
+		else if( lastDir == DS_Y_STEP )
+		{
+			printf( "DS y step, keep running\n" );
+			handle_take_y_step( 0, NULL );
+		}
+		else if( lastDir == DS_Z_STEP )
+		{
+			printf( "DS z step, keep running\n" );
+			handle_take_z_step( 0, NULL );
+		}
+		// else do nothing
 	}
 }
 

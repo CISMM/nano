@@ -256,6 +256,8 @@ struct AFMModifyState {
   Tclvar_float blunt_speed;
   TclNet_float new_blunt_speed;
 
+  // direct-step parameters.  these are declared here so
+  // that they are sharable with distributed nano.
   //direct step controls, where to step to?
   TclNet_float step_x_pos;
   TclNet_float step_y_pos;
@@ -264,6 +266,9 @@ struct AFMModifyState {
   TclNet_float step_x_size;
   TclNet_float step_y_size;
   TclNet_float step_z_size;
+
+  // direct step controls.  keep stepping?
+  TclNet_int ds_keep_stepping;
 
 };
 

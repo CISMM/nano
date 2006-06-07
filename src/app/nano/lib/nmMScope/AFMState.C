@@ -214,7 +214,9 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
 
 	step_x_size ("step_x_size", 1.0),
 	step_y_size ("step_y_size",1.0),
-	step_z_size ("step_z_size",1.0)
+	step_z_size ("step_z_size",1.0),
+
+	ds_keep_stepping( "keep_stepping", 0 )
 
 
 {
