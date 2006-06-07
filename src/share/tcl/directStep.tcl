@@ -18,6 +18,8 @@ set cur_x 0.0
 set cur_y 0.0
 set cur_z 0.0
 set go_to_pos 1
+set keep_stepping 0
+
 # ---------------------------------------------------------------
 # 
 # regular arrows to take steps along normal axis
@@ -211,29 +213,6 @@ pack $takestep(pos_c) -side top -fill x -pady 5
 set takestep(goto_c) [frame $takestep(color_axis).goto_c]
 pack $takestep(goto_c) -side top -fill x -pady 5
 
-# ------------------------------------------------------
-# an attempt to put these buttons into a list...
-# not working out, maybe later
-# ----------------------------------------------
-# global button2_list
-# set button2_list [    minus_x plus_x minus_x_c plus_x_c ]
-# set button3_list [    minus_y minus_y_c ]
-# set buttons_list [    plus_y plus_y_c ]
-
-# set packing_list [$takestep(buttons2).minus_x \
-\#    $takestep(buttons2).plus_x \
-\#    $takestep(buttons2).minus_x \
-\#    $takestep(buttons3).minus_y \
-\#    $takestep(buttons).plus_y \
-\#    $takestep(buttons_z3).minus_z \
-\#    $takestep(buttons_z).plus_z \
-\#    $takestep(stepSize).step_x_size \
-\#    $takestep(stepSize).step_y_size \
-\#    $takestep(stepSize).step_z_size \
-\#    $takestep(pos).x_pos \
-\#    $takestep(pos).y_pos \
-\#		      $takestep(pos).z_pos] 
-
 # --------------------------------------------------------------------
 # set up buttons with correct arrow image and correct function to call
 # ---------------------------------------------------------------------
@@ -287,6 +266,9 @@ button $takestep(goto).go_to_pos -text "Go To Position" \
 checkbutton $takestep(goto).test -text "axis" \
          -variable setting_direct_step_axis
 
+checkbutton $takestep(goto).keep_stepping_check -text "keep stepping" \
+    -variable keep_stepping
+
 generic_entry $takestep(stepSize).step_x_size step_x_size \
 	"X Step     " real
 
@@ -318,6 +300,9 @@ button $takestep(goto_c).go_to_pos_c -text "Go To Position" \
 
 checkbutton $takestep(goto_c).test_c -text "axis" \
          -variable setting_direct_step_axis
+
+checkbutton $takestep(goto_c).keep_stepping_check_c -text "keep stepping" \
+    -variable keep_stepping
 
 generic_entry $takestep(stepSize_c).step_x_size_c step_x_size \
 	"Red Step     " real
@@ -573,14 +558,16 @@ button $takestep(axis_controls_5).ds_reset_axis \
 pack $takestep(axis_controls_5).ds_reset_axis -side left
 
 # ---------------------------------------------------------
-pack  $takestep(goto).go_to_pos -side left
-pack  $takestep(goto).test -side left
+pack $takestep(goto).go_to_pos -side left
+pack $takestep(goto).test -side left
+pack $takestep(goto).keep_stepping_check -side right
 
 pack $takestep(current_pos).cur_x $takestep(current_pos).value_cur_x -side left
 pack $takestep(current_pos).cur_y $takestep(current_pos).value_cur_y -side left
 
 pack $takestep(goto_c).go_to_pos_c -side left
 pack $takestep(goto_c).test_c -side left
+pack $takestep(goto_c).keep_stepping_check_c -side right
 
 pack $takestep(current_pos_c).cur_x_c $takestep(current_pos_c).value_cur_x_c -side left
 pack $takestep(current_pos_c).cur_y_c $takestep(current_pos_c).value_cur_y_c -side left
