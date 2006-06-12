@@ -17,6 +17,9 @@ extern int EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES];
 extern int EDAX_SCAN_MATRIX_Y[EDAX_NUM_SCAN_MATRICES];
 const int EDAX_DEFAULT_SCAN_MATRIX =(3);	// (512 x 400)
 */
+
+const int OPTICAL_SERVER_DEFAULT_SCAN_MATRIX=(3);  // (512 X 400)
+
 int resolutionToIndex(const int res_x, const int res_y);
 int indexToResolution(const int id, int &res_x, int &res_y);
 

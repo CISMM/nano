@@ -309,12 +309,11 @@ setupCamera( )
 	}
 	
 	// set the capture area
-	int res_x = EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX];
-	int res_y = EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX];
+	int res_x = EDAX_SCAN_MATRIX_X[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX];
+	int res_y = EDAX_SCAN_MATRIX_Y[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX];
 	int maxX = 0, maxY = 0;
 	getMaxResolution( maxX, maxY );
 	
-	/*
 	maxX = (int) floor( maxX / binning );
 	maxY = (int) floor( maxY / binning );
 	// check that the requested resolution isn't too big
@@ -334,8 +333,9 @@ setupCamera( )
 		ty = (maxY - res_y) / 2;
 	left += tx;  right += tx;
 	top += ty;  bottom += ty;
-	*/
+	/*
 	WORD left = 1 + 156, right = res_x + 156, top = 1 + 100, bottom = res_y + 100;
+	*/
 	fprintf( stdout, "setting ROI to %d x %d:  (%d,%d) to (%d,%d).  Max is %d x %d.\n",
 			res_x, res_y, left, top, right, bottom, maxX, maxY );
 	success = PCO_SetROI( camera, left, top, right, bottom );
@@ -577,10 +577,9 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 	}
 	else
 	{
-		/*
 		x = standardMaxResX;
 		y = standardMaxResY;
-		*/
+		/*
 		// it turns out that PCO_GetSizes returned bogus values
 		// for max resolution, either b/c of sdk bugs, or 
 		// firmware in need of upgrade, or the CameraLink i-face.
@@ -598,6 +597,7 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 		}
 		x = xmax;
 		y = ymax;
+		*/
 	}
 	return 0;
 }
@@ -697,7 +697,7 @@ requestScan(vrpn_int32 nscans)
         d_scans_to_do = 0;
     } else {
         d_scan_enabled = vrpn_TRUE;
-        d_scans_to_do = 1;
+        d_scans_to_do += nscans;
 		//acquireImage();
 		//d_scans_to_do--;
     }
@@ -1173,6 +1173,7 @@ doRequestedChangesOnCooke( )
 			if( iface != NULL ) iface->setResolutionIndex( currentResolutionIndex );
 			return;
 		}
+
 		// validate settings
 		success = PCO_ArmCamera( camera );
 		if( success != PCO_NOERROR )

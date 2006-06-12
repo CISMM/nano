@@ -27,6 +27,11 @@ Logging::Logging( )
 	conn = NULL;
 	isLogging = false;
 	logfileName = NULL;
+	justStartedLogging = false;
+	stopLoggingNextMainloop = false;
+	connectionNotConnectedAtStartLogging = false;
+	thread = NULL;
+	keepRunning = false;
 }
 
 
@@ -51,7 +56,6 @@ Logging::~Logging( )
 		conn = NULL;
 	}
 	LeaveCriticalSection( &cslogging );
-
 }
 
 
@@ -124,12 +128,17 @@ startLogging ( )
 	{
 		makeNewLogfileName();
 		conn = vrpn_get_connection_by_name( connName, logfileName );
-		conn->mainloop( );
+		//conn->mainloop( );
+		if( !conn->connected( ) )  connectionNotConnectedAtStartLogging = true;
 		sem = new nmm_Microscope_SEM_Remote( connName, conn );
 		sem->registerChangeHandler( NULL, (nmm_Microscope_SEM_Remote_ChangeHandler_t) SEM_handler );
-		sem->requestScan( 5 );
+		sem->requestScan( 1 );
 		isLogging = true;
 		fprintf( stdout, "logging to %s\n", logfileName );
+		justStartedLogging = true;
+	    LPDWORD lpThreadID = NULL;
+		keepRunning = true;
+		thread = CreateThread( NULL, 0, Logging_threadFunc, NULL, 0, lpThreadID );
 	}
 	LeaveCriticalSection( &cslogging );
 	return logfileName;
@@ -141,8 +150,20 @@ stopLogging( )
 {
 	EnterCriticalSection( &cslogging );
 	char* oldName = logfileName;
-	if( isLogging )
+	if( isLogging && !justStartedLogging )
 	{
+		keepRunning = false;
+		printf( "keepRunning is false; waiting for logging thread to stop...\n" );
+		// wait for the logging thread to stop
+		LeaveCriticalSection( &cslogging );
+		DWORD lpExitCode = 0;
+		GetExitCodeThread( thread, &lpExitCode );
+		while( lpExitCode == STILL_ACTIVE )
+		{
+			vrpn_SleepMsecs( 5 );
+			GetExitCodeThread( thread, &lpExitCode );
+		}
+		EnterCriticalSection( &cslogging );
 		sem->mainloop( );
 		conn->mainloop( );
 		conn->save_log_so_far( );
@@ -155,6 +176,10 @@ stopLogging( )
 		logfileName = NULL;
 		isLogging = false;
 		fprintf( stdout, "logged to %s\n", logfileName );
+	}
+	if( justStartedLogging )
+	{
+		stopLoggingNextMainloop = true;
 	}
 	LeaveCriticalSection( &cslogging );
 	return oldName;
@@ -173,6 +198,20 @@ mainloop( )
 			conn->mainloop( );
 			conn->save_log_so_far( );
 		}
+		if( connectionNotConnectedAtStartLogging )
+		{
+			if( conn->connected( ) )
+			{
+				sem->requestScan( 1 );
+				connectionNotConnectedAtStartLogging = false;
+			}
+		}
+		if( justStartedLogging ) justStartedLogging = false;
+		if( stopLoggingNextMainloop ) 
+		{
+			stopLogging( );
+			stopLoggingNextMainloop = false;
+		}
 		LeaveCriticalSection( &cslogging );
 	}
 }
@@ -182,6 +221,29 @@ mainloop( )
 void Logging::
 SEM_handler( void*, const nmm_Microscope_SEM_ChangeHandlerData& d )
 {  
+	static int completedImages = 0;
 	if( d.sem->lastScanMessageCompletesImage( ) )
+	{
+		//printf( "%d completed images\n", ++completedImages );
 		d.sem->requestScan( 1 );
+	}
+	/*
+	if( d.msg_type != nmm_Microscope_SEM::SCANLINE_DATA )
+		printf( "message from SEM.  type:  %d.\n", d.msg_type );
+		*/
+}
+
+
+DWORD WINAPI Logging::
+Logging_threadFunc( LPVOID lpParameter )
+{
+	while( instance && instance->keepRunning )
+	{
+		EnterCriticalSection( &cslogging );
+		if( instance ) instance->mainloop( );
+		LeaveCriticalSection( &cslogging );
+		vrpn_SleepMsecs( 5 );
+	}
+
+	return 0;
 }

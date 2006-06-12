@@ -333,7 +333,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
     sprintf( s, "%i %dx%d", i, EDAX_SCAN_MATRIX_X[i], EDAX_SCAN_MATRIX_Y[i] );
     iface->d_resolutionList->Add_entry(s);
   }
-  sprintf( s, "%dx%d", EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX], EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX] );
+  sprintf( s, "%dx%d", EDAX_SCAN_MATRIX_X[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX], EDAX_SCAN_MATRIX_Y[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX] );
   iface->d_resolutionSelector = new Tclvar_selector("resolution", "", iface->d_resolutionList, s, iface->handle_resolution_changed, iface);
 
   // contrast
@@ -386,7 +386,7 @@ OpticalServerInterface( )
   image_window( -1 ),
   microscope( NULL ),
   binning( 2 ),
-  resolutionIndex( EDAX_DEFAULT_SCAN_MATRIX ),
+  resolutionIndex( OPTICAL_SERVER_DEFAULT_SCAN_MATRIX ),
   contrast( 0 )
 {
 	atexit( OpticalServerInterface_exitFunc );

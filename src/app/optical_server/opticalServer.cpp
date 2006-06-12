@@ -115,11 +115,14 @@ int main( int argc, char* argv[] )
         microscope->mainloop();
         connection->mainloop(&timeout);
 
-		log = Logging::getInstance( );
-		if( log != NULL ) log->mainloop( );
+		//log = Logging::getInstance( );
+		//if( log != NULL ) log->mainloop( );
 		vrpn_SleepMsecs(10);
     }
 	microscopeThreadDone = true;
+	
+	log = Logging::getInstance( );
+	if( log != NULL ) log->stopLogging( );
 
 	while( !OpticalServerInterface::isGlutThreadDone() )
 	{

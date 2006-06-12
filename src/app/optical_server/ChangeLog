@@ -1,3 +1,17 @@
+2006-06-12  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Logging.h, cpp:  logging code starts and runs in its own thread.
+	this avoids a producer/consumer deadlock with vrpn & network buffers.
+	* edax_def.h:  removed the duplicate definitions of edax-related
+	constants from nmm_Edax.h.  also defined constants for optical
+	server defaults.
+	* OpticalServerInterface.cpp:  uses optical-server edax defaults
+	* nmm_Microscope_SEM_optical.cpp:  ditto
+	* nmm_Microscope_SEM_diaginc.cpp:  uses optical-server edax defaults,
+	plus correctly keeps up with number of requsted scans.
+	* nmm_Microscope_SEM_cooke.cpp:  ditto
+	* opticalServer.cpp:  changes for logging being in its own thread
+
 2006-05-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Logging.[h,cpp]:  fixes the directory in which the log files

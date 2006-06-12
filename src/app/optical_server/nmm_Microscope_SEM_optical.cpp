@@ -9,7 +9,7 @@ nmm_Microscope_SEM_optical::
 nmm_Microscope_SEM_optical( const char * name, vrpn_Connection * c, vrpn_bool virtualAcq )
 	: nmb_Device_Server(name, c),
 	  nmm_Microscope_SEM(name, d_connection),
-	  currentResolutionIndex( EDAX_DEFAULT_SCAN_MATRIX ),
+	  currentResolutionIndex( OPTICAL_SERVER_DEFAULT_SCAN_MATRIX ),
 	  currentBinning( 1 )
 {
 

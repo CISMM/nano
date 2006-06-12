@@ -16,9 +16,11 @@ public:
 	// if no logging was going on.
 	const char* stopLogging( );
 
-	void mainloop( );
 
 protected:
+	void mainloop( );
+	static DWORD WINAPI Logging_threadFunc( LPVOID lpParameter );
+	
 	static Logging* instance;
 	static CRITICAL_SECTION cslogging;
 	static char* connName;
@@ -31,12 +33,18 @@ protected:
 	void makeNewLogfileName( );
 	void testAndCreateDirectory( );
 
+	bool justStartedLogging;
+	bool stopLoggingNextMainloop;
+	bool connectionNotConnectedAtStartLogging;
 private:
 	Logging( );
 	Logging( const Logging& );
 	Logging& operator=( const Logging& );
 	~Logging( );
 	
+	HANDLE thread;
+	bool keepRunning;
+
 	bool isLogging;
 	static void SEM_handler( void*, const nmm_Microscope_SEM_ChangeHandlerData& d );
 

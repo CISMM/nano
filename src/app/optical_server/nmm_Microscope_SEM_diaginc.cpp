@@ -130,8 +130,8 @@ setupCamera( )
 
 	// set resolution
 	// check that the requested resolution isn't too big
-	int res_x = EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX];
-	int res_y = EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX];
+	int res_x = EDAX_SCAN_MATRIX_X[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX];
+	int res_y = EDAX_SCAN_MATRIX_Y[OPTICAL_SERVER_DEFAULT_SCAN_MATRIX];
 	int camX = res_x * binning, camY = res_y * binning;
 	int maxX = 0, maxY = 0;
 	getMaxResolution( maxX, maxY );
@@ -529,7 +529,7 @@ requestScan(vrpn_int32 nscans)
         d_scans_to_do = 0;
     } else {
         d_scan_enabled = vrpn_TRUE;
-        d_scans_to_do = 1;
+        d_scans_to_do += nscans;
 		//acquireImage();
 		//d_scans_to_do--;
     }
