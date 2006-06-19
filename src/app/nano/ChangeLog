@@ -1,3 +1,9 @@
+2006-06-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nano.dsp : Made it not try to link in both release and debug
+		builds of VRPN when building nano.  Now debug links in
+		debug and release links in release.
+
 2006-06-07  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C:  calls directStep_mainloop with all the other mainloops

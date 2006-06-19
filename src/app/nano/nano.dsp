@@ -334,6 +334,15 @@ SOURCE=..\..\..\..\vrpn\pc_win32\server_src\Release\vrpn_phantom.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\vrpn\pc_win32\Release\vrpn.lib
+
+!IF  "$(CFG)" == "nano - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "nano - Win32 Release"
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Libraries-Debug"
@@ -381,6 +390,15 @@ SOURCE=..\..\..\..\vrpn\pc_win32\server_src\Debug\vrpn_phantom.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
+
+!IF  "$(CFG)" == "nano - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "nano - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Libraries-External"
