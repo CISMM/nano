@@ -1,5 +1,11 @@
 2006-06-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
+	* microscape.C : Came across some strange behavior in the
+		video-save code, so made a note of it and marked it
+		with XXX.
+
+2006-06-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
 	* nano.dsp : Made it not try to link in both release and debug
 		builds of VRPN when building nano.  Now debug links in
 		debug and release links in release.

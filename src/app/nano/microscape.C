@@ -4497,8 +4497,12 @@ static void handle_videoCaptureBegin_change(const char *, void *userdata)
 		save_frame = 1;
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
+		// XXX It is very strange to be chopping off low-order bits here.
+		// It looks like it is making it an even multiple of 4 in X and Y.
+		// Make sure this isn't getting us into trouble later; the code does
+		// seg fault when we try it, after all.
 		save_width = viewport[2] & 0xffffffc;
-		save_height = viewport[3] & 0xfffffffc;;
+		save_height = viewport[3] & 0xfffffffc;
 		//printf("saving %u x %u\n", save_width, save_height);
 		open_video_file(videoCaptureFilename.string(), save_width, save_height, 15);
 		glPixelStorei(GL_PACK_ALIGNMENT, 4);
