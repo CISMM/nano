@@ -2,6 +2,10 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.2:  (June 22, 2006)
+	- added a "keep stepping" option to the direct-step tool
+	  that will cause it to keep stepping as if a button
+	  were repeatedly clicked.
 12.1:  (May 21, 2006)
 	- disables logging of SEM streams.  For the combined
 	  AFM-optical systems, this is done on the video 
