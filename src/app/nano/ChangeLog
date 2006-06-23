@@ -1,3 +1,7 @@
+2006-06-23    <marshbur@cs.unc.edu>
+
+	* microscape.h:  bumped minor version number
+
 2006-06-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.C : Came across some strange behavior in the
