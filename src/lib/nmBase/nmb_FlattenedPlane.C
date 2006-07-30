@@ -6,11 +6,11 @@
 #include <winsock2.h>  // for gethostname
 #endif
 
+#include <iostream>
+
 #include "nmb_FlattenedPlane.h"
 #include "BCPlane.h"
 #include "nmb_Dataset.h"
-
-#include <iostream>
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored

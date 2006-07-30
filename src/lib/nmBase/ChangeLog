@@ -1,3 +1,14 @@
+2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* BCGrid.h : Fixing nits to enable compiling on Linux
+	* BCPplane.C : Same.
+	* nmb_FlattenedPlane.C : Same.
+	* nmb_Image.C : Same.
+	* nmb_LBLFlattenedPlane.C : Same.
+	* nmb_MorphologyPlane.C : Same.
+	* nmb_SummedPlane.C : Same.
+	* wsxmHeader.h : Same.
+
 2005-06-17  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* BCGrid.h : Removed "#include <iostream>", which was causing

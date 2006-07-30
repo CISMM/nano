@@ -44,6 +44,7 @@ class BCPlane;
 class nmb_diImageInfo;
 class nmb_hhImageInfo;
 class nmb_NanotecImageInfo;
+class TopoFile;
 
 #ifdef	_WIN32
 // Windows doesn't have the strncasecmp function.

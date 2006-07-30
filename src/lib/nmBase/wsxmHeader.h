@@ -129,3 +129,4 @@ void RemoveLeftAndRightWhitesFromString (char *szString);
 void ReplaceStringInString (char *szDest, const char *szOld, const char *szNew);
 
 #endif //_HEADER_H_
+

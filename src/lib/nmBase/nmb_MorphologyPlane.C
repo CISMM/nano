@@ -1,3 +1,4 @@
+#include <iostream>
 
 #ifdef sgi
 #include <unistd.h>  // for gethostname
@@ -12,8 +13,6 @@
 
 #include <GL/gl.h> 
 #include <GL/glut_unc.h>
-
-#include <iostream>
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored

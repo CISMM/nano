@@ -11,9 +11,7 @@
 #include "nmb_ImgMagick.h"
 
 #include <limits.h>
-#ifdef _WIN32
 #include <float.h> // for FLT_MAX
-#endif
 
 #define PAD_IMAGE_TO_POWER_OF_TWO
 
@@ -1466,7 +1464,6 @@ nmb_ImageArray::~nmb_ImageArray() {
     default:
       fprintf(stderr, "nmb_ImageArray::~nmb_ImageArray:"
 	      " Error, unknown type\n");
-      delete [] (void*) data; // better delete it anyway
       break;
     }
     data = NULL;

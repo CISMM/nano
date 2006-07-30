@@ -1,3 +1,4 @@
+#include <iostream>
 
 #ifdef sgi
 #include <unistd.h>  // for gethostname
@@ -7,8 +8,6 @@
 #endif
 
 #include "nmb_LBLFlattenedPlane.h"
-
-#include <iostream>
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored

@@ -1,3 +1,4 @@
+#include <iostream>
 
 #ifdef sgi
 #include <unistd.h>  // for gethostname
@@ -10,7 +11,6 @@
 #include "BCPlane.h"
 #include "nmb_Dataset.h"
 
-#include <iostream>
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored

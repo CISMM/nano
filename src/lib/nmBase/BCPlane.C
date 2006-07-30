@@ -26,6 +26,8 @@ int write( int fildes, const void *buf, size_t nbyte );
 #include "BCGrid.h"
 #include "wsxmHeader.h"
 
+#include <iostream>
+
 #ifndef	min
 #define min(x,y) ( (x) < (y) ? (x) : (y) )
 #endif
