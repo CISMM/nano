@@ -1,3 +1,7 @@
+2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmg_RaySegment.h : Fixing nits to enable compiling on Linux.
+
 2003-07-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_HeightField.[Ch]: fixes some initialization problems

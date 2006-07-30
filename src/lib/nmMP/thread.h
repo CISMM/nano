@@ -100,6 +100,7 @@
 #else
 #include <pthread.h>
 #include <semaphore.h>
+#include <errno.h>
 #endif
 #include <stdio.h>
 
@@ -240,6 +241,14 @@ protected:
 
 /*****************************************************************************\
   $Log$
+  Revision 1.6  2006/04/08 02:08:57  taylorr
+  2006-04-07  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+  	* thread.h : Ported to use Pthreads by default if not on
+  		SGI or Windows.  If it is on linux, then it can still
+  		tell you how many processors there are; otherwise, not.
+  	* thread.C : Same.
+
   Revision 1.4  2002/03/19 02:00:14  marshbur
    - All the changes in this commit are the same.  On the SGI only,
   they add compiler pragmas, before any stream includes, in order to

@@ -6,6 +6,10 @@
 #include "nmg_Vector.h"
 #include "nmg_Point.h"
 
+class nmg_Edge_d;
+class nmg_Edge_f;
+class nmg_Ray_f;
+
 // making these inline and pure C has a huge effect on performance
 inline void initPlucker(const nmg_Point_3d &start, 
                         const nmg_Point_3d &end, double *p)

@@ -1,3 +1,9 @@
+2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* Makefile.common : Adding things to let it compile under
+		Linux.
+	* Makefile.lib_common : Same.
+
 2002-04-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile.common:  updated link location (-L) of glut_UNC

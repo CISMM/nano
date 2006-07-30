@@ -155,6 +155,9 @@ PWD_COMMAND := pwd
 #
 
 CC := cc
+ifeq ($(HW_OS),pc_linux)
+	CC := g++
+endif	
 ifeq ($(HW_OS),sgi_irix)
 	CC := CC -$(SGI_ABI) -$(SGI_ARCH) -fullwarn
 endif	
@@ -194,7 +197,7 @@ endif
 # test-makefile.  If you do, please commit your additions.
 #
 
-DEFAULT_PROJ_HOME    := /afs/cs.unc.edu/project/stm
+DEFAULT_PROJ_HOME    := /tmp
 DEFAULT_PROJ_SRC_DIR := $(DEFAULT_PROJ_HOME)/src
 DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
 DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
@@ -304,7 +307,7 @@ endif
 # {{{ Include flags
 #
 
-SYS_INCLUDE := /usr/local/contrib/include /usr/local/contrib/mod/include
+SYS_INCLUDE := /usr/local/contrib/include /usr/local/contrib/mod/include /usr/local/include
 
 ifeq ($(HW_OS),pc_cygwin)
    SYS_INCLUDE := 
@@ -433,8 +436,6 @@ LIBS += $(LATE_LIBRARIES)
 #
 
 BAREBAREDEFINES := INCLUDE_CALLBACK_CODE 
-
-BAREDEFINES += VRPN_NO_STREAMS
 
 ifeq ($(HW_OS),sgi_irix) 
   BAREDEFINES += V_GLUT NO_MAGELLAN NO_PHANTOM_SERVER
