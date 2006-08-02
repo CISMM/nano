@@ -1661,7 +1661,7 @@ static int myscreen (int, void * data)
 	return 0;
   }
   
-  // Set material parameters for the space, then draw things in head space.
+  // Set material parameters for the space, then draw things in screen space.
   // Since all in screen space is text or lines, set measure materials.
   TIMERVERBOSE(5, mytimer, "myscreen;set_gl_measure_materials");
   set_gl_measure_materials(state);

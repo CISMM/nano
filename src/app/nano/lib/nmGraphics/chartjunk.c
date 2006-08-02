@@ -485,7 +485,7 @@ int measure_display (void *data) {
          decoration->blue.getIntercept(plane) -
          decoration->red.getIntercept(plane);
 
-  glPushAttrib(GL_CURRENT_BIT);
+   glPushAttrib(GL_CURRENT_BIT);
    glPushMatrix();
  
 

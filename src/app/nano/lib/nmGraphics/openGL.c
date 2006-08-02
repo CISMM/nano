@@ -510,8 +510,7 @@ void setupMaterials (void) {
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     /* Counter-clockwise is forward for the surface and all objects. */
-    glFrontFace(GL_CCW);
-    
+    glFrontFace(GL_CCW);   
 }
 
 
@@ -550,6 +549,9 @@ void set_gl_surface_materials(nmg_State * state)
     
     glColor4dv(state->surfaceColor);
     
+    // Enable lighting
+    glEnable(GL_LIGHTING);
+
     // Turn texture mapping to the appropriate state
     // Note that the Enable has to be the last one, after all the
     // Disable calls.
@@ -629,6 +631,9 @@ void    set_gl_icon_materials(nmg_State * state)
     state->surfaceColor[3] = state->surface_alpha; //make sure alpha value is updated
     glColor4dv(state->surfaceColor);
     
+    // Enable lighting
+    glEnable(GL_LIGHTING);
+
     // Disable texture-mapping.
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
@@ -662,13 +667,16 @@ void    set_gl_measure_materials(nmg_State * state)
     
     TIMERVERBOSE(7, mytimer, "set_gl_measure_materials: end glLightModelfv");
     
-    /* Set a color, in case the color is not being adjusted per vertex. */
-    /* Use the surface color for this. */
-    state->surfaceColor[3] = state->surface_alpha; //Make sure alpha value is updated
-    glColor4dv(state->surfaceColor);
+    // Set a color, in case the color is not being adjusted per vertex.
+    // Use white for this, and make sure that its alpha value
+    // is set to 1.
+    glColor4fv(bright);
     
     TIMERVERBOSE(7, mytimer, "set_gl_measure_materials: end glColor3dv");
-    
+
+    // Disable lighting
+    glDisable(GL_LIGHTING);
+
     // Disable texture-mapping.
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);

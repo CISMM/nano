@@ -1,3 +1,13 @@
+2005-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* chartjunk.c : Cleanup/comment/white space.
+	* font.c : Same.
+	* globjects.c : Same.
+	* openGL.c : Disabled GL_LIGHTING in the measure materials so
+		that the text would appear on ATI graphics cards.  Had
+		to explicitly enable it in the other functions so that
+		lighting shows up in them.
+
 2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmg_State.C : Whitespace changes.

@@ -162,7 +162,7 @@ float getFontWidth() { return 10.0f; }
 
 int loadFont (const char * filename)
 {
-	GLuint fontOffset;
+        GLuint fontOffset;
 	GLuint i;
 
 	v_gl_set_context_to_vlib_window();
@@ -190,24 +190,23 @@ int loadFont (const char * filename)
 	return(fontOffset);
 }
 
-void drawStringInFont (int fontOffset, const char * s) {
-
+void drawStringInFont (int fontOffset, const char * s)
+{
     glPushAttrib(GL_LIST_BIT);
     if (spm_graphics_verbosity >= 14)
       fprintf(stderr, "drawStringInFont setting list base to %d.\n",
               fontOffset);
-
     glListBase(fontOffset);
     glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *) s);
+
 
     glPopAttrib ();
 
     if (spm_graphics_verbosity >= 14) {
-      GLint i;  /* sizeof(GLint) is platform-dependent! */
+      GLint i;
       glGetIntegerv(GL_LIST_BASE, &i);
       fprintf(stderr, "drawStringInFont popped state "
                       "to restore list base %d.\n", i);
     }
-
 }
 
