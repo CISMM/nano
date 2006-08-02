@@ -1,3 +1,14 @@
+2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* microscape.C : Added command-line argument to set the
+		microscope flavor to be used by the application to
+		either Topometrix or Asylum.  This causes various
+		changes to the interface to make it native to the
+		particular instrument.
+	* tcl_tk.c : Pushes the new variable over into Tcl, where
+		it can be used to modify the look and feel of the
+		Tcl interface to make it native for each microscope.
+
 2006-06-23    <marshbur@cs.unc.edu>
 
 	* microscape.h:  bumped minor version number

@@ -34,7 +34,7 @@
 
 #include "BCGrid.h"
 #include "BCPlane.h"
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 #include "nmb_ImgMagick.h"
 
 //#include "readNanoscopeFile.h"

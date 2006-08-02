@@ -67,8 +67,13 @@ generic_entry $nmInfo(imagepage).p-gain imagep_p_gain "P-Gain (0,5)" real \
         { set accepted_image_params 1 }
 generic_entry $nmInfo(imagepage).i-gain imagep_i_gain "I-Gain (0,5)" real\
         { set accepted_image_params 1 }
-generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real\
+if { $microscopeflavor == "Asylum" } {
+	generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "S-Gain (0,5)" real\
         { set accepted_image_params 1 }
+} else {
+	generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real\
+        { set accepted_image_params 1 }
+}
 generic_entry $nmInfo(imagepage).rate imagep_rate "Rate (um/sec)" real\
         { set accepted_image_params 1 }
 
@@ -199,7 +204,11 @@ button $nmInfo(imagefull).mode.accept -text "Accept" \
 button $nmInfo(imagefull).mode.cancel -text "Revert" \
         -command "cancelImageVars imageplist" -highlightthickness 0
 
-set grid_resolution_list { 2 5 10 25 50 100 200 300 400 500 1000 }
+if { $microscopeflavor == "Asylum" } {
+	set grid_resolution_list { 32 64 128 256 512 800 }
+} else {
+	set grid_resolution_list { 2 5 10 25 50 100 200 300 400 500 1000 }
+}
 generic_optionmenu $nmInfo(imagefull).mode.grid_resolution \
         newimagep_grid_resolution \
 	"Grid Resolution" grid_resolution_list
@@ -248,8 +257,13 @@ generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain \
         "P-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain \
         "I-Gain (0,5)" real 
-generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain \
+if { $microscopeflavor == "Asylum" } {
+	generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain \
+        "S-Gain (0,5)" real 
+} else {
+	generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain \
         "D-Gain (0,5)" real 
+}
 generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate \
         "Rate (1,50 um/sec)" real 
 generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \

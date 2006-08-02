@@ -102,19 +102,25 @@ float ** mkSplat (BCGrid * grid)
 **/
 int ptSplat (int * , BCGrid * grid, Point_results * inputPoint)
 {
+  Point_value *value = NULL;
+  if (nmb_MicroscopeFlavor == Topometrix) {
+	value = inputPoint->getValueByName("Topography");
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+	value = inputPoint->getValueByName("Height");
+  } else {
+        fprintf(stderr,"ptSplat(): Unknown microscope flavor\n");
+  }
 
-	Point_value * value = inputPoint->getValueByName("Topography");
-	if (value == NULL) {
-		fprintf(stderr, "ptSplat(): could not get value!\n");
-		return -1;
-	}
-
-	return ptSplat(grid, value);
+  if (value == NULL) {
+    fprintf(stderr, "ptSplat(): could not get value!\n");
+    return -1;
+  }
+  return ptSplat(grid, value);
 
 }
 
 // For those who want to use some value other than the phantasmagorical
-// "Topography"
+// "Topography" or "Height"
 
 int ptSplat (BCGrid * grid, Point_value * value) {
 

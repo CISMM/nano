@@ -30,7 +30,7 @@
 
 #include "BCGrid.h"
 #include "BCPlane.h"
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 
 cimage im;
 int prev_x, prev_y;

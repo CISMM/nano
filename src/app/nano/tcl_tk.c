@@ -71,6 +71,17 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_SetVar(my_tk_control_interp,"thirdtech_ui",&command[0],TCL_GLOBAL_ONLY);
 #endif
 
+        // Set the microscope flavor
+        if (nmb_MicroscopeFlavor == Asylum) {
+          sprintf(command, "Asylum");
+        } else if (nmb_MicroscopeFlavor == Topometrix) {
+          sprintf(command, "Topometrix");
+        } else {
+          fprintf(stderr, "init_Tk_control_panels(): Unknown microscope flavor\n");
+          return -1;
+        }
+	Tcl_SetVar(my_tk_control_interp,"microscopeflavor",&command[0],TCL_GLOBAL_ONLY);
+
         // Tell tcl script what directory it lives in. 
         sprintf(command, "%s",tcl_script_dir);
 	Tcl_SetVar(my_tk_control_interp,"tcl_script_dir",command,TCL_GLOBAL_ONLY);

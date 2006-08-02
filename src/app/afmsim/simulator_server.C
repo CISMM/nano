@@ -9,7 +9,7 @@
 
 #include "BCGrid.h"
 #include "BCPlane.h"
-#include "Topo.h" // added 4/19/99
+#include "MicroscopeFlavors.h" // added 4/19/99
 #include <iostream>
 using namespace std;
 #include <time.h>

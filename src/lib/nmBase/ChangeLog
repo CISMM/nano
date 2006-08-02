@@ -1,3 +1,23 @@
+2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* Asylum.h : Adding a place-holder for Asylum-specific definitions.
+	* BCGrid.C : Generalizing to enable inclusion of different flavors
+		of microscopes.  In particular, it is now set up for both
+		Asylum and Topometrix.
+	* BCGrid.h : Same.
+	* nmb_Dataset.C : Same.
+	* nmb_Dataset.h : Same.
+	* nmb_Image.C : Same.
+	* nmb_Image.h : Same.
+	* MicroscopeFlavors.C : Holds an extern telling what the current
+		kind of microscope is so that it can be set on the command
+		line before the rest of the data structures are created.
+		Don't try to change this in the middle of a running program.
+	* MicroscopeFlavors.h : Includes the different flavor header files
+		(Topo.h and Asylum.h for now); this file should now be
+		included rather than Topo.h everywhere.  Also defines a type
+		that list what flavor of microscope we are using.
+
 2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* BCGrid.h : Fixing nits to enable compiling on Linux

@@ -225,72 +225,155 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
     nmb_ListOfStrings * namelist, nmb_Dataset * dataset) :
 		Channel_selector (namelist, dataset)
 {
-
 	change_from_tcl = 0;		
 	change_from_microscope = 1;   // Get current datasets from MScope
 
 	numchannels = 0;	// No channels mapped yet
 	mygrid = grid_to_track;
+        unsigned i;
 
  	// Put the known types into the list, but don't require planes for
  	// them.
         // The names and the tcl variable names are "magic" - i.e. they must
         // correspond exactly to the widgets we create for them. 
-        // As of 6/00, those are created from a list in setup_menu.tcl
-  	channel_list.addEntry("Topography-Forward");
-        active_list[0] = new Tclvar_int("data_sets(scan0)",1,tcl_update_callback,this);
-  	channel_list.addEntry("Topography-Reverse");
-        active_list[1] = new Tclvar_int("data_sets(scan1)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Internal Sensor-Forward");
-        active_list[2] = new Tclvar_int("data_sets(scan2)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Internal Sensor-Reverse");
-        active_list[3] = new Tclvar_int("data_sets(scan3)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Modulation-Forward");
-        active_list[4] = new Tclvar_int("data_sets(scan4)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Modulation-Reverse");
-        active_list[5] = new Tclvar_int("data_sets(scan5)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Lateral Force-Forward");
-        active_list[6] = new Tclvar_int("data_sets(scan6)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Lateral Force-Reverse");
-        active_list[7] = new Tclvar_int("data_sets(scan7)",0,tcl_update_callback,this);
-  	channel_list.addEntry("IN 1-Forward");
-        active_list[8] = new Tclvar_int("data_sets(scan8)",0,tcl_update_callback,this);
-  	channel_list.addEntry("IN 1-Reverse");
-        active_list[9] = new Tclvar_int("data_sets(scan9)",0,tcl_update_callback,this);
-  	channel_list.addEntry("IN 2-Forward");
-        active_list[10] = new Tclvar_int("data_sets(scan10)",0,tcl_update_callback,this);
-  	channel_list.addEntry("IN 2-Reverse");
-        active_list[11] = new Tclvar_int("data_sets(scan11)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Phase-Forward");
-        active_list[12] = new Tclvar_int("data_sets(scan12)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Phase-Reverse");
-        active_list[13] = new Tclvar_int("data_sets(scan13)",0,tcl_update_callback,this);
-  	channel_list.addEntry("FastTrack-Forward");
-        active_list[14] = new Tclvar_int("data_sets(scan14)",0,tcl_update_callback,this);
-  	channel_list.addEntry("FastTrack-Reverse");
-        active_list[15] = new Tclvar_int("data_sets(scan15)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Piezo-Forward");
-        active_list[16] = new Tclvar_int("data_sets(scan16)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Piezo-Reverse");
-        active_list[17] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+        // As of 8/2006, those are created from a list in setup_menu.tcl
+        if (nmb_MicroscopeFlavor == Topometrix) {
+  	  channel_list.addEntry("Topography-Forward");
+          active_list[0] = new Tclvar_int("data_sets(scan0)",1,tcl_update_callback,this);
+  	  channel_list.addEntry("Topography-Reverse");
+          active_list[1] = new Tclvar_int("data_sets(scan1)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Internal Sensor-Forward");
+          active_list[2] = new Tclvar_int("data_sets(scan2)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Internal Sensor-Reverse");
+          active_list[3] = new Tclvar_int("data_sets(scan3)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Z Modulation-Forward");
+          active_list[4] = new Tclvar_int("data_sets(scan4)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Z Modulation-Reverse");
+          active_list[5] = new Tclvar_int("data_sets(scan5)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Lateral Force-Forward");
+          active_list[6] = new Tclvar_int("data_sets(scan6)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Lateral Force-Reverse");
+          active_list[7] = new Tclvar_int("data_sets(scan7)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("IN 1-Forward");
+          active_list[8] = new Tclvar_int("data_sets(scan8)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("IN 1-Reverse");
+          active_list[9] = new Tclvar_int("data_sets(scan9)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("IN 2-Forward");
+          active_list[10] = new Tclvar_int("data_sets(scan10)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("IN 2-Reverse");
+          active_list[11] = new Tclvar_int("data_sets(scan11)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Phase-Forward");
+          active_list[12] = new Tclvar_int("data_sets(scan12)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Phase-Reverse");
+          active_list[13] = new Tclvar_int("data_sets(scan13)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("FastTrack-Forward");
+          active_list[14] = new Tclvar_int("data_sets(scan14)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("FastTrack-Reverse");
+          active_list[15] = new Tclvar_int("data_sets(scan15)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Z Piezo-Forward");
+          active_list[16] = new Tclvar_int("data_sets(scan16)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Z Piezo-Reverse");
+          active_list[17] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+          for (i = 18; i < MAX_CHANNELS; i++) {
+            active_list[i] = NULL;
+          }
+        } else if (nmb_MicroscopeFlavor == Asylum) {
+  	  channel_list.addEntry("Height-Trace");
+          active_list[0] = new Tclvar_int("data_sets(scan0)",1,tcl_update_callback,this);
+  	  channel_list.addEntry("Height-Retrace");
+          active_list[1] = new Tclvar_int("data_sets(scan1)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Deflection-Trace");
+          active_list[2] = new Tclvar_int("data_sets(scan2)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Deflection-Retrace");
+          active_list[3] = new Tclvar_int("data_sets(scan3)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Lateral-Trace");
+          active_list[4] = new Tclvar_int("data_sets(scan4)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Lateral-Retrace");
+          active_list[5] = new Tclvar_int("data_sets(scan5)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Amplitude-Trace");
+          active_list[6] = new Tclvar_int("data_sets(scan6)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Amplitude-Retrace");
+          active_list[7] = new Tclvar_int("data_sets(scan7)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Phase-Trace");
+          active_list[8] = new Tclvar_int("data_sets(scan8)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Phase-Retrace");
+          active_list[9] = new Tclvar_int("data_sets(scan9)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Frequency-Trace");
+          active_list[10] = new Tclvar_int("data_sets(scan10)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Frequency-Retrace");
+          active_list[11] = new Tclvar_int("data_sets(scan11)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("ZSensor-Trace");
+          active_list[12] = new Tclvar_int("data_sets(scan12)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("ZSensor-Retrace");
+          active_list[13] = new Tclvar_int("data_sets(scan13)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn0-Trace");
+          active_list[14] = new Tclvar_int("data_sets(scan14)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn0-Retrace");
+          active_list[15] = new Tclvar_int("data_sets(scan15)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn1-Trace");
+          active_list[16] = new Tclvar_int("data_sets(scan16)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn1-Retrace");
+          active_list[17] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn2-Trace");
+          active_list[18] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("UserIn2-Retrace");
+          active_list[19] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Inputi-Trace");
+          active_list[20] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Inputi-Retrace");
+          active_list[21] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Input1-Trace");
+          active_list[22] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Inputq-Retrace");
+          active_list[23] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Current-Trace");
+          active_list[24] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Current-Retrace");
+          active_list[25] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Calculated-Trace");
+          active_list[26] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Calculated-Retrace");
+          active_list[27] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Count-Trace");
+          active_list[28] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+  	  channel_list.addEntry("Count-Retrace");
+          active_list[29] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
+          for (i = 30; i < MAX_CHANNELS; i++) {
+            active_list[i] = NULL;
+          }
+        } else {
+          fprintf(stderr,"Scan_channel_selector::Scan_channel_selector: Unknown microscope flavor\n");
+        }
 
-		//init the shadow list, which will let us know what channels
-		//have been activated or deactivated when recieving channels from the 
-		//microscope
-		for(int i = 0; i < MAX_CHANNELS; i++) {
-			if(active_list[i] != NULL) {
-				shadow_active_list[i] = *active_list[i];
-			}
+	//init the shadow list, which will let us know what channels
+	//have been activated or deactivated when recieving channels from the 
+	//microscope
+	for (i = 0; i < MAX_CHANNELS; i++) {
+		if(active_list[i] != NULL) {
+			shadow_active_list[i] = *active_list[i];
 		}
-
-
-	// Set up for old default, which was Topography and standard deviation
-	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
-            (d_dataset->inputGrid->readMode() == READ_STREAM)) {
-            if (Add_channel("Topography-Forward","nm",0,1)) {
-		fprintf(stderr,"Scan_channel_selector(): Can't get height\n");
-	  }
 	}
+
+        if (nmb_MicroscopeFlavor == Topometrix) {
+	  // Set up for the default channel because we have to set something.
+	  if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
+              (d_dataset->inputGrid->readMode() == READ_STREAM)) {
+              if (Add_channel("Topography-Forward","nm",0,1)) {
+		  fprintf(stderr,"Scan_channel_selector(): Can't get height\n");
+	    }
+	  }
+        } else if (nmb_MicroscopeFlavor == Asylum) {
+	  // Set up for the default channel because we have to set something.
+	  if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
+              (d_dataset->inputGrid->readMode() == READ_STREAM)) {
+              if (Add_channel("Height-Trace","nm",0,1)) {
+		  fprintf(stderr,"Scan_channel_selector(): Can't get height\n");
+	    }
+	  }
+        } else {
+          fprintf(stderr,"Scan_channel_selector::Scan_channel_selector: Unknown microscope flavor\n");
+        }
+
 }
 
 Scan_channel_selector::~Scan_channel_selector (void) {
@@ -519,44 +602,77 @@ Point_channel_selector::Point_channel_selector
 	//change_from_tcl = 1;		// Report to the microscope what we want
 	numchannels = 0;	// No channels mapped yet
 	myresult = point;	// Where to store values
+        unsigned i;
 
 //  	// Put the known types into the list.
         // The names and the tcl variable names are "magic" - i.e. they must
         // correspond exactly to the widgets we create for them. 
-        // As of 6/00, those are created from a list in setup_menu.tcl
- 	channel_list.addEntry("Topography");
-        active_list[0] = new Tclvar_int("data_sets(touch0)",1,tcl_update_callback,this);
-        numsamples_list[0] = new Tclvar_int("data_sets(touch_samples0)",90,tcl_update_callback,this);
- 	channel_list.addEntry("Internal Sensor");
-        active_list[1] = new Tclvar_int("data_sets(touch1)",1,tcl_update_callback,this);
-        numsamples_list[1] = new Tclvar_int("data_sets(touch_samples1)",10,tcl_update_callback,this);
- 	channel_list.addEntry("Z Modulation");
-        active_list[2] = new Tclvar_int("data_sets(touch2)",0,tcl_update_callback,this);
-        numsamples_list[2] = new Tclvar_int("data_sets(touch_samples2)",10,tcl_update_callback,this);
- 	channel_list.addEntry("Lateral Force");
-        active_list[3] = new Tclvar_int("data_sets(touch3)",1,tcl_update_callback,this);
-        numsamples_list[3] = new Tclvar_int("data_sets(touch_samples3)",10,tcl_update_callback,this);
- 	channel_list.addEntry("IN 1");
-        active_list[4] = new Tclvar_int("data_sets(touch4)",0,tcl_update_callback,this);
-        numsamples_list[4] = new Tclvar_int("data_sets(touch_samples4)",10,tcl_update_callback,this);
- 	channel_list.addEntry("IN 2");
-        active_list[5] = new Tclvar_int("data_sets(touch5)",0,tcl_update_callback,this);
-        numsamples_list[5] = new Tclvar_int("data_sets(touch_samples5)",10,tcl_update_callback,this);
- 	channel_list.addEntry("FastTrack");
-        active_list[6] = new Tclvar_int("data_sets(touch6)",0,tcl_update_callback,this);
-        numsamples_list[6] = new Tclvar_int("data_sets(touch_samples6)",10,tcl_update_callback,this);
- 	channel_list.addEntry("Z Piezo");
-        active_list[7] = new Tclvar_int("data_sets(touch7)",1,tcl_update_callback,this);
-        numsamples_list[7] = new Tclvar_int("data_sets(touch_samples7)",10,tcl_update_callback,this);
+        // As of 8/2006, those are created from a list in setup_menu.tcl
+        if (nmb_MicroscopeFlavor == Topometrix) {
+ 	  channel_list.addEntry("Topography");
+          active_list[0] = new Tclvar_int("data_sets(touch0)",1,tcl_update_callback,this);
+          numsamples_list[0] = new Tclvar_int("data_sets(touch_samples0)",90,tcl_update_callback,this);
+ 	  channel_list.addEntry("Internal Sensor");
+          active_list[1] = new Tclvar_int("data_sets(touch1)",1,tcl_update_callback,this);
+          numsamples_list[1] = new Tclvar_int("data_sets(touch_samples1)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("Z Modulation");
+          active_list[2] = new Tclvar_int("data_sets(touch2)",0,tcl_update_callback,this);
+          numsamples_list[2] = new Tclvar_int("data_sets(touch_samples2)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("Lateral Force");
+          active_list[3] = new Tclvar_int("data_sets(touch3)",1,tcl_update_callback,this);
+          numsamples_list[3] = new Tclvar_int("data_sets(touch_samples3)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("IN 1");
+          active_list[4] = new Tclvar_int("data_sets(touch4)",0,tcl_update_callback,this);
+          numsamples_list[4] = new Tclvar_int("data_sets(touch_samples4)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("IN 2");
+          active_list[5] = new Tclvar_int("data_sets(touch5)",0,tcl_update_callback,this);
+          numsamples_list[5] = new Tclvar_int("data_sets(touch_samples5)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("FastTrack");
+          active_list[6] = new Tclvar_int("data_sets(touch6)",0,tcl_update_callback,this);
+          numsamples_list[6] = new Tclvar_int("data_sets(touch_samples6)",10,tcl_update_callback,this);
+ 	  channel_list.addEntry("Z Piezo");
+          active_list[7] = new Tclvar_int("data_sets(touch7)",1,tcl_update_callback,this);
+          numsamples_list[7] = new Tclvar_int("data_sets(touch_samples7)",10,tcl_update_callback,this);
+          for (i = 8; i < MAX_CHANNELS; i++) {
+            active_list[i] = NULL;
+            numsamples_list[i] = NULL;
+          }
+        } else if (nmb_MicroscopeFlavor == Asylum) {
+ 	  channel_list.addEntry("Height");
+          active_list[0] = new Tclvar_int("data_sets(touch0)",1,tcl_update_callback,this);
+          numsamples_list[0] = new Tclvar_int("data_sets(touch_samples0)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("Deflection");
+          active_list[1] = new Tclvar_int("data_sets(touch1)",1,tcl_update_callback,this);
+          numsamples_list[1] = new Tclvar_int("data_sets(touch_samples1)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("Lateral");
+          active_list[2] = new Tclvar_int("data_sets(touch2)",1,tcl_update_callback,this);
+          numsamples_list[2] = new Tclvar_int("data_sets(touch_samples2)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("ZSensor");
+          active_list[3] = new Tclvar_int("data_sets(touch3)",0,tcl_update_callback,this);
+          numsamples_list[3] = new Tclvar_int("data_sets(touch_samples3)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("UserIn0");
+          active_list[4] = new Tclvar_int("data_sets(touch4)",0,tcl_update_callback,this);
+          numsamples_list[4] = new Tclvar_int("data_sets(touch_samples4)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("UserIn1");
+          active_list[5] = new Tclvar_int("data_sets(touch5)",0,tcl_update_callback,this);
+          numsamples_list[5] = new Tclvar_int("data_sets(touch_samples5)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("UserIn2");
+          active_list[6] = new Tclvar_int("data_sets(touch6)",0,tcl_update_callback,this);
+          numsamples_list[6] = new Tclvar_int("data_sets(touch_samples6)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("Inputi");
+          active_list[7] = new Tclvar_int("data_sets(touch7)",0,tcl_update_callback,this);
+          numsamples_list[7] = new Tclvar_int("data_sets(touch_samples7)",1,tcl_update_callback,this);
+ 	  channel_list.addEntry("Inputq");
+          active_list[8] = new Tclvar_int("data_sets(touch8)",0,tcl_update_callback,this);
+          numsamples_list[8] = new Tclvar_int("data_sets(touch_samples8)",1,tcl_update_callback,this);
+          for (i = 9; i < MAX_CHANNELS; i++) {
+            active_list[i] = NULL;
+            numsamples_list[i] = NULL;
+          }
+        } else {
+          fprintf(stderr,"Point_channel_selector::Point_channel_selector: Unknown microscope flavor\n");
+        }
 
-	// Set up for default, which is Topography 
-        // Should be taken care of with first call to Update_Microscope, or message from Thermo...
-//  	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
-//              (d_dataset->inputGrid->readMode() == READ_STREAM)) {
-//              if (Add_channel("Topography","nm",0,1, 90) ) {
-//  		fprintf(stderr,"Point_channel_selector(): Can't get height\n");
-//  	  }
-//  	}
 }
 
 Point_channel_selector::~Point_channel_selector (void) {
@@ -674,13 +790,25 @@ ForceCurve_channel_selector::ForceCurve_channel_selector
     // spmlab allows two out of three including the following and
     // the two auxiliary channels, but selection of other than the default
     // hasn't been implemented yet
-    channel_list.addEntry("Internal Sensor");
-    active_list[0] = new Tclvar_int("data_sets(forcecurve0)",1,tcl_update_callback,this);
-    // numsamples isn't really used by the force curve (maybe), but it's required because
-    // forcecurve uses the pointresults data type to query the SPM. 
-    numsamples_list[0] = new Tclvar_int("data_sets(forcecurve_samples0)",10,tcl_update_callback,this);
-    if (Add_channel("Internal Sensor", "nA", 0.0, 1.0))
-	fprintf(stderr,"ForceCurve_channel_selector(): Can't get internal sensor\n");
+    if (nmb_MicroscopeFlavor == Topometrix) {
+      channel_list.addEntry("Internal Sensor");
+      active_list[0] = new Tclvar_int("data_sets(forcecurve0)",1,tcl_update_callback,this);
+      // numsamples isn't really used by the force curve (maybe), but it's required because
+      // forcecurve uses the pointresults data type to query the SPM. 
+      numsamples_list[0] = new Tclvar_int("data_sets(forcecurve_samples0)",10,tcl_update_callback,this);
+      if (Add_channel("Internal Sensor", "nA", 0.0, 1.0))
+	  fprintf(stderr,"ForceCurve_channel_selector(): Can't get internal sensor\n");
+    } else if (nmb_MicroscopeFlavor == Asylum) {
+      channel_list.addEntry("Deflection");
+      active_list[0] = new Tclvar_int("data_sets(forcecurve0)",1,tcl_update_callback,this);
+      // numsamples isn't really used by the force curve (maybe), but it's required because
+      // forcecurve uses the pointresults data type to query the SPM. 
+      numsamples_list[0] = new Tclvar_int("data_sets(forcecurve_samples0)",10,tcl_update_callback,this);
+      if (Add_channel("Deflection", "nA", 0.0, 1.0))
+	  fprintf(stderr,"ForceCurve_channel_selector(): Can't get deflection\n");
+    } else {
+      fprintf(stderr,"ForceCurve_channel_selector::ForceCurve_channel_selector: Unknown microscope flavor\n");
+    }
 }
 
 ForceCurve_channel_selector::~ForceCurve_channel_selector (void) {

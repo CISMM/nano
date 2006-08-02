@@ -88,7 +88,7 @@ pid_t getpid();
 #include <nmb_Debug.h>
 #include <nmb_Line.h>
 #include <nmb_TimerList.h>
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 #include <nmb_ImgMagick.h>
 
 #include <Tcl_Interpreter.h>
@@ -6286,6 +6286,15 @@ void ParseArgs (int argc, char ** argv,
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
+      } else if (strcmp(argv[i], "-microscope_type") == 0) {
+          if (++i >= argc) Usage(argv[0]);
+          if (strcmp(argv[i],"Topometrix") == 0) {
+            nmb_MicroscopeFlavor = Topometrix;
+          } else if (strcmp(argv[i],"Asylum") == 0) {
+            nmb_MicroscopeFlavor = Asylum;
+          } else {
+            Usage(argv[0]);
+          }
       } else if (!strcmp(argv[i], "-renderserver")) {
         istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
@@ -6660,6 +6669,7 @@ void ParseArgs (int argc, char ** argv,
 void Usage(char* s)
 {
   fprintf(stderr, "Usage: %s \n",s);
+  fprintf(stderr, "       [-microscope_type type\n");
   fprintf(stderr, "       [-d device] [-do device] [-div device]\n");
   fprintf(stderr, "       [-dsem device] [-daligner device]\n");
   fprintf(stderr, "       [-f infile] [-z scale] \n");
@@ -6698,6 +6708,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-udp] [-qm t d] [-wpa] [-fa n d]\n");
   fprintf(stderr, "       \n");
 
+  fprintf(stderr, "       -microscope_type: Topometrix or Asylum (default Topometrix)\n");
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
   fprintf(stderr, "       -do: Use given ohmmeter device (default none)\n");
   fprintf(stderr, "       -div: Use given iv-curve device (default none)\n");

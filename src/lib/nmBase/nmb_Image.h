@@ -39,7 +39,7 @@
 #include "BCGrid.h"
 #include "nmb_String.h"
 #include "nmb_TransformMatrix44.h"
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 
 class nmb_Dataset;
 

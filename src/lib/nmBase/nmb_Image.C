@@ -5,7 +5,7 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
-#include "Topo.h" // for TopoFile
+#include "MicroscopeFlavors.h" // for TopoFile
 #include "nmb_Image.h"
 #include "nmb_TransformMatrix44.h"
 #include "nmb_ImgMagick.h"

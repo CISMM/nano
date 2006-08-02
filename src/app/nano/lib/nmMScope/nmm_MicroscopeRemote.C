@@ -18,7 +18,7 @@
 #include <vrpn_FileConnection.h>	// for vrpn_File_Connection class
 #include <vrpn_RedundantTransmission.h>
 
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 #include <Point.h>
 #include <BCPlane.h>
 #include <BCGrid.h>

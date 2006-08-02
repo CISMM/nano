@@ -13,7 +13,7 @@
 #include "BCGrid.h"
 #include "BCPlane.h"
 
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 TopoFile	GTF;	// ??? required by BCGrid.C!!!
 
 void	Usage(char *progname)

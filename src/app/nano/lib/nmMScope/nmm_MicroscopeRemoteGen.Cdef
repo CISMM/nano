@@ -20,7 +20,7 @@ OUTPUT_FILENAME nmm_MicroscopeRemoteGen.C
 
 #include "nmm_MicroscopeRemote.h"
 
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 #include <Point.h>
 #include <BCPlane.h>
 #include <BCGrid.h>

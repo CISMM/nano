@@ -209,7 +209,7 @@ proc init_quick {} {
 	   modifyp_d_gain modifyp_rate newmodifyp_setpoint \
 	   newmodifyp_p_gain newmodifyp_i_gain \
 	   newmodifyp_d_gain newmodifyp_rate \
-           device_only_controls
+           device_only_controls microscopeflavor
 
     # Variables dealt with in quick param window
     set modifyp_setpoint 1.0
@@ -240,8 +240,13 @@ proc init_quick {} {
 	"P-Gain (0,5)" real "set newmodifyp_p_gain \$modifyp_p_gain"
     generic_entry $nmInfo(modifypage).i-gain modifyp_i_gain \
 	"I-Gain (0,5)" real "set newmodifyp_i_gain \$modifyp_i_gain"
-    generic_entry $nmInfo(modifypage).d-gain modifyp_d_gain \
-	"D-Gain (0,5)" real "set newmodifyp_d_gain \$modifyp_d_gain"
+    if { $microscopeflavor == "Asylum" } {
+        generic_entry $nmInfo(modifypage).d-gain modifyp_d_gain \
+	    "S-Gain (0,5)" real "set newmodifyp_d_gain \$modifyp_d_gain"
+    } else {
+        generic_entry $nmInfo(modifypage).d-gain modifyp_d_gain \
+	    "D-Gain (0,5)" real "set newmodifyp_d_gain \$modifyp_d_gain"
+    }
     generic_entry $nmInfo(modifypage).rate modifyp_rate \
 	 "Rate (um/sec)" real "set newmodifyp_rate \$modifyp_rate"
 
@@ -432,7 +437,7 @@ proc init_full {} {
 
     ####################################################################
     ### MODE ###
-    global doRelaxComp
+    global doRelaxComp microscopeflavor
 
     set modifyp_mode 1
 
@@ -490,7 +495,11 @@ proc init_full {} {
 	"Setpoint(0,100 %)" real
     generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
     generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
-    generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
+    if { $microscopeflavor == "Asylum" } {
+        generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "S-Gain (0,5)" real
+    } else {
+        generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real
+    }
     generic_entry $nmInfo(modifyfull).modeparam.rate newmodifyp_rate "Rate (0.1,50.0 um/sec)" real 
     generic_entry $nmInfo(modifyfull).modeparam.amplitude newmodifyp_amplitude \
 	"Amplitude (0,2)" real 

@@ -6,7 +6,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Widget.h>
 
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 
 void pv_exit(Fl_Widget* caller, void* unused);
 

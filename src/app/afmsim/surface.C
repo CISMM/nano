@@ -14,7 +14,7 @@ using namespace std;
 
 #include <BCGrid.h>
 #include <BCPlane.h>
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 
 #include "simulator_server.h"
 

@@ -4,7 +4,7 @@
 
 #include <nmb_Decoration.h>
 #include <nmb_Dataset.h>
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 
 #include <nmg_Graphics.h>  // for graphics for tcl_tk
 

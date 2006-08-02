@@ -101,6 +101,10 @@ SOURCE=.\filter.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\MicroscopeFlavors.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmb_CalculatedPlane.C
 # End Source File
 # Begin Source File
@@ -245,6 +249,10 @@ SOURCE=.\afmstm.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Asylum.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\BCGrid.h
 # End Source File
 # Begin Source File
@@ -258,6 +266,10 @@ SOURCE=.\BCRenderGrid.h
 # Begin Source File
 
 SOURCE=.\filter.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MicroscopeFlavors.h
 # End Source File
 # Begin Source File
 

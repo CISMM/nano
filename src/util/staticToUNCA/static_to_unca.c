@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 #include "BCGrid.h"
 #include "BCPlane.h"
 

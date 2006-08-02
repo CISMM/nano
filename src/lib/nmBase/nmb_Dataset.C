@@ -11,7 +11,7 @@
 #include "BCPlane.h"
 #include "nmb_String.h"
 
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 
 #include "filter.h"  // for filter_plane
 
@@ -50,7 +50,6 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   colorMapName (string_allocator("none")),
   contourPlaneName (string_allocator("none")),
   opacityPlaneName (string_allocator("none")),
-  heightPlaneName (string_allocator("Topography-Forward")),
   //Visualization related planes
   transparentPlaneName (string_allocator("none")),
   maskPlaneName (string_allocator("none")),
@@ -59,10 +58,18 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   done (0),
   d_topoFile(new TopoFile)
 {
-    //variables to save the command line args for heightplane and colorplane
-    initHeight[0] = '\0';
-    initColorPlane[0] = '\0';
-    int i;
+  if (nmb_MicroscopeFlavor == Topometrix) {
+    heightPlaneName = string_allocator("Topography-Forward");
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+    heightPlaneName = string_allocator("Height-Trace");
+  } else {
+    fprintf(stderr,"nmb_Dataset::nmb_Dataset: Unknown microscope flavor\n");
+  }
+
+  //variables to save the command line args for heightplane and colorplane
+  initHeight[0] = '\0';
+  initColorPlane[0] = '\0';
+  int i;
 
   // Load any static images from our args. 
   switch (readMode) 
@@ -70,7 +77,13 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   case READ_STREAM:
   case READ_DEVICE:
       {	
+        if (nmb_MicroscopeFlavor == Topometrix) {
   	  inputGrid->addNewPlane("Topography-Forward", "nm", TIMED);
+        } else if (nmb_MicroscopeFlavor == Asylum) {
+  	  inputGrid->addNewPlane("Height-Trace", "nm", TIMED);
+        } else {
+          fprintf(stderr,"nmb_Dataset::nmb_Dataset: Unknown microscope flavor\n");
+        }
       }
       break;
   case READ_FILE: 

@@ -10,7 +10,7 @@
 
 #include "BCGrid.h"
 #include "BCPlane.h"
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 #include "BCDebug.h"
 
 #include "readNanoscopeFile.C" // <------------ reading a .C file!

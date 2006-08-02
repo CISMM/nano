@@ -115,8 +115,8 @@ class nmb_Dataset {
     BCPlane * ensureHeightPlane (void);
     /**< Call to make sure there is a height plane in inputGrid.
       This is defined as a plane with "nm" units, or (if none exists)
-        a plane named "Topography-Forward".
-      If none exists, one will be created (with name "Topography-Forward"
+        a height plane appropriate to the microscope flavor
+      If none exists, one will be created (with a name appopriate to the microscope
       and units "nm"). */
 
     int computeFilteredPlane (const char * outputPlane,

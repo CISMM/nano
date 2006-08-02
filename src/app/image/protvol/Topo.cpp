@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "Topo.h"
+#include "MicroscopeFlavors.h"
 #include "afmstm.h"
 
 void TopoFile::parseReleaseString( char *release)

@@ -32,7 +32,40 @@ pack $nmInfo(data_sets).forcecurve -side left -anchor n
 #pack $nmInfo(data_sets).scanline.label -side top
 #pack $nmInfo(data_sets).scanline -side left -anchor n 
 
-set scandatalist [list \
+if { $microscopeflavor == "Asylum" } {
+  set scandatalist [list \
+        "Height-Trace" \
+        "Height-Retrace" \
+        "Deflection-Trace" \
+        "Deflection-Retrace" \
+        "Lateral-Trace" \
+        "Lateral-Retrace" \
+        "Amplitude-Trace" \
+        "Amplitude-Retrace" \
+        "Phase-Trace" \
+        "Phase-Retrace" \
+        "Frequency-Trace" \
+        "Frequency-Retrace" \
+        "ZSensor-Trace" \
+        "ZSensor-Retrace" \
+        "UserIn0-Trace" \
+        "UserIn0-Retrace" \
+        "UserIn1-Trace" \
+        "UserIn1-Retrace" \
+        "UserIn2-Trace" \
+        "UserIn2-Retrace" \
+        "Inputi-Trace" \
+        "Inputi-Retrace" \
+        "Inputq-Trace" \
+        "Inputq-Retrace" \
+        "Current-Trace" \
+        "Current-Retrace" \
+        "Calculated-Trace" \
+        "Calculated-Retrace" \
+        "Count-Trace" \
+        "Count-Retrace" ]
+} else {
+  set scandatalist [list \
         "Topography-Forward" \
         "Topography-Reverse" \
         "Internal Sensor-Forward" \
@@ -51,6 +84,7 @@ set scandatalist [list \
         "FastTrack-Reverse" \
         "Z Piezo-Forward" \
         "Z Piezo-Reverse" ]
+}
 
 set i 0
 foreach name $scandatalist {
@@ -61,7 +95,19 @@ foreach name $scandatalist {
 }
 #set num_scandata [expr $i -1]
 
-set touchdatalist [list \
+if { $microscopeflavor == "Asylum" } {
+  set touchdatalist [list \
+        "Height" \
+        "Deflection" \
+        "Lateral" \
+        "ZSensor" \
+        "UserIn0" \
+        "UserIn1" \
+        "UserIn2" \
+        "Inputi" \
+        "Inputq" ]
+} else {
+  set touchdatalist [list \
         "Topography" \
         "Internal Sensor" \
         "Z Modulation" \
@@ -70,6 +116,7 @@ set touchdatalist [list \
         "IN 2" \
         "FastTrack" \
         "Z Piezo" ]
+}
 
 set i 0
 foreach name $touchdatalist {
@@ -90,7 +137,11 @@ foreach name $touchdatalist {
 # spmlab allows two out of three possible channels including "Internal Sensor" and
 # the two auxiliary channels, but selection of other than "Internal Sensor"
 # hasn't been implemented yet
-set forcecurvedatalist [list "Internal Sensor" ]
+if { $microscopeflavor == "Asylum" } {
+	set forcecurvedatalist [list "Deflection" ]
+} else {
+	set forcecurvedatalist [list "Internal Sensor" ]
+}
 set i 0
 foreach name $forcecurvedatalist {
     checkbutton $nmInfo(data_sets).forcecurve.forcecurvebutton$i -text "$name"\

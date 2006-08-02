@@ -28,7 +28,7 @@
 
 #include <BCGrid.h>
 #include <BCPlane.h>
-#include <Topo.h>
+#include <MicroscopeFlavors.h>
 
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>

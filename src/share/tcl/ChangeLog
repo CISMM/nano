@@ -1,3 +1,13 @@
+2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* image.tcl : Changed PID to PIS for Asylum case.
+		Changed available scan resolutions for the
+		Asylum case.
+	* modify.tcl : Same.
+	* setupmenu.tcl : Changed the names of the data sets
+		for the scan, point, and force-curve Dataset seleection
+		menus to match Asylum when we're using an Asylum.
+
 2006-06-07  David Marshburn  <marshbur@cs.unc.edu>
 
 	* directstep.tcl:  added a checkbox to have the direct step tool

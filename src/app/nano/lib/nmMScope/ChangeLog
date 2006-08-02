@@ -1,3 +1,13 @@
+2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* active_set.C : Now responds to the setting of the global
+		microscope flavor variable and creates data sets for
+		scan, point, and force curves based on whether we are
+		dealing with an Asylum or a Topometrix instrument.
+	* nmm_MicroscopeRemote.Cdef : Different include file.
+	* splat.C : Changes to work with both Asylum and Topometrix.
+	* splat.h : Same.
+
 2006-06-07  David Marshburn  <marshbur@cs.unc.edu>
 	
 	* directstep.h,C:  implementation of functionality so that the
