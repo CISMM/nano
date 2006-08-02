@@ -1,5 +1,9 @@
 2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
+	* active_set.C : Fixing typo in channel name.
+
+2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
 	* active_set.C : Now responds to the setting of the global
 		microscope flavor variable and creates data sets for
 		scan, point, and force curves based on whether we are

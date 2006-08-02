@@ -322,7 +322,7 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
           active_list[20] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
   	  channel_list.addEntry("Inputi-Retrace");
           active_list[21] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
-  	  channel_list.addEntry("Input1-Trace");
+  	  channel_list.addEntry("Inputq-Trace");
           active_list[22] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
   	  channel_list.addEntry("Inputq-Retrace");
           active_list[23] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
