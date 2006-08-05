@@ -665,7 +665,10 @@ Point_channel_selector::Point_channel_selector
  	  channel_list.addEntry("Inputq");
           active_list[8] = new Tclvar_int("data_sets(touch8)",0,tcl_update_callback,this);
           numsamples_list[8] = new Tclvar_int("data_sets(touch_samples8)",1,tcl_update_callback,this);
-          for (i = 9; i < MAX_CHANNELS; i++) {
+ 	  channel_list.addEntry("Amplitude");
+          active_list[9] = new Tclvar_int("data_sets(touch9)",0,tcl_update_callback,this);
+          numsamples_list[9] = new Tclvar_int("data_sets(touch_samples9)",1,tcl_update_callback,this);
+          for (i = 10; i < MAX_CHANNELS; i++) {
             active_list[i] = NULL;
             numsamples_list[i] = NULL;
           }

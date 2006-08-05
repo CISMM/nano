@@ -2038,7 +2038,10 @@ double touch_surface (int, q_vec_type handpos) {
 
 
 /** When controlling the position of the tip in 3D, this calculates
- * the force the user should feel based on internal sensor measurements.
+ * the force the user should feel based on error signal measurements
+ * (internal sensor for Topo and either Deflection or Amplitude for
+ * Asylum, depending on whether we are in non-contact or contact mode).
+ * XXX This needs to be tested for the Asylum.
  */
 int specify_directZ_force(int whichUser) 
 {
@@ -2046,6 +2049,20 @@ int specify_directZ_force(int whichUser)
      q_vec_type		        point;
      q_vec_type		up = { 0.0, 0.0, 1.0 };
      v_xform_type               WorldFromTracker, TrackerFromWorld;
+
+      const char *error_channel;
+      if (nmb_MicroscopeFlavor == Topometrix) {
+        error_channel = "Internal Sensor";
+      } else if (nmb_MicroscopeFlavor == Asylum) {
+        if (microscope->state.modify.mode == TAPPING) {
+          error_channel = "Amplitude";
+        } else {
+          error_channel = "Deflection";
+        }
+      } else {
+        fprintf(stderr,"specify_directZ_force(): Unknown microscope flavor\n");
+        return -1;
+      }
 
      // If directz hasn't been initialized, specify a force field that has
      // zero force, so that when the forcefield is turned on the user won't
@@ -2085,10 +2102,10 @@ int specify_directZ_force(int whichUser)
  
     double current_force;
 
-    // Get the current value of the internal sensor, which tells us 
+    // Get the current value of the error signal, which tells us 
     // the force the tip is experiencing.
      Point_value *forcevalue =
-	microscope->state.data.inputPoint->getValueByName("Internal Sensor");
+	microscope->state.data.inputPoint->getValueByName(error_channel);
 
      if (forcevalue == NULL) {
 	 fprintf(stderr, "Error in specify_directZ_force: "
@@ -2099,7 +2116,7 @@ int specify_directZ_force(int whichUser)
      current_force = forcevalue->value();
 
      // Calculate the difference from the free-space value of 
-     // internal sensor recorded when we entered direct-z control
+     // the error signal recorded when we entered direct-z control
      double diff_force 
        = current_force - microscope->state.modify.freespace_normal_force;
 
@@ -2116,8 +2133,6 @@ int specify_directZ_force(int whichUser)
      v_x_xform_vector( point, &TrackerFromWorld, point );
 
      q_xform(up, TrackerFromWorld.rotate, up);
-     
-
 
     if (!forceDevice) return 0;
 	

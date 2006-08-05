@@ -1,3 +1,11 @@
+2006-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* modify.tcl : More Asylum-native code.  This time for doing
+		DirectZ mode (needed correct names for the planes).
+	* setupmenu.tcl : Added "Amplitude" to things to be collected
+		for DirectZ mode.  In case someone wants to to DirectZ
+		Tapping mode.
+
 2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* image.tcl : Changed PID to PIS for Asylum case.

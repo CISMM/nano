@@ -1,3 +1,9 @@
+2006-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* interaction.C : More Asylum native code.  This time to
+		do with the DirectZ mode.
+	* microscape.C : Same.
+
 2006-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.C : Added command-line argument to set the

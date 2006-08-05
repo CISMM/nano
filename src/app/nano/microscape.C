@@ -4752,7 +4752,15 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
   char* sPlane = strdup(dataset->heightPlaneName->string());
   printf("\n Height plane = %s\n", sPlane);
 
-  char* pFound = strstr(sPlane, "Reverse");
+  const char *backwards = "Reverse";
+  if (nmb_MicroscopeFlavor == Topometrix) {
+    backwards = "Reverse";
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+    backwards = "Retrace";
+  } else {
+    fprintf(stderr,"handle_guardedscan_planeacquire(): Unknown microscope flavor\n");
+  }
+  char* pFound = strstr(sPlane, backwards);
   if(pFound == NULL) {
     // Forward...
     printf(" Forward - ");
@@ -4763,14 +4771,22 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
     pMe->state.guardedscan.bDirection = 0;
   }
 
-  pFound = strstr(sPlane, "Z Piezo");
+  const char *height_channel = "Z Piezo";
+  if (nmb_MicroscopeFlavor == Topometrix) {
+    height_channel = "Z Piezo";
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+    height_channel = "ZSensor";
+  } else {
+    fprintf(stderr,"handle_guardedscan_planeacquire(): Unknown microscope flavor\n");
+  }
+  pFound = strstr(sPlane, height_channel);
   if(pFound == NULL) {
     // Topography...
     printf("Topography.\n");
     pMe->state.guardedscan.nChannel = 0;
   } else {
     // Z-piezo
-    printf("Z-Piezo.\n");
+    printf("%s.\n", height_channel);
     pMe->state.guardedscan.nChannel = 1;
   }
   delete sPlane;

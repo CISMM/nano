@@ -1067,11 +1067,21 @@ long nmm_Microscope_Remote::EnterDirectZControl (float _max_z_step,
   char * msgbuf;
   vrpn_int32 len;	
 
-  if (!strncmp(d_dataset->heightPlaneName->string(), "Z Piezo", 7)) {
+  const char *height_channel;
+  if (nmb_MicroscopeFlavor == Topometrix) {
+    height_channel = "Z Piezo";
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+    height_channel = "ZSensor";
+  } else {
+    fprintf(stderr,"nmm_Microscope_Remote::EnterDirectZControl(): Unknown microscope flavor\n");
+    return -1;
+  }
+
+  if (!strncmp(d_dataset->heightPlaneName->string(), height_channel, strlen(height_channel))) {
       // We are not looking at Z Piezo as our height plane
       // XXX Directz doesn't work with anything but Z Piezo, yet.
-      fprintf (stderr, "WARNING: EnterDirectZControl Height plane not Z Piezo, "
-	       "Direct Z control will probably not work!\n");
+      fprintf (stderr, "WARNING: EnterDirectZControl Height plane not %s "
+	       "Direct Z control will probably not work!\n", height_channel);
   }
   msgbuf = encode_EnterDirectZControl(&len, _max_z_step, 
 				      _max_xy_step, _min_setpoint, 

@@ -748,11 +748,22 @@ void nmui_HSDirectZ::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scop
   d_planePosPH[1] = d_handPosMS[1];
   d_planePosPH[2] = value->value() * plane->scale();
 
-  // Get the current value of the internal sensor, which tells us
+  // Get the current value of the error signal, which tells us
   // the force the tip is experiencing.
 
-  forcevalue = scope->state.data.inputPoint->getValueByName
-                       ("Internal Sensor");
+  const char *error_channel;
+  if (nmb_MicroscopeFlavor == Topometrix) {
+    error_channel = "Internal Sensor";
+  } else if (nmb_MicroscopeFlavor == Asylum) {
+    if (scope->state.image.mode == TAPPING) {
+      error_channel = "Amplitude";
+    } else {
+      error_channel = "Deflection";
+    }
+  } else {
+    fprintf(stderr,"nmui_HSDirectZ::update(): Unknown microscope flavor\n");
+  }
+  forcevalue = scope->state.data.inputPoint->getValueByName(error_channel);
 
   if (!forcevalue) {
     fprintf(stderr, "nmui_HSDirectZ::update():  NULL force value.\n");
@@ -762,7 +773,7 @@ void nmui_HSDirectZ::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scop
   currentForce = forcevalue->value();
 
   // Calculate the difference from the free-space value of
-  // internal sensor recorded when we entered direct-z control
+  // error recorded when we entered direct-z control
   d_force = currentForce
              - scope->state.modify.freespace_normal_force;
 
@@ -777,7 +788,7 @@ void nmui_HSDirectZ::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scop
 void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
 
 // The force should be a force-field, proportional to the difference between
-// the free-space internal sensor and the current internal-sensor, scaled by
+// the free-space error signal and the current internal-sensor, scaled by
 // the direct_z_force_scale, a tclvar float whose widget should be in the live
 // modify controls dialog.
 

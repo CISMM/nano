@@ -291,27 +291,28 @@ proc flip_optimize_selection_mode {optimize_mode_param element op} {
 
 ####################################################
 # Recursive procedure called by enforce_directz_heightplane
-# to set the heightplane to Z Piezo. We have to wait
-# for the AFM to respond so that Z Piezo is available to choose.
+# to set the heightplane to the one that it needs to be
+# based on the microscope that is open. We have to wait
+# for the AFM to respond so that this field is available to choose.
 ####################################################
 proc set_directz_heightplane { plane_name { rec_level 0 } } {
     global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
     global newmodifyp_control
-    # Check to see if Z Piezo is available in height plane list. 
+    # Check to see if plane_name is available in height plane list. 
     set id [lsearch -exact $inputPlaneNames $plane_name]
     #puts "$plane_name next $rec_level"
     if { $id != -1 } {
-        set response [tk_messageBox -type okcancel -title "Z Piezo Heightfield" \
+        set response [tk_messageBox -type okcancel -title "$plane_name Heightfield" \
                 -parent .modify -default ok -message "
 The Direct Z control requires that 
-Z Piezo (Forward or Reverse) be displayed as the 
+$plane_name (Forward or Reverse scan) be displayed as the 
 heightfield. 
 Press OK to use $plane_name as the heightfield.
 Press Cancel to resolve yourself." ]
         switch -- $response {
             ok {
-                puts "DirectZ: Setting Z Piezo as heightplane"
-                # Switch to viewing Z Piezo. 
+                puts "DirectZ: Setting $plane_name as heightplane"
+                # Switch to viewing plane_name. 
                 #Doesn't send change to C: 
                 #$nmInfo(z_mapping).z_dataset select $id
                 # but this works:
@@ -326,7 +327,7 @@ Press Cancel to resolve yourself." ]
         }
     } elseif { $rec_level > 15 } {
         # We've waited more that 1.5 seconds, give up.
-        tk_messageBox -type ok -title "Z Piezo Heightfield" \
+        tk_messageBox -type ok -title "#plane_name Heightfield" \
                 -parent .modify -default ok -message "
 Direct Z control is unable to set 
 $plane_name as the heightfield. 
@@ -343,38 +344,52 @@ Direct Z control."
 
 ####################################################
 # Direct Z requires that the height plane be
-# Z Peizo forward or reverse. Put up a dialog
+# the one corresponding to the Z piezo.  Which this
+# is depends on the particular microscope type that
+# is open.  It can be either a forward or a backward
+# scan.  Put up a dialog
 # to enforce that requirement.
 ####################################################
 proc enforce_directz_heightplane {} {
     global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
-    global newmodifyp_control
+    global newmodifyp_control microscopeflavor
+
+    if { $microscopeflavor == "Asylum" } {
+	set z_piezo "ZSensor"
+	set forward "Trace"
+	set backward "Retrace"
+    } else {
+	set z_piezo "Z Piezo"
+	set forward "Forward"
+	set backward "Backward"
+    }
+
     # Check to see if height plane is Z Piezo forward/reverse
-    if { !([string equal "$z_comes_from" "Z Piezo-Forward"] || \
-            [string equal "$z_comes_from" "Z Piezo-Reverse"]) } {
+    if { !([string equal "$z_comes_from" "$z_piezo-$forward"] || \
+            [string equal "$z_comes_from" "$z_piezo-$backward"]) } {
         # Check to see that Z Piezo is being collected as a scan dataset
-        set id2 [lsearch -exact $scandatalist {Z Piezo-Forward}]
-        set id3 [lsearch -exact $scandatalist {Z Piezo-Reverse}]
+        set id2 [lsearch -exact $scandatalist "$z_piezo-$forward"]
+        set id3 [lsearch -exact $scandatalist "$z_piezo-$backward"]
         if { $id2 == -1 || $id3 == -1 } { 
-            nano_error "Internal: Z Piezo not available as scan dataset"
+            nano_error "Internal: $z_piezo not available as scan dataset"
             return
         }
         # Variable is 1 if Z Piezo is selected. 
         if { (!$data_sets(scan$id2)) && (!$data_sets(scan$id3)) } {
             # Neither is selected, so ask the user if they want to 
-            # select Z Piezo Forward
+            # select $z_piezo $forward
             set response [tk_messageBox -type okcancel -title "Scan Z Piezo" \
                     -parent .modify -default ok -message "
 The Direct Z control requires that 
-Z Piezo (Forward or Reverse) be collected
+$z_piezo ($forward or $reverse) be collected
 as a scan dataset and displayed as the 
 heightfield. 
-Press OK to begin collecting Z Piezo Forward.
+Press OK to begin collecting $z_piezo-$forward.
 Press Cancel to resolve yourself." ]
             switch -- $response {
                 ok {
                     $nmInfo(data_sets).scan.scanbutton$id2 select
-                    after 100 [list set_directz_heightplane "Z Piezo-Forward" ]
+                    after 100 [list set_directz_heightplane "$z_piezo-$forward" ]
                     return
                 }
                 cancel {
@@ -384,12 +399,12 @@ Press Cancel to resolve yourself." ]
                 }
             }
         }
-        # Otherwise, Z Piezo being collected, but is not the height plane
+        # Otherwise, $z_piezo being collected, but is not the height plane
         # Ask user to make it the height plane. 
         if { $data_sets(scan$id2) } {
-            set_directz_heightplane "Z Piezo-Forward" 
+            set_directz_heightplane "$z_piezo-$forward" 
         } elseif { $data_sets(scan$id3) } {
-            set_directz_heightplane "Z Piezo-Reverse"
+            set_directz_heightplane "$z_piezo-$reverse"
         }
     } else {
         #puts "nothing to be done."

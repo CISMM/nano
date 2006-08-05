@@ -1,3 +1,11 @@
+2005-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+	
+	* nmg_Surface.C : More Asylum native changes.  I think
+		mostly white-space and comment changes at this
+		point.
+	* nmg_SurfaceRegion.C : Same.
+	* surface_strip_create.c : Same.
+
 2005-08-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* chartjunk.c : Cleanup/comment/white space.

@@ -807,7 +807,7 @@ determineInterval(nmb_Dataset *dataset,
     } 
   }
 
-    return (!d_update.empty() || !d_color_update.empty());
+  return (!d_update.empty() || !d_color_update.empty());
 }
 
 /**
@@ -968,8 +968,6 @@ int nmg_SurfaceRegion::build_list_set (
         }
 #endif
         d_num_lists = new_num_lists;
-
-        
     }
     if (d_VertexArrayDim < (unsigned)d_num_lists) {
         // I got this problem when the height plane changed resolutions
@@ -1037,11 +1035,7 @@ int nmg_SurfaceRegion::build_list_set (
     glTexGenfv(GL_Q, GL_OBJECT_PLANE, eyePlaneQ);
     if (report_gl_errors()) {
         printf(" Error calling glTexGen.\n");
-    } 
-    
-
-
-
+    }
 #endif
     
     if (state->VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY

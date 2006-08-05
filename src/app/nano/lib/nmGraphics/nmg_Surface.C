@@ -401,7 +401,7 @@ rebuildInterval(nmg_State * state)
     }
 
     if (d_dataset != NULL) {
-        // Call default region first because it's mask depends on
+        // Call default region first because its mask depends on
         // other masks, and whether they've been changed. 
         if (d_defaultRegion->rebuildInterval(d_dataset, state, low_row, 
                                       high_row, d_display_lists_in_x)) {
@@ -413,7 +413,6 @@ rebuildInterval(nmg_State * state)
                 return -1;
             }
         }
-
     }
     return 0;
 }

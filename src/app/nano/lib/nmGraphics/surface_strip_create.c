@@ -768,7 +768,7 @@ int spm_y_strip_masked(nmg_State * state,
             else {
                 if (describe_gl_vertex(state, planes, surfaceColor,x,y,
                                        &(vertexArray[vert]))) {
-                    fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
+                    fprintf(stderr, "spm_y_strip_masked:  describe_gl_vertex() failed.\n");
                     return(-1);
                 }
                 vert++;
