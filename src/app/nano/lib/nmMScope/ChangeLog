@@ -1,3 +1,7 @@
+2006-11-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* directstep.C:  removed some unnecessary print statements.
+
 2006-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* active_set.C : More Asylum native code.

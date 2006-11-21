@@ -322,17 +322,14 @@ void directStep_mainloop( )
 	{
 		if( lastDir == DS_X_STEP )
 		{
-			printf( "DS x step, keep running\n" );
 			handle_take_x_step( 0, NULL );
 		}
 		else if( lastDir == DS_Y_STEP )
 		{
-			printf( "DS y step, keep running\n" );
 			handle_take_y_step( 0, NULL );
 		}
 		else if( lastDir == DS_Z_STEP )
 		{
-			printf( "DS z step, keep running\n" );
 			handle_take_z_step( 0, NULL );
 		}
 		// else do nothing
