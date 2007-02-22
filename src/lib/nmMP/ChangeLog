@@ -1,3 +1,7 @@
+2007-02-22  Ryan Schubert  <res@cs.unc.edu>
+
+	* *.vcproj : Added Visual Studio 8 (.NET 2005) project files
+
 2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* thread.h : Needed another #include file for Linux.
