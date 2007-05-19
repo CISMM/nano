@@ -1,3 +1,7 @@
+2007-05-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* microscape.h : Changed minor version number.
+
 2006-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* interaction.C : More Asylum native code.  This time to
