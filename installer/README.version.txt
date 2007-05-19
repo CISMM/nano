@@ -2,6 +2,9 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.3:	 (May 19, 2007)
+	- added "-microscope_type" flag to provide native support for
+	  Asylum microscope.
 12.2:  (June 22, 2006)
 	- added a "keep stepping" option to the direct-step tool
 	  that will cause it to keep stepping as if a button

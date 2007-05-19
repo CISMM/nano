@@ -7,7 +7,7 @@ set TRACKER=null Phantom
 set BDBOX=Magellan
 REM set BDBOX=null
 set PATH=c:\nsrg\external\pc_win32\bin;%NANO_ROOT%/bin/;%PATH%
-nano.exe
+nano.exe -microscope_type Asylum
 if not errorlevel 0 pause
 
 REM set V_DISPLAY=workbench
