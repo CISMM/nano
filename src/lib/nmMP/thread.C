@@ -406,7 +406,7 @@ int Semaphore::condP() {
   // Posix by default
   iRetVal = sem_trywait(&semaphore);
   if (iRetVal == 0) {  iRetVal = 1;
-  } else if (iRetVal == EAGAIN) { iRetVal = 0;
+  } else if (errno == EAGAIN) { iRetVal = 0;
   } else {
     perror("Semaphore::condP: ");
     iRetVal = -1;
@@ -604,6 +604,14 @@ unsigned Thread::number_of_processors() {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.6  2006/04/08 02:08:57  taylorr
+  2006-04-07  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+  	* thread.h : Ported to use Pthreads by default if not on
+  		SGI or Windows.  If it is on linux, then it can still
+  		tell you how many processors there are; otherwise, not.
+  	* thread.C : Same.
+
   Revision 1.4  2001/12/18 20:41:28  marshbur
 
           * thread.C: remove compiler warnings

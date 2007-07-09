@@ -1,3 +1,9 @@
+2007-07-09  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* thread.C : Fixed bug in condP() on Posix;
+		it will now handle the case where the
+		semaphore runs out of counts.
+
 2007-02-22  Ryan Schubert  <res@cs.unc.edu>
 
 	* *.vcproj : Added Visual Studio 8 (.NET 2005) project files
