@@ -15,9 +15,8 @@
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored
 #pragma warning( push )
-#pragma warning( disable : 4290 )
+#pragma warning( disable : 4290 4996 )
 #endif
-
 
 nmb_FlattenedPlane::
 nmb_FlattenedPlane( const char* inputPlaneName,

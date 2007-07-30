@@ -31,11 +31,16 @@
 #include <unistd.h>
 #endif
 
-
 #include "BCGrid.h"
 #include "BCPlane.h"
 #include "MicroscopeFlavors.h"
 #include "nmb_ImgMagick.h"
+
+#ifdef _WIN32
+// Turns off warnings for Visual Studio compiler
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
 
 //#include "readNanoscopeFile.h"
 //#include "readNanoscopeFile.C" // Include BCGrid functions to read DI files
@@ -1643,3 +1648,7 @@ ostream& operator << (ostream& os, BCGrid* grid)
     
     return os;
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

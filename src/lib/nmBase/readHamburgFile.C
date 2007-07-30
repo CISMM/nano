@@ -13,6 +13,12 @@
 #include "BCPlane.h"
 #include "readHamburgFile.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /* local defines
 **/
 #define CTL_Z	(26)
@@ -309,3 +315,7 @@ BCGrid::transformHamburg(short* datum, nmb_hhImageInfo * file_info, int do_swap)
 	return -1;
     }
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

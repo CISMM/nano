@@ -28,6 +28,12 @@ int write( int fildes, const void *buf, size_t nbyte );
 
 #include <iostream>
 
+#ifdef _WIN32
+// Turns off warnings for Visual Studio compiler
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 #ifndef	min
 #define min(x,y) ( (x) < (y) ? (x) : (y) )
 #endif
@@ -2240,3 +2246,6 @@ ostream& operator << (ostream& os, BCPlane* plane)
     return os;
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

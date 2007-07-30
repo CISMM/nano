@@ -10,6 +10,12 @@
 #include <string.h>  // strcmp(), strncmp(), strncpy()
 #include <stdio.h>  // fprintf()
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 nmb_ListOfStrings::nmb_ListOfStrings (void) :
     d_numEntries (0) {
     for(int i =0; i< NUM_ENTRIES; i++) {
@@ -203,3 +209,6 @@ nmb_String * allocate_nmb_String (const char * iv) {
   return new nmb_String (iv);
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

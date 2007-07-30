@@ -1,3 +1,30 @@
+2007-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* BCGrid.C : Making it compiled without
+		warnings under VS 2005.
+	* BCPlane.C : Same.
+	* PPM.C : Same.
+	* Point.C : Same.
+	* Topo.C : Same.
+	* Topo.h : Same.
+	* nmBase.vcproj : Same.
+	* nmb_CalculatedPlane.C : Same.
+	* nmb_CalculatedPlane.h : Same.
+	* nmb_Colormap.C : Same.
+	* nmb_Dataset.C : Same.
+	* nmb_Device.C : Same.
+	* nmb_FlattenedPlane.C : Same.
+	* nmb_ImgMagick.C : Same.
+	* nmb_LBLFlattenedPlane.C : Same.
+	* nmb_MorphologyPlane.C : Same.
+	* nmb_String.C : Same.
+	* nmb_SummedPlane.C : Same.
+	* readHamburgFile.C : Same.
+	* readNanoscaopeFile.C : Same.
+	* readHamburgFile.C : Same.
+	* vc_dirent.c : Same.
+	* wsxmHeader.c : Same.
+
 2007-02-22  Ryan Schubert  <res@cs.unc.edu>
 
 	* *.vcproj : Added Visual Studio 8 (.NET 2005) project files

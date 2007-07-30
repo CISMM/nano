@@ -14,6 +14,12 @@
 #include <ctype.h>
 #include "wsxmHeader.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /***********************************************************************
 *
 *	Function void HeaderInit (HEADER *pHeader);
@@ -858,9 +864,9 @@ int HeaderGetSize (HEADER *pHeader)
 		iSize += sizeof (IMAGE_HEADER_END_TEXT) + 2 + 4;
 
 		/* adds the size of the characteres for the image header size in pre-header */
-		iNumDigits = (int)floor(log10(iSize)) + 1;
+		iNumDigits = (int)floor(log10(static_cast<double>(iSize))) + 1;
 		iSize += iNumDigits;
-		if (iNumDigits != (int)floor((log10(iSize)) + 1))
+		if (iNumDigits != (int)floor((log10(static_cast<double>(iSize))) + 1))
 			iSize++;
 	}
 
@@ -1027,4 +1033,6 @@ void ReplaceStringInString (char *szDest, const char *szOld, const char *szNew)
 	strcpy (szDest, szAuxString);
 }
 
-
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

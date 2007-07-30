@@ -14,10 +14,10 @@
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored
 #pragma warning( push )
-#pragma warning( disable : 4290 )
+#pragma warning( disable : 4290 4996 )
 #endif
 
-#include <BCPlane.h>
+#include "BCPlane.h"
 class nmb_Dataset; // declare instead of include to avoid circular dependencies
 #include <vrpn_Connection.h>
 

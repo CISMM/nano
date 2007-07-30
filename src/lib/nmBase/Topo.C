@@ -19,6 +19,12 @@ int write( int fildes, const void *buf, size_t nbyte );
 #include "Topo.h"
 #include "nmb_Image.h"
 
+#ifdef _WIN32
+// Turns off warnings for Visual Studio compiler
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /**
 * Assumes the .release is filled in.  Looks for #Rn.n# OFFSET
 * Fills in .verNumber with n.nn (2.30 = 230, 3.00 = 300, etc)
@@ -1989,3 +1995,7 @@ TopoFile::~TopoFile()
     if(header!=NULL) delete [] header;
     if(griddata!=NULL) delete [] griddata;
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

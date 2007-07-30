@@ -15,6 +15,11 @@
 
 #include "filter.h"  // for filter_plane
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 #ifndef min
 #define min(a,b) ((a)<(b) ? (a) : (b))
 #endif
@@ -332,7 +337,7 @@ int nmb_Dataset::computeAdhesionFromDeflection
   char    num[10];
   string newname;
   int     x,y, plane;
-  char    *ffl_in_first, *ffl_in_last;
+  const char    *ffl_in_first, *ffl_in_last;
   char    basename[1000];
 
   //
@@ -549,3 +554,6 @@ float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
 
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

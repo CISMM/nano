@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include "Point.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 //----------------------------------------------------------------------
 // Point_value methods
 //----------------------------------------------------------------------
@@ -285,7 +291,7 @@ int Point_list::numEntries (void) const
 
 const Point_results * Point_list::entry (int which) const
 {
-  if( ( which < 0 ) || ( which >= _entries.size() - 1 ) )
+  if( ( which < 0 ) || ( which >= static_cast<int>(_entries.size() - 1) ) )
   {
     return NULL;
   }
@@ -306,7 +312,7 @@ int Point_list::addEntry(const Point_results &p)
 void Point_list::clear(void)
 {
 	if( _entries.empty( ) ) return;
-	for( int i = 0; i <= _entries.size() - 1; i++ )
+	for( int i = 0; i <= static_cast<int>(_entries.size() - 1); i++ )
 	{
 		if( _entries[i] != NULL ) 
 		{
@@ -319,7 +325,7 @@ void Point_list::clear(void)
 
 string * Point_list::outputToText()
 {
-    int	i, numValues;
+    unsigned	i, numValues;
     double	last_x, last_y /*, last_z*/;
     long	first_sec,first_usec;
     double	s, time;
@@ -420,3 +426,6 @@ string * Point_list::outputToText()
     return result;
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

@@ -13,6 +13,12 @@
 #include "BCPlane.h"
 #include "wsxmHeader.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 // local defines
 #define CTL_Z	(26)
 #define BSLASH	'\\'
@@ -258,3 +264,7 @@ BCGrid::parseNanotecV2 (nmb_NanotecImageInfo * curr_info, char * header_text)
 
 }
 */
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

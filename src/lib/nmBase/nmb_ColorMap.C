@@ -13,6 +13,11 @@
 #include	"nmb_ColorMap.h"
 #include        "nmb_String.h"
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /* Plans, 10/25/00 Aron Helser 
 
 Should add a solid-color "map", which always returns a single color.  Method
@@ -489,3 +494,7 @@ void	nmb_ColorMap::lookup (float value,
     lookup(value, r, g, b, a);
     
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

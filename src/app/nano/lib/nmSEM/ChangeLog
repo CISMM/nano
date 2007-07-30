@@ -1,3 +1,9 @@
+2007-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmm_Microscope_SEM_Remote.C : Making it compiled without
+		warnings under VS 2005.
+	* nmui_SEM.C : Same.
+
 2007-02-22  Ryan Schubert  <res@cs.unc.edu>
 
 	* *.vcproj : Added Visual Studio 8 (.NET 2005) project files

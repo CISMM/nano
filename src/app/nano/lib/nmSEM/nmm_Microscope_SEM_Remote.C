@@ -1,5 +1,11 @@
 #include "nmm_Microscope_SEM_Remote.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     (const char * name, vrpn_Connection *cn):
     nmb_Device_Client(name, cn?cn:vrpn_get_connection_by_name(name)),
@@ -1123,3 +1129,7 @@ int nmm_Microscope_SEM_Remote::notifyMessageHandlers(
   }
   return 0;
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

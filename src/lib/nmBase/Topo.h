@@ -6,7 +6,7 @@ class nmb_Image;
 #include "afmstm.h"  // for another 15 #defines
 
 #include <stdlib.h>  // free()
-#include <nmb_Types.h>
+#include "nmb_Types.h"
     // architecture-independent sizes
 
 /*

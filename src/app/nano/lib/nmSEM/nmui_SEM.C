@@ -5,6 +5,12 @@
 #include "nmg_Graphics.h"
 #include <nmui_ColorMap.h>
 
+#ifdef _WIN32
+// Turns off warnings for Visual Studio compiler
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 extern nmb_Dataset * dataset;
 extern nmg_Graphics * graphics;
 
@@ -462,3 +468,7 @@ int nms_SEM_ui::set_tcl_callbacks()
    CMap->addMinMaxCallback(handle_colormap_minmax_change, this);
    return 0;
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

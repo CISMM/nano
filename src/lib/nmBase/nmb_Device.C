@@ -8,6 +8,11 @@
 
 #include <vrpn_RedundantTransmission.h>
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 char * nmb_Device::encode_RequestSynchronization (long *len,
           vrpn_int32 operation_id, vrpn_int32 synch_id,
           const char *comment)
@@ -560,3 +565,6 @@ int nmb_Device_Server::handle_RequestSynchronization(void *userdata,
   return me->dispatchMessage(len, msgbuf, me->d_Synchronization_type);
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

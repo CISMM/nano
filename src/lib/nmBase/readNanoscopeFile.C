@@ -13,6 +13,12 @@
 #include "BCPlane.h"
 #include "readNanoscopeFile.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /* local defines
 **/
 #define CTL_Z	(26)
@@ -821,3 +827,7 @@ BCGrid::transform(short* datum, nmb_diImageInfo * file_info, int do_swap)
 
 }
 
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

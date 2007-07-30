@@ -29,6 +29,12 @@
 
 #include <vc_dirent.h>
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 #define SUFFIX	"*"
 #define	SLASH	"\\"
 #define streq(a,b)	(strcmp(a,b)==0)
@@ -318,3 +324,6 @@ seekdir (DIR* dirp, long lPos)
 	}
 }
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

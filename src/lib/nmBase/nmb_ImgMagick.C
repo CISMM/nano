@@ -10,12 +10,19 @@
 #include <time.h>
 #include <sys/types.h>
 #define QuantumLeap
+#define _LIB  // Needed for ImageMagick to build and link statically.
 #include <magick/api.h>
 
 #include "BCGrid.h"
 #include "BCPlane.h"
 #include "nmb_Image.h"
 #include "nmb_ImgMagick.h"
+
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
 
 /** Initialize ImageMagick library. Pass in argv[0] */
 void nmb_ImgMagick::initMagick(char * argv) {
@@ -311,3 +318,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     DestroyImage(image);
     return(0);
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

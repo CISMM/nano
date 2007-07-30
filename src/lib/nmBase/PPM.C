@@ -13,6 +13,12 @@
 #include	<ctype.h>
 #include	"PPM.h"
 
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 4996 )
+#endif
+
 /**	This routine will read an integer from the file whose descriptor
  * that is passed to it.  White space before the integer will be skipped.
  * One character past the integer will be read, so it will hopefully be
@@ -468,3 +474,7 @@ int	PPM::Write_to(FILE *outfile)
 
 	return(0);
 }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
