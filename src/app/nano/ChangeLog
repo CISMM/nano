@@ -1,3 +1,9 @@
+2008-01-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* microscape.C : Changed a warning message about
+		round-trip time from happening every frame
+		to only happening once per run.
+
 2007-05-19  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.h : Changed minor version number.

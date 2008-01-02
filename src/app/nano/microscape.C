@@ -7322,8 +7322,12 @@ void update_rtt (void) {
 
     scp = (vrpn_Connection *) microscope_connection;
 
-    fprintf(stderr,"update_rtt(): This function relied on vrpn_Clock functions, which no longer exist.\n");
-    fprintf(stderr,"              It needs to be re-implemented another way.\n");
+    static bool first_time = true;
+    if (first_time) {
+      fprintf(stderr,"update_rtt(): XXX This function relied on vrpn_Clock functions, which no longer exist.\n");
+      fprintf(stderr,"              It needs to be re-implemented another way if we're relying on round-trip time.\n");
+      first_time = false;
+    }
     /*XXX
     if ((!scp) || (!scp->pClockRemote)) {
       fprintf(stderr,"Warning: Calling update_rtt when pClockRemote == NULL\n");
