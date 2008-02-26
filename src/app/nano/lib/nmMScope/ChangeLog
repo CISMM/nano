@@ -1,3 +1,9 @@
+2008-02-25  David Marshburn  <marshburn@cs.unc.edu>
+
+	* nmMScopeGenerate.dsp:  no apparent change in this file, 
+	   although visual studio recognizes the custom build rules now.
+	* generate.sh:  fixed line endings.
+
 2006-11-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* directstep.C:  removed some unnecessary print statements.
