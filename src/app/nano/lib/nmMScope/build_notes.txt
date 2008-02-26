@@ -1,0 +1,13 @@
+02/25/2008
+david marshburn
+
+i had to do the following to get the generated files built:
+
+cvs checkout nano-cygwin-homedir-stuff
+ follow the directions there for downloading and configuring cygwin
+
+from http://sourceforge.net/project/showfiles.php?group_id=99645,
+downloaded perl-Parse-RecDescent.
+unzipped the file and copied Parse\ from ...\usr\lib\perl5\site_perl\5.8.2\
+to C:\cygwin\lib\perl5\site_perl\5.8
+

@@ -3,6 +3,8 @@
 	* nmMScopeGenerate.dsp:  no apparent change in this file, 
 	   although visual studio recognizes the custom build rules now.
 	* generate.sh:  fixed line endings.
+	* build_notes.txt:  notes on what i had to do to get the 
+	generated files created.
 
 2006-11-21  David Marshburn  <marshbur@cs.unc.edu>
 
