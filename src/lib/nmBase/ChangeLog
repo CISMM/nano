@@ -1,3 +1,8 @@
+2008-03-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmb_Decoration.C : Changed to use the new method of
+		opening a VRPN server connection.
+
 2007-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* BCGrid.C : Making it compiled without

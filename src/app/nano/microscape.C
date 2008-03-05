@@ -6920,7 +6920,7 @@ VERBOSE(1, "g>In graphics thread.\n");
 
   // start a server connection
 VERBOSE(1, "g>Graphics thread starting vrpn server\n");
-  c = new vrpn_Connection (wellKnownPorts->graphicsControl);
+  c = vrpn_create_server_connection(wellKnownPorts->graphicsControl);
 
   // start a graphics implementation
 VERBOSE(1, "g>Graphics thread starting graphics implementation\n");
@@ -7067,7 +7067,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       fprintf(stderr, "Running local GL graphics implementation PLUS "
               "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
               "    THIS MODE IS FOR TESTING ONLY.\n");
-      shmem_connection = new vrpn_Connection
+      shmem_connection = vrpn_create_server_connection
                             (wellKnownPorts->graphicsControl);
       gi = new nmg_Graphics_Implementation (
           dataset, surfC, rulerPPMName, vizPPMName,
@@ -7081,12 +7081,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Connection
+              vrpn_create_server_connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Connection
+              vrpn_create_server_connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7104,12 +7104,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Connection
+              vrpn_create_server_connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Connection
+              vrpn_create_server_connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7127,12 +7127,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Connection
+              vrpn_create_server_connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Connection
+              vrpn_create_server_connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7150,12 +7150,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
               "    THIS MODE IS FOR TESTING ONLY.\n");
 
       renderServerOutputConnection =
-              new vrpn_Connection
+              vrpn_create_server_connection
                         (wellKnownPorts->remoteRenderingData);
 
       //renderServerControlConnection = renderServerOutputConnection;
       renderServerControlConnection = 
-              new vrpn_Connection
+              vrpn_create_server_connection
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
@@ -7293,7 +7293,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
 void initialize_rtt (void) {
 
-  rtt_server_connection = new vrpn_Connection
+  rtt_server_connection = vrpn_create_server_connection
            (wellKnownPorts->roundTripTime);
   rtt_server = new vrpn_Analog_Server ("microscope_rtt",
                                        rtt_server_connection);
@@ -8118,7 +8118,7 @@ int main (int argc, char* argv[])
     sprintf(phantomlog, "%s/phantom-%d.log", istate.phantomLogPath,
             istate.logTimestamp.tv_sec);
 
-    internal_device_connection = new vrpn_Connection 
+    internal_device_connection = vrpn_create_server_connection
            (wellKnownPorts->localDevice,
             istate.logPhantom ? phantomlog : NULL);
 

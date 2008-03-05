@@ -83,7 +83,7 @@ vrpn_Connection * getServer (int port,
                 "Opening peer server on port %d, NIC %s; any logging is to %s and %s\n",
                 port, NIC_IP, inbuf, outbuf);
 
-  return new vrpn_Connection
+  return vrpn_create_server_connection
         (port,
          loggingInterface ? inbuf : NULL, 
          loggingInterface ? outbuf : NULL, 
@@ -330,7 +330,7 @@ void CollaborationManager::initialize
                               d_NIC_IP);
     if( d_log )
       d_interfaceLog 
-        = new vrpn_Connection( d_interfaceLogPort, NULL,
+        = vrpn_create_server_connection( d_interfaceLogPort, NULL,
                                             isLoggingInterface() ? sfbuf : NULL, 
                                             d_NIC_IP );
   }

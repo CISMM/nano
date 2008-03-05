@@ -1,3 +1,10 @@
+2008-03-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* CollaborationManager.C : Changed to use the new method of
+		opening a VRPN server connection.
+	* imagerPlugin.C : Same.
+	* microscape.C : Same.
+
 2008-01-02  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* microscape.C : Changed a warning message about

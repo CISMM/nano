@@ -60,7 +60,7 @@ imagerPlugin::imagerPlugin(nmb_Dataset *data_set) :
 
   // Create the connection on which traffic to and from this imager
   // will flow.
-  d_connection = new vrpn_Connection(g_port_number);
+  d_connection = vrpn_create_server_connection(g_port_number);
   if (d_connection == NULL) {
     fprintf(stderr,"imagerPlugin::imagerPlugin(): Cannot create connection, becoming inactive\n");
     return;
