@@ -722,17 +722,13 @@ proc set_ds_axis {nm el op} {
 
 }
 
-proc reset_ds_obj { } {
-global import_transx import_transy import_transz
-global import_rotx import_roty import_rotz
-set import_transx 0
-set import_transy 0
-set import_transz 0
 
-set import_rotx 0
-set import_roty 0
-set import_rotz 0
+proc reset_ds_obj { } {
+	global do_reset_import_obj
+	set do_reset_import_obj 1
 }
+
+
 proc set_ds_grab_object { } {
 global import_grab_object
 global user_0_mode
