@@ -1,3 +1,8 @@
+2008-03-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* globject.c (make_ds_sphere_axis):  corrects the calculation
+	of the size of the axis object.
+
 2005-08-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 	
 	* nmg_Surface.C : More Asylum native changes.  I think

@@ -1400,16 +1400,15 @@ int make_blue_line (nmg_State * state, const float a[], const float b[])
 //will be created
 int make_ds_sphere_axis (nmg_State *state, const q_type rot )
 {
-
-	//int scale = state->inputGrid->getPlaneByName(state->heightPlaneName)->maxX
 	BCPlane *plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
-	int size = plane->maxX() - plane->minY();
+	int size = plane->maxX() - plane->minX();
 
 	//factor to scale axis by
 	int axis_scale = size * .05;
 
 	//size of tick mark
-	//the tick size will be double this number, in NM (reletive to everything else on the screen) i think
+	//the tick size will be double this number, in NM 
+	// (relative to everything else on the screen) i think
 	int tick_size = axis_scale *.12;
 
 	//these are the axes vectors when they are not rotated
