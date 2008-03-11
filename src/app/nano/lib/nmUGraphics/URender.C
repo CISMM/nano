@@ -136,14 +136,10 @@ int URender::ChangeStaticFile(void* userdata) {
 		import_scale = this->GetLocalXform().GetScale();
 	}
 
-
 	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
-
 	q_vec_type q2, q3;
-
 	q_vec_copy(q2, q1);
 	q_vec_copy(q3, q1);
-
 	q_vec_scale(q2, csf.scale, q2);
 
 	this->GetLocalXform().SetTranslate(q2);
@@ -158,6 +154,7 @@ int URender::ChangeStaticFile(void* userdata) {
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
+
 
 int URender::ChangeHeightPlane(void* userdata) {
 	// modifies the scale and translation so appears in same place...
@@ -175,6 +172,47 @@ int URender::ChangeHeightPlane(void* userdata) {
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
+}
+
+
+int URender::ResetAll( void* userdata )
+{
+	extern Tclvar_float import_transx;
+	extern Tclvar_float import_transy;
+	extern Tclvar_float import_transz;
+	extern Tclvar_string current_object;
+	extern Tclvar_float import_rotx;
+	extern Tclvar_float import_roty;
+	extern Tclvar_float import_rotz;
+
+    if (this->name == NULL) {
+        if(recursion) return ITER_CONTINUE;
+	    else return ITER_STOP;
+    }
+
+	change_static_file csf = *(change_static_file*) userdata;
+
+	this->GetLocalXform().SetXOffset(csf.xoffset);
+	this->GetLocalXform().SetYOffset(csf.yoffset);
+	this->GetLocalXform().SetZOffset(csf.zoffset);
+	this->GetLocalXform().SetRotate( 0.0, 0.0, 0.0, 1.0 );
+	this->GetLocalXform().SetTranslate( 0, 0, 0 );
+
+	// if current object, update the tcl stuff
+	if (strcmp(this->name, current_object.string()) == 0) 
+	{
+		// import_scale = this->GetLocalXform().GetScale();
+		import_transx = 0; //q2[0];
+		import_transy = 0; //q2[1];
+		import_transz = 0; //q2[2];
+		import_rotx = 0;
+		import_roty = 0;
+		import_rotz = 0;
+	}
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+
 }
 
 

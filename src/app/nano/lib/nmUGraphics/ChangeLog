@@ -1,3 +1,9 @@
+2008-03-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* URendger.C/h (ResetAll):  new, resets all the rotations
+	and translations to zero and updates the offsets with 
+	those specified.
+
 2005-04-25  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* URProjectiveTexture.C : Whitespace changes.

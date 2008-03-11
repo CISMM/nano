@@ -214,9 +214,19 @@ public:
 	virtual int SetProjTextureAll(void *userdata=NULL);
 	virtual int SetTextureTransformAll(void *userdata=NULL);
 
-	virtual int ChangeStaticFile(void *userdata=NULL);
-	virtual int ChangeHeightPlane(void *userdata=NULL);
-	virtual int ChangeDataset(void *userdata=NULL);
+	// resets all the rotations and translations to 0.  
+	// sets the offsets to the given values.  scale is ignored.
+	// userdata should be of type change_static_file*
+	virtual int ResetAll( void* userdata );
+
+	// userdata should be of type change_static_file*
+	virtual int ChangeStaticFile( void* userdata );
+
+	// userdata should be of type double*
+	virtual int ChangeHeightPlane( void* userdata );
+
+	// userdata should be of type nmb_Dataset*
+	virtual int ChangeDataset( void* userdata );
 
 	virtual void ReloadGeometry();
 
