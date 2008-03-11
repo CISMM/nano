@@ -1,0 +1,9 @@
+
+#ifndef __VERSION_H
+#define __VERSION_H
+
+#define	MICROSCAPE_MAJOR_VERSION	(12)
+#define	MICROSCAPE_MINOR_VERSION	(4)
+
+
+#endif // __VERSION_H

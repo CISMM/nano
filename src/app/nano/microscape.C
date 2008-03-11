@@ -157,6 +157,7 @@ pid_t getpid();
 #include "minit.h"
 #include "microscape.h"
 #include "index_mode.h"
+#include "version.h"
 
 #include "error_display.h"
 /*********** Import Objects **************/
@@ -295,7 +296,7 @@ static void handle_colormap_change(const char *new_value, void *userdata);
 static void handle_color_dataset_change (const char *, void * _mptr);
 
 /// Default location for colormaps, if NANO_ROOT is not set. 
-static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
+static	char	defaultColormapDirectory[] = ".\\share\\colormaps";
 /// This is a string that lets the user choose a color map to use.
 static	char	*colorMapDir = NULL;
 
@@ -1408,7 +1409,7 @@ static TwoDLineStrip * teststrip = NULL;
 #endif
 
 
-static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
+static char tcl_default_dir [] = ".\\share\\tcl\\";
 
 
 /************

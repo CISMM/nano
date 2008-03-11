@@ -129,12 +129,10 @@ int				current_leg = -1;		// integer value of the current leg
 										// set when the tcl string value is changed
 
 //-----------------------------------------------------------------
-///SimulatedMicroscope object
+// stuff from microscape.C
 extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
-
-//-----------------------------------------------------------------
-///nmg_Graphics object
 extern nmg_Graphics* graphics;
+extern nmb_Dataset * dataset;
 
 //-----------------------------------------------------------------
 ///MSI File specific variables
@@ -145,6 +143,39 @@ Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
 //variables for direct step axis
 Tclvar_int   set_ds_axis("setting_direct_step_axis", 0, handle_set_ds_axis);
 extern int setting_axis;
+void handle_do_reset_import_obj( vrpn_int32 val, void* );
+TclNet_int reset_import_obj( "do_reset_import_obj", 0, handle_do_reset_import_obj, NULL );
+
+void handle_do_reset_import_obj( vrpn_int32 val, void* )
+{
+	printf( "handle_do_reset_import_obj:  val is %d\n", val );
+	if( val != 0 )
+	{
+		if( dataset != NULL && &World.TGetContents() != NULL) 
+		{
+		    change_static_file csf;
+			csf.scale = 1.0;
+			csf.xoffset = dataset->inputGrid->minX();
+			csf.yoffset = dataset->inputGrid->minY();
+			csf.zoffset = dataset->inputGrid->getPlaneByName
+				(dataset->heightPlaneName->string())->minNonZeroValue();
+			World.Do(&URender::ResetAll, &csf);
+			
+		}
+		else
+		{
+			import_transx = 0;
+			import_transy = 0;
+			import_transz = 0;
+		}
+
+		import_rotx = 0;
+		import_roty = 0;
+		import_rotz = 0;
+		reset_import_obj = 0;
+	}
+}
+
 
 //------------------------------------------------------------------------
 //Functions necessary for all imported objects

@@ -1028,75 +1028,76 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
     case USER_SERVO_MODE: // user is in Select mode
 		// set the scan region based on the last one specified by the user. 
         if ( (microscope->state.modify.tool == OPTIMIZE_NOW) && 
-	     (microscope->state.modify.optimize_now_param == 
-	      OPTIMIZE_NOW_AREA) ) {
-	    BCPlane * plane = dataset->inputGrid->getPlaneByName
-	      (dataset->heightPlaneName->string());
-
-	    // optimize within an area specified by the user
-
-	    printf("Optimizing based on selected area\n");
-	    Position_list & pos_list = microscope->state.modify.stored_points;
-	    pos_list.goToHead();
-	    computeOptimizeMinMax(
-		 microscope->state.modify.optimize_now_param,
-		 microscope->state.select_center_x
-                    - microscope->state.select_region_rad,
-		 microscope->state.select_center_y
-                    - microscope->state.select_region_rad,
-		 microscope->state.select_center_x
-                    + microscope->state.select_region_rad,
-		 microscope->state.select_center_y
-                    + microscope->state.select_region_rad, &coord_x, &coord_y);
-	    Point_value *value =
-	      microscope->state.data.inputPoint->getValueByPlaneName
-	      (dataset->heightPlaneName->string());
-	    if (value == NULL) {
-	      fprintf(stderr, "Error in handle_commit_change(): "
-		      "could not get value!\n");
-	      return;
-	  }
-	  microscope->ScanTo( coord_x, coord_y );
-
-	double height;
-	plane -> valueAt(&height,coord_x,coord_y);
-
-	  graphics->positionSphere( coord_x, coord_y,height );
-	  printf("Moved tip location to %.2f, %.2f\n", coord_x, coord_y);
-	}
-	// if not in optimize_now mode, use the select tool as it was 
-	// originally intended to be used.
-	else if ( microscope->state.select_region_rad > 0.01 ) {  
-	    // This comparison sets the smallest possible scan region 
-	    // to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
-	    // only do something if region has been specified.
-
-	    // here's how the region is specified. 
-	    //x_min = centerx - rad;
-	    //x_max = centerx + rad;
-	    //y_min = centery - rad;
-	    //y_max = centery + rad;
-	    
-	    microscope->SetRegionNM(
-	        microscope->state.select_center_x
-                   - microscope->state.select_region_rad,
-		microscope->state.select_center_y
-                   - microscope->state.select_region_rad,
-		microscope->state.select_center_x
-                   + microscope->state.select_region_rad,
-		microscope->state.select_center_y
-                   + microscope->state.select_region_rad);         
-	}
-	
-	// All done - turn off commit button
-	tcl_commit_pressed = 0;
-	old_commit_pressed = 0;
-
-	break;
+			(microscope->state.modify.optimize_now_param == 
+			OPTIMIZE_NOW_AREA) ) 
+		{
+			BCPlane * plane = dataset->inputGrid->getPlaneByName
+				(dataset->heightPlaneName->string());
+			
+			// optimize within an area specified by the user
+			
+			printf("Optimizing based on selected area\n");
+			Position_list & pos_list = microscope->state.modify.stored_points;
+			pos_list.goToHead();
+			computeOptimizeMinMax(
+				microscope->state.modify.optimize_now_param,
+				microscope->state.select_center_x
+				- microscope->state.select_region_rad,
+				microscope->state.select_center_y
+				- microscope->state.select_region_rad,
+				microscope->state.select_center_x
+				+ microscope->state.select_region_rad,
+				microscope->state.select_center_y
+				+ microscope->state.select_region_rad, &coord_x, &coord_y);
+			Point_value *value =
+				microscope->state.data.inputPoint->getValueByPlaneName
+				(dataset->heightPlaneName->string());
+			if (value == NULL) {
+				fprintf(stderr, "Error in handle_commit_change(): "
+					"could not get value!\n");
+				return;
+			}
+			microscope->ScanTo( coord_x, coord_y );
+			
+			double height;
+			plane -> valueAt(&height,coord_x,coord_y);
+			
+			graphics->positionSphere( coord_x, coord_y,height );
+			printf("Moved tip location to %.2f, %.2f\n", coord_x, coord_y);
+		}
+		// if not in optimize_now mode, use the select tool as it was 
+		// originally intended to be used.
+		else if ( microscope->state.select_region_rad > 0.01 ) {  
+			// This comparison sets the smallest possible scan region 
+			// to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
+			// only do something if region has been specified.
+			
+			// here's how the region is specified. 
+			//x_min = centerx - rad;
+			//x_max = centerx + rad;
+			//y_min = centery - rad;
+			//y_max = centery + rad;
+			
+			microscope->SetRegionNM(
+				microscope->state.select_center_x
+				- microscope->state.select_region_rad,
+				microscope->state.select_center_y
+				- microscope->state.select_region_rad,
+				microscope->state.select_center_x
+				+ microscope->state.select_region_rad,
+				microscope->state.select_center_y
+				+ microscope->state.select_region_rad);         
+		}
+		
+		// All done - turn off commit button
+		tcl_commit_pressed = 0;
+		old_commit_pressed = 0;
+		
+		break;
     default:
-      tcl_commit_pressed = 0;	
-      old_commit_pressed = 0;
-	return;
+		tcl_commit_pressed = 0;	
+		old_commit_pressed = 0;
+		return;
     }
 }
 

@@ -1,3 +1,19 @@
+2008-03-11  David Marshburn  <marshbur@cs.unc.ecu>
+
+	* import.C (handle_do_reset_import_obj):  new, resets imported
+	objects (including the direct-step axis) to the origin of the
+	current heightplane (really the current BCGrid).  also added
+	a couple of extern objects from microscape.C
+	* interaction.C:  whitespace changes
+	* microscape.C:  includes version.h.  windows-style default
+	tcl and colormap directories.
+	* microscape.h:  moved version number to version.h
+	* version.h:  moved the version number here from microscape.h
+	so that everything doesn't have to be recompiled w/ version change
+	(turns out that only 1-2 files use the version number).
+	* nano.dsp:  includes version.h
+	* nanorelease.bat:  updated paths, added phantom & magellan
+
 2008-03-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* CollaborationManager.C : Changed to use the new method of
