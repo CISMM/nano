@@ -2,6 +2,9 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.4:  (March 11, 2008)
+	- resetting the direct-step axis will now return it to the
+	  lower-left corner of the current heightplane.
 12.3:	 (May 19, 2007)
 	- added "-microscope_type" flag to provide native support for
 	  Asylum microscope.

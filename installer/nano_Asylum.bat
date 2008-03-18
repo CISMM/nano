@@ -1,6 +1,6 @@
 rem @echo off
 
-set NANO_ROOT=C:\nsrg\bin\NanoManipulator\12.3
+set NANO_ROOT=C:\nsrg\bin\NanoManipulator\12.4
 set NM_COLORMAP_DIR=%NANO_ROOT%\share\colormaps
 set NM_TCL_DIR=%NANO_ROOT%\share\tcl
 set TRACKER=null Phantom
