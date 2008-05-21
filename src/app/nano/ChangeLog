@@ -1,3 +1,7 @@
+2008-05-21  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nano.dsp : Put back into Windows format so VS can open it.
+
 2008-03-11  David Marshburn  <marshbur@cs.unc.ecu>
 
 	* import.C (handle_do_reset_import_obj):  new, resets imported
