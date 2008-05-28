@@ -3389,8 +3389,19 @@ static void handle_exportFileName_change (const char *, void *)
                                 newExportFileName.string());
           return;
       }
-
-      if (im->exportToFile(file_ptr, exportFileType.string(), newExportFileName.string())) {
+      // special case - Asylum files want multi-layer image, which can only be
+      // handled by the main BCGrid, if the plane selected is in the main grid.
+      if (strcmp(exportFileType.string(), "Asylum Igor") == 0
+          && dataset->inputGrid->getPlaneByName(exportPlaneName.string()) != NULL) {
+         if (dataset->inputGrid->writeAsylumFile(file_ptr, *(dataset->d_asylumFile))) {
+            display_error_dialog( "Couldn't write to this file: %s\n"
+                                  "Please try another name or directory",
+                                  newExportFileName.string());
+            fclose(file_ptr);
+            return;
+         }            
+            
+      } else if (im->exportToFile(file_ptr, exportFileType.string(), newExportFileName.string())) {
 	  display_error_dialog( "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 newExportFileName.string());
