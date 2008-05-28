@@ -1,3 +1,9 @@
+2008-05-28  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_RegistrationUI.C: Remove some debugging images and
+	printouts, use less memory for Ingrid Tessmer's use. 
+	* nmr_AlignerMI.C: Fix tiff image save typo. 
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmr_Registration_Client.h : Uses new VRPN_CALLBACK definition.

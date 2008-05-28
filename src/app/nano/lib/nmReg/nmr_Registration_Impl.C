@@ -507,9 +507,9 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
     }
 
     d_mutInfoAligner.setTransform(xform);
-    fprintf(stderr, "registerImagesUsingMutualInformation: Warning,"
-            "automatically saving histogram TIFF files\n");
-	d_mutInfoAligner.printJointHistograms(xform);
+    //fprintf(stderr, "registerImagesUsingMutualInformation: Warning,"
+    //        "automatically saving histogram TIFF files\n");
+    //	d_mutInfoAligner.printJointHistograms(xform);
 	
     bool useGradientDescent = false;
 	if (useGradientDescent) {

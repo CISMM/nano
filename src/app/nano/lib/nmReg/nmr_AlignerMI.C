@@ -313,7 +313,7 @@ void nmr_AlignerMI::printJointHistograms(nmb_Transform_TScShR &xform)
 	d_objective->getJointHistogramImage(i, hist);
 	sprintf(filename, "jointHistogram%d.%d.tif", printCount, i);
 	file = fopen(filename, "w");
-	hist->exportToFile(file, "TIFF", filename);
+	hist->exportToFile(file, "TIFF Image", filename);
 	fclose(file);
 	nmb_Image::deleteImage(hist);
 	hist = NULL;

@@ -725,15 +725,15 @@ void nmr_RegistrationUI::handle_autoAlignRequested_change(
         first_time = vrpn_FALSE;
         // some debugging code that inserts the blurred images used for
         // alignment into the image list so you can easily view them:
-        if (!me->d_dataset) return;
-        nmb_Image *im_3D = me->d_dataset->dataImages()->getImageByName
-                            (me->d_registrationImageName3D.string());
-        nmb_Image *im_2D = me->d_dataset->dataImages()->getImageByName
-                            (me->d_registrationImageName2D.string());
-        nmr_AlignerMI aligner;
-        aligner.initImages(im_3D, im_2D, 
-                           me->d_numResolutionLevels, me->d_stddev, 
-                           NULL, me->d_dataset->dataImages());
+//         if (!me->d_dataset) return;
+//         nmb_Image *im_3D = me->d_dataset->dataImages()->getImageByName
+//                             (me->d_registrationImageName3D.string());
+//         nmb_Image *im_2D = me->d_dataset->dataImages()->getImageByName
+//                             (me->d_registrationImageName2D.string());
+//         nmr_AlignerMI aligner;
+//         aligner.initImages(im_3D, im_2D, 
+//                            me->d_numResolutionLevels, me->d_stddev, 
+//                            NULL, me->d_dataset->dataImages());
       }
     }
 }
