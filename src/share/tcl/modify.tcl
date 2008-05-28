@@ -638,31 +638,43 @@ proc init_full {} {
     generic_entry $nmInfo(modifyfull).styleparam.watchdog newmodifyp_watchdog \
 	"Watchdog Dist. (50,500 nm)" real 
 
-    generic_entry $nmInfo(modifyfull).styleparam.z-start newmodifyp_z_start \
-	"Start Height (-1000,1000 nm)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.z-end newmodifyp_z_end \
-	"End Height (-1000,1000 nm)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.z-pullback newmodifyp_z_pullback \
-	"Pullout Height (-1000,0 nm)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.force-limit newmodifyp_force_limit\
-	"Force Limit (0,1000 nA)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.forcecurvedist newmodifyp_fcdist \
-	"F.C. Dist. (0,500 nm)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.num-layers newmodifyp_num_layers \
-	"# Samples (100,500)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.num-halfcycles newmodifyp_num_hcycles \
-	"# Half Cycles (1,4)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.sample-speed newmodifyp_sample_speed \
-	"Sample Speed (0,10 um/s)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.pullback-speed newmodifyp_pullback_speed \
-	"Pullback Speed (0,100 um/s)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.start-speed newmodifyp_start_speed \
-	"Start Speed (0,10 um/s)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.fdback-speed newmodifyp_feedback_speed \
-	"Feedback Speed (0,100 um/s)" real 
-    generic_entry $nmInfo(modifyfull).styleparam.avg-num newmodifyp_avg_num \
-	"Averaging (1,10)" real 
-
+    if { $microscopeflavor == "Asylum" } {
+        # We're just appropriating some of the existing parameters and using them
+        # for approximately the same purpose for the Asylum AFM. 
+        generic_entry $nmInfo(modifyfull).styleparam.z-start newmodifyp_z_start \
+            "Start Dist (nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.z-pullback newmodifyp_z_pullback \
+            "Force Dist (0,1000 nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.sample-speed newmodifyp_sample_speed \
+            "Scan Rate (Hz)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.forcecurvedist newmodifyp_fcdist \
+            "F.C. Dist. (0,500 nm)" real 
+    } else {
+        generic_entry $nmInfo(modifyfull).styleparam.z-start newmodifyp_z_start \
+            "Start Height (-1000,1000 nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.z-end newmodifyp_z_end \
+            "End Height (-1000,1000 nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.z-pullback newmodifyp_z_pullback \
+            "Pullout Height (-1000,0 nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.force-limit newmodifyp_force_limit\
+            "Force Limit (0,1000 nA)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.forcecurvedist newmodifyp_fcdist \
+            "F.C. Dist. (0,500 nm)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.num-layers newmodifyp_num_layers \
+            "# Samples (100,500)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.num-halfcycles newmodifyp_num_hcycles \
+            "# Half Cycles (1,4)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.sample-speed newmodifyp_sample_speed \
+            "Sample Speed (0,10 um/s)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.pullback-speed newmodifyp_pullback_speed \
+            "Pullback Speed (0,100 um/s)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.start-speed newmodifyp_start_speed \
+            "Start Speed (0,10 um/s)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.fdback-speed newmodifyp_feedback_speed \
+            "Feedback Speed (0,100 um/s)" real 
+        generic_entry $nmInfo(modifyfull).styleparam.avg-num newmodifyp_avg_num \
+            "Averaging (1,10)" real 
+    }
     global mod_sweep_list
     set mod_sweep_list "$nmInfo(modifyfull).styleparam.sweepwidth"
    
@@ -675,7 +687,14 @@ proc init_full {} {
     eval iwidgets::Labeledwidget::alignlabels $mod_sewing_list
 
     global mod_forcecurve_list
-    set mod_forcecurve_list " \
+    if { $microscopeflavor == "Asylum" } {
+        set mod_forcecurve_list " \
+	$nmInfo(modifyfull).styleparam.z-start \
+        $nmInfo(modifyfull).styleparam.z-pullback \
+	$nmInfo(modifyfull).styleparam.sample-speed \
+	$nmInfo(modifyfull).styleparam.forcecurvedist "
+    } else {
+        set mod_forcecurve_list " \
 	$nmInfo(modifyfull).styleparam.z-start $nmInfo(modifyfull).styleparam.z-end \
 	$nmInfo(modifyfull).styleparam.z-pullback $nmInfo(modifyfull).styleparam.force-limit \
 	$nmInfo(modifyfull).styleparam.forcecurvedist $nmInfo(modifyfull).styleparam.num-layers \
@@ -683,7 +702,7 @@ proc init_full {} {
 	$nmInfo(modifyfull).styleparam.sample-speed $nmInfo(modifyfull).styleparam.pullback-speed \
 	$nmInfo(modifyfull).styleparam.start-speed $nmInfo(modifyfull).styleparam.fdback-speed \
 	$nmInfo(modifyfull).styleparam.avg-num "
-
+    }
     eval iwidgets::Labeledwidget::alignlabels $mod_forcecurve_list
 
     # eval command expands the lists so we get one list of single elements. 

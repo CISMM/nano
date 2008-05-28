@@ -300,6 +300,7 @@ proc save_plane_data {} {
     # file.  The Entries in both places must match!
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
+        { "Asylum Igor" ".ibw" }
         { "ThermoMicroscopes" ".tfr" }
         { "TIFF Image" ".tif" }
         { "PPM Image" ".ppm" }

@@ -1,3 +1,8 @@
+2008-05-28  Aron Helser  <helser@cs.unc.edu>
+
+	* filemenu.tcl (save_plane_data): Igor .ibw files.
+	* modify.tcl : force curve for Asylum. Not complete.
+
 2008-03-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* directStep.tcl (reset_ds_obj):  sets a flag for the c code
