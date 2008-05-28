@@ -1,5 +1,5 @@
 /*===3rdtech===
-  Copyright (c) 2000 by 3rdTech, Inc.
+  Copyright (c) 2000-2007 by 3rdTech, Inc.
   All Rights Reserved.
 
   This file may not be distributed without the permission of 
@@ -61,7 +61,8 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   vizPlaneName (string_allocator("none")),
 
   done (0),
-  d_topoFile(new TopoFile)
+  d_topoFile(new TopoFile),
+  d_asylumFile(new AsylumFile)
 {
   if (nmb_MicroscopeFlavor == Topometrix) {
     heightPlaneName = string_allocator("Topography-Forward");
@@ -189,6 +190,8 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete contourPlaneName;
   if (heightPlaneName)
     delete heightPlaneName;
+  delete d_topoFile;
+  delete d_asylumFile;
 }
 
 
@@ -211,6 +214,10 @@ nmb_Dataset::loadFile(const char* file_name)
         //Add file to image list only, doesn't match current region/gridsize.
         // Need to handle multi-layer files, like DI files. 
         for (BCPlane *p = tmpgrid->head(); p != NULL; p = p->next()) {
+            // make the name unique with our primary grid.
+            string new_name;
+            inputGrid->findUniquePlaneName(*(p->name()), &new_name);
+            p->rename(new_name);
             im = new nmb_ImageGrid(p);
             im->setTopoFileInfo(*d_topoFile);
             dataImages->addImage(im);

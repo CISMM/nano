@@ -1773,7 +1773,38 @@ int BCPlane::readHamburgFile(FILE *file, nmb_hhImageInfo *file_info)
     
 } // readHamburgFile
 
-  
+
+/** read flat array of floats from asylum data file, scaled via parameter. */
+int BCPlane::readAsylumData(float *data, float data_scale)
+{
+   int	first_value_read = 1;	
+   int x, y;
+	
+   for (y = 0; y < numY(); y++) {
+      for (x = 0; x < numX(); x++) {
+         float value = data[y*numX() + x] * data_scale;
+
+         if (first_value_read) {
+            _min_value = value;
+            _max_value = value;
+            first_value_read = 0;
+         }
+
+         if (value < _min_value) { _min_value = value; }
+         if (value > _max_value) { _max_value = value; }
+
+         setValue(x,y, value);
+
+         if (_timed) {
+            _sec[x][y] = 0;
+            _usec[x][y] = 0;
+         }
+      }
+   }
+
+   return 0;
+}
+
 /**
 writeNCFile
     Writes a Numerically-controlled machine tool file that will

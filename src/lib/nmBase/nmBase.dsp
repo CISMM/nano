@@ -213,6 +213,10 @@ SOURCE=.\PPM.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\readAsylumFile.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\readHamburgFile.C
 # End Source File
 # Begin Source File

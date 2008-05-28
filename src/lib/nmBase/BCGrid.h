@@ -45,6 +45,7 @@ class nmb_diImageInfo;
 class nmb_hhImageInfo;
 class nmb_NanotecImageInfo;
 class TopoFile;
+class AsylumFile;
 
 #ifdef	_WIN32
 // Windows doesn't have the strncasecmp function.
@@ -172,6 +173,8 @@ class BCGrid
     int writeNCFile(FILE* file, BCPlane* grid,
 	double sizex = 1, double sizey = 1, double sizez = 1,
 	double maxcut = 0.1, double zoff = 0.1, int roughskip = 1);
+   /// writes all planes originally acquired, according to header info.
+    int writeAsylumFile(FILE* file, AsylumFile& af);
 
     friend ostream& operator << (ostream& os, BCGrid* grid);
 
@@ -236,6 +239,9 @@ class BCGrid
     int readHamburgFile(FILE* file, const char *name);
       ///< readHamburgFile.C 
 
+    int readAsylumFile(FILE* file, const char *name);
+      ///< readAsylumFile.C 
+   
     int readComment(FILE *file, char *buffer, double* max_value);
     int readPPMorPGMFile(FILE* file, const char *name);
     int readPPMorPGMFileNew(FILE *file, const char *filename);

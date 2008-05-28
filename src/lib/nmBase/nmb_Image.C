@@ -693,10 +693,12 @@ void nmb_Image::triggerChangeHandlers()
   printf("not implemented yet\n");
 }
 
-const int nmb_ImageGrid::num_export_formats = 7;
+const int nmb_ImageGrid::num_export_formats = 8;
 // Warning -- you must edit this list both here and in the filemenu.tcl
 // script.  The names in each list must match!
-const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
+const char *nmb_ImageGrid::export_formats_list[] = {
+   "Asylum Igor",
+   "ThermoMicroscopes",
                                  		"TIFF Image",
                                  		"PPM Image",
                                  		"Other Image",
@@ -705,7 +707,8 @@ const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
                                  		"UNCA Image" };
 const nmb_ImageGrid::FileExportingFunction 
 	nmb_ImageGrid::file_exporting_function[] = 
-				{nmb_ImageGrid::writeTopoFile,
+				{nmb_ImageGrid::writeAsylumFile,
+                                 nmb_ImageGrid::writeTopoFile,
                                  nmb_ImageGrid::writeTIFFile,
                                  nmb_ImageGrid::writePPMFile,
                                  nmb_ImageGrid::writeOtherImageFile,
@@ -1217,6 +1220,18 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type,
 }
 
 BCPlane *nmb_ImageGrid::getPlane() {return plane;} 
+
+//static 
+int nmb_ImageGrid::writeAsylumFile(FILE *file, nmb_ImageGrid *im, const char * )
+{
+   fprintf(stderr, "nmb_ImageGrid::Error, unable to write Asylum file"
+           "directly, use BCGrid method\n");
+   
+   //if (im->plane->_grid->writeAsylumFile(file, im->plane)) {
+	return -1;
+        //}
+        //return 0;
+}
 
 //static 
 int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * )

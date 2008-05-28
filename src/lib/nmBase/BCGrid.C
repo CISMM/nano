@@ -279,12 +279,14 @@ BCGrid::loadFile(const char* file_name, TopoFile &topoFile)
 //  			file_names[i]);
                 return grid;
 	    } else {
-		BCPlane *newplane;
-		string name;
-                findUniquePlaneName(grid->head()->_dataset,&name);
-                newplane = addPlaneCopy(grid->head());
-                newplane->rename(name);
-	    }
+               for (BCPlane *p = grid->head(); p != NULL; p = p->next()) {
+                  BCPlane *newplane;
+                  string name;
+                  findUniquePlaneName(p->_dataset,&name);
+                  newplane = addPlaneCopy(p);
+                  newplane->rename(name);
+               }
+            }
         }
     }
 
@@ -1262,6 +1264,16 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
             name = filename;
         }           
     }
+    // identify an extension
+    const char * extension = NULL;
+    if ((extension = strrchr(name, '.')) != NULL) {
+       // found a '.', advance past. 
+       extension += 1;
+        // Make sure we still have a string
+        if (strlen(extension) <1) {
+           extension = NULL;
+        }
+    }
 
     if (strncmp(magic,"DSBB",4) == 0) 
     {
@@ -1341,6 +1353,11 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
        fclose(file);
         return readNanotecFile(filename, name, 1);
     } 
+    else if (strncmp(extension,"ibw",3) == 0) { // Igor Asylum binary wave file. 
+       // TODO binary 01, 02, 03 05 in first two bytes, but possibly byte-swapped.
+       fseek(file, 0, SEEK_SET);
+       return readAsylumFile(file, name);
+    }
 //      else if (strncmp(magic,"P6",2) == 0) 
 //      {
 //  	return readPPMorPGMFile(file, name);

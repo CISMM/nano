@@ -1,3 +1,13 @@
+2008-05-28  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Image.C: Add ability to read Asylum .ibw files, version 5
+	float. No writing yet.
+	* IgorBin.h: Same.
+	* readAsylumFile.C: Same.
+	* BCGrid.C,h: Same.
+	* BCPlane.C,h: Same.
+
+
 2008-03-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmb_Decoration.C : Changed to use the new method of

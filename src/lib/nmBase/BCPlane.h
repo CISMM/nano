@@ -229,6 +229,8 @@ class BCPlane
 
     int readAsciiRHKFile(FILE* file, double z_offset_nm, double z_scale_pm);
 
+    int readAsylumData(float *data, float data_scale);
+   
     int writeNCFile(FILE* file, double sizex, double sizey, double sizez,
 		double maxCut = 0.1, double zoff = 0.1, int roughskip = 1);
 

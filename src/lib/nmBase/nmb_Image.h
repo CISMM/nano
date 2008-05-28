@@ -405,6 +405,7 @@ class nmb_ImageGrid : public nmb_Image{
         static const char    *export_formats_list[];
 	nmb_ListOfStrings formatNames;
 	static const FileExportingFunction file_exporting_function[];
+        static int writeAsylumFile(FILE *file, nmb_ImageGrid *im, const char * filename);
         static int writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * filename);
 	static int writeTextFile(FILE *file, nmb_ImageGrid *im, const char * filename);
         static int writePPMFile(FILE *file, nmb_ImageGrid *im, const char * filename);

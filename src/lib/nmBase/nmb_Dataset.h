@@ -1,5 +1,5 @@
 /*===3rdtech===
-  Copyright (c) 2000 by 3rdTech, Inc.
+  Copyright (c) 2000-2007 by 3rdTech, Inc.
   All Rights Reserved.
 
   This file may not be distributed without the permission of 
@@ -12,6 +12,7 @@ class BCGrid;  // from BCGrid.h
 class BCPlane;  // from BCPlane.h
 class nmb_String;  // from nmb_String.h
 class TopoFile; // from Topo.h
+class AsylumFile; // from Asylum.h
 
 #include "nmb_Types.h"  // for PointType
 #include "nmb_Image.h"  // for nmb_ImageLIst
@@ -97,6 +98,8 @@ class nmb_Dataset {
 
     TopoFile * d_topoFile;
     ///< helps write out topo files, Read out of stream or AFM conn. 
+    AsylumFile * d_asylumFile;
+    ///< helps write out Asylum files, Read out of stream or AFM conn. 
 
     int readMode() const { return inputGrid->readMode(); }
       ///< Query the read mode, READ_DEVICE, READ_FILE or READ_STREAM
