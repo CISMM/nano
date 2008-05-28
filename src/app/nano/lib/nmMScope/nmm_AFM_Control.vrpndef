@@ -81,3 +81,11 @@ VRPN_MESSAGE EnterSpectroscopyMode {
   float32 pullbackDelay
   float32 feedbackDelay
 }
+
+VRPN_MESSAGE EnterForceMode {
+  float32 startdist
+  float32 forcedist
+  float32 scanrate
+  float32 distBetweenFC
+}
+

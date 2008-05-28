@@ -80,6 +80,13 @@ VRPN_MESSAGE InSpectroscopyMode {
   float32 feedbackDelay
 }
 
+VRPN_MESSAGE InForceMode {
+  float32 startdist
+  float32 forcedist
+  float32 scanrate
+  float32 distBetweenFC
+}
+
 VRPN_MESSAGE InDirectZControl {
   float32 max_z_step
   float32 max_xy_step

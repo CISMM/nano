@@ -139,6 +139,11 @@ VRPN_MESSAGE TopoFileHeader {
   char header [length]
 }
 
+VRPN_MESSAGE AsylumFileHeader {
+  int32 length
+  char header [length]
+}
+
 VRPN_MESSAGE SuspendCommands {
 }
 

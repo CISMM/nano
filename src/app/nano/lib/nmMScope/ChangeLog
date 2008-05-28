@@ -1,3 +1,8 @@
+2008-05-28  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C: Preliminary support for Asylum
+	forcecurves. Incomplete, non-functional.
+
 2008-02-25  David Marshburn  <marshburn@cs.unc.edu>
 
 	* nmMScopeGenerate.dsp:  no apparent change in this file, 

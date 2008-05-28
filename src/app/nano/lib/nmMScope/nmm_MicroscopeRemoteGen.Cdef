@@ -189,8 +189,8 @@ int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
     // Only display warning if we aren't quitting the program, and
     // if we are connected to a live AFM - no streamfiles!
     if ((!ms->d_dataset->done) && (ms->d_dataset->readMode() == READ_DEVICE)) {
-      display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
-                             "No more data will be collected until ThermoMicroscopes\n"
+      display_warning_dialog("Communication with the AFM has stopped.\n"
+                             "No more data will be collected until the AFM\n"
                              "software is re-started and communication is re-established.");
     }
     return 0;
@@ -545,6 +545,9 @@ RECEIVE_MSG InSpectroscopyMode {
   } else {
     fprintf(stderr, "Can't do Image/SpectroscopyMode!\n");
   }
+}
+
+RECEIVE_MSG InForceMode {
 }
 
 RECEIVE_MSG InModMode {
@@ -1319,6 +1322,11 @@ RECEIVE_MSG TopoFileHeader {
   }
 }
 
+RECEIVE_MSG AsylumFileHeader {
+//    int32 length
+//    char header [length]
+   d_dataset->d_asylumFile->parseHeader(header, length);
+}
 
 RECEIVE_MSG_HEADER ForceCurveData {
 //    float32 x

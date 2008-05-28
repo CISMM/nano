@@ -428,10 +428,11 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long EnterSewingStyle (float set, float bot, float top, float zpull,
                           float punch, float speed, float watchdog);
     long EnterForceCurveStyle (float setpnt, float startdelay, float zstart, 
-	float zend, float zpull, float forcelimit, float movedist, long numpnts,
+	float zend, float zpullback, float forcelimit, float movedist, long numpnts,
 	long numhalfcycles, float samplespd, float pullspd, float startspd,
 	float fdbackspd, long avgnum, float sampledel, float pulldel, 
 	float fdbackdel);
+    long EnterForceStyle (float zstart, float zpullback, float samplespd, float movedist);
     long ZagTo (float x, float y, float yaw,
                float sweepWidth, float regionDiag);
     long GotConnection(void);

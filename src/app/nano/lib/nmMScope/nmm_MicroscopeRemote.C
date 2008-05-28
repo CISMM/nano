@@ -419,10 +419,11 @@ long nmm_Microscope_Remote::ModifyMode (void) {
       fprintf(stderr, "DirectZ during forcecurve is an impossible setting.\n");
       return 0;
     } else {
-       long numpnts = (long)(double)(state.modify.fc_num_points);
-       long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
-       long avgnum = (long)(double)(state.modify.fc_avg_num);
-       return EnterForceCurveStyle(state.modify.setpoint,
+       if (nmb_MicroscopeFlavor == Topometrix) {
+          long numpnts = (long)(double)(state.modify.fc_num_points);
+          long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+          long avgnum = (long)(double)(state.modify.fc_avg_num);
+          return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
                                 state.modify.fc_z_end,
@@ -439,6 +440,12 @@ long nmm_Microscope_Remote::ModifyMode (void) {
 				state.modify.fc_sample_delay,
 				state.modify.fc_pullback_delay,
 				state.modify.fc_feedback_delay);
+       } else if (nmb_MicroscopeFlavor == Asylum) {
+          return EnterForceStyle( state.modify.fc_z_start,
+                                  state.modify.fc_z_pullback,
+                                  state.modify.fc_sample_speed,
+                                  state.modify.fc_movedist);
+       }
     }
   }
   
@@ -1143,7 +1150,20 @@ long nmm_Microscope_Remote::EnterForceCurveStyle
   // _pull_delay = delay after pullback (us)
   // _fdback_delay = delay to establish feedback (us)
 }
+long nmm_Microscope_Remote::EnterForceStyle
+     ( float zstart, float zpullback, float samplespd, float movedist )
+{
+  char * msgbuf;
+  vrpn_int32 len;
 
+  msgbuf = encode_EnterForceMode(&len, zstart, zpullback, samplespd, movedist);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_EnterForceMode_type);
+
+   
+}
 long nmm_Microscope_Remote::ZagTo
         (float _x, float _y, float yaw, float sweepWidth, float regionDiag) {
   char * msgbuf;
@@ -1332,10 +1352,11 @@ long nmm_Microscope_Remote::SetModForce () {
                            " (not contact, guarded scan, or tapping)\n");
         return 0;
     }
-    long numpnts = (long)(double)(state.modify.fc_num_points);
-    long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
-    long avgnum = (long)(double)(state.modify.fc_avg_num);
-    return EnterForceCurveStyle(state.modify.setpoint,
+    if (nmb_MicroscopeFlavor == Topometrix) {
+       long numpnts = (long)(double)(state.modify.fc_num_points);
+       long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+       long avgnum = (long)(double)(state.modify.fc_avg_num);
+       return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
                                 state.modify.fc_z_end,
@@ -1348,14 +1369,20 @@ long nmm_Microscope_Remote::SetModForce () {
                                 state.modify.fc_pullback_speed,
                                 state.modify.fc_start_speed,
                                 state.modify.fc_feedback_speed,
-                                avgnum,
-                                state.modify.fc_sample_delay,
-                                state.modify.fc_pullback_delay,
-                                state.modify.fc_feedback_delay);
+				avgnum,
+				state.modify.fc_sample_delay,
+				state.modify.fc_pullback_delay,
+				state.modify.fc_feedback_delay);
+    } else if (nmb_MicroscopeFlavor == Asylum) {
+       return EnterForceStyle( state.modify.fc_z_start,
+                               state.modify.fc_z_pullback,
+                               state.modify.fc_sample_speed,
+                               state.modify.fc_movedist);
+    }
   } else {
     fprintf(stderr,"shouldn't be here\n");
-    return 0;
   }
+  return 0;
 }
 
 
