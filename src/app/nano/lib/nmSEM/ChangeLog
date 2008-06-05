@@ -1,3 +1,8 @@
+2008-06-05	Ryan Schubert  <res@cs.unc.edu>
+
+	* nmSEM.vcproj : Added include directory to the platform SDK
+		to avoid PVOID64 compiler errors.
+
 2007-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmm_Microscope_SEM_Remote.C : Making it compiled without

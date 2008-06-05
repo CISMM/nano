@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="nmSEM"
 	ProjectGUID="{66492EFA-0424-49C0-8A53-7A659E35EFBD}"
+	RootNamespace="nmSEM"
 	>
 	<Platforms>
 		<Platform
@@ -41,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SYSTEMDRIVE)\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include&quot;;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;C:\nsrg\external\pc_win32\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..,..\..\..\..\..\..\vrpn,..\..\..\..\lib\nmBase,..\..\..\..\lib\nmMP,..\..\..\..\..\..\vogl,..\..\..\..\lib\tcllinkvar,..\..\..\..\lib\nmImageViewer,..\nmGraphics,..\..\..\..\..\..\quat,..\nmUI"
 				PreprocessorDefinitions="_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -118,8 +119,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="&quot;$(SYSTEMDRIVE)\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include&quot;;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;C:\nsrg\external\pc_win32\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
-				PreprocessorDefinitions="_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;$(SYSTEMDRIVE)\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\include&quot;;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;C:\nsrg\external\pc_win32\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				PreprocessorDefinitions="_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
