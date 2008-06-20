@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="nmMScopeGenerate"
+	ProjectGUID="{37907DBB-5EA4-4D5C-A762-BEC2346978E1}"
+	RootNamespace="nmMScopeGenerate"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
+			ConfigurationType="10"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/nmMScopeGenerate.tlb"
+				HeaderFileName=""
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
+			ConfigurationType="10"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/nmMScopeGenerate.tlb"
+				HeaderFileName=""
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Generated"
+			>
+			<Filter
+				Name="Header"
+				>
+				<File
+					RelativePath="nmm_MicroscopeRemote.hdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SimulatedMicroscope.hdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SimulatedMicroscope_Remote.hdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Performing Custom Build Step on $(InputPath)"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="C Files"
+				>
+				<File
+					RelativePath="nmm_MicroscopeRemoteGen.Cdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SimulatedMicroscope.Cdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SimulatedMicroscope_Remote.Cdef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="Both"
+				>
+				<File
+					RelativePath="nmm_AFM_Control.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_AFM_Report.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_AFMSIM_Report.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_AFMSIMSERVER_Report.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_Monitor.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SPM_Control.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="nmm_SPM_Report.vrpndef"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							CommandLine="$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -c &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;$(SYSTEMDRIVE)\cygwin\bin\bash -c &quot;&apos;./generate.sh&apos; -h &apos;$(InputPath)&apos; &quot;&#x0D;&#x0A;"
+							Outputs="$(InputName).C;$(InputName).h"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

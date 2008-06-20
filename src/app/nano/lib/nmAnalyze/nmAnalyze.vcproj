@@ -2,9 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="nmSEM"
-	ProjectGUID="{66492EFA-0424-49C0-8A53-7A659E35EFBD}"
-	RootNamespace="nmSEM"
+	Name="nmAnalyze"
+	ProjectGUID="{2EBF9EE8-1A88-46F9-B236-2FFFFF27CE95}"
 	>
 	<Platforms>
 		<Platform
@@ -15,85 +14,9 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
-			IntermediateDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..,..\..\..\..\..\..\vrpn,..\..\..\..\lib\nmBase,..\..\..\..\lib\nmMP,..\..\..\..\..\..\vogl,..\..\..\..\lib\tcllinkvar,..\..\..\..\lib\nmImageViewer,..\nmGraphics,..\..\..\..\..\..\quat,..\nmUI"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/nmSEM.pch"
-				AssemblerListingLocation=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
-				ObjectFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
-				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM\nmSEM.lib"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/nmSEM.bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
-			IntermediateDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
+			OutputDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -119,15 +42,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include;C:\nsrg\external\pc_win32\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="../../../../lib/nmBase,../../../../lib/nmMP,..\..\..\..\..\..\vrpn,..\..\..\..\..\..\quat,../nmMScope,../nmUGraphics"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/nmSEM.pch"
-				AssemblerListingLocation=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
-				ObjectFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
-				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
+				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze/nmAnalyze.pch"
+				AssemblerListingLocation=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze/"
+				ObjectFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze/"
+				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -144,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM\nmSEM.lib"
+				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze\nmAnalyze.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -156,7 +79,83 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/nmSEM.bsc"
+				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmAnalyze/nmAnalyze.bsc"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="../../../../lib/nmBase,..\..\..\..\..\..\vrpn,.,..\..\..\..\..\..\quat,..\..\..\..\..\..\vogl,..\..\..\..\..\..\external\pc_win32\include,..\..\..\..\lib\nmBase,..\..\..\..\lib\ImgFormat,..\nmUGraphics,..\..,..\nmMScope,..\..\..\..\lib\nmMP,..\..\..\..\lib\tcllinkvar,..\nmUI"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze/nmAnalyze.pch"
+				AssemblerListingLocation=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze/"
+				ObjectFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze/"
+				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze/"
+				BrowseInformation="1"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze\nmAnalyze.lib"
+				SuppressStartupBanner="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+				SuppressStartupBanner="true"
+				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmAnalyze/nmAnalyze.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -174,10 +173,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="nmm_EDAX.C"
+				RelativePath="cnt_filter.C"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -187,7 +186,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -198,10 +197,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM.C"
+				RelativePath="cnt_ia.C"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -211,7 +210,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -222,10 +221,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM_Remote.C"
+				RelativePath="nma_ppm.C"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -235,7 +234,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -246,10 +245,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmui_SEM.C"
+				RelativePath="nma_ShapeAnalyze.C"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -259,7 +258,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -275,19 +274,19 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="nmm_EDAX.h"
+				RelativePath="cnt_ia.h"
 				>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM.h"
+				RelativePath="cnt_ps.h"
 				>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM_Remote.h"
+				RelativePath="nma_ShapeAnalyze.h"
 				>
 			</File>
 			<File
-				RelativePath="nmui_SEM.h"
+				RelativePath="ppm.h"
 				>
 			</File>
 		</Filter>

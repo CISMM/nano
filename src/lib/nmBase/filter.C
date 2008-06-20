@@ -47,7 +47,7 @@ int sdi_noint_block_write( SOCKET, char[], int );
 */
 
 // instead of the above using sdi we have this:
-#include "vrpn_Connection.h"
+//#include "vrpn_Connection.h"
 
 #include "BCGrid.h"
 #include "BCPlane.h"

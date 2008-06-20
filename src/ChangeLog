@@ -1,3 +1,8 @@
+2008-06-20  Aron Helser  <helser@cs.unc.edu>
+
+	* nano.sln: New solution and project files (.vcproj) to compile
+	with VS2005
+
 2002-08-13  Adam Seeger <seeger@cs.unc.edu>
 
 	* nano.dsw: added nmGeometry library (used for afm-sem alignment)

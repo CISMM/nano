@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="nmBase"
-	ProjectGUID="{D4F8077F-6D72-43F8-B907-28436EA0645C}"
+	Name="nmMScope"
+	ProjectGUID="{02120677-6423-4801-85FA-8D958C815ABD}"
 	>
 	<Platforms>
 		<Platform
@@ -15,13 +15,13 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\../../../obj/pc_win32/debug/lib/nmBase"
-			IntermediateDirectory=".\../../../obj/pc_win32/debug/lib/nmBase"
+			OutputDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="0"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -41,16 +41,16 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SYSTEMDRIVE)\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include&quot;;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;..\..\..\..\vrpn;..\..\..\..\quat;C:\nsrg\external\pc_win32\include;../nmBase;../../app/image/protvol;../nmMP"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
+				AdditionalIncludeDirectories=".,..\..\..\..\..\..\vrpn,..\..\..\..\lib\tclLinkVar,..\..\..\..\lib\nmBase,..\..\..\..\lib\nmMP,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\..\..\quat,..\nmUI,..\..,..\..\..\..\..\..\vogl,..\nmAux,..\nmAnalyze,..\nmUGraphics"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="true"
-				PrecompiledHeaderFile=".\../../../obj/pc_win32/debug/lib/nmBase/nmBase.pch"
-				AssemblerListingLocation=".\../../../obj/pc_win32/debug/lib/nmBase/"
-				ObjectFile=".\../../../obj/pc_win32/debug/lib/nmBase/"
-				ProgramDataBaseFileName=".\../../../obj/pc_win32/debug/lib/nmBase/"
+				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/nmMScope.pch"
+				AssemblerListingLocation=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/"
+				ObjectFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/"
+				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -69,7 +69,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\../../../obj/pc_win32/debug/lib/nmBase\nmBase.lib"
+				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope\nmMScope.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -81,7 +81,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../../obj/pc_win32/debug/lib/nmBase/nmBase.bsc"
+				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope/nmMScope.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -92,8 +92,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\../../../obj/pc_win32/release/lib/nmBase"
-			IntermediateDirectory=".\../../../obj/pc_win32/release/lib/nmBase"
+			OutputDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
+			IntermediateDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -119,16 +119,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="&quot;$(SYSTEMDRIVE)\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include&quot;;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;..\..\..\..\vrpn;..\..\..\..\quat;C:\nsrg\external\pc_win32\include;../nmBase;../../app/image/protvol;../nmMP"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories=".,..\..\..\..\..\..\vrpn,..\..\..\..\lib\tclLinkVar,..\..\..\..\lib\nmBase,..\..\..\..\lib\nmMP,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\..\..\quat,..\nmUI,..\..,..\..\..\..\..\..\vogl,..\nmAux,..\nmAnalyze,..\nmUGraphics"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="true"
-				PrecompiledHeaderFile=".\../../../obj/pc_win32/release/lib/nmBase/nmBase.pch"
-				AssemblerListingLocation=".\../../../obj/pc_win32/release/lib/nmBase/"
-				ObjectFile=".\../../../obj/pc_win32/release/lib/nmBase/"
-				ProgramDataBaseFileName=".\../../../obj/pc_win32/release/lib/nmBase/"
+				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/nmMScope.pch"
+				AssemblerListingLocation=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/"
+				ObjectFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/"
+				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -145,7 +144,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\../../../obj/pc_win32/release/lib/nmBase\nmBase.lib"
+				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope\nmMScope.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -157,7 +156,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../../obj/pc_win32/release/lib/nmBase/nmBase.bsc"
+				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmMScope/nmMScope.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -175,7 +174,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="BCGrid.C"
+				RelativePath="active_set.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -199,7 +198,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="BCPlane.C"
+				RelativePath="AFMState.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -223,7 +222,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="BCRenderGrid.C"
+				RelativePath="directstep.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -247,7 +246,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="filter.C"
+				RelativePath="drift.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -271,7 +270,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="MicroscopeFlavors.C"
+				RelativePath="nmm_AFM_Control.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -295,7 +294,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_CalculatedPlane.C"
+				RelativePath="nmm_AFM_Report.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -319,7 +318,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_ColorMap.C"
+				RelativePath="nmm_AFMSIM_Report.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -343,7 +342,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Dataset.C"
+				RelativePath="nmm_AFMSIMSERVER_Report.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -367,7 +366,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Debug.C"
+				RelativePath="nmm_GuardedscanClient.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -391,7 +390,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Decoration.C"
+				RelativePath="nmm_Microscope.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -415,7 +414,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Device.C"
+				RelativePath="nmm_MicroscopeRemote.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -439,7 +438,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_DeviceSequencer.C"
+				RelativePath="nmm_MicroscopeRemoteGen.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -463,7 +462,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_FlattenedPlane.C"
+				RelativePath="nmm_MicroscopeTranslator.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -487,7 +486,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Image.C"
+				RelativePath="nmm_QueueMonitor.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -511,7 +510,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_ImageManager.C"
+				RelativePath="nmm_RelaxComp.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -535,7 +534,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_ImgMagick.C"
+				RelativePath="nmm_Sample.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -559,7 +558,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Interval.C"
+				RelativePath="nmm_SimulatedMicroscope.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -583,7 +582,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_LBLFlattenedPlane.C"
+				RelativePath="nmm_SimulatedMicroscope_Remote.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -607,7 +606,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Line.C"
+				RelativePath="nmm_SPM_Control.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -631,7 +630,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_MorphologyPlane.C"
+				RelativePath="nmm_SPM_Report.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -655,7 +654,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_PlaneSelection.C"
+				RelativePath="nmm_TimestampList.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -679,7 +678,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_SharedDevice.C"
+				RelativePath="optimize_now.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -703,7 +702,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_String.C"
+				RelativePath="relax.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -727,379 +726,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmb_Subgrid.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="nmb_SummedPlane.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="nmb_Time.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="nmb_TimerList.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="nmb_Transform_TScShR.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="nmb_TransformMatrix44.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Point.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Position.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="PPM.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\readAsylumFile.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="readHamburgFile.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="readNanoscopeFile.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="readNanotecFile.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Scanline.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Topo.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="vc_dirent.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="wsxmHeader.c"
+				RelativePath="splat.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1128,183 +755,111 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="afmstm.h"
+				RelativePath="active_set.h"
 				>
 			</File>
 			<File
-				RelativePath="Asylum.h"
+				RelativePath="AFMState.h"
 				>
 			</File>
 			<File
-				RelativePath="BCGrid.h"
+				RelativePath="directstep.h"
 				>
 			</File>
 			<File
-				RelativePath="BCPlane.h"
+				RelativePath="drift.h"
 				>
 			</File>
 			<File
-				RelativePath="BCRenderGrid.h"
+				RelativePath="nmm_AFM_Control.h"
 				>
 			</File>
 			<File
-				RelativePath="filter.h"
+				RelativePath="nmm_AFM_Report.h"
 				>
 			</File>
 			<File
-				RelativePath=".\IgorBin.h"
+				RelativePath="nmm_AFMSIM_Report.h"
 				>
 			</File>
 			<File
-				RelativePath="MicroscopeFlavors.h"
+				RelativePath="nmm_AFMSIMSERVER_Report.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_CalculatedPlane.h"
+				RelativePath="nmm_Globals.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_ColorMap.h"
+				RelativePath="nmm_GuardedscanClient.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Dataset.h"
+				RelativePath="nmm_Microscope.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Debug.h"
+				RelativePath="nmm_MicroscopeRemote.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Decoration.h"
+				RelativePath="nmm_MicroscopeTranslator.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Device.h"
+				RelativePath="nmm_QueueMonitor.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_DeviceSequencer.h"
+				RelativePath="nmm_RelaxComp.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_FlattenedPlane.h"
+				RelativePath="nmm_Sample.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Globals.h"
+				RelativePath="nmm_SimulatedMicroscope.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Image.h"
+				RelativePath="nmm_SimulatedMicroscope_Remote.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_ImageDisplay.h"
+				RelativePath="nmm_SPM_Control.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_ImageManager.h"
+				RelativePath="nmm_SPM_Report.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_ImgMagick.h"
+				RelativePath="nmm_TimestampList.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Interval.h"
+				RelativePath="nmm_Types.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_LBLFlattenedPlane.h"
+				RelativePath="optimize_now.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_Line.h"
+				RelativePath="relax.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_MorphologyPlane.h"
+				RelativePath="splat.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_PlaneSelection.h"
+				RelativePath="stm_cmd.h"
 				>
 			</File>
 			<File
-				RelativePath="nmb_SharedDevice.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_String.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_Subgrid.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_SummedPlane.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_Time.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_TimerList.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_Transform_TScShR.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_TransformMatrix44.h"
-				>
-			</File>
-			<File
-				RelativePath="nmb_Types.h"
-				>
-			</File>
-			<File
-				RelativePath="Point.h"
-				>
-			</File>
-			<File
-				RelativePath="Position.h"
-				>
-			</File>
-			<File
-				RelativePath="PPM.h"
-				>
-			</File>
-			<File
-				RelativePath="readHamburgFile.h"
-				>
-			</File>
-			<File
-				RelativePath="readNanoscopeFile.h"
-				>
-			</File>
-			<File
-				RelativePath="readNanotecFile.h"
-				>
-			</File>
-			<File
-				RelativePath="Scanline.h"
-				>
-			</File>
-			<File
-				RelativePath="Topo.h"
-				>
-			</File>
-			<File
-				RelativePath="vc_dirent.h"
-				>
-			</File>
-			<File
-				RelativePath="wsxmHeader.h"
+				RelativePath="stm_file.h"
 				>
 			</File>
 		</Filter>

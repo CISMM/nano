@@ -570,7 +570,7 @@ int connect_Magellan() {
     // check for local vs remote server by examining name
     // "Magellan0" means local server - device attached to com1
     // "Magellan0@somewhere.unc.edu" means remote server. 
-    char * bp= NULL;
+    const char * bp= NULL;
     bp = strchr(magellan_name, '@');
     if ((bp == NULL)&&(magellan_connection)) {
         // NOTE: we are ignoring the name passed in and

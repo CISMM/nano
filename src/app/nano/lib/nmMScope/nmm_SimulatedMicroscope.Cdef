@@ -3,7 +3,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.C
 #include "nmm_SimulatedMicroscope.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
 #include <string.h>
 //#include <unistd.h>
 #include <sys/types.h>
@@ -14,6 +14,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.C
 #else
 #include <vrpn_Shared.h>  // get timeval some other way
 #endif
+using namespace std;
 //
 //
 USE_MSG_GROUP nmm_AFMSIM_Report

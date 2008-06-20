@@ -2,9 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="nmSEM"
-	ProjectGUID="{66492EFA-0424-49C0-8A53-7A659E35EFBD}"
-	RootNamespace="nmSEM"
+	Name="tclLinkVar"
+	ProjectGUID="{39C3060B-9420-4BBB-B736-AF9A10E5B197}"
 	>
 	<Platforms>
 		<Platform
@@ -16,8 +15,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
-			IntermediateDirectory=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
+			OutputDirectory=".\../../../obj/pc_win32/debug/lib/tclLinkVar"
+			IntermediateDirectory=".\../../../obj/pc_win32/debug/lib/tclLinkVar"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -42,15 +41,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..,..\..\..\..\..\..\vrpn,..\..\..\..\lib\nmBase,..\..\..\..\lib\nmMP,..\..\..\..\..\..\vogl,..\..\..\..\lib\tcllinkvar,..\..\..\..\lib\nmImageViewer,..\nmGraphics,..\..\..\..\..\..\quat,..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\vrpn,..\nmBase"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/nmSEM.pch"
-				AssemblerListingLocation=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
-				ObjectFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
-				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/"
+				PrecompiledHeaderFile=".\../../../obj/pc_win32/debug/lib/tclLinkVar/tclLinkVar.pch"
+				AssemblerListingLocation=".\../../../obj/pc_win32/debug/lib/tclLinkVar/"
+				ObjectFile=".\../../../obj/pc_win32/debug/lib/tclLinkVar/"
+				ProgramDataBaseFileName=".\../../../obj/pc_win32/debug/lib/tclLinkVar/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -69,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM\nmSEM.lib"
+				OutputFile=".\../../../obj/pc_win32/debug/lib/tclLinkVar\tclLinkVar.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -81,7 +80,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM/nmSEM.bsc"
+				OutputFile=".\../../../obj/pc_win32/debug/lib/tclLinkVar/tclLinkVar.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -92,8 +91,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
-			IntermediateDirectory=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
+			OutputDirectory=".\../../../obj/pc_win32/release/lib/tclLinkVar"
+			IntermediateDirectory=".\../../../obj/pc_win32/release/lib/tclLinkVar"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -119,15 +118,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include;C:\nsrg\external\pc_win32\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\vrpn,..\nmBase"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/nmSEM.pch"
-				AssemblerListingLocation=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
-				ObjectFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
-				ProgramDataBaseFileName=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/"
+				PrecompiledHeaderFile=".\../../../obj/pc_win32/release/lib/tclLinkVar/tclLinkVar.pch"
+				AssemblerListingLocation=".\../../../obj/pc_win32/release/lib/tclLinkVar/"
+				ObjectFile=".\../../../obj/pc_win32/release/lib/tclLinkVar/"
+				ProgramDataBaseFileName=".\../../../obj/pc_win32/release/lib/tclLinkVar/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -144,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM\nmSEM.lib"
+				OutputFile=".\../../../obj/pc_win32/release/lib/tclLinkVar\tclLinkVar.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -156,7 +155,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\../../../../../obj/pc_win32/release/app/nano/lib/nmSEM/nmSEM.bsc"
+				OutputFile=".\../../../obj/pc_win32/release/lib/tclLinkVar/tclLinkVar.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -174,7 +173,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="nmm_EDAX.C"
+				RelativePath="error_display.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -198,7 +197,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM.C"
+				RelativePath="Tcl_Interpreter.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -222,7 +221,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM_Remote.C"
+				RelativePath="Tcl_Linkvar.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -246,7 +245,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nmui_SEM.C"
+				RelativePath="Tcl_Netvar.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -275,19 +274,19 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="nmm_EDAX.h"
+				RelativePath="error_display.h"
 				>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM.h"
+				RelativePath="Tcl_Interpreter.h"
 				>
 			</File>
 			<File
-				RelativePath="nmm_Microscope_SEM_Remote.h"
+				RelativePath="Tcl_Linkvar.h"
 				>
 			</File>
 			<File
-				RelativePath="nmui_SEM.h"
+				RelativePath="Tcl_Netvar.h"
 				>
 			</File>
 		</Filter>

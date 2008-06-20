@@ -1,3 +1,9 @@
+2008-06-20  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_CalculatedPlane.h (nmb_CalculatedPlane): allow default
+	constructor, for VS2005 compilation.
+	* filter.C: remove vrpn include, unused.
+
 2008-05-28  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Image.C: Add ability to read Asylum .ibw files, version 5
