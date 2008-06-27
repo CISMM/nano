@@ -106,7 +106,8 @@ if { $microscopeflavor == "Asylum" } {
         "UserIn2" \
         "Inputi" \
         "Inputq" \
-	  "Amplitude" ]
+	  "Amplitude" \
+	  "Phase" ]
 } else {
   set touchdatalist [list \
         "Topography" \

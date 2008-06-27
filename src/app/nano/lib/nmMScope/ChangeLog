@@ -1,3 +1,8 @@
+2008-06-27  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* active_set.C : Added Phase to the channels that
+		can be requested from the Asylum.
+
 2008-06-20  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope_Remote.Cdef: Change to <iostream> to
