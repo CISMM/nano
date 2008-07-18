@@ -1,4 +1,4 @@
-2008-06-20  Ryan Schubert  <res@cs.unc.edu>
+2008-07-18  Ryan Schubert  <res@cs.unc.edu>
 
 	* nmBase.vcproj : Changing readAsylumFile.C to compile as C++
 		in all configurations
