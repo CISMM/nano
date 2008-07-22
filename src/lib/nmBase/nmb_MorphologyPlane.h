@@ -19,7 +19,7 @@
    To do the subtraction of two planes, the scale should be -1.
 */
 class nmb_MorphologyPlane 
-  : virtual public nmb_CalculatedPlane
+  : public nmb_CalculatedPlane
 {
 public:
   // Constructor

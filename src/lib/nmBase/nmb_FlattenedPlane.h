@@ -19,7 +19,7 @@ The resulting flattened plane is calculated such that the intersections
 of three measure lines with the surface have the same z value.
 */
 class nmb_FlattenedPlane 
-  : virtual public nmb_CalculatedPlane
+  : public nmb_CalculatedPlane
 {
 public:
   // Constructor

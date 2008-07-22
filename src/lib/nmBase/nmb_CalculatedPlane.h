@@ -157,10 +157,10 @@ private:
   // set this every time we are passed in a dataset argument.
   nmb_Dataset* dataset;
   
-  // default constructor - unimplemented causes problems with VS2005
-  //nmb_CalculatedPlane( );
+  // default constructor - unimplemented.
+  nmb_CalculatedPlane( );
   
-  // copy constructor
+  // copy constructor - unimplemented.
   nmb_CalculatedPlane( nmb_CalculatedPlane& );
 
   // The desired name of the calculated plane

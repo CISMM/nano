@@ -17,7 +17,7 @@
     same as that of the first line of the plane
 */
 class nmb_LBLFlattenedPlane
-  : virtual public nmb_CalculatedPlane
+  : public nmb_CalculatedPlane
 {
 public:
   // Constructor

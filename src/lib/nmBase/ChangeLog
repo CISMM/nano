@@ -1,8 +1,20 @@
+<<<<<<< ChangeLog
+2008-07-22  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_CalculatedPlane.h (nmb_CalculatedPlane): make default
+	constructor unimplemented again, so it can't be used.
+	* nmb_FlattenedPlane.h (nmb_FlattenedPlane): remove 'virtual'
+	keyword from 'public' inheritance, because it was used incorrectly
+	and confused VS 2005.
+	* nmb_*Plane.h : same
+
+=======
 2008-07-18  Ryan Schubert  <res@cs.unc.edu>
 
 	* nmBase.vcproj : Changing readAsylumFile.C to compile as C++
 		in all configurations
 
+>>>>>>> 1.145
 2008-06-20  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_CalculatedPlane.h (nmb_CalculatedPlane): allow default

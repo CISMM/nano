@@ -399,7 +399,7 @@ int BCGrid::readAsylumFile(FILE* fr, const char *filename)
    if (fseek(fr, startFilePos, SEEK_SET) != 0) return -1;
    
    numBytesRead = fread(buffer, 1, binHeaderSize+waveHeaderSize, fr);
-   if (numBytesRead < binHeaderSize+waveHeaderSize || ferror(fr)) {
+   if ((int)numBytesRead < binHeaderSize+waveHeaderSize || ferror(fr)) {
       printf("Error occurred while reading the file headers.\n");
       return -1;
    }
@@ -556,7 +556,7 @@ int BCGrid::readAsylumFile(FILE* fr, const char *filename)
       memset(&(wave_name[0]), '\0', 32);
       
       numBytesRead = fread(notes_str, 1, num_bytes_left, fr);
-      if (numBytesRead < num_bytes_left || ferror(fr)) {
+      if ((long)numBytesRead < num_bytes_left || ferror(fr)) {
          delete [] notes_str;
          return -1;
       }
