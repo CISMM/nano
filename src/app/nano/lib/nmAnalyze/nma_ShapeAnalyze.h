@@ -76,10 +76,9 @@ private:
 //between the existing data points and thus blurring the image to look smooth and be the
 //appropriate size
 class nma_ShapeIdentifiedPlane 
-  : virtual public nmb_CalculatedPlane
+  : public nmb_CalculatedPlane
 {
 public:
-	friend class nmb_CalculatedPlane;
 	friend class nmm_SimulatedMicroscope_Remote;
 
     nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, 

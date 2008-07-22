@@ -1,3 +1,10 @@
+2008-07-22  Aron Helser  <helser@cs.unc.edu>
+
+	* nma_ShapeAnalyze.h (class nma_ShapeIdentifiedPlane): remove
+	 'virtual' keyword from 'public' inheritance, because it was used
+	 incorrectly and confused VS 2005.
+
+
 2003-08-07  Aron Helser  <helser@cs.unc.edu>
 
 	* cnt_ia.C: Fixed compile warning.
