@@ -158,6 +158,9 @@ CC := cc
 ifeq ($(HW_OS),pc_linux)
 	CC := g++
 endif	
+ifeq ($(HW_OS),pc_linux64)
+	CC := g++
+endif	
 ifeq ($(HW_OS),sgi_irix)
 	CC := CC -$(SGI_ABI) -$(SGI_ARCH) -fullwarn
 endif	

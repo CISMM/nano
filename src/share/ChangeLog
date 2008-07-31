@@ -1,3 +1,8 @@
+2008-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* Makefile.common : Making it compile under the BASS.
+	* Makefile.lib_common : Same.
+
 2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* Makefile.common : Adding things to let it compile under

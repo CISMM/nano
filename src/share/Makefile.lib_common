@@ -77,6 +77,8 @@ ifdef VC
 else 
   ifeq ($(HW_OS),pc_linux)
    LIB_LINK_CMD := ar ruv
+  else ifeq ($(HW_OS),pc_linux64)
+   LIB_LINK_CMD := ar ruv
   else
    LIB_LINK_CMD := $(CC) -ar -WR,-u,-v -o
   endif
