@@ -18,3 +18,4 @@ nmm_SimulatedMicroscope.C
 nmm_SimulatedMicroscope.h
 nmm_SimulatedMicroscope_Remote.C
 nmm_SimulatedMicroscope_Remote.h
+*.vcproj.*.user
