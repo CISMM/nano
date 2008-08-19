@@ -14,6 +14,8 @@
 
 class nmb_ColorMap;
 class PPM;
+class spot_tracker_XY;
+class image_wrapperAdapter;
 
 class CorrespondenceWindowParameters {
  public:
@@ -21,6 +23,18 @@ class CorrespondenceWindowParameters {
   double left, right, bottom, top;
   nmb_Image *im;
   int winID;
+  GLuint texID;
+};
+
+class SpotTrackerParameters {
+public:
+	SpotTrackerParameters();
+	spot_tracker_XY *tracker;
+	bool   invert;
+	bool   optimizeRadius;
+	double radiusAccuracy;
+	double pixelAccuracy;
+	double sampleSeparation;
 };
 
 typedef void (*CorrespondenceCallback)(Correspondence &c, void *ud);
@@ -35,6 +49,7 @@ class CorrespondenceEditor {
     CorrespondenceEditor(int num_im, char **win_names = NULL);
     CorrespondenceEditor(int num_im, ImageViewer *view,
                               Correspondence *corr, int *winIDs);
+	virtual ~CorrespondenceEditor();
     void showAll();
 	void show(int image_index);
     void hideAll();
@@ -52,12 +67,21 @@ class CorrespondenceEditor {
     int setColorMinMax(int image_index,
                        vrpn_float64 dmin, vrpn_float64 dmax,
                        vrpn_float64 cmin, vrpn_float64 cmax);
+	int setFiducialSpotTracker(int image_index, int tracker_type);
+	int setOptimizeSpotTrackerRadius(int image_index, vrpn_bool enable);
+	int setSpotTrackerRadius(int image_index, vrpn_float64 radius);
+	int setSpotTrackerPixelAccuracy(int image_index, vrpn_float64 accuracy);
+	int setSpotTrackerRadiusAccuracy(int image_index, vrpn_float64 accuracy);
+
     void mainloop();
     void getCorrespondence(Correspondence &corr);
 	int numImages() {return num_images;}
     void registerCallback(CorrespondenceCallback handler, void *ud);
 	void enableEdit(vrpn_bool enableAddAndDelete, 
 										 vrpn_bool enableMove);
+
+	void recenterFiducials(int spaceIndex);
+	void centerWithSpotTracker(int spaceIndex, int pointIndex);
 
   private:
     // eventHandler is responsible for handling user interaction with image
@@ -67,6 +91,7 @@ class CorrespondenceEditor {
     static int displayHandler(const ImageViewerDisplayData &data, void *ud);
 
     void notifyCallbacks();
+	void drawRoundCrosshair(double x, double y, double radius, double scaleX, double scaleY);
     void drawCrosshair(float x, float y);
     void drawSelectionBox(int xp, int yp);
     int getSpaceIndex(int winID);
@@ -89,6 +114,12 @@ class CorrespondenceEditor {
 
 	vrpn_bool enableMovingPoints;
 	vrpn_bool enableAddDeletePoints;
+
+	image_wrapperAdapter *imageAdapter; // Adapts images between nano and spot tracker lib.
+
+	// Settings for spot trackers
+	SpotTrackerParameters spotTrackerParams[2];
+
 };
 
 #endif

@@ -45,6 +45,11 @@ class nmr_Registration_ImplUI {
     void setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
+    void setFiducialSpotTracker(nmr_ImageType whichImage, vrpn_int32 tracker);
+    void setOptimizeSpotTrackerRadius(nmr_ImageType whichImage, vrpn_bool enable);
+    void setSpotTrackerRadius(nmr_ImageType whichImage, vrpn_float64 radius);
+    void setSpotTrackerPixelAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
+    void setSpotTrackerRadiusAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
     void setImageOrientation(nmr_ImageType whichImage,
                               vrpn_bool flipX, vrpn_bool flipY);
     void getCorrespondence(Correspondence &c, int &srcIndex, int &tgtIndex);

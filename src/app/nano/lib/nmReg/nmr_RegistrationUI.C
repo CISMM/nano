@@ -48,8 +48,18 @@ nmr_RegistrationUI::nmr_RegistrationUI
 
    d_registrationImageName3D("reg_surface_cm(color_comes_from)", "none"),
    d_refresh3D("reg_refresh_3D", 0),
+   d_fiducialSpotTracker3D("reg_fiducial_spot_tracker_3D", "none"),
+   d_optimizeSpotTrackerRadius3D("reg_spot_tracker_optimize_radius_3D", 0),
+   d_spotTrackerRadius3D("reg_spot_tracker_radius_3D", 5.0),
+   d_spotTrackerRadiusAccuracy3D("reg_spot_tracker_radius_accuracy_3D", 0.05),
+   d_spotTrackerPixelAccuracy3D("reg_spot_tracker_pixel_accuracy_3D", 0.05),
    d_registrationImageName2D("reg_projection_cm(color_comes_from)", "none"),
    d_refresh2D("reg_refresh_2D", 0),
+   d_fiducialSpotTracker2D("reg_fiducial_spot_tracker_2D", "none"),
+   d_optimizeSpotTrackerRadius2D("reg_spot_tracker_optimize_radius_2D", 0),
+   d_spotTrackerRadius2D("reg_spot_tracker_radius_2D", 5.0),
+   d_spotTrackerRadiusAccuracy2D("reg_spot_tracker_radius_accuracy_2D", 0.05),
+   d_spotTrackerPixelAccuracy2D("reg_spot_tracker_pixel_accuracy_2D", 0.05),
    d_flipProjectionImageInX("reg_proj_flipX", 0),
    d_newResampleImageName("resample_image_name", ""),
    d_newResamplePlaneName("resample_plane_name", ""),
@@ -172,10 +182,30 @@ void nmr_RegistrationUI::setupCallbacks()
        (handle_registrationImage3D_change, (void *)this);
 	d_refresh3D.addCallback
 		(handle_refresh3D_change, (void *)this);
+	d_fiducialSpotTracker3D.addCallback
+		(handle_fiducialSpotTracker3D_change, (void *) this);
+	d_optimizeSpotTrackerRadius3D.addCallback
+		(handle_optimizeSpotTrackerRadius3D_change, (void *) this);
+	d_spotTrackerRadius3D.addCallback
+		(handle_spotTrackerRadius3D_change, (void *) this);
+	d_spotTrackerRadiusAccuracy3D.addCallback
+		(handle_spotTrackerRadiusAccuracy3D_change, (void *) this);
+	d_spotTrackerPixelAccuracy3D.addCallback
+		(handle_spotTrackerPixelAccuracy3D_change, (void *) this);
     d_registrationImageName2D.addCallback
        (handle_registrationImage2D_change, (void *)this);
 	d_refresh2D.addCallback
 		(handle_refresh2D_change, (void *)this);
+	d_fiducialSpotTracker2D.addCallback
+		(handle_fiducialSpotTracker2D_change, (void *)this);
+	d_optimizeSpotTrackerRadius2D.addCallback
+		(handle_optimizeSpotTrackerRadius2D_change, (void *) this);
+	d_spotTrackerRadius2D.addCallback
+		(handle_spotTrackerRadius2D_change, (void *) this);
+	d_spotTrackerRadiusAccuracy2D.addCallback
+		(handle_spotTrackerRadiusAccuracy2D_change, (void *) this);
+	d_spotTrackerPixelAccuracy2D.addCallback
+		(handle_spotTrackerPixelAccuracy2D_change, (void *) this);
 
 	d_flipProjectionImageInX.addCallback
        (handle_flipProjectionImageInX_change, (void *)this);
@@ -221,10 +251,30 @@ void nmr_RegistrationUI::teardownCallbacks()
        (handle_registrationImage3D_change, (void *)this);
 	d_refresh3D.removeCallback
 		(handle_refresh3D_change, (void *)this);
+	d_fiducialSpotTracker3D.removeCallback
+		(handle_fiducialSpotTracker3D_change, (void *)this);
+    d_optimizeSpotTrackerRadius3D.removeCallback
+        (handle_optimizeSpotTrackerRadius3D_change, (void *)this);
+    d_spotTrackerRadius3D.removeCallback
+        (handle_spotTrackerRadius3D_change, (void *)this);
+    d_spotTrackerRadiusAccuracy3D.removeCallback
+        (handle_spotTrackerRadiusAccuracy3D_change, (void *)this);
+    d_spotTrackerPixelAccuracy3D.removeCallback
+		(handle_spotTrackerPixelAccuracy3D_change, (void *)this);
     d_registrationImageName2D.removeCallback
        (handle_registrationImage2D_change, (void *)this);
 	d_refresh2D.removeCallback
 		(handle_refresh2D_change, (void *)this);
+	d_fiducialSpotTracker2D.removeCallback
+		(handle_fiducialSpotTracker2D_change, (void *)this);
+    d_optimizeSpotTrackerRadius2D.removeCallback
+		(handle_optimizeSpotTrackerRadius2D_change, (void *) this);
+	d_spotTrackerRadius2D.removeCallback
+		(handle_spotTrackerRadius2D_change, (void *) this);
+	d_spotTrackerRadiusAccuracy2D.removeCallback
+		(handle_spotTrackerRadiusAccuracy2D_change, (void *) this);
+	d_spotTrackerPixelAccuracy2D.removeCallback
+		(handle_spotTrackerPixelAccuracy2D_change, (void *) this);
 
     d_registrationColorMap3D.removeCallback
        (handle_registrationColorMap3D_change, (void *)this);
@@ -452,6 +502,78 @@ void nmr_RegistrationUI::handle_refresh3D_change(vrpn_int32 value, void *ud)
 			me->d_flipXreference, 
 			me->d_flipYreference);
 	}
+}
+
+// static
+void nmr_RegistrationUI::handle_fiducialSpotTracker3D_change(const char *name, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    nmr_FiducialSpotTracker tracker = me->getFiducialSpotTrackerByName(name);
+    me->d_aligner->setFiducialSpotTracker(NMR_SOURCE, tracker);
+}
+
+// static
+void nmr_RegistrationUI::handle_optimizeSpotTrackerRadius3D_change(vrpn_int32 enable, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setOptimizeSpotTrackerRadius(NMR_SOURCE, enable ? vrpn_TRUE : vrpn_FALSE);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerRadius3D_change(vrpn_float64 radius, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerRadius(NMR_SOURCE, radius);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerRadiusAccuracy3D_change(vrpn_float64 accuracy, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerRadiusAccuracy(NMR_SOURCE, accuracy);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerPixelAccuracy3D_change(vrpn_float64 accuracy, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerPixelAccuracy(NMR_SOURCE, accuracy);
+}
+
+// static
+void nmr_RegistrationUI::handle_fiducialSpotTracker2D_change(const char *name, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    nmr_FiducialSpotTracker tracker = me->getFiducialSpotTrackerByName(name);
+    me->d_aligner->setFiducialSpotTracker(NMR_TARGET, tracker);
+}
+
+// static
+void nmr_RegistrationUI::handle_optimizeSpotTrackerRadius2D_change(vrpn_int32 enable, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setOptimizeSpotTrackerRadius(NMR_TARGET, enable ? vrpn_TRUE : vrpn_FALSE);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerRadius2D_change(vrpn_float64 radius, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerRadius(NMR_TARGET, radius);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerRadiusAccuracy2D_change(vrpn_float64 accuracy, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerRadiusAccuracy(NMR_TARGET, accuracy);
+}
+
+// static
+void nmr_RegistrationUI::handle_spotTrackerPixelAccuracy2D_change(vrpn_float64 accuracy, void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->d_aligner->setSpotTrackerPixelAccuracy(NMR_TARGET, accuracy);
 }
 
 // static
@@ -710,6 +832,27 @@ void nmr_RegistrationUI::setAutoAlignMode(nmr_AutoAlignMode mode)
       d_autoAlignMode = s_autoAlignModeNames[i];
     }
   }
+}
+
+nmr_FiducialSpotTracker nmr_RegistrationUI::getFiducialSpotTrackerByName(const char *trackerName) {
+    if (!strcmp(trackerName, "None"))
+        return NMR_NO_TRACKER;
+    else if (!strcmp(trackerName, "Local Max"))
+        return NMR_LOCAL_MAX_TRACKER;
+    else if (!strcmp(trackerName, "Cone"))
+        return NMR_CONE_TRACKER;
+    else if (!strcmp(trackerName, "Disk"))
+        return NMR_DISK_TRACKER;
+    else if (!strcmp(trackerName, "FIONA"))
+        return NMR_FIONA_TRACKER;
+    else if (!strcmp(trackerName, "Symmetric"))
+        return NMR_SYMMETRIC_TRACKER;
+    else {
+        fprintf(stderr, 
+            "getFiducialSpotTrackerByName encountered unknown tracker name '%s'. Defaulting to Cone Tracker\n", 
+            trackerName);
+        return NMR_CONE_TRACKER;
+    }
 }
 
 // static

@@ -73,8 +73,18 @@ class nmr_RegistrationUI {
     static void handle_resamplePlaneName_change(const char *name, void *ud);
     static void handle_registrationImage3D_change(const char *name, void *ud);
 	static void handle_refresh3D_change(vrpn_int32 value, void *ud);
+	static void handle_fiducialSpotTracker3D_change(const char *name, void *ud);
+	static void handle_optimizeSpotTrackerRadius3D_change(vrpn_int32 enable, void *ud);
+	static void handle_spotTrackerRadius3D_change(vrpn_float64 radius, void *ud);
+	static void handle_spotTrackerRadiusAccuracy3D_change(vrpn_float64 accuracy, void *ud);
+	static void handle_spotTrackerPixelAccuracy3D_change(vrpn_float64 accuracy, void *ud);
     static void handle_registrationImage2D_change(const char *name, void *ud);
 	static void handle_refresh2D_change(vrpn_int32 value, void *ud);
+	static void handle_fiducialSpotTracker2D_change(const char *name, void *ud);
+	static void handle_optimizeSpotTrackerRadius2D_change(vrpn_int32 enable, void *ud);
+	static void handle_spotTrackerRadius2D_change(vrpn_float64, void *ud);
+	static void handle_spotTrackerRadiusAccuracy2D_change(vrpn_float64, void *ud);
+	static void handle_spotTrackerPixelAccuracy2D_change(vrpn_float64 accuracy, void *ud);
     static void handle_flipProjectionImageInX_change(vrpn_int32 value, void *ud);
     static void handle_registrationColorMap3D_change(const char *name, void *ud);
     static void handle_registrationColorMap2D_change(const char *name, void *ud);
@@ -113,11 +123,22 @@ class nmr_RegistrationUI {
     void updateTextureTransform();
     void setTransformationSource(nmr_RegistrationType source);
     void setAutoAlignMode(nmr_AutoAlignMode mode);
+	nmr_FiducialSpotTracker getFiducialSpotTrackerByName(const char *trackerName);
 
     TclNet_string d_registrationImageName3D;
 	TclNet_int d_refresh3D;
+	TclNet_string d_fiducialSpotTracker3D;
+	TclNet_int d_optimizeSpotTrackerRadius3D;
+	TclNet_float d_spotTrackerRadius3D;
+	TclNet_float d_spotTrackerRadiusAccuracy3D;
+	TclNet_float d_spotTrackerPixelAccuracy3D;
     TclNet_string d_registrationImageName2D;
 	TclNet_int d_refresh2D;
+	TclNet_string d_fiducialSpotTracker2D;
+	TclNet_int d_optimizeSpotTrackerRadius2D;
+	TclNet_float d_spotTrackerRadius2D;
+	TclNet_float d_spotTrackerRadiusAccuracy2D;
+	TclNet_float d_spotTrackerPixelAccuracy2D;
     TclNet_string d_newResampleImageName;
     TclNet_string d_newResamplePlaneName;
 

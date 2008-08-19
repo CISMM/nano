@@ -164,6 +164,10 @@ class nmr_Registration_Interface {
 /// SetImageScanlineData messages
 enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
 
+/// represents tracker for fiducial spot optimization
+enum nmr_FiducialSpotTracker {NMR_NO_TRACKER, NMR_LOCAL_MAX_TRACKER, NMR_CONE_TRACKER, NMR_DISK_TRACKER, 
+    NMR_FIONA_TRACKER, NMR_SYMMETRIC_TRACKER};
+
 /// values sent in the ENABLE_GUI message
 enum nmr_WindowType {NMR_SOURCEWINDOW, NMR_TARGETWINDOW, NMR_ALLWINDOWS};
 

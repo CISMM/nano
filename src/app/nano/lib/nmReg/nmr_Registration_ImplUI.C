@@ -9,9 +9,10 @@
 #include <nmb_ColorMap.h>
 
 int nmr_Registration_ImplUI::s_numImages = 2;
-char *nmr_Registration_ImplUI::s_imageWinNames[] = 
-                  {"registration:reference",
-                   "registration:adjustable"};
+char *nmr_Registration_ImplUI::s_imageWinNames[] = {
+	"Registration: Topography Image",
+	"Registration: Projection Image"
+};
 int nmr_Registration_ImplUI::s_sourceImageIndex = 0;
 int nmr_Registration_ImplUI::s_targetImageIndex = 1;
 
@@ -166,6 +167,51 @@ void nmr_Registration_ImplUI::setColorMinMax(nmr_ImageType whichImage,
   } else if (whichImage == NMR_TARGET) {
     d_ce.setColorMinMax(s_targetImageIndex, dmin, dmax, cmin, cmax);
   }
+}
+
+void  nmr_Registration_ImplUI::setFiducialSpotTracker(nmr_ImageType whichImage, vrpn_int32 tracker)
+{
+	if (whichImage == NMR_SOURCE) {
+		d_ce.setFiducialSpotTracker(s_sourceImageIndex, tracker);
+	} else if (whichImage == NMR_TARGET) {
+		d_ce.setFiducialSpotTracker(s_targetImageIndex, tracker);
+	}
+}
+
+void nmr_Registration_ImplUI::setOptimizeSpotTrackerRadius(nmr_ImageType whichImage, vrpn_bool enable)
+{
+	if (whichImage == NMR_SOURCE) {
+		d_ce.setOptimizeSpotTrackerRadius(s_sourceImageIndex, enable);
+	} else if (whichImage == NMR_TARGET) {
+		d_ce.setOptimizeSpotTrackerRadius(s_targetImageIndex, enable);
+	}
+}
+
+void nmr_Registration_ImplUI::setSpotTrackerRadius(nmr_ImageType whichImage, vrpn_float64 radius)
+{
+	if (whichImage == NMR_SOURCE) {
+		d_ce.setSpotTrackerRadius(s_sourceImageIndex, radius);
+	} else if (whichImage == NMR_TARGET) {
+		d_ce.setSpotTrackerRadius(s_targetImageIndex, radius);
+	}
+}
+
+void nmr_Registration_ImplUI::setSpotTrackerPixelAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy)
+{
+	if (whichImage == NMR_SOURCE) {
+		d_ce.setSpotTrackerPixelAccuracy(s_sourceImageIndex, accuracy);
+	} else if (whichImage == NMR_TARGET) {
+		d_ce.setSpotTrackerPixelAccuracy(s_targetImageIndex, accuracy);
+	}
+}
+
+void nmr_Registration_ImplUI::setSpotTrackerRadiusAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy)
+{
+	if (whichImage == NMR_SOURCE) {
+		d_ce.setSpotTrackerRadiusAccuracy(s_sourceImageIndex, accuracy);
+	} else if (whichImage == NMR_TARGET) {
+		d_ce.setSpotTrackerRadiusAccuracy(s_targetImageIndex, accuracy);
+	}
 }
 
 void nmr_Registration_ImplUI::setImageOrientation(nmr_ImageType whichImage,

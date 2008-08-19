@@ -47,6 +47,11 @@ class nmr_Registration_Impl {
     int setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
+	int setFiducialSpotTracker(nmr_ImageType whichImage, vrpn_int32 tracker);
+	int setOptimizeSpotTrackerRadius(nmr_ImageType whichImage, vrpn_bool enable);
+	int setSpotTrackerRadius(nmr_ImageType whichImage, vrpn_float64 radius);
+	int setSpotTrackerPixelAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
+	int setSpotTrackerRadiusAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
     int setFiducial(vrpn_int32 replace, vrpn_int32 num,
              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);

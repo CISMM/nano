@@ -5,6 +5,14 @@
 
 #include <nmb_Types.h>	// for vrpn_bool
 
+corr_point_t::corr_point_t(double xp, double yp, double radiusp) :
+	is2D(true), x(xp), y(yp), z(0.0), radius(radiusp) {
+}
+
+corr_point_t::corr_point_t(double xp, double yp, double zp, double radiusp) :
+	is2D(false), x(xp), y(yp), z(zp), radius(radiusp) {
+}
+
 Correspondence::Correspondence()
 {
     num_points = 0;
@@ -137,6 +145,7 @@ int Correspondence::setPoint(int spaceIdx, int pntIdx, const corr_point_t &p)
     if (pntIdx < 0 || (unsigned)pntIdx >= num_points) return -1;
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     pnts[spaceIdx][pntIdx] = p;
+
     return 0;
 }
 
@@ -165,14 +174,18 @@ int Correspondence::deletePoint(int pntIdx)
     does, return true, and fill in the point index of the closest point.
   */
 vrpn_bool Correspondence::findNearestPoint(int spaceIdx, double x, double y,
-                double x_max, double y_max, int *pntIdx)
+                double scaleX, double scaleY, int *pntIdx)
 {
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return VRPN_FALSE;
     unsigned int i;
     vrpn_bool found_point = VRPN_FALSE;
     float dx, dy, min_distance;
 
-    for (i = 0; i < num_points; i++){
+    for (i = 0; i < num_points; i++) {
+		corr_point_t spot;
+		getPoint(spaceIdx, i, &spot);
+		double x_max = spot.radius * scaleX;
+		double y_max = spot.radius * scaleY;
         dx = fabs(x-pnts[spaceIdx][i].x);
         dy = fabs(y-pnts[spaceIdx][i].y);
         if (dx <= x_max && dy <= y_max){

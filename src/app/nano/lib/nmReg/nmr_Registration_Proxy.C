@@ -26,7 +26,7 @@ nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name,
     if (!c) {
         d_remote_impl = new nmr_Registration_Client(name);
         d_remote_impl->registerChangeHandler((void *) this, 
- 		handle_registration_change);
+             handle_registration_change);
         d_local = vrpn_FALSE;
     } else {
         d_server = new nmr_Registration_Server("reg_server", c);
@@ -115,6 +115,26 @@ vrpn_int32 nmr_Registration_Proxy::autoAlignImages(vrpn_int32 mode)
     }
 */
     return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::setFiducialSpotTracker(nmr_ImageType whichImage, nmr_FiducialSpotTracker tracker) {
+	return d_local_impl->setFiducialSpotTracker(whichImage, tracker);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setOptimizeSpotTrackerRadius(nmr_ImageType whichImage, vrpn_bool enable) {
+	return d_local_impl->setOptimizeSpotTrackerRadius(whichImage, enable);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setSpotTrackerRadius(nmr_ImageType whichImage, vrpn_float64 radius) {
+	return d_local_impl->setSpotTrackerRadius(whichImage, radius);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setSpotTrackerPixelAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy) {
+	return d_local_impl->setSpotTrackerPixelAccuracy(whichImage, accuracy);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setSpotTrackerRadiusAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy) {
+	return d_local_impl->setSpotTrackerRadiusAccuracy(whichImage, accuracy);
 }
 
 vrpn_int32 nmr_Registration_Proxy::enableAutoUpdate(vrpn_bool enable)

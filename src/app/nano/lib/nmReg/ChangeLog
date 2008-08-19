@@ -1,3 +1,46 @@
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
+	* correspondence.h: Added a spot tracker radius member to the corr_point_t
+	type.
+
+	* correspondence.C: Added constructors for corr_point_t type. Method
+	findNearestPoint now considers the radius of the spot trackers when
+	searching for the nearest fiducial marker.
+
+	* correspondenceEditor.h: Added class SpotTrackerParameters and
+	destructor for CorrespondenceEditor class.  Added methods in 
+	CorrespondenceEditor for setting spot tracker parameters, and methods 
+	recenterFiducials, centerWithSpotTracker, and drawRoundCrosshair.
+	Added an image_wrapperAdapter and two SpotTrackerParams to the
+	CorrespondenceEditor class.
+
+	* correspondenceEditor.C: Added method centerWithSpotTracker that
+	centers the tracker on spots optimally if a spot tracker is selected
+	in the registration interface. Added calls to this method anytime the
+	fiducial marker may potentially be changed. Fiducial markers are now
+	drawn as round crosshairs like in Video Spot Tracker.
+
+	* image_wrapperAdapter.h,.C: Subclass of image_wrapper in Video
+	Spot Tracker that adapts the interface of the nmb_Image class in nM
+	so that spot trackers can operate on image data stored in nmb_Images.
+
+	* nmb_Registration_Impl.h,.C: Added methods that pass spot tracker
+	parameters to the nmr_Registration_ImpleUI that computes the affine 
+	transformation.
+
+	* nmb_Registration_ImplUI.h,.C: Changed names of the registration
+	windows. Added methods for passing spot tracker settings to the
+	CorrespondenceEditor where tracking actually occurs.
+	
+	* nmb_Registration_Interface.h: Added an enum defining symbols for
+	the various spot trackers.
+
+	* nmb_Registration_Proxy.h,.C: Added methods for passing spot tracker
+	settings to nmr_Registration_Impl.
+
+	* nmr_RegistrationUI.h,.C: Added TclNet variables for user interface
+	widgets and callbacks to handle variable changes.
+
 2008-05-28  Aron Helser  <helser@cs.unc.edu>
 
 	* nmr_RegistrationUI.C: Remove some debugging images and

@@ -53,6 +53,13 @@ class nmr_Registration_Proxy {
     vrpn_int32 setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
+
+    vrpn_int32 setFiducialSpotTracker(nmr_ImageType whichImage, nmr_FiducialSpotTracker tracker);
+    vrpn_int32 setOptimizeSpotTrackerRadius(nmr_ImageType whichImage, vrpn_bool enable);
+    vrpn_int32 setSpotTrackerRadius(nmr_ImageType whichImage, vrpn_float64 radius);
+    vrpn_int32 setSpotTrackerPixelAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
+    vrpn_int32 setSpotTrackerRadiusAccuracy(nmr_ImageType whichImage, vrpn_float64 accuracy);
+
     vrpn_int32 setImage(nmr_ImageType whichImage, nmb_Image *im, 
                         vrpn_bool flip_x, vrpn_bool flip_y);
     static void handle_registration_change(void *ud,
