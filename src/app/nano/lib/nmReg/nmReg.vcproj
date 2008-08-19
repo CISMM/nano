@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".,..\..\..\..\..\..\vrpn,..\..\..\..\lib\nmImageViewer,..\..\..\..\lib\nmBase,..\..\..\..\..\..\quat,..\..\..\..\lib\nmMP,..\nmGraphics,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\..\..\vogl,..\..\..\..\lib\tcllinkvar,..\..\..\..\lib\nmGeometry,..\..,..\nmUI,..\nmUGraphics,..\nmMScope,..\nmSEM"
+				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmImageViewer;..\..\..\..\lib\nmBase;..\..\..\..\..\..\quat;..\..\..\..\lib\nmMP;..\nmGraphics;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;C:\nsrg\external\pc_win32\include;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmGeometry;..\..;..\nmUI;..\nmUGraphics;..\nmMScope;..\nmSEM;..\..\..\..\..\..\video"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,7 +68,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="spot_tracker_library.lib base_camera_server.lib file_stack_library.lib"
 				OutputFile=".\../../../../../obj/pc_win32/debug/app/nano/lib/nmReg\nmReg.lib"
+				AdditionalLibraryDirectories="..\..\..\..\..\..\video\Debug"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -312,6 +314,18 @@
 						Name="VCCLCompilerTool"
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\image_wrapperAdapter.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						CompileAs="2"
 					/>
 				</FileConfiguration>
@@ -787,6 +801,10 @@
 			</File>
 			<File
 				RelativePath="f2c.h"
+				>
+			</File>
+			<File
+				RelativePath=".\image_wrapperAdapter.h"
 				>
 			</File>
 			<File
