@@ -1,5 +1,15 @@
 2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
 
+	* image_wrapperAdapter.h,.C: I guess Tortoise CVS doesn't add files
+	when you try to commit them. Here they are.
+
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
+	* nmReg.vcProj: Added 'video' directory to list of include directories
+	and added image_wrapperAdapter source files to project.
+
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
 	* correspondence.h: Added a spot tracker radius member to the corr_point_t
 	type.
 
