@@ -1,3 +1,9 @@
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
+	* nano.vcproj: Changed relative paths pointing to libraries
+	in the NSRG buildtime to absolute paths pointing to the
+	standard install location for the buildtime.
+
 2008-05-28  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.C (handle_exportFileName_change): Asylum .ibw file

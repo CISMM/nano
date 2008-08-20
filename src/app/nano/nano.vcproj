@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="nano"
 	ProjectGUID="{26983F78-0E0C-4DE7-A29C-01191997E522}"
+	RootNamespace="nano"
 	>
 	<Platforms>
 		<Platform
@@ -197,6 +198,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+
 			/>
 		</Configuration>
 	</Configurations>
@@ -902,86 +904,86 @@
 			Name="Libraries-External"
 			>
 			<File
-				RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\lib\glut32_UNC.lib"
+				RelativePath="C:\nsrg\external\pc_win32\lib\glut32_UNC.lib"
 				>
 			</File>
 			<Filter
 				Name="ImageMagick"
 				>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_bzlib_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_bzlib_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_coders_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_coders_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_filters_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_filters_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jbig_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jbig_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jp2_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jp2_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jpeg_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jpeg_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_lcms_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_lcms_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_libxml_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_libxml_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_Magick++_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_Magick++_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_magick_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_magick_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_png_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_png_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_tiff_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_tiff_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_ttf_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_ttf_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wand_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wand_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wmf_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wmf_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_xlib_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_xlib_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_zlib_.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_zlib_.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\X11.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\X11.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\Xext.lib"
+					RelativePath="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\Xext.lib"
 					>
 				</File>
 			</Filter>
@@ -989,15 +991,15 @@
 				Name="TCL"
 				>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\lib\BLT24.lib"
+					RelativePath="C:\nsrg\external\pc_win32\lib\BLT24.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\lib\tcl83.lib"
+					RelativePath="C:\nsrg\external\pc_win32\lib\tcl83.lib"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\..\..\..\nsrg\external\pc_win32\lib\tk83.lib"
+					RelativePath="C:\nsrg\external\pc_win32\lib\tk83.lib"
 					>
 				</File>
 			</Filter>
