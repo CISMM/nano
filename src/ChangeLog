@@ -1,3 +1,8 @@
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
+	* nano.sln: Added project files for incorporating spot trackers
+	from Video Spot Tracker in image registration.
+
 2008-06-20  Aron Helser  <helser@cs.unc.edu>
 
 	* nano.sln: New solution and project files (.vcproj) to compile
