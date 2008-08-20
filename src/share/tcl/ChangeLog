@@ -1,3 +1,8 @@
+2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
+
+	* registration.tcl: Reorganized controls. Added controls for
+	setting spot tracker parameters.
+
 2008-06-27  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* setupmenu.tcl : Added Phase to the channels that
