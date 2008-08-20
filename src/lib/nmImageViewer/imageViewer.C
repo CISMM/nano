@@ -1171,26 +1171,33 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
                 image->borderYMin()+image->borderYMax();
 
     glEnable(GL_TEXTURE_2D);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_R);
-    glEnable(GL_TEXTURE_GEN_Q);
 
     glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
 
-	if (textureID) {
+	if (textureID && *textureID) {
 		glBindTexture(GL_TEXTURE_2D, *textureID);
 	}
-	if (!textureID || reload) {
-		if (!colormap) {
 
+	if (!*textureID || reload) {
+		if (*textureID) {
+			glDeleteTextures(1, textureID);
+			*textureID = 0;
+		}
+		glGenTextures(1, textureID);
+		glBindTexture(GL_TEXTURE_2D, *textureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+		if (!colormap) {
 			glPixelTransferf(GL_RED_SCALE, (float)red);
 			glPixelTransferf(GL_GREEN_SCALE, (float)green);
 			glPixelTransferf(GL_BLUE_SCALE, (float)blue);
 			glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
-        
+
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 				 texwidth, texheight, 0, GL_LUMINANCE,
 				 pixType, texture);
@@ -1234,7 +1241,10 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     W2I.invTransform(regionVertex[1]);
     W2I.invTransform(regionVertex[2]);
     W2I.invTransform(regionVertex[3]);
-
+	
+	// Removed for now because it doesn't do the right thing to the texture coordinates.
+	// Cory Quammen <cquammen@cs.unc.edu>
+#if 0
     // compensation for the border:
     double imageToTexture[16];
     nmb_TransformMatrix44 I2T;
@@ -1247,23 +1257,24 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     double worldToImage[16];
     W2I.getMatrix(worldToImage);
     glMultMatrixd(worldToImage);
+#endif
 
     // draw the quadrilateral computed above that describes the region in the
     // world where the texture is supposed to show up
     glBegin(GL_POLYGON);
       glNormal3f(0.0, 0.0, 1.0);
       glColor4f(1.0, 1.0, 1.0, (float)alpha);
-      glVertex2f(regionVertex[0][0], regionVertex[0][1]);
+      glTexCoord2f(0.0, 0.0);
+	  glVertex2f(regionVertex[0][0], regionVertex[0][1]);
+	  glTexCoord2f(1.0, 0.0);
       glVertex2f(regionVertex[1][0], regionVertex[1][1]);
+	  glTexCoord2f(1.0, 1.0);
       glVertex2f(regionVertex[2][0], regionVertex[2][1]);
+	  glTexCoord2f(0.0, 1.0);
       glVertex2f(regionVertex[3][0], regionVertex[3][1]);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_R);
-    glDisable(GL_TEXTURE_GEN_Q);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
