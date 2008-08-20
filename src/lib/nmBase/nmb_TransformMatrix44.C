@@ -82,6 +82,30 @@ void nmb_TransformMatrix44::scale(double sx, double sy, double sz) {
 	compose(scale);
 }
 
+void nmb_TransformMatrix44::rotate(double thetaX, double thetaY, double thetaZ) {
+	nmb_TransformMatrix44 rotX;
+	rotX.set(1,1,  cos(-thetaX)); //-
+	rotX.set(1,2,  sin(-thetaX));
+	rotX.set(2,1, -sin(-thetaX));
+	rotX.set(2,2,  cos(-thetaX)); //-
+
+	nmb_TransformMatrix44 rotY;
+	rotY.set(0,0,  cos(-thetaY)); //-
+	rotY.set(0,2, -sin(-thetaY));
+	rotY.set(2,0,  sin(-thetaY));
+	rotY.set(2,2,  cos(-thetaY)); //-
+
+	nmb_TransformMatrix44 rotZ;
+	rotZ.set(0,0,  cos(-thetaZ)); //-
+	rotZ.set(0,1,  sin(-thetaZ));
+	rotZ.set(1,0, -sin(-thetaZ));
+	rotZ.set(1,1,  cos(-thetaZ)); //-
+
+	compose(rotZ);
+	compose(rotY);
+	compose(rotX);
+}
+
 void nmb_TransformMatrix44::setMatrix(double *matrix)
 {
     int i,j,k = 0;

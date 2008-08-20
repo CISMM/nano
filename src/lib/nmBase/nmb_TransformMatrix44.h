@@ -13,6 +13,7 @@ class nmb_TransformMatrix44 {
 	double get(int i_dest, int i_src);
 	void translate(double tx, double ty, double tz);
 	void scale(double sx, double sy, double sz);
+	void rotate(double thetaX, double thetaY, double thetaZ);
     void setMatrix(double *matrix);
     void getMatrix(double *matrix);
 	void compose(double *matrix);
