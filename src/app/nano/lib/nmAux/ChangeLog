@@ -1,3 +1,7 @@
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* *.vcproj:  updated paths for new build/run-time
+
 2006-04-28    <marshbur@cs.unc.edu>
 
 	* vrpn_Ohmmeter.C:  includes myUtil from nmMP for ASSERT

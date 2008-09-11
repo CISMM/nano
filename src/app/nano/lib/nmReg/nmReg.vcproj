@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="nmReg"
 	ProjectGUID="{AE0895F0-5BE5-4CC8-A1F1-5D478A881A81}"
+	RootNamespace="nmReg"
 	>
 	<Platforms>
 		<Platform
@@ -41,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmImageViewer;..\..\..\..\lib\nmBase;..\..\..\..\..\..\quat;..\..\..\..\lib\nmMP;..\nmGraphics;&quot;C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include&quot;;C:\nsrg\external\pc_win32\include;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmGeometry;..\..;..\nmUI;..\nmUGraphics;..\nmMScope;..\nmSEM;..\..\..\..\..\..\video"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmImageViewer;..\..\..\..\lib\nmBase;..\..\..\..\..\..\quat;..\..\..\..\lib\nmMP;..\nmGraphics;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmGeometry;..\..;..\nmUI;..\nmUGraphics;..\nmMScope;..\nmSEM;..\..\..\..\..\..\video"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +121,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories=".,..\..\..\..\..\..\vrpn,..\..\..\..\lib\nmImageViewer,..\..\..\..\lib\nmBase,..\..\..\..\..\..\quat,..\..\..\..\lib\nmMP,..\nmGraphics,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\..\..\vogl,..\..\..\..\lib\tcllinkvar,..\..\..\..\lib\nmGeometry,..\..,..\nmUI,..\nmUGraphics,..\nmMScope,..\nmSEM"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmImageViewer;..\..\..\..\lib\nmBase;..\..\..\..\..\..\quat;..\..\..\..\lib\nmMP;..\nmGraphics;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmGeometry;..\..;..\nmUI;..\nmUGraphics;..\nmMScope;..\nmSEM;..\..\..\..\..\..\video"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"

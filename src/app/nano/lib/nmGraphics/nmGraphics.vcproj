@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="nmGraphics"
 	ProjectGUID="{C91C732D-F97F-409C-9134-87BA08B6F6D4}"
+	RootNamespace="nmGraphics"
 	>
 	<Platforms>
 		<Platform
@@ -42,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories=".,..\..\..\..\..\..\quat,..\..\..\..\..\..\vogl,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\lib\nmBase,..\..\..\..\..\..\vrpn,..\nmUGraphics,..\..,..\nmMScope,..\..\..\..\lib\nmMP,..\..\..\..\lib\tcllinkvar,..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\nmAnalyze;.;..\..\..\..\..\..\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\..\..\vrpn;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -116,7 +117,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\nmAnalyze,.,..\..\..\..\..\..\quat,..\..\..\..\..\..\vogl,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\lib\nmBase,..\..\..\..\..\..\vrpn,..\nmUGraphics,..\..,..\nmMScope,..\..\..\..\lib\nmMP,..\..\..\..\lib\tcllinkvar,..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\nmAnalyze;.;..\..\..\..\..\..\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\..\..\vrpn;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

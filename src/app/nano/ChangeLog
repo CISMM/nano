@@ -1,5 +1,9 @@
 2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
 
+	* *.vcproj:  updated paths for new build/run-time
+
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
 	* collaboration.C:  includes headers from this directory using
 	quotation marks instead of angled brackets.
 	* microscape.C:  same

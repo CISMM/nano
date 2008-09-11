@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="nmUGraphics"
 	ProjectGUID="{E4694DD2-67C6-48B6-9D00-C15D68AF9B1A}"
+	RootNamespace="nmUGraphics"
 	>
 	<Platforms>
 		<Platform
@@ -42,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="..\nmMScope\,..\..\..\..\..\..\quat,..\..,..\..\..\..\lib\nmBase,..\..\..\..\..\..\vrpn,..\..\..\..\..\..\vogl,..\..\..\..\lib\tclLinkVar,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\nmAnalyze,..\..\..\..\lib\NMmp,..\nmMScope,..\nmGraphics"
+				AdditionalIncludeDirectories="..\..\..\..\..\..\quat;..\..;..\..\..\..\lib\nmBase;..\..\..\..\..\..\vrpn;..\..\..\..\..\..\vogl;..\..\..\..\lib\tclLinkVar;C:\nsrg\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\nmAnalyze;..\..\..\..\lib\NMmp;..\nmMScope;..\nmGraphics"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -116,7 +117,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\..\..\quat,..\..,..\..\..\..\lib\nmBase,..\..\..\..\..\..\vrpn,..\..\..\..\..\..\vogl,..\..\..\..\lib\tclLinkVar,C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\nmAnalyze,..\..\..\..\lib\NMmp,..\nmMScope,..\nmGraphics"
+				AdditionalIncludeDirectories="..\..\..\..\..\..\quat;..\..;..\..\..\..\lib\nmBase;..\..\..\..\..\..\vrpn;..\..\..\..\..\..\vogl;..\..\..\..\lib\tclLinkVar;C:\nsrg\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\nmAnalyze;..\..\..\..\lib\NMmp;..\nmMScope;..\nmGraphics"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="tclLinkVar"
 	ProjectGUID="{39C3060B-9420-4BBB-B736-AF9A10E5B197}"
+	RootNamespace="tclLinkVar"
 	>
 	<Platforms>
 		<Platform
@@ -41,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\vrpn,..\nmBase"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\X11\include;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\vrpn;..\nmBase"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -118,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include,C:\nsrg\external\pc_win32\include,..\..\..\..\vrpn,..\nmBase"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\X11\include;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\vrpn;..\nmBase"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"

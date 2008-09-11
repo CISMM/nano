@@ -1,3 +1,7 @@
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* *.vcproj:  updated paths for new build/run-time
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* Tcl_Netvar.C : Uses new VRPN_CALLBACK definition.

@@ -1,3 +1,7 @@
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* *.vcproj:  updated paths for new build/run-time
+
 2008-03-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* URendger.C/h (ResetAll):  new, resets all the rotations

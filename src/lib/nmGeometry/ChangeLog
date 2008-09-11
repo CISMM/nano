@@ -1,3 +1,7 @@
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* *.vcproj:  updated paths for new build/run-time
+
 2006-07-30  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmg_RaySegment.h : Fixing nits to enable compiling on Linux.
