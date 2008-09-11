@@ -22,8 +22,8 @@
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
 
-#include <interaction.h>
-#include <microscape.h>
+#include "interaction.h"
+#include "microscape.h"
 
 #include "microscopeHandlers.h"
 #include "index_mode.h"

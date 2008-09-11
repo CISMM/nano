@@ -1,6 +1,5 @@
 
 
-#include <nM_coord_change.h>
 #include <nmb_Decoration.h>
 #include <nmb_Debug.h>
 #include <Tcl_Netvar.h>
@@ -9,6 +8,7 @@
 #include <nmui_Component.h>
 #include <nmui_PlaneSync.h>
 
+#include "nM_coord_change.h"
 #include "CollaborationManager.h"
 #include "error_display.h"
 #include "collaboration.h"

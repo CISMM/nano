@@ -1,3 +1,12 @@
+2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* collaboration.C:  includes headers from this directory using
+	quotation marks instead of angled brackets.
+	* microscape.C:  same
+	* microscapeHandlers.C:  same
+	* minit.c:  same
+	* nm_MouseInteractor.C:  same
+
 2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
 
 	* nano.vcproj: Changed relative paths pointing to libraries

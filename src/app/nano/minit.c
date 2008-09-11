@@ -40,7 +40,7 @@
 #include <vrpn_Text.h>
 #endif
 // Make the mouse behave like the Phantom. 
-#include <nm_MouseInteractor.h>
+#include "nm_MouseInteractor.h"
 
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>

@@ -42,7 +42,7 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #endif
 
-#include <nm_MouseInteractor.h>
+#include "nm_MouseInteractor.h"
 
 #include <tcl.h>
 #include <tk.h>  // for Tk_DoOneEvent()

@@ -17,7 +17,7 @@
 #include <vrpn_Button.h>
 #include <vrpn_Tracker.h>
 #include <vrpn_ForceDevice.h>
-#include <nm_MouseInteractor.h>
+#include "nm_MouseInteractor.h"
 
 #include <nmb_Dataset.h>
 #include <nmb_Globals.h>
