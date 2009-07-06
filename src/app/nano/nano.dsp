@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\lib\nmGeometry" /I "C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include" /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /I "C:\Program Files\SensAble\3DTouch\include" /I "D:\Program Files\SensAble\3DTouch\include" /I "C:\Program Files\SensAble\3DTouch\utilities\include" /I "D:\Program Files\SensAble\3DTouch\utilities\include" /D "NDEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /Fr /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\lib\nmGeometry" /I "C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include" /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /I "C:\Program Files\SensAble\3DTouch\include" /I "D:\Program Files\SensAble\3DTouch\include" /I "C:\Program Files\SensAble\3DTouch\utilities\include" /I "D:\Program Files\SensAble\3DTouch\utilities\include" /I "C:\NSRG\external\pc_win32\X11\include" /I "C:\NSRG\external\pc_win32\tcl\include" /I "C:\NSRG\external\pc_win32\GL\include" /D "NDEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /Fr /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409
 BSC32=bscmake.exe
@@ -412,79 +412,79 @@ SOURCE=..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_bzlib_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\Xext.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_coders_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_bzlib_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_filters_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_coders_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jbig_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_filters_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jp2_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_jbig_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_jpeg_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_jp2_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_lcms_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_jpeg_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_libxml_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_lcms_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_magick_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_libxml_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_Magick++_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_magick_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_png_.lib"
+SOURCE="C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_Magick++_.lib"
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_tiff_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_png_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_ttf_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_tiff_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wand_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_ttf_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_wmf_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_wand_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_xlib_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_wmf_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\CORE_RL_zlib_.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_xlib_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\X11.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\CORE_RL_zlib_.lib
 # End Source File
 # Begin Source File
 
-SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\Xext.lib"
+SOURCE=C:\NSRG\external\pc_win32\ImageMagick\lib\X11.lib
 # End Source File
 # End Group
 # Begin Group "TCL"
@@ -492,20 +492,20 @@ SOURCE="C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\lib\Xext.lib"
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=C:\nsrg\external\pc_win32\lib\BLT24.lib
+SOURCE=C:\NSRG\external\pc_win32\tcl\lib\tk83.lib
 # End Source File
 # Begin Source File
 
-SOURCE=C:\nsrg\external\pc_win32\lib\tk83.lib
+SOURCE=C:\NSRG\external\pc_win32\tcl\lib\BLT24.lib
 # End Source File
 # Begin Source File
 
-SOURCE=C:\nsrg\external\pc_win32\lib\tcl83.lib
+SOURCE=C:\NSRG\external\pc_win32\tcl\lib\tcl83.lib
 # End Source File
 # End Group
 # Begin Source File
 
-SOURCE=C:\nsrg\external\pc_win32\lib\glut32_UNC.lib
+SOURCE=C:\NSRG\external\pc_win32\GL\lib\glut32_UNC.lib
 # End Source File
 # End Group
 # End Target

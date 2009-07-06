@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmGraphics"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\..\..\quat" /I "..\..\..\..\..\..\vogl" /I "C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include" /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\vrpn" /I "..\nmUGraphics" /I "..\.." /I "..\nmMScope" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\lib\tcllinkvar" /I "..\nmUI" /D "_LIB" /D "NDEBUG" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\..\..\quat" /I "..\..\..\..\..\..\vogl" /I "C:\nsrg\external\pc_win32\ImageMagick-6.2.3_staticDLL\include" /I "C:\nsrg\external\pc_win32\include" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\vrpn" /I "..\nmUGraphics" /I "..\.." /I "..\nmMScope" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\lib\tcllinkvar" /I "..\nmUI" /I "C:\NSRG\external\pc_win32\tcl\include" /I "C:\NSRG\external\pc_win32\GL\include" /D "_LIB" /D "NDEBUG" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
