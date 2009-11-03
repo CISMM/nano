@@ -1,0 +1,40 @@
+
+***Last modified 10/20/2009 by Serdar Cakici***
+
+These instructions are also available on the NSRG wiki: http://gpsf-wiki.unc.edu/confluence/display/nano/Nano+Manipulator+Compilation
+
+These instructions come from my experience compiling the NanoManipulator on May 4, 2009.
+
+   1. Install a CVS client. I like to use Eclipse because it is easy and has nice features for comparing local changes to code in the repository. TortoiseCVS also works well.
+   2. See/contact David Marshburn to make sure your UNC Computer Science account has permission to read and write to the NSRG CVS repository.
+   3. Set up your CVS client to use the repository with the following configuration
+          * Server: cvs.cs.unc.edu
+          * Directory: /afs/cs.unc.edu/project/stm/src/CVS_repository
+          * Protocol: extssh
+          * Username and password: your computer science username and password
+   4. Check out the following projects from the CVS repository
+          * quat
+          * vogl
+          * vrpn
+          * nano
+          * video
+   5. Install the NSRG build time. On Windows, navigate to "\\nsrg\nanodata\installers\NSRG runtime" and run the nsrg-buildtime_3_0_0.msi installer (or newer).
+   6. Install Cygwin. Make sure to install Perl 5.10, which is not included by default. Do NOT bother with Perl 5.8, which doesn't seem to work at all.
+   7. GNU Make 3.81 for Cygwin is buggy. Replace it with the version posted at http://www.cmake.org/files/cygwin/make.exe (this should be saved in "C:\cygwin\bin\make.exe").
+   8. Download perl-Parse-RecDescent-1.94-1.tar.bz2 to install the module Parser::RecDescent. Open a Cygwin shell, navigate to where you saved this file, and bunzip and untar it. Copy RecDescent.pm and RecDescent.pod from "usr/lib/perl5/site_perl/5.8.2" (relative to where you saved the bz2 file) to "C:/cygwin/lib/perl5/site_perl/5.10/i686-cygwin".
+   9. Open a Cygwin shell and navigate to "nano/src/app/nano/lib/nmMScope" (nano the project; not the nano folder in Cygwin). Type
+
+      /usr/bin/make generate
+
+      If you type gmake, it may not be the one that you downloaded in step 7.. Specifically, if MATLAB is installed, the gmake   http://search.cpan.org/~dconway/Parse-RecDescent-1.94/by the shell will probably be the one installed with MATLAB.
+  10. Compile
+          * quat - quat\quatlib.sln - Project quatlib
+          * vogl - vogl\vlib.sln - Project vlib
+          * vrpn - vrpn\vrbin.sln - Projects vrpn_server and vrpn_phantom (vrpn_phantom gets built as a dependency of vrpn_server)
+          * nano - nano\nano.sln - Project nano
+  11. Optionally, you can set up a batch file in "nano/src" to set the environment variables and run the program
+
+      set PATH=C:\NSRG\external\pc_win32\bin
+      set TCL_LIBRARY=C:\NSRG\external\pc_win32\tcl\lib\tcl8.3
+      ..\obj\pc_win32\debug\app\nano\nano.exe
+
