@@ -1,3 +1,11 @@
+2009-11-12  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nano.vcproj:  the debug build now includes only the debug
+	libraries from image magick, and the release build includes 
+	only the release libraries from image magick.  including 
+	both debug and release libraries in both builds was apparently
+	only a problem for the release build.
+
 2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* *.vcproj:  updated paths for new build/run-time
