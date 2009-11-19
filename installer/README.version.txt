@@ -2,10 +2,14 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.5:  (November 16, 2009)
+	- includes the ability to read igor .ibw files from asylum.
+	- cory quammen's registration additions from summer '08.
+	  these never made it into a released version before.
 12.4:  (March 11, 2008)
 	- resetting the direct-step axis will now return it to the
 	  lower-left corner of the current heightplane.
-12.3:	 (May 19, 2007)
+12.3:  (May 19, 2007)
 	- added "-microscope_type" flag to provide native support for
 	  Asylum microscope.
 12.2:  (June 22, 2006)
