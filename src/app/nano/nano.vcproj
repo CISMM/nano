@@ -64,7 +64,6 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="THIRDTECH"
 				Culture="1033"
 			/>
 			<Tool
@@ -75,7 +74,7 @@
 				OutputFile=".\../../../obj/pc_win32/release/app/nano/nano.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="$(SYSTEMDRIVE)/Program Files/SensAble/3DTouch/lib,$(SYSTEMDRIVE)\Program Files\SensAble\3DTouch\utilities\lib"
+				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				SubSystem="1"
 				TargetMachine="1"
@@ -156,7 +155,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG,THIRDTECH"
+				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
 			/>
 			<Tool
