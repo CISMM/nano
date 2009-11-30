@@ -205,6 +205,27 @@ pack $nmInfo(auto_align).row2.resolution_selector \
 
 ################ end of controls for automatic alignment
 
+iwidgets::Labeledframe $nmInfo(registration).initialPoints \
+	-labeltext "Save/Load Registration Markers" \
+	-labelpos nw 
+set nmInfo(initialPoints) [$nmInfo(registration).initialPoints childsite]
+pack $nmInfo(registration).initialPoints -anchor nw -expand true -fill x
+
+frame $nmInfo(initialPoints).row1
+
+pack $nmInfo(initialPoints).row1 -anchor nw
+
+button $nmInfo(initialPoints).row1.save -text "Save Markers"  \
+    -command "set save_registration_markers 1"
+
+button $nmInfo(initialPoints).row1.load -text "Load Markers"  \
+    -command "set load_registration_markers 1"
+
+pack $nmInfo(initialPoints).row1.save \
+	$nmInfo(initialPoints).row1.load \
+	-anchor nw -side left -pady 1
+################ end of controls for saving points
+
 ################ some manually-adjustable transformation parameters #####
 
 iwidgets::Labeledframe $nmInfo(registration).transformParameters \

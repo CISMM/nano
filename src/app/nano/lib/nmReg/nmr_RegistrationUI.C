@@ -80,6 +80,8 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resolutionLevel("auto_align_resolution", "0"),
    d_numResolutionLevels(0),
    d_resolutionLevelList("auto_align_resolution_list"),
+   d_saveRegistrationMarkers("save_registration_markers", 0), //new
+   d_loadRegistrationMarkers("load_registration_markers", 0), //new
 
    d_scaleX("reg_scaleX", 1.0),
    d_scaleY("reg_scaleY", 1.0),
@@ -166,6 +168,8 @@ void nmr_RegistrationUI::setupCallbacks()
     d_rotate3D_X.addCallback(handle_transformationParameter_change, this);
     d_rotate3D_Z.addCallback(handle_transformationParameter_change, this);
     d_shearZ.addCallback(handle_transformationParameter_change, this);
+	d_saveRegistrationMarkers.addCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
+	d_loadRegistrationMarkers.addCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
 
     d_registrationEnabled.addCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -235,6 +239,8 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_rotate3D_X.removeCallback(handle_transformationParameter_change, this);
     d_rotate3D_Z.removeCallback(handle_transformationParameter_change, this);
     d_shearZ.removeCallback(handle_transformationParameter_change, this);
+	d_saveRegistrationMarkers.removeCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
+	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
 
     d_registrationEnabled.removeCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -888,6 +894,93 @@ void nmr_RegistrationUI::handle_transformationParameter_change(
   nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
   me->sendTransformationParameters();
 }
+
+void nmr_RegistrationUI::handle_saveRegistrationMarkers_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
+{
+	// If it is static
+//	nmr_RegistrationUI *me = dynamic_cast<nmr_RegistrationUI *>(ud);
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	// Check me for NULL
+
+	Correspondence	c;
+	int	src, tgt;
+//	me->d_aligner->d_local_impl->d_alignerUI->getCorrespondence(c, src, tgt);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->get_d_ce();
+
+	corr_point_t point_topography;
+	corr_point_t point_projection;
+	unsigned i;
+
+	FILE * pFile;
+	pFile = fopen ("registration_markers.txt","w");
+ 
+	//number of markers in an image
+	fprintf(pFile,"%d\n", c.numPoints());
+
+	// Topography Image Point
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(src, i, &point_topography);
+		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
+	}
+	fprintf(pFile,"\n");
+
+	// Projection Image Point
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(tgt, i, &point_projection);
+		fprintf(pFile,"%g %g ", point_projection.x, point_projection.y);
+	}
+	fprintf(pFile,"\n");
+
+	fclose (pFile);
+
+} //new
+
+void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
+{
+	float x,y;
+
+	FILE * pFile;
+	pFile = fopen ("registration_markers.txt","r");
+
+	rewind (pFile);
+	int num;
+	fscanf (pFile, "%d", &num);
+
+	vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
+		x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+
+	vrpn_int32 replace = 1;
+
+	printf ("%d ",num);
+	printf ("Topography: ");
+	for(int i = 0; i<num; i++)
+	{
+		fscanf (pFile, "%f %f", &x, &y);
+		x_src[i] = x;
+	    y_src[i] = y;
+		z_src[i] = 0;
+		printf ( "%f %f ", x, y);
+	}
+	printf ("\n");
+
+	printf ("Projection: ");
+	for(int i = 0; i<num; i++)
+	{
+		fscanf (pFile, "%f %f", &x, &y);
+		x_tgt[i] = x;
+		y_tgt[i] = y;
+		z_tgt[i] = 0;
+		printf ( "%f %f ", x, y);
+	}
+	printf ("\n");
+
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,num,x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
+	
+	fclose (pFile);
+		printf("save here \n");
+} //new
 
 void nmr_RegistrationUI::sendTransformationParameters()
 {

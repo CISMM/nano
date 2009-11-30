@@ -660,6 +660,20 @@ void nmr_Registration_Impl::reportFiducial()
             x_tgt, y_tgt, z_tgt);
     }
 }
+/*
+vrpn_int32 nmr_Registration_Impl::fiducialData() //new
+{
+	vrpn_int32 num;
+    vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL],
+                 z_src[NMR_MAX_FIDUCIAL];
+    vrpn_float32 x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL],
+                 z_tgt[NMR_MAX_FIDUCIAL];
+
+    d_alignerUI->getFiducial(num, x_src, y_src, z_src, 
+        x_tgt, y_tgt, z_tgt);
+	return num;
+}*/
+
 
 //static
 void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
@@ -963,3 +977,8 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
 
   return 0;
 }
+
+nmr_Registration_ImplUI * nmr_Registration_Impl::get_d_alignerUI()
+{
+	return d_alignerUI;
+}//new

@@ -62,6 +62,7 @@ class nmr_Registration_Impl {
     int registerImagesFromPointCorrespondenceAssumingDefaultRotation();
     int registerImagesUsingMutualInformation(nmb_Transform_TScShR &xform);
     void sendResult(int type, double *xform);
+//	vrpn_int32 fiducialData(); //new
 	void reportFiducial();
 
     // functions not in the network interface:
@@ -73,6 +74,8 @@ class nmr_Registration_Impl {
 
     vrpn_int32 setImage(nmr_ImageType whichImage, nmb_Image *im,
                         vrpn_bool flip_x, vrpn_bool flip_y);
+
+	nmr_Registration_ImplUI * get_d_alignerUI();//new
 
   protected:
     void ensureThreePoints(Correspondence &c,  int corrSourceIndex, 

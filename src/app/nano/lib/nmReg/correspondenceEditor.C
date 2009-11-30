@@ -169,9 +169,14 @@ int CorrespondenceEditor::eventHandler(
                   me->grab_offset_x = 0;
                   me->grab_offset_y = 0;
                   int i;
-                  for (i = 0; i < me->num_images; i++) {
-                      me->viewer->dirtyWindow((me->winParam)[i].winID);
-                  }
+
+				  // new outer if statement
+				  //if (show_markers_in_single_image == false)
+				 // {
+	                 for (i = 0; i < me->num_images; i++) {
+		                  me->viewer->dirtyWindow((me->winParam)[i].winID);
+			          }
+				 // }
                   me->notifyCallbacks();
               }
           }
@@ -400,6 +405,11 @@ void CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointIndex)
     spot.y = opt_y / (height-1);
     correspondence->setPoint(spaceIndex, pointIndex, spot);
 }
+
+/*void CorrespondenceEditor::showMarkersInSingleImage()
+{
+	show_markers_in_single_image = true;
+}*/ // new
 
 int CorrespondenceEditor::displayHandler(
     const ImageViewerDisplayData &data, void *ud) {

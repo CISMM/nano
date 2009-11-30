@@ -368,3 +368,8 @@ void nmr_Registration_Proxy::getFiducial(
   }
   return;
 }
+
+nmr_Registration_Impl * nmr_Registration_Proxy::get_d_local_impl()
+{
+	return d_local_impl; 
+}//new

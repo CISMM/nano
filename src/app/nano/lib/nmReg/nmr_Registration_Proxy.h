@@ -86,6 +86,7 @@ class nmr_Registration_Proxy {
               vrpn_int32 &replace, vrpn_int32 &num,
               vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
               vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
+	nmr_Registration_Impl * get_d_local_impl(); //new  
 
   protected:
     nmr_Registration_Server *d_server; // non-NULL if local implementation

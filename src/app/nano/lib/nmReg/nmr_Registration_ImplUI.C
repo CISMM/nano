@@ -223,3 +223,8 @@ void nmr_Registration_ImplUI::setImageOrientation(nmr_ImageType whichImage,
     d_ce.setImageOrientation(s_targetImageIndex, flipX, flipY);
   }
 }
+
+CorrespondenceEditor nmr_Registration_ImplUI::get_d_ce()
+{
+	return d_ce; 
+}//new

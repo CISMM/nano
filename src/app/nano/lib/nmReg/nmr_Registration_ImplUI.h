@@ -56,6 +56,8 @@ class nmr_Registration_ImplUI {
 
     void registerCorrespondenceHandler(CorrespondenceCallback handler,void *ud);
 
+	CorrespondenceEditor get_d_ce(); //new
+
   protected:
     static int s_numImages;
     static char *s_imageWinNames[];

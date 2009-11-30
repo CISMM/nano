@@ -83,6 +83,8 @@ class CorrespondenceEditor {
 	void recenterFiducials(int spaceIndex);
 	void centerWithSpotTracker(int spaceIndex, int pointIndex);
 
+//	void showMarkersInSingleImage(); // new
+
   private:
     // eventHandler is responsible for handling user interaction with image
     // windows
@@ -119,6 +121,8 @@ class CorrespondenceEditor {
 
 	// Settings for spot trackers
 	SpotTrackerParameters spotTrackerParams[2];
+
+//	bool show_markers_in_single_image; // new
 
 };
 
