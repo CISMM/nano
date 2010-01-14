@@ -19,6 +19,11 @@ Correspondence::Correspondence()
     max_points = 0;
     num_spaces = 0;
     pnts = NULL;
+
+	unpaired_fluoro_num_points = 0;
+    unpaired_fluoro_max_points = 0;
+    unpaired_fluoro_num_spaces = 0;
+    unpaired_fluoro_pnts = NULL;
 }
 
 Correspondence::Correspondence(int num_im, int max_pnts)
@@ -26,11 +31,19 @@ Correspondence::Correspondence(int num_im, int max_pnts)
     num_points = 0;
     max_points = max_pnts;
     num_spaces = num_im;
-
     pnts = new corr_point_t*[num_im];
+
+	unpaired_fluoro_num_points = 0;
+    unpaired_fluoro_max_points = max_pnts;
+    unpaired_fluoro_num_spaces = num_im;
+    unpaired_fluoro_pnts = new corr_point_t*[num_im];
+
     int i;
     for (i = 0; i < num_im; i++)
+	{
         pnts[i] = new corr_point_t[max_pnts];
+		unpaired_fluoro_pnts[i] = new corr_point_t[max_pnts];
+	}
 }
 
 /** This function will always change the number of images
@@ -49,8 +62,12 @@ void Correspondence::init(int num_im, int max_pnts)
     int i;
     if (pnts){
         for (i = 0; i < num_im; i++)
-	    delete [] pnts[i];
+		{
+			delete [] pnts[i];
+			delete [] unpaired_fluoro_pnts[i];
+		}
         delete [] pnts;
+		delete [] unpaired_fluoro_pnts;
     }
 
     num_points = 0;
@@ -59,14 +76,25 @@ void Correspondence::init(int num_im, int max_pnts)
     }
     num_spaces = num_im;
 
-    pnts = new corr_point_t*[num_im];
+	pnts = new corr_point_t*[num_im];
     for (i = 0; i < num_im; i++)
         pnts[i] = new corr_point_t[max_points];
+
+    unpaired_fluoro_num_points = 0;
+    if (((unsigned)max_pnts) > unpaired_fluoro_max_points) {
+        unpaired_fluoro_max_points = max_pnts;
+    }
+    unpaired_fluoro_num_spaces = num_im;
+
+    unpaired_fluoro_pnts = new corr_point_t*[num_im];
+    for (i = 0; i < num_im; i++)
+        unpaired_fluoro_pnts[i] = new corr_point_t[unpaired_fluoro_max_points];
 }
 
 void Correspondence::clear()
 {
   num_points = 0;
+  unpaired_fluoro_num_points = 0;
 }
 
 Correspondence &Correspondence::operator = (const Correspondence &c) {
@@ -129,6 +157,17 @@ int Correspondence::addPoint(corr_point_t &p)
     return num_points-1;
 }
 
+int Correspondence::unpaired_fluoro_addPoint(corr_point_t &p)
+{
+    if (unpaired_fluoro_num_points == unpaired_fluoro_max_points) return -1;
+    unsigned int i;
+    for (i = 0; i < unpaired_fluoro_num_spaces; i++){
+        unpaired_fluoro_pnts[i][unpaired_fluoro_num_points] = p;
+    }
+    unpaired_fluoro_num_points++;
+    return unpaired_fluoro_num_points-1;
+}
+
 int Correspondence::addPoint(corr_point_t *p)
 {
     if (num_points == max_points) return -1;
@@ -140,11 +179,42 @@ int Correspondence::addPoint(corr_point_t *p)
     return num_points-1;
 }
 
+int Correspondence::unpaired_fluoro_addPoint(corr_point_t *p)
+{
+    if (unpaired_fluoro_num_points == unpaired_fluoro_max_points) return -1;
+    unsigned int i;
+    for (i = 0; i < unpaired_fluoro_num_spaces; i++){
+        unpaired_fluoro_pnts[i][unpaired_fluoro_num_points] = p[i];
+    }
+    unpaired_fluoro_num_points++;
+    return unpaired_fluoro_num_points-1;
+}
+
 int Correspondence::setPoint(int spaceIdx, int pntIdx, const corr_point_t &p)
 {
     if (pntIdx < 0 || (unsigned)pntIdx >= num_points) return -1;
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     pnts[spaceIdx][pntIdx] = p;
+
+    return 0;
+}
+
+int Correspondence::unpaired_fluoro_setPoint(int spaceIdx, int pntIdx, const corr_point_t &p)
+{
+    if (pntIdx < 0 || (unsigned)pntIdx >= unpaired_fluoro_num_points) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= unpaired_fluoro_num_spaces) return -1;
+    unpaired_fluoro_pnts[spaceIdx][pntIdx] = p;
+	/*
+	if(spaceIdx == 0)
+	{
+		unpaired_fluoro_pnts[1][pntIdx] = p;
+	}
+	else
+	{
+		unpaired_fluoro_pnts[0][pntIdx] = p;
+	}
+	printf ("spaceidx is %d\n", spaceIdx);
+	*/
 
     return 0;
 }
@@ -159,12 +229,31 @@ int Correspondence::setPoint(int pntIdx, corr_point_t *p)
     return 0;
 }
 
+int Correspondence::unpaired_fluoro_setPoint(int pntIdx, corr_point_t *p)
+{
+    if (pntIdx < 0 || (unsigned)pntIdx >= unpaired_fluoro_num_points) return -1;
+    unsigned int i;
+    for (i = 0; i < unpaired_fluoro_num_spaces; i++){
+        unpaired_fluoro_pnts[i][pntIdx] = p[i];
+    }
+    return 0;
+}
+
 int Correspondence::deletePoint(int pntIdx)
 {
     unsigned int i;
     num_points--;
     for (i = 0; i < num_spaces; i++)
         pnts[i][pntIdx] = pnts[i][num_points];
+    return 0;
+}
+
+int Correspondence::unpaired_fluoro_deletePoint(int pntIdx)
+{
+    unsigned int i;
+    unpaired_fluoro_num_points--;
+    for (i = 0; i < unpaired_fluoro_num_spaces; i++)
+        unpaired_fluoro_pnts[i][pntIdx] = unpaired_fluoro_pnts[i][unpaired_fluoro_num_points];
     return 0;
 }
 
@@ -203,12 +292,54 @@ vrpn_bool Correspondence::findNearestPoint(int spaceIdx, double x, double y,
     return found_point;
 }
 
+
+vrpn_bool Correspondence::unpaired_fluoro_findNearestPoint(int spaceIdx, double x, double y,
+                double scaleX, double scaleY, int *pntIdx)
+{
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= unpaired_fluoro_num_spaces) return VRPN_FALSE;
+    unsigned int i;
+    vrpn_bool found_point = VRPN_FALSE;
+    float dx, dy, min_distance;
+
+    for (i = 0; i < unpaired_fluoro_num_points; i++) {
+		corr_point_t spot;
+		unpaired_fluoro_getPoint(spaceIdx, i, &spot);
+		double x_max = spot.radius * scaleX;
+		double y_max = spot.radius * scaleY;
+        dx = fabs(x-unpaired_fluoro_pnts[spaceIdx][i].x);
+        dy = fabs(y-unpaired_fluoro_pnts[spaceIdx][i].y);
+        if (dx <= x_max && dy <= y_max){
+            if (!found_point){
+                found_point = VRPN_TRUE;
+                min_distance = dx + dy;
+                *pntIdx = i;
+            }
+            else if (dx + dy < min_distance){
+                min_distance = dx+dy;
+                *pntIdx = i;
+            }
+        }
+    }
+    return found_point;
+}
+
+
 int Correspondence::getPoint(int spaceIdx, int pntIndex,
         corr_point_t *pnt) const
 {
     if (pntIndex < 0 || (unsigned)pntIndex >= num_points) return -1;
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     *pnt = pnts[spaceIdx][pntIndex];
+    return 0;
+}
+
+
+int Correspondence::unpaired_fluoro_getPoint(int spaceIdx, int pntIndex,
+        corr_point_t *pnt) const
+{
+    if (pntIndex < 0 || (unsigned)pntIndex >= unpaired_fluoro_num_points) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= unpaired_fluoro_num_spaces) return -1;
+    *pnt = unpaired_fluoro_pnts[spaceIdx][pntIndex];
     return 0;
 }
 

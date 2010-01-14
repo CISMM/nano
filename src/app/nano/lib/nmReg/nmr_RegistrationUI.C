@@ -82,6 +82,8 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resolutionLevelList("auto_align_resolution_list"),
    d_saveRegistrationMarkers("save_registration_markers", 0), //new
    d_loadRegistrationMarkers("load_registration_markers", 0), //new
+   d_saveReport("save_report", 0), //new
+   d_runRansac("run_ransac", 0), //new
 
    d_scaleX("reg_scaleX", 1.0),
    d_scaleY("reg_scaleY", 1.0),
@@ -170,6 +172,8 @@ void nmr_RegistrationUI::setupCallbacks()
     d_shearZ.addCallback(handle_transformationParameter_change, this);
 	d_saveRegistrationMarkers.addCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
 	d_loadRegistrationMarkers.addCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
+	d_saveReport.addCallback(handle_saveReport_change, (void *)this); //new
+	d_runRansac.addCallback(handle_runRansac_change, (void *)this); //new
 
     d_registrationEnabled.addCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -240,7 +244,9 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_rotate3D_Z.removeCallback(handle_transformationParameter_change, this);
     d_shearZ.removeCallback(handle_transformationParameter_change, this);
 	d_saveRegistrationMarkers.removeCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
-	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
+	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new		
+	d_saveReport.removeCallback(handle_saveReport_change, (void *)this); //new
+	d_runRansac.removeCallback(handle_runRansac_change, (void *)this); //new	
 
     d_registrationEnabled.removeCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -906,14 +912,14 @@ void nmr_RegistrationUI::handle_saveRegistrationMarkers_change(vrpn_int32 value,
 	int	src, tgt;
 //	me->d_aligner->d_local_impl->d_alignerUI->getCorrespondence(c, src, tgt);
 	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
-	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->get_d_ce();
+//	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->get_d_ce();
 
 	corr_point_t point_topography;
 	corr_point_t point_projection;
 	unsigned i;
 
 	FILE * pFile;
-	pFile = fopen ("registration_markers.txt","w");
+	pFile = fopen ("output/registration_markers.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -941,7 +947,7 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 	float x,y;
 
 	FILE * pFile;
-	pFile = fopen ("registration_markers.txt","r");
+	pFile = fopen ("output/registration_markers.txt","r");
 
 	rewind (pFile);
 	int num;
@@ -980,6 +986,30 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 	
 	fclose (pFile);
 		printf("save here \n");
+} //new
+
+void nmr_RegistrationUI::handle_saveReport_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
+{
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+	FILE * pFile;
+	pFile = fopen ("output/methods section.txt","w");
+ 
+	fprintf(pFile,"rms error between images: %f\n", me->d_aligner->get_d_local_impl()->get_rmsError());
+
+	fclose (pFile);
+
+} //new
+
+void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+//	Correspondence	c;
+//	int	src, tgt;
+//	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
+
 } //new
 
 void nmr_RegistrationUI::sendTransformationParameters()

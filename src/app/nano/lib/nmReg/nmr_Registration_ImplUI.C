@@ -223,8 +223,23 @@ void nmr_Registration_ImplUI::setImageOrientation(nmr_ImageType whichImage,
     d_ce.setImageOrientation(s_targetImageIndex, flipX, flipY);
   }
 }
-
+/*
 CorrespondenceEditor nmr_Registration_ImplUI::get_d_ce()
 {
 	return d_ce; 
 }//new
+*/
+void nmr_Registration_ImplUI::readPixels()
+{
+//	const char * image_topography = "output/pixelvalues_topography.txt";
+//	d_ce.readAllTest(0,image_topography);
+
+//	const char * image_projection = "output/pixelvalues_projection.txt";
+//	d_ce.readAllTest(1,image_projection);
+
+	const char * ransac_points_topography = "output/ransac_points_topography.txt";
+	d_ce.comparePixelsWithNeighbors(0,ransac_points_topography);
+
+	const char * ransac_points_projection = "output/ransac_points_projection.txt";
+	d_ce.comparePixelsWithNeighbors(1,ransac_points_projection);
+}

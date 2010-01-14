@@ -226,6 +226,43 @@ pack $nmInfo(initialPoints).row1.save \
 	-anchor nw -side left -pady 1
 ################ end of controls for saving points
 
+
+iwidgets::Labeledframe $nmInfo(registration).report \
+	-labeltext "Report" \
+	-labelpos nw 
+set nmInfo(report) [$nmInfo(registration).report childsite]
+pack $nmInfo(registration).report -anchor nw -expand true -fill x
+
+frame $nmInfo(report).row1
+
+pack $nmInfo(report).row1 -anchor nw
+
+button $nmInfo(report).row1.createReport -text "Create Report"  \
+    -command "set save_report 1"
+
+
+pack $nmInfo(report).row1.createReport \
+	-anchor nw -side left -pady 1
+################ end of controls for methods section
+
+iwidgets::Labeledframe $nmInfo(registration).ransac \
+	-labeltext "RANSAC" \
+	-labelpos nw 
+set nmInfo(ransac) [$nmInfo(registration).ransac childsite]
+pack $nmInfo(registration).ransac -anchor nw -expand true -fill x
+
+frame $nmInfo(ransac).row1
+
+pack $nmInfo(ransac).row1 -anchor nw
+
+button $nmInfo(ransac).row1.runRansac -text "Run RANSAC"  \
+    -command "set run_ransac 1"
+
+pack $nmInfo(ransac).row1.runRansac \
+	-anchor nw -side left -pady 1
+
+################ end of controls for ransac
+
 ################ some manually-adjustable transformation parameters #####
 
 iwidgets::Labeledframe $nmInfo(registration).transformParameters \

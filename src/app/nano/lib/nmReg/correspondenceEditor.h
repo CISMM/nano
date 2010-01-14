@@ -9,6 +9,7 @@
   ===3rdtech===*/
 
 #include <imageViewer.h>
+#include <vector>
 
 #include "correspondence.h"
 
@@ -81,7 +82,12 @@ class CorrespondenceEditor {
 										 vrpn_bool enableMove);
 
 	void recenterFiducials(int spaceIndex);
+	void unpaired_fluoro_recenterFiducials(int spaceIndex);
 	void centerWithSpotTracker(int spaceIndex, int pointIndex);
+	void unpaired_fluoro_centerWithSpotTracker(int spaceIndex, int pointIndex);
+	void readAllTest(int spaceIndex, const char * filename);
+	vector< vector <float> > decideOnUsingMedianFilter(int spaceIndex);
+	void comparePixelsWithNeighbors(int spaceIndex, const char * filename);
 
 //	void showMarkersInSingleImage(); // new
 
@@ -107,6 +113,8 @@ class CorrespondenceEditor {
     CorrespondenceWindowParameters *winParam;
     int selectedPointIndex;
     int grabbedPointIndex;
+	int unpaired_fluoro_selectedPointIndex;
+    int unpaired_fluoro_grabbedPointIndex;
     vrpn_bool draggingPoint;
     int grab_offset_x, grab_offset_y;
 

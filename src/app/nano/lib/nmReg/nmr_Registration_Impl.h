@@ -77,6 +77,8 @@ class nmr_Registration_Impl {
 
 	nmr_Registration_ImplUI * get_d_alignerUI();//new
 
+	double get_rmsError(); 
+
   protected:
     void ensureThreePoints(Correspondence &c,  int corrSourceIndex, 
                       vrpn_bool normalized, vrpn_bool lookupZ);
@@ -94,6 +96,8 @@ class nmr_Registration_Impl {
     nmr_Registration_ImplUI *d_alignerUI;
     nmr_Registration_Server *d_server;
     nmr_TransformationType d_transformType;
+
+	double rmsError;
 
     vrpn_bool d_imageChangeSinceLastRegistration;
     nmr_AlignerMI d_mutInfoAligner;

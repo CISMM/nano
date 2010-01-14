@@ -531,6 +531,7 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
 
     // Report error
     printf("Root mean squared error from manual alignment: %f\n", sqrt(rms / (double) c.numPoints()));
+	rmsError = sqrt(rms / (double) c.numPoints());
     
     return 0;
 }
@@ -982,3 +983,8 @@ nmr_Registration_ImplUI * nmr_Registration_Impl::get_d_alignerUI()
 {
 	return d_alignerUI;
 }//new
+
+double nmr_Registration_Impl::get_rmsError()
+{
+	return rmsError;
+}

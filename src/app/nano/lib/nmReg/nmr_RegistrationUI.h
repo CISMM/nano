@@ -99,6 +99,8 @@ class nmr_RegistrationUI {
     static void handle_transformationParameter_change(vrpn_float64, void *ud);
 	static void handle_saveRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
+	static void handle_saveReport_change(vrpn_int32 value, void *ud); //new
+	static void handle_runRansac_change(vrpn_int32 value, void *ud); //new
 
     void sendTransformationParameters();
 
@@ -169,6 +171,8 @@ class nmr_RegistrationUI {
     Tclvar_list_of_strings d_resolutionLevelList;
 	TclNet_int d_saveRegistrationMarkers; //new
 	TclNet_int d_loadRegistrationMarkers; //new
+	TclNet_int d_saveReport; //new
+	TclNet_int d_runRansac; //new
 
     TclNet_float d_scaleX, d_scaleY;
     TclNet_float d_translateX, d_translateY, d_translateZ;

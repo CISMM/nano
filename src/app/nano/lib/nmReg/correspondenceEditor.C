@@ -13,6 +13,9 @@
 #include "spot_tracker.h"
 #include "image_wrapperAdapter.h"
 
+#include <algorithm>
+#include <vector>
+
 #ifndef	M_PI
 #ifndef M_PI_DEFINED
 const double M_PI = 2*asin(1.0);
@@ -51,6 +54,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
     }
     selectedPointIndex = 0;
     grabbedPointIndex = 0;
+	unpaired_fluoro_selectedPointIndex = 0;
+    unpaired_fluoro_grabbedPointIndex = 0;
     draggingPoint = VRPN_FALSE;
     grab_offset_x = 0;
     grab_offset_y = 0;
@@ -94,6 +99,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     }
     selectedPointIndex = 0;
     grabbedPointIndex = 0;
+	unpaired_fluoro_selectedPointIndex = 0;
+    unpaired_fluoro_grabbedPointIndex = 0;
     draggingPoint = VRPN_FALSE;
     grab_offset_x = 0;
     grab_offset_y = 0;
@@ -180,6 +187,60 @@ int CorrespondenceEditor::eventHandler(
                   me->notifyCallbacks();
               }
           }
+		  else if (event.button == IV_RIGHT_BUTTON){
+			  if(spaceIndex == 1)
+			  {
+				  double x_im = event.mouse_x, y_im = event.mouse_y;
+				  me->viewer->toImagePnt(event.winID, &x_im, &y_im);
+				  // Inside or outside existing point?
+				  if (me->correspondence->unpaired_fluoro_findNearestPoint(spaceIndex, x_im, y_im,
+					  scaleX, scaleY, &(me->unpaired_fluoro_grabbedPointIndex))) {
+						  // We are inside- prepare to drag this point
+						  corr_point_t grabbed_pnt;
+						  if (me->correspondence->unpaired_fluoro_getPoint(spaceIndex, 
+							  me->unpaired_fluoro_grabbedPointIndex, &grabbed_pnt)) {
+								  fprintf(stderr, "CorrespondenceEditor::eventHandler: "
+									  "getPoint failed\n");
+								  return -1;
+						  }
+						  me->draggingPoint = VRPN_TRUE;
+						  me->viewer->toPixelsPnt(event.winID, &(grabbed_pnt.x),
+							  &(grabbed_pnt.y));
+						  me->grab_offset_x = (int)(grabbed_pnt.x - event.mouse_x);
+						  me->grab_offset_y = (int)(grabbed_pnt.y - event.mouse_y);
+						  me->unpaired_fluoro_selectedPointIndex = me->unpaired_fluoro_grabbedPointIndex;
+						  int i;
+						  for (i = 0; i < me->num_images; i++)
+							  me->viewer->dirtyWindow((me->winParam)[i].winID);
+				  } else if (me->enableAddDeletePoints) {
+					  // We are outside, create a new point. 
+					  double x_im = event.mouse_x, y_im = event.mouse_y;
+					  me->viewer->toImagePnt(event.winID, &x_im, &y_im);
+
+					  corr_point_t p(x_im, y_im);
+					  int new_pntIdx = me->correspondence->unpaired_fluoro_addPoint(p);
+					  me->unpaired_fluoro_selectedPointIndex = me->unpaired_fluoro_grabbedPointIndex = new_pntIdx;
+					  me->unpaired_fluoro_centerWithSpotTracker(spaceIndex, me->unpaired_fluoro_selectedPointIndex);
+
+					  // Also prepare to drag this new point. 
+					  me->draggingPoint = VRPN_TRUE;
+					  me->viewer->toPixelsPnt(event.winID, &(p.x),
+						  &(p.y));
+					  me->grab_offset_x = 0;
+					  me->grab_offset_y = 0;
+					  int i;
+
+					  // new outer if statement
+					  //if (show_markers_in_single_image == false)
+					 // {
+						 for (i = 0; i < me->num_images; i++) {
+							  me->viewer->dirtyWindow((me->winParam)[i].winID);
+						  }
+					 // }
+					  me->notifyCallbacks();
+				  }
+			  }
+          }
           break;
       case BUTTON_RELEASE_EVENT:
           if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
@@ -215,7 +276,41 @@ int CorrespondenceEditor::eventHandler(
                   me->draggingPoint = VRPN_FALSE;
                   me->notifyCallbacks();
               }
-          } 
+          }
+		  else if (event.button == IV_RIGHT_BUTTON && me->draggingPoint && spaceIndex == 1) {
+              double x_im = event.mouse_x + me->grab_offset_x;
+              double y_im = event.mouse_y + me->grab_offset_y;
+              // allow a 10 pixel tolerance for dragging outside the window to
+              // make it easier for the user to set a point exactly on the 
+              // border of the image without deleting it by accident
+              if(me->viewer->clampToWindow(event.winID, &x_im, &y_im) > 10 &&
+                  me->enableAddDeletePoints) {
+                      // If we dragged outside the window, delete the point. 
+                      me->correspondence->unpaired_fluoro_deletePoint(me->unpaired_fluoro_selectedPointIndex);
+                      me->unpaired_fluoro_selectedPointIndex = me->correspondence->unpaired_fluoro_numPoints()-1;
+                      // deleted point affects all windows. 
+                      int i;
+                      for (i = 0; i < me->num_images; i++) {
+                          me->viewer->dirtyWindow((me->winParam)[i].winID);
+                      }
+                      me->draggingPoint = VRPN_FALSE;
+                      me->notifyCallbacks();
+              } else if (me->enableMovingPoints) {
+                  me->viewer->toImagePnt(event.winID, &x_im, &y_im);
+
+                  corr_point_t p;
+                  me->correspondence->unpaired_fluoro_getPoint(spaceIndex, me->unpaired_fluoro_grabbedPointIndex, &p);
+                  p.x = x_im;
+                  p.y = y_im;
+                  me->correspondence->unpaired_fluoro_setPoint(spaceIndex, me->unpaired_fluoro_grabbedPointIndex, p);
+                  me->unpaired_fluoro_centerWithSpotTracker(spaceIndex, me->unpaired_fluoro_grabbedPointIndex);
+
+                  // moved point only affects active window. 
+                  me->viewer->dirtyWindow(event.winID);
+                  me->draggingPoint = VRPN_FALSE;
+                  me->notifyCallbacks();
+              }
+          }
           break;
       case MOTION_EVENT:
           if (me->enableMovingPoints) {
@@ -234,12 +329,26 @@ int CorrespondenceEditor::eventHandler(
                   me->viewer->dirtyWindow(event.winID);
                   me->notifyCallbacks();
               }
+			  else if ((event.state & IV_RIGHT_BUTTON_MASK) && me->draggingPoint && spaceIndex == 1) {
+                  double x_im = event.mouse_x + me->grab_offset_x;
+                  double y_im = event.mouse_y + me->grab_offset_y;
+                  me->viewer->toImagePnt(event.winID, &x_im, &y_im);		
+
+                  corr_point_t p;
+                  me->correspondence->unpaired_fluoro_getPoint(spaceIndex, me->unpaired_fluoro_grabbedPointIndex, &p);
+                  p.x = x_im;
+                  p.y = y_im;
+                  me->correspondence->unpaired_fluoro_setPoint(spaceIndex, me->unpaired_fluoro_grabbedPointIndex, p);
+                  me->unpaired_fluoro_centerWithSpotTracker(spaceIndex, me->unpaired_fluoro_grabbedPointIndex);
+                  
+                  me->viewer->dirtyWindow(event.winID);
+                  me->notifyCallbacks();
+              }
           }
           break;
       case KEY_PRESS_EVENT:
-          if (event.keycode == 127 ||
-              event.keycode == 8){ // 8 is for backspace, ^H. 
-                  // 127 for delete key. Delete key needs glut 3.7 or greater. 
+          if (event.keycode == 8) // 8 is for backspace, ^H.
+		  { // this is for regular markers that were previously put with left button
                   if (me->enableAddDeletePoints) {
                       if (me->correspondence->numPoints() > 0){
                           me->correspondence->deletePoint(me->selectedPointIndex);
@@ -252,7 +361,23 @@ int CorrespondenceEditor::eventHandler(
                       // Allow update of the registration automatically. 
                       me->notifyCallbacks();
                   }
-          } else if (event.keycode == 'z') {
+		  }
+		  else if (event.keycode == 127) // 127 for delete key. Delete key needs glut 3.7 or greater.
+		  {  // this is for unpaired regular markers that were previously put with right button
+                  if (me->enableAddDeletePoints) {
+                      if (me->correspondence->unpaired_fluoro_numPoints() > 0){
+                          me->correspondence->unpaired_fluoro_deletePoint(me->unpaired_fluoro_selectedPointIndex);
+                      }
+                      me->unpaired_fluoro_selectedPointIndex = me->correspondence->unpaired_fluoro_numPoints()-1;
+                      int i;
+                      for (i = 0; i < me->num_images; i++) {
+                          me->viewer->dirtyWindow((me->winParam)[i].winID);
+                      }
+                      // Allow update of the registration automatically. 
+                      me->notifyCallbacks();
+                  }
+		  }
+		  else if (event.keycode == 'z') {
               me->scaleImageRegion(event.winID, event.mouse_x, event.mouse_y, 0.5);
               me->viewer->dirtyWindow(event.winID);
           } else if (event.keycode == 'Z') {
@@ -406,6 +531,55 @@ void CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointIndex)
     correspondence->setPoint(spaceIndex, pointIndex, spot);
 }
 
+void CorrespondenceEditor::unpaired_fluoro_centerWithSpotTracker(int spaceIndex, int pointIndex) {
+    if (!spotTrackerParams[spaceIndex].tracker) {
+        printf("Tracking off for space index %d\n", spaceIndex);
+        return;
+    }
+
+    corr_point_t spot;
+    correspondence->unpaired_fluoro_getPoint(spaceIndex, pointIndex, &spot);
+
+    nmb_Image *image = this->winParam[spaceIndex].im;
+    imageAdapter->setImage(image);
+
+    // Convert to pixel coordinates from image coordinates.
+    double width = image->width();
+    double height = image->height();
+    double imageI = (width-1) * spot.x;
+    double imageJ = (height-1) * spot.y;
+    printf("Starting position = %lf, %lf\n", imageI, imageJ);
+    if (imageAdapter->read_pixel_nocheck(imageI, imageJ) > 0.0)
+        printf("%f ********************************************************************\n", imageAdapter->read_pixel_nocheck(imageI, imageJ));
+
+    spotTrackerParams[spaceIndex].tracker->set_radius(spot.radius);
+    spotTrackerParams[spaceIndex].tracker->set_invert(spotTrackerParams[spaceIndex].invert);
+    spotTrackerParams[spaceIndex].tracker->set_radius_accuracy(spotTrackerParams[spaceIndex].radiusAccuracy);
+    spotTrackerParams[spaceIndex].tracker->set_pixel_accuracy(spotTrackerParams[spaceIndex].pixelAccuracy);
+    spotTrackerParams[spaceIndex].tracker->set_sample_separation(spotTrackerParams[spaceIndex].sampleSeparation);
+
+    printf("Starting radius to %f\n", spot.radius);
+
+    double opt_x, opt_y;
+    if (spotTrackerParams[spaceIndex].optimizeRadius) {
+        spotTrackerParams[spaceIndex].tracker->optimize(*imageAdapter, 0, opt_x, opt_y, imageI, imageJ);
+        // Store radius.
+        spot.radius = spotTrackerParams[spaceIndex].tracker->get_radius();
+
+    } else {
+        spotTrackerParams[spaceIndex].tracker->optimize_xy(*imageAdapter, 0, opt_x, opt_y, imageI, imageJ);
+    }
+
+    printf("Ending radius: %lf\n", spotTrackerParams[spaceIndex].tracker->get_radius());
+    printf("Ending position   = %lf, %lf\n", spotTrackerParams[spaceIndex].tracker->get_x(), 
+        spotTrackerParams[spaceIndex].tracker->get_y());
+
+    // Convert from pixel coordinates in the image back to image coordinates.
+    spot.x = opt_x / (width-1);
+    spot.y = opt_y / (height-1);
+    correspondence->unpaired_fluoro_setPoint(spaceIndex, pointIndex, spot);
+}
+
 /*void CorrespondenceEditor::showMarkersInSingleImage()
 {
 	show_markers_in_single_image = true;
@@ -476,6 +650,38 @@ int CorrespondenceEditor::displayHandler(
         me->viewer->drawString(data.winWidth-image_pnt.x - 1 - 1.414*image_pnt.radius, 
             image_pnt.y - 3 - 1.414*image_pnt.radius, num_str);
     }
+
+	if(spaceIndex == 1)
+	{
+		corr_point_t unpaired_fluoro_image_pnt;
+
+		char unpaired_fluoro_num_str[16];
+		
+		int unpaired_fluoro_num_pnts = me->correspondence->unpaired_fluoro_numPoints();
+		for (i = 0; i < unpaired_fluoro_num_pnts; i++){
+			me->correspondence->unpaired_fluoro_getPoint(spaceIndex, i, &unpaired_fluoro_image_pnt);
+			// convert point to the right location in the window by scaling it
+			me->viewer->toPixelsPnt(data.winID, &(unpaired_fluoro_image_pnt.x), &(unpaired_fluoro_image_pnt.y));
+
+			// Now set the color and draw the tracker icon.
+			if (i == me->unpaired_fluoro_selectedPointIndex)
+				glColor3f(1.0f, 0.0f, 0.0f);
+			else
+				glColor3f(0.0f, 0.0f, 1.0f);
+			double scaleX = 1.0, scaleY = 1.0;
+			if (me->winParam[spaceIndex].im) {
+				scaleX = (double) data.winWidth / (double) me->winParam[spaceIndex].im->width();
+				scaleY = (double) data.winHeight / (double) me->winParam[spaceIndex].im->height();
+			}
+			me->drawRoundCrosshair(data.winWidth-unpaired_fluoro_image_pnt.x, unpaired_fluoro_image_pnt.y, unpaired_fluoro_image_pnt.radius, scaleX, scaleY);
+
+			// Draw label number.
+			sprintf(unpaired_fluoro_num_str, "%d", i);
+			glColor3f(1.0, 1.0, 1.0);
+			me->viewer->drawString(data.winWidth-unpaired_fluoro_image_pnt.x - 1 - 1.414*unpaired_fluoro_image_pnt.radius, 
+				unpaired_fluoro_image_pnt.y - 3 - 1.414*unpaired_fluoro_image_pnt.radius, unpaired_fluoro_num_str);
+		}
+	}
     return 0;
 }
 
@@ -890,6 +1096,7 @@ int CorrespondenceEditor::setFiducialSpotTracker(int image_index, int tracker_ty
 
         // Now update all the fiducial markers 
         recenterFiducials(image_index);
+		unpaired_fluoro_recenterFiducials(image_index);
     }
 
     return 0;
@@ -945,9 +1152,272 @@ void CorrespondenceEditor::recenterFiducials(int spaceIndex) {
     if (numPts > 0) {
         viewer->dirtyWindow(winParam[spaceIndex].winID);
         notifyCallbacks();
-    }
+    } 
 }
 
+void CorrespondenceEditor::unpaired_fluoro_recenterFiducials(int spaceIndex) {
+    nmb_Image *image = winParam[spaceIndex].im;
+    int numPts = correspondence->unpaired_fluoro_numPoints();
+    for (int i = 0; i < numPts; i++) {
+        unpaired_fluoro_centerWithSpotTracker(spaceIndex, i);
+    }
+
+    if (numPts > 0) {
+        viewer->dirtyWindow(winParam[spaceIndex].winID);
+        notifyCallbacks();
+    } 
+}
+
+void CorrespondenceEditor::readAllTest(int spaceIndex, const char * filename) 
+{
+    nmb_Image *image = this->winParam[spaceIndex].im;
+
+	FILE * pFile;
+	pFile = fopen (filename,"w");
+	fprintf(pFile,"min value: %f\n", image->minValue());
+	fprintf(pFile,"max value: %f\n", image->maxValue());
+	fprintf(pFile,"width: %d\n", image->width());
+	fprintf(pFile,"height: %d\n", image->height());
+
+	for(int i = 0; i < image->height(); i++)
+	{
+		for(int j = 0; j < image->width(); j++)
+		{
+			fprintf(pFile,"%f ", image->getValue(i,j));
+		}
+		fprintf(pFile,"\n\n");
+	}
+
+	fclose (pFile);
+//  imageAdapter->setImage(image);
+//	imageAdapter->get_num_rows();
+}
+
+vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spaceIndex)
+{
+	vector< vector <float> > pixelMatrix;
+
+    nmb_Image *image = this->winParam[spaceIndex].im;
+
+	float img_width = image->width();
+	float img_height = image->height();
+
+	if(spaceIndex == 0) // do not use median filter for afm images (mapped to height)
+	{
+		for(int i = 0; i < image->height(); i++)
+		{
+			vector<float> pixelRow;
+			for(int j = 0; j < image->width(); j++)
+			{
+				pixelRow.push_back(image->getValue(i,j));
+			}
+			pixelMatrix.push_back(pixelRow);
+		}
+	}
+	else // use median filter for fluoro images (mapped to color)
+	{
+		for(int i = 0; i < image->height(); i++)
+		{
+			vector<float> pixelRow;
+
+			for(int j = 0; j < image->width(); j++)
+			{
+				float current_pixel = image->getValue(i,j);
+				vector<float> tempSort;
+
+				tempSort.push_back(current_pixel);
+
+				if(i>0 && i<(image->height()-1) && j>0 && j<(image->width()-1))
+				{
+					tempSort.push_back(image->getValue(i-1,j-1)); tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i-1,j+1));
+					tempSort.push_back(image->getValue(i,j+1));	tempSort.push_back(image->getValue(i+1,j+1)); tempSort.push_back(image->getValue(i+1,j));
+					tempSort.push_back(image->getValue(i+1,j-1)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+9);
+					pixelRow.push_back(tempSort[4]);
+				}
+				else if(i>0 && i<(image->height()-1) && j>0)
+				{
+					tempSort.push_back(image->getValue(i-1,j-1)); tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i+1,j));
+					tempSort.push_back(image->getValue(i+1,j-1)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+6);
+					pixelRow.push_back((tempSort[2]+tempSort[3])/2);
+				}
+				else if(i>0 && i<(image->height()-1) && j<(image->width()-1))
+				{
+					tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i-1,j+1)); tempSort.push_back(image->getValue(i,j+1));
+					tempSort.push_back(image->getValue(i+1,j+1)); tempSort.push_back(image->getValue(i+1,j));
+					sort(tempSort.begin(),tempSort.begin()+6);
+					pixelRow.push_back((tempSort[2]+tempSort[3])/2);
+				}
+				else if(i>0 && j>0 && j<(image->width()-1))
+				{	
+					tempSort.push_back(image->getValue(i-1,j-1)); tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i-1,j+1));
+					tempSort.push_back(image->getValue(i,j+1)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+6);
+					pixelRow.push_back((tempSort[2]+tempSort[3])/2);
+				}
+				else if(i<(image->height()-1) && j>0 && j<(image->width()-1))
+				{
+					tempSort.push_back(image->getValue(i,j+1)); tempSort.push_back(image->getValue(i+1,j+1)); tempSort.push_back(image->getValue(i+1,j));
+					tempSort.push_back(image->getValue(i+1,j-1)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+6);
+					pixelRow.push_back((tempSort[2]+tempSort[3])/2);
+				}///////////////////////////
+				else if(i>0 && j>0)
+				{
+					tempSort.push_back(image->getValue(i-1,j-1)); tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+4);
+					pixelRow.push_back((tempSort[1]+tempSort[2])/2);
+				}
+				else if(i<(image->height()-1)&& j<(image->width()-1))
+				{
+					tempSort.push_back(image->getValue(i,j+1)); tempSort.push_back(image->getValue(i+1,j+1)); tempSort.push_back(image->getValue(i+1,j));
+					sort(tempSort.begin(),tempSort.begin()+4);
+					pixelRow.push_back((tempSort[1]+tempSort[2])/2);
+				}
+				else if(i>0 && j<(image->width()-1))
+				{
+					tempSort.push_back(image->getValue(i-1,j)); tempSort.push_back(image->getValue(i-1,j+1)); tempSort.push_back(image->getValue(i,j+1));
+					sort(tempSort.begin(),tempSort.begin()+4);
+					pixelRow.push_back((tempSort[1]+tempSort[2])/2);
+				}
+				else if(i<(image->height()-1) && j>0)
+				{
+					tempSort.push_back(image->getValue(i+1,j)); tempSort.push_back(image->getValue(i+1,j-1)); tempSort.push_back(image->getValue(i,j-1));
+					sort(tempSort.begin(),tempSort.begin()+4);
+					pixelRow.push_back((tempSort[1]+tempSort[2])/2);
+				}
+				else
+				{
+					printf("***should not happen***\n");
+				}
+			}
+
+			pixelMatrix.push_back(pixelRow);
+		}
+	}
+
+	return pixelMatrix;
+}
+
+void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
+{
+    nmb_Image *image = this->winParam[spaceIndex].im;
+	vector< vector <float> > pixMatrix;
+	pixMatrix = decideOnUsingMedianFilter(spaceIndex);
+
+	FILE * pFile;
+	pFile = fopen (filename,"w");
+	fprintf(pFile,"width: %d\n", image->width());
+	fprintf(pFile,"height: %d\n", image->height());
+
+	float img_width = image->width();
+	float img_height = image->height();
+
+	int count = 0;
+
+	// locate the pixels in the image. values are scaled down (they can be between 0 and 1).
+	for(int i = 0; i < image->height(); i++)
+	{
+		for(int j = 0; j < image->width(); j++)
+		{
+			float current_pixel = pixMatrix[i][j];
+
+			if(current_pixel > 0.1)
+			{
+				if(i>0 && i<(image->height()-1) && j>0 && j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i>0 && i<(image->height()-1) && j>0)
+				{
+					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i>0 && i<(image->height()-1) && j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i>0 && j>0 && j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i<(image->height()-1) && j>0 && j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}///////////////////////////
+				else if(i>0 && j>0)
+				{
+					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i<(image->height()-1)&& j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i>0 && j<(image->width()-1))
+				{
+					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else if(i<(image->height()-1) && j>0)
+				{
+					if(current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
+					{
+//						fprintf(pFile,"%f ", current_pixel);
+						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+						count++;
+					}
+				}
+				else
+				{
+					printf("***should not happen***\n");
+				}
+			}
+		}
+	}
+
+	fclose (pFile);
+
+	printf("%s: %d\n", filename, count);
+}
 
 // This is some driver code I used to test this stuff:
 /*main ()
