@@ -246,19 +246,48 @@ pack $nmInfo(report).row1.createReport \
 ################ end of controls for methods section
 
 iwidgets::Labeledframe $nmInfo(registration).ransac \
-	-labeltext "RANSAC" \
+	-labeltext "Find Correspondence" \
 	-labelpos nw 
 set nmInfo(ransac) [$nmInfo(registration).ransac childsite]
 pack $nmInfo(registration).ransac -anchor nw -expand true -fill x
 
 frame $nmInfo(ransac).row1
+frame $nmInfo(ransac).row2
+frame $nmInfo(ransac).row3
+frame $nmInfo(ransac).row4
 
-pack $nmInfo(ransac).row1 -anchor nw
+pack $nmInfo(ransac).row1 $nmInfo(ransac).row2 $nmInfo(ransac).row3 $nmInfo(ransac).row4 -anchor nw
 
-button $nmInfo(ransac).row1.runRansac -text "Run RANSAC"  \
+button $nmInfo(ransac).row1.calculatePoints -text "Calculate Points"  \
+    -command "set run_calculatePoints 1"
+
+pack $nmInfo(ransac).row1.calculatePoints \
+	-anchor nw -side left -pady 1
+
+button $nmInfo(ransac).row2.drawTopo -text "Draw Topography Points"  \
+    -command "set run_calculatePoints 1"
+
+button $nmInfo(ransac).row2.saveTopo -text "Save Topography Points"  \
+    -command "set run_calculatePoints 1"
+
+pack $nmInfo(ransac).row2.drawTopo \
+	$nmInfo(ransac).row2.saveTopo \
+	-anchor w -side left -pady 1
+
+button $nmInfo(ransac).row3.drawProj -text "Draw Projection Points"  \
+    -command "set run_calculatePoints 1"
+
+button $nmInfo(ransac).row3.saveProj -text "Save Projection Points"  \
+    -command "set run_calculatePoints 1"
+
+pack $nmInfo(ransac).row3.drawProj \
+	$nmInfo(ransac).row3.saveProj \
+	-anchor w -side left -pady 1
+
+button $nmInfo(ransac).row4.run_newPoints -text "ransac"  \
     -command "set run_ransac 1"
 
-pack $nmInfo(ransac).row1.runRansac \
+pack $nmInfo(ransac).row4.run_newPoints \
 	-anchor nw -side left -pady 1
 
 ################ end of controls for ransac

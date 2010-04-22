@@ -58,7 +58,8 @@ class nmr_Registration_ImplUI {
 
 //	CorrespondenceEditor get_d_ce(); //new
 
-	void readPixels();
+	vector< vector< vector <float> > > readPixels();
+	vector < vector <float> > getWidthHeight();
 
   protected:
     static int s_numImages;

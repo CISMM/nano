@@ -87,7 +87,9 @@ class CorrespondenceEditor {
 	void unpaired_fluoro_centerWithSpotTracker(int spaceIndex, int pointIndex);
 	void readAllTest(int spaceIndex, const char * filename);
 	vector< vector <float> > decideOnUsingMedianFilter(int spaceIndex);
-	void comparePixelsWithNeighbors(int spaceIndex, const char * filename);
+	float getWidth(int spaceIndex);
+	float getHeight(int spaceIndex);
+	vector< vector <float> > comparePixelsWithNeighbors(int spaceIndex, const char * filename);
 
 //	void showMarkersInSingleImage(); // new
 

@@ -110,6 +110,11 @@ void nmr_Registration_ImplUI::setFiducial(vrpn_int32 replace, vrpn_int32 num,
     y[s_targetImageIndex] = y_tgt[i];
     z[s_targetImageIndex] = z_tgt[i];
 
+	if(i == 0)
+	{
+		printf ("xsource: %f ysource: %f xtarget: %f ytarget: %f\n", x[s_sourceImageIndex], y[s_sourceImageIndex], x[s_targetImageIndex], y[s_targetImageIndex]);
+	}
+
     d_ce.addFiducial(x, y, z);
   }
 }
@@ -229,7 +234,7 @@ CorrespondenceEditor nmr_Registration_ImplUI::get_d_ce()
 	return d_ce; 
 }//new
 */
-void nmr_Registration_ImplUI::readPixels()
+vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 {
 //	const char * image_topography = "output/pixelvalues_topography.txt";
 //	d_ce.readAllTest(0,image_topography);
@@ -237,9 +242,35 @@ void nmr_Registration_ImplUI::readPixels()
 //	const char * image_projection = "output/pixelvalues_projection.txt";
 //	d_ce.readAllTest(1,image_projection);
 
+	vector< vector< vector <float> > > initialRansac;
+
 	const char * ransac_points_topography = "output/ransac_points_topography.txt";
-	d_ce.comparePixelsWithNeighbors(0,ransac_points_topography);
+	vector< vector <float> > initialRansacTopography;
+	initialRansacTopography = d_ce.comparePixelsWithNeighbors(0,ransac_points_topography);
 
 	const char * ransac_points_projection = "output/ransac_points_projection.txt";
-	d_ce.comparePixelsWithNeighbors(1,ransac_points_projection);
+	vector< vector <float> > initialRansacProjection;
+	initialRansacProjection = d_ce.comparePixelsWithNeighbors(1,ransac_points_projection);
+
+	initialRansac.push_back(initialRansacTopography);
+	initialRansac.push_back(initialRansacProjection);
+
+	return initialRansac;
+}
+
+vector < vector <float> > nmr_Registration_ImplUI::getWidthHeight()
+{
+	vector<float> wh0(2,0);
+	wh0[0] = d_ce.getWidth(0);
+	wh0[1] = d_ce.getHeight(0);
+
+	vector<float> wh1(2,0);
+	wh1[0] = d_ce.getWidth(1);
+	wh1[1] = d_ce.getHeight(1);
+
+	vector < vector <float> > wh;
+	wh.push_back(wh0);
+	wh.push_back(wh1);
+
+	return wh;
 }

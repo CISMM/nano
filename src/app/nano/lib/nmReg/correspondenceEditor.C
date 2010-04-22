@@ -1202,15 +1202,20 @@ vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spa
 	float img_width = image->width();
 	float img_height = image->height();
 
-	if(spaceIndex == 0) // do not use median filter for afm images (mapped to height)
+//	if(spaceIndex == 0) // do not use median filter for afm images (mapped to height)
+	if(spaceIndex == 0  || spaceIndex == 1)
 	{
+		printf("burda_1 %d", image->height());
 		for(int i = 0; i < image->height(); i++)
 		{
 			vector<float> pixelRow;
+			
 			for(int j = 0; j < image->width(); j++)
 			{
+	//			printf("burda_2 %d %d\n", j , image->getValue(i,j));
 				pixelRow.push_back(image->getValue(i,j));
 			}
+	//		printf("burda_3 %d", image->width());
 			pixelMatrix.push_back(pixelRow);
 		}
 	}
@@ -1300,7 +1305,21 @@ vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spa
 	return pixelMatrix;
 }
 
-void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
+float CorrespondenceEditor::getWidth(int spaceIndex)
+{
+    nmb_Image *image = this->winParam[spaceIndex].im;
+	float img_width = image->width();
+	return img_width;
+}
+
+float CorrespondenceEditor::getHeight(int spaceIndex)
+{
+	nmb_Image *image = this->winParam[spaceIndex].im;
+	float img_height = image->height();
+	return img_height;
+}
+
+vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
 {
     nmb_Image *image = this->winParam[spaceIndex].im;
 	vector< vector <float> > pixMatrix;
@@ -1316,12 +1335,18 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 
 	int count = 0;
 
+	vector< vector <float> > points;
+
 	// locate the pixels in the image. values are scaled down (they can be between 0 and 1).
 	for(int i = 0; i < image->height(); i++)
 	{
 		for(int j = 0; j < image->width(); j++)
 		{
 			float current_pixel = pixMatrix[i][j];
+			
+			vector <float> initialRansacPoint;
+
+			bool validPoint = false;
 
 			if(current_pixel > 0.1)
 			{
@@ -1330,8 +1355,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i>0 && i<(image->height()-1) && j>0)
@@ -1339,8 +1363,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i>0 && i<(image->height()-1) && j<(image->width()-1))
@@ -1348,8 +1371,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i>0 && j>0 && j<(image->width()-1))
@@ -1357,8 +1379,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i<(image->height()-1) && j>0 && j<(image->width()-1))
@@ -1366,8 +1387,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}///////////////////////////
 				else if(i>0 && j>0)
@@ -1375,8 +1395,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i<(image->height()-1)&& j<(image->width()-1))
@@ -1384,8 +1403,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i>0 && j<(image->width()-1))
@@ -1393,8 +1411,7 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else if(i<(image->height()-1) && j>0)
@@ -1402,13 +1419,34 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 					if(current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
 					{
 //						fprintf(pFile,"%f ", current_pixel);
-						fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-						count++;
+						validPoint = true;
 					}
 				}
 				else
 				{
 					printf("***should not happen***\n");
+				}
+			}
+
+			if(validPoint == true)
+			{
+				bool too_close = false;
+				for(int ind = 0; ind < points.size() && too_close == false; ind++)
+				{
+					float dist = sqrt(((points[ind][0]-i)*(points[ind][0]-i)) + ((points[ind][1]-j)*(points[ind][1]-j)));
+					if(dist <= 5)
+					{
+						too_close = true;
+					}
+				}
+				if(too_close == false)
+				{
+//					fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+					fprintf(pFile,"%d %d ", i, j);
+					initialRansacPoint.push_back(i);
+					initialRansacPoint.push_back(j);
+					points.push_back(initialRansacPoint);
+					count++;
 				}
 			}
 		}
@@ -1417,6 +1455,8 @@ void CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char
 	fclose (pFile);
 
 	printf("%s: %d\n", filename, count);
+
+	return points;
 }
 
 // This is some driver code I used to test this stuff:

@@ -47,7 +47,7 @@ class nmb_ColorMap;
 
 #define MAX_WIN (10)
 #define MAX_DISPLAYS (4)
-#define DEFAULT_MAX_POINTS (100)
+#define DEFAULT_MAX_POINTS (1000)
 #define FONT_WIDTH (8)	// width of characters in pixels for font used
 			// by drawString()
 

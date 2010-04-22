@@ -101,7 +101,8 @@ class nmr_RegistrationUI {
 	static void handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveReport_change(vrpn_int32 value, void *ud); //new
 	static void handle_runRansac_change(vrpn_int32 value, void *ud); //new
-
+	static void handle_visualizePoints_change(vrpn_int32 value, void *ud); //new
+	static void handle_calculatePoints_change(vrpn_int32 value, void *ud); //new
     void sendTransformationParameters();
 
     void createResampleImage(const char *imageName);
@@ -173,6 +174,7 @@ class nmr_RegistrationUI {
 	TclNet_int d_loadRegistrationMarkers; //new
 	TclNet_int d_saveReport; //new
 	TclNet_int d_runRansac; //new
+	TclNet_int d_calculatePoints; //new
 
     TclNet_float d_scaleX, d_scaleY;
     TclNet_float d_translateX, d_translateY, d_translateZ;

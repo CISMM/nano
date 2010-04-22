@@ -4,8 +4,8 @@
 #include <vrpn_Connection.h>
 #include <vrpn_Types.h>
 
-#define NMR_MAX_RESOLUTION_LEVELS (32)
-#define NMR_MAX_FIDUCIAL (32)
+#define NMR_MAX_RESOLUTION_LEVELS (5000)
+#define NMR_MAX_FIDUCIAL (5000)
 
 /**
    design:
