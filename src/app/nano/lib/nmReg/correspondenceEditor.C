@@ -1327,8 +1327,10 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 
 	FILE * pFile;
 	pFile = fopen (filename,"w");
-	fprintf(pFile,"width: %d\n", image->width());
-	fprintf(pFile,"height: %d\n", image->height());
+//	fprintf(pFile,"width: %d\n", image->width());
+//	fprintf(pFile,"height: %d\n", image->height());
+	fprintf(pFile,"%d\n", image->width());
+	fprintf(pFile,"%d\n", image->height());
 
 	float img_width = image->width();
 	float img_height = image->height();
@@ -1441,8 +1443,8 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 				}
 				if(too_close == false)
 				{
-//					fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-					fprintf(pFile,"%d %d ", i, j);
+					fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
+//					fprintf(pFile,"%d %d ", i, j);
 					initialRansacPoint.push_back(i);
 					initialRansacPoint.push_back(j);
 					points.push_back(initialRansacPoint);

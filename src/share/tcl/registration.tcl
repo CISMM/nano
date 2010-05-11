@@ -265,29 +265,34 @@ pack $nmInfo(ransac).row1.calculatePoints \
 	-anchor nw -side left -pady 1
 
 button $nmInfo(ransac).row2.drawTopo -text "Draw Topography Points"  \
-    -command "set run_calculatePoints 1"
+    -command "set run_drawTopographyPoints 1"
 
 button $nmInfo(ransac).row2.saveTopo -text "Save Topography Points"  \
-    -command "set run_calculatePoints 1"
+    -command "set run_saveTopographyPoints 1"
 
 pack $nmInfo(ransac).row2.drawTopo \
 	$nmInfo(ransac).row2.saveTopo \
 	-anchor w -side left -pady 1
 
 button $nmInfo(ransac).row3.drawProj -text "Draw Projection Points"  \
-    -command "set run_calculatePoints 1"
+    -command "set run_drawProjectionPoints 1"
 
 button $nmInfo(ransac).row3.saveProj -text "Save Projection Points"  \
-    -command "set run_calculatePoints 1"
+    -command "set run_saveProjectionPoints 1"
 
 pack $nmInfo(ransac).row3.drawProj \
 	$nmInfo(ransac).row3.saveProj \
 	-anchor w -side left -pady 1
 
-button $nmInfo(ransac).row4.run_newPoints -text "ransac"  \
+button $nmInfo(ransac).row4.run_calcCorr -text "Calculate Correspondences"  \
     -command "set run_ransac 1"
 
-pack $nmInfo(ransac).row4.run_newPoints \
+button $nmInfo(ransac).row4.run_drawCorr -text "Draw Correspondences"  \
+    -command "set draw_ransac 1"
+
+
+pack $nmInfo(ransac).row4.run_calcCorr \
+	$nmInfo(ransac).row4.run_drawCorr \
 	-anchor nw -side left -pady 1
 
 ################ end of controls for ransac

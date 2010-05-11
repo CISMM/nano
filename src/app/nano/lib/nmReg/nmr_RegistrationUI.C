@@ -91,6 +91,11 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_saveReport("save_report", 0), //new
    d_runRansac("run_ransac", 0), //new
    d_calculatePoints("run_calculatePoints", 0), //new
+   d_drawTopographyPoints("run_drawTopographyPoints", 0), //new
+   d_saveTopographyPoints("run_saveTopographyPoints", 0), //new
+   d_drawProjectionPoints("run_drawProjectionPoints", 0), //new
+   d_saveProjectionPoints("run_saveProjectionPoints", 0), //new
+   d_runDrawRansac("draw_ransac", 0), //new
 
    d_scaleX("reg_scaleX", 1.0),
    d_scaleY("reg_scaleY", 1.0),
@@ -182,6 +187,11 @@ void nmr_RegistrationUI::setupCallbacks()
 	d_saveReport.addCallback(handle_saveReport_change, (void *)this); //new
 	d_runRansac.addCallback(handle_runRansac_change, (void *)this); //new
     d_calculatePoints.addCallback(handle_calculatePoints_change, (void *)this); //new
+	d_drawTopographyPoints.addCallback(handle_drawTopographyPoints_change, (void *)this); //new
+	d_saveTopographyPoints.addCallback(handle_saveTopographyPoints_change, (void *)this); //new
+	d_drawProjectionPoints.addCallback(handle_drawProjectionPoints_change, (void *)this); //new
+	d_saveProjectionPoints.addCallback(handle_saveProjectionPoints_change, (void *)this); //new
+	d_runDrawRansac.addCallback(handle_runDrawRansac_change, (void *)this); //new
 
     d_registrationEnabled.addCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -256,6 +266,11 @@ void nmr_RegistrationUI::teardownCallbacks()
 	d_saveReport.removeCallback(handle_saveReport_change, (void *)this); //new
 	d_runRansac.removeCallback(handle_runRansac_change, (void *)this); //new
     d_calculatePoints.removeCallback(handle_calculatePoints_change, (void *)this); //new
+	d_drawTopographyPoints.removeCallback(handle_drawTopographyPoints_change, (void *)this); //new
+	d_saveTopographyPoints.removeCallback(handle_saveTopographyPoints_change, (void *)this); //new
+	d_drawProjectionPoints.removeCallback(handle_drawProjectionPoints_change, (void *)this); //new
+	d_saveProjectionPoints.removeCallback(handle_saveProjectionPoints_change, (void *)this); //new
+	d_runDrawRansac.removeCallback(handle_runDrawRansac_change, (void *)this); //new
 
     d_registrationEnabled.removeCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -1179,9 +1194,11 @@ void cofact(float inverseMatrix[6][6], float num[6][6],float f)
 
 void nmr_RegistrationUI::handle_calculatePoints_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
 {
+
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	vector< vector< vector <float> > > rawRansac = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
+
 #if(0)
-	//	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
-//	vector< vector< vector <float> > > rawRansac = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
 	float x,y;
 
 	FILE * pFile;
@@ -1248,7 +1265,238 @@ void nmr_RegistrationUI::handle_calculatePoints_change(vrpn_int32 value, void *u
 #endif
 } //new
 
+/*ewfwef
+{
+	float x,y;
 
+	FILE * pFile;
+	pFile = fopen ("output/ransac_points_topography.txt","r");
+
+	if (pFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		rewind (pFile);
+		int num;
+		fscanf (pFile, "%d", &num);
+
+		if(num <= NMR_MAX_FIDUCIAL)
+		{
+			vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
+				x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+
+			vrpn_int32 replace = 1;
+
+			vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+
+			printf ("%d ",num);
+			printf ("Topography: ");
+			for(int i = 0; i<num; i++)
+			{
+				fscanf (pFile, "%f %f", &x, &y);
+				x_src[i] = x/(wh[0][0]-1);
+				y_src[i] = y/(wh[0][1]-1);
+				z_src[i] = 0;
+				if( i == 0 || i == (num-1))
+				{
+					printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
+				}
+			}
+			printf ("\n");
+
+			nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+			me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,num,x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
+
+		}
+		else
+		{
+			printf ("Error: Number of markers in the file is bigger than NMR_MAX_FIDUCIAL\n");
+		}
+		fclose (pFile);
+	}
+}*/
+
+void nmr_RegistrationUI::handle_drawTopographyPoints_change(vrpn_int32 value, void *ud)
+{
+	float x,y;
+
+	FILE * pFile;
+	pFile = fopen ("output/ransac_points_topography.txt","r");
+
+	if (pFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		rewind (pFile);
+		int width;
+		int height;
+		fscanf (pFile, "%d", &width);
+		fscanf (pFile, "%d", &height);
+
+		vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
+			x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+
+		vrpn_int32 replace = 1;
+
+		printf ("handle_drawTopographyPoints_change: ");
+
+		int i = 0;
+		for(; !feof(pFile); i++)
+		{
+			fscanf (pFile, "%f %f", &x, &y);
+//			x_src[i] = x/(width-1);
+//			y_src[i] = y/(height-1);
+			x_src[i] = x;
+			y_src[i] = y;
+			z_src[i] = 0;
+
+			x_tgt[i] = -1;
+			y_tgt[i] = -1;
+			z_tgt[i] = -1;
+
+			if( i == 0)
+			{
+				printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
+			}
+		}
+		printf ("\n");
+
+		printf ("LAST source %d %f %f\n", i-1, x_src[i-1], y_src[i-1]);
+
+		if(i < NMR_MAX_FIDUCIAL)
+		{
+			nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+			me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,(i-1),x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
+		}
+		else
+		{
+			printf ("Error: Number of markers in the file is bigger than NMR_MAX_FIDUCIAL\n");
+		}
+		fclose (pFile);
+	}
+}
+
+void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, void *ud)
+{
+	// If it is static
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	// Check me for NULL
+
+	Correspondence	c;
+	int	src, tgt;
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+
+	corr_point_t point_topography;
+	unsigned i;
+
+	FILE * pFile;
+	pFile = fopen ("output/processed_ransac_topography.txt","w");
+ 
+	//number of markers in an image
+	fprintf(pFile,"%d\n", c.numPoints());
+
+	// Topography Image Point
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(src, i, &point_topography);
+		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
+	}
+	fprintf(pFile,"\n");
+
+	fclose (pFile);
+}
+
+void nmr_RegistrationUI::handle_drawProjectionPoints_change(vrpn_int32 value, void *ud)
+{
+	float x,y;
+
+	FILE * pFile;
+	pFile = fopen ("output/ransac_points_projection.txt","r");
+
+	if (pFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		rewind (pFile);
+		int width;
+		int height;
+		fscanf (pFile, "%d", &width);
+		fscanf (pFile, "%d", &height);
+
+		vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
+			x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+
+		vrpn_int32 replace = 1;
+
+		printf ("handle_drawProjectionPoints_change: ");
+
+		int i = 0;
+		for(; !feof(pFile); i++)
+		{
+			fscanf (pFile, "%f %f", &x, &y);
+			x_src[i] = -1;
+			y_src[i] = -1;
+			z_src[i] = -1;
+
+			x_tgt[i] = x;
+			y_tgt[i] = y;
+			z_tgt[i] = 0;
+
+			if( i == 0)
+			{
+				printf ("target %d %f %f\n", i, x_tgt[i], y_tgt[i]);
+			}
+		}
+		printf ("\n");
+
+		printf ("LAST target %d %f %f\n", i-1, x_tgt[i-1], y_tgt[i-1]);
+
+		if(i < NMR_MAX_FIDUCIAL)
+		{
+			nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+			me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,(i-1),x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
+		}
+		else
+		{
+			printf ("Error: Number of markers in the file is bigger than NMR_MAX_FIDUCIAL\n");
+		}
+		fclose (pFile);
+	}
+}
+
+void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, void *ud)
+{
+	// If it is static
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	// Check me for NULL
+
+	Correspondence	c;
+	int	src, tgt;
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+
+	corr_point_t point_projection;
+	unsigned i;
+
+	FILE * pFile;
+	pFile = fopen ("output/processed_ransac_projection.txt","w");
+ 
+	//number of markers in an image
+	fprintf(pFile,"%d\n", c.numPoints());
+
+	// Projection Image Point
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(tgt, i, &point_projection);
+		fprintf(pFile,"%g %g ", point_projection.x, point_projection.y);
+	}
+	fprintf(pFile,"\n");
+
+	fclose (pFile);
+}
 
 void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 {
@@ -1311,8 +1559,75 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 ///////////////////////
 
 	//	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
-	vector< vector< vector <float> > > rawRansac = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
+//	vector< vector< vector <float> > > rawRansac = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
 
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+
+#if(1)
+	vector< vector< vector <float> > > rawRansac;
+	
+	FILE * processedTopoFile;
+	processedTopoFile = fopen ("output/processed_ransac_topography.txt","r");
+
+	vector< vector <float> > topo_rawRansac;
+
+	if (processedTopoFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		float x,y;
+		rewind (processedTopoFile);
+		int num;
+		fscanf (processedTopoFile, "%d", &num);
+
+		for(int i = 0; i<num; i++)
+		{
+			fscanf (processedTopoFile, "%f %f", &x, &y);
+			vector <float> tempPoint;
+//			tempPoint.push_back(x*(wh[0][0]-1));
+//			tempPoint.push_back(y*(wh[0][1]-1));
+			tempPoint.push_back(x);
+			tempPoint.push_back(y);
+			topo_rawRansac.push_back(tempPoint);
+		}
+	}
+	fclose (processedTopoFile);
+
+
+	FILE * processedProjFile;
+	processedProjFile = fopen ("output/processed_ransac_projection.txt","r");
+
+	vector< vector <float> > proj_rawRansac;
+
+	if (processedProjFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		float x,y;
+		rewind (processedProjFile);
+		int num;
+		fscanf (processedProjFile, "%d", &num);
+
+		for(int i = 0; i<num; i++)
+		{
+			fscanf (processedProjFile, "%f %f", &x, &y);
+			vector <float> tempPoint;
+//			tempPoint.push_back(x*(wh[1][0]-1));
+//			tempPoint.push_back(y*(wh[1][1]-1));
+			tempPoint.push_back(x);
+			tempPoint.push_back(y);
+			proj_rawRansac.push_back(tempPoint);
+		}
+	}
+	fclose (processedProjFile);
+
+	rawRansac.push_back(topo_rawRansac);
+	rawRansac.push_back(proj_rawRansac);
+#endif
 //	vector< vector< vector <float> > > rawRansac = test_rawransac;
 
 /*	float tmpResultMatrix[6][6] = {0};
@@ -1856,19 +2171,21 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		}
 	}
 
-	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+//	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
 
 	fprintf(ransacFile,"%d\n", ransacmarkers_topo.size());
 
 	for (int r_i = 0; r_i < ransacmarkers_topo.size(); r_i++) 
 	{
-		fprintf(ransacFile,"%g %g ", ransacmarkers_topo[r_i][0]/(wh[0][0]-1), ransacmarkers_topo[r_i][1]/(wh[0][1]-1));
+//		fprintf(ransacFile,"%g %g ", ransacmarkers_topo[r_i][0]/(wh[0][0]-1), ransacmarkers_topo[r_i][1]/(wh[0][1]-1));
+		fprintf(ransacFile,"%g %g ", ransacmarkers_topo[r_i][0], ransacmarkers_topo[r_i][1]);
 	}
 	fprintf(ransacFile,"\n");
 
 	for (int r_i = 0; r_i < ransacmarkers_proj.size(); r_i++) 
 	{
-		fprintf(ransacFile,"%g %g ", ransacmarkers_proj[r_i][0]/(wh[1][0]-1), ransacmarkers_proj[r_i][1]/(wh[1][1]-1));
+//		fprintf(ransacFile,"%g %g ", ransacmarkers_proj[r_i][0]/(wh[1][0]-1), ransacmarkers_proj[r_i][1]/(wh[1][1]-1));
+		fprintf(ransacFile,"%g %g ", ransacmarkers_proj[r_i][0], ransacmarkers_proj[r_i][1]);
 	}
 	fprintf(ransacFile,"\n");
 
@@ -1977,9 +2294,73 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 } //new
 
-void nmr_RegistrationUI::handle_visualizePoints_change(vrpn_int32 value, void *ud)
+void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 {
+	float x,y;
+
+	FILE * pFile;
+	pFile = fopen ("output/ransac_markers.txt","r");
+
+	if (pFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		rewind (pFile);
+		int num;
+		fscanf (pFile, "%d", &num);
+
+		if(num <= NMR_MAX_FIDUCIAL)
+		{
+			vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
+				x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+
+			vrpn_int32 replace = 1;
+
+
+			printf ("%d ",num);
+			printf ("Topography: ");
+			for(int i = 0; i<num; i++)
+			{
+				fscanf (pFile, "%f %f", &x, &y);
+				x_src[i] = x;
+				y_src[i] = y;
+				z_src[i] = 0;
+		//		printf ( "%f %f ", x, y);
+				if( i == 0 || i == (num-1))
+				{
+					printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
+				}
+			}
+			printf ("\n");
+
+			printf ("Projection: ");
+			for(int i = 0; i<num; i++)
+			{
+				fscanf (pFile, "%f %f", &x, &y);
+				x_tgt[i] = x;
+				y_tgt[i] = y;
+				z_tgt[i] = 0;
+		//		printf ( "%f %f ", x, y);
+				if( i == 0 || i == (num-1))
+				{
+					printf ("target %d %f %f\n", i, x_tgt[i], y_tgt[i]);
+				}
+			}
+			printf ("\n");
+
+			nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+			me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,num,x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
+		}
+		else
+		{
+			printf ("Error: Number of markers in the file is bigger than NMR_MAX_FIDUCIAL\n");
+		}
+		fclose (pFile);
+	}
 }
+
 
 void nmr_RegistrationUI::sendTransformationParameters()
 {
