@@ -90,6 +90,8 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_loadRegistrationMarkers("load_registration_markers", 0), //new
    d_saveReport("save_report", 0), //new
    d_runRansac("run_ransac", 0), //new
+   d_setTopoIntensityThreshold("set_topoIntensityThreshold", 0.1),
+   d_setProjIntensityThreshold("set_projIntensityThreshold", 0.1),
    d_calculatePoints("run_calculatePoints", 0), //new
    d_drawTopographyPoints("run_drawTopographyPoints", 0), //new
    d_saveTopographyPoints("run_saveTopographyPoints", 0), //new
@@ -186,6 +188,8 @@ void nmr_RegistrationUI::setupCallbacks()
 	d_loadRegistrationMarkers.addCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
 	d_saveReport.addCallback(handle_saveReport_change, (void *)this); //new
 	d_runRansac.addCallback(handle_runRansac_change, (void *)this); //new
+	d_setTopoIntensityThreshold.addCallback(handle_setTopoIntensityThreshold_change, (void *) this);
+	d_setProjIntensityThreshold.addCallback(handle_setProjIntensityThreshold_change, (void *) this);
     d_calculatePoints.addCallback(handle_calculatePoints_change, (void *)this); //new
 	d_drawTopographyPoints.addCallback(handle_drawTopographyPoints_change, (void *)this); //new
 	d_saveTopographyPoints.addCallback(handle_saveTopographyPoints_change, (void *)this); //new
@@ -265,6 +269,8 @@ void nmr_RegistrationUI::teardownCallbacks()
 	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new		
 	d_saveReport.removeCallback(handle_saveReport_change, (void *)this); //new
 	d_runRansac.removeCallback(handle_runRansac_change, (void *)this); //new
+	d_setTopoIntensityThreshold.removeCallback(handle_setTopoIntensityThreshold_change, (void *) this);
+	d_setProjIntensityThreshold.removeCallback(handle_setProjIntensityThreshold_change, (void *) this);
     d_calculatePoints.removeCallback(handle_calculatePoints_change, (void *)this); //new
 	d_drawTopographyPoints.removeCallback(handle_drawTopographyPoints_change, (void *)this); //new
 	d_saveTopographyPoints.removeCallback(handle_saveTopographyPoints_change, (void *)this); //new
@@ -1191,6 +1197,18 @@ void cofact(float inverseMatrix[6][6], float num[6][6],float f)
         trans(inverseMatrix,num,fac,f);
 }
 
+// static
+void nmr_RegistrationUI::handle_setTopoIntensityThreshold_change(vrpn_float64 intensity, void *ud)
+{
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setTopoIntensityThreshold(intensity);
+}
+
+void nmr_RegistrationUI::handle_setProjIntensityThreshold_change(vrpn_float64 intensity, void *ud)
+{
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setProjIntensityThreshold(intensity);
+}
 
 void nmr_RegistrationUI::handle_calculatePoints_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
 {

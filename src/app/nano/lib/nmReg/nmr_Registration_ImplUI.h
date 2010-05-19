@@ -58,6 +58,8 @@ class nmr_Registration_ImplUI {
 
 //	CorrespondenceEditor get_d_ce(); //new
 
+	void setTopoIntensityThreshold(float intensity);
+	void setProjIntensityThreshold(float intensity);
 	vector< vector< vector <float> > > readPixels();
 	vector < vector <float> > getWidthHeight();
 

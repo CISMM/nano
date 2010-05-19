@@ -101,6 +101,8 @@ class nmr_RegistrationUI {
 	static void handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveReport_change(vrpn_int32 value, void *ud); //new
 	static void handle_runRansac_change(vrpn_int32 value, void *ud); //new
+	static void handle_setTopoIntensityThreshold_change(vrpn_float64, void *ud);
+	static void handle_setProjIntensityThreshold_change(vrpn_float64, void *ud);
 	static void handle_calculatePoints_change(vrpn_int32 value, void *ud); //new
 	static void handle_drawTopographyPoints_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveTopographyPoints_change(vrpn_int32 value, void *ud); //new
@@ -178,6 +180,8 @@ class nmr_RegistrationUI {
 	TclNet_int d_loadRegistrationMarkers; //new
 	TclNet_int d_saveReport; //new
 	TclNet_int d_runRansac; //new
+	TclNet_float d_setTopoIntensityThreshold;
+	TclNet_float d_setProjIntensityThreshold;
 	TclNet_int d_calculatePoints; //new
 	TclNet_int d_drawTopographyPoints; //new
 	TclNet_int d_saveTopographyPoints; //new

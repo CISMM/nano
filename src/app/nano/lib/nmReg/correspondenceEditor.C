@@ -64,6 +64,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
     enableMovingPoints = vrpn_TRUE;
     enableAddDeletePoints = vrpn_TRUE;
     imageAdapter = new image_wrapperAdapter();
+	intensityValues[0] = 0.1;
+	intensityValues[1] = 0.1;
 }
 
 CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
@@ -109,6 +111,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     enableMovingPoints = vrpn_TRUE;
     enableAddDeletePoints = vrpn_TRUE;
     imageAdapter = new image_wrapperAdapter();
+	intensityValues[0] = 0.1;
+	intensityValues[1] = 0.1;
 }
 
 CorrespondenceEditor::~CorrespondenceEditor() {
@@ -1319,8 +1323,36 @@ float CorrespondenceEditor::getHeight(int spaceIndex)
 	return img_height;
 }
 
+void CorrespondenceEditor::setIntensityThreshold(int spaceIndex, float intensity)
+{
+	if(spaceIndex == 0) // topography image intensity threshold
+	{
+		intensityValues[0] = intensity;
+		printf("changed intensity value: %f\n", intensityValues[0]);
+	}
+	else // projection image intensity threshold
+	{
+		intensityValues[1] = intensity;
+	}
+}
+
+float CorrespondenceEditor::getIntensityThreshold(int spaceIndex)
+{
+	if(spaceIndex == 0) // topography image
+	{
+		return intensityValues[0]; 
+	}
+	else // projection image
+	{
+		return intensityValues[1];
+	}
+}
+
 vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
 {
+	float intensity_value = getIntensityThreshold(spaceIndex);
+	printf("INTENSITY THRESH0LD for %d:  %f\n", spaceIndex, intensity_value);
+
     nmb_Image *image = this->winParam[spaceIndex].im;
 	vector< vector <float> > pixMatrix;
 	pixMatrix = decideOnUsingMedianFilter(spaceIndex);
@@ -1350,7 +1382,7 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 
 			bool validPoint = false;
 
-			if(current_pixel > 0.1)
+			if(current_pixel > intensity_value)
 			{
 				if(i>0 && i<(image->height()-1) && j>0 && j<(image->width()-1))
 				{

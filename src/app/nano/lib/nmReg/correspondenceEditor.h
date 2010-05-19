@@ -89,6 +89,8 @@ class CorrespondenceEditor {
 	vector< vector <float> > decideOnUsingMedianFilter(int spaceIndex);
 	float getWidth(int spaceIndex);
 	float getHeight(int spaceIndex);
+	void setIntensityThreshold(int spaceIndex, float intensity);
+	float getIntensityThreshold(int spaceIndex);
 	vector< vector <float> > comparePixelsWithNeighbors(int spaceIndex, const char * filename);
 
 //	void showMarkersInSingleImage(); // new
@@ -132,8 +134,7 @@ class CorrespondenceEditor {
 	// Settings for spot trackers
 	SpotTrackerParameters spotTrackerParams[2];
 
-//	bool show_markers_in_single_image; // new
-
+	float intensityValues[2];
 };
 
 #endif

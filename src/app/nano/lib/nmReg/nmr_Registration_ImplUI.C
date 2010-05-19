@@ -234,6 +234,17 @@ CorrespondenceEditor nmr_Registration_ImplUI::get_d_ce()
 	return d_ce; 
 }//new
 */
+
+void nmr_Registration_ImplUI::setTopoIntensityThreshold(float intensity)
+{
+	d_ce.setIntensityThreshold(0,intensity);
+}
+
+void nmr_Registration_ImplUI::setProjIntensityThreshold(float intensity)
+{
+	d_ce.setIntensityThreshold(1,intensity);
+}
+
 vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 {
 //	const char * image_topography = "output/pixelvalues_topography.txt";

@@ -255,44 +255,55 @@ frame $nmInfo(ransac).row1
 frame $nmInfo(ransac).row2
 frame $nmInfo(ransac).row3
 frame $nmInfo(ransac).row4
+frame $nmInfo(ransac).row5
 
-pack $nmInfo(ransac).row1 $nmInfo(ransac).row2 $nmInfo(ransac).row3 $nmInfo(ransac).row4 -anchor nw
+pack $nmInfo(ransac).row1 $nmInfo(ransac).row2 $nmInfo(ransac).row3 $nmInfo(ransac).row4 $nmInfo(ransac).row5 -anchor nw
 
-button $nmInfo(ransac).row1.calculatePoints -text "Calculate Points"  \
-    -command "set run_calculatePoints 1"
+floatscale $nmInfo(ransac).row1.topo_intensity 0.001 1 1000 1 1 \
+	set_topoIntensityThreshold "Topo. Intensity Thr."
 
-pack $nmInfo(ransac).row1.calculatePoints \
+floatscale $nmInfo(ransac).row1.proj_intensity 0.001 1 1000 1 1 \
+	set_projIntensityThreshold "Proj. Intensity Thr."
+
+pack $nmInfo(ransac).row1.topo_intensity \
+	$nmInfo(ransac).row1.proj_intensity \
 	-anchor nw -side left -pady 1
 
-button $nmInfo(ransac).row2.drawTopo -text "Draw Topography Points"  \
+button $nmInfo(ransac).row2.calculatePoints -text "Calculate Points"  \
+    -command "set run_calculatePoints 1"
+
+pack $nmInfo(ransac).row2.calculatePoints \
+	-anchor nw -side left -pady 1
+
+button $nmInfo(ransac).row3.drawTopo -text "Draw Topography Points"  \
     -command "set run_drawTopographyPoints 1"
 
-button $nmInfo(ransac).row2.saveTopo -text "Save Topography Points"  \
+button $nmInfo(ransac).row3.saveTopo -text "Save Topography Points"  \
     -command "set run_saveTopographyPoints 1"
 
-pack $nmInfo(ransac).row2.drawTopo \
-	$nmInfo(ransac).row2.saveTopo \
+pack $nmInfo(ransac).row3.drawTopo \
+	$nmInfo(ransac).row3.saveTopo \
 	-anchor w -side left -pady 1
 
-button $nmInfo(ransac).row3.drawProj -text "Draw Projection Points"  \
+button $nmInfo(ransac).row4.drawProj -text "Draw Projection Points"  \
     -command "set run_drawProjectionPoints 1"
 
-button $nmInfo(ransac).row3.saveProj -text "Save Projection Points"  \
+button $nmInfo(ransac).row4.saveProj -text "Save Projection Points"  \
     -command "set run_saveProjectionPoints 1"
 
-pack $nmInfo(ransac).row3.drawProj \
-	$nmInfo(ransac).row3.saveProj \
+pack $nmInfo(ransac).row4.drawProj \
+	$nmInfo(ransac).row4.saveProj \
 	-anchor w -side left -pady 1
 
-button $nmInfo(ransac).row4.run_calcCorr -text "Calculate Correspondences"  \
+button $nmInfo(ransac).row5.run_calcCorr -text "Calculate Correspondences"  \
     -command "set run_ransac 1"
 
-button $nmInfo(ransac).row4.run_drawCorr -text "Draw Correspondences"  \
+button $nmInfo(ransac).row5.run_drawCorr -text "Draw Correspondences"  \
     -command "set draw_ransac 1"
 
 
-pack $nmInfo(ransac).row4.run_calcCorr \
-	$nmInfo(ransac).row4.run_drawCorr \
+pack $nmInfo(ransac).row5.run_calcCorr \
+	$nmInfo(ransac).row5.run_drawCorr \
 	-anchor nw -side left -pady 1
 
 ################ end of controls for ransac
