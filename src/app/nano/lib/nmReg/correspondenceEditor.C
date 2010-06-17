@@ -1328,11 +1328,12 @@ void CorrespondenceEditor::setIntensityThreshold(int spaceIndex, float intensity
 	if(spaceIndex == 0) // topography image intensity threshold
 	{
 		intensityValues[0] = intensity;
-		printf("changed intensity value: %f\n", intensityValues[0]);
+//		printf("changed intensity value_0: %f\n", intensityValues[0]);
 	}
 	else // projection image intensity threshold
 	{
 		intensityValues[1] = intensity;
+//		printf("changed intensity value_1: %f\n", intensityValues[1]);
 	}
 }
 
@@ -1340,10 +1341,12 @@ float CorrespondenceEditor::getIntensityThreshold(int spaceIndex)
 {
 	if(spaceIndex == 0) // topography image
 	{
+//		printf("get intensity_0: %f\n", intensityValues[0]);
 		return intensityValues[0]; 
 	}
 	else // projection image
 	{
+//		printf("get intensity_1: %f\n", intensityValues[1]);
 		return intensityValues[1];
 	}
 }
@@ -1351,7 +1354,7 @@ float CorrespondenceEditor::getIntensityThreshold(int spaceIndex)
 vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
 {
 	float intensity_value = getIntensityThreshold(spaceIndex);
-	printf("INTENSITY THRESH0LD for %d:  %f\n", spaceIndex, intensity_value);
+//	printf("INTENSITY THRESH0LD for %d:  %f\n", spaceIndex, intensity_value);
 
     nmb_Image *image = this->winParam[spaceIndex].im;
 	vector< vector <float> > pixMatrix;
