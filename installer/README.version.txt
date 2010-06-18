@@ -2,6 +2,8 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+12.6:  (June 18, 2010)
+	- includes serdar cakici's additions on automatic point finding 	and point set registration. 
 12.5:  (November 16, 2009)
 	- includes the ability to read igor .ibw files from asylum.
 	- cory quammen's registration additions from summer '08.
