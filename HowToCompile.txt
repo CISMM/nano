@@ -19,7 +19,7 @@ These instructions come from my experience compiling the NanoManipulator on May 
           * nano
           * video
    5. Install the NSRG build time. On Windows, navigate to "\\nsrg\nanodata\installers\NSRG runtime" and run the nsrg-buildtime_3_0_0.msi installer (or newer).
-   6. Install Cygwin. Make sure to install Perl 5.10, which is not included by default. Do NOT bother with Perl 5.8, which doesn't seem to work at all.
+   6. Install Cygwin. Make sure to install Perl 5.10, which is not included by default (It is one of the options found in the Cygwin menu that is shown right before installation). Do NOT bother with Perl 5.8, which doesn't seem to work at all.
    7. GNU Make 3.81 for Cygwin is buggy. Replace it with the version posted at http://www.cmake.org/files/cygwin/make.exe (this should be saved in "C:\cygwin\bin\make.exe").
    8. Download perl-Parse-RecDescent-1.94-1.tar.bz2 to install the module Parser::RecDescent. Open a Cygwin shell, navigate to where you saved this file, and bunzip and untar it. Copy RecDescent.pm and RecDescent.pod from "usr/lib/perl5/site_perl/5.8.2" (relative to where you saved the bz2 file) to "C:/cygwin/lib/perl5/site_perl/5.10/i686-cygwin".
    9. Open a Cygwin shell and navigate to "nano/src/app/nano/lib/nmMScope" (nano the project; not the nano folder in Cygwin). Type
