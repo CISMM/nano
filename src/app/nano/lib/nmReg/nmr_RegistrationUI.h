@@ -97,6 +97,9 @@ class nmr_RegistrationUI {
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
 
     static void handle_transformationParameter_change(vrpn_float64, void *ud);
+	static void handle_savePointsReport_change(vrpn_int32 value, void *ud);
+    static void handle_calculateErrorReport_change(vrpn_int32 value, void *ud);
+	static void handle_calculateAveragePointsErrorReport_change(vrpn_int32 value, void *ud);
 	static void handle_saveRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveReport_change(vrpn_int32 value, void *ud); //new
@@ -178,6 +181,9 @@ class nmr_RegistrationUI {
     Tclvar_list_of_strings d_resolutionLevelList;
 	TclNet_int d_saveRegistrationMarkers; //new
 	TclNet_int d_loadRegistrationMarkers; //new
+	TclNet_int d_pointsReport;
+    TclNet_int d_calculateErrorReport;
+	TclNet_int d_calculateAveragePointsErrorReport;
 	TclNet_int d_saveReport; //new
 	TclNet_int d_runRansac; //new
 	TclNet_float d_setTopoIntensityThreshold;

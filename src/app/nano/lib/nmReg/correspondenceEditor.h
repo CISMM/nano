@@ -83,7 +83,7 @@ class CorrespondenceEditor {
 
 	void recenterFiducials(int spaceIndex);
 	void unpaired_fluoro_recenterFiducials(int spaceIndex);
-	void centerWithSpotTracker(int spaceIndex, int pointIndex);
+	double centerWithSpotTracker(int spaceIndex, int pointIndex);
 	void unpaired_fluoro_centerWithSpotTracker(int spaceIndex, int pointIndex);
 	void readAllTest(int spaceIndex, const char * filename);
 	vector< vector <float> > decideOnUsingMedianFilter(int spaceIndex);
@@ -91,7 +91,9 @@ class CorrespondenceEditor {
 	float getHeight(int spaceIndex);
 	void setIntensityThreshold(int spaceIndex, float intensity);
 	float getIntensityThreshold(int spaceIndex);
+	float getIntensity(int x, int y);
 	vector< vector <float> > comparePixelsWithNeighbors(int spaceIndex, const char * filename);
+	void BrightDeal();
 
 //	void showMarkersInSingleImage(); // new
 

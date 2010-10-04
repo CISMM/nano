@@ -486,10 +486,10 @@ int CorrespondenceEditor::clampImageRegion(int index) {
     return 0;
 }
 
-void CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointIndex) {
+double CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointIndex) {
     if (!spotTrackerParams[spaceIndex].tracker) {
         printf("Tracking off for space index %d\n", spaceIndex);
-        return;
+        return 0;
     }
 
     corr_point_t spot;
@@ -532,7 +532,13 @@ void CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointIndex)
     // Convert from pixel coordinates in the image back to image coordinates.
     spot.x = opt_x / (width-1);
     spot.y = opt_y / (height-1);
-    correspondence->setPoint(spaceIndex, pointIndex, spot);
+
+//	if(spotTrackerParams[spaceIndex].tracker->get_x() >= 0 && spotTrackerParams[spaceIndex].tracker->get_y() >= 0)
+//	{
+		correspondence->setPoint(spaceIndex, pointIndex, spot);
+//	}
+
+	return spotTrackerParams[spaceIndex].tracker->get_radius();
 }
 
 void CorrespondenceEditor::unpaired_fluoro_centerWithSpotTracker(int spaceIndex, int pointIndex) {
@@ -1149,9 +1155,21 @@ int CorrespondenceEditor::setSpotTrackerRadiusAccuracy(int image_index, vrpn_flo
 void CorrespondenceEditor::recenterFiducials(int spaceIndex) {
     nmb_Image *image = winParam[spaceIndex].im;
     int numPts = correspondence->numPoints();
+
+	FILE * pFile;
+	pFile = fopen ("output/radii.txt","w");
+
+	vector<double> radii(numPts);
+
     for (int i = 0; i < numPts; i++) {
-        centerWithSpotTracker(spaceIndex, i);
+		radii[i] = centerWithSpotTracker(spaceIndex, i);
     }
+
+	fprintf(pFile,"%d\n", numPts);
+	for (int i = 0; i < numPts; i++) {
+		fprintf(pFile,"%f ", radii[i]);
+    }
+	fclose (pFile);
 
     if (numPts > 0) {
         viewer->dirtyWindow(winParam[spaceIndex].winID);
@@ -1349,6 +1367,57 @@ float CorrespondenceEditor::getIntensityThreshold(int spaceIndex)
 //		printf("get intensity_1: %f\n", intensityValues[1]);
 		return intensityValues[1];
 	}
+}
+
+void CorrespondenceEditor::BrightDeal()
+{
+//    nmb_Image *first_image = this->winParam[0].im;
+//	nmb_Image *second_image = this->winParam[1].im;
+
+	const char * br = "bright.txt";
+
+	FILE * pFile;
+	pFile = fopen (br,"w");
+
+//	FILE * pblack;
+//	pblack = fopen ("black.txt","w");
+
+//	FILE * pwhite;
+//	pwhite = fopen ("white.txt","w");
+//	fprintf(pFile,"min value: %f\n", image->minValue());
+//	fprintf(pFile,"max value: %f\n", image->maxValue());
+//	fprintf(pFile,"width: %d\n", image->width());
+//	fprintf(pFile,"height: %d\n", image->height());
+
+	fprintf(pFile,"%d \n", num_images);
+	for(int i = 0; i < this->winParam[0].im->height(); i++)
+	{
+		for(int j = 0; j < this->winParam[0].im->width(); j++)
+		{
+			float deneme = 0;
+			for(int num_index = 0 ; num_index < num_images; num_index++)
+			{
+				deneme += this->winParam[num_index].im->getValue(i,j);
+			}
+			deneme /= num_images;
+
+			fprintf(pFile,"%f ", deneme);
+//			fprintf(pblack,"%f ", first_image->getValue(i,j));
+//			fprintf(pwhite,"%f ", second_image->getValue(i,j));
+		}
+		fprintf(pFile,"\n\n");
+	}
+
+	fclose (pFile);
+//	fclose (pblack);
+//	fclose (pwhite);
+}
+
+float CorrespondenceEditor::getIntensity(int x, int y)
+{
+    nmb_Image *image = this->winParam[0].im;
+
+	return image->getValue(x,y);
 }
 
 vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)

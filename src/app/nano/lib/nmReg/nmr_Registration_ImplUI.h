@@ -60,7 +60,9 @@ class nmr_Registration_ImplUI {
 
 	void setTopoIntensityThreshold(float intensity);
 	void setProjIntensityThreshold(float intensity);
+	float getIntensityValue(int x, int y);
 	vector< vector< vector <float> > > readPixels();
+	void BrightestPixels();
 	vector < vector <float> > getWidthHeight();
 
   protected:

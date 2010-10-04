@@ -1,3 +1,22 @@
+
+2010-10-04  Serdar Cakici <cakici@cs.unc.edu>
+
+	* correspondenceEditor.C: methods for getting intensity value at a location; calculating average intensity image; printing out radii for markers
+
+	* correspondenceEditor.h: methods for getting intensity value at a location; calculating average intensity image; printing out radii for markers	
+
+	* nmr_Registration_ImplUI.C: methods for getting intensity value at a location; calculating average intensity image
+
+	* nmr_Registration_ImplUI.h: methods for getting intensity value at a location; calculating average intensity image
+
+	* nmr_RegistrationUI.C: methods for calculating different FIONA approaches (i.e. using multiple images, using averaged image); calculating errors of FIONA approaches
+	tcl buttons for FIONA approaches
+
+	* nmr_RegistrationUI.h: methods for calculating different FIONA approaches (i.e. using multiple images, using averaged image); calculating errors of FIONA approaches	
+
+	* nmReg.vcproj: quat is under vrpn now
+
+
 2008-09-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* *.vcproj:  updated paths for new build/run-time

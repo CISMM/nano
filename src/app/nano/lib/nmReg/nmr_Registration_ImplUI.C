@@ -245,6 +245,11 @@ void nmr_Registration_ImplUI::setProjIntensityThreshold(float intensity)
 	d_ce.setIntensityThreshold(1,intensity);
 }
 
+float nmr_Registration_ImplUI::getIntensityValue(int x, int y)
+{
+	return d_ce.getIntensity(x,y);
+}
+
 vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 {
 //	const char * image_topography = "output/pixelvalues_topography.txt";
@@ -267,6 +272,17 @@ vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 	initialRansac.push_back(initialRansacProjection);
 
 	return initialRansac;
+}
+
+void nmr_Registration_ImplUI::BrightestPixels()
+{
+    vector< vector <int> > brightest;
+
+
+//	vector< vector <float> > initialRansacTopography;
+	d_ce.BrightDeal();
+
+//	initialRansac.push_back(initialRansacTopography);
 }
 
 vector < vector <float> > nmr_Registration_ImplUI::getWidthHeight()

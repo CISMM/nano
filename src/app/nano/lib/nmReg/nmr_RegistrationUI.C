@@ -48,6 +48,11 @@ nmr_RegistrationType nmr_RegistrationUI::s_transformationSources[] =
 char * nmr_RegistrationUI::s_transformationSourceNames[] =
                 {"Manual", "Default", "Auto"};
 
+static vector< vector< vector <double> > > markersForReport; // markerForReport[image number][marker index][x or y coordinate]
+static vector< vector <bool> > control_markersForReport;
+
+static vector< vector< vector <double> > > orderedMarkers; //[marker number][marker index][x or y coordinate]
+
 nmr_RegistrationUI::nmr_RegistrationUI
   ( nmr_Registration_Proxy *aligner, 
     nmb_ImageDisplay *display):
@@ -88,6 +93,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resolutionLevelList("auto_align_resolution_list"),
    d_saveRegistrationMarkers("save_registration_markers", 0), //new
    d_loadRegistrationMarkers("load_registration_markers", 0), //new
+   d_pointsReport("save_Points_report", 0), //new
+   d_calculateErrorReport("calculate_Error_report", 0), //new
+   d_calculateAveragePointsErrorReport("calculate_Average_Points_Error_Report", 0), //new
    d_saveReport("save_report", 0), //new
    d_runRansac("run_ransac", 0), //new
    d_setTopoIntensityThreshold("set_topoIntensityThreshold", 0.1),
@@ -186,6 +194,9 @@ void nmr_RegistrationUI::setupCallbacks()
     d_shearZ.addCallback(handle_transformationParameter_change, this);
 	d_saveRegistrationMarkers.addCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
 	d_loadRegistrationMarkers.addCallback(handle_loadRegistrationMarkers_change, (void *)this); //new
+	d_pointsReport.addCallback(handle_savePointsReport_change, (void *)this);
+    d_calculateErrorReport.addCallback(handle_calculateErrorReport_change, (void *)this);
+	d_calculateAveragePointsErrorReport.addCallback(handle_calculateAveragePointsErrorReport_change, (void *)this);
 	d_saveReport.addCallback(handle_saveReport_change, (void *)this); //new
 	d_runRansac.addCallback(handle_runRansac_change, (void *)this); //new
 	d_setTopoIntensityThreshold.addCallback(handle_setTopoIntensityThreshold_change, (void *) this);
@@ -265,6 +276,9 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_rotate3D_X.removeCallback(handle_transformationParameter_change, this);
     d_rotate3D_Z.removeCallback(handle_transformationParameter_change, this);
     d_shearZ.removeCallback(handle_transformationParameter_change, this);
+	d_pointsReport.removeCallback(handle_savePointsReport_change, (void *)this);
+    d_calculateErrorReport.removeCallback(handle_calculateErrorReport_change, (void *)this);
+	d_calculateAveragePointsErrorReport.removeCallback(handle_calculateAveragePointsErrorReport_change, (void *)this);
 	d_saveRegistrationMarkers.removeCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
 	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new		
 	d_saveReport.removeCallback(handle_saveReport_change, (void *)this); //new
@@ -1065,6 +1079,239 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 	}
 } //new
 
+void nmr_RegistrationUI::handle_savePointsReport_change(vrpn_int32 value, void *ud)
+{
+	vector< vector <double> > markersFromSingleImage;
+	vector<bool> control_markersFromSingleImage;
+
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+
+	Correspondence	c;
+	int	src, tgt;
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+
+	corr_point_t point_topography;
+	unsigned i;
+ 
+	//number of markers in an image
+//	fprintf(pFile,"%d\n", c.numPoints());
+
+	// Topography Image Point
+	for (i = 0; i < c.numPoints(); i++) 
+	{
+		c.getPoint(src, i, &point_topography);
+		vector <double> temp(2);
+
+		//the image has to be a square one
+		temp[0] = point_topography.x*(wh[0][0]-1.0);
+		temp[1] = point_topography.y*(wh[0][0]-1.0);
+		markersFromSingleImage.push_back(temp);
+		control_markersFromSingleImage.push_back(false);
+	}
+
+	markersForReport.push_back(markersFromSingleImage);
+	control_markersForReport.push_back(control_markersFromSingleImage);
+}
+
+void nmr_RegistrationUI::handle_calculateErrorReport_change(vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+	FILE * pFile;
+	pFile = fopen ("output/calculateError.txt","w");
+ 
+	//number of markers in an image
+	fprintf(pFile,"number of images: %d\n", markersForReport.size());
+
+	// Topography Image Point
+	for(int imnum = 0; imnum < markersForReport.size(); imnum++)
+	{
+		fprintf(pFile,"image number: %d\n", imnum);
+		for (int i = 0; i < markersForReport[imnum].size(); i++) 
+		{
+			fprintf(pFile,"%g %g ", markersForReport[imnum][i][0], markersForReport[imnum][i][1]);
+		}
+		fprintf(pFile,"\n\n");
+	}
+
+	for(int left_i = 0; left_i < markersForReport.size(); left_i++)
+	{
+		for(int left_j = 0; left_j < markersForReport[left_i].size(); left_j++)
+		{
+			if(control_markersForReport[left_i][left_j] == false)
+			{
+				control_markersForReport[left_i][left_j] = true;
+				vector< vector <double> > temp;
+				temp.push_back(markersForReport[left_i][left_j]);
+
+				for(int right_i = left_i+1 ; right_i < markersForReport.size(); right_i++)
+				{
+					for(int right_j = 0; right_j < markersForReport[right_i].size(); right_j++)
+					{
+						if(control_markersForReport[right_i][right_j] == false)
+						{
+							double dist =  sqrt(pow((markersForReport[left_i][left_j][0] - markersForReport[right_i][right_j][0]),2) + pow((markersForReport[left_i][left_j][1] - markersForReport[right_i][right_j][1]),2));
+							if(dist <= 5)
+							{
+								control_markersForReport[right_i][right_j] = true;
+								temp.push_back(markersForReport[right_i][right_j]);
+							}
+						}
+					}
+				}
+				orderedMarkers.push_back(temp);
+			}
+		}
+	}
+
+	fprintf(pFile,"\n\n");
+
+	double sum_stddev = 0;
+	vector<double> standard_dev(orderedMarkers.size());
+
+	for(int i = 0; i < orderedMarkers.size(); i++)
+	{
+		double sum_x = 0;
+		double sum_y = 0;
+
+		for(int j = 0; j < orderedMarkers[i].size(); j++)
+		{
+			sum_x += orderedMarkers[i][j][0];
+			sum_y += orderedMarkers[i][j][1];
+		}
+
+		double avg_x = sum_x/double(orderedMarkers[i].size());
+		double avg_y = sum_y/double(orderedMarkers[i].size());
+
+		double sumsqdiff_x = 0;
+		double sumsqdiff_y = 0;
+
+		for(int m = 0; m < orderedMarkers[i].size(); m++)
+		{
+			sumsqdiff_x += pow((orderedMarkers[i][m][0] - avg_x),2);
+			sumsqdiff_y += pow((orderedMarkers[i][m][1] - avg_y),2);
+		}
+
+		double std_dev_x = sqrt(sumsqdiff_x/double(orderedMarkers[i].size()));
+		double std_dev_y = sqrt(sumsqdiff_y/double(orderedMarkers[i].size()));
+
+		double xy_std_dev = sqrt(pow(std_dev_x,2) + pow(std_dev_y,2));
+		standard_dev[i] = xy_std_dev;
+		sum_stddev += xy_std_dev;
+	}
+
+
+	double sum_std_error = 0; 
+
+	//changing std deviations to into std errors
+	for(int i = 0; i < orderedMarkers.size(); i++)
+	{
+		double std_error = standard_dev[i]/sqrt(double(orderedMarkers[i].size()));
+		fprintf(pFile,"std_error %d: %f \n", i, std_error);
+		sum_std_error += std_error;
+	}
+
+	//calculating the average of standard errors
+	double avg_std_err = sum_std_error/orderedMarkers.size();
+
+	fprintf(pFile,"\n average of standard errors : %f \n", avg_std_err);
+
+	fclose (pFile);
+
+}
+
+void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_int32 value, void *ud)
+{	
+	// If it is static
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+	Correspondence	c;
+	int	src, tgt;
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
+
+	corr_point_t point_topography;
+
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+
+	FILE * pFile;
+	pFile = fopen ("output/averageImage_ErrorReport.txt","w");
+ 
+	//number of markers in an image
+//	fprintf(pFile,"%d\n", c.numPoints());
+
+	double camera_offset = 10;
+	double EM_gain = 80;
+	double analog_gain = 5;
+
+	double full_well_capacity = 370000;
+	double max_grayscale_value = 255;
+	double gain_conversion_factor = full_well_capacity / (max_grayscale_value - camera_offset);
+
+	double pixel_size = 66.7; //nanometers
+	double background_value = 9.285; // 8bit greyscale
+
+	vector<double> standard_error(c.numPoints());
+	vector<double> gaussian_radius;
+
+	FILE * radiusFile;
+	radiusFile = fopen ("output/radii.txt","r");
+
+	if (radiusFile==NULL) 
+	{
+		perror ("Error opening file");
+	}
+	else
+	{
+		float r;
+		rewind (radiusFile);
+
+		int num;
+		fscanf (radiusFile, "%d", &num);
+		printf ("RadiusFile: %d\n", num);
+
+		for(int i = 0; i<num; i++)
+		{
+			fscanf (radiusFile, "%f", &r);
+			std::cout<<"RadiusFile: "<<r<<endl;
+			gaussian_radius.push_back(r*pixel_size);
+		}
+	}
+	fclose (radiusFile);
+
+	double sum_std = 0;
+
+	// Topography Image Point
+	for (int i = 0; i < c.numPoints(); i++) 
+	{
+		c.getPoint(src, i, &point_topography);
+//		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
+
+		cout<<point_topography.x<<" "<<point_topography.y;
+		double grayscale_value = (me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getIntensityValue(int(point_topography.x*(wh[0][0]-1.0)),int(point_topography.y*(wh[0][0]-1.0))))*255;
+		cout<<" grayscale_value: "<<grayscale_value<<endl;
+
+		double photon_count = (grayscale_value - camera_offset) * gain_conversion_factor / (EM_gain * analog_gain);
+
+		//!!!change the background value to photon units!!!!
+//		standard_error[i] = sqrt( pow(gaussian_radius[i],2) / photon_count + pow(pixel_size,2) / (12*photon_count) + 8 * M_PI * pow(gaussian_radius[i],4)* pow(background_value,2) / pow(pixel_size,2) * pow(photon_count,2));
+		standard_error[i] = sqrt( pow(gaussian_radius[i],2) / photon_count);
+		sum_std += standard_error[i];
+//		fprintf(pFile,"%f %f %f %f %f %f \n", pow(gaussian_radius[i],2), photon_count, pow(gaussian_radius[i],2) / photon_count, pow(pixel_size,2) / (12*photon_count), pow(background_value,2) / pow(pixel_size,2), standard_error[i]);
+		fprintf(pFile,"%f \n", standard_error[i]);
+	}
+	fprintf(pFile,"\n");
+
+
+	double avg_std = sum_std/c.numPoints();
+
+	//calculating the average of standard errors
+	fprintf(pFile,"average of std errors : %f \n", avg_std);
+
+	fclose (pFile);
+}
+
 void nmr_RegistrationUI::handle_saveReport_change(vrpn_int32 value, void *ud) //(vrpn_float64 /*value*/, void *ud)
 {
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
@@ -1076,9 +1323,30 @@ void nmr_RegistrationUI::handle_saveReport_change(vrpn_int32 value, void *ud) //
 
 	fclose (pFile);
 
+
+/*	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->BrightestPixels();
+*/
+
+/*
+	FILE * pFile;
+	pFile = fopen ("brightest.txt","w");
+ 
+	//number of markers in an image
+	fprintf(pFile,"%d\n", c.numPoints());
+
+	// Topography Image Point
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(src, i, &point_topography);
+		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
+	}
+	fprintf(pFile,"\n");
+
+	fclose (pFile);
+*/
 } //new
 
-void matrixMultiplication(float resultMatrix[6][6], float leftMatrix[6][6], float rightMatrix[6][6])
+void matrixMultiplication(double resultMatrix[6][6], double leftMatrix[6][6], double rightMatrix[6][6])
 {
     for ( int r = 0; r < 6; r++ )
     {
@@ -1425,6 +1693,21 @@ void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, vo
 	fprintf(pFile,"\n");
 
 	fclose (pFile);
+
+	FILE * IngridFile;
+	IngridFile = fopen ("output/Ingrid_Topography.txt","w");
+ 
+	//number of markers in an image
+	fprintf(IngridFile,"%d\n", c.numPoints());
+
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(src, i, &point_topography);
+		fprintf(IngridFile,"%d %g %g\n", i, point_topography.x*(wh[0][0]-1.0), point_topography.y*(wh[0][0]-1.0));
+	}
+	fprintf(IngridFile,"\n");
+
+	fclose (IngridFile);
 }
 
 void nmr_RegistrationUI::handle_drawProjectionPoints_change(vrpn_int32 value, void *ud)
@@ -1514,6 +1797,21 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 	fprintf(pFile,"\n");
 
 	fclose (pFile);
+
+	FILE * IngridFile;
+	IngridFile = fopen ("output/Ingrid_Projection.txt","w");
+ 
+	//number of markers in an image
+	fprintf(IngridFile,"%d\n", c.numPoints());
+
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+	for (i = 0; i < c.numPoints(); i++) {
+		c.getPoint(tgt, i, &point_projection);
+		fprintf(IngridFile,"%d %g %g\n", i, point_projection.x*(wh[1][0]-1.0), point_projection.y*(wh[1][0]-1.0));
+	}
+	fprintf(IngridFile,"\n");
+
+	fclose (IngridFile);
 }
 
 void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
@@ -1582,12 +1880,12 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
 
 #if(1)
-	vector< vector< vector <float> > > rawRansac;
+	vector< vector< vector <double> > > rawRansac;
 	
 	FILE * processedTopoFile;
 	processedTopoFile = fopen ("output/processed_ransac_topography.txt","r");
 
-	vector< vector <float> > topo_rawRansac;
+	vector< vector <double> > topo_rawRansac;
 
 	if (processedTopoFile==NULL) 
 	{
@@ -1603,11 +1901,11 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		for(int i = 0; i<num; i++)
 		{
 			fscanf (processedTopoFile, "%f %f", &x, &y);
-			vector <float> tempPoint;
-//			tempPoint.push_back(x*(wh[0][0]-1));
-//			tempPoint.push_back(y*(wh[0][1]-1));
-			tempPoint.push_back(x);
-			tempPoint.push_back(y);
+			vector <double> tempPoint;
+			tempPoint.push_back(x*(wh[0][0]-1));
+			tempPoint.push_back(y*(wh[0][1]-1));
+//			tempPoint.push_back(x);
+//			tempPoint.push_back(y);
 			topo_rawRansac.push_back(tempPoint);
 		}
 	}
@@ -1617,7 +1915,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	FILE * processedProjFile;
 	processedProjFile = fopen ("output/processed_ransac_projection.txt","r");
 
-	vector< vector <float> > proj_rawRansac;
+	vector< vector <double> > proj_rawRansac;
 
 	if (processedProjFile==NULL) 
 	{
@@ -1633,11 +1931,11 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		for(int i = 0; i<num; i++)
 		{
 			fscanf (processedProjFile, "%f %f", &x, &y);
-			vector <float> tempPoint;
-//			tempPoint.push_back(x*(wh[1][0]-1));
-//			tempPoint.push_back(y*(wh[1][1]-1));
-			tempPoint.push_back(x);
-			tempPoint.push_back(y);
+			vector <double> tempPoint;
+			tempPoint.push_back(x*(wh[1][0]-1));
+			tempPoint.push_back(y*(wh[1][1]-1));
+//			tempPoint.push_back(x);
+//			tempPoint.push_back(y);
 			proj_rawRansac.push_back(tempPoint);
 		}
 	}
@@ -1702,15 +2000,15 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 //    nmr_FiducialSpotTracker tracker = NMR_LOCAL_MAX_TRACKER;
   //  me->d_aligner->setFiducialSpotTracker(NMR_SOURCE, tracker); //sadece source icin bu; target icin de yapman lazim
 
-	vector< vector< float > > distanceMatrixTopography;
-	vector< vector< float > > distanceMatrixProjection;
+	vector< vector< double > > distanceMatrixTopography;
+	vector< vector< double > > distanceMatrixProjection;
 
 	for(int topo_i = 0; topo_i < rawRansac[0].size(); topo_i++)
 	{
-		vector<float> line_i;
+		vector<double> line_i;
 		for(int topo_j = 0; topo_j < rawRansac[0].size(); topo_j++)
 		{
-			float dist = sqrt(pow((rawRansac[0][topo_i][0]-rawRansac[0][topo_j][0]),2) + pow((rawRansac[0][topo_i][1]-rawRansac[0][topo_j][1]),2));
+			double dist = sqrt(pow((rawRansac[0][topo_i][0]-rawRansac[0][topo_j][0]),2) + pow((rawRansac[0][topo_i][1]-rawRansac[0][topo_j][1]),2));
 			line_i.push_back(dist);
 		}
 		distanceMatrixTopography.push_back(line_i);
@@ -1718,10 +2016,10 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	for(int proj_i = 0; proj_i < rawRansac[1].size(); proj_i++)
 	{
-		vector<float> line_i;
+		vector<double> line_i;
 		for(int proj_j = 0; proj_j < rawRansac[1].size(); proj_j++)
 		{
-			float dist = sqrt(pow((rawRansac[1][proj_i][0]-rawRansac[1][proj_j][0]),2) + pow((rawRansac[1][proj_i][1]-rawRansac[1][proj_j][1]),2));
+			double dist = sqrt(pow((rawRansac[1][proj_i][0]-rawRansac[1][proj_j][0]),2) + pow((rawRansac[1][proj_i][1]-rawRansac[1][proj_j][1]),2));
 			line_i.push_back(dist);
 		}
 		distanceMatrixProjection.push_back(line_i);
@@ -1730,8 +2028,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 //	bool found = false;
 
 ////////////////////////////////////////////////////begin////////////////////////////////////////////
-	vector< vector< vector <float> > > closestneighbors_topo;
-	vector<float> distanceratio_closestneighbors_topo;
+	vector< vector< vector <double> > > closestneighbors_topo;
+	vector<double> distanceratio_closestneighbors_topo;
 
 	//closestneighbors_topo[a][b][c]
 	// a: index of a triplet (i.e. point "rawRansac[0][a]" with its two closest neighbors)
@@ -1744,19 +2042,19 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	for(int topo_index = 0; topo_index < rawRansac[0].size(); topo_index++)
 	{
-		vector< vector <float> > triplet;
-		vector<float> topo_index_close_1(2,100000); 
-		vector<float> topo_index_close_2(2,100000);
+		vector< vector <double> > triplet;
+		vector<double> topo_index_close_1(2,100000); 
+		vector<double> topo_index_close_2(2,100000);
 		int indexvalue_topo_close_1 = -1; 
 		int indexvalue_topo_close_2 = -1;
 
-		float topo_index_close_1_dist = 100000, topo_index_close_2_dist = 100000;
+		double topo_index_close_1_dist = 100000, topo_index_close_2_dist = 100000;
 
 		for(int i = 0; i < rawRansac[0].size(); i++)
 		{
 			if(topo_index != i)
 			{
-				float dist = distanceMatrixTopography[i][topo_index];
+				double dist = distanceMatrixTopography[i][topo_index];
 				if(dist < topo_index_close_1_dist)
 				{
 					topo_index_close_2 = topo_index_close_1;
@@ -1789,14 +2087,15 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		triplet.push_back(topo_index_close_2);
 		closestneighbors_topo.push_back(triplet);
 
+		std::cout<<"distanceratio isleri: "<<indexvalue_topo_close_1<<" "<<topo_index<<" "<<indexvalue_topo_close_2<<" "<<topo_index<<endl;
 		distanceratio_closestneighbors_topo.push_back(distanceMatrixTopography[indexvalue_topo_close_1][topo_index]/distanceMatrixTopography[indexvalue_topo_close_2][topo_index]);
 //		printf("%d dene: %f %f %f %f %f %f\n\n", topo_index, closestneighbors_topo[topo_index][0][0], closestneighbors_topo[topo_index][0][1], closestneighbors_topo[topo_index][1][0], closestneighbors_topo[topo_index][1][1], closestneighbors_topo[topo_index][2][0], closestneighbors_topo[topo_index][2][1]);
 	}
 
 	
 	
-	vector< vector< vector <float> > > closestneighbors_proj;
-	vector<float> distanceratio_closestneighbors_proj;
+	vector< vector< vector <double> > > closestneighbors_proj;
+	vector<double> distanceratio_closestneighbors_proj;
 
 	//closestneighbors_proj[a][b][c]
 	// a: index of a triplet (i.e. point "rawRansac[1][a]" with its two closest neighbors)
@@ -1809,19 +2108,19 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	for(int proj_index = 0; proj_index < rawRansac[1].size(); proj_index++)
 	{
-		vector< vector <float> > triplet;
-		vector<float> proj_index_close_1(2,100000); 
-		vector<float> proj_index_close_2(2,100000);
+		vector< vector <double> > triplet;
+		vector<double> proj_index_close_1(2,100000); 
+		vector<double> proj_index_close_2(2,100000);
 		int indexvalue_proj_close_1 = -1; 
 		int indexvalue_proj_close_2 = -1;
 
-		float proj_index_close_1_dist = 100000, proj_index_close_2_dist = 100000;
+		double proj_index_close_1_dist = 100000, proj_index_close_2_dist = 100000;
 
 		for(int i = 0; i < rawRansac[1].size(); i++)
 		{
 			if(proj_index != i)
 			{
-				float dist = distanceMatrixProjection[i][proj_index];
+				double dist = distanceMatrixProjection[i][proj_index];
 				if(dist < proj_index_close_1_dist)
 				{
 					proj_index_close_2 = proj_index_close_1;
@@ -1861,7 +2160,10 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	int sayaca = 0;
 	int hele = 0;
-	float overall_minimum_median = 100000;
+	double overall_minimum_median = 100000;
+	double overall_minimum_average = 100000;
+	int total_used = 0;
+
 	
 	FILE * identityFile;
 	identityFile = fopen ("identity.txt","w");
@@ -1869,8 +2171,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	FILE * ransacFile;
 	ransacFile = fopen ("output/ransac_markers.txt","w");
 
-	vector< vector < float > > ransacmarkers_topo;
-	vector< vector < float > > ransacmarkers_proj;
+	vector< vector < double > > ransacmarkers_topo;
+	vector< vector < double > > ransacmarkers_proj;
 
 	for(int i = 0; i < distanceratio_closestneighbors_topo.size(); i++)
 	{
@@ -1888,7 +2190,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	// c: 0--> x coordinate, 1--> y coordinate	 
 
 
-				float topo_matrix_M[6][6] = {0};
+				double topo_matrix_M[6][6] = {0};
 				topo_matrix_M[0][0] = closestneighbors_topo[i][0][0]; topo_matrix_M[0][1] = closestneighbors_topo[i][0][1]; topo_matrix_M[0][4] = 1;
 				topo_matrix_M[1][2] = closestneighbors_topo[i][0][0]; topo_matrix_M[1][3] = closestneighbors_topo[i][0][1]; topo_matrix_M[1][5] = 1;
 				topo_matrix_M[2][0] = closestneighbors_topo[i][1][0]; topo_matrix_M[2][1] = closestneighbors_topo[i][1][1]; topo_matrix_M[2][4] = 1;
@@ -1897,7 +2199,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				topo_matrix_M[5][2] = closestneighbors_topo[i][2][0]; topo_matrix_M[5][3] = closestneighbors_topo[i][2][1]; topo_matrix_M[5][5] = 1;
 
 
-				float topo_matrix_transpose_M[6][6] = {0};
+				double topo_matrix_transpose_M[6][6] = {0};
 			    for(int trans_i=0; trans_i < 6; trans_i++)
 				{
 					for(int trans_j=0; trans_j < 6; trans_j++)
@@ -1906,7 +2208,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 					}
 				}
 
-				float topo_matrix_r[6];
+				double topo_matrix_r[6];
 				topo_matrix_r[0] = closestneighbors_proj[j][0][0];
 				topo_matrix_r[1] = closestneighbors_proj[j][0][1];
 				topo_matrix_r[2] = closestneighbors_proj[j][1][0];
@@ -1914,7 +2216,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				topo_matrix_r[4] = closestneighbors_proj[j][2][0];
 				topo_matrix_r[5] = closestneighbors_proj[j][2][1];
 
-				float topo_matrix_TM_M_multiplied[6][6] = {0};
+				double topo_matrix_TM_M_multiplied[6][6] = {0};
 
 				matrixMultiplication(topo_matrix_TM_M_multiplied, topo_matrix_transpose_M, topo_matrix_M);
 /*				if(sayaca == 1)
@@ -1944,11 +2246,39 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 ////////////////////////////////////////
 
-				float inverseMatrix[6][6] = {0};
+				double inverseMatrix[6][6] = {0};
 
-				float determinant;
-				determinant = detrm(topo_matrix_TM_M_multiplied,6);
-				if(determinant == 0)
+//				float determinant;
+//				determinant = detrm(topo_matrix_TM_M_multiplied,6);
+
+				Matrix topo_tm_m(6,6);
+				topo_tm_m(0,0) = topo_matrix_TM_M_multiplied[0][0];topo_tm_m(0,1) = topo_matrix_TM_M_multiplied[0][1];
+				topo_tm_m(0,2) = topo_matrix_TM_M_multiplied[0][2];topo_tm_m(0,3) = topo_matrix_TM_M_multiplied[0][3];
+				topo_tm_m(0,4) = topo_matrix_TM_M_multiplied[0][4];topo_tm_m(0,5) = topo_matrix_TM_M_multiplied[0][5];
+
+				topo_tm_m(1,0) = topo_matrix_TM_M_multiplied[1][0];topo_tm_m(1,1) = topo_matrix_TM_M_multiplied[1][1];
+				topo_tm_m(1,2) = topo_matrix_TM_M_multiplied[1][2];topo_tm_m(1,3) = topo_matrix_TM_M_multiplied[1][3];
+				topo_tm_m(1,4) = topo_matrix_TM_M_multiplied[1][4];topo_tm_m(1,5) = topo_matrix_TM_M_multiplied[1][5];
+
+				topo_tm_m(2,0) = topo_matrix_TM_M_multiplied[2][0];topo_tm_m(2,1) = topo_matrix_TM_M_multiplied[2][1];
+				topo_tm_m(2,2) = topo_matrix_TM_M_multiplied[2][2];topo_tm_m(2,3) = topo_matrix_TM_M_multiplied[2][3];
+				topo_tm_m(2,4) = topo_matrix_TM_M_multiplied[2][4];topo_tm_m(2,5) = topo_matrix_TM_M_multiplied[2][5];
+
+				topo_tm_m(3,0) = topo_matrix_TM_M_multiplied[3][0];topo_tm_m(3,1) = topo_matrix_TM_M_multiplied[3][1];
+				topo_tm_m(3,2) = topo_matrix_TM_M_multiplied[3][2];topo_tm_m(3,3) = topo_matrix_TM_M_multiplied[3][3];
+				topo_tm_m(3,4) = topo_matrix_TM_M_multiplied[3][4];topo_tm_m(3,5) = topo_matrix_TM_M_multiplied[3][5];
+
+				topo_tm_m(4,0) = topo_matrix_TM_M_multiplied[4][0];topo_tm_m(4,1) = topo_matrix_TM_M_multiplied[4][1];
+				topo_tm_m(4,2) = topo_matrix_TM_M_multiplied[4][2];topo_tm_m(4,3) = topo_matrix_TM_M_multiplied[4][3];
+				topo_tm_m(4,4) = topo_matrix_TM_M_multiplied[4][4];topo_tm_m(4,5) = topo_matrix_TM_M_multiplied[4][5];
+
+				topo_tm_m(5,0) = topo_matrix_TM_M_multiplied[5][0];topo_tm_m(5,1) = topo_matrix_TM_M_multiplied[5][1];
+				topo_tm_m(5,2) = topo_matrix_TM_M_multiplied[5][2];topo_tm_m(5,3) = topo_matrix_TM_M_multiplied[5][3];
+				topo_tm_m(5,4) = topo_matrix_TM_M_multiplied[5][4];topo_tm_m(5,5) = topo_matrix_TM_M_multiplied[5][5];
+
+//				if(determinant == 0)
+//				std::cout<<endl<<"topo_tm_m.IsSingular'in degeri: "<<topo_tm_m.IsSingular()<<endl;
+				if(topo_tm_m.IsSingular())
 				{
 					printf("\nMATRIX IS NOT INVERSIBLE\n");
 					hele++;
@@ -1957,30 +2287,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				{
 		//			printf("%d esit %d\n", sayaca, hele);
 			//		cofact(inverseMatrix,topo_matrix_TM_M_multiplied,6);
-					Matrix topo_tm_m(6,6);
-					topo_tm_m(0,0) = topo_matrix_TM_M_multiplied[0][0];topo_tm_m(0,1) = topo_matrix_TM_M_multiplied[0][1];
-					topo_tm_m(0,2) = topo_matrix_TM_M_multiplied[0][2];topo_tm_m(0,3) = topo_matrix_TM_M_multiplied[0][3];
-					topo_tm_m(0,4) = topo_matrix_TM_M_multiplied[0][4];topo_tm_m(0,5) = topo_matrix_TM_M_multiplied[0][5];
-
-					topo_tm_m(1,0) = topo_matrix_TM_M_multiplied[1][0];topo_tm_m(1,1) = topo_matrix_TM_M_multiplied[1][1];
-					topo_tm_m(1,2) = topo_matrix_TM_M_multiplied[1][2];topo_tm_m(1,3) = topo_matrix_TM_M_multiplied[1][3];
-					topo_tm_m(1,4) = topo_matrix_TM_M_multiplied[1][4];topo_tm_m(1,5) = topo_matrix_TM_M_multiplied[1][5];
-
-					topo_tm_m(2,0) = topo_matrix_TM_M_multiplied[2][0];topo_tm_m(2,1) = topo_matrix_TM_M_multiplied[2][1];
-					topo_tm_m(2,2) = topo_matrix_TM_M_multiplied[2][2];topo_tm_m(2,3) = topo_matrix_TM_M_multiplied[2][3];
-					topo_tm_m(2,4) = topo_matrix_TM_M_multiplied[2][4];topo_tm_m(2,5) = topo_matrix_TM_M_multiplied[2][5];
-
-					topo_tm_m(3,0) = topo_matrix_TM_M_multiplied[3][0];topo_tm_m(3,1) = topo_matrix_TM_M_multiplied[3][1];
-					topo_tm_m(3,2) = topo_matrix_TM_M_multiplied[3][2];topo_tm_m(3,3) = topo_matrix_TM_M_multiplied[3][3];
-					topo_tm_m(3,4) = topo_matrix_TM_M_multiplied[3][4];topo_tm_m(3,5) = topo_matrix_TM_M_multiplied[3][5];
-
-					topo_tm_m(4,0) = topo_matrix_TM_M_multiplied[4][0];topo_tm_m(4,1) = topo_matrix_TM_M_multiplied[4][1];
-					topo_tm_m(4,2) = topo_matrix_TM_M_multiplied[4][2];topo_tm_m(4,3) = topo_matrix_TM_M_multiplied[4][3];
-					topo_tm_m(4,4) = topo_matrix_TM_M_multiplied[4][4];topo_tm_m(4,5) = topo_matrix_TM_M_multiplied[4][5];
-
-					topo_tm_m(5,0) = topo_matrix_TM_M_multiplied[5][0];topo_tm_m(5,1) = topo_matrix_TM_M_multiplied[5][1];
-					topo_tm_m(5,2) = topo_matrix_TM_M_multiplied[5][2];topo_tm_m(5,3) = topo_matrix_TM_M_multiplied[5][3];
-					topo_tm_m(5,4) = topo_matrix_TM_M_multiplied[5][4];topo_tm_m(5,5) = topo_matrix_TM_M_multiplied[5][5];
 
 					Matrix matinverse = !topo_tm_m;
 
@@ -2004,7 +2310,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 
 
-					float identityCheckMatrix[6][6] = {0};
+					double identityCheckMatrix[6][6] = {0};
 					matrixMultiplication(identityCheckMatrix, inverseMatrix, topo_matrix_TM_M_multiplied);
 					fprintf(identityFile,"***%d***\n", sayaca);
 					for(int iden_i = 0; iden_i < 6; iden_i++)
@@ -2017,7 +2323,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 					}
 					fprintf(identityFile,"\n\n\n");
 	
-					float topo_matrix_TM_r_multiplied[6] = {0};
+					double topo_matrix_TM_r_multiplied[6] = {0};
 						
 					for ( int ind_r = 0; ind_r < 6; ind_r++ )
 					{
@@ -2028,7 +2334,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 						}
 					}
 
-					float topo_matrix_v[6] = {0};
+					double topo_matrix_v[6] = {0};
 					for ( int ind_r = 0; ind_r < 6; ind_r++ )
 					{
 						topo_matrix_v[ind_r] = 0.0;
@@ -2079,24 +2385,24 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 					}*/
 
 	//				int no_of_correspondences = 0;
-					vector<float> sum_of_errors;
+					vector<double> sum_of_errors;
 
 
 //					if(rawRansac[0].size() <= rawRansac[1].size())
 //					{
-						vector< vector < float > > temp_ransacmarkers_proj;
+						vector< vector < double > > temp_ransacmarkers_proj;
 
 						for(int den_i = 0; den_i < rawRansac[0].size(); den_i++)
 						{
-							float tmp_proj_x = topo_matrix_v[0]*rawRansac[0][den_i][0] + topo_matrix_v[1]*rawRansac[0][den_i][1] + topo_matrix_v[4];
-							float tmp_proj_y = topo_matrix_v[2]*rawRansac[0][den_i][0] + topo_matrix_v[3]*rawRansac[0][den_i][1] + topo_matrix_v[5];
-							float smallest_distance = 100000;
+							double tmp_proj_x = topo_matrix_v[0]*rawRansac[0][den_i][0] + topo_matrix_v[1]*rawRansac[0][den_i][1] + topo_matrix_v[4];
+							double tmp_proj_y = topo_matrix_v[2]*rawRansac[0][den_i][0] + topo_matrix_v[3]*rawRansac[0][den_i][1] + topo_matrix_v[5];
+							double smallest_distance = 100000;
 							int minimum_ind = 0;
 
-							vector < float > temp_unit_proj(2,0);
+							vector < double > temp_unit_proj(2,0);
 							for(int den_j = 0; den_j < rawRansac[1].size(); den_j++)
 							{
-								float temp_distance = sqrt(pow((rawRansac[1][den_j][0]-tmp_proj_x),2) + pow((rawRansac[1][den_j][1]-tmp_proj_y),2));
+								double temp_distance = sqrt(pow((rawRansac[1][den_j][0]-tmp_proj_x),2) + pow((rawRansac[1][den_j][1]-tmp_proj_y),2));
 								if(temp_distance < smallest_distance)
 								{
 									smallest_distance = temp_distance;
@@ -2113,7 +2419,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 						sort(sum_of_errors.begin(),sum_of_errors.begin()+rawRansac[0].size());
 
-						float median_value;
+						double median_value;
 						if(sum_of_errors.size()%2 == 0)
 						{
 							median_value = (sum_of_errors[sum_of_errors.size()/2] + sum_of_errors[sum_of_errors.size()/2 - 1])/2;
@@ -2123,11 +2429,27 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 							median_value = sum_of_errors[sum_of_errors.size()/2];
 						}
 
+						double temp_average = 0;
+						int valid_dist = 0;
+						for(int av_i = 0; av_i < sum_of_errors.size(); av_i++)
+						{
+							if(sum_of_errors[av_i] <= 4)
+							{
+								valid_dist++;
+								temp_average += sum_of_errors[av_i]; 
+							}
+						}
+
+//						temp_average /= sum_of_errors.size();
+						temp_average /= valid_dist;
+
 						if(median_value < overall_minimum_median)
 						{
 							overall_minimum_median = median_value;
 							ransacmarkers_topo = rawRansac[0];
 							ransacmarkers_proj = temp_ransacmarkers_proj;
+							overall_minimum_average = temp_average;
+							total_used = valid_dist;
 						}
 //					}
 					/*else
@@ -2209,7 +2531,9 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	fclose (ransacFile);
 	fclose (identityFile);
-	printf("\noverall_minimum_median : %f\n", overall_minimum_median);
+	printf("\n average coming from overall_minimum_median : %f\n", overall_minimum_average);
+	printf("\n total number of used markers for calculation : %d\n", total_used);
+	
 ////////////////////////////////////////////////////end//////////////////////////////////////////////
 
 	//there are many repetitions. optimize this part.
@@ -2319,6 +2643,11 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 	FILE * pFile;
 	pFile = fopen ("output/ransac_markers.txt","r");
 
+	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
+
+	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
+
+
 	if (pFile==NULL) 
 	{
 		perror ("Error opening file");
@@ -2342,8 +2671,8 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 			for(int i = 0; i<num; i++)
 			{
 				fscanf (pFile, "%f %f", &x, &y);
-				x_src[i] = x;
-				y_src[i] = y;
+				x_src[i] = x/(wh[0][0]-1.0);
+				y_src[i] = y/(wh[0][0]-1.0);
 				z_src[i] = 0;
 		//		printf ( "%f %f ", x, y);
 				if( i == 0 || i == (num-1))
@@ -2357,8 +2686,8 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 			for(int i = 0; i<num; i++)
 			{
 				fscanf (pFile, "%f %f", &x, &y);
-				x_tgt[i] = x;
-				y_tgt[i] = y;
+				x_tgt[i] = x/(wh[1][0]-1.0);
+				y_tgt[i] = y/(wh[1][0]-1.0);
 				z_tgt[i] = 0;
 		//		printf ( "%f %f ", x, y);
 				if( i == 0 || i == (num-1))
