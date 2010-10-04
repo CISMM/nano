@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;C:\NSRG\external\pc_win32\gl\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;C:\NSRG\external\pc_win32\gl\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\..\..\vrpn\quat;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -119,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;C:\NSRG\external\pc_win32\gl\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\nsrg\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;C:\NSRG\external\pc_win32\gl\include;..\..;..\..\..\..\..\..\vrpn;..\..\..\..\..\..\vrpn\quat;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\..\..\vogl;..\..\..\..\lib\tcllinkvar;..\..\..\..\lib\nmImageViewer;..\nmGraphics;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
