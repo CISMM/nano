@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\ImageMagick\include;..\..\..\..\vrpn;..\..\..\..\quat;../nmBase;../../app/image/protvol;../nmMP"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\ImageMagick\include;..\..\..\..\vrpn;..\..\..\..\vrpn\quat;../nmBase;../../app/image/protvol;../nmMP"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\ImageMagick\include;..\..\..\..\vrpn;..\..\..\..\quat;../nmBase;../../app/image/protvol;../nmMP"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\ImageMagick\include;..\..\..\..\vrpn;..\..\..\..\vrpn\quat;../nmBase;../../app/image/protvol;../nmMP"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
