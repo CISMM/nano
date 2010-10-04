@@ -43,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="../../../../lib/nmBase;..\..\..\..\..\..\vrpn;.;..\..\..\..\..\..\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\lib\ImgFormat;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
+				AdditionalIncludeDirectories="../../../../lib/nmBase;..\..\..\..\..\..\vrpn;.;..\..\..\..\..\..\vrpn\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\lib\ImgFormat;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -117,7 +117,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../lib/nmBase;..\..\..\..\..\..\vrpn;.;..\..\..\..\..\..\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\lib\ImgFormat;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
+				AdditionalIncludeDirectories="../../../../lib/nmBase;..\..\..\..\..\..\vrpn;.;..\..\..\..\..\..\vrpn\quat;..\..\..\..\..\..\vogl;..\..\..\..\lib\nmBase;..\..\..\..\lib\ImgFormat;..\nmUGraphics;..\..;..\nmMScope;..\..\..\..\lib\nmMP;..\..\..\..\lib\tcllinkvar;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

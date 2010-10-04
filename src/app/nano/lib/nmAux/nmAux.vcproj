@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\lib\tclLinkVar;..\nmMScope;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\lib\tclLinkVar;..\nmMScope;..\..\..\..\..\..\vrpn\quat;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -119,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\lib\tclLinkVar;..\nmMScope;..\..\..\..\..\..\quat;..\nmUI"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..;.;..\..\..\..\..\..\vrpn;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;..\..\..\..\lib\tclLinkVar;..\nmMScope;..\..\..\..\..\..\vrpn\quat;..\nmUI"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"

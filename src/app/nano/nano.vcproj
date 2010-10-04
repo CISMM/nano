@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..\..\..\vrpn;..\..\lib\nmBase;..\..\lib\tcllinkvar;..\..\lib\nmGeometry;..\..\..\..\quat;..\..\..\..\vogl;lib\nmUI;lib\nmGraphics;lib\nmUGraphics;..\..\..\..\vrpn\server_src;lib\nmMScope;..\..\lib\nmMP;lib\nmReg;..\..\lib\nmImageViewer;lib\nmAux;lib\nmSEM;lib\nmAnalyze"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..\..\..\vrpn;..\..\lib\nmBase;..\..\lib\tcllinkvar;..\..\lib\nmGeometry;..\..\..\..\vrpn\quat;..\..\..\..\vogl;lib\nmUI;lib\nmGraphics;lib\nmUGraphics;..\..\..\..\vrpn\server_src;lib\nmMScope;..\..\lib\nmMP;lib\nmReg;..\..\lib\nmImageViewer;lib\nmAux;lib\nmSEM;lib\nmAnalyze"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -136,7 +136,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..\..\..\vrpn;..\..\lib\nmBase;..\..\lib\tcllinkvar;..\..\lib\nmGeometry;..\..\..\..\quat;..\..\..\..\vogl;lib\nmUI;lib\nmGraphics;lib\nmUGraphics;..\..\..\..\vrpn\server_src;lib\nmMScope;..\..\lib\nmMP;lib\nmReg;..\..\lib\nmImageViewer;lib\nmAux;lib\nmSEM;lib\nmAnalyze"
+				AdditionalIncludeDirectories="C:\NSRG\external\pc_win32\GL\include;C:\NSRG\external\pc_win32\tcl\include;C:\NSRG\external\pc_win32\X11\include;..\..\..\..\vrpn;..\..\lib\nmBase;..\..\lib\tcllinkvar;..\..\lib\nmGeometry;..\..\..\..\vrpn\quat;..\..\..\..\vogl;lib\nmUI;lib\nmGraphics;lib\nmUGraphics;..\..\..\..\vrpn\server_src;lib\nmMScope;..\..\lib\nmMP;lib\nmReg;..\..\lib\nmImageViewer;lib\nmAux;lib\nmSEM;lib\nmAnalyze"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE;THIRDTECH"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -790,16 +790,8 @@
 			Name="Libraries-Release"
 			>
 			<File
-				RelativePath="..\..\..\..\quat\pc_win32\Release\quat.lib"
+				RelativePath="..\..\..\..\vrpn\quat\pc_win32\Release\quat.lib"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\vogl\pc_win32\Release\vogl.lib"
@@ -1050,7 +1042,7 @@
 			Name="Libraries-Debug"
 			>
 			<File
-				RelativePath="..\..\..\..\quat\pc_win32\Debug\quat.lib"
+				RelativePath="..\..\..\..\vrpn\quat\pc_win32\Debug\quat.lib"
 				>
 				<FileConfiguration
 					Name="Release|Win32"

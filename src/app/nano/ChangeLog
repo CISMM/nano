@@ -1,3 +1,7 @@
+2010-10-04 Serdar Cakici <cakici@cs.unc.edu>
+
+	* *.vcproj: quat under vrpn now
+
 2010-06-23  David Marshburn  <marshbur@cs.unc.edu>
 
 	* version.h:  v. 12.6
