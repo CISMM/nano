@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\tclLinkVar;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\..\..\quat;..\nmUI;..\..;..\..\..\..\..\..\vogl;..\nmAux;..\nmAnalyze;..\nmUGraphics"
+				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\tclLinkVar;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\..\..\vrpn\quat;..\nmUI;..\..;..\..\..\..\..\..\vogl;..\nmAux;..\nmAnalyze;..\nmUGraphics"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;_DEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\tclLinkVar;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\..\..\quat;..\nmUI;..\..;..\..\..\..\..\..\vogl;..\nmAux;..\nmAnalyze;..\nmUGraphics"
+				AdditionalIncludeDirectories=".;..\..\..\..\..\..\vrpn;..\..\..\..\lib\tclLinkVar;..\..\..\..\lib\nmBase;..\..\..\..\lib\nmMP;C:\nsrg\external\pc_win32\tcl\include;..\..\..\..\..\..\vrpn\quat;..\nmUI;..\..;..\..\..\..\..\..\vogl;..\nmAux;..\nmAnalyze;..\nmUGraphics"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;_LIB;NDEBUG;V_GLUT;NO_RAW_TERM;NO_XWINDOWS;NO_ITCL;NO_FILTERS;NO_EXT_TEXTURES;PROJECTIVE_TEXTURE"
 				StringPooling="true"
 				RuntimeLibrary="2"

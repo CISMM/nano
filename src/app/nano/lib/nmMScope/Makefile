@@ -30,7 +30,7 @@ GEN-FILES-O	:= $(addprefix $(OBJECT_DIR)/,$(addsuffix $(OBJECT_SUFFIX),$(GEN-FIL
 ifdef VC
 GEN_RPC := ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl
 else
-GEN_RPC := /usr/local/bin/perl ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl
+GEN_RPC := /usr/bin/perl ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl
 endif
 
 
