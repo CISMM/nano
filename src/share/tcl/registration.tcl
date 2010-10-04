@@ -234,15 +234,61 @@ set nmInfo(report) [$nmInfo(registration).report childsite]
 pack $nmInfo(registration).report -anchor nw -expand true -fill x
 
 frame $nmInfo(report).row1
+frame $nmInfo(report).row2
+frame $nmInfo(report).row3
+frame $nmInfo(report).row4
+frame $nmInfo(report).row5
+frame $nmInfo(report).row6
+frame $nmInfo(report).row7
 
-pack $nmInfo(report).row1 -anchor nw
+pack $nmInfo(report).row1 $nmInfo(report).row2 $nmInfo(report).row3 $nmInfo(report).row4 $nmInfo(report).row5 $nmInfo(report).row6 $nmInfo(report).row7 -anchor nw
 
-button $nmInfo(report).row1.createReport -text "Create Report"  \
-    -command "set save_report 1"
+#generic_entry $nmInfo(report).row1.topo_dim \
+#        report_dimensionsTopo "Topography Dimensions (in nm)#	Width" numeric
 
+#pack $nmInfo(report).row1.topo_dim \
+#	-anchor w -side left -pady 1
 
-pack $nmInfo(report).row1.createReport \
+#generic_entry $nmInfo(report).row2.proj_dim \
+#        report_dimensionsProj "Projection Dimensions (in nm)#	Width" numeric
+
+#pack $nmInfo(report).row2.proj_dim \
+#	-anchor w -side left -pady 1
+
+#generic_entry $nmInfo(report).row3.topo_resolution \
+#        report_resTopo "Topography Pixel Resolution" numeric
+
+#pack $nmInfo(report).row3.topo_resolution \
+#	-anchor w -side left -pady 1
+
+#generic_entry $nmInfo(report).row4.proj_resolution \
+#        report_resProj "Projection Pixel Resolution" numeric
+
+#pack $nmInfo(report).row4.proj_resolution \
+#	-anchor w -side left -pady 1
+
+button $nmInfo(report).row5.savePoints -text "Save Points for Multi Fluoro"  \
+    -command { set save_Points_report 1 }
+
+button $nmInfo(report).row5.calculateErrorMulti -text "Calculate Error for Multi Fluoro"  \
+    -command { set calculate_Error_report 1 }
+
+pack $nmInfo(report).row5.savePoints \
+	$nmInfo(report).row5.calculateErrorMulti \
 	-anchor nw -side left -pady 1
+
+button $nmInfo(report).row6.calculateErrorAverage -text "Calculate Error for Average Fluoro"  \
+    -command { set calculate_Average_Points_Error_Report 1 }
+
+pack $nmInfo(report).row6.calculateErrorAverage \
+	-anchor nw -side left -pady 1
+
+button $nmInfo(report).row7.createReport -text "Create Report"  \
+    -command { set save_report 1 }
+
+pack $nmInfo(report).row7.createReport \
+	-anchor nw -side left -pady 1
+
 ################ end of controls for methods section
 
 iwidgets::Labeledframe $nmInfo(registration).ransac \
@@ -272,38 +318,43 @@ pack $nmInfo(ransac).row1.topo_intensity \
 button $nmInfo(ransac).row2.calculatePoints -text "Calculate Points"  \
     -command "set run_calculatePoints 1"
 
-pack $nmInfo(ransac).row2.calculatePoints \
-	-anchor nw -side left -pady 1
+#pack $nmInfo(ransac).row2.calculatePoints \
+#	-anchor nw -side left -pady 1
 
-button $nmInfo(ransac).row3.drawTopo -text "Draw Topography Points"  \
+button $nmInfo(ransac).row2.drawTopo -text "Draw Topography Points"  \
     -command "set run_drawTopographyPoints 1"
 
-button $nmInfo(ransac).row3.saveTopo -text "Save Topography Points"  \
+button $nmInfo(ransac).row2.saveTopo -text "Save Topography Points"  \
     -command "set run_saveTopographyPoints 1"
 
-pack $nmInfo(ransac).row3.drawTopo \
-	$nmInfo(ransac).row3.saveTopo \
-	-anchor w -side left -pady 1
+#pack $nmInfo(ransac).row3.drawTopo \
+#	$nmInfo(ransac).row3.saveTopo \
+#	-anchor w -side left -pady 1
 
-button $nmInfo(ransac).row4.drawProj -text "Draw Projection Points"  \
+button $nmInfo(ransac).row2.drawProj -text "Draw Projection Points"  \
     -command "set run_drawProjectionPoints 1"
 
-button $nmInfo(ransac).row4.saveProj -text "Save Projection Points"  \
+button $nmInfo(ransac).row2.saveProj -text "Save Projection Points"  \
     -command "set run_saveProjectionPoints 1"
 
-pack $nmInfo(ransac).row4.drawProj \
-	$nmInfo(ransac).row4.saveProj \
-	-anchor w -side left -pady 1
+#pack $nmInfo(ransac).row4.drawProj \
+#	$nmInfo(ransac).row4.saveProj \
+#	-anchor w -side left -pady 1
 
-button $nmInfo(ransac).row5.run_calcCorr -text "Calculate Correspondences"  \
+button $nmInfo(ransac).row2.run_calcCorr -text "Calculate Correspondences"  \
     -command "set run_ransac 1"
 
-button $nmInfo(ransac).row5.run_drawCorr -text "Draw Correspondences"  \
+button $nmInfo(ransac).row2.run_drawCorr -text "Draw Correspondences"  \
     -command "set draw_ransac 1"
 
 
-pack $nmInfo(ransac).row5.run_calcCorr \
-	$nmInfo(ransac).row5.run_drawCorr \
+pack $nmInfo(ransac).row2.calculatePoints \
+$nmInfo(ransac).row2.drawTopo \
+$nmInfo(ransac).row2.saveTopo \
+$nmInfo(ransac).row2.drawProj \
+$nmInfo(ransac).row2.saveProj \
+$nmInfo(ransac).row2.run_calcCorr \
+$nmInfo(ransac).row2.run_drawCorr \
 	-anchor nw -side left -pady 1
 
 ################ end of controls for ransac
