@@ -1,3 +1,8 @@
+2010-10-04 Serdar Cakici <cakici@cs.unc.edu>
+
+	* nano_debug.bat: new batch file for debug mode
+	* nano_release.bat: new batch file for release mode 
+
 2008-08-19  Cory Quammen <cquammen@cs.unc.edu>
 
 	* nano.sln: Added project files for incorporating spot trackers
