@@ -1,5 +1,9 @@
 Versions:
 ---------
+12.7:  (October 8, 2010)
+	- includes serdar cakici's additions on automatic point finding
+	  and point set registration and FIONA approaches. 
+	- new colormaps.
 12.6:  (June 18, 2010)
 	- includes serdar cakici's additions on automatic point finding
 	  and point set registration. 

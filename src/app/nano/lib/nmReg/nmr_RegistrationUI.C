@@ -963,7 +963,8 @@ void nmr_RegistrationUI::handle_saveRegistrationMarkers_change(vrpn_int32 value,
 	unsigned i;
 
 	FILE * pFile;
-	pFile = fopen ("output/registration_markers.txt","w");
+	pFile = fopen ("registration_markers.txt","w");
+//	pFile = fopen ("output/registration_markers.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -1017,7 +1018,8 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 	float x,y;
 
 	FILE * pFile;
-	pFile = fopen ("output/registration_markers.txt","r");
+	pFile = fopen ("registration_markers.txt","r");
+//	pFile = fopen ("output/registration_markers.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1120,7 +1122,8 @@ void nmr_RegistrationUI::handle_calculateErrorReport_change(vrpn_int32 value, vo
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
 
 	FILE * pFile;
-	pFile = fopen ("output/calculateError.txt","w");
+	pFile = fopen ("calculateError.txt","w");
+	//	pFile = fopen ("output/calculateError.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"number of images: %d\n", markersForReport.size());
@@ -1236,7 +1239,8 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
 
 	FILE * pFile;
-	pFile = fopen ("output/averageImage_ErrorReport.txt","w");
+	pFile = fopen ("averageImage_ErrorReport.txt","w");
+//	pFile = fopen ("output/averageImage_ErrorReport.txt","w");
  
 	//number of markers in an image
 //	fprintf(pFile,"%d\n", c.numPoints());
@@ -1256,7 +1260,8 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 	vector<double> gaussian_radius;
 
 	FILE * radiusFile;
-	radiusFile = fopen ("output/radii.txt","r");
+	radiusFile = fopen ("radii.txt","r");
+//	radiusFile = fopen ("output/radii.txt","r");
 
 	if (radiusFile==NULL) 
 	{
@@ -1317,7 +1322,8 @@ void nmr_RegistrationUI::handle_saveReport_change(vrpn_int32 value, void *ud) //
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
 
 	FILE * pFile;
-	pFile = fopen ("output/methods section.txt","w");
+	pFile = fopen ("methods section.txt","w");
+//	pFile = fopen ("output/methods section.txt","w");
  
 	fprintf(pFile,"rms error between images: %f\n", me->d_aligner->get_d_local_impl()->get_rmsError());
 
@@ -1609,7 +1615,8 @@ void nmr_RegistrationUI::handle_drawTopographyPoints_change(vrpn_int32 value, vo
 	float x,y;
 
 	FILE * pFile;
-	pFile = fopen ("output/ransac_points_topography.txt","r");
+	pFile = fopen ("ransac_points_topography.txt","r");
+//	pFile = fopen ("output/ransac_points_topography.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1680,7 +1687,8 @@ void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, vo
 	unsigned i;
 
 	FILE * pFile;
-	pFile = fopen ("output/processed_ransac_topography.txt","w");
+	pFile = fopen ("processed_ransac_topography.txt","w");
+	//	pFile = fopen ("output/processed_ransac_topography.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -1695,7 +1703,8 @@ void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, vo
 	fclose (pFile);
 
 	FILE * IngridFile;
-	IngridFile = fopen ("output/Ingrid_Topography.txt","w");
+	IngridFile = fopen ("Ingrid_Topography.txt","w");
+//	IngridFile = fopen ("output/Ingrid_Topography.txt","w");
  
 	//number of markers in an image
 	fprintf(IngridFile,"%d\n", c.numPoints());
@@ -1715,7 +1724,8 @@ void nmr_RegistrationUI::handle_drawProjectionPoints_change(vrpn_int32 value, vo
 	float x,y;
 
 	FILE * pFile;
-	pFile = fopen ("output/ransac_points_projection.txt","r");
+	pFile = fopen ("ransac_points_projection.txt","r");
+//	pFile = fopen ("output/ransac_points_projection.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1784,7 +1794,8 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 	unsigned i;
 
 	FILE * pFile;
-	pFile = fopen ("output/processed_ransac_projection.txt","w");
+	pFile = fopen ("processed_ransac_projection.txt","w");
+//	pFile = fopen ("output/processed_ransac_projection.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -1799,7 +1810,8 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 	fclose (pFile);
 
 	FILE * IngridFile;
-	IngridFile = fopen ("output/Ingrid_Projection.txt","w");
+	IngridFile = fopen ("Ingrid_Projection.txt","w");
+//	IngridFile = fopen ("output/Ingrid_Projection.txt","w");
  
 	//number of markers in an image
 	fprintf(IngridFile,"%d\n", c.numPoints());
@@ -1883,7 +1895,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	vector< vector< vector <double> > > rawRansac;
 	
 	FILE * processedTopoFile;
-	processedTopoFile = fopen ("output/processed_ransac_topography.txt","r");
+	processedTopoFile = fopen ("processed_ransac_topography.txt","r");
+//	processedTopoFile = fopen ("output/processed_ransac_topography.txt","r");
 
 	vector< vector <double> > topo_rawRansac;
 
@@ -1913,7 +1926,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 
 	FILE * processedProjFile;
-	processedProjFile = fopen ("output/processed_ransac_projection.txt","r");
+	processedProjFile = fopen ("processed_ransac_projection.txt","r");
+//	processedProjFile = fopen ("output/processed_ransac_projection.txt","r");
 
 	vector< vector <double> > proj_rawRansac;
 
@@ -2169,7 +2183,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	identityFile = fopen ("identity.txt","w");
 
 	FILE * ransacFile;
-	ransacFile = fopen ("output/ransac_markers.txt","w");
+	ransacFile = fopen ("ransac_markers.txt","w");
+//	ransacFile = fopen ("output/ransac_markers.txt","w");
 
 	vector< vector < double > > ransacmarkers_topo;
 	vector< vector < double > > ransacmarkers_proj;
@@ -2641,7 +2656,8 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 	float x,y;
 
 	FILE * pFile;
-	pFile = fopen ("output/ransac_markers.txt","r");
+	pFile = fopen ("ransac_markers.txt","r");
+//	pFile = fopen ("output/ransac_markers.txt","r");
 
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
 

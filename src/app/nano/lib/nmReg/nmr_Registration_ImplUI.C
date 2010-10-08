@@ -260,11 +260,13 @@ vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 
 	vector< vector< vector <float> > > initialRansac;
 
-	const char * ransac_points_topography = "output/ransac_points_topography.txt";
+	const char * ransac_points_topography = "ransac_points_topography.txt";
+//	const char * ransac_points_topography = "output/ransac_points_topography.txt";
 	vector< vector <float> > initialRansacTopography;
 	initialRansacTopography = d_ce.comparePixelsWithNeighbors(0,ransac_points_topography);
 
-	const char * ransac_points_projection = "output/ransac_points_projection.txt";
+	const char * ransac_points_projection = "ransac_points_projection.txt";
+//	const char * ransac_points_projection = "output/ransac_points_projection.txt";
 	vector< vector <float> > initialRansacProjection;
 	initialRansacProjection = d_ce.comparePixelsWithNeighbors(1,ransac_points_projection);
 

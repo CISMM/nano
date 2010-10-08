@@ -1157,7 +1157,8 @@ void CorrespondenceEditor::recenterFiducials(int spaceIndex) {
     int numPts = correspondence->numPoints();
 
 	FILE * pFile;
-	pFile = fopen ("output/radii.txt","w");
+	pFile = fopen ("radii.txt","w");
+//	pFile = fopen ("output/radii.txt","w");
 
 	vector<double> radii(numPts);
 

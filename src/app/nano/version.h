@@ -3,7 +3,7 @@
 #define __VERSION_H
 
 #define	MICROSCAPE_MAJOR_VERSION	(12)
-#define	MICROSCAPE_MINOR_VERSION	(6)
+#define	MICROSCAPE_MINOR_VERSION	(7)
 
 
 #endif // __VERSION_H
