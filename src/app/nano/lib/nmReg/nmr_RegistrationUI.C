@@ -97,15 +97,15 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_calculateErrorReport("calculate_Error_report", 0), //new
    d_calculateAveragePointsErrorReport("calculate_Average_Points_Error_Report", 0), //new
    d_saveReport("save_report", 0), //new
-   d_runRansac("run_ransac", 0), //new
-   d_setTopoIntensityThreshold("set_topoIntensityThreshold", 0.1),
-   d_setProjIntensityThreshold("set_projIntensityThreshold", 0.1),
+   d_runRegistration("run_ransac", 0), //new
+   d_setTopoIntensityThreshold("set_topoIntensityThreshold", 10),
+   d_setProjIntensityThreshold("set_projIntensityThreshold", 0.7),
    d_calculatePoints("run_calculatePoints", 0), //new
    d_drawTopographyPoints("run_drawTopographyPoints", 0), //new
    d_saveTopographyPoints("run_saveTopographyPoints", 0), //new
    d_drawProjectionPoints("run_drawProjectionPoints", 0), //new
    d_saveProjectionPoints("run_saveProjectionPoints", 0), //new
-   d_runDrawRansac("draw_ransac", 0), //new
+   d_runDrawRegistration("draw_registration", 0), //new
 
    d_scaleX("reg_scaleX", 1.0),
    d_scaleY("reg_scaleY", 1.0),
@@ -198,7 +198,7 @@ void nmr_RegistrationUI::setupCallbacks()
     d_calculateErrorReport.addCallback(handle_calculateErrorReport_change, (void *)this);
 	d_calculateAveragePointsErrorReport.addCallback(handle_calculateAveragePointsErrorReport_change, (void *)this);
 	d_saveReport.addCallback(handle_saveReport_change, (void *)this); //new
-	d_runRansac.addCallback(handle_runRansac_change, (void *)this); //new
+	d_runRegistration.addCallback(handle_runRegistration_change, (void *)this); //new
 	d_setTopoIntensityThreshold.addCallback(handle_setTopoIntensityThreshold_change, (void *) this);
 	d_setProjIntensityThreshold.addCallback(handle_setProjIntensityThreshold_change, (void *) this);
     d_calculatePoints.addCallback(handle_calculatePoints_change, (void *)this); //new
@@ -206,7 +206,7 @@ void nmr_RegistrationUI::setupCallbacks()
 	d_saveTopographyPoints.addCallback(handle_saveTopographyPoints_change, (void *)this); //new
 	d_drawProjectionPoints.addCallback(handle_drawProjectionPoints_change, (void *)this); //new
 	d_saveProjectionPoints.addCallback(handle_saveProjectionPoints_change, (void *)this); //new
-	d_runDrawRansac.addCallback(handle_runDrawRansac_change, (void *)this); //new
+	d_runDrawRegistration.addCallback(handle_runDrawRegistration_change, (void *)this); //new
 
     d_registrationEnabled.addCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -282,7 +282,7 @@ void nmr_RegistrationUI::teardownCallbacks()
 	d_saveRegistrationMarkers.removeCallback(handle_saveRegistrationMarkers_change, (void *)this); //new
 	d_loadRegistrationMarkers.removeCallback(handle_loadRegistrationMarkers_change, (void *)this); //new		
 	d_saveReport.removeCallback(handle_saveReport_change, (void *)this); //new
-	d_runRansac.removeCallback(handle_runRansac_change, (void *)this); //new
+	d_runRegistration.removeCallback(handle_runRegistration_change, (void *)this); //new
 	d_setTopoIntensityThreshold.removeCallback(handle_setTopoIntensityThreshold_change, (void *) this);
 	d_setProjIntensityThreshold.removeCallback(handle_setProjIntensityThreshold_change, (void *) this);
     d_calculatePoints.removeCallback(handle_calculatePoints_change, (void *)this); //new
@@ -290,7 +290,7 @@ void nmr_RegistrationUI::teardownCallbacks()
 	d_saveTopographyPoints.removeCallback(handle_saveTopographyPoints_change, (void *)this); //new
 	d_drawProjectionPoints.removeCallback(handle_drawProjectionPoints_change, (void *)this); //new
 	d_saveProjectionPoints.removeCallback(handle_saveProjectionPoints_change, (void *)this); //new
-	d_runDrawRansac.removeCallback(handle_runDrawRansac_change, (void *)this); //new
+	d_runDrawRegistration.removeCallback(handle_runDrawRegistration_change, (void *)this); //new
 
     d_registrationEnabled.removeCallback
          (handle_registrationEnabled_change, (void *)this);
@@ -954,9 +954,7 @@ void nmr_RegistrationUI::handle_saveRegistrationMarkers_change(vrpn_int32 value,
 
 	Correspondence	c;
 	int	src, tgt;
-//	me->d_aligner->d_local_impl->d_alignerUI->getCorrespondence(c, src, tgt);
 	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getCorrespondence(c, src, tgt);
-//	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->get_d_ce();
 
 	corr_point_t point_topography;
 	corr_point_t point_projection;
@@ -964,36 +962,9 @@ void nmr_RegistrationUI::handle_saveRegistrationMarkers_change(vrpn_int32 value,
 
 	FILE * pFile;
 	pFile = fopen ("registration_markers.txt","w");
-//	pFile = fopen ("output/registration_markers.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
-
-/*
-	vector<float> list_x;
-	vector<float> list_y;
-
-	for(int a = 0; a < c.numPoints(); a++)
-	{
-		int isthere = 0;
-		for(int b = 0; b < list_x.size(); b++)
-		{
-			if(imgvalues_x[a] == list_x[b] && imgvalues_y[a] == list_y[b])
-			{
-				isthere++;
-			}
-		}
-		if(isthere == 0)
-		{
-			list_x.push_back(imgvalues_x[a]);
-			list_y.push_back(imgvalues_y[a]);
-		}
-	}
-	for(int i = 0; i < list_x.size(); i++)
-	{
-		fprintf(pFile,"%g %g ", list_x[i], list_y[i]);
-	}
-*/
 
 	// Topography Image Point
 	for (i = 0; i < c.numPoints(); i++) {
@@ -1019,7 +990,6 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 
 	FILE * pFile;
 	pFile = fopen ("registration_markers.txt","r");
-//	pFile = fopen ("output/registration_markers.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1047,7 +1017,7 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 				x_src[i] = x;
 				y_src[i] = y;
 				z_src[i] = 0;
-		//		printf ( "%f %f ", x, y);
+
 				if( i == 0 || i == (num-1))
 				{
 					printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
@@ -1062,7 +1032,7 @@ void nmr_RegistrationUI::handle_loadRegistrationMarkers_change(vrpn_int32 value,
 				x_tgt[i] = x;
 				y_tgt[i] = y;
 				z_tgt[i] = 0;
-		//		printf ( "%f %f ", x, y);
+
 				if( i == 0 || i == (num-1))
 				{
 					printf ("target %d %f %f\n", i, x_tgt[i], y_tgt[i]);
@@ -1097,9 +1067,6 @@ void nmr_RegistrationUI::handle_savePointsReport_change(vrpn_int32 value, void *
 	corr_point_t point_topography;
 	unsigned i;
  
-	//number of markers in an image
-//	fprintf(pFile,"%d\n", c.numPoints());
-
 	// Topography Image Point
 	for (i = 0; i < c.numPoints(); i++) 
 	{
@@ -1123,7 +1090,6 @@ void nmr_RegistrationUI::handle_calculateErrorReport_change(vrpn_int32 value, vo
 
 	FILE * pFile;
 	pFile = fopen ("calculateError.txt","w");
-	//	pFile = fopen ("output/calculateError.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"number of images: %d\n", markersForReport.size());
@@ -1240,11 +1206,7 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 
 	FILE * pFile;
 	pFile = fopen ("averageImage_ErrorReport.txt","w");
-//	pFile = fopen ("output/averageImage_ErrorReport.txt","w");
  
-	//number of markers in an image
-//	fprintf(pFile,"%d\n", c.numPoints());
-
 	double camera_offset = 10;
 	double EM_gain = 80;
 	double analog_gain = 5;
@@ -1261,7 +1223,6 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 
 	FILE * radiusFile;
 	radiusFile = fopen ("radii.txt","r");
-//	radiusFile = fopen ("output/radii.txt","r");
 
 	if (radiusFile==NULL) 
 	{
@@ -1291,7 +1252,6 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 	for (int i = 0; i < c.numPoints(); i++) 
 	{
 		c.getPoint(src, i, &point_topography);
-//		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
 
 		cout<<point_topography.x<<" "<<point_topography.y;
 		double grayscale_value = (me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getIntensityValue(int(point_topography.x*(wh[0][0]-1.0)),int(point_topography.y*(wh[0][0]-1.0))))*255;
@@ -1299,15 +1259,12 @@ void nmr_RegistrationUI::handle_calculateAveragePointsErrorReport_change(vrpn_in
 
 		double photon_count = (grayscale_value - camera_offset) * gain_conversion_factor / (EM_gain * analog_gain);
 
-		//!!!change the background value to photon units!!!!
-//		standard_error[i] = sqrt( pow(gaussian_radius[i],2) / photon_count + pow(pixel_size,2) / (12*photon_count) + 8 * M_PI * pow(gaussian_radius[i],4)* pow(background_value,2) / pow(pixel_size,2) * pow(photon_count,2));
+		//!!!!change the background value to photon units!!!!
 		standard_error[i] = sqrt( pow(gaussian_radius[i],2) / photon_count);
 		sum_std += standard_error[i];
-//		fprintf(pFile,"%f %f %f %f %f %f \n", pow(gaussian_radius[i],2), photon_count, pow(gaussian_radius[i],2) / photon_count, pow(pixel_size,2) / (12*photon_count), pow(background_value,2) / pow(pixel_size,2), standard_error[i]);
 		fprintf(pFile,"%f \n", standard_error[i]);
 	}
 	fprintf(pFile,"\n");
-
 
 	double avg_std = sum_std/c.numPoints();
 
@@ -1323,34 +1280,11 @@ void nmr_RegistrationUI::handle_saveReport_change(vrpn_int32 value, void *ud) //
 
 	FILE * pFile;
 	pFile = fopen ("methods section.txt","w");
-//	pFile = fopen ("output/methods section.txt","w");
  
 	fprintf(pFile,"rms error between images: %f\n", me->d_aligner->get_d_local_impl()->get_rmsError());
 
 	fclose (pFile);
-
-
-/*	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
-	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->BrightestPixels();
-*/
-
-/*
-	FILE * pFile;
-	pFile = fopen ("brightest.txt","w");
- 
-	//number of markers in an image
-	fprintf(pFile,"%d\n", c.numPoints());
-
-	// Topography Image Point
-	for (i = 0; i < c.numPoints(); i++) {
-		c.getPoint(src, i, &point_topography);
-		fprintf(pFile,"%g %g ", point_topography.x, point_topography.y);
-	}
-	fprintf(pFile,"\n");
-
-	fclose (pFile);
-*/
-} //new
+}
 
 void matrixMultiplication(double resultMatrix[6][6], double leftMatrix[6][6], double rightMatrix[6][6])
 {
@@ -1361,114 +1295,9 @@ void matrixMultiplication(double resultMatrix[6][6], double leftMatrix[6][6], do
 		  for ( int i = 0; i < 6; i++ )
 		  {
 			  resultMatrix[r][c] +=  leftMatrix[r][i] * rightMatrix[i][c];
-//			  printf("%f %f %f \n",resultMatrix[r][c],leftMatrix[r][i],rightMatrix[i][c]);
 		  }
 	  }
 	}
-}
-
-float detrm(float a[6][6],float k)
-{
-        float s=1,det=0;
-		float b[6][6]={0};
-        int i,j,m,n,c;
-        if(k==1)
-        {
-                return(a[0][0]);
-        }
-        else
-        {
-                det=0;
-                for(c=0;c<k;c++)
-                {
-                        m=0;
-                        n=0;
-                        for(i=0;i<k;i++)
-                        {
-                                for(j=0;j<k;j++)
-                                {
-                                        b[i][j]=0;
-                                        if(i!=0&&j!=c)
-                                        {
-                                                b[m][n]=a[i][j];
-                                                if(n<(k-2))
-                                                        n++;
-                                                else
-                                                {
-                                                        n=0;
-                                                        m++;
-                                                }
-                                        }
-                                }
-                        }
-                        det=det+s*(a[0][c]*detrm(b,k-1));
-                        s=-1*s;
-                }
-        }
-        return det;
-}
-
-void trans(float inverseMatrix[6][6],float num[6][6],float fac[6][6],float r)
-{
-        int i,j;
-		float b[6][6] = {0};
-		float inv[6][6] = {0};
-		float d;
-        for(i=0;i<r;i++)
-        {
-                for(j=0;j<r;j++)
-                {
-                        b[i][j]=fac[j][i];
-                }
-        }
-        d=detrm(num,r);
-        inv[i][j]=0;
-
-        for(i=0;i<r;i++)
-        {
-                for(j=0;j<r;j++)
-                {
-                        if (d==1 || b[i][j]==0)
-                                inverseMatrix[i][j] = b[i][j];
-                        else
-                                inverseMatrix[i][j] = b[i][j]/d;
-                }
-        }
-}
-
-void cofact(float inverseMatrix[6][6], float num[6][6],float f)
-{
-        float b[6][6]={0};
-		float fac[6][6]={0};
-        int p,q,m,n,i,j;
-        for(q=0;q<f;q++)
-        {
-                for(p=0;p<f;p++)
-                {
-                        m=0;
-                        n=0;
-                        for(i=0;i<f;i++)
-                        {
-                                for(j=0;j<f;j++)
-                                {
-                                        b[i][j]=0;
-                                        if(i!=q&&j!=p)
-                                        {
-                                                b[m][n]=num[i][j];
-                                                if(n<(f-2))
-                                                        n++;
-                                                else
-                                                {
-                                                        n=0;
-                                                        m++;
-                                                }
-                                        }
-                                }
-                        }
-                        fac[q][p]=pow(-1.0,q+p)*detrm(b,f-1);
-                }
-        }
-        trans(inverseMatrix,num,fac,f);
 }
 
 // static
@@ -1555,60 +1384,8 @@ void nmr_RegistrationUI::handle_calculatePoints_change(vrpn_int32 value, void *u
 		fclose (pFile);
 	}
 #endif
-} //new
+}
 
-/*ewfwef
-{
-	float x,y;
-
-	FILE * pFile;
-	pFile = fopen ("output/ransac_points_topography.txt","r");
-
-	if (pFile==NULL) 
-	{
-		perror ("Error opening file");
-	}
-	else
-	{
-		rewind (pFile);
-		int num;
-		fscanf (pFile, "%d", &num);
-
-		if(num <= NMR_MAX_FIDUCIAL)
-		{
-			vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], z_src[NMR_MAX_FIDUCIAL],
-				x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
-
-			vrpn_int32 replace = 1;
-
-			vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
-
-			printf ("%d ",num);
-			printf ("Topography: ");
-			for(int i = 0; i<num; i++)
-			{
-				fscanf (pFile, "%f %f", &x, &y);
-				x_src[i] = x/(wh[0][0]-1);
-				y_src[i] = y/(wh[0][1]-1);
-				z_src[i] = 0;
-				if( i == 0 || i == (num-1))
-				{
-					printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
-				}
-			}
-			printf ("\n");
-
-			nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
-			me->d_aligner->get_d_local_impl()->get_d_alignerUI()->setFiducial(replace,num,x_src,y_src,z_src,x_tgt,y_tgt,z_tgt);
-
-		}
-		else
-		{
-			printf ("Error: Number of markers in the file is bigger than NMR_MAX_FIDUCIAL\n");
-		}
-		fclose (pFile);
-	}
-}*/
 
 void nmr_RegistrationUI::handle_drawTopographyPoints_change(vrpn_int32 value, void *ud)
 {
@@ -1616,7 +1393,6 @@ void nmr_RegistrationUI::handle_drawTopographyPoints_change(vrpn_int32 value, vo
 
 	FILE * pFile;
 	pFile = fopen ("ransac_points_topography.txt","r");
-//	pFile = fopen ("output/ransac_points_topography.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1688,7 +1464,6 @@ void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, vo
 
 	FILE * pFile;
 	pFile = fopen ("processed_ransac_topography.txt","w");
-	//	pFile = fopen ("output/processed_ransac_topography.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -1704,7 +1479,6 @@ void nmr_RegistrationUI::handle_saveTopographyPoints_change(vrpn_int32 value, vo
 
 	FILE * IngridFile;
 	IngridFile = fopen ("Ingrid_Topography.txt","w");
-//	IngridFile = fopen ("output/Ingrid_Topography.txt","w");
  
 	//number of markers in an image
 	fprintf(IngridFile,"%d\n", c.numPoints());
@@ -1725,7 +1499,6 @@ void nmr_RegistrationUI::handle_drawProjectionPoints_change(vrpn_int32 value, vo
 
 	FILE * pFile;
 	pFile = fopen ("ransac_points_projection.txt","r");
-//	pFile = fopen ("output/ransac_points_projection.txt","r");
 
 	if (pFile==NULL) 
 	{
@@ -1795,7 +1568,6 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 
 	FILE * pFile;
 	pFile = fopen ("processed_ransac_projection.txt","w");
-//	pFile = fopen ("output/processed_ransac_projection.txt","w");
  
 	//number of markers in an image
 	fprintf(pFile,"%d\n", c.numPoints());
@@ -1811,7 +1583,6 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 
 	FILE * IngridFile;
 	IngridFile = fopen ("Ingrid_Projection.txt","w");
-//	IngridFile = fopen ("output/Ingrid_Projection.txt","w");
  
 	//number of markers in an image
 	fprintf(IngridFile,"%d\n", c.numPoints());
@@ -1826,68 +1597,9 @@ void nmr_RegistrationUI::handle_saveProjectionPoints_change(vrpn_int32 value, vo
 	fclose (IngridFile);
 }
 
-void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
+void nmr_RegistrationUI::handle_runRegistration_change(vrpn_int32 value, void *ud)
 {
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
-
-
-///////////////////////
-
-/*	float x,y;
-
-	FILE * pFile;
-	pFile = fopen ("output/test.txt","r");
-
-	vector< vector< vector <float> > > test_rawransac;
-
-	if (pFile==NULL) 
-	{
-		perror ("Error opening file");
-	}
-	else
-	{
-		rewind (pFile);
-		int num;
-		fscanf (pFile, "%d", &num);
-
-		if(num <= NMR_MAX_FIDUCIAL)
-		{
-			vrpn_int32 replace = 1;
-
-			printf ("%d ",num);
-
-			vector< vector <float> > test_topo;
-			vector< vector <float> > test_proj;
-
-			printf ("TEST_Topography: ");
-			for(int i = 0; i<146; i++)
-			{
-				fscanf (pFile, "%f %f", &x, &y);
-				vector <float> test_pair;
-				test_pair.push_back(x);
-				test_pair.push_back(y);
-				test_topo.push_back(test_pair);
-			}
-			printf ("\n");
-
-			printf ("TEST_Projection: ");
-			for(int i = 0; i<146; i++)
-			{
-				fscanf (pFile, "%f %f", &x, &y);
-				vector <float> test_pair;
-				test_pair.push_back(x);
-				test_pair.push_back(y);
-				test_proj.push_back(test_pair);
-			}
-			test_rawransac.push_back(test_topo);
-			test_rawransac.push_back(test_proj);
-		}
-		fclose (pFile);
-	}*/
-///////////////////////
-
-	//	me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
-//	vector< vector< vector <float> > > rawRansac = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->readPixels();
 
 	vector< vector <float> > wh = me->d_aligner->get_d_local_impl()->get_d_alignerUI()->getWidthHeight();
 
@@ -1896,7 +1608,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	
 	FILE * processedTopoFile;
 	processedTopoFile = fopen ("processed_ransac_topography.txt","r");
-//	processedTopoFile = fopen ("output/processed_ransac_topography.txt","r");
 
 	vector< vector <double> > topo_rawRansac;
 
@@ -1927,7 +1638,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	FILE * processedProjFile;
 	processedProjFile = fopen ("processed_ransac_projection.txt","r");
-//	processedProjFile = fopen ("output/processed_ransac_projection.txt","r");
 
 	vector< vector <double> > proj_rawRansac;
 
@@ -1958,51 +1668,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	rawRansac.push_back(topo_rawRansac);
 	rawRansac.push_back(proj_rawRansac);
 #endif
-//	vector< vector< vector <float> > > rawRansac = test_rawransac;
 
-/*	float tmpResultMatrix[6][6] = {0};
-	float inverseMatrix[6][6] = {0};
-
-	float a[6][6];
-	a[0][0] = 7; a[0][1] = 0; a[0][2] = 2; a[0][3] = 38; a[0][4] = 0; a[0][5] = 0;
-	a[1][0] = 0; a[1][1] = 1; a[1][2] = 0; a[1][3] = 0; a[1][4] = 5; a[1][5] = 0;
-	a[2][0] = 0; a[2][1] = 12; a[2][2] = 1; a[2][3] = 0; a[2][4] = 0; a[2][5] = 24;
-	a[3][0] = 3; a[3][1] = 0; a[3][2] = 0; a[3][3] = 1; a[3][4] = 0; a[3][5] = 46;
-	a[4][0] = 0; a[4][1] = 0; a[4][2] = 2; a[4][3] = 0; a[4][4] = 1; a[4][5] = 0;
-	a[5][0] = 0; a[5][1] = 0; a[5][2] = 0; a[5][3] = 0; a[5][4] = 0; a[5][5] = 1;
-
-	float d;
-	d=detrm(a,6);
-	if(d==0)
-	{
-		printf("\nMATRIX IS NOT INVERSIBLE\n");
-	}
-    else
-	{
-		cofact(inverseMatrix,a,6);
-
-		for(int i = 0; i<6; i++)
-		{
-			for(int j = 0; j<6; j++)
-			{
-				printf("%f ",inverseMatrix[i][j]);
-			}
-			printf("\n");
-		}
-	}
-
-	matrixMultiplication(tmpResultMatrix, inverseMatrix, a);
-	printf("\n\n");
-
-	for(int i = 0; i<6; i++)
-	{
-		for(int j = 0; j<6; j++)
-		{
-			printf("%f ",tmpResultMatrix[i][j]);
-		}
-		printf("\n");
-	}*/
-/////////////////////////////////////////////////////////////////////
 	//rawRansac[a][b][c]
 	// a: 0 --> topography; 1 --> projection
 	// b: index of a data point
@@ -2010,9 +1676,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	//!!different from the regular way, data point coordinates are NOT divided to 511 to keep them between 0-1. 
 	//Here, coordinates are between 0-511 (just to be sure they don't go unnoticed (i.e. get too small) during affine transformation).
-
-//    nmr_FiducialSpotTracker tracker = NMR_LOCAL_MAX_TRACKER;
-  //  me->d_aligner->setFiducialSpotTracker(NMR_SOURCE, tracker); //sadece source icin bu; target icin de yapman lazim
 
 	vector< vector< double > > distanceMatrixTopography;
 	vector< vector< double > > distanceMatrixProjection;
@@ -2039,9 +1702,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		distanceMatrixProjection.push_back(line_i);
 	}
 
-//	bool found = false;
-
-////////////////////////////////////////////////////begin////////////////////////////////////////////
 	vector< vector< vector <double> > > closestneighbors_topo;
 	vector<double> distanceratio_closestneighbors_topo;
 
@@ -2092,7 +1752,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		}
 		if(topo_index_close_1[0] == 100000 || topo_index_close_1[1] == 100000 ||  topo_index_close_2[0] == 100000 ||  topo_index_close_2[1] == 100000 || indexvalue_topo_close_1 == -1 || indexvalue_topo_close_2 == -1)
 		{
-			printf("error at handle_runRansac_change: %d %d\n", topo_index, rawRansac[0].size());
+			printf("error at handle_runRegistration_change: %d %d\n", topo_index, rawRansac[0].size());
 			printf("topo_index_close_1_dist: %f   topo_index_close_2_dist: %f\n", topo_index_close_1_dist, topo_index_close_2_dist);
 		}
 
@@ -2103,7 +1763,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 		std::cout<<"distanceratio isleri: "<<indexvalue_topo_close_1<<" "<<topo_index<<" "<<indexvalue_topo_close_2<<" "<<topo_index<<endl;
 		distanceratio_closestneighbors_topo.push_back(distanceMatrixTopography[indexvalue_topo_close_1][topo_index]/distanceMatrixTopography[indexvalue_topo_close_2][topo_index]);
-//		printf("%d dene: %f %f %f %f %f %f\n\n", topo_index, closestneighbors_topo[topo_index][0][0], closestneighbors_topo[topo_index][0][1], closestneighbors_topo[topo_index][1][0], closestneighbors_topo[topo_index][1][1], closestneighbors_topo[topo_index][2][0], closestneighbors_topo[topo_index][2][1]);
 	}
 
 	
@@ -2158,7 +1817,7 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		}
 		if(proj_index_close_1[0] == 100000 || proj_index_close_1[1] == 100000 ||  proj_index_close_2[0] == 100000 ||  proj_index_close_2[1] == 100000 || indexvalue_proj_close_1 == -1 || indexvalue_proj_close_2 == -1)
 		{
-			printf("error at handle_runRansac_change: %d %d\n", proj_index, rawRansac[0].size());
+			printf("error at handle_runRegistration_change: %d %d\n", proj_index, rawRansac[0].size());
 			printf("proj_index_close_1_dist: %f   proj_index_close_2_dist: %f\n", proj_index_close_1_dist, proj_index_close_2_dist);
 		}
 
@@ -2168,23 +1827,17 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		closestneighbors_proj.push_back(triplet);
 
 		distanceratio_closestneighbors_proj.push_back(distanceMatrixProjection[indexvalue_proj_close_1][proj_index]/distanceMatrixProjection[indexvalue_proj_close_2][proj_index]);
-//		printf("%d dene: %f %f %f\n",proj_index,distanceMatrixProjection[indexvalue_proj_close_1][proj_index], distanceMatrixProjection[indexvalue_proj_close_2][proj_index], distanceratio_closestneighbors_proj[proj_index]);
-//		printf("%d dene: %f %f %f %f %f %f\n\n", proj_index, closestneighbors_proj[proj_index][0][0], closestneighbors_proj[proj_index][0][1], closestneighbors_proj[proj_index][1][0], closestneighbors_proj[proj_index][1][1], closestneighbors_proj[proj_index][2][0], closestneighbors_proj[proj_index][2][1]);
 	}
 
-	int sayaca = 0;
-	int hele = 0;
 	double overall_minimum_median = 100000;
 	double overall_minimum_average = 100000;
 	int total_used = 0;
 
-	
 	FILE * identityFile;
 	identityFile = fopen ("identity.txt","w");
 
 	FILE * ransacFile;
 	ransacFile = fopen ("ransac_markers.txt","w");
-//	ransacFile = fopen ("output/ransac_markers.txt","w");
 
 	vector< vector < double > > ransacmarkers_topo;
 	vector< vector < double > > ransacmarkers_proj;
@@ -2195,8 +1848,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 		{
 			if(distanceratio_closestneighbors_topo[i] <= distanceratio_closestneighbors_proj[j]*1.02 && distanceratio_closestneighbors_topo[i] >= distanceratio_closestneighbors_proj[j]*0.98)
 			{
-//				printf("%d esit\n", sayaca);
-				sayaca++;
 
 	//closestneighbors_topo[a][b][c]
 	// a: index of a triplet (i.e. point "rawRansac[0][a]" with its two closest neighbors)
@@ -2212,7 +1863,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				topo_matrix_M[3][2] = closestneighbors_topo[i][1][0]; topo_matrix_M[3][3] = closestneighbors_topo[i][1][1]; topo_matrix_M[3][5] = 1;
 				topo_matrix_M[4][0] = closestneighbors_topo[i][2][0]; topo_matrix_M[4][1] = closestneighbors_topo[i][2][1]; topo_matrix_M[4][4] = 1;
 				topo_matrix_M[5][2] = closestneighbors_topo[i][2][0]; topo_matrix_M[5][3] = closestneighbors_topo[i][2][1]; topo_matrix_M[5][5] = 1;
-
 
 				double topo_matrix_transpose_M[6][6] = {0};
 			    for(int trans_i=0; trans_i < 6; trans_i++)
@@ -2234,37 +1884,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				double topo_matrix_TM_M_multiplied[6][6] = {0};
 
 				matrixMultiplication(topo_matrix_TM_M_multiplied, topo_matrix_transpose_M, topo_matrix_M);
-/*				if(sayaca == 1)
-				{
-					printf("topo_matrix_transpose_M\n");
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[0][0], topo_matrix_transpose_M[0][1], topo_matrix_transpose_M[0][2], topo_matrix_transpose_M[0][3], topo_matrix_transpose_M[0][4], topo_matrix_transpose_M[0][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[1][0], topo_matrix_transpose_M[1][1], topo_matrix_transpose_M[1][2], topo_matrix_transpose_M[1][3], topo_matrix_transpose_M[1][4], topo_matrix_transpose_M[1][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[2][0], topo_matrix_transpose_M[2][1], topo_matrix_transpose_M[2][2], topo_matrix_transpose_M[2][3], topo_matrix_transpose_M[2][4], topo_matrix_transpose_M[2][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[3][0], topo_matrix_transpose_M[3][1], topo_matrix_transpose_M[3][2], topo_matrix_transpose_M[3][3], topo_matrix_transpose_M[3][4], topo_matrix_transpose_M[3][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[4][0], topo_matrix_transpose_M[4][1], topo_matrix_transpose_M[4][2], topo_matrix_transpose_M[4][3], topo_matrix_transpose_M[4][4], topo_matrix_transpose_M[4][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_transpose_M[5][0], topo_matrix_transpose_M[5][1], topo_matrix_transpose_M[5][2], topo_matrix_transpose_M[5][3], topo_matrix_transpose_M[5][4], topo_matrix_transpose_M[5][5]);
-					printf("\ntopo_matrix_M\n");
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[0][0], topo_matrix_M[0][1], topo_matrix_M[0][2], topo_matrix_M[0][3], topo_matrix_M[0][4], topo_matrix_M[0][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[1][0], topo_matrix_M[1][1], topo_matrix_M[1][2], topo_matrix_M[1][3], topo_matrix_M[1][4], topo_matrix_M[1][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[2][0], topo_matrix_M[2][1], topo_matrix_M[2][2], topo_matrix_M[2][3], topo_matrix_M[2][4], topo_matrix_M[2][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[3][0], topo_matrix_M[3][1], topo_matrix_M[3][2], topo_matrix_M[3][3], topo_matrix_M[3][4], topo_matrix_M[3][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[4][0], topo_matrix_M[4][1], topo_matrix_M[4][2], topo_matrix_M[4][3], topo_matrix_M[4][4], topo_matrix_M[4][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_M[5][0], topo_matrix_M[5][1], topo_matrix_M[5][2], topo_matrix_M[5][3], topo_matrix_M[5][4], topo_matrix_M[5][5]);
-					printf("\ntopo_matrix_TM_M_multiplied\n");
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[0][0], topo_matrix_TM_M_multiplied[0][1], topo_matrix_TM_M_multiplied[0][2], topo_matrix_TM_M_multiplied[0][3], topo_matrix_TM_M_multiplied[0][4], topo_matrix_TM_M_multiplied[0][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[1][0], topo_matrix_TM_M_multiplied[1][1], topo_matrix_TM_M_multiplied[1][2], topo_matrix_TM_M_multiplied[1][3], topo_matrix_TM_M_multiplied[1][4], topo_matrix_TM_M_multiplied[1][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[2][0], topo_matrix_TM_M_multiplied[2][1], topo_matrix_TM_M_multiplied[2][2], topo_matrix_TM_M_multiplied[2][3], topo_matrix_TM_M_multiplied[2][4], topo_matrix_TM_M_multiplied[2][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[3][0], topo_matrix_TM_M_multiplied[3][1], topo_matrix_TM_M_multiplied[3][2], topo_matrix_TM_M_multiplied[3][3], topo_matrix_TM_M_multiplied[3][4], topo_matrix_TM_M_multiplied[3][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[4][0], topo_matrix_TM_M_multiplied[4][1], topo_matrix_TM_M_multiplied[4][2], topo_matrix_TM_M_multiplied[4][3], topo_matrix_TM_M_multiplied[4][4], topo_matrix_TM_M_multiplied[4][5]);
-					printf("%f %f %f %f %f %f\n", topo_matrix_TM_M_multiplied[5][0], topo_matrix_TM_M_multiplied[5][1], topo_matrix_TM_M_multiplied[5][2], topo_matrix_TM_M_multiplied[5][3], topo_matrix_TM_M_multiplied[5][4], topo_matrix_TM_M_multiplied[5][5]);
-				}*/
-
-////////////////////////////////////////
 
 				double inverseMatrix[6][6] = {0};
-
-//				float determinant;
-//				determinant = detrm(topo_matrix_TM_M_multiplied,6);
 
 				Matrix topo_tm_m(6,6);
 				topo_tm_m(0,0) = topo_matrix_TM_M_multiplied[0][0];topo_tm_m(0,1) = topo_matrix_TM_M_multiplied[0][1];
@@ -2291,18 +1912,12 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 				topo_tm_m(5,2) = topo_matrix_TM_M_multiplied[5][2];topo_tm_m(5,3) = topo_matrix_TM_M_multiplied[5][3];
 				topo_tm_m(5,4) = topo_matrix_TM_M_multiplied[5][4];topo_tm_m(5,5) = topo_matrix_TM_M_multiplied[5][5];
 
-//				if(determinant == 0)
-//				std::cout<<endl<<"topo_tm_m.IsSingular'in degeri: "<<topo_tm_m.IsSingular()<<endl;
 				if(topo_tm_m.IsSingular())
 				{
 					printf("\nMATRIX IS NOT INVERSIBLE\n");
-					hele++;
 				}
 				else
 				{
-		//			printf("%d esit %d\n", sayaca, hele);
-			//		cofact(inverseMatrix,topo_matrix_TM_M_multiplied,6);
-
 					Matrix matinverse = !topo_tm_m;
 
 					inverseMatrix[0][0] = matinverse(0,0); inverseMatrix[0][1] = matinverse(0,1); inverseMatrix[0][2] = matinverse(0,2);
@@ -2323,11 +1938,9 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 					inverseMatrix[5][0] = matinverse(5,0); inverseMatrix[5][1] = matinverse(5,1); inverseMatrix[5][2] = matinverse(5,2);
 					inverseMatrix[5][3] = matinverse(5,3); inverseMatrix[5][4] = matinverse(5,4); inverseMatrix[5][5] = matinverse(5,5);
 
-
-
 					double identityCheckMatrix[6][6] = {0};
 					matrixMultiplication(identityCheckMatrix, inverseMatrix, topo_matrix_TM_M_multiplied);
-					fprintf(identityFile,"***%d***\n", sayaca);
+
 					for(int iden_i = 0; iden_i < 6; iden_i++)
 					{
 						for(int iden_j = 0; iden_j < 6; iden_j++)
@@ -2359,52 +1972,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 						}
 					}
 
-/*					if(sayaca == 1)
-					{
-						printf("\ninverseMatrix\n");
-						printf("%f %f %f %f %f %f\n", inverseMatrix[0][0], inverseMatrix[0][1], inverseMatrix[0][2], inverseMatrix[0][3], inverseMatrix[0][4], inverseMatrix[0][5]);
-						printf("%f %f %f %f %f %f\n", inverseMatrix[1][0], inverseMatrix[1][1], inverseMatrix[1][2], inverseMatrix[1][3], inverseMatrix[1][4], inverseMatrix[1][5]);
-						printf("%f %f %f %f %f %f\n", inverseMatrix[2][0], inverseMatrix[2][1], inverseMatrix[2][2], inverseMatrix[2][3], inverseMatrix[2][4], inverseMatrix[2][5]);
-						printf("%f %f %f %f %f %f\n", inverseMatrix[3][0], inverseMatrix[3][1], inverseMatrix[3][2], inverseMatrix[3][3], inverseMatrix[3][4], inverseMatrix[3][5]);
-						printf("%f %f %f %f %f %f\n", inverseMatrix[4][0], inverseMatrix[4][1], inverseMatrix[4][2], inverseMatrix[4][3], inverseMatrix[4][4], inverseMatrix[4][5]);
-						printf("%f %f %f %f %f %f\n", inverseMatrix[5][0], inverseMatrix[5][1], inverseMatrix[5][2], inverseMatrix[5][3], inverseMatrix[5][4], inverseMatrix[5][5]);
-						printf("\ntopo_matrix_r\n");
-						printf("%f %f %f %f %f %f\n", topo_matrix_r[0], topo_matrix_r[1], topo_matrix_r[2], topo_matrix_r[3], topo_matrix_r[4], topo_matrix_r[5]);
-						printf("\ntopo_matrix_TM_r_multiplied\n");
-						printf("%f %f %f %f %f %f\n", topo_matrix_TM_r_multiplied[0], topo_matrix_TM_r_multiplied[1], topo_matrix_TM_r_multiplied[2], topo_matrix_TM_r_multiplied[3], topo_matrix_TM_r_multiplied[4], topo_matrix_TM_r_multiplied[5]);
-						printf("\ntopo_matrix_v\n");
-						printf("%f %f %f %f %f %f\n", topo_matrix_v[0], topo_matrix_v[1], topo_matrix_v[2], topo_matrix_v[3], topo_matrix_v[4], topo_matrix_v[5]);
-					}
-*/
-
-
-/*					for(int inv_i = 0; i<6; i++)
-					{
-						for(int inv_j = 0; j<6; j++)
-						{
-							printf("%f ",inverseMatrix[inv_i][inv_j]);
-						}
-						printf("\n");
-					}
-				
-					float testResultMatrix[6][6] = {0};
-					matrixMultiplication(testResultMatrix, inverseMatrix, topo_matrix_TM_M_multiplied);
-					printf("\n\n");
-					for(int test_i = 0; i<6; i++)
-					{
-						for(int test_j = 0; j<6; j++)
-						{
-							printf("%f ",testResultMatrix[test_i][test_j]);
-						}
-						printf("\n");
-					}*/
-
-	//				int no_of_correspondences = 0;
 					vector<double> sum_of_errors;
 
-
-//					if(rawRansac[0].size() <= rawRansac[1].size())
-//					{
 						vector< vector < double > > temp_ransacmarkers_proj;
 
 						for(int den_i = 0; den_i < rawRansac[0].size(); den_i++)
@@ -2455,7 +2024,6 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 							}
 						}
 
-//						temp_average /= sum_of_errors.size();
 						temp_average /= valid_dist;
 
 						if(median_value < overall_minimum_median)
@@ -2466,62 +2034,8 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 							overall_minimum_average = temp_average;
 							total_used = valid_dist;
 						}
-//					}
-					/*else
-					{
-						vector< vector < float > > temp_ransacmarkers_proj;
 
-						vector< vector < float > > new_proj;
-
-						for(int den_i = 0; den_i < rawRansac[0].size(); den_i++)
-						{
-							float tmp_proj_x = topo_matrix_v[0]*rawRansac[0][den_i][0] + topo_matrix_v[1]*rawRansac[0][den_i][1] + topo_matrix_v[4];
-							float tmp_proj_y = topo_matrix_v[2]*rawRansac[0][den_i][0] + topo_matrix_v[3]*rawRansac[0][den_i][1] + topo_matrix_v[5];
-							vector<float> tmp_unit;
-							tmp_unit.push_back(tmp_proj_x);
-							tmp_unit.push_back(tmp_proj_y);
-							new_proj.push_back(tmp_unit);
-						}
-
-						for(int den_j = 0; den_j < rawRansac[1].size(); den_j++)
-						{
-							float smallest_distance = 100000;
-
-							for(int t_i = 0; t_i < new_proj.size(); t_i++)
-							{
-								float temp_distance = sqrt(pow((rawRansac[1][den_j][0]-new_proj[t_i][0]),2) + pow((rawRansac[1][den_j][1]-new_proj[t_i][1]),2));
-								if(temp_distance < smallest_distance)
-								{
-									smallest_distance = temp_distance;
-								}
-							}
-							sum_of_errors.push_back(smallest_distance);
-						}
-
-						sort(sum_of_errors.begin(),sum_of_errors.begin()+rawRansac[1].size());
-
-						float median_value;
-						if(sum_of_errors.size()%2 == 0)
-						{
-							median_value = (sum_of_errors[sum_of_errors.size()/2] + sum_of_errors[sum_of_errors.size()/2 - 1])/2;
-						}
-						else
-						{
-							median_value = sum_of_errors[sum_of_errors.size()/2];
-						}
-
-						if(median_value < overall_minimum_median)
-						{
-							overall_minimum_median = median_value;
-						}
-					}*/
-
-	//				printf("no_of_correspondences for %d %d is %d\n", i, j, no_of_correspondences);
 				}
-
-
-/////////////////////////////////////////
-
 			}
 		}
 	}
@@ -2532,14 +2046,12 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 
 	for (int r_i = 0; r_i < ransacmarkers_topo.size(); r_i++) 
 	{
-//		fprintf(ransacFile,"%g %g ", ransacmarkers_topo[r_i][0]/(wh[0][0]-1), ransacmarkers_topo[r_i][1]/(wh[0][1]-1));
 		fprintf(ransacFile,"%g %g ", ransacmarkers_topo[r_i][0], ransacmarkers_topo[r_i][1]);
 	}
 	fprintf(ransacFile,"\n");
 
 	for (int r_i = 0; r_i < ransacmarkers_proj.size(); r_i++) 
 	{
-//		fprintf(ransacFile,"%g %g ", ransacmarkers_proj[r_i][0]/(wh[1][0]-1), ransacmarkers_proj[r_i][1]/(wh[1][1]-1));
 		fprintf(ransacFile,"%g %g ", ransacmarkers_proj[r_i][0], ransacmarkers_proj[r_i][1]);
 	}
 	fprintf(ransacFile,"\n");
@@ -2548,116 +2060,14 @@ void nmr_RegistrationUI::handle_runRansac_change(vrpn_int32 value, void *ud)
 	fclose (identityFile);
 	printf("\n average coming from overall_minimum_median : %f\n", overall_minimum_average);
 	printf("\n total number of used markers for calculation : %d\n", total_used);
-	
-////////////////////////////////////////////////////end//////////////////////////////////////////////
+}
 
-	//there are many repetitions. optimize this part.
-/*	for(int topo_index = 0; topo_index < rawRansac[0].size() && found == false ; topo_index++)
-	{
-		vector<float> topo_index_close_1(2,100000); 
-		vector<float> topo_index_close_2(2,100000);
-
-		float topo_index_close_1_dist = 100000, topo_index_close_2_dist = 100000;
-
-		for(int i = 0; i < rawRansac[0].size(); i++)
-		{
-			if(topo_index != i)
-			{
-				float dist = distanceMatrixTopography[i][topo_index];
-				if(dist < topo_index_close_1_dist)
-				{
-					topo_index_close_2 = topo_index_close_1;
-					topo_index_close_1 = rawRansac[0][i];
-
-					topo_index_close_2_dist = topo_index_close_1_dist;
-					topo_index_close_1_dist = dist;
-				}
-				else if(dist < topo_index_close_2_dist)
-				{
-					topo_index_close_2 = rawRansac[0][i];
-					topo_index_close_2_dist = dist;
-				}
-			}
-		}
-		if(topo_index_close_1[0] == 100000 || topo_index_close_1[1] == 100000 ||  topo_index_close_2[0] == 100000 ||  topo_index_close_2[1] == 100000)
-		{
-			printf("error at handle_runRansac_change: %d %d\n", topo_index, rawRansac[0].size());
-			printf("topo_index_close_1_dist: %f   topo_index_close_2_dist: %f\n", topo_index_close_1_dist, topo_index_close_2_dist);
-		}
-//		printf("topo_index_close_1_dist: %f   topo_index_close_2_dist: %f\n", topo_index_close_1_dist, topo_index_close_2_dist);
-
-		
-		for(int proj_index = 0; proj_index < rawRansac[1].size(); proj_index++)
-		{
-			vector< vector<float> > proj_index_near_1s; // candidate nearest ones
-			vector< vector<float> > proj_index_near_2s; // candidate second nearest ones
-			for(int j = 0; j < rawRansac[1].size(); j++)
-			{
-				if(proj_index != j)
-				{
-					float dist = distanceMatrixProjection[j][proj_index];
-					//if( dist < topo_index_close_1_dist)
-					if( dist > topo_index_close_1_dist*0.8 && dist < topo_index_close_1_dist*1.2)
-					{
-						proj_index_near_1s.push_back(rawRansac[1][j]);
-					}
-					else if( dist > topo_index_close_2_dist*0.8 && dist < topo_index_close_2_dist*1.2)
-					{
-						proj_index_near_2s.push_back(rawRansac[1][j]);
-					}
-				}
-			}
-			if(proj_index_near_1s.size() > 0 && proj_index_near_2s.size() > 0)
-			{
-				vector<float> topo_point_a = rawRansac[0][topo_index];
-				vector<float> topo_point_b = topo_index_close_1;
-				vector<float> topo_point_c = topo_index_close_2;
-				
-				vector<float> proj_point_a = rawRansac[1][proj_index];
-				vector<float> proj_point_b;
-				vector<float> proj_point_c;
-
-				for(int ind_proj_point_b = 0; ind_proj_point_b < proj_index_near_1s.size(); ind_proj_point_b++)
-				{
-					proj_point_b = proj_index_near_1s[ind_proj_point_b];
-
-					for(int ind_proj_point_c = 0; ind_proj_point_c < proj_index_near_2s.size(); ind_proj_point_c++)
-					{
-						proj_point_c = proj_index_near_2s[ind_proj_point_c];
-					}
-				}
-
-				printf("topo_point: %f %f %f %f %f %f\n", topo_point_a[0], topo_point_a[1], topo_point_b[0], topo_point_b[1], topo_point_c[0], topo_point_c[1]);
-				printf("proj_point :%f %f %f %f %f %f\n\n", proj_point_a[0], proj_point_a[1], proj_point_b[0], proj_point_b[1], proj_point_c[0], proj_point_c[1]);
-
-//				printf("topo_index: %d  proj_index: %d\n", topo_index, proj_index);
-//				printf("\n");
-//				printf("%f %f\n", rawRansac[0][proj_index][0], rawRansac[0][proj_index][1]);
-//				printf("%f %f\n", topo_index_close_1[0], topo_index_close_1[1]);
-//				printf("%f %f\n", topo_index_close_2[0], topo_index_close_2[1]);
-//				printf("\n");
-//				printf("%f %f\n", rawRansac[1][proj_index][0], rawRansac[1][proj_index][1]);
-//				printf("%f %f\n", proj_index_near_1s[0][0], proj_index_near_1s[0][1]);
-//				printf("%f %f\n", proj_index_near_2s[0][0], proj_index_near_2s[0][1]);
-
-			}
-
-			//try every combination
-			//if found sth, do sth
-			//if not, do nothing
-		}
-	}*/
-//	printf("c_coun: %d\n",c_coun);
-
-} //new
-
-void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
+void nmr_RegistrationUI::handle_runDrawRegistration_change(vrpn_int32 value, void *ud)
 {
 	float x,y;
 
 	FILE * pFile;
 	pFile = fopen ("ransac_markers.txt","r");
-//	pFile = fopen ("output/ransac_markers.txt","r");
 
 	nmr_RegistrationUI *me = static_cast<nmr_RegistrationUI *>(ud);
 
@@ -2690,7 +2100,7 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 				x_src[i] = x/(wh[0][0]-1.0);
 				y_src[i] = y/(wh[0][0]-1.0);
 				z_src[i] = 0;
-		//		printf ( "%f %f ", x, y);
+
 				if( i == 0 || i == (num-1))
 				{
 					printf ("source %d %f %f\n", i, x_src[i], y_src[i]);
@@ -2705,7 +2115,7 @@ void nmr_RegistrationUI::handle_runDrawRansac_change(vrpn_int32 value, void *ud)
 				x_tgt[i] = x/(wh[1][0]-1.0);
 				y_tgt[i] = y/(wh[1][0]-1.0);
 				z_tgt[i] = 0;
-		//		printf ( "%f %f ", x, y);
+
 				if( i == 0 || i == (num-1))
 				{
 					printf ("target %d %f %f\n", i, x_tgt[i], y_tgt[i]);

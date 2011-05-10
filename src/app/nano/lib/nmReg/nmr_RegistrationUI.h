@@ -103,7 +103,7 @@ class nmr_RegistrationUI {
 	static void handle_saveRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_loadRegistrationMarkers_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveReport_change(vrpn_int32 value, void *ud); //new
-	static void handle_runRansac_change(vrpn_int32 value, void *ud); //new
+	static void handle_runRegistration_change(vrpn_int32 value, void *ud); //new
 	static void handle_setTopoIntensityThreshold_change(vrpn_float64, void *ud);
 	static void handle_setProjIntensityThreshold_change(vrpn_float64, void *ud);
 	static void handle_calculatePoints_change(vrpn_int32 value, void *ud); //new
@@ -111,7 +111,7 @@ class nmr_RegistrationUI {
 	static void handle_saveTopographyPoints_change(vrpn_int32 value, void *ud); //new
 	static void handle_drawProjectionPoints_change(vrpn_int32 value, void *ud); //new
 	static void handle_saveProjectionPoints_change(vrpn_int32 value, void *ud); //new
-	static void handle_runDrawRansac_change(vrpn_int32 value, void *ud); //new
+	static void handle_runDrawRegistration_change(vrpn_int32 value, void *ud); //new
     void sendTransformationParameters();
 
     void createResampleImage(const char *imageName);
@@ -185,7 +185,7 @@ class nmr_RegistrationUI {
     TclNet_int d_calculateErrorReport;
 	TclNet_int d_calculateAveragePointsErrorReport;
 	TclNet_int d_saveReport; //new
-	TclNet_int d_runRansac; //new
+	TclNet_int d_runRegistration; //new
 	TclNet_float d_setTopoIntensityThreshold;
 	TclNet_float d_setProjIntensityThreshold;
 	TclNet_int d_calculatePoints; //new
@@ -193,7 +193,7 @@ class nmr_RegistrationUI {
 	TclNet_int d_saveTopographyPoints; //new
 	TclNet_int d_drawProjectionPoints; //new
 	TclNet_int d_saveProjectionPoints; //new
-	TclNet_int d_runDrawRansac; //new
+	TclNet_int d_runDrawRegistration; //new
 
     TclNet_float d_scaleX, d_scaleY;
     TclNet_float d_translateX, d_translateY, d_translateZ;

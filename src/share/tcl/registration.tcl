@@ -305,8 +305,8 @@ frame $nmInfo(ransac).row5
 
 pack $nmInfo(ransac).row1 $nmInfo(ransac).row2 $nmInfo(ransac).row3 $nmInfo(ransac).row4 $nmInfo(ransac).row5 -anchor nw
 
-floatscale $nmInfo(ransac).row1.topo_intensity 0.001 1 1000 1 1 \
-	set_topoIntensityThreshold "Topo. Intensity Thr."
+floatscale $nmInfo(ransac).row1.topo_intensity 0.1 15 100 1 1 \
+	set_topoIntensityThreshold "Topo. STD Thr."
 
 floatscale $nmInfo(ransac).row1.proj_intensity 0.001 1 1000 1 1 \
 	set_projIntensityThreshold "Proj. Intensity Thr."
@@ -342,10 +342,10 @@ button $nmInfo(ransac).row2.saveProj -text "Save Projection Points"  \
 #	-anchor w -side left -pady 1
 
 button $nmInfo(ransac).row2.run_calcCorr -text "Calculate Correspondences"  \
-    -command "set run_ransac 1"
+    -command "set run_registration 1"
 
 button $nmInfo(ransac).row2.run_drawCorr -text "Draw Correspondences"  \
-    -command "set draw_ransac 1"
+    -command "set draw_registration 1"
 
 
 pack $nmInfo(ransac).row2.calculatePoints \

@@ -93,9 +93,6 @@ class CorrespondenceEditor {
 	float getIntensityThreshold(int spaceIndex);
 	float getIntensity(int x, int y);
 	vector< vector <float> > comparePixelsWithNeighbors(int spaceIndex, const char * filename);
-	void BrightDeal();
-
-//	void showMarkersInSingleImage(); // new
 
   private:
     // eventHandler is responsible for handling user interaction with image

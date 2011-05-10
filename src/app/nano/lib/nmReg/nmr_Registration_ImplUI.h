@@ -56,13 +56,10 @@ class nmr_Registration_ImplUI {
 
     void registerCorrespondenceHandler(CorrespondenceCallback handler,void *ud);
 
-//	CorrespondenceEditor get_d_ce(); //new
-
 	void setTopoIntensityThreshold(float intensity);
 	void setProjIntensityThreshold(float intensity);
 	float getIntensityValue(int x, int y);
 	vector< vector< vector <float> > > readPixels();
-	void BrightestPixels();
 	vector < vector <float> > getWidthHeight();
 
   protected:

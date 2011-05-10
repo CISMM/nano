@@ -276,17 +276,6 @@ vector< vector< vector <float> > > nmr_Registration_ImplUI::readPixels()
 	return initialRansac;
 }
 
-void nmr_Registration_ImplUI::BrightestPixels()
-{
-    vector< vector <int> > brightest;
-
-
-//	vector< vector <float> > initialRansacTopography;
-	d_ce.BrightDeal();
-
-//	initialRansac.push_back(initialRansacTopography);
-}
-
 vector < vector <float> > nmr_Registration_ImplUI::getWidthHeight()
 {
 	vector<float> wh0(2,0);

@@ -181,13 +181,9 @@ int CorrespondenceEditor::eventHandler(
                   me->grab_offset_y = 0;
                   int i;
 
-				  // new outer if statement
-				  //if (show_markers_in_single_image == false)
-				 // {
-	                 for (i = 0; i < me->num_images; i++) {
-		                  me->viewer->dirtyWindow((me->winParam)[i].winID);
-			          }
-				 // }
+                  for (i = 0; i < me->num_images; i++) {
+	                  me->viewer->dirtyWindow((me->winParam)[i].winID);
+		          }
                   me->notifyCallbacks();
               }
           }
@@ -233,14 +229,10 @@ int CorrespondenceEditor::eventHandler(
 					  me->grab_offset_x = 0;
 					  me->grab_offset_y = 0;
 					  int i;
-
-					  // new outer if statement
-					  //if (show_markers_in_single_image == false)
-					 // {
-						 for (i = 0; i < me->num_images; i++) {
-							  me->viewer->dirtyWindow((me->winParam)[i].winID);
-						  }
-					 // }
+ 
+ 					  for (i = 0; i < me->num_images; i++) {
+						  me->viewer->dirtyWindow((me->winParam)[i].winID);
+					  }
 					  me->notifyCallbacks();
 				  }
 			  }
@@ -533,10 +525,7 @@ double CorrespondenceEditor::centerWithSpotTracker(int spaceIndex, int pointInde
     spot.x = opt_x / (width-1);
     spot.y = opt_y / (height-1);
 
-//	if(spotTrackerParams[spaceIndex].tracker->get_x() >= 0 && spotTrackerParams[spaceIndex].tracker->get_y() >= 0)
-//	{
-		correspondence->setPoint(spaceIndex, pointIndex, spot);
-//	}
+	correspondence->setPoint(spaceIndex, pointIndex, spot);
 
 	return spotTrackerParams[spaceIndex].tracker->get_radius();
 }
@@ -589,11 +578,6 @@ void CorrespondenceEditor::unpaired_fluoro_centerWithSpotTracker(int spaceIndex,
     spot.y = opt_y / (height-1);
     correspondence->unpaired_fluoro_setPoint(spaceIndex, pointIndex, spot);
 }
-
-/*void CorrespondenceEditor::showMarkersInSingleImage()
-{
-	show_markers_in_single_image = true;
-}*/ // new
 
 int CorrespondenceEditor::displayHandler(
     const ImageViewerDisplayData &data, void *ud) {
@@ -1218,6 +1202,7 @@ void CorrespondenceEditor::readAllTest(int spaceIndex, const char * filename)
 
 vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spaceIndex)
 {
+
 	vector< vector <float> > pixelMatrix;
 
     nmb_Image *image = this->winParam[spaceIndex].im;
@@ -1225,7 +1210,9 @@ vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spa
 	float img_width = image->width();
 	float img_height = image->height();
 
-//	if(spaceIndex == 0) // do not use median filter for afm images (mapped to height)
+	// In this format (where spaceIndex is allowed to be 0[AFM] and 1[fluoro], we
+	// are not using median filter neither in AFM nor in fluoro images.
+	// This condition can be changed accordingly when median filtering is wanted. 
 	if(spaceIndex == 0  || spaceIndex == 1)
 	{
 		printf("burda_1 %d", image->height());
@@ -1235,14 +1222,12 @@ vector< vector <float> > CorrespondenceEditor::decideOnUsingMedianFilter(int spa
 			
 			for(int j = 0; j < image->width(); j++)
 			{
-	//			printf("burda_2 %d %d\n", j , image->getValue(i,j));
 				pixelRow.push_back(image->getValue(i,j));
 			}
-	//		printf("burda_3 %d", image->width());
 			pixelMatrix.push_back(pixelRow);
 		}
 	}
-	else // use median filter for fluoro images (mapped to color)
+	else
 	{
 		for(int i = 0; i < image->height(); i++)
 		{
@@ -1347,12 +1332,10 @@ void CorrespondenceEditor::setIntensityThreshold(int spaceIndex, float intensity
 	if(spaceIndex == 0) // topography image intensity threshold
 	{
 		intensityValues[0] = intensity;
-//		printf("changed intensity value_0: %f\n", intensityValues[0]);
 	}
 	else // projection image intensity threshold
 	{
 		intensityValues[1] = intensity;
-//		printf("changed intensity value_1: %f\n", intensityValues[1]);
 	}
 }
 
@@ -1360,58 +1343,12 @@ float CorrespondenceEditor::getIntensityThreshold(int spaceIndex)
 {
 	if(spaceIndex == 0) // topography image
 	{
-//		printf("get intensity_0: %f\n", intensityValues[0]);
 		return intensityValues[0]; 
 	}
 	else // projection image
 	{
-//		printf("get intensity_1: %f\n", intensityValues[1]);
 		return intensityValues[1];
 	}
-}
-
-void CorrespondenceEditor::BrightDeal()
-{
-//    nmb_Image *first_image = this->winParam[0].im;
-//	nmb_Image *second_image = this->winParam[1].im;
-
-	const char * br = "bright.txt";
-
-	FILE * pFile;
-	pFile = fopen (br,"w");
-
-//	FILE * pblack;
-//	pblack = fopen ("black.txt","w");
-
-//	FILE * pwhite;
-//	pwhite = fopen ("white.txt","w");
-//	fprintf(pFile,"min value: %f\n", image->minValue());
-//	fprintf(pFile,"max value: %f\n", image->maxValue());
-//	fprintf(pFile,"width: %d\n", image->width());
-//	fprintf(pFile,"height: %d\n", image->height());
-
-	fprintf(pFile,"%d \n", num_images);
-	for(int i = 0; i < this->winParam[0].im->height(); i++)
-	{
-		for(int j = 0; j < this->winParam[0].im->width(); j++)
-		{
-			float deneme = 0;
-			for(int num_index = 0 ; num_index < num_images; num_index++)
-			{
-				deneme += this->winParam[num_index].im->getValue(i,j);
-			}
-			deneme /= num_images;
-
-			fprintf(pFile,"%f ", deneme);
-//			fprintf(pblack,"%f ", first_image->getValue(i,j));
-//			fprintf(pwhite,"%f ", second_image->getValue(i,j));
-		}
-		fprintf(pFile,"\n\n");
-	}
-
-	fclose (pFile);
-//	fclose (pblack);
-//	fclose (pwhite);
 }
 
 float CorrespondenceEditor::getIntensity(int x, int y)
@@ -1423,8 +1360,8 @@ float CorrespondenceEditor::getIntensity(int x, int y)
 
 vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int spaceIndex, const char * filename)
 {
-	float intensity_value = getIntensityThreshold(spaceIndex);
-//	printf("INTENSITY THRESH0LD for %d:  %f\n", spaceIndex, intensity_value);
+	float threshold_value = getIntensityThreshold(spaceIndex);
+	printf("THRESHOLD VALUE for %d:  %f\n", spaceIndex, threshold_value);
 
     nmb_Image *image = this->winParam[spaceIndex].im;
 	vector< vector <float> > pixMatrix;
@@ -1432,8 +1369,6 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 
 	FILE * pFile;
 	pFile = fopen (filename,"w");
-//	fprintf(pFile,"width: %d\n", image->width());
-//	fprintf(pFile,"height: %d\n", image->height());
 	fprintf(pFile,"%d\n", image->width());
 	fprintf(pFile,"%d\n", image->height());
 
@@ -1443,6 +1378,8 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 	int count = 0;
 
 	vector< vector <float> > points;
+
+	int windowsize = 50;
 
 	// locate the pixels in the image. values are scaled down (they can be between 0 and 1).
 	for(int i = 0; i < image->height(); i++)
@@ -1455,83 +1392,50 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 
 			bool validPoint = false;
 
-			if(current_pixel > intensity_value)
+			if(spaceIndex == 0)
 			{
-				if(i>0 && i<(image->height()-1) && j>0 && j<(image->width()-1))
+				double window_sum = 0;
+				int start_i = i-windowsize/2;
+				int start_j = j-windowsize/2;
+				int cc_count = 0;
+				vector<double> pixvals;
+				for(int w_i = 0; w_i < windowsize; w_i++)
 				{
-					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
+					for(int w_j = 0; w_j < windowsize; w_j++)
 					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
+						if(w_i == 0 || w_i == windowsize-1 || w_j == 0 || w_j == windowsize-1)
+						{
+							int current_i = start_i + w_i;
+							int current_j = start_j + w_j;
+							if(current_i >= 0 && current_i < image->height() && current_j >= 0 && current_j < image->height())
+							{
+								cc_count++;
+								window_sum += pixMatrix[current_i][current_j];
+								pixvals.push_back(pixMatrix[current_i][current_j]);
+							}
+						}
 					}
 				}
-				else if(i>0 && i<(image->height()-1) && j>0)
+				double window_mean = window_sum/cc_count;
+
+				double std_inner = 0;
+				for(int pix_ind = 0; pix_ind < pixvals.size(); pix_ind++)
 				{
-					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
+					std_inner += ((pixvals[pix_ind] - window_mean) * (pixvals[pix_ind] - window_mean));
 				}
-				else if(i>0 && i<(image->height()-1) && j<(image->width()-1))
+
+				double std_window = sqrt(std_inner/pixvals.size());
+
+				if(current_pixel > (window_mean + threshold_value*std_window))
 				{
-					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
+					validPoint = true;
 				}
-				else if(i>0 && j>0 && j<(image->width()-1))
+			}
+			else
+			{
+				if(current_pixel > threshold_value)
 				{
-					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i][j-1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}
-				else if(i<(image->height()-1) && j>0 && j<(image->width()-1))
-				{
-					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}///////////////////////////
-				else if(i>0 && j>0)
-				{
-					if(current_pixel >= pixMatrix[i-1][j-1] && current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i][j-1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}
-				else if(i<(image->height()-1)&& j<(image->width()-1))
-				{
-					if(current_pixel >= pixMatrix[i][j+1] && current_pixel >= pixMatrix[i+1][j+1] && current_pixel >= pixMatrix[i+1][j])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}
-				else if(i>0 && j<(image->width()-1))
-				{
-					if(current_pixel >= pixMatrix[i-1][j] && current_pixel >= pixMatrix[i-1][j+1] && current_pixel >= pixMatrix[i][j+1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}
-				else if(i<(image->height()-1) && j>0)
-				{
-					if(current_pixel >= pixMatrix[i+1][j] && current_pixel >= pixMatrix[i+1][j-1] && current_pixel >= pixMatrix[i][j-1])
-					{
-//						fprintf(pFile,"%f ", current_pixel);
-						validPoint = true;
-					}
-				}
-				else
-				{
-					printf("***should not happen***\n");
+					validPoint = true;
 				}
 			}
 
@@ -1541,7 +1445,8 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 				for(int ind = 0; ind < points.size() && too_close == false; ind++)
 				{
 					float dist = sqrt(((points[ind][0]-i)*(points[ind][0]-i)) + ((points[ind][1]-j)*(points[ind][1]-j)));
-					if(dist <= 5)
+//					if(dist <= 5)
+					if(dist <= 10)
 					{
 						too_close = true;
 					}
@@ -1549,7 +1454,6 @@ vector< vector <float> > CorrespondenceEditor::comparePixelsWithNeighbors(int sp
 				if(too_close == false)
 				{
 					fprintf(pFile,"%f %f ", i/(img_height-1), j/(img_width-1));
-//					fprintf(pFile,"%d %d ", i, j);
 					initialRansacPoint.push_back(i);
 					initialRansacPoint.push_back(j);
 					points.push_back(initialRansacPoint);
